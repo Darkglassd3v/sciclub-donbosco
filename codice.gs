@@ -50,6 +50,8 @@ function saveMember(d) {
   const uid = Utilities.getUuid();
   const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
   const sheet = ss.getSheetByName("Risposte del modulo 1");
+  
+  // Array completo di tutte le colonne (NON ELIMINARE NULLA)
   const rowData = [
     new Date(), 
     d.policy, 
@@ -77,17 +79,19 @@ function saveMember(d) {
     uid
   ];
   
-  let targetRow;
   if (d.row > 0) {
-    targetRow = parseInt(d.row);
-    sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+    sheet.getRange(parseInt(d.row), 1, 1, rowData.length).setValues([rowData]);
   } else {
     sheet.appendRow(rowData);
-    targetRow = sheet.getLastRow();
   }
   
-  sendSummaryEmail(d, uid);
-  return "Socio " + d.lastName + " salvato correttamente!";
+  // Invia email solo se richiesto (Nuovo Socio o Rinnovo con nuovo pagamento)
+  if (d.sendEmail) {
+    sendSummaryEmail(d, uid);
+    return "✅ Socio " + d.lastName + " salvato e email inviata!";
+  }
+  
+  return "✅ Modifiche salvate per " + d.lastName;
 }
 
 function sendSummaryEmail(d, uid) {

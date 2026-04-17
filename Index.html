@@ -5,40 +5,49 @@
   <style>
     body { background-color: #e9ecef; margin: 0; padding: 0; min-height: 100vh; font-family: sans-serif; }
     #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-    .container-main { max-width: 1100px; margin: 20px auto 140px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .container-main { max-width: 1100px; margin: 20px auto 180px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .section-title { background: #1a73e8; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 25px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
-    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: #212529; color: white; padding: 20px; z-index: 1000; border-top: 4px solid #1a73e8; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
+    
+    /* FIX FOOTER E PULSANTE */
+    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: #212529; color: white; padding: 15px; z-index: 1000; border-top: 4px solid #1a73e8; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
     .val-label { font-size: 0.75rem; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px; }
     .val-amount { font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; margin-top: 5px; }
     .val-residuo { color: #ffca28; }
+    
+    #statusToast { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; min-width: 300px; text-align: center; }
+
     #searchZone { display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeeba; }
     .result-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background: white; transition: 0.2s; }
     .result-item:hover { background: #eff5fb; }
     .label { font-size: 0.85rem; margin-bottom: 0.2rem; color: #495057; }
-    .input:focus, .select select:focus { border-color: #1a73e8; box-shadow: 0 0 0 0.125em rgba(26, 115, 232, 0.25); }
     
-    .required-asterisk { color: #ff3860; margin-left: 3px; }
-    .help { font-size: 0.7rem; margin-top: 2px; color: #7a7a7a; }
+    @media screen and (max-width: 768px) {
+      .total-box .columns { display: flex; flex-wrap: wrap; }
+      .total-box .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
+      .button.is-large { font-size: 1.2rem; }
+    }
   </style>
 </head>
 <body>
 
   <div id="loader">
     <div class="button is-loading is-large is-white"></div>
-    <p id="loaderText" class="mt-4 has-text-weight-bold">INIZIALIZZAZIONE...</p>
+    <p id="loaderText" class="mt-4 has-text-weight-bold">CARICAMENTO...</p>
   </div>
+
+  <div id="statusToast" class="notification is-success"></div>
 
   <div class="container-main">
     <h1 class="title is-4 has-text-centered mb-5">Sci Club Don Bosco - Gestione Soci</h1>
     
-    <div class="columns mb-5">
-      <div class="column"><button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA ESISTENTE</button></div>
-      <div class="column"><button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO / RESET FORM</button></div>
+    <div class="columns is-mobile mb-5">
+      <div class="column"><button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA</button></div>
+      <div class="column"><button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO</button></div>
+      <div class="column"><button onclick="renewMember()" id="btnRenew" class="button is-info is-light is-fullwidth has-text-weight-bold" disabled>⭐ RINNOVA</button></div>
     </div>
 
     <div id="searchZone">
-      <label class="label">Cerca Socio:</label>
-      <input id="searchInput" class="input" type="text" placeholder="Inizia a scrivere cognome o CF..." oninput="filterDb()">
+      <input id="searchInput" class="input" type="text" placeholder="Cerca cognome..." oninput="filterDb()">
       <div id="searchResults" style="max-height: 200px; overflow-y: auto;" class="mt-2"></div>
     </div>
 
@@ -47,102 +56,32 @@
       
       <div class="section-title">Anagrafica Socio</div>
       <div class="columns is-multiline mt-1">
-        <div class="column is-3">
-          <label class="label">Cognome<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_lastName" required title="Inserisci il cognome">
-          <p class="help">Es: ROSSI</p>
-        </div>
-        <div class="column is-3">
-          <label class="label">Nome<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_firstName" required title="Inserisci il nome">
-          <p class="help">Es: MARIO</p>
-        </div>
-        <div class="column is-4">
-          <label class="label">Luogo di Nascita<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_birthPlace" required title="Comune di nascita">
-          <p class="help">Comune o Stato estero</p>
-        </div>
-        <div class="column is-2">
-          <label class="label">Prov. Nascita<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_birthProv" maxlength="2" required title="Sigla provincia (es. AT)">
-          <p class="help">Sigla (es: AT)</p>
-        </div>
-        
-        <div class="column is-4">
-          <label class="label">Codice Fiscale<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_taxCode" required pattern=".{16,16}" title="Inserisci i 16 caratteri del Codice Fiscale">
-          <p class="help">16 caratteri alfanumerici</p>
-        </div>
-        <div class="column is-4">
-          <label class="label">Data Nascita<span class="required-asterisk">*</span></label>
-          <input class="input" type="date" id="f_birthDate" required title="Seleziona la data di nascita">
-          <p class="help">Utilizza il calendario</p>
-        </div>
-        <div class="column is-4">
-          <label class="label">Telefono<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_phone" required pattern="[0-9]{9,11}" title="Inserisci un numero di telefono valido (solo numeri)">
-          <p class="help">Solo numeri (es: 3331234567)</p>
-        </div>
-        
-        <div class="column is-6">
-          <label class="label">Indirizzo Residenza<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_address" required title="Via/Piazza e numero civico">
-          <p class="help">Via, Piazza, Corso e Civico</p>
-        </div>
-        <div class="column is-3">
-          <label class="label">Città<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_city" required title="Comune di residenza">
-        </div>
-        <div class="column is-1">
-          <label class="label">Prov.<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_prov" maxlength="2" required title="Sigla provincia residenza">
-        </div>
-        <div class="column is-2">
-          <label class="label">CAP<span class="required-asterisk">*</span></label>
-          <input class="input" id="f_cap" required pattern="[0-9]{5}" title="Il CAP deve essere di 5 cifre">
-          <p class="help">5 cifre</p>
-        </div>
-        
-        <div class="column is-12">
-          <label class="label">Email<span class="required-asterisk">*</span></label>
-          <input class="input" type="email" id="f_email" required title="Indirizzo email per comunicazioni">
-          <p class="help">Indirizzo valido per invio ricevuta</p>
-        </div>
+        <div class="column is-3"><label class="label">Cognome*</label><input class="input" id="f_lastName" required></div>
+        <div class="column is-3"><label class="label">Nome*</label><input class="input" id="f_firstName" required></div>
+        <div class="column is-4"><label class="label">Luogo Nascita*</label><input class="input" id="f_birthPlace" required></div>
+        <div class="column is-2"><label class="label">Prov.*</label><input class="input" id="f_birthProv" maxlength="2" required></div>
+        <div class="column is-4"><label class="label">Codice Fiscale*</label><input class="input" id="f_taxCode" required pattern=".{16,16}"></div>
+        <div class="column is-4"><label class="label">Data Nascita*</label><input class="input" type="date" id="f_birthDate" required></div>
+        <div class="column is-4"><label class="label">Telefono*</label><input class="input" id="f_phone" required></div>
+        <div class="column is-6"><label class="label">Indirizzo*</label><input class="input" id="f_address" required></div>
+        <div class="column is-3"><label class="label">Città*</label><input class="input" id="f_city" required></div>
+        <div class="column is-1"><label class="label">Prov.*</label><input class="input" id="f_prov" maxlength="2" required></div>
+        <div class="column is-2"><label class="label">CAP*</label><input class="input" id="f_cap" required></div>
+        <div class="column is-12"><label class="label">Email*</label><input class="input" type="email" id="f_email" required></div>
       </div>
 
-      <div class="section-title">Scelte Iscrizione</div>
+      <div class="section-title">Scelte Iscrizione (TUTTI I CAMPI)</div>
       <div class="columns is-multiline mt-1">
-        <div class="column is-6">
-          <label class="label">Tipologia Tessera<span class="required-asterisk">*</span></label>
-          <div class="select is-fullwidth">
-            <select id="f_membership" onchange="calc()" required title="Campo obbligatorio"></select>
-          </div>
-          <p class="help">Obbligatorio per l'assicurazione</p>
-        </div>
-        <div class="column is-6">
-          <label class="label">Agevolazione Famiglia</label>
-          <div class="select is-fullwidth">
-            <select id="f_family" onchange="calc()" title="Sconto per nuclei familiari"></select>
-          </div>
-        </div>
-        <div class="column is-6">
-          <label class="label">Abbonamento</label>
-          <div class="select is-fullwidth">
-            <select id="f_subscription" onchange="calc()" title="Scegli il tipo di abbonamento bus"></select>
-          </div>
-        </div>
-        <div class="column is-6">
-          <label class="label">Corso Sci/Snow</label>
-          <div class="select is-fullwidth">
-            <select id="f_course" onchange="calc()" title="Eventuale iscrizione ai corsi"></select>
-          </div>
-        </div>
+        <div class="column is-6"><label class="label">Tipologia Tessera*</label><div class="select is-fullwidth"><select id="f_membership" onchange="calc()" required></select></div></div>
+        <div class="column is-6"><label class="label">Agevolazione Famiglia</label><div class="select is-fullwidth"><select id="f_family" onchange="calc()"></select></div></div>
+        <div class="column is-6"><label class="label">Abbonamento</label><div class="select is-fullwidth"><select id="f_subscription" onchange="calc()"></select></div></div>
+        <div class="column is-6"><label class="label">Corso Sci/Snow</label><div class="select is-fullwidth"><select id="f_course" onchange="calc()"></select></div></div>
       </div>
 
       <div class="columns mt-1">
         <div class="column is-6">
           <label class="label">Partenza Sabato</label>
-          <div id="check_saturday" class="control p-2 border-rounded" style="background: #f8f9fa; border-radius: 5px;">
+          <div id="check_saturday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
             <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
             <label class="checkbox mr-3"><input type="checkbox" value="FELIZZANO"> FELIZZANO</label>
             <label class="checkbox"><input type="checkbox" value="PORTACOMARO"> PORTACOMARO</label>
@@ -150,7 +89,7 @@
         </div>
         <div class="column is-6">
           <label class="label">Partenza Domenica</label>
-          <div id="check_sunday" class="control p-2 border-rounded" style="background: #f8f9fa; border-radius: 5px;">
+          <div id="check_sunday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
             <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
             <label class="checkbox"><input type="checkbox" value="NIZZA M."> NIZZA M.</label>
           </div>
@@ -159,15 +98,8 @@
 
       <div class="section-title">Amministrazione</div>
       <div class="columns mt-1">
-        <div class="column is-6">
-          <label class="label">Numero Polizza</label>
-          <input class="input" id="f_policy" style="background:#fff9c4" title="Inserire se già disponibile">
-        </div>
-        <div class="column is-6">
-          <label class="label">Acconto Versato (€)</label>
-          <input class="input" type="number" id="f_deposit" value="0" oninput="calc()" title="Importo versato al momento">
-          <p class="help">Verrà sottratto dal totale</p>
-        </div>
+        <div class="column is-6"><label class="label">Numero Polizza</label><input class="input" id="f_policy" style="background:#fff9c4"></div>
+        <div class="column is-6"><label class="label">Acconto Versato (€)</label><input class="input" type="number" id="f_deposit" value="0" oninput="calc()"></div>
       </div>
     </form>
   </div>
@@ -177,7 +109,7 @@
       <div class="columns is-mobile is-vcentered">
         <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount"><span id="v_total">0</span>€</span></div>
         <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount val-residuo"><span id="v_balance">0</span>€</span></div>
-        <div class="column is-5"><button onclick="save()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSave">SALVA E INVIA EMAIL</button></div>
+        <div class="column is-5"><button onclick="save()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSave" style="white-space: normal; height: auto;">SALVA E INVIA EMAIL</button></div>
       </div>
     </div>
   </div>
@@ -200,11 +132,7 @@
 
     function populateOptions(id, cat) {
       let s = document.getElementById(id); 
-      if (id === "f_membership") {
-        s.innerHTML = '<option value="" disabled selected>-- Seleziona Tessera --</option>';
-      } else {
-        s.innerHTML = '<option value="0">Nessuna opzione</option>';
-      } 
+      s.innerHTML = id === "f_membership" ? '<option value="" disabled selected>-- Seleziona --</option>' : '<option value="0">Nessuna opzione</option>';
       PRICES[cat].forEach(p => {
         let o = document.createElement('option');
         o.value = p.price; 
@@ -216,7 +144,6 @@
     function showSearch() {
       if (DB.length > 0) { document.getElementById('searchZone').style.display = 'block'; return; }
       document.getElementById('loader').style.display = 'flex';
-      document.getElementById('loaderText').innerText = "CARICAMENTO DATABASE SOCI...";
       google.script.run.withSuccessHandler(res => {
         DB = res;
         document.getElementById('loader').style.display = 'none';
@@ -229,30 +156,23 @@
       const box = document.getElementById('searchResults');
       if (q.length < 2) { box.innerHTML = ""; return; }
       const res = DB.filter(s => (s.lastName + " " + s.firstName).toLowerCase().includes(q) || s.taxCode.toLowerCase().includes(q)).slice(0, 6);
-      box.innerHTML = res.map(s => `<div class="result-item box p-2 mb-1" onclick='loadMember(${JSON.stringify(s)})'><strong>${s.lastName} ${s.firstName}</strong> - ${s.taxCode}</div>`).join('');
+      box.innerHTML = res.map(s => `<div class="result-item box p-2 mb-1" onclick='loadMember(${JSON.stringify(s)})'><strong>${s.lastName} ${s.firstName}</strong></div>`).join('');
     }
 
     function loadMember(s) {
       document.getElementById('f_row').value = s.row;
       document.getElementById('f_lastName').value = s.lastName;
       document.getElementById('f_firstName').value = s.firstName;
-      document.getElementById('f_birthPlace').value = s.birthPlace || "";
-      document.getElementById('f_birthProv').value = s.birthProv || "";
       document.getElementById('f_taxCode').value = s.taxCode;
-
-      if (s.birthDate && s.birthDate.includes('/')) {
-        const p = s.birthDate.split('/');
-        document.getElementById('f_birthDate').value = `${p[2]}-${p[1]}-${p[0]}`;
-      } else {
-        document.getElementById('f_birthDate').value = s.birthDate;
-      }
-
-      document.getElementById('f_address').value = s.address || "";
-      document.getElementById('f_city').value = s.city || "";
-      document.getElementById('f_prov').value = s.prov || "";
-      document.getElementById('f_cap').value = s.cap || "";
+      document.getElementById('f_birthDate').value = s.birthDate.includes('/') ? s.birthDate.split('/').reverse().join('-') : s.birthDate;
+      document.getElementById('f_address').value = s.address;
+      document.getElementById('f_city').value = s.city;
+      document.getElementById('f_prov').value = s.prov;
+      document.getElementById('f_cap').value = s.cap;
       document.getElementById('f_phone').value = s.phone;
       document.getElementById('f_email').value = s.email;
+      document.getElementById('f_birthPlace').value = s.birthPlace || "";
+      document.getElementById('f_birthProv').value = s.birthProv || "";
       document.getElementById('f_policy').value = s.policy || "";
       document.getElementById('f_deposit').value = s.deposit || 0;
       
@@ -269,12 +189,35 @@
       if(s.saturday) s.saturday.split(', ').forEach(v => { let el = document.querySelector(`#check_saturday input[value="${v}"]`); if(el) el.checked = true; });
       if(s.sunday) s.sunday.split(', ').forEach(v => { let el = document.querySelector(`#check_sunday input[value="${v}"]`); if(el) el.checked = true; });
       
+      document.getElementById('btnSave').innerText = "SALVA LE MODIFICHE";
+      document.getElementById('btnRenew').disabled = false;
       calc();
       document.getElementById('searchZone').style.display = 'none';
     }
 
+    function renewMember() {
+      // SVUOTA SOLO I CAMPI RELATIVI ALLA NUOVA STAGIONE
+      document.getElementById('f_membership').selectedIndex = 0;
+      document.getElementById('f_policy').value = "";
+      document.getElementById('f_deposit').value = 0;
+      document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL"; // Torna a inviare email
+      calc();
+      showToast("Modalità RINNOVO: Inserisci la nuova tessera e salva.", "is-info");
+    }
+
+    function showToast(msg, type = "is-success") {
+      const t = document.getElementById('statusToast');
+      t.innerText = msg;
+      t.className = `notification ${type}`;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+
     function calc() {
-      const t = (parseInt(document.getElementById('f_membership').value) || 0) + (parseInt(document.getElementById('f_family').value) || 0) + (parseInt(document.getElementById('f_subscription').value) || 0) + (parseInt(document.getElementById('f_course').value) || 0);
+      const t = (parseInt(document.getElementById('f_membership').value) || 0) + 
+                (parseInt(document.getElementById('f_family').value) || 0) + 
+                (parseInt(document.getElementById('f_subscription').value) || 0) + 
+                (parseInt(document.getElementById('f_course').value) || 0);
       const d = parseInt(document.getElementById('f_deposit').value) || 0;
       document.getElementById('v_total').innerText = t;
       document.getElementById('v_balance').innerText = t - d;
@@ -284,6 +227,8 @@
       document.getElementById('memberForm').reset();
       document.getElementById('f_row').value = "";
       document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+      document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
+      document.getElementById('btnRenew').disabled = true;
       calc();
       window.scrollTo(0,0);
     }
@@ -293,43 +238,40 @@
       if (!form.checkValidity()) { form.reportValidity(); return; }
       
       const btn = document.getElementById('btnSave');
+      const sendEmail = btn.innerText.includes("INVIA EMAIL");
       btn.disabled = true;
       document.getElementById('loader').style.display = 'flex';
-      document.getElementById('loaderText').innerText = "SALVATAGGIO...";
       
       const getT = (id) => { let e = document.getElementById(id); return e.selectedIndex > 0 ? e.options[e.selectedIndex].text.split(" (")[0] : "No"; };
       const getChecks = (id) => { return Array.from(document.querySelectorAll(`#${id} input:checked`)).map(c => c.value).join(', ') || "No"; };
-      
       const rawDate = document.getElementById('f_birthDate').value;
-      let italianDate = "";
-      if (rawDate) {
-        const p = rawDate.split('-'); 
-        italianDate = `${p[2]}/${p[1]}/${p[0]}`;
-      }
 
       const data = {
         row: document.getElementById('f_row').value,
         lastName: document.getElementById('f_lastName').value.toUpperCase(),
         firstName: document.getElementById('f_firstName').value.toUpperCase(),
+        taxCode: document.getElementById('f_taxCode').value.toUpperCase(),
+        birthDate: rawDate ? rawDate.split('-').reverse().join('/') : "",
+        phone: document.getElementById('f_phone').value,
+        email: document.getElementById('f_email').value,
         birthPlace: document.getElementById('f_birthPlace').value.toUpperCase(),
         birthProv: document.getElementById('f_birthProv').value.toUpperCase(),
-        taxCode: document.getElementById('f_taxCode').value.toUpperCase(),
-        birthDate: italianDate,
         address: document.getElementById('f_address').value.toUpperCase(),
         city: document.getElementById('f_city').value.toUpperCase(),
         prov: document.getElementById('f_prov').value.toUpperCase(),
         cap: document.getElementById('f_cap').value,
-        phone: document.getElementById('f_phone').value,
-        email: document.getElementById('f_email').value,
         membership: getT('f_membership'), family: getT('f_family'), subscription: getT('f_subscription'), course: getT('f_course'),
         sunday: getChecks('check_sunday'), saturday: getChecks('check_saturday'),
-        total: document.getElementById('v_total').innerText, deposit: document.getElementById('f_deposit').value, balance: document.getElementById('v_balance').innerText,
-        policy: document.getElementById('f_policy').value
+        total: document.getElementById('v_total').innerText, 
+        deposit: document.getElementById('f_deposit').value, 
+        balance: document.getElementById('v_balance').innerText,
+        policy: document.getElementById('f_policy').value,
+        sendEmail: sendEmail
       };
       
       google.script.run.withSuccessHandler(res => {
         document.getElementById('loader').style.display = 'none';
-        alert(res);
+        showToast(res);
         resetForm();
         btn.disabled = false;
         DB = []; 
