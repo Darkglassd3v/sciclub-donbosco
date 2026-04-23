@@ -164,7 +164,7 @@
       document.getElementById('f_lastName').value = s.lastName;
       document.getElementById('f_firstName').value = s.firstName;
       document.getElementById('f_taxCode').value = s.taxCode;
-      document.getElementById('f_birthDate').value = s.birthDate.includes('/') ? s.birthDate.split('/').reverse().join('-') : s.birthDate;
+      document.getElementById('f_birthDate').value = s.birthDate || "";
       document.getElementById('f_address').value = s.address;
       document.getElementById('f_city').value = s.city;
       document.getElementById('f_prov').value = s.prov;
@@ -241,17 +241,22 @@
       const sendEmail = btn.innerText.includes("INVIA EMAIL");
       btn.disabled = true;
       document.getElementById('loader').style.display = 'flex';
-      
+      const rawDate = document.getElementById('f_birthDate').value; // Riceve yyyy-mm-dd
+      let dateForSheet = "";
+
+      if (rawDate) {
+        const [y, m, d] = rawDate.split('-');
+        dateForSheet = `${m}/${d}/${y}`; // Salva come MM/DD/YYYY
+      }
       const getT = (id) => { let e = document.getElementById(id); return e.selectedIndex > 0 ? e.options[e.selectedIndex].text.split(" (")[0] : "No"; };
       const getChecks = (id) => { return Array.from(document.querySelectorAll(`#${id} input:checked`)).map(c => c.value).join(', ') || "No"; };
-      const rawDate = document.getElementById('f_birthDate').value;
 
       const data = {
         row: document.getElementById('f_row').value,
         lastName: document.getElementById('f_lastName').value.toUpperCase(),
         firstName: document.getElementById('f_firstName').value.toUpperCase(),
         taxCode: document.getElementById('f_taxCode').value.toUpperCase(),
-        birthDate: rawDate ? rawDate.split('-').reverse().join('/') : "",
+        birthDate: dateForSheet,
         phone: document.getElementById('f_phone').value,
         email: document.getElementById('f_email').value,
         birthPlace: document.getElementById('f_birthPlace').value.toUpperCase(),
