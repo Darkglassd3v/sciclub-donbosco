@@ -7,20 +7,24 @@
     #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .container-main { max-width: 1100px; margin: 20px auto 180px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     .section-title { background: #1a73e8; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 25px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
-    
-    /* FIX FOOTER E PULSANTE */
+
     .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: #212529; color: white; padding: 15px; z-index: 1000; border-top: 4px solid #1a73e8; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
     .val-label { font-size: 0.75rem; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px; }
     .val-amount { font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; margin-top: 5px; }
     .val-residuo { color: #ffca28; }
-    
+
     #statusToast { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; min-width: 300px; text-align: center; }
 
     #searchZone { display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeeba; }
     .result-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background: white; transition: 0.2s; }
     .result-item:hover { background: #eff5fb; }
     .label { font-size: 0.85rem; margin-bottom: 0.2rem; color: #495057; }
-    
+
+    /* Pannello familiari a carico */
+    #familyPanel { margin-top: 15px; }
+    .family-title { background: #198754; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
+    #payerResults { border: 1px solid #ddd; border-radius: 4px; display: none; position: relative; z-index: 100; background: white; }
+
     @media screen and (max-width: 768px) {
       .total-box .columns { display: flex; flex-wrap: wrap; }
       .total-box .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
@@ -30,258 +34,479 @@
 </head>
 <body>
 
-  <div id="loader">
-    <div class="button is-loading is-large is-white"></div>
-    <p id="loaderText" class="mt-4 has-text-weight-bold">CARICAMENTO...</p>
+<div id="loader">
+  <div class="button is-loading is-large is-white"></div>
+  <p id="loaderText" class="mt-4 has-text-weight-bold">CARICAMENTO...</p>
+</div>
+
+<div id="statusToast" class="notification is-success"></div>
+
+<div class="container-main">
+  <h1 class="title is-4 has-text-centered mb-5">Sci Club Don Bosco - Gestione Soci</h1>
+
+  <div class="columns is-mobile mb-5">
+    <div class="column"><button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA</button></div>
+    <div class="column"><button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO</button></div>
+    <div class="column"><button onclick="renewMember()" id="btnRenew" class="button is-info is-light is-fullwidth has-text-weight-bold" disabled>⭐ RINNOVA</button></div>
   </div>
 
-  <div id="statusToast" class="notification is-success"></div>
+  <div id="searchZone">
+    <input id="searchInput" class="input" type="text" placeholder="Cerca cognome..." oninput="filterDb()">
+    <div id="searchResults" style="max-height: 200px; overflow-y: auto;" class="mt-2"></div>
+  </div>
 
-  <div class="container-main">
-    <h1 class="title is-4 has-text-centered mb-5">Sci Club Don Bosco - Gestione Soci</h1>
-    
-    <div class="columns is-mobile mb-5">
-      <div class="column"><button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA</button></div>
-      <div class="column"><button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO</button></div>
-      <div class="column"><button onclick="renewMember()" id="btnRenew" class="button is-info is-light is-fullwidth has-text-weight-bold" disabled>⭐ RINNOVA</button></div>
+  <form id="memberForm">
+    <input type="hidden" id="f_row">
+
+    <!-- ===================== ANAGRAFICA ===================== -->
+    <div class="section-title">Anagrafica Socio</div>
+    <div class="columns is-multiline mt-1">
+      <div class="column is-3"><label class="label">Cognome*</label><input class="input" id="f_lastName" required></div>
+      <div class="column is-3"><label class="label">Nome*</label><input class="input" id="f_firstName" required></div>
+      <div class="column is-4"><label class="label">Città Nascita*</label><input class="input" id="f_birthPlace" required></div>
+      <div class="column is-2"><label class="label">Prov Nascita</label><input class="input" id="f_birthProv" maxlength="2"></div>
+      <div class="column is-4"><label class="label">Codice Fiscale</label><input class="input" id="f_taxCode" pattern=".{16,16}"></div>
+      <div class="column is-4"><label class="label">Data Nascita</label><input class="input" type="date" id="f_birthDate"></div>
+      <div class="column is-4"><label class="label">Telefono*</label><input class="input" id="f_phone" required></div>
+      <div class="column is-6"><label class="label">Indirizzo Residenza</label><input class="input" id="f_address"></div>
+      <div class="column is-3"><label class="label">Città Residenza</label><input class="input" id="f_city"></div>
+      <div class="column is-1"><label class="label">Prov Residenza</label><input class="input" id="f_prov" maxlength="2"></div>
+      <div class="column is-2"><label class="label">CAP Residenza</label><input class="input" id="f_cap"></div>
+      <div class="column is-12"><label class="label">Email</label><input class="input" type="email" id="f_email"></div>
     </div>
 
-    <div id="searchZone">
-      <input id="searchInput" class="input" type="text" placeholder="Cerca cognome..." oninput="filterDb()">
-      <div id="searchResults" style="max-height: 200px; overflow-y: auto;" class="mt-2"></div>
+    <!-- ===================== ISCRIZIONE ===================== -->
+    <div class="section-title">Scelte Iscrizione (TUTTI I CAMPI)</div>
+    <div class="columns is-multiline mt-1">
+      <div class="column is-6"><label class="label">Tipologia Tessera*</label><div class="select is-fullwidth"><select id="f_membership" onchange="calc()" required></select></div></div>
+      <div class="column is-6"><label class="label">Agevolazione Famiglia</label><div class="select is-fullwidth"><select id="f_family" onchange="calc()"></select></div></div>
+      <div class="column is-6"><label class="label">Abbonamento</label><div class="select is-fullwidth"><select id="f_subscription" onchange="calc()"></select></div></div>
+      <div class="column is-6"><label class="label">Corso Sci/Snow</label><div class="select is-fullwidth"><select id="f_course" onchange="calc()"></select></div></div>
     </div>
 
-    <form id="memberForm">
-      <input type="hidden" id="f_row">
-      
-      <div class="section-title">Anagrafica Socio</div>
-      <div class="columns is-multiline mt-1">
-        <div class="column is-3"><label class="label">Cognome*</label><input class="input" id="f_lastName" required></div>
-        <div class="column is-3"><label class="label">Nome*</label><input class="input" id="f_firstName" required></div>
-        <div class="column is-4"><label class="label">Città Nascita*</label><input class="input" id="f_birthPlace" required></div>
-        <div class="column is-2"><label class="label">Prov Nascita</label><input class="input" id="f_birthProv" maxlength="2"></div>
-        <div class="column is-4"><label class="label">Codice Fiscale</label><input class="input" id="f_taxCode"  pattern=".{16,16}"></div>
-        <div class="column is-4"><label class="label">Data Nascita</label><input class="input" type="date" id="f_birthDate" ></div>
-        <div class="column is-4"><label class="label">Telefono*</label><input class="input" id="f_phone" required></div>
-        <div class="column is-6"><label class="label">Indirizzo Residenza</label><input class="input" id="f_address" ></div>
-        <div class="column is-3"><label class="label">Città Residenza</label><input class="input" id="f_city" ></div>
-        <div class="column is-1"><label class="label">Prov Residenza</label><input class="input" id="f_prov" maxlength="2" ></div>
-        <div class="column is-2"><label class="label">CAP Residenza</label><input class="input" id="f_cap" ></div>
-        <div class="column is-12"><label class="label">Email</label><input class="input" type="email" id="f_email" ></div>
-      </div>
-
-      <div class="section-title">Scelte Iscrizione (TUTTI I CAMPI)</div>
-      <div class="columns is-multiline mt-1">
-        <div class="column is-6"><label class="label">Tipologia Tessera*</label><div class="select is-fullwidth"><select id="f_membership" onchange="calc()" required></select></div></div>
-        <div class="column is-6"><label class="label">Agevolazione Famiglia</label><div class="select is-fullwidth"><select id="f_family" onchange="calc()"></select></div></div>
-        <div class="column is-6"><label class="label">Abbonamento</label><div class="select is-fullwidth"><select id="f_subscription" onchange="calc()"></select></div></div>
-        <div class="column is-6"><label class="label">Corso Sci/Snow</label><div class="select is-fullwidth"><select id="f_course" onchange="calc()"></select></div></div>
-      </div>
-
-      <div class="columns mt-1">
-        <div class="column is-6">
-          <label class="label">Partenza Sabato</label>
-          <div id="check_saturday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
-            <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
-            <label class="checkbox mr-3"><input type="checkbox" value="FELIZZANO"> FELIZZANO</label>
-            <label class="checkbox"><input type="checkbox" value="PORTACOMARO"> PORTACOMARO</label>
-          </div>
-        </div>
-        <div class="column is-6">
-          <label class="label">Partenza Domenica</label>
-          <div id="check_sunday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
-            <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
-            <label class="checkbox"><input type="checkbox" value="NIZZA M."> NIZZA M.</label>
-          </div>
+    <div class="columns mt-1">
+      <div class="column is-6">
+        <label class="label">Partenza Sabato</label>
+        <div id="check_saturday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
+          <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
+          <label class="checkbox mr-3"><input type="checkbox" value="FELIZZANO"> FELIZZANO</label>
+          <label class="checkbox"><input type="checkbox" value="PORTACOMARO"> PORTACOMARO</label>
         </div>
       </div>
-
-      <div class="section-title">Amministrazione</div>
-      <div class="columns mt-1">
-        <div class="column is-6"><label class="label">Numero Polizza</label><input class="input" id="f_policy" style="background:#fff9c4"></div>
-        <div class="column is-6"><label class="label">Acconto Versato (€)</label><input class="input" type="number" id="f_deposit" value="0" oninput="calc()"></div>
-      </div>
-    </form>
-  </div>
-
-  <div class="total-box">
-    <div class="container">
-      <div class="columns is-mobile is-vcentered">
-        <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount"><span id="v_total">0</span>€</span></div>
-        <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount val-residuo"><span id="v_balance">0</span>€</span></div>
-        <div class="column is-5"><button onclick="save()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSave" style="white-space: normal; height: auto;">SALVA E INVIA EMAIL</button></div>
+      <div class="column is-6">
+        <label class="label">Partenza Domenica</label>
+        <div id="check_sunday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
+          <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
+          <label class="checkbox"><input type="checkbox" value="NIZZA M."> NIZZA M.</label>
+        </div>
       </div>
     </div>
+
+    <!-- ===================== AMMINISTRAZIONE ===================== -->
+    <div class="section-title">Amministrazione</div>
+    <div class="columns mt-1">
+      <div class="column is-4">
+        <label class="label">Numero Polizza</label>
+        <input class="input" id="f_policy" style="background:#fff9c4">
+      </div>
+      <div class="column is-4">
+        <label class="label">Numero Tessera</label>
+        <input class="input" id="f_cardNumber" style="background:#fff9c4" placeholder="Es. 2024-0001">
+      </div>
+      <div class="column is-4">
+        <label class="label">Acconto Versato (€)</label>
+        <input class="input" type="number" id="f_deposit" value="0" oninput="calc()">
+      </div>
+    </div>
+
+    <!-- ===================== PAGAMENTO / CAPOFAMIGLIA ===================== -->
+    <div class="section-title">Pagamento Familiare</div>
+    <div class="columns mt-1">
+      <div class="column is-8">
+        <label class="label">
+          Pagato da
+          <span class="tag is-light ml-2" style="font-weight:normal;text-transform:none;">lascia vuoto se il socio paga in proprio</span>
+        </label>
+        <div class="field has-addons mb-0">
+          <div class="control is-expanded">
+            <input class="input" id="f_payerDisplay"
+                   placeholder="Cerca capofamiglia per cognome..."
+                   oninput="filterPayer()"
+                   autocomplete="off">
+          </div>
+          <div class="control">
+            <button type="button" class="button is-light" onclick="clearPayer()" title="Rimuovi pagante">✕</button>
+          </div>
+        </div>
+        <input type="hidden" id="f_payerCode">
+        <div id="payerResults" style="max-height:160px;overflow-y:auto;"></div>
+        <p id="payerConfirm" class="help is-success" style="display:none;"></p>
+      </div>
+    </div>
+
+    <!-- Pannello familiari a carico (visibile solo quando si modifica un capofamiglia) -->
+    <div id="familyPanel" style="display:none;">
+      <div class="family-title">👨‍👩‍👧 Familiari a carico — pagati da questo socio</div>
+      <div id="familyList" class="mt-2"></div>
+    </div>
+
+  </form>
+</div>
+
+<!-- ===================== FOOTER TOTALI ===================== -->
+<div class="total-box">
+  <div class="container">
+    <div class="columns is-mobile is-vcentered">
+      <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount"><span id="v_total">0</span>€</span></div>
+      <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount val-residuo"><span id="v_balance">0</span>€</span></div>
+      <div class="column is-5"><button onclick="save()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSave" style="white-space: normal; height: auto;">SALVA E INVIA EMAIL</button></div>
+    </div>
   </div>
+</div>
 
-  <script>
-    let DB = []; 
-    let PRICES = {};
+<script>
+  let DB = [];
+  let PRICES = {};
 
-    window.onload = () => {
-      document.getElementById('loader').style.display = 'flex';
-      google.script.run.withSuccessHandler(res => {
-        PRICES = res;
-        populateOptions("f_membership", "TESSERA");
-        populateOptions("f_family", "FAMIGLIA");
-        populateOptions("f_subscription", "ABBONAMENTO");
-        populateOptions("f_course", "CORSO");
-        document.getElementById('loader').style.display = 'none';
-      }).getPrices();
+  // ===================== INIT =====================
+  window.onload = () => {
+    document.getElementById('loader').style.display = 'flex';
+    google.script.run.withSuccessHandler(res => {
+      PRICES = res;
+      populateOptions("f_membership", "TESSERA");
+      populateOptions("f_family", "FAMIGLIA");
+      populateOptions("f_subscription", "ABBONAMENTO");
+      populateOptions("f_course", "CORSO");
+      document.getElementById('loader').style.display = 'none';
+    }).getPrices();
+  };
+
+  function populateOptions(id, cat) {
+    let s = document.getElementById(id);
+    s.innerHTML = id === "f_membership"
+      ? '<option value="" disabled selected>-- Seleziona --</option>'
+      : '<option value="0">Nessuna opzione</option>';
+    PRICES[cat].forEach(p => {
+      let o = document.createElement('option');
+      o.value = p.price;
+      o.text = p.name + " (" + p.price + "€)";
+      s.add(o);
+    });
+  }
+
+  // ===================== RICERCA SOCI =====================
+  function showSearch() {
+    if (DB.length > 0) { document.getElementById('searchZone').style.display = 'block'; return; }
+    document.getElementById('loader').style.display = 'flex';
+    google.script.run.withSuccessHandler(res => {
+      DB = res;
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('searchZone').style.display = 'block';
+    }).getMembers();
+  }
+
+  function filterDb() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    const box = document.getElementById('searchResults');
+    if (q.length < 2) { box.innerHTML = ""; return; }
+    const res = DB.filter(s =>
+      (s.lastName + " " + s.firstName).toLowerCase().includes(q) ||
+      s.taxCode.toLowerCase().includes(q)
+    ).slice(0, 6);
+    box.innerHTML = res.map(s =>
+      `<div class="result-item box p-2 mb-1" onclick='loadMember(${JSON.stringify(s)})'>
+         <strong>${s.lastName} ${s.firstName}</strong>
+         ${s.cardNumber ? '<span class="tag is-info is-light ml-2">N° ' + s.cardNumber + '</span>' : ''}
+       </div>`
+    ).join('');
+  }
+
+  // ===================== CARICA SOCIO =====================
+  function loadMember(s) {
+    document.getElementById('f_row').value = s.row;
+    document.getElementById('f_lastName').value = s.lastName;
+    document.getElementById('f_firstName').value = s.firstName;
+    document.getElementById('f_taxCode').value = s.taxCode;
+    document.getElementById('f_birthDate').value = s.birthDate || "";
+    document.getElementById('f_address').value = s.address;
+    document.getElementById('f_city').value = s.city;
+    document.getElementById('f_prov').value = s.prov;
+    document.getElementById('f_cap').value = s.cap;
+    document.getElementById('f_phone').value = s.phone;
+    document.getElementById('f_email').value = s.email;
+    document.getElementById('f_birthPlace').value = s.birthPlace || "";
+    document.getElementById('f_birthProv').value = s.birthProv || "";
+    document.getElementById('f_policy').value = s.policy || "";
+    document.getElementById('f_deposit').value = s.deposit || 0;
+
+    // NUOVO: numero tessera
+    document.getElementById('f_cardNumber').value = s.cardNumber || "";
+
+    // NUOVO: pagante (capofamiglia)
+    document.getElementById('f_payerCode').value = s.payerCode || "";
+    if (s.payerCode) {
+      const payer = DB.find(m => m.taxCode === s.payerCode);
+      document.getElementById('f_payerDisplay').value = payer
+        ? payer.lastName + " " + payer.firstName
+        : s.payerCode;
+      showPayerConfirm(document.getElementById('f_payerDisplay').value);
+    } else {
+      document.getElementById('f_payerDisplay').value = "";
+      document.getElementById('payerConfirm').style.display = 'none';
+    }
+
+    ["f_membership", "f_family", "f_subscription", "f_course"].forEach(id => {
+      let sel = document.getElementById(id);
+      let val = s[id.split('_')[1]];
+      sel.selectedIndex = 0;
+      for (let i = 0; i < sel.options.length; i++) {
+        if (val && sel.options[i].text.includes(val)) { sel.selectedIndex = i; break; }
+      }
+    });
+
+    document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    if (s.saturday) s.saturday.split(', ').forEach(v => {
+      let el = document.querySelector(`#check_saturday input[value="${v}"]`);
+      if (el) el.checked = true;
+    });
+    if (s.sunday) s.sunday.split(', ').forEach(v => {
+      let el = document.querySelector(`#check_sunday input[value="${v}"]`);
+      if (el) el.checked = true;
+    });
+
+    document.getElementById('btnSave').innerText = "SALVA LE MODIFICHE";
+    document.getElementById('btnRenew').disabled = false;
+    calc();
+    document.getElementById('searchZone').style.display = 'none';
+
+    // NUOVO: mostra pannello familiari a carico (questo socio paga per altri?)
+    loadFamilyPanel(s.taxCode);
+
+    window.scrollTo(0, 0);
+  }
+
+  // ===================== RINNOVO =====================
+  function renewMember() {
+    document.getElementById('f_membership').selectedIndex = 0;
+    document.getElementById('f_policy').value = "";
+    document.getElementById('f_cardNumber').value = "";
+    document.getElementById('f_deposit').value = 0;
+    document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
+    calc();
+    showToast("Modalità RINNOVO: Inserisci la nuova tessera e salva.", "is-info");
+  }
+
+  // ===================== CALCOLO TOTALE =====================
+  function calc() {
+    const t = (parseInt(document.getElementById('f_membership').value) || 0) +
+              (parseInt(document.getElementById('f_family').value) || 0) +
+              (parseInt(document.getElementById('f_subscription').value) || 0) +
+              (parseInt(document.getElementById('f_course').value) || 0);
+    const d = parseInt(document.getElementById('f_deposit').value) || 0;
+    document.getElementById('v_total').innerText = t;
+    document.getElementById('v_balance').innerText = t - d;
+  }
+
+  // ===================== RICERCA PAGANTE (CAPOFAMIGLIA) =====================
+  function filterPayer() {
+    const q = document.getElementById('f_payerDisplay').value.toLowerCase().trim();
+    const box = document.getElementById('payerResults');
+    document.getElementById('f_payerCode').value = ""; // reset se l'utente sta riscrivendo
+    document.getElementById('payerConfirm').style.display = 'none';
+
+    if (q.length < 2 || DB.length === 0) { box.style.display = 'none'; return; }
+
+    const currentTax = document.getElementById('f_taxCode').value.toUpperCase();
+    const res = DB.filter(s =>
+      (s.lastName + " " + s.firstName).toLowerCase().includes(q) &&
+      s.taxCode !== currentTax
+    ).slice(0, 6);
+
+    if (res.length === 0) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    box.innerHTML = res.map(s =>
+      `<div class="result-item box p-2 mb-1" onclick='selectPayer("${s.taxCode}", "${s.lastName} ${s.firstName}")'>
+         <strong>${s.lastName} ${s.firstName}</strong>
+         <span class="tag is-light ml-2">${s.taxCode}</span>
+       </div>`
+    ).join('');
+  }
+
+  function selectPayer(taxCode, name) {
+    document.getElementById('f_payerCode').value = taxCode;
+    document.getElementById('f_payerDisplay').value = name;
+    document.getElementById('payerResults').style.display = 'none';
+    showPayerConfirm(name);
+  }
+
+  function showPayerConfirm(name) {
+    const p = document.getElementById('payerConfirm');
+    p.textContent = "✔ Pagante selezionato: " + name;
+    p.style.display = 'block';
+  }
+
+  function clearPayer() {
+    document.getElementById('f_payerCode').value = "";
+    document.getElementById('f_payerDisplay').value = "";
+    document.getElementById('payerResults').style.display = 'none';
+    document.getElementById('payerConfirm').style.display = 'none';
+  }
+
+  // ===================== PANNELLO FAMILIARI A CARICO =====================
+  function loadFamilyPanel(taxCode) {
+    const panel = document.getElementById('familyPanel');
+    const list = document.getElementById('familyList');
+
+    if (!taxCode || DB.length === 0) { panel.style.display = 'none'; return; }
+
+    // Cerca tutti i soci che hanno questo taxCode come payerCode
+    const members = DB.filter(s => s.payerCode === taxCode);
+
+    if (members.length === 0) { panel.style.display = 'none'; return; }
+
+    const totalFamily = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+    const depositFamily = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
+    const balanceFamily = members.reduce((sum, s) => sum + (parseFloat(s.balance) || 0), 0);
+
+    list.innerHTML = `
+      <table class="table is-fullwidth is-striped is-hoverable is-size-7 mt-2">
+        <thead>
+          <tr style="background:#e8f5e9;">
+            <th>Cognome Nome</th>
+            <th>N° Tessera</th>
+            <th>Tipologia</th>
+            <th style="text-align:right">Totale</th>
+            <th style="text-align:right">Acconto</th>
+            <th style="text-align:right">Saldo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${members.map(s => `
+            <tr>
+              <td><strong>${s.lastName} ${s.firstName}</strong></td>
+              <td>${s.cardNumber || "—"}</td>
+              <td>${s.membership || "—"}</td>
+              <td style="text-align:right">${s.total || 0}€</td>
+              <td style="text-align:right">${s.deposit || 0}€</td>
+              <td style="text-align:right;font-weight:bold;color:${parseFloat(s.balance) > 0 ? '#d9534f' : '#198754'}">
+                ${s.balance || 0}€
+              </td>
+              <td>
+                <button type="button" class="button is-small is-link is-light"
+                        onclick='loadMember(${JSON.stringify(s)})'>
+                  Modifica
+                </button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:#d4edda;font-weight:bold;font-size:0.8rem;">
+            <td colspan="3">TOTALE NUCLEO FAMILIARE (${members.length} familiare/i)</td>
+            <td style="text-align:right">${totalFamily}€</td>
+            <td style="text-align:right">${depositFamily}€</td>
+            <td style="text-align:right;color:${balanceFamily > 0 ? '#d9534f' : '#198754'}">${balanceFamily}€</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>`;
+
+    panel.style.display = 'block';
+  }
+
+  // ===================== RESET FORM =====================
+  function resetForm() {
+    document.getElementById('memberForm').reset();
+    document.getElementById('f_row').value = "";
+    document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+    document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
+    document.getElementById('btnRenew').disabled = true;
+
+    // NUOVO: reset campi aggiuntivi
+    document.getElementById('f_cardNumber').value = "";
+    document.getElementById('f_payerCode').value = "";
+    document.getElementById('f_payerDisplay').value = "";
+    document.getElementById('payerResults').style.display = 'none';
+    document.getElementById('payerConfirm').style.display = 'none';
+    document.getElementById('familyPanel').style.display = 'none';
+
+    calc();
+    window.scrollTo(0, 0);
+  }
+
+  // ===================== TOAST NOTIFICA =====================
+  function showToast(msg, type = "is-success") {
+    const t = document.getElementById('statusToast');
+    t.innerText = msg;
+    t.className = `notification ${type}`;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
+  // ===================== SALVATAGGIO =====================
+  function save() {
+    const form = document.getElementById('memberForm');
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    const btn = document.getElementById('btnSave');
+    const sendEmail = btn.innerText.includes("INVIA EMAIL");
+    btn.disabled = true;
+    document.getElementById('loader').style.display = 'flex';
+
+    const rawDate = document.getElementById('f_birthDate').value;
+    let dateForSheet = "";
+    if (rawDate) {
+      const [y, m, d] = rawDate.split('-');
+      dateForSheet = `${m}/${d}/${y}`;
+    }
+
+    const getT = (id) => {
+      let e = document.getElementById(id);
+      return e.selectedIndex > 0 ? e.options[e.selectedIndex].text.split(" (")[0] : "No";
+    };
+    const getChecks = (id) => {
+      return Array.from(document.querySelectorAll(`#${id} input:checked`))
+        .map(c => c.value).join(', ') || "No";
     };
 
-    function populateOptions(id, cat) {
-      let s = document.getElementById(id); 
-      s.innerHTML = id === "f_membership" ? '<option value="" disabled selected>-- Seleziona --</option>' : '<option value="0">Nessuna opzione</option>';
-      PRICES[cat].forEach(p => {
-        let o = document.createElement('option');
-        o.value = p.price; 
-        o.text = p.name + " (" + p.price + "€)";
-        s.add(o);
-      });
-    }
+    const data = {
+      row: document.getElementById('f_row').value,
+      lastName: document.getElementById('f_lastName').value.toUpperCase(),
+      firstName: document.getElementById('f_firstName').value.toUpperCase(),
+      taxCode: document.getElementById('f_taxCode').value.toUpperCase(),
+      birthDate: dateForSheet,
+      phone: document.getElementById('f_phone').value,
+      email: document.getElementById('f_email').value,
+      birthPlace: document.getElementById('f_birthPlace').value.toUpperCase(),
+      birthProv: document.getElementById('f_birthProv').value.toUpperCase(),
+      address: document.getElementById('f_address').value.toUpperCase(),
+      city: document.getElementById('f_city').value.toUpperCase(),
+      prov: document.getElementById('f_prov').value.toUpperCase(),
+      cap: document.getElementById('f_cap').value,
+      membership: getT('f_membership'),
+      family: getT('f_family'),
+      subscription: getT('f_subscription'),
+      course: getT('f_course'),
+      sunday: getChecks('check_sunday'),
+      saturday: getChecks('check_saturday'),
+      total: document.getElementById('v_total').innerText,
+      deposit: document.getElementById('f_deposit').value,
+      balance: document.getElementById('v_balance').innerText,
+      policy: document.getElementById('f_policy').value,
+      // NUOVO
+      cardNumber: document.getElementById('f_cardNumber').value,
+      payerCode: document.getElementById('f_payerCode').value,
+      sendEmail: sendEmail
+    };
 
-    function showSearch() {
-      if (DB.length > 0) { document.getElementById('searchZone').style.display = 'block'; return; }
-      document.getElementById('loader').style.display = 'flex';
-      google.script.run.withSuccessHandler(res => {
-        DB = res;
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('searchZone').style.display = 'block';
-      }).getMembers();
-    }
-
-    function filterDb() {
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const box = document.getElementById('searchResults');
-      if (q.length < 2) { box.innerHTML = ""; return; }
-      const res = DB.filter(s => (s.lastName + " " + s.firstName).toLowerCase().includes(q) || s.taxCode.toLowerCase().includes(q)).slice(0, 6);
-      box.innerHTML = res.map(s => `<div class="result-item box p-2 mb-1" onclick='loadMember(${JSON.stringify(s)})'><strong>${s.lastName} ${s.firstName}</strong></div>`).join('');
-    }
-
-    function loadMember(s) {
-      document.getElementById('f_row').value = s.row;
-      document.getElementById('f_lastName').value = s.lastName;
-      document.getElementById('f_firstName').value = s.firstName;
-      document.getElementById('f_taxCode').value = s.taxCode;
-      document.getElementById('f_birthDate').value = s.birthDate || "";
-      document.getElementById('f_address').value = s.address;
-      document.getElementById('f_city').value = s.city;
-      document.getElementById('f_prov').value = s.prov;
-      document.getElementById('f_cap').value = s.cap;
-      document.getElementById('f_phone').value = s.phone;
-      document.getElementById('f_email').value = s.email;
-      document.getElementById('f_birthPlace').value = s.birthPlace || "";
-      document.getElementById('f_birthProv').value = s.birthProv || "";
-      document.getElementById('f_policy').value = s.policy || "";
-      document.getElementById('f_deposit').value = s.deposit || 0;
-      
-      ["f_membership", "f_family", "f_subscription", "f_course"].forEach(id => {
-        let sel = document.getElementById(id);
-        let val = s[id.split('_')[1]];
-        sel.selectedIndex = 0;
-        for (let i = 0; i < sel.options.length; i++) {
-          if (val && sel.options[i].text.includes(val)) { sel.selectedIndex = i; break; }
-        }
-      });
-
-      document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-      if(s.saturday) s.saturday.split(', ').forEach(v => { let el = document.querySelector(`#check_saturday input[value="${v}"]`); if(el) el.checked = true; });
-      if(s.sunday) s.sunday.split(', ').forEach(v => { let el = document.querySelector(`#check_sunday input[value="${v}"]`); if(el) el.checked = true; });
-      
-      document.getElementById('btnSave').innerText = "SALVA LE MODIFICHE";
-      document.getElementById('btnRenew').disabled = false;
-      calc();
-      document.getElementById('searchZone').style.display = 'none';
-    }
-
-    function renewMember() {
-      // SVUOTA SOLO I CAMPI RELATIVI ALLA NUOVA STAGIONE
-      document.getElementById('f_membership').selectedIndex = 0;
-      document.getElementById('f_policy').value = "";
-      document.getElementById('f_deposit').value = 0;
-      document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL"; // Torna a inviare email
-      calc();
-      showToast("Modalità RINNOVO: Inserisci la nuova tessera e salva.", "is-info");
-    }
-
-    function showToast(msg, type = "is-success") {
-      const t = document.getElementById('statusToast');
-      t.innerText = msg;
-      t.className = `notification ${type}`;
-      t.style.display = 'block';
-      setTimeout(() => { t.style.display = 'none'; }, 4000);
-    }
-
-    function calc() {
-      const t = (parseInt(document.getElementById('f_membership').value) || 0) + 
-                (parseInt(document.getElementById('f_family').value) || 0) + 
-                (parseInt(document.getElementById('f_subscription').value) || 0) + 
-                (parseInt(document.getElementById('f_course').value) || 0);
-      const d = parseInt(document.getElementById('f_deposit').value) || 0;
-      document.getElementById('v_total').innerText = t;
-      document.getElementById('v_balance').innerText = t - d;
-    }
-
-    function resetForm() {
-      document.getElementById('memberForm').reset();
-      document.getElementById('f_row').value = "";
-      document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-      document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
-      document.getElementById('btnRenew').disabled = true;
-      calc();
-      window.scrollTo(0,0);
-    }
-
-    function save() {
-      const form = document.getElementById('memberForm');
-      if (!form.checkValidity()) { form.reportValidity(); return; }
-      
-      const btn = document.getElementById('btnSave');
-      const sendEmail = btn.innerText.includes("INVIA EMAIL");
-      btn.disabled = true;
-      document.getElementById('loader').style.display = 'flex';
-      const rawDate = document.getElementById('f_birthDate').value; // Riceve yyyy-mm-dd
-      let dateForSheet = "";
-
-      if (rawDate) {
-        const [y, m, d] = rawDate.split('-');
-        dateForSheet = `${m}/${d}/${y}`; // Salva come MM/DD/YYYY
-      }
-      const getT = (id) => { let e = document.getElementById(id); return e.selectedIndex > 0 ? e.options[e.selectedIndex].text.split(" (")[0] : "No"; };
-      const getChecks = (id) => { return Array.from(document.querySelectorAll(`#${id} input:checked`)).map(c => c.value).join(', ') || "No"; };
-
-      const data = {
-        row: document.getElementById('f_row').value,
-        lastName: document.getElementById('f_lastName').value.toUpperCase(),
-        firstName: document.getElementById('f_firstName').value.toUpperCase(),
-        taxCode: document.getElementById('f_taxCode').value.toUpperCase(),
-        birthDate: dateForSheet,
-        phone: document.getElementById('f_phone').value,
-        email: document.getElementById('f_email').value,
-        birthPlace: document.getElementById('f_birthPlace').value.toUpperCase(),
-        birthProv: document.getElementById('f_birthProv').value.toUpperCase(),
-        address: document.getElementById('f_address').value.toUpperCase(),
-        city: document.getElementById('f_city').value.toUpperCase(),
-        prov: document.getElementById('f_prov').value.toUpperCase(),
-        cap: document.getElementById('f_cap').value,
-        membership: getT('f_membership'), family: getT('f_family'), subscription: getT('f_subscription'), course: getT('f_course'),
-        sunday: getChecks('check_sunday'), saturday: getChecks('check_saturday'),
-        total: document.getElementById('v_total').innerText, 
-        deposit: document.getElementById('f_deposit').value, 
-        balance: document.getElementById('v_balance').innerText,
-        policy: document.getElementById('f_policy').value,
-        sendEmail: sendEmail
-      };
-      
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('loader').style.display = 'none';
-        showToast(res);
-        resetForm();
-        btn.disabled = false;
-        DB = []; 
-      }).saveMember(data);
-    }
-  </script>
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('loader').style.display = 'none';
+      showToast(res);
+      resetForm();
+      btn.disabled = false;
+      DB = []; // Svuota cache DB per forzare ricaricamento aggiornato
+    }).saveMember(data);
+  }
+</script>
 </body>
 </html>
