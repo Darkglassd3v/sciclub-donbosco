@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <style>
+        body { background: #f4f7f6; padding: 20px; }
+        .table-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status-badge { font-size: 0.75rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="title is-3">Amministrazione Polizze e Pagamenti</h1>
+    <p class="subtitle is-6">Stagione corrente - Solo soci senza polizza</p>
+
+    <div class="table-container">
+        <table class="table is-fullwidth is-striped">
+            <thead>
+            <tr>
+                <th>Socio</th>
+                <th>Totale</th>
+                <th>Acconto (€)</th>
+                <th>Saldo</th>
+                <th>N° Polizza</th>
+                <th>Azione</th>
+            </tr>
+            </thead>
+            <tbody id="adminTableBody">
+            <tr><td colspan="6" class="has-text-centered">Caricamento in corso...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    window.onload = loadData;
+
+    function loadData() {
+      google.script.run.withSuccessHandler(renderTable).getAdminData();
+    }
+
+    function renderTable(members) {
+      const tbody = document.getElementById('adminTableBody');
+      if (members.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="has-text-centered">Nessun socio da gestire per la stagione corrente.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = members.map(m => `
+        <tr>
+          <td><strong>${m.lastName} ${m.firstName}</strong></td>
+          <td>${m.total}€</td>
+          <td>
+            <input class="input is-small" type="number" id="dep_${m.row}" value="${m.deposit}" style="width:80px">
+          </td>
+          <td id="bal_${m.row}" class="has-text-weight-bold ${m.balance > 0 ? 'has-text-danger' : 'has-text-success'}">
+            ${m.balance}€
+          </td>
+          <td>
+            <input class="input is-small" type="text" id="pol_${m.row}" placeholder="Inserisci polizza">
+          </td>
+          <td>
+            <button class="button is-link is-small" onclick="updateRow(${m.row})">AGGIORNA</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateRow(row) {
+      const deposit = parseFloat(document.getElementById(`dep_${row}`).value) || 0;
+      const policy = document.getElementById(`pol_${row}`).value;
+
+      if (!policy) {
+        alert("Inserisci un numero di polizza!");
+        return;
+      }
+
+      google.script.run.withSuccessHandler(res => {
+        alert(res);
+        loadData(); // Ricarica e rimuove il socio dalla lista (perché ora avrà la polizza)
+      }).updateAdminMember(row, deposit, policy);
+    }
+</script>
+</body>
+</html>
