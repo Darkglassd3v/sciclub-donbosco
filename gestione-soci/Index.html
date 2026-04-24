@@ -25,6 +25,9 @@
     .family-title { background: #198754; color: white; padding: 8px 15px; border-radius: 5px; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; }
     #payerResults { border: 1px solid #ddd; border-radius: 4px; display: none; position: relative; z-index: 100; background: white; }
 
+    /* Sezione pagante disabilitata */
+    .payer-section-disabled { opacity: 0.5; pointer-events: none; }
+
     @media screen and (max-width: 768px) {
       .total-box .columns { display: flex; flex-wrap: wrap; }
       .total-box .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
@@ -45,13 +48,20 @@
   <h1 class="title is-4 has-text-centered mb-5">Sci Club Don Bosco - Gestione Soci</h1>
 
   <div class="columns is-mobile mb-5">
-    <div class="column"><button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA</button></div>
-    <div class="column"><button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO</button></div>
-    <div class="column"><button onclick="renewMember()" id="btnRenew" class="button is-info is-light is-fullwidth has-text-weight-bold" disabled>⭐ RINNOVA</button></div>
+    <div class="column is-6">
+      <button onclick="showSearch()" id="btnEdit" class="button is-link is-fullwidth has-text-weight-bold">
+        🔄 MODIFICA SOCIO
+      </button>
+    </div>
+    <div class="column is-6">
+      <button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">
+        ➕ NUOVO SOCIO
+      </button>
+    </div>
   </div>
 
   <div id="searchZone">
-    <input id="searchInput" class="input" type="text" placeholder="Cerca cognome..." oninput="filterDb()">
+    <input id="searchInput" class="input" type="text" placeholder="Cerca cognome o codice fiscale..." oninput="filterDb()">
     <div id="searchResults" style="max-height: 200px; overflow-y: auto;" class="mt-2"></div>
   </div>
 
@@ -88,16 +98,11 @@
       <div class="column is-6">
         <label class="label">Partenza Sabato</label>
         <div id="check_saturday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
-          <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
-          <label class="checkbox mr-3"><input type="checkbox" value="FELIZZANO"> FELIZZANO</label>
-          <label class="checkbox"><input type="checkbox" value="PORTACOMARO"> PORTACOMARO</label>
         </div>
       </div>
       <div class="column is-6">
         <label class="label">Partenza Domenica</label>
         <div id="check_sunday" class="control p-2" style="background: #f8f9fa; border-radius: 5px;">
-          <label class="checkbox mr-3"><input type="checkbox" value="ASTI"> ASTI</label>
-          <label class="checkbox"><input type="checkbox" value="NIZZA M."> NIZZA M.</label>
         </div>
       </div>
     </div>
@@ -120,27 +125,37 @@
     </div>
 
     <!-- ===================== PAGAMENTO / CAPOFAMIGLIA ===================== -->
-    <div class="section-title">Pagamento Familiare</div>
-    <div class="columns mt-1">
-      <div class="column is-8">
-        <label class="label">
-          Pagato da
-          <span class="tag is-light ml-2" style="font-weight:normal;text-transform:none;">lascia vuoto se il socio paga in proprio</span>
-        </label>
-        <div class="field has-addons mb-0">
-          <div class="control is-expanded">
-            <input class="input" id="f_payerDisplay"
-                   placeholder="Cerca capofamiglia per cognome..."
-                   oninput="filterPayer()"
-                   autocomplete="off">
+    <div class="section-title">
+      Pagamento Familiare
+      <button type="button" id="btnEnablePayer" class="button is-success is-small is-pulled-right"
+              onclick="enablePayerSection()" style="margin-top:-2px;">
+        ➕ AGGIUNGI PAGANTE
+      </button>
+    </div>
+
+    <div id="payerSection" class="payer-section-disabled">
+      <div class="columns mt-1">
+        <div class="column is-8">
+          <label class="label">
+            Pagato da
+            <span class="tag is-light ml-2" style="font-weight:normal;text-transform:none;">cerca il capofamiglia che effettua il pagamento</span>
+          </label>
+          <div class="field has-addons mb-0">
+            <div class="control is-expanded">
+              <input class="input" id="f_payerDisplay"
+                     placeholder="Cerca capofamiglia per cognome..."
+                     oninput="filterPayer()"
+                     autocomplete="off"
+                     disabled>
+            </div>
+            <div class="control">
+              <button type="button" class="button is-light" onclick="clearPayer()" title="Rimuovi pagante" disabled>✕</button>
+            </div>
           </div>
-          <div class="control">
-            <button type="button" class="button is-light" onclick="clearPayer()" title="Rimuovi pagante">✕</button>
-          </div>
+          <input type="hidden" id="f_payerCode">
+          <div id="payerResults" style="max-height:160px;overflow-y:auto;"></div>
+          <p id="payerConfirm" class="help is-success" style="display:none;"></p>
         </div>
-        <input type="hidden" id="f_payerCode">
-        <div id="payerResults" style="max-height:160px;overflow-y:auto;"></div>
-        <p id="payerConfirm" class="help is-success" style="display:none;"></p>
       </div>
     </div>
 
@@ -177,7 +192,13 @@
       populateOptions("f_family", "FAMIGLIA");
       populateOptions("f_subscription", "ABBONAMENTO");
       populateOptions("f_course", "CORSO");
+
       document.getElementById('loader').style.display = 'none';
+      google.script.run.withSuccessHandler(depRes => {
+        populateDepartures(depRes);
+        document.getElementById('loader').style.display = 'none';
+      }).getDepartures();
+
     }).getPrices();
   };
 
@@ -193,15 +214,47 @@
       s.add(o);
     });
   }
+  function populateDepartures(data) {
+    const satBox = document.getElementById('check_saturday');
+    const sunBox = document.getElementById('check_sunday');
 
+    // Svuota i contenitori (opzionale se sono già vuoti)
+    satBox.innerHTML = "";
+    sunBox.innerHTML = "";
+
+    // Genera i checkbox per Sabato
+    data.SABATO.forEach(luogo => {
+      satBox.innerHTML += `
+        <label class="checkbox mr-3">
+          <input type="checkbox" value="${luogo}"> ${luogo}
+        </label>`;
+    });
+
+    // Genera i checkbox per Domenica
+    data.DOMENICA.forEach(luogo => {
+      sunBox.innerHTML += `
+        <label class="checkbox mr-3">
+          <input type="checkbox" value="${luogo}"> ${luogo}
+        </label>`;
+    });
+  }
   // ===================== RICERCA SOCI =====================
   function showSearch() {
-    if (DB.length > 0) { document.getElementById('searchZone').style.display = 'block'; return; }
+    if (DB.length > 0) {
+      document.getElementById('searchZone').style.display = 'block';
+      return;
+    }
+    loadDatabase(() => {
+      document.getElementById('searchZone').style.display = 'block';
+    });
+  }
+
+  function loadDatabase(callback) {
     document.getElementById('loader').style.display = 'flex';
     google.script.run.withSuccessHandler(res => {
       DB = res;
       document.getElementById('loader').style.display = 'none';
-      document.getElementById('searchZone').style.display = 'block';
+      if (callback) callback();
     }).getMembers();
   }
 
@@ -242,17 +295,17 @@
     // NUOVO: numero tessera
     document.getElementById('f_cardNumber').value = s.cardNumber || "";
 
-    // NUOVO: pagante (capofamiglia)
+    // NUOVO: pagante (capofamiglia) - ABILITA LA SEZIONE SE C'È UN PAGANTE
     document.getElementById('f_payerCode').value = s.payerCode || "";
     if (s.payerCode) {
+      enablePayerSection(); // Abilita la sezione
       const payer = DB.find(m => m.taxCode === s.payerCode);
       document.getElementById('f_payerDisplay').value = payer
         ? payer.lastName + " " + payer.firstName
         : s.payerCode;
       showPayerConfirm(document.getElementById('f_payerDisplay').value);
     } else {
-      document.getElementById('f_payerDisplay').value = "";
-      document.getElementById('payerConfirm').style.display = 'none';
+      disablePayerSection(); // Disabilita la sezione
     }
 
     ["f_membership", "f_family", "f_subscription", "f_course"].forEach(id => {
@@ -275,7 +328,6 @@
     });
 
     document.getElementById('btnSave').innerText = "SALVA LE MODIFICHE";
-    document.getElementById('btnRenew').disabled = false;
     calc();
     document.getElementById('searchZone').style.display = 'none';
 
@@ -283,17 +335,6 @@
     loadFamilyPanel(s.taxCode);
 
     window.scrollTo(0, 0);
-  }
-
-  // ===================== RINNOVO =====================
-  function renewMember() {
-    document.getElementById('f_membership').selectedIndex = 0;
-    document.getElementById('f_policy').value = "";
-    document.getElementById('f_cardNumber').value = "";
-    document.getElementById('f_deposit').value = 0;
-    document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
-    calc();
-    showToast("Modalità RINNOVO: Inserisci la nuova tessera e salva.", "is-info");
   }
 
   // ===================== CALCOLO TOTALE =====================
@@ -305,6 +346,39 @@
     const d = parseInt(document.getElementById('f_deposit').value) || 0;
     document.getElementById('v_total').innerText = t;
     document.getElementById('v_balance').innerText = t - d;
+  }
+
+  // ===================== GESTIONE SEZIONE PAGANTE =====================
+  function enablePayerSection() {
+    // Carica il DB se non è già stato caricato
+    if (DB.length === 0) {
+      loadDatabase(() => {
+        activatePayerSection();
+      });
+    } else {
+      activatePayerSection();
+    }
+  }
+
+  function activatePayerSection() {
+    const section = document.getElementById('payerSection');
+    section.classList.remove('payer-section-disabled');
+    document.getElementById('f_payerDisplay').disabled = false;
+    document.querySelectorAll('#payerSection button').forEach(btn => btn.disabled = false);
+    document.getElementById('btnEnablePayer').style.display = 'none';
+    showToast("Sezione pagante abilitata. Cerca il capofamiglia.", "is-info");
+  }
+
+  function disablePayerSection() {
+    const section = document.getElementById('payerSection');
+    section.classList.add('payer-section-disabled');
+    document.getElementById('f_payerDisplay').disabled = true;
+    document.getElementById('f_payerDisplay').value = "";
+    document.getElementById('f_payerCode').value = "";
+    document.querySelectorAll('#payerSection button').forEach(btn => btn.disabled = true);
+    document.getElementById('payerResults').style.display = 'none';
+    document.getElementById('payerConfirm').style.display = 'none';
+    document.getElementById('btnEnablePayer').style.display = 'inline-block';
   }
 
   // ===================== RICERCA PAGANTE (CAPOFAMIGLIA) =====================
@@ -420,14 +494,10 @@
     document.getElementById('f_row').value = "";
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
     document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
-    document.getElementById('btnRenew').disabled = true;
 
-    // NUOVO: reset campi aggiuntivi
+    // NUOVO: reset campi aggiuntivi e DISABILITA sezione pagante
     document.getElementById('f_cardNumber').value = "";
-    document.getElementById('f_payerCode').value = "";
-    document.getElementById('f_payerDisplay').value = "";
-    document.getElementById('payerResults').style.display = 'none';
-    document.getElementById('payerConfirm').style.display = 'none';
+    disablePayerSection();
     document.getElementById('familyPanel').style.display = 'none';
 
     calc();

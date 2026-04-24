@@ -16,9 +16,27 @@ function getPrices() {
   return prices;
 }
 
+function getDepartures() {
+  const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
+  const sheet = ss.getSheetByName("PARTENZE");
+  const data = sheet.getDataRange().getValues();
+
+  // Organizziamo i dati in un oggetto con le chiavi SABATO e DOMENICA
+  const departures = { SABATO: [], DOMENICA: [] };
+
+  for (let i = 1; i < data.length; i++) {
+    const giorno = data[i][0].toUpperCase(); // Colonna A: Giorno partenza
+    const luogo = data[i][1];               // Colonna B: Luogo
+    if (departures[giorno]) {
+      departures[giorno].push(luogo);
+    }
+  }
+  return departures;
+}
+
 function getMembers() {
   const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
-  const memberData = ss.getSheetByName("Risposte del modulo 1").getDataRange().getValues();
+  const memberData = ss.getSheetByName("SOCI").getDataRange().getValues();
   return memberData.slice(1).filter(r => r[2]).map((r, i) => ({
     row: i + 2,
     policy: r[1],
@@ -66,7 +84,7 @@ function getMembers() {
 function saveMember(d) {
   const uid = Utilities.getUuid();
   const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
-  const sheet = ss.getSheetByName("Risposte del modulo 1");
+  const sheet = ss.getSheetByName("SOCI");
 
   const rowData = [
     new Date(),       // col 1
