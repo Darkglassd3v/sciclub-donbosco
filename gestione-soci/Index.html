@@ -182,7 +182,7 @@
 <script>
   let DB = [];
   let PRICES = {};
-
+  let FAMILY_TOTALS = { total: 0, deposit: 0 };
   // ===================== INIT =====================
   window.onload = () => {
     document.getElementById('loader').style.display = 'flex';
@@ -339,13 +339,34 @@
 
   // ===================== CALCOLO TOTALE =====================
   function calc() {
-    const t = (parseInt(document.getElementById('f_membership').value) || 0) +
-              (parseInt(document.getElementById('f_family').value) || 0) +
-              (parseInt(document.getElementById('f_subscription').value) || 0) +
-              (parseInt(document.getElementById('f_course').value) || 0);
-    const d = parseInt(document.getElementById('f_deposit').value) || 0;
-    document.getElementById('v_total').innerText = t;
-    document.getElementById('v_balance').innerText = t - d;
+<!--    const t = (parseInt(document.getElementById('f_membership').value) || 0) +-->
+<!--              (parseInt(document.getElementById('f_family').value) || 0) +-->
+<!--              (parseInt(document.getElementById('f_subscription').value) || 0) +-->
+<!--              (parseInt(document.getElementById('f_course').value) || 0);-->
+    const individualTotal = (parseInt(document.getElementById('f_membership').value) || 0) +
+                            (parseInt(document.getElementById('f_family').value) || 0) +
+                            (parseInt(document.getElementById('f_subscription').value) || 0) +
+                            (parseInt(document.getElementById('f_course').value) || 0);
+
+    const individualDeposit = parseInt(document.getElementById('f_deposit').value) || 0;
+    // Somma socio corrente + familiari a carico
+    const grandTotal = individualTotal + FAMILY_TOTALS.total;
+    const grandDeposit = individualDeposit + FAMILY_TOTALS.deposit;
+    const grandBalance = grandTotal - grandDeposit;
+
+    // Aggiornamento interfaccia
+    document.getElementById('v_total').innerText = grandTotal;
+    document.getElementById('v_balance').innerText = grandBalance;
+
+    const balanceEl = document.getElementById('v_balance').parentElement;
+    if (grandBalance > 0) {
+      balanceEl.style.color = "#ffca28";
+    } else {
+      balanceEl.style.color = "#25d366"; // Verde se tutto pagato
+    }
+<!--    const d = parseInt(document.getElementById('f_deposit').value) || 0;-->
+<!--    document.getElementById('v_total').innerText = t;-->
+<!--    document.getElementById('v_balance').innerText = t - d;-->
   }
 
   // ===================== GESTIONE SEZIONE PAGANTE =====================
@@ -427,21 +448,33 @@
   }
 
   // ===================== PANNELLO FAMILIARI A CARICO =====================
+
   function loadFamilyPanel(taxCode) {
     const panel = document.getElementById('familyPanel');
     const list = document.getElementById('familyList');
 
-    if (!taxCode || DB.length === 0) { panel.style.display = 'none'; return; }
+    if (!taxCode || DB.length === 0) {
+      panel.style.display = 'none';
+      FAMILY_TOTALS = { total: 0, deposit: 0 }; // Reset se non c'è taxCode
+      return;
+    }
 
     // Cerca tutti i soci che hanno questo taxCode come payerCode
     const members = DB.filter(s => s.payerCode === taxCode);
 
-    if (members.length === 0) { panel.style.display = 'none'; return; }
+    if (members.length === 0) {
+      panel.style.display = 'none';
+      FAMILY_TOTALS = { total: 0, deposit: 0 };
+      calc(); // Aggiorna i totali (che torneranno solo quelli del singolo)
+      return;
+    }
 
     const totalFamily = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
     const depositFamily = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
-    const balanceFamily = members.reduce((sum, s) => sum + (parseFloat(s.balance) || 0), 0);
-
+<!--    const balanceFamily = members.reduce((sum, s) => sum + (parseFloat(s.balance) || 0), 0);-->
+    FAMILY_TOTALS.total = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+    FAMILY_TOTALS.deposit = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
+    const balanceFamily = FAMILY_TOTALS.total - FAMILY_TOTALS.deposit;
     list.innerHTML = `
       <table class="table is-fullwidth is-striped is-hoverable is-size-7 mt-2">
         <thead>
@@ -486,6 +519,7 @@
       </table>`;
 
     panel.style.display = 'block';
+    calc();
   }
 
   // ===================== RESET FORM =====================
@@ -494,7 +528,7 @@
     document.getElementById('f_row').value = "";
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
     document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
-
+    FAMILY_TOTALS = { total: 0, deposit: 0 }
     // NUOVO: reset campi aggiuntivi e DISABILITA sezione pagante
     document.getElementById('f_cardNumber').value = "";
     disablePayerSection();
