@@ -67,6 +67,7 @@
 
   <form id="memberForm">
     <input type="hidden" id="f_row">
+    <input type="hidden" id="f_id_hidden">
 
     <!-- ===================== ANAGRAFICA ===================== -->
     <div class="section-title">Anagrafica Socio</div>
@@ -277,6 +278,7 @@
   // ===================== CARICA SOCIO =====================
   function loadMember(s) {
     document.getElementById('f_row').value = s.row;
+    document.getElementById('f_id_hidden').value = s.id || "";
     document.getElementById('f_lastName').value = s.lastName;
     document.getElementById('f_firstName').value = s.firstName;
     document.getElementById('f_taxCode').value = s.taxCode;
@@ -296,16 +298,17 @@
     document.getElementById('f_cardNumber').value = s.cardNumber || "";
 
     // NUOVO: pagante (capofamiglia) - ABILITA LA SEZIONE SE C'È UN PAGANTE
-    document.getElementById('f_payerCode').value = s.payerCode || "";
+   document.getElementById('f_payerCode').value = s.payerCode || "";
     if (s.payerCode) {
-      enablePayerSection(); // Abilita la sezione
-      const payer = DB.find(m => m.taxCode === s.payerCode);
+      enablePayerSection();
+      // Cerchiamo nel DB il socio che ha come ID il payerCode del socio corrente
+      const payer = DB.find(m => m.id === s.payerCode);
       document.getElementById('f_payerDisplay').value = payer
         ? payer.lastName + " " + payer.firstName
-        : s.payerCode;
+        : "ID Pagante: " + s.payerCode;
       showPayerConfirm(document.getElementById('f_payerDisplay').value);
     } else {
-      disablePayerSection(); // Disabilita la sezione
+      disablePayerSection();
     }
 
     ["f_membership", "f_family", "f_subscription", "f_course"].forEach(id => {
@@ -332,7 +335,7 @@
     document.getElementById('searchZone').style.display = 'none';
 
     // NUOVO: mostra pannello familiari a carico (questo socio paga per altri?)
-    loadFamilyPanel(s.taxCode);
+    loadFamilyPanel(s.id);
 
     window.scrollTo(0, 0);
   }
@@ -411,10 +414,10 @@
 
     if (q.length < 2 || DB.length === 0) { box.style.display = 'none'; return; }
 
-    const currentTax = document.getElementById('f_taxCode').value.toUpperCase();
+    const currentId = document.getElementById('f_id_hidden').value;
     const res = DB.filter(s =>
       (s.lastName + " " + s.firstName).toLowerCase().includes(q) &&
-      s.taxCode !== currentTax
+      s.id !== currentId // Escludiamo se stessi usando l'ID unico
     ).slice(0, 6);
 
     if (res.length === 0) { box.style.display = 'none'; return; }
@@ -575,6 +578,7 @@
 
     const data = {
       row: document.getElementById('f_row').value,
+      id: document.getElementById('f_id_hidden') ? document.getElementById('f_id_hidden').value : "",
       lastName: document.getElementById('f_lastName').value.toUpperCase(),
       firstName: document.getElementById('f_firstName').value.toUpperCase(),
       taxCode: document.getElementById('f_taxCode').value.toUpperCase(),

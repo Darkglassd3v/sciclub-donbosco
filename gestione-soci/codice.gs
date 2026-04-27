@@ -75,63 +75,65 @@ function getMembers() {
     total: r[20],
     deposit: r[21],
     balance: r[22],
-    // r[23] = uid (colonna 24, non esposta al frontend)
+    id: r[23] ? r[23].toString() : "",
     cardNumber: r[24] ? r[24].toString() : "",  // colonna 25 - NUOVO
     payerCode: r[25] ? r[25].toString() : ""    // colonna 26 - NUOVO
   }));
 }
 
 function saveMember(d) {
-  const uid = Utilities.getUuid();
-  const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
-  const sheet = ss.getSheetByName("SOCI");
+    if (!d.id || d.id === "") {
+        d.id = Utilities.getUuid();
+    }
+    const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
+    const sheet = ss.getSheetByName("SOCI");
 
-  const rowData = [
-    new Date(),       // col 1
-    d.policy,         // col 2
-    d.lastName,       // col 3
-    d.firstName,      // col 4
-    d.birthPlace,     // col 5
-    d.birthProv,      // col 6
-    d.taxCode,        // col 7
-    d.birthDate,      // col 8
-    d.address,        // col 9
-    d.city,           // col 10
-    d.prov,           // col 11
-    d.cap,            // col 12
-    d.phone,          // col 13
-    d.email,          // col 14
-    d.membership,     // col 15
-    d.family,         // col 16
-    d.subscription,   // col 17
-    d.sunday,         // col 18
-    d.saturday,       // col 19
-    d.course,         // col 20
-    d.total,          // col 21
-    d.deposit,        // col 22
-    d.balance,        // col 23
-    uid,              // col 24 - invariato (usato per link polizza)
-    d.cardNumber,     // col 25 - NUOVO: numero tessera
-    d.payerCode       // col 26 - NUOVO: codice fiscale del pagante (capofamiglia)
-  ];
+    const rowData = [
+        new Date(),       // col 1
+        d.policy,         // col 2
+        d.lastName,       // col 3
+        d.firstName,      // col 4
+        d.birthPlace,     // col 5
+        d.birthProv,      // col 6
+        d.taxCode,        // col 7
+        d.birthDate,      // col 8
+        d.address,        // col 9
+        d.city,           // col 10
+        d.prov,           // col 11
+        d.cap,            // col 12
+        d.phone,          // col 13
+        d.email,          // col 14
+        d.membership,     // col 15
+        d.family,         // col 16
+        d.subscription,   // col 17
+        d.sunday,         // col 18
+        d.saturday,       // col 19
+        d.course,         // col 20
+        d.total,          // col 21
+        d.deposit,        // col 22
+        d.balance,        // col 23
+        d.id,              // col 24 - invariato (usato per link polizza)
+        d.cardNumber,     // col 25 - NUOVO: numero tessera
+        d.payerCode       // col 26 - NUOVO: codice fiscale del pagante (capofamiglia)
+    ];
 
-  if (d.row > 0) {
-    sheet.getRange(parseInt(d.row), 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    sheet.appendRow(rowData);
-  }
+    if (d.row > 0) {
+        sheet.getRange(parseInt(d.row), 1, 1, rowData.length).setValues([rowData]);
+    } else {
+        sheet.appendRow(rowData);
+    }
 
-  if (d.sendEmail) {
-    sendSummaryEmail(d, uid);
+    if (d.sendEmail) {
+    sendSummaryEmail(d);
     return "✅ Socio " + d.lastName + " salvato e email inviata!";
-  }
-
-  return "✅ Modifiche salvate per " + d.lastName;
 }
 
-function sendSummaryEmail(d, uid) {
+return "✅ Modifiche salvate per " + d.lastName;
+}
+
+function sendSummaryEmail(d) {
   const recipient = "federico.cossetta90@gmail.com";
-  const webAppUrl = "https://script.google.com/macros/s/AKfycbw-H4oSUtVBMOa_Pe7g4Am-1cziCj2veLsvFk3RdUxQ_RuqYJsPhV7Skk9lZYLnDTYt/exec?id=" + uid;
+  const webAppUrl = "https://script.google.com/macros/s/AKfycbw-H4oSUtVBMOa_Pe7g4Am-1cziCj2veLsvFk3RdUxQ_RuqYJsPhV7Skk9lZYLnDTYt/exec?id=" + d.id;
   const whatsappUrl = `https://wa.me/${d.phone.replace(/\s+/g, '')}?text=${encodeURIComponent("Ciao " + d.firstName + ", iscrizione confermata!")}`;
 
   const htmlTable = `
