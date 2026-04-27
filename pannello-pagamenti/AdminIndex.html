@@ -4,335 +4,141 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <style>
-        body {
-          background-color: #f4f7f9;
-          color: #333;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          min-height: 100vh;
-          padding: 20px;
-        }
-
-        .main-container {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .header-section {
-          background: white;
-          border-radius: 4px;
-          padding: 15px 25px;
-          margin-bottom: 20px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          border-bottom: 3px solid #3273dc;
-        }
-
-        /* Card Unità Familiare */
-        .unit-card {
-          background: white;
-          border-radius: 4px;
-          margin-bottom: 30px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-          overflow: hidden;
-        }
-
-        /* Header Sezione - Simile a ANAGRAFICA SOCIO */
-        .unit-header {
-          background: #2196F3;
-          color: white;
-          padding: 12px 20px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .unit-header .unit-title {
-          font-size: 1rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .unit-header .unit-badge {
-          background: rgba(255,255,255,0.15);
-          padding: 5px 12px;
-          border-radius: 3px;
-          font-weight: 500;
-          font-size: 0.9rem;
-        }
-
-        /* Tabella */
-        .custom-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .custom-table thead th {
-          background: #ffffff;
-          color: #4a4a4a;
-          font-weight: 700;
-          font-size: 0.85rem;
-          padding: 12px;
-          border-bottom: 2px solid #eeeeee;
-          text-align: left;
-        }
-
-        .row-payer {
-          background: #ffffff;
-        }
-
-        .row-dependent {
-          background: #f9fbfc;
-          border-left: 4px solid #3273dc;
-        }
-
-        .custom-table td {
-          padding: 12px;
-          border-bottom: 1px solid #f0f0f0;
-          vertical-align: middle;
-        }
-
-        /* Badge Status */
-        .status-tag {
-          font-size: 0.7rem;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 3px;
-          display: inline-block;
-          margin-right: 5px;
-        }
-
-        .tag-membership { background: #eff5fb; color: #2160c4; border: 1px solid #d1e1f5; }
-        .tag-course { background: #f5f5f5; color: #4a4a4a; border: 1px solid #dbdbdb; }
+        body { background-color: #f4f7f9; color: #333; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+        .main-container { max-width: 1200px; margin: 0 auto; }
+        .dashboard-box { background: #3273dc; color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; display: block; }
+        .stat-label { font-size: 0.85rem; text-transform: uppercase; opacity: 0.9; }
+        .unit-card { background: white; border-radius: 4px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); overflow: hidden; }
+        .unit-header { background: #2196F3; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .unit-title { font-size: 1rem; font-weight: 600; }
+        .custom-table { width: 100%; border-collapse: collapse; }
+        .custom-table thead th { background: #ffffff; color: #4a4a4a; font-weight: 700; font-size: 0.85rem; padding: 12px; border-bottom: 2px solid #eeeeee; }
+        .row-payer { background: #ffffff; }
+        .row-dependent { background: #f9fbfc; border-left: 4px solid #3273dc; }
+        .custom-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+        .status-tag { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 3px; display: inline-block; }
         .tag-dependent { background: #fffbeb; color: #947600; border: 1px solid #ffe08a; }
-
-        /* Input Fields - Stile Form Modulo */
-        .input-field {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid #dbdbdb;
-          border-radius: 4px;
-          font-size: 0.9rem;
-          box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        .input-readonly {
-          background-color: #f5f5f5;
-          color: #7a7a7a;
-          cursor: not-allowed;
-        }
-
-        .input-missing {
-          border-color: #ff3860;
-        }
-
-        /* Bottoni */
-        .btn-refresh {
-          background-color: #3273dc;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 4px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .btn-save {
-          background-color: #48c774;
-          color: white;
-          border: none;
-          padding: 8px 15px;
-          border-radius: 4px;
-          font-weight: 600;
-          cursor: pointer;
-          width: 100%;
-        }
-
-        .btn-refresh:hover, .btn-save:hover {
-          opacity: 0.9;
-        }
-
+        .input-field { width: 100%; padding: 8px; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 0.9rem; }
+        .input-readonly { background-color: #f5f5f5; color: #7a7a7a; cursor: not-allowed; }
+        .btn-save { background-color: #48c774; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; }
         .balance-negative { color: #cc0000; font-weight: 700; }
-        .balance-zero { color: #28a745; font-weight: 600; }
-
-        .loading-overlay {
-          position: fixed;
-          top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(255,255,255,0.8);
-          display: flex; justify-content: center; align-items: center;
-          z-index: 9999;
-        }
-
-        .loader {
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #3273dc;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-        }
-
+        .help-text { font-size: 0.75rem; color: #666; margin-top: 2px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3273dc; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 <div class="main-container">
-    <!-- Header -->
-    <div class="header-section">
-        <div class="level is-mobile">
-            <div class="level-left">
-                <div class="level-item">
-                    <h1 class="title is-4" style="margin:0; color:#2c3e50;">
-                        📊 Gestione Incassi e Polizze
-                    </h1>
-                </div>
-            </div>
-            <div class="level-right">
-                <div class="level-item">
-                    <button class="btn-refresh" onclick="loadData()">
-                        🔄 Aggiorna Dati
-                    </button>
-                </div>
-            </div>
+    <div id="statsArea" class="dashboard-box" style="display:none;">
+        <div class="stat-item">
+            <span class="stat-label">Da Incassare Totale</span>
+            <span id="grandTotal" class="stat-value">0.00€</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Nuclei in Sospeso</span>
+            <span id="pendingCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <button class="button is-light is-small" onclick="loadData()">🔄 Aggiorna</button>
         </div>
     </div>
 
-    <!-- Area Dati -->
     <div id="displayArea"></div>
 </div>
 
-<!-- Loading Overlay -->
-<div id="loadingOverlay" class="loading-overlay" style="display:none;">
-    <div class="loader"></div>
-</div>
+<div id="loadingOverlay" class="loading-overlay" style="display:none;"><div class="loader"></div></div>
 
 <script>
     window.onload = loadData;
 
     function loadData() {
       document.getElementById('loadingOverlay').style.display = 'flex';
-      document.getElementById('displayArea').innerHTML = '';
-      google.script.run
-        .withSuccessHandler(render)
-        .withFailureHandler(handleError)
-        .getAdminData();
+      google.script.run.withSuccessHandler(render).withFailureHandler(handleError).getAdminData();
     }
 
-    
+    function render(response) {
+      document.getElementById('loadingOverlay').style.display = 'none';
+      const statsArea = document.getElementById('statsArea');
+      const container = document.getElementById('displayArea');
 
-    function renderRow(member, isDependent, hasDependents) {
-      const balanceClass = member.balance > 0 ? 'balance-negative' : 'balance-zero';
-      const rowClass = isDependent ? 'row-dependent' : 'row-payer';
+      // Aggiorna Dashboard
+      statsArea.style.display = 'flex';
+      document.getElementById('grandTotal').innerText = response.stats.totalToCollect.toFixed(2) + "€";
+      document.getElementById('pendingCount').innerText = response.stats.pendingCount;
 
-      // Campo acconto
-      let depositField;
-      if (isDependent) {
-        // Familiare: solo visualizzazione
-        depositField = `
-          <input type="number" class="input-field input-readonly"
-                 value="${member.deposit}" readonly>
-          <div class="help-text">Totale: ${member.total}€</div>`;
-      } else {
-        // Pagante: editabile
-        depositField = `
-          <input type="number" id="dep_${member.row}" class="input-field"
-                 value="${member.deposit}" min="0" step="0.01">
-          <div class="help-text">Totale: ${member.total}€</div>`;
-      }
-
-      // Campo polizza
-      const policyMissing = !member.policy || member.policy.trim() === '';
-      const policyClass = policyMissing ? 'input-field input-missing' : 'input-field';
-      const policyReadonly = isDependent ? 'readonly class="input-field input-readonly"' : `class="${policyClass}"`;
-
-      let policyField;
-      if (isDependent) {
-        policyField = `
-          <input type="text" ${policyReadonly}
-                 value="${member.policy || ''}"
-                 placeholder="Gestito dal pagante">`;
-      } else {
-        policyField = `
-          <input type="text" id="pol_${member.row}" ${policyReadonly}
-                 value="${member.policy || ''}"
-                 placeholder="Inserisci polizza">`;
-      }
-
-      // Azioni
-      let actionCell;
-      if (isDependent) {
-        actionCell = `<small style="color:#6c757d; font-style:italic;">Gestito dal pagante</small>`;
-      } else {
-        actionCell = `
-          <button class="btn-save" onclick="saveRow(${member.row}, this)">
-            💾 Salva
-          </button>`;
-      }
-
-      return `
-        <tr class="${rowClass}">
-          <td>
-            <div style="font-weight:700; font-size:1rem; margin-bottom:5px;">
-              ${member.lastName} ${member.firstName}
-            </div>
-            <div>
-              ${member.membership ?
-                `<span class="status-tag tag-membership">${member.membership}</span>` :
-                '<span class="status-tag tag-membership">Nessuna</span>'}
-              ${member.course && member.course !== 'No' ?
-                `<span class="status-tag tag-course">${member.course}</span>` : ''}
-              ${isDependent ?
-                '<span class="status-tag tag-dependent">👨‍👩‍👧 A CARICO</span>' : ''}
-            </div>
-          </td>
-          <td>${depositField}</td>
-          <td>
-            <div class="${balanceClass}">
-              ${member.balance.toFixed(2)}€
-            </div>
-          </td>
-          <td>${policyField}</td>
-          <td>
-            <input type="text" class="input-field input-readonly"
-                   value="${member.cardNumber || '—'}" readonly>
-          </td>
-          <td class="has-text-centered">
-            ${actionCell}
-          </td>
-        </tr>
-      `;
-    }
-
-    function saveRow(rowId, btn) {
-      const deposit = document.getElementById('dep_' + rowId).value;
-      const policy = document.getElementById('pol_' + rowId).value;
-
-      if (!deposit || parseFloat(deposit) < 0) {
-        alert('Inserisci un acconto valido (≥ 0)');
+      container.innerHTML = "";
+      if (response.units.length === 0) {
+        container.innerHTML = `<div class="notification is-success has-text-centered">✅ Ottimo! Non ci sono pagamenti in sospeso.</div>`;
         return;
       }
 
+      response.units.forEach(u => {
+        const card = document.createElement('div');
+        card.className = "unit-card";
+        const hasFamily = u.dependents && u.dependents.length > 0;
+
+        card.innerHTML = `
+          <div class="unit-header">
+            <span class="unit-title">👤 ${u.payer.lastName} ${u.payer.firstName}</span>
+            <span>Saldo Nucleo: <strong>${u.unitBalance.toFixed(2)}€</strong></span>
+          </div>
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th style="width:25%">Socio</th>
+                <th style="width:18%">Acconto (€)</th>
+                <th style="width:12%">Saldo</th>
+                <th style="width:20%">Polizza</th>
+                <th style="width:15%">Tessera</th>
+                <th style="width:10%"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${renderRow(u.payer, false, hasFamily, u.unitTotal, u.unitBalance)}
+              ${u.dependents.map(d => renderRow(d, true, false)).join('')}
+            </tbody>
+          </table>`;
+        container.appendChild(card);
+      });
+    }
+
+    function renderRow(member, isDependent, hasDependents, unitTotal, unitBalance) {
+      const displayBalance = (!isDependent && hasDependents) ? unitBalance : member.balance;
+      const displayTotal = (!isDependent && hasDependents) ? unitTotal : member.total;
+
+      let depositField = isDependent ?
+        `<input type="number" class="input-field input-readonly" value="${member.deposit}" readonly><div class="help-text">Quota: ${member.total}€</div>` :
+        `<input type="number" id="dep_${member.row}" class="input-field" value="${member.deposit}"><div class="help-text">Tot Nucleo: ${displayTotal}€</div>`;
+
+      let actionCell = isDependent ?
+        `<small style="color:#888;">A carico</small>` :
+        `<button class="btn-save" onclick="saveRow(${member.row}, this, ${displayTotal})">💾 Salva</button>`;
+
+      return `
+        <tr class="${isDependent ? 'row-dependent' : 'row-payer'}">
+          <td>
+            <div style="font-weight:700;">${member.lastName} ${member.firstName}</div>
+            ${isDependent ? '<span class="status-tag tag-dependent">FAMILIARE</span>' : ''}
+          </td>
+          <td>${depositField}</td>
+          <td><div class="balance-negative">${displayBalance.toFixed(2)}€</div></td>
+          <td><input type="text" id="pol_${member.row}" class="input-field" value="${member.policy || ''}" ${isDependent ? 'readonly' : ''}></td>
+          <td><input type="text" class="input-field input-readonly" value="${member.cardNumber || '—'}" readonly></td>
+          <td class="has-text-centered">${actionCell}</td>
+        </tr>`;
+    }
+
+    function saveRow(rowId, btn, unitTotal) {
+      const deposit = document.getElementById('dep_' + rowId).value;
+      const policy = document.getElementById('pol_' + rowId).value;
       btn.classList.add('is-loading');
-      btn.disabled = true;
-
-      google.script.run
-        .withSuccessHandler(() => {
-          btn.classList.remove('is-loading');
-          btn.disabled = false;
-          loadData();
-        })
-        .withFailureHandler((error) => {
-          btn.classList.remove('is-loading');
-          btn.disabled = false;
-          alert('Errore durante il salvataggio: ' + error);
-        })
-        .updateAdminMember(rowId, deposit, policy);
+      google.script.run.withSuccessHandler(loadData).updateAdminMember(rowId, deposit, policy, unitTotal);
     }
 
-    function handleError(error) {
-      document.getElementById('loadingOverlay').style.display = 'none';
-      alert('Errore nel caricamento dei dati: ' + error.message);
-      console.error('Error:', error);
-    }
+    function handleError(error) { alert('Errore: ' + error.message); }
 </script>
 </body>
 </html>
