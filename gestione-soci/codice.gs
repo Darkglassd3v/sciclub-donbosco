@@ -58,7 +58,7 @@ function getMembers() {
         }
         return val;
       }
-      return Utilities.formatDate(d, "GMT+1", "yyyy-MM-dd");
+      return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
     })(r[7]),
     address: r[8],
     city: r[9],

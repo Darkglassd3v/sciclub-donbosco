@@ -293,12 +293,12 @@
     document.getElementById('f_birthProv').value = s.birthProv || "";
     document.getElementById('f_policy').value = s.policy || "";
     document.getElementById('f_deposit').value = s.deposit || 0;
+    document.getElementById('f_payerCode').value = s.payerCode || "";
 
     // NUOVO: numero tessera
     document.getElementById('f_cardNumber').value = s.cardNumber || "";
 
     // NUOVO: pagante (capofamiglia) - ABILITA LA SEZIONE SE C'È UN PAGANTE
-   document.getElementById('f_payerCode').value = s.payerCode || "";
     if (s.payerCode) {
       enablePayerSection();
       // Cerchiamo nel DB il socio che ha come ID il payerCode del socio corrente
@@ -406,36 +406,38 @@
   }
 
   // ===================== RICERCA PAGANTE (CAPOFAMIGLIA) =====================
-  function filterPayer() {
-    const q = document.getElementById('f_payerDisplay').value.toLowerCase().trim();
-    const box = document.getElementById('payerResults');
-    document.getElementById('f_payerCode').value = ""; // reset se l'utente sta riscrivendo
-    document.getElementById('payerConfirm').style.display = 'none';
+ // ===================== RICERCA PAGANTE (CAPOFAMIGLIA) =====================
+function filterPayer() {
+  const q = document.getElementById('f_payerDisplay').value.toLowerCase().trim();
+  const box = document.getElementById('payerResults');
+  document.getElementById('f_payerCode').value = "";
+  document.getElementById('payerConfirm').style.display = 'none';
 
-    if (q.length < 2 || DB.length === 0) { box.style.display = 'none'; return; }
+  if (q.length < 2 || DB.length === 0) { box.style.display = 'none'; return; }
 
-    const currentId = document.getElementById('f_id_hidden').value;
-    const res = DB.filter(s =>
-      (s.lastName + " " + s.firstName).toLowerCase().includes(q) &&
-      s.id !== currentId // Escludiamo se stessi usando l'ID unico
-    ).slice(0, 6);
+  const currentId = document.getElementById('f_id_hidden').value;
+  const res = DB.filter(s =>
+    (s.lastName + " " + s.firstName).toLowerCase().includes(q) &&
+    s.id !== currentId
+  ).slice(0, 6);
 
-    if (res.length === 0) { box.style.display = 'none'; return; }
-    box.style.display = 'block';
-    box.innerHTML = res.map(s =>
-      `<div class="result-item box p-2 mb-1" onclick='selectPayer("${s.taxCode}", "${s.lastName} ${s.firstName}")'>
-         <strong>${s.lastName} ${s.firstName}</strong>
-         <span class="tag is-light ml-2">${s.taxCode}</span>
-       </div>`
-    ).join('');
-  }
+  if (res.length === 0) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = res.map(s =>
+    // NOTA: Qui passiamo s.id invece di s.taxCode
+    `<div class="result-item box p-2 mb-1" onclick='selectPayer("${s.id}", "${s.lastName} ${s.firstName}")'>
+       <strong>${s.lastName} ${s.firstName}</strong>
+       <span class="tag is-light ml-2">${s.taxCode || 'No CF'}</span>
+     </div>`
+  ).join('');
+}
 
-  function selectPayer(taxCode, name) {
-    document.getElementById('f_payerCode').value = taxCode;
-    document.getElementById('f_payerDisplay').value = name;
-    document.getElementById('payerResults').style.display = 'none';
-    showPayerConfirm(name);
-  }
+function selectPayer(id, name) {
+  document.getElementById('f_payerCode').value = id; // Salviamo l'ID univoco
+  document.getElementById('f_payerDisplay').value = name;
+  document.getElementById('payerResults').style.display = 'none';
+  showPayerConfirm(name);
+}
 
   function showPayerConfirm(name) {
     const p = document.getElementById('payerConfirm');
@@ -450,80 +452,72 @@
     document.getElementById('payerConfirm').style.display = 'none';
   }
 
-  // ===================== PANNELLO FAMILIARI A CARICO =====================
+  /// ===================== PANNELLO FAMILIARI A CARICO =====================
+function loadFamilyPanel(memberId) {
+  const panel = document.getElementById('familyPanel');
+  const list = document.getElementById('familyList');
 
-  function loadFamilyPanel(taxCode) {
-    const panel = document.getElementById('familyPanel');
-    const list = document.getElementById('familyList');
-
-    if (!taxCode || DB.length === 0) {
-      panel.style.display = 'none';
-      FAMILY_TOTALS = { total: 0, deposit: 0 }; // Reset se non c'è taxCode
-      return;
-    }
-
-    // Cerca tutti i soci che hanno questo taxCode come payerCode
-    const members = DB.filter(s => s.payerCode === taxCode);
-
-    if (members.length === 0) {
-      panel.style.display = 'none';
-      FAMILY_TOTALS = { total: 0, deposit: 0 };
-      calc(); // Aggiorna i totali (che torneranno solo quelli del singolo)
-      return;
-    }
-
-    const totalFamily = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
-    const depositFamily = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
-<!--    const balanceFamily = members.reduce((sum, s) => sum + (parseFloat(s.balance) || 0), 0);-->
-    FAMILY_TOTALS.total = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
-    FAMILY_TOTALS.deposit = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
-    const balanceFamily = FAMILY_TOTALS.total - FAMILY_TOTALS.deposit;
-    list.innerHTML = `
-      <table class="table is-fullwidth is-striped is-hoverable is-size-7 mt-2">
-        <thead>
-          <tr style="background:#e8f5e9;">
-            <th>Cognome Nome</th>
-            <th>N° Tessera</th>
-            <th>Tipologia</th>
-            <th style="text-align:right">Totale</th>
-            <th style="text-align:right">Acconto</th>
-            <th style="text-align:right">Saldo</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          ${members.map(s => `
-            <tr>
-              <td><strong>${s.lastName} ${s.firstName}</strong></td>
-              <td>${s.cardNumber || "—"}</td>
-              <td>${s.membership || "—"}</td>
-              <td style="text-align:right">${s.total || 0}€</td>
-              <td style="text-align:right">${s.deposit || 0}€</td>
-              <td style="text-align:right;font-weight:bold;color:${parseFloat(s.balance) > 0 ? '#d9534f' : '#198754'}">
-                ${s.balance || 0}€
-              </td>
-              <td>
-                <button type="button" class="button is-small is-link is-light"
-                        onclick='loadMember(${JSON.stringify(s)})'>
-                  Modifica
-                </button>
-              </td>
-            </tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr style="background:#d4edda;font-weight:bold;font-size:0.8rem;">
-            <td colspan="3">TOTALE NUCLEO FAMILIARE (${members.length} familiare/i)</td>
-            <td style="text-align:right">${totalFamily}€</td>
-            <td style="text-align:right">${depositFamily}€</td>
-            <td style="text-align:right;color:${balanceFamily > 0 ? '#d9534f' : '#198754'}">${balanceFamily}€</td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>`;
-
-    panel.style.display = 'block';
-    calc();
+  // memberId è l'ID del socio corrente (che potrebbe essere un capofamiglia)
+  if (!memberId || DB.length === 0) {
+    panel.style.display = 'none';
+    FAMILY_TOTALS = { total: 0, deposit: 0 };
+    return;
   }
+
+  // Cerchiamo tutti i soci che hanno l'ID di questo socio nel campo payerCode
+  const members = DB.filter(s => s.payerCode === memberId);
+
+  if (members.length === 0) {
+    panel.style.display = 'none';
+    FAMILY_TOTALS = { total: 0, deposit: 0 };
+    calc();
+    return;
+  }
+
+  FAMILY_TOTALS.total = members.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+  FAMILY_TOTALS.deposit = members.reduce((sum, s) => sum + (parseFloat(s.deposit) || 0), 0);
+  const balanceFamily = FAMILY_TOTALS.total - FAMILY_TOTALS.deposit;
+
+  list.innerHTML = `
+    <table class="table is-fullwidth is-striped is-hoverable is-size-7 mt-2">
+      <thead>
+        <tr style="background:#e8f5e9;">
+          <th>Cognome Nome</th>
+          <th>N° Tessera</th>
+          <th style="text-align:right">Totale</th>
+          <th style="text-align:right">Saldo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${members.map(s => `
+          <tr>
+            <td><strong>${s.lastName} ${s.firstName}</strong></td>
+            <td>${s.cardNumber || "—"}</td>
+            <td style="text-align:right">${s.total || 0}€</td>
+            <td style="text-align:right;font-weight:bold;color:${parseFloat(s.balance) > 0 ? '#d9534f' : '#198754'}">
+              ${s.balance || 0}€
+            </td>
+            <td>
+              <button type="button" class="button is-small is-link is-light" onclick='loadMember(${JSON.stringify(s)})'>
+                Modifica
+              </button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr style="background:#d4edda;font-weight:bold;">
+          <td colspan="2">TOTALE NUCLEO (${members.length} familiari)</td>
+          <td style="text-align:right">${FAMILY_TOTALS.total}€</td>
+          <td style="text-align:right;color:${balanceFamily > 0 ? '#d9534f' : '#198754'}">${balanceFamily}€</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>`;
+
+  panel.style.display = 'block';
+  calc();
+}
 
   // ===================== RESET FORM =====================
   function resetForm() {
