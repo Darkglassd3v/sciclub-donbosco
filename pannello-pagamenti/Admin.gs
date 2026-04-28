@@ -15,26 +15,31 @@ function getAdminData() {
     : new Date(now.getFullYear() - 1, 8, 1);
 
   const allMembers = [];
-
   for (let i = 1; i < data.length; i++) {
     const r = data[i];
     const timestamp = r[0];
+    const policy = r[1] ? r[1].toString().trim() : "";
+    const balance = parseFloat(r[22]) || 0;
     const isCurrentSeason = timestamp && (new Date(timestamp) >= seasonStart);
 
-    if (isCurrentSeason) {
-      allMembers.push({
-        row: i + 2,
+    if (isCurrentSeason && (balance > 0 || policy === "")) {
+      const member = {
+        row: i + 1,
         id: r[23] ? r[23].toString().trim() : "",
         lastName: r[2],
         firstName: r[3],
+        taxCode: r[6] ? r[6].toString().toUpperCase().trim() : "",
         membership: r[14],
+        course: r[19],
         total: parseFloat(r[20]) || 0,
+        familyTotal: parseFloat(r[26]) || 0, // Colonna AA (27esima, indice 26)
         deposit: parseFloat(r[21]) || 0,
-        balance: parseFloat(r[22]) || 0,
-        policy: r[1] ? r[1].toString().trim() : "",
+        balance: balance,
+        policy: policy,
         cardNumber: r[24] ? r[24].toString() : "",
         paymentId: r[25] ? r[25].toString().trim() : ""
-      });
+      };
+      allMembers.push(member);
     }
   }
 
@@ -43,16 +48,20 @@ function getAdminData() {
 
   allMembers.forEach(m => {
     if (!m.paymentId) {
-      const dependents = allMembers.filter(d => d.paymentId === m.id && d.row !== m.row);
-      const familyTotal = dependents.reduce((sum, d) => sum + d.total, 0);
-      const familyBalance = dependents.reduce((sum, d) => sum + d.balance, 0);
+      const dependents = allMembers.filter(d => d.paymentId === m.id || d.paymentId === m.taxCode);
+
+      // LOGICA RICHIESTA: Totale Pagante = Totale Personale + Totale Familiari
+      const unitTotalCombined = m.total + m.familyTotal;
+      const unitBalanceCalculated = unitTotalCombined - m.deposit;
 
       units.push({
         payer: m,
         dependents: dependents,
-        unitTotal: m.total + familyTotal,
-        unitBalance: m.balance + familyBalance
+        unitTotal: unitTotalCombined,
+        unitDeposit: m.deposit,
+        unitBalance: unitBalanceCalculated
       });
+
       processedRows.add(m.row);
       dependents.forEach(d => processedRows.add(d.row));
     }
@@ -60,35 +69,35 @@ function getAdminData() {
 
   allMembers.forEach(m => {
     if (!processedRows.has(m.row)) {
-      units.push({ payer: m, dependents: [], unitTotal: m.total, unitBalance: m.balance });
+      units.push({
+        payer: m,
+        dependents: [],
+        unitTotal: m.total,
+        unitDeposit: m.deposit,
+        unitBalance: m.balance,
+        isOrphan: true
+      });
     }
   });
 
-  // Filtro: solo chi deve ancora pagare
-  const filteredUnits = units.filter(u => u.unitBalance > 0);
-  filteredUnits.sort((a, b) => a.payer.lastName.localeCompare(b.payer.lastName));
-
-  // Calcolo Totale Generale da incassare
-  const grandTotalBalance = filteredUnits.reduce((sum, u) => sum + u.unitBalance, 0);
-
-  return {
-    units: filteredUnits,
-    stats: {
-      totalToCollect: grandTotalBalance,
-      pendingCount: filteredUnits.length
-    }
-  };
+  units.sort((a, b) => a.payer.lastName.localeCompare(b.payer.lastName));
+  return units;
 }
 
 function updateAdminMember(rowId, deposit, policy, unitTotal) {
   const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
   const sheet = ss.getSheetByName("SOCI");
+
   const newDeposit = parseFloat(deposit);
   const totalCost = parseFloat(unitTotal);
 
+  // Aggiorna polizza (Col B - indice 2) e acconto (Col V - indice 22)
   sheet.getRange(rowId, 2).setValue(policy);
   sheet.getRange(rowId, 22).setValue(newDeposit);
-  sheet.getRange(rowId, 23).setValue(totalCost - newDeposit);
+
+  // Ricalcola il saldo (Col W - indice 23)
+  const newBalance = totalCost - newDeposit;
+  sheet.getRange(rowId, 23).setValue(newBalance);
 
   return "OK";
 }

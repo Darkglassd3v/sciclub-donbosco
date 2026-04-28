@@ -302,7 +302,7 @@
     if (s.payerCode) {
       enablePayerSection();
       // Cerchiamo nel DB il socio che ha come ID il payerCode del socio corrente
-      const payer = DB.find(m => m.id === s.payerCode);
+      const payer = DB.find(m => m.id === s.pamyerCode);
       document.getElementById('f_payerDisplay').value = payer
         ? payer.lastName + " " + payer.firstName
         : "ID Pagante: " + s.payerCode;
@@ -316,7 +316,9 @@
       let val = s[id.split('_')[1]];
       sel.selectedIndex = 0;
       for (let i = 0; i < sel.options.length; i++) {
-        if (val && sel.options[i].text.includes(val)) { sel.selectedIndex = i; break; }
+        const optName = sel.options[i].text.split(' (')[0].trim().toLowerCase();
+        const valNorm = val.toString().trim().toLowerCase();
+        if (val && optName === valNorm) { sel.selectedIndex = i; break; }
       }
     });
 
@@ -465,7 +467,7 @@ function loadFamilyPanel(memberId) {
   }
 
   // Cerchiamo tutti i soci che hanno l'ID di questo socio nel campo payerCode
-  const members = DB.filter(s => s.payerCode === memberId);
+  const members = DB.filter(s => s.payerCode && s.payerCode.trim() === memberId.trim());
 
   if (members.length === 0) {
     panel.style.display = 'none';
@@ -591,8 +593,12 @@ function loadFamilyPanel(memberId) {
       course: getT('f_course'),
       sunday: getChecks('check_sunday'),
       saturday: getChecks('check_saturday'),
-      total: document.getElementById('v_total').innerText,
-      deposit: document.getElementById('f_deposit').value,
+      total: (parseInt(document.getElementById('f_membership').value) || 0) +
+             (parseInt(document.getElementById('f_family').value) || 0) +
+             (parseInt(document.getElementById('f_subscription').value) || 0) +
+             (parseInt(document.getElementById('f_course').value) || 0),
+      deposit: parseInt(document.getElementById('f_deposit').value) || 0,
+      get balance() { return this.total - this.deposit; },
       balance: document.getElementById('v_balance').innerText,
       policy: document.getElementById('f_policy').value,
       // NUOVO

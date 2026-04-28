@@ -117,18 +117,51 @@ function saveMember(d) {
         d.payerCode       // col 26 - NUOVO: codice fiscale del pagante (capofamiglia)
     ];
 
-    if (d.row > 0) {
-        sheet.getRange(parseInt(d.row), 1, 1, rowData.length).setValues([rowData]);
-    } else {
-        sheet.appendRow(rowData);
-    }
+    // Leggi vecchio payerCode PRIMA di sovrascrivere (per aggiornare l'ex-pagante)
+        let oldPayerCode = "";
+        if (d.row > 0) {
+          try {
+            const oldVal = sheet.getRange(parseInt(d.row), 26, 1, 1).getValues()[0][0];
+            oldPayerCode = oldVal ? oldVal.toString().trim() : "";
+          } catch(e) {}
+        }
+
+        if (d.row > 0) {
+            sheet.getRange(parseInt(d.row), 1, 1, rowData.length).setValues([rowData]);
+        } else {
+            sheet.appendRow(rowData);
+        }
+
+        // Aggiorna TOTALE FAMILIARI per: nuovo pagante, vecchio pagante (se cambiato), e se questo socio è esso stesso pagante
+        const toUpdate = new Set([d.payerCode, oldPayerCode, d.id].filter(Boolean));
+        toUpdate.forEach(uid => updateFamilyTotal(sheet, uid));
 
     if (d.sendEmail) {
     sendSummaryEmail(d);
     return "✅ Socio " + d.lastName + " salvato e email inviata!";
 }
 
-return "✅ Modifiche salvate per " + d.lastName;
+return "✅ Modifiche salvate per " + d.lastName+" "+d.firstName;
+}
+
+function updateFamilyTotal(sheet, payerUUID) {
+  if (!payerUUID) return;
+  const data = sheet.getDataRange().getValues();
+  let payerRow = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][23] && data[i][23].toString().trim() === payerUUID.trim()) {
+      payerRow = i + 1; // 1-indexed
+      break;
+    }
+  }
+  if (payerRow === -1) return;
+  let familyTotal = 0;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][25] && data[i][25].toString().trim() === payerUUID.trim()) {
+      familyTotal += parseFloat(data[i][20]) || 0;
+    }
+  }
+  sheet.getRange(payerRow, 27).setValue(familyTotal > 0 ? familyTotal : "");
 }
 
 function sendSummaryEmail(d) {

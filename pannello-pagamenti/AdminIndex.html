@@ -6,139 +6,116 @@
     <style>
         body { background-color: #f4f7f9; color: #333; font-family: 'Segoe UI', sans-serif; padding: 20px; }
         .main-container { max-width: 1200px; margin: 0 auto; }
-        .dashboard-box { background: #3273dc; color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .stat-item { text-align: center; }
-        .stat-value { font-size: 1.8rem; font-weight: 800; display: block; }
-        .stat-label { font-size: 0.85rem; text-transform: uppercase; opacity: 0.9; }
+        .header-section { background: white; border-radius: 4px; padding: 15px 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-bottom: 3px solid #3273dc; }
         .unit-card { background: white; border-radius: 4px; margin-bottom: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.08); overflow: hidden; }
         .unit-header { background: #2196F3; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .unit-title { font-size: 1rem; font-weight: 600; }
+        .unit-header .unit-title { font-size: 1rem; font-weight: 600; text-transform: uppercase; }
+        .unit-header .unit-badge { background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 3px; font-size: 0.9rem; }
         .custom-table { width: 100%; border-collapse: collapse; }
-        .custom-table thead th { background: #ffffff; color: #4a4a4a; font-weight: 700; font-size: 0.85rem; padding: 12px; border-bottom: 2px solid #eeeeee; }
         .row-payer { background: #ffffff; }
         .row-dependent { background: #f9fbfc; border-left: 4px solid #3273dc; }
-        .custom-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
-        .status-tag { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 3px; display: inline-block; }
-        .tag-dependent { background: #fffbeb; color: #947600; border: 1px solid #ffe08a; }
-        .input-field { width: 100%; padding: 8px; border: 1px solid #dbdbdb; border-radius: 4px; font-size: 0.9rem; }
+        .custom-table td, .custom-table th { padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        .input-field { width: 100%; padding: 8px; border: 1px solid #dbdbdb; border-radius: 4px; }
         .input-readonly { background-color: #f5f5f5; color: #7a7a7a; cursor: not-allowed; }
         .btn-save { background-color: #48c774; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: 600; cursor: pointer; width: 100%; }
+        .btn-save:hover { background-color: #3eb464; }
         .balance-negative { color: #cc0000; font-weight: 700; }
-        .help-text { font-size: 0.75rem; color: #666; margin-top: 2px; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3273dc; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 <div class="main-container">
-    <div id="statsArea" class="dashboard-box" style="display:none;">
-        <div class="stat-item">
-            <span class="stat-label">Da Incassare Totale</span>
-            <span id="grandTotal" class="stat-value">0.00€</span>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Nuclei in Sospeso</span>
-            <span id="pendingCount" class="stat-value">0</span>
-        </div>
-        <div class="stat-item">
-            <button class="button is-light is-small" onclick="loadData()">🔄 Aggiorna</button>
+    <div class="header-section">
+        <div class="level">
+            <div class="level-left"><h1 class="title is-4">📊 Gestione Incassi</h1></div>
+            <div class="level-right"><button class="button is-link" onclick="loadData()">🔄 Aggiorna</button></div>
         </div>
     </div>
-
     <div id="displayArea"></div>
 </div>
 
-<div id="loadingOverlay" class="loading-overlay" style="display:none;"><div class="loader"></div></div>
+<div id="loadingOverlay" class="loading-overlay"><div class="loader"></div></div>
 
 <script>
     window.onload = loadData;
 
     function loadData() {
       document.getElementById('loadingOverlay').style.display = 'flex';
-      google.script.run.withSuccessHandler(render).withFailureHandler(handleError).getAdminData();
+      google.script.run.withSuccessHandler(render).getAdminData();
     }
 
-    function render(response) {
+    function render(units) {
       document.getElementById('loadingOverlay').style.display = 'none';
-      const statsArea = document.getElementById('statsArea');
       const container = document.getElementById('displayArea');
-
-      // Aggiorna Dashboard
-      statsArea.style.display = 'flex';
-      document.getElementById('grandTotal').innerText = response.stats.totalToCollect.toFixed(2) + "€";
-      document.getElementById('pendingCount').innerText = response.stats.pendingCount;
-
       container.innerHTML = "";
-      if (response.units.length === 0) {
-        container.innerHTML = `<div class="notification is-success has-text-centered">✅ Ottimo! Non ci sono pagamenti in sospeso.</div>`;
-        return;
-      }
 
-      response.units.forEach(u => {
+      units.forEach(u => {
         const card = document.createElement('div');
         card.className = "unit-card";
-        const hasFamily = u.dependents && u.dependents.length > 0;
-
         card.innerHTML = `
           <div class="unit-header">
             <span class="unit-title">👤 ${u.payer.lastName} ${u.payer.firstName}</span>
-            <span>Saldo Nucleo: <strong>${u.unitBalance.toFixed(2)}€</strong></span>
+            <span class="unit-badge">Totale Nucleo: ${u.unitTotal.toFixed(2)}€</span>
           </div>
           <table class="custom-table">
             <thead>
               <tr>
-                <th style="width:25%">Socio</th>
-                <th style="width:18%">Acconto (€)</th>
-                <th style="width:12%">Saldo</th>
-                <th style="width:20%">Polizza</th>
-                <th style="width:15%">Tessera</th>
-                <th style="width:10%"></th>
+                <th>Socio</th>
+                <th>Acconto (€)</th>
+                <th>Saldo</th>
+                <th>Polizza</th>
+                <th>Azione</th>
               </tr>
             </thead>
             <tbody>
-              ${renderRow(u.payer, false, hasFamily, u.unitTotal, u.unitBalance)}
-              ${u.dependents.map(d => renderRow(d, true, false)).join('')}
+              ${renderRow(u.payer, false, u.unitTotal, u.unitBalance)}
+              ${u.dependents.map(d => renderRow(d, true)).join('')}
             </tbody>
           </table>`;
         container.appendChild(card);
       });
     }
 
-    function renderRow(member, isDependent, hasDependents, unitTotal, unitBalance) {
-      const displayBalance = (!isDependent && hasDependents) ? unitBalance : member.balance;
-      const displayTotal = (!isDependent && hasDependents) ? unitTotal : member.total;
-
-      let depositField = isDependent ?
-        `<input type="number" class="input-field input-readonly" value="${member.deposit}" readonly><div class="help-text">Quota: ${member.total}€</div>` :
-        `<input type="number" id="dep_${member.row}" class="input-field" value="${member.deposit}"><div class="help-text">Tot Nucleo: ${displayTotal}€</div>`;
-
-      let actionCell = isDependent ?
-        `<small style="color:#888;">A carico</small>` :
-        `<button class="btn-save" onclick="saveRow(${member.row}, this, ${displayTotal})">💾 Salva</button>`;
+    function renderRow(m, isDep, unitTotal, unitBalance) {
+      const rowClass = isDep ? 'row-dependent' : 'row-payer';
+      const bal = isDep ? m.balance : unitBalance;
+      const balClass = bal > 0 ? 'balance-negative' : '';
 
       return `
-        <tr class="${isDependent ? 'row-dependent' : 'row-payer'}">
+        <tr class="${rowClass}">
+          <td><b>${m.lastName} ${m.firstName}</b>${isDep ? ' <small>(fam)</small>' : ''}</td>
           <td>
-            <div style="font-weight:700;">${member.lastName} ${member.firstName}</div>
-            ${isDependent ? '<span class="status-tag tag-dependent">FAMILIARE</span>' : ''}
+            ${isDep ? m.deposit : `<input type="number" id="dep_${m.row}" class="input-field" value="${m.deposit}">`}
           </td>
-          <td>${depositField}</td>
-          <td><div class="balance-negative">${displayBalance.toFixed(2)}€</div></td>
-          <td><input type="text" id="pol_${member.row}" class="input-field" value="${member.policy || ''}" ${isDependent ? 'readonly' : ''}></td>
-          <td><input type="text" class="input-field input-readonly" value="${member.cardNumber || '—'}" readonly></td>
-          <td class="has-text-centered">${actionCell}</td>
+          <td class="${balClass}">${bal.toFixed(2)}€</td>
+          <td>
+            ${isDep ? m.policy : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
+          </td>
+          <td>
+            ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row}, ${unitTotal})">Salva</button>`}
+          </td>
         </tr>`;
     }
 
-    function saveRow(rowId, btn, unitTotal) {
-      const deposit = document.getElementById('dep_' + rowId).value;
-      const policy = document.getElementById('pol_' + rowId).value;
-      btn.classList.add('is-loading');
-      google.script.run.withSuccessHandler(loadData).updateAdminMember(rowId, deposit, policy, unitTotal);
-    }
+    function handleSave(rowId, unitTotal) {
+      const dep = document.getElementById('dep_' + rowId).value;
+      const pol = document.getElementById('pol_' + rowId).value;
 
-    function handleError(error) { alert('Errore: ' + error.message); }
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      google.script.run
+        .withSuccessHandler(() => {
+          alert("Dati aggiornati!");
+          loadData();
+        })
+        .withFailureHandler(err => {
+          alert("Errore: " + err);
+          document.getElementById('loadingOverlay').style.display = 'none';
+        })
+        .updateAdminMember(rowId, dep, pol, unitTotal);
+    }
 </script>
 </body>
 </html>
