@@ -52,13 +52,13 @@ function getAdminData() {
 
     const dependents = allMembers.filter(d => d.paymentId === m.id);
 
-    // Saldo nucleo = saldo personale pagante + somma saldi familiari.
-    // Se un familiare ha già pagato (balance=0) non incide sul totale da incassare.
-    const unitBalance = m.balance + dependents.reduce((s, d) => s + d.balance, 0);
-    const unitTotal   = m.total   + dependents.reduce((s, d) => s + d.total,   0);
+    // Usa sempre total-deposit per evitare dati stale nel campo balance.
+    const pBal = x => x.total - x.deposit;
+    const unitBalance = pBal(m) + dependents.reduce((s, d) => s + pBal(d), 0);
+    const unitTotal   = m.total  + dependents.reduce((s, d) => s + d.total,   0);
     const unitDeposit = m.deposit + dependents.reduce((s, d) => s + d.deposit, 0);
 
-    if (unitBalance <= 0 && m.policy !== "") return; // nucleo a posto, non mostrare
+    if (unitBalance <= 0 && m.policy !== "") return;
 
     units.push({
       payer: m,
@@ -75,16 +75,17 @@ function getAdminData() {
   // Soci senza pagante (orfani)
   allMembers.forEach(m => {
     if (processedIds.has(m.id)) return;
-    if (m.balance <= 0 && m.policy !== "") return;
+    const orphanBalance = m.total - m.deposit;
+    if (orphanBalance <= 0 && m.policy !== "") return;
     units.push({
       payer: m,
       dependents: [],
       unitTotal: m.total,
       unitDeposit: m.deposit,
-      unitBalance: m.balance,
+      unitBalance: orphanBalance,
       isOrphan: true
     });
-    grandTotal += m.balance;
+    grandTotal += orphanBalance;
     processedIds.add(m.id);
   });
 
@@ -92,20 +93,17 @@ function getAdminData() {
   return {units,grandTotal};
 }
 
-function updateAdminMember(rowId, deposit, policy, unitTotal) {
+function updateAdminMember(rowId, deposit, policy) {
   const ss = SpreadsheetApp.openById("1z41N7ofw3bJK9n8f9w2DJgIgMoXW0WLfY8Xs10MnbzQ");
   const sheet = ss.getSheetByName("SOCI");
 
-  const newDeposit = parseFloat(deposit);
-  const totalCost = parseFloat(unitTotal);
+  const newDeposit = parseFloat(deposit) || 0;
+  // Legge il totale personale direttamente dal foglio (col 21, indice 20)
+  const personalTotal = parseFloat(sheet.getRange(rowId, 21).getValue()) || 0;
 
-  // Aggiorna polizza (Col B - indice 2) e acconto (Col V - indice 22)
   sheet.getRange(rowId, 2).setValue(policy);
   sheet.getRange(rowId, 22).setValue(newDeposit);
-
-  // Ricalcola il saldo (Col W - indice 23)
-  const newBalance = totalCost - newDeposit;
-  sheet.getRange(rowId, 23).setValue(newBalance);
+  sheet.getRange(rowId, 23).setValue(personalTotal - newDeposit);
 
   return "OK";
 }

@@ -609,7 +609,6 @@ function loadFamilyPanel(memberId) {
              (parseInt(document.getElementById('f_course').value) || 0),
       deposit: parseInt(document.getElementById('f_deposit').value) || 0,
       get balance() { return this.total - this.deposit; },
-      balance: document.getElementById('v_balance').innerText,
       policy: document.getElementById('f_policy').value,
       // NUOVO
       cardNumber: document.getElementById('f_cardNumber').value,

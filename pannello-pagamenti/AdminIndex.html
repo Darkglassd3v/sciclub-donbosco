@@ -109,12 +109,12 @@
           ${isDep ? m.policy : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
         </td>
         <td>
-          ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row}, ${unitTotal})">Salva</button>`}
+          ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row})">Salva</button>`}
         </td>
       </tr>`;
     }
 
-    function handleSave(rowId, unitTotal) {
+    function handleSave(rowId) {
       const dep = document.getElementById('dep_' + rowId).value;
       const pol = document.getElementById('pol_' + rowId).value;
 
@@ -129,7 +129,7 @@
           alert("Errore: " + err);
           document.getElementById('loadingOverlay').style.display = 'none';
         })
-        .updateAdminMember(rowId, dep, pol, unitTotal);
+        .updateAdminMember(rowId, dep, pol);
     }
 </script>
 </body>
