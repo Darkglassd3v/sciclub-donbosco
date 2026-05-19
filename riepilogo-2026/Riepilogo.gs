@@ -9,7 +9,16 @@ function doGet() {
 
 function getRiepilogo() {
   const ss = SpreadsheetApp.openById(SS_ID);
-  const rows = ss.getSheetByName("SOCI").getDataRange().getValues().slice(1).filter(r => r[2]);
+  const now = new Date();
+  const seasonStart = (now.getMonth() >= 8)
+    ? new Date(now.getFullYear(), 8, 1)
+    : new Date(now.getFullYear() - 1, 8, 1);
+
+  const rows = ss.getSheetByName("SOCI").getDataRange().getValues().slice(1).filter(r => {
+    if (!r[2]) return false;
+    const ts = r[0];
+    return ts && (new Date(ts) >= seasonStart);
+  });
 
   const tessere = {};
   const abbonamenti = {};

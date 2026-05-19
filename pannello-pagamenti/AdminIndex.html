@@ -72,8 +72,9 @@
             <thead>
               <tr>
                 <th>Socio</th>
+                <th>Totale (€)</th>
                 <th>Acconto (€)</th>
-                <th>Saldo</th>
+                <th>Saldo (€)</th>
                 <th>Polizza</th>
                 <th>Azione</th>
               </tr>
@@ -89,26 +90,30 @@
 
     function renderRow(m, isDep, unitTotal, unitBalance) {
       const rowClass = isDep ? 'row-dependent' : 'row-payer';
-      const bal = isDep ? m.balance : unitBalance;
-      const balClass = bal > 0 ? 'balance-negative' : '';
+      const displayTotal = isDep ? m.total : unitTotal;
+      const displayBal   = isDep ? (m.total - m.deposit) : unitBalance;
+      const balStyle = displayBal > 0
+        ? 'font-weight:700; color:#fff; background:#e53935; padding:4px 8px; border-radius:4px;'
+        : 'font-weight:700; color:#fff; background:#43a047; padding:4px 8px; border-radius:4px;';
 
       return `
         <tr class="${rowClass}">
         <td>
-          <b>${m.lastName} ${m.firstName}</b>${isDep ? ' <small>(fam)</small>' : ''}
-          <div style="display: flex; flex-direction: column; font-size: 0.85em; margin-top: 4px; color: #555;">
+          <b>${m.lastName} ${m.firstName}</b>${isDep ? ' <small style="color:#888">(fam)</small>' : ''}
+          <div style="display:flex; flex-direction:column; font-size:0.82em; margin-top:4px; color:#666;">
             <span>${m.membership}</span>
             ${m.facilitation && m.facilitation.toLowerCase() !== 'no' ? `<span>${m.facilitation}</span>` : ''}
             ${m.subscription && m.subscription.toLowerCase() !== 'no' ? `<span>${m.subscription}</span>` : ''}
             ${m.course && m.course.toLowerCase() !== 'no' ? `<span>${m.course}</span>` : ''}
           </div>
         </td>
+        <td style="font-weight:600">${displayTotal.toFixed(2)}€</td>
         <td>
-          ${isDep ? m.deposit : `<input type="number" id="dep_${m.row}" class="input-field" value="${m.deposit}">`}
+          ${isDep ? m.deposit.toFixed(2) + '€' : `<input type="number" id="dep_${m.row}" class="input-field" value="${m.deposit}">`}
         </td>
-        <td class="${balClass}">${bal.toFixed(2)}€</td>
+        <td><span style="${balStyle}">${displayBal.toFixed(2)}€</span></td>
         <td>
-          ${isDep ? m.policy : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
+          ${isDep ? (m.policy || '—') : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
         </td>
         <td>
           ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row})">Salva</button>`}
