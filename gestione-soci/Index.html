@@ -241,13 +241,11 @@
   }
   // ===================== RICERCA SOCI =====================
   function showSearch() {
-    if (DB.length > 0) {
-      document.getElementById('searchZone').style.display = 'block';
-      return;
+    document.getElementById('searchZone').style.display = 'block';
+    document.getElementById('searchInput').focus();
+    if (DB.length === 0) {
+      loadDatabase();
     }
-    loadDatabase(() => {
-      document.getElementById('searchZone').style.display = 'block';
-    });
   }
 
   function loadDatabase(callback) {
@@ -259,12 +257,19 @@
     }).getMembers();
   }
 
+  function matchQuery(fullName, q) {
+    const terms = q.split(/\s+/).filter(t => t.length > 0);
+    const name = fullName.toLowerCase();
+    return terms.every(t => name.includes(t));
+  }
+
   function filterDb() {
     const q = document.getElementById('searchInput').value.toLowerCase().trim();
     const box = document.getElementById('searchResults');
     if (q.length < 2) { box.innerHTML = ""; return; }
+    if (DB.length === 0) { box.innerHTML = '<p class="help">Caricamento in corso...</p>'; return; }
     const res = DB.filter(s =>
-      (s.lastName + " " + s.firstName).toLowerCase().includes(q) ||
+      matchQuery(s.lastName + " " + s.firstName, q) ||
       s.taxCode.toLowerCase().includes(q)
     ).slice(0, 6);
     box.innerHTML = res.map(s =>
@@ -302,7 +307,7 @@
     if (s.payerCode) {
       enablePayerSection();
       // Cerchiamo nel DB il socio che ha come ID il payerCode del socio corrente
-      const payer = DB.find(m => m.id === s.pamyerCode);
+      const payer = DB.find(m => m.id === s.payerCode);
       document.getElementById('f_payerDisplay').value = payer
         ? payer.lastName + " " + payer.firstName
         : "ID Pagante: " + s.payerCode;
@@ -335,6 +340,8 @@
     document.getElementById('btnSave').innerText = "SALVA LE MODIFICHE";
     calc();
     document.getElementById('searchZone').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
 
     // NUOVO: mostra pannello familiari a carico (questo socio paga per altri?)
     loadFamilyPanel(s.id);
@@ -419,7 +426,7 @@ function filterPayer() {
 
   const currentId = document.getElementById('f_id_hidden').value;
   const res = DB.filter(s =>
-    (s.lastName + " " + s.firstName).toLowerCase().includes(q) &&
+    matchQuery(s.lastName + " " + s.firstName, q) &&
     s.id !== currentId
   ).slice(0, 6);
 
@@ -527,7 +534,10 @@ function loadFamilyPanel(memberId) {
     document.getElementById('f_row').value = "";
     document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
     document.getElementById('btnSave').innerText = "SALVA E INVIA EMAIL";
-    FAMILY_TOTALS = { total: 0, deposit: 0 }
+    FAMILY_TOTALS = { total: 0, deposit: 0 };
+    document.getElementById('searchZone').style.display = 'none';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
     // NUOVO: reset campi aggiuntivi e DISABILITA sezione pagante
     document.getElementById('f_cardNumber').value = "";
     disablePayerSection();
