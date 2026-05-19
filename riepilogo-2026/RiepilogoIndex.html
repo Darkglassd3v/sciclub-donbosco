@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <style>
+    body { background: #f4f7f9; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+    .main { max-width: 1200px; margin: 0 auto; }
+    .page-header { background: white; border-radius: 6px; padding: 18px 25px; margin-bottom: 24px;
+                   box-shadow: 0 1px 4px rgba(0,0,0,0.1); border-bottom: 3px solid #1a73e8;
+                   display: flex; justify-content: space-between; align-items: center; }
+    .stat-card { background: white; border-radius: 8px; padding: 20px 25px;
+                 box-shadow: 0 2px 6px rgba(0,0,0,0.08); text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 800; display: block; line-height: 1.1; }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-top: 4px; }
+    .section-card { background: white; border-radius: 8px; overflow: hidden;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 24px; }
+    .section-header { padding: 12px 20px; font-weight: 700; font-size: 0.85rem;
+                      text-transform: uppercase; letter-spacing: 0.5px; color: white; }
+    .bg-blue   { background: #1a73e8; }
+    .bg-green  { background: #198754; }
+    .bg-orange { background: #e67e22; }
+    .bg-purple { background: #8e44ad; }
+    .bg-teal   { background: #16a085; }
+    .section-body { padding: 0; }
+    table.rtable { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    table.rtable th { background: #f8f9fa; padding: 9px 14px; text-align: left;
+                      font-size: 0.78rem; text-transform: uppercase; color: #666; }
+    table.rtable td { padding: 9px 14px; border-top: 1px solid #f0f0f0; }
+    table.rtable tr:last-child.total-row td { background: #f0f7ff; font-weight: 700; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+    .badge-blue   { background: #e3f0ff; color: #1a73e8; }
+    .badge-green  { background: #e8f5e9; color: #198754; }
+    .badge-red    { background: #fdecea; color: #d32f2f; }
+    .loader-wrap { position: fixed; inset: 0; background: rgba(255,255,255,0.85);
+                   display: flex; justify-content: center; align-items: center; z-index: 999; }
+    .spinner { width: 44px; height: 44px; border: 5px solid #e0e0e0;
+               border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div id="loader" class="loader-wrap"><div class="spinner"></div></div>
+
+<div class="main">
+  <div class="page-header">
+    <div>
+      <h1 class="title is-4 mb-0">📊 Riepilogo Sci Club Don Bosco 2026</h1>
+      <p id="lastUpdate" class="is-size-7 has-text-grey mt-1"></p>
+    </div>
+    <button class="button is-link is-small" onclick="load()">🔄 Aggiorna</button>
+  </div>
+
+  <!-- KPI -->
+  <div class="columns mb-4" id="kpiRow">
+    <div class="column"><div class="stat-card"><span class="stat-value has-text-link" id="kSoci">—</span><span class="stat-label">Soci Iscritti</span></div></div>
+    <div class="column"><div class="stat-card"><span class="stat-value has-text-dark" id="kTeor">—</span><span class="stat-label">Totale Teorico</span></div></div>
+    <div class="column"><div class="stat-card"><span class="stat-value has-text-success" id="kInc">—</span><span class="stat-label">Totale Incassato</span></div></div>
+    <div class="column"><div class="stat-card"><span class="stat-value has-text-danger" id="kDa">—</span><span class="stat-label">Da Incassare</span></div></div>
+  </div>
+
+  <div class="columns">
+    <!-- GITE SABATO -->
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-blue">🚌 Gite Sabato — per Partenza</div>
+        <div class="section-body">
+          <table class="rtable">
+            <thead><tr><th>Partenza</th><th>Iscritti</th></tr></thead>
+            <tbody id="tGiteSab"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- GITE DOMENICA -->
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-blue">🚌 Gite Domenica — per Partenza</div>
+        <div class="section-body">
+          <table class="rtable">
+            <thead><tr><th>Partenza</th><th>Iscritti</th></tr></thead>
+            <tbody id="tGiteDom"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="columns">
+    <!-- CORSI -->
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-green">🎿 Corsi Sci / Snow</div>
+        <div class="section-body">
+          <table class="rtable">
+            <thead><tr><th>Tipo Corso</th><th>Iscritti</th></tr></thead>
+            <tbody id="tCorsi"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ABBONAMENTI -->
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-teal">🎫 Abbonamenti</div>
+        <div class="section-body">
+          <table class="rtable">
+            <thead><tr><th>Tipo</th><th>Iscritti</th></tr></thead>
+            <tbody id="tAbb"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- TESSERE -->
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-purple">🪪 Tessere</div>
+        <div class="section-body">
+          <table class="rtable">
+            <thead><tr><th>Tipo</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead>
+            <tbody id="tTess"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.onload = load;
+
+  function load() {
+    document.getElementById('loader').style.display = 'flex';
+    google.script.run.withSuccessHandler(render).withFailureHandler(err => {
+      alert('Errore: ' + err.message);
+      document.getElementById('loader').style.display = 'none';
+    }).getRiepilogo();
+  }
+
+  function fmt(n) { return '€ ' + parseFloat(n).toFixed(2).replace('.', ','); }
+
+  function render(d) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('lastUpdate').textContent = 'Aggiornato: ' + d.lastUpdate;
+
+    document.getElementById('kSoci').textContent = d.totalSoci;
+    document.getElementById('kTeor').textContent = fmt(d.totalTeor);
+    document.getElementById('kInc').textContent  = fmt(d.totalInc);
+    document.getElementById('kDa').textContent   = fmt(d.daIncassare);
+
+    fillCount('tGiteSab', d.giteSabato);
+    fillCount('tGiteDom', d.giteDomenica);
+    fillCount('tCorsi',   d.corsi);
+    fillCount('tAbb',     d.abbonamenti);
+    fillTessere('tTess',  d.tessere);
+  }
+
+  function fillCount(id, obj) {
+    const tbody = document.getElementById(id);
+    const entries = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
+    if (!entries.length) { tbody.innerHTML = '<tr><td colspan="2" class="has-text-grey-light has-text-centered py-3">—</td></tr>'; return; }
+    const total = entries.reduce((s, [, v]) => s + v, 0);
+    tbody.innerHTML = entries.map(([k, v]) =>
+      `<tr><td>${k}</td><td><span class="badge badge-blue">${v}</span></td></tr>`
+    ).join('') + `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${total}</span></td></tr>`;
+  }
+
+  function fillTessere(id, obj) {
+    const tbody = document.getElementById(id);
+    const entries = Object.entries(obj || {}).sort((a, b) => b[1].count - a[1].count);
+    if (!entries.length) { tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>'; return; }
+    const totCount = entries.reduce((s, [, v]) => s + v.count, 0);
+    const totPrice = entries.reduce((s, [, v]) => s + (v.total || 0), 0);
+    tbody.innerHTML = entries.map(([k, v]) =>
+      `<tr>
+        <td>${k}</td>
+        <td><span class="badge badge-blue">${v.count}</span></td>
+        <td>${v.price ? fmt(v.price) : '—'}</td>
+        <td>${v.total ? fmt(v.total) : '—'}</td>
+      </tr>`
+    ).join('') + `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totCount}</span></td><td>—</td><td>${fmt(totPrice)}</td></tr>`;
+  }
+</script>
+</body>
+</html>
