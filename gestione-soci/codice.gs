@@ -138,7 +138,7 @@ function saveMember(d) {
 
     if (d.sendEmail) {
     sendSummaryEmail(d);
-    return "✅ Socio " + d.lastName + " salvato e email inviata!";
+    return "✅ Socio " + d.lastName + " " + d.firstName + " salvato e email inviata!";
 }
 
 return "✅ Modifiche salvate per " + d.lastName+" "+d.firstName;

@@ -37,10 +37,12 @@
     .spinner { width: 44px; height: 44px; border: 5px solid #e0e0e0;
                border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    #statusToast { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; min-width: 300px; text-align: center; }
   </style>
 </head>
 <body>
 
+<div id="statusToast" class="notification is-success"></div>
 <div id="loader" class="loader-wrap"><div class="spinner"></div></div>
 
 <div class="main">
@@ -130,10 +132,18 @@
 <script>
   window.onload = load;
 
+  function showToast(msg, type = "is-success") {
+    const t = document.getElementById('statusToast');
+    t.innerText = msg;
+    t.className = `notification ${type}`;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 4000);
+  }
+
   function load() {
     document.getElementById('loader').style.display = 'flex';
     google.script.run.withSuccessHandler(render).withFailureHandler(err => {
-      alert('Errore: ' + err.message);
+      showToast("❌ Errore: " + err.message, "is-danger");
       document.getElementById('loader').style.display = 'none';
     }).getRiepilogo();
   }
