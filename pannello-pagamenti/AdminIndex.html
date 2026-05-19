@@ -30,6 +30,12 @@
     <div class="header-section">
         <div class="level">
             <div class="level-left"><h1 class="title is-4">📊 Gestione Incassi</h1></div>
+            <div class="level-item has-text-centered">
+                <div>
+                    <p class="heading">Totale da Incassare</p>
+                    <p class="title is-4 has-text-danger" id="totalInsoluti">0.00€</p>
+                </div>
+            </div>
             <div class="level-right"><button class="button is-link" onclick="loadData()">🔄 Aggiorna</button></div>
         </div>
     </div>
@@ -46,11 +52,12 @@
       google.script.run.withSuccessHandler(render).getAdminData();
     }
 
-    function render(units) {
+    function render(result) {
+      const { units, grandTotal } = result;
+      document.getElementById('totalInsoluti').innerText = grandTotal.toFixed(2) + "€";
       document.getElementById('loadingOverlay').style.display = 'none';
       const container = document.getElementById('displayArea');
       container.innerHTML = "";
-
       units.forEach(u => {
         const card = document.createElement('div');
         card.className = "unit-card";
@@ -85,18 +92,26 @@
 
       return `
         <tr class="${rowClass}">
-          <td><b>${m.lastName} ${m.firstName}</b>${isDep ? ' <small>(fam)</small>' : ''}</td>
-          <td>
-            ${isDep ? m.deposit : `<input type="number" id="dep_${m.row}" class="input-field" value="${m.deposit}">`}
-          </td>
-          <td class="${balClass}">${bal.toFixed(2)}€</td>
-          <td>
-            ${isDep ? m.policy : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
-          </td>
-          <td>
-            ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row}, ${unitTotal})">Salva</button>`}
-          </td>
-        </tr>`;
+        <td>
+          <b>${m.lastName} ${m.firstName}</b>${isDep ? ' <small>(fam)</small>' : ''}
+          <div style="display: flex; flex-direction: column; font-size: 0.85em; margin-top: 4px; color: #555;">
+            <span>${m.membership}</span>
+            ${m.facilitation && m.facilitation.toLowerCase() !== 'no' ? `<span>${m.facilitation}</span>` : ''}
+            ${m.subscription && m.subscription.toLowerCase() !== 'no' ? `<span>${m.subscription}</span>` : ''}
+            ${m.course && m.course.toLowerCase() !== 'no' ? `<span>${m.course}</span>` : ''}
+          </div>
+        </td>
+        <td>
+          ${isDep ? m.deposit : `<input type="number" id="dep_${m.row}" class="input-field" value="${m.deposit}">`}
+        </td>
+        <td class="${balClass}">${bal.toFixed(2)}€</td>
+        <td>
+          ${isDep ? m.policy : `<input type="text" id="pol_${m.row}" class="input-field" value="${m.policy || ''}">`}
+        </td>
+        <td>
+          ${isDep ? '' : `<button class="btn-save" onclick="handleSave(${m.row}, ${unitTotal})">Salva</button>`}
+        </td>
+      </tr>`;
     }
 
     function handleSave(rowId, unitTotal) {

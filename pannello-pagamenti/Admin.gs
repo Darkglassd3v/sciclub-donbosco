@@ -30,6 +30,8 @@ function getAdminData() {
         firstName: r[3],
         taxCode: r[6] ? r[6].toString().toUpperCase().trim() : "",
         membership: r[14],
+        facilitation: r[15],
+        subscription: r[16],
         course: r[19],
         total: parseFloat(r[20]) || 0,
         familyTotal: parseFloat(r[26]) || 0, // Colonna AA (27esima, indice 26)
@@ -45,6 +47,7 @@ function getAdminData() {
 
   const units = [];
   const processedRows = new Set();
+  let grandTotal = 0;
 
   allMembers.forEach(m => {
     if (!m.paymentId) {
@@ -61,7 +64,7 @@ function getAdminData() {
         unitDeposit: m.deposit,
         unitBalance: unitBalanceCalculated
       });
-
+      grandTotal += unitBalanceCalculated;
       processedRows.add(m.row);
       dependents.forEach(d => processedRows.add(d.row));
     }
@@ -77,11 +80,12 @@ function getAdminData() {
         unitBalance: m.balance,
         isOrphan: true
       });
+      grandTotal += m.balance;
     }
   });
 
   units.sort((a, b) => a.payer.lastName.localeCompare(b.payer.lastName));
-  return units;
+  return {units,grandTotal};
 }
 
 function updateAdminMember(rowId, deposit, policy, unitTotal) {
