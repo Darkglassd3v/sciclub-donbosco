@@ -5,23 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pannello Pagamenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
   <style>
-    body { background: #eef1f5; font-family: sans-serif; }
-    .container-main { max-width: 1200px; margin: 20px auto 60px; padding: 0 15px; }
+    .container-main { max-width: 1000px; margin: 20px auto 60px; padding: 0 15px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
-    .summary-bar { background: #212529; color: #fff; padding: 18px 22px; border-radius: 10px; margin-bottom: 22px; }
-    .summary-value { font-size: 1.9rem; font-weight: 800; color: #ffca28; }
-    .unit-card { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 18px; overflow: hidden; }
-    .unit-header { background: #1a73e8; color: #fff; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .unit-title { font-weight: 700; }
-    .unit-badge { background: rgba(255,255,255,.2); padding: 4px 10px; border-radius: 20px; font-size: .85rem; }
+
+    .summary-bar { background: var(--testo); color: #fff; padding: 18px 22px; border-radius: 10px; margin-bottom: 22px; }
+    .summary-label { font-size: .9375rem; color: #C3CCD6; text-transform: uppercase; letter-spacing: .02em; }
+    .summary-value { font-size: 2.1rem; font-weight: 800; color: var(--giallo); line-height: 1.1; }
+    .summary-bar .checkbox { color: #fff; font-size: 1rem; }
+    .summary-bar .checkbox input { width: 22px; height: 22px; vertical-align: -4px; margin-right: 6px; }
+
+    .unit-card { background: #fff; border-radius: 10px; box-shadow: var(--ombra); margin-bottom: 18px; overflow: hidden; }
+    .unit-header { background: var(--blu); color: #fff; padding: 12px 16px; display: flex;
+                   justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .unit-title { font-weight: 700; font-size: 1.15rem; }
+    .unit-badge { background: rgba(255,255,255,.22); padding: 5px 12px; border-radius: 20px; }
+
     .custom-table { width: 100%; border-collapse: collapse; }
-    .custom-table th { background: #f1f3f5; text-align: left; padding: 8px 12px; font-size: .78rem; text-transform: uppercase; color: #555; }
-    .custom-table td { padding: 10px 12px; border-top: 1px solid #eee; vertical-align: middle; }
-    .row-dependent td:first-child { padding-left: 28px; }
-    .input-field { width: 110px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .badge-saldo { font-weight: 700; color: #fff; padding: 4px 8px; border-radius: 4px; }
-    .filtro-attivo { font-size: .85rem; color: #666; }
+    .custom-table th { background: var(--riga-alt); text-align: left; padding: 12px; text-transform: uppercase; }
+    .custom-table td { padding: 14px 12px; border-top: 1px solid var(--bordo); vertical-align: middle; }
+    .custom-table .num { text-align: right; white-space: nowrap; }
+    .row-dependent td:first-child { padding-left: 30px; }
+    .dettagli-socio { display: flex; flex-direction: column; margin-top: 4px; color: var(--testo-soft); font-size: .9375rem; }
+
+    /* La riga del pagamento sta in fondo alla famiglia, larga e da sola: è
+     * l'unica cosa che si può fare in questa pagina. */
+    .barra-saldo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+                   padding: 16px; border-top: 3px solid var(--bordo); background: var(--riga-alt); }
+    .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 800; }
+    .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+    .barra-saldo .domanda { font-weight: 700; color: var(--blu-dark); }
+    .nucleo-saldato { color: var(--ok); font-weight: 700; font-size: 1.15rem; }
   </style>
 </head>
 <body>
@@ -30,10 +45,11 @@
 
 <div class="container-main">
   <div class="level is-mobile mb-4">
-    <div class="level-left"><h1 class="title is-4 mb-0">Pannello Pagamenti</h1></div>
+    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Pannello Pagamenti</h1></div>
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="index.html">Soci</a>
       <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>
@@ -42,19 +58,24 @@
     <div class="level is-mobile">
       <div class="level-left">
         <div>
-          <div style="font-size:.78rem;color:#adb5bd;text-transform:uppercase;letter-spacing:1px">Totale da incassare</div>
+          <div class="summary-label">Totale da incassare</div>
           <div class="summary-value" id="totalInsoluti">—</div>
-          <div class="filtro-attivo" id="conteggioNuclei"></div>
+          <div class="filtro-attivo" id="conteggioNuclei" style="color:#C3CCD6"></div>
         </div>
       </div>
       <div class="level-right">
-        <label class="checkbox mr-4" style="color:#fff">
-          <input type="checkbox" id="soloInsoluti" checked> Solo con saldo aperto
+        <label class="checkbox mr-4">
+          <input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare
         </label>
         <button class="button is-link" onclick="caricaDati()">🔄 Aggiorna</button>
       </div>
     </div>
   </div>
+
+  <p class="mb-4">
+    Qui si incassa e basta. Le quote, la polizza e la tessera si scrivono
+    nella pagina <a href="index.html">Soci</a>, quando si fa l'iscrizione.
+  </p>
 
   <div id="displayArea"></div>
 </div>
@@ -70,8 +91,8 @@
     el("soloInsoluti").addEventListener("change", caricaDati);
     await caricaDati();
 
-    // Aggiornamento in tempo reale: se un altro operatore salva un'iscrizione
-    // o un acconto, la pagina si ricarica da sola.
+    // Aggiornamento in tempo reale: se un altro operatore incassa da un altro
+    // computer, la pagina si aggiorna da sola.
     ascoltaSoci(() => caricaDati({ silenzioso: true }));
   })();
 
@@ -133,7 +154,8 @@
 
     const contenitore = el("displayArea");
     if (!nuclei.length) {
-      contenitore.innerHTML = '<div class="notification is-light has-text-centered">Nessun nucleo da mostrare.</div>';
+      contenitore.innerHTML =
+        '<div class="notification is-light has-text-centered">Nessun nucleo da mostrare.</div>';
       return;
     }
 
@@ -141,72 +163,106 @@
       const pagante = capofamiglia[nucleo.payer_id];
       const aCarico = familiari.filter((f) => f.payer_id === nucleo.payer_id);
       if (!pagante) return "";
+      const saldo = parseFloat(nucleo.saldo_nucleo || 0);
 
       return `
         <div class="unit-card">
           <div class="unit-header">
-            <span class="unit-title">👤 ${nucleo.cognome} ${nucleo.nome}</span>
-            <span class="unit-badge">Totale nucleo: ${fmt(nucleo.totale_nucleo)} · Saldo: ${fmt(nucleo.saldo_nucleo)}</span>
+            <span class="unit-title">${nucleo.cognome} ${nucleo.nome}</span>
+            <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.totale_nucleo)}</span>
           </div>
-          <table class="custom-table">
-            <thead><tr>
-              <th>Socio</th><th>Totale</th><th>Acconto</th><th>Saldo</th><th>Polizza</th><th>Azione</th>
-            </tr></thead>
-            <tbody>
-              ${rigaSocio(pagante, false)}
-              ${aCarico.map((f) => rigaSocio(f, true)).join("")}
-            </tbody>
-          </table>
+          <div class="tabella-scorrevole">
+            <table class="custom-table">
+              <thead><tr>
+                <th>Socio</th><th class="num">Quota</th><th class="num">Già versato</th><th class="num">Da pagare</th>
+              </tr></thead>
+              <tbody>
+                ${rigaSocio(pagante, false)}
+                ${aCarico.map((f) => rigaSocio(f, true)).join("")}
+              </tbody>
+            </table>
+          </div>
+          ${barraSaldo(nucleo.payer_id, saldo)}
         </div>`;
     }).join("");
 
-    contenitore.querySelectorAll("button[data-salva]").forEach((bottone) => {
-      bottone.addEventListener("click", () => salvaRiga(bottone.dataset.salva));
+    contenitore.querySelectorAll("button[data-chiedi]").forEach((bottone) => {
+      bottone.addEventListener("click", () => chiediConferma(bottone.dataset.chiedi));
     });
   }
 
-  /**
-   * Una sola funzione per capofamiglia e familiari: entrambi hanno acconto e
-   * polizza modificabili. Nella 1.x il familiare era in sola lettura e per
-   * correggergli l'acconto bisognava passare dall'altra applicazione.
-   */
+  /** Riga in sola lettura: in questa pagina non si modifica niente del socio. */
   function rigaSocio(socio, eFamiliare) {
     const saldo = parseFloat(socio.saldo || 0);
-    const stile = `background:${saldo > 0 ? "#e53935" : "#43a047"}`;
-    const dettagli = [socio.tipologia_tessera, socio.agevolazioni_famiglia, socio.tipo_abbonamento, socio.tipologia_corso]
+    const dettagli = [socio.tipologia_tessera, socio.agevolazioni_famiglia,
+                      socio.tipo_abbonamento, socio.tipologia_corso]
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `
       <tr class="${eFamiliare ? "row-dependent" : ""}">
         <td>
-          <b>${socio.cognome} ${socio.nome}</b>${eFamiliare ? ' <small style="color:#888">(fam)</small>' : ""}
-          <div style="display:flex;flex-direction:column;font-size:.82em;margin-top:4px;color:#666">
-            ${dettagli.map((d) => `<span>${d}</span>`).join("")}
-          </div>
+          <b>${socio.cognome} ${socio.nome}</b>${eFamiliare ? " <small>(a carico)</small>" : ""}
+          <div class="dettagli-socio">${dettagli.map((d) => `<span>${d}</span>`).join("")}</div>
         </td>
-        <td style="font-weight:600">${fmt(socio.totale)}</td>
-        <td><input type="number" step="0.01" class="input-field" id="dep_${socio.id}" value="${socio.acconto}"></td>
-        <td><span class="badge-saldo" style="${stile}">${fmt(saldo)}</span></td>
-        <td><input type="text" class="input-field" id="pol_${socio.id}" value="${socio.numero_polizza || ""}"></td>
-        <td><button class="button is-small is-warning has-text-weight-bold" data-salva="${socio.id}">Salva</button></td>
+        <td class="num">${fmt(socio.totale)}</td>
+        <td class="num">${fmt(socio.acconto)}</td>
+        <td class="num" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>
       </tr>`;
   }
 
   /**
-   * Si scrivono solo acconto e polizza: il saldo è una colonna generata e si
-   * aggiorna da sé. Nella 1.x andava ricalcolato e riscritto a mano, ed è da lì
-   * che nascevano i saldi disallineati.
+   * Un solo pulsante per famiglia. La conferma è dentro la pagina e non una
+   * finestra del browser: chi incassa vede la cifra e il nome mentre conferma,
+   * invece di un avviso che copre tutto e si chiude a caso.
    */
-  async function salvaRiga(idSocio) {
+  function barraSaldo(idPagante, saldo) {
+    if (saldo <= 0) {
+      return `<div class="barra-saldo"><span class="nucleo-saldato">✓ Nucleo saldato</span></div>`;
+    }
+    return `
+      <div class="barra-saldo" id="barra_${idPagante}">
+        <span class="da-pagare">Da incassare: ${fmt(saldo)}</span>
+        <span class="azioni">
+          <button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${fmt(saldo)}</button>
+        </span>
+      </div>`;
+  }
+
+  function chiediConferma(idPagante) {
+    const barra = el("barra_" + idPagante);
+    if (!barra) return;
+    const azioni = barra.querySelector(".azioni");
+    const importo = barra.querySelector(".da-pagare").textContent.replace("Da incassare: ", "");
+
+    azioni.innerHTML = `
+      <span class="domanda">Hai riscosso ${importo}?</span>
+      <button class="button is-light" data-annulla>No</button>
+      <button class="button is-success" data-conferma>Sì, incassato</button>`;
+
+    azioni.querySelector("[data-annulla]").addEventListener("click", () => {
+      azioni.innerHTML =
+        `<button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${importo}</button>`;
+      azioni.querySelector("button").addEventListener("click", () => chiediConferma(idPagante));
+    });
+    azioni.querySelector("[data-conferma]").addEventListener("click", () => salda(idPagante));
+  }
+
+  /**
+   * Porta a zero il saldo di tutta la famiglia. Il calcolo sta in
+   * salda_nucleo() sul database: le righe del nucleo cambiano tutte insieme,
+   * e non esiste il caso "metà famiglia risulta pagata" per una connessione
+   * caduta a metà elenco.
+   */
+  async function salda(idPagante) {
     setLoading(true);
     try {
-      const { error } = await sb.from("soci").update({
-        acconto: parseFloat(el("dep_" + idSocio).value) || 0,
-        numero_polizza: el("pol_" + idSocio).value.trim() || null,
-      }).eq("id", idSocio);
+      const { data, error } = await sb.rpc("salda_nucleo", { capofamiglia: idPagante });
       if (error) throw error;
 
-      showToast("✅ Dati aggiornati");
+      const esito = Array.isArray(data) ? data[0] : data;
+      showToast(esito && esito.soci_saldati
+        ? `✅ Incassati ${fmt(esito.importo)} — ${esito.soci_saldati} soci a posto`
+        : "Questo nucleo era già saldato.");
       await caricaDati({ silenzioso: true });
     } catch (error) {
       showToast("❌ " + messaggioErrore(error), "is-danger");

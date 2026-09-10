@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amministrazione — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <style>
+    .container-main { max-width: 820px; margin: 20px auto 60px; padding: 0 15px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+
+    /* Questa pagina deve sembrare diversa dalle altre appena si apre: chi ci
+     * finisce per sbaglio se ne accorge prima di toccare qualcosa. */
+    .fascia-pericolo {
+      background: var(--errore); color: #fff; padding: 16px 20px;
+      border-radius: var(--raggio); margin-bottom: 22px; font-size: 1.05rem;
+    }
+    .fascia-pericolo strong { color: #fff; display: block; font-size: 1.25rem; margin-bottom: 4px; }
+
+    .riquadro { background: #fff; border-radius: 10px; box-shadow: var(--ombra);
+                padding: 22px; margin-bottom: 20px; }
+    .riquadro.pericolo { border: 3px solid var(--errore); }
+    .riquadro h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
+
+    .due-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .elenco { margin: 0; padding-left: 22px; list-style: disc; }
+    .elenco li { padding: 3px 0; }
+    .resta { color: var(--ok); font-weight: 700; }
+    .via { color: var(--errore); font-weight: 700; }
+
+    .tabella-stagioni { width: 100%; border-collapse: collapse; }
+    .tabella-stagioni th { text-align: left; padding: 10px 8px; color: var(--testo-soft); text-transform: uppercase; font-size: .9375rem; }
+    .tabella-stagioni td { padding: 12px 8px; border-top: 1px solid var(--bordo); }
+    .tabella-stagioni .num { text-align: right; white-space: nowrap; }
+
+    .conferma { background: var(--giallo-light); border: 2px solid var(--giallo);
+                border-radius: var(--raggio); padding: 18px; margin-top: 18px; }
+    .conferma label { font-weight: 700; display: block; margin-bottom: 8px; }
+    .conferma code { background: #fff; border: 1px solid var(--bordo); padding: 2px 8px;
+                     border-radius: 4px; font-size: 1rem; }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+
+<div class="container-main">
+  <div class="level is-mobile mb-4">
+    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Amministrazione</h1></div>
+    <div class="level-right">
+      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
+      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
+      <button class="button is-small is-light" onclick="logout()">Esci</button>
+    </div>
+  </div>
+
+  <div class="fascia-pericolo">
+    <strong>⚠ Pagina da usare una volta all'anno</strong>
+    Da qui si chiude la stagione: tesseramenti, pagamenti, partenze e nuclei
+    familiari di tutti i soci vengono azzerati in un colpo solo. Non è una
+    pagina da aprire per curiosità.
+  </div>
+
+  <div class="riquadro">
+    <h2>Situazione attuale</h2>
+    <table class="tabella-stagioni">
+      <thead><tr>
+        <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
+        <th class="num">Incassato</th><th class="num">Da incassare</th>
+      </tr></thead>
+      <tbody id="tabellaStagioni"><tr><td colspan="5">Caricamento…</td></tr></tbody>
+    </table>
+    <p class="mt-4" id="statoStorico"></p>
+  </div>
+
+  <div class="riquadro">
+    <h2>Cosa succede quando chiudi</h2>
+    <p class="mb-4">
+      Prima di azzerare, tutto quello che viene tolto finisce nell'archivio
+      (<code>soci_storico</code>): la stagione chiusa resta consultabile e
+      niente viene perso davvero.
+    </p>
+    <div class="due-colonne">
+      <div>
+        <p class="resta mb-2">✓ Resta com'è</p>
+        <ul class="elenco">
+          <li>Cognome e nome</li>
+          <li>Data e luogo di nascita</li>
+          <li>Codice fiscale</li>
+          <li>Indirizzo, città, CAP</li>
+          <li>Telefono ed email</li>
+        </ul>
+      </div>
+      <div>
+        <p class="via mb-2">✗ Viene azzerato</p>
+        <ul class="elenco">
+          <li>Numero di polizza</li>
+          <li>Numero e tipologia di tessera</li>
+          <li>Agevolazione famiglia</li>
+          <li>Abbonamento e corso</li>
+          <li>Partenze del sabato e della domenica</li>
+          <li>Quota, acconto e saldo</li>
+          <li>Capofamiglia che paga (nuclei familiari)</li>
+          <li>Note</li>
+          <li>Data di iscrizione</li>
+          <li>Contatori delle gite (ripartono da zero)</li>
+        </ul>
+      </div>
+    </div>
+    <p class="mt-4">
+      Le gite già registrate non si cancellano: restano legate alla stagione in
+      cui sono state fatte e si possono ancora rileggere. A ripartire da zero
+      sono i contatori della stagione nuova.
+    </p>
+    <p class="mt-4">
+      Dopo la chiusura i soci restano in anagrafica ma non risultano iscritti a
+      nessuna stagione: torneranno nei conteggi quando li si risalva dalla
+      pagina <a href="index.html">Soci</a>. Il listino prezzi e le partenze non
+      vengono toccati: se cambiano le quote, si aggiornano da Supabase prima di
+      aprire le iscrizioni.
+    </p>
+  </div>
+
+  <div class="riquadro pericolo">
+    <h2>Chiudi la stagione</h2>
+    <p>Fallo quando le iscrizioni dell'anno sono finite e prima di aprire quelle nuove.</p>
+
+    <div class="conferma">
+      <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
+      <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
+      <button class="button is-danger mt-4" id="btnChiudi" disabled>Chiudi la stagione e azzera i dati</button>
+    </div>
+
+    <div id="esito" class="mt-4"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+  const FRASE = "CHIUDI STAGIONE";
+
+  (async function init() {
+    if (!(await requireAuth())) return;
+
+    // Il pulsante si accende solo con la frase esatta: un clic distratto non
+    // basta a chiudere una stagione.
+    el("frase").addEventListener("input", (e) => {
+      el("btnChiudi").disabled = e.target.value.trim().toUpperCase() !== FRASE;
+    });
+    el("btnChiudi").addEventListener("click", chiudi);
+
+    await caricaSituazione();
+  })();
+
+  function annoStagione(iso) {
+    const inizio = new Date(iso).getFullYear();
+    return `${inizio}/${inizio + 1}`;
+  }
+
+  async function caricaSituazione() {
+    setLoading(true);
+    try {
+      const { data: stagioni, error } = await sb.from("stagioni_aperte").select("*");
+      if (error) throw error;
+
+      el("tabellaStagioni").innerHTML = stagioni.length
+        ? stagioni.map((s) => `
+            <tr>
+              <td><b>${annoStagione(s.stagione)}</b></td>
+              <td class="num">${s.soci}</td>
+              <td class="num">${fmt(s.totale)}</td>
+              <td class="num">${fmt(s.incassato)}</td>
+              <td class="num" style="color:${s.da_incassare > 0 ? "var(--errore)" : "var(--ok)"};font-weight:700">${fmt(s.da_incassare)}</td>
+            </tr>`).join("")
+        : '<tr><td colspan="5">Nessuna stagione aperta: i dati sono già stati azzerati.</td></tr>';
+
+      const { count, error: erroreStorico } = await sb
+        .from("soci_storico").select("*", { count: "exact", head: true });
+      if (erroreStorico) throw erroreStorico;
+
+      el("statoStorico").textContent = count
+        ? `In archivio ci sono ${count} righe di stagioni già chiuse.`
+        : "L'archivio è vuoto: non è mai stata chiusa una stagione.";
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function chiudi() {
+    setLoading(true);
+    el("btnChiudi").disabled = true;
+    try {
+      const { data, error } = await sb.rpc("chiudi_stagione", { conferma: FRASE });
+      if (error) throw error;
+
+      const esito = Array.isArray(data) ? data[0] : data;
+      el("esito").innerHTML = `
+        <div class="notification is-success">
+          <b>Stagione ${annoStagione(esito.stagione_chiusa)} chiusa.</b><br>
+          Archiviate ${esito.archiviati} posizioni. Le anagrafiche sono rimaste al loro posto:
+          si riparte iscrivendo i soci dalla pagina <a href="index.html">Soci</a>.
+        </div>`;
+      el("frase").value = "";
+      await caricaSituazione();
+    } catch (error) {
+      el("esito").innerHTML =
+        `<div class="notification is-danger">Non è stato chiuso niente: ${messaggioErrore(error)}</div>`;
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>

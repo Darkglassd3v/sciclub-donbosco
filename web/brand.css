@@ -1,0 +1,145 @@
+/* Brand Sci Club Don Bosco — vedi docs/brand-guidelines.md
+ *
+ * Caricato DOPO bulma.min.css e PRIMA dello <style> di pagina, che usa le
+ * variabili definite qui invece di ripetere i colori.
+ *
+ * I due colori vengono dal logo (web/logo_sciclubdonbosco.png) e non cambiano.
+ * Tutto il resto è tarato su chi usa il gestionale: volontari del direttivo,
+ * spesso non giovani, al banchetto delle iscrizioni. Quindi corpo 17px, campi
+ * e pulsanti da 48px, focus giallo sempre visibile.
+ */
+
+:root {
+  /* Colori del logo */
+  --blu:        #084C8D;
+  --blu-dark:   #06396A;
+  --blu-light:  #E7EFF7;
+  --giallo:      #FCCF02;
+  --giallo-dark: #6B5200;  /* il giallo pieno non ha contrasto: per il testo si usa questo */
+  --giallo-light:#FFF6D0;
+
+  /* Neutri */
+  --sfondo:     #F2F5F8;
+  --superficie: #FFFFFF;
+  --riga-alt:   #F7F9FB;
+  --testo:      #14202E;
+  --testo-soft: #4A5A6B;
+  --bordo:      #C7D0DA;
+
+  /* Stati */
+  --ok:      #147A45;
+  --ok-bg:   #E4F3EA;
+  --errore:  #B3261E;
+  --errore-bg:#FBE9E7;
+
+  --raggio: 8px;
+  --ombra: 0 2px 10px rgba(20, 32, 46, .10);
+  --tocco: 48px;  /* altezza minima di ogni cosa cliccabile */
+}
+
+html { font-size: 17px; }
+
+body {
+  background: var(--sfondo);
+  color: var(--testo);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Bulma scrive testo e titoli in #4a4a4a / #363636: troppo chiaro sul bianco. */
+.title, .subtitle, strong, label, .label { color: var(--testo); }
+.label { font-size: 1rem; font-weight: 600; }
+.help, .filtro-attivo { font-size: .9375rem; color: var(--testo-soft); }
+
+/* --- Focus -------------------------------------------------------------
+ * Bulma toglie l'outline e lascia solo un'ombra tenue: su schermi vecchi o
+ * poco contrastati non si vede dove si è arrivati col TAB. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.button:focus-visible,
+.input:focus-visible,
+.select select:focus-visible {
+  outline: 3px solid var(--giallo);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* --- Campi -------------------------------------------------------------- */
+.input, .textarea, .select select, .input-field {
+  min-height: var(--tocco);
+  font-size: 1rem;
+  color: var(--testo);
+  border: 2px solid var(--bordo);
+  border-radius: var(--raggio);
+}
+.input:hover, .select select:hover { border-color: var(--testo-soft); }
+.input:focus, .select select:focus { border-color: var(--blu); }
+.input::placeholder { color: var(--testo-soft); opacity: 1; }
+.select:not(.is-multiple) { height: auto; }
+.select:not(.is-multiple):not(.is-loading)::after { border-color: var(--blu); }
+
+/* Campi amministrativi (polizza, tessera): il direttivo usa già il giallo
+ * come "da compilare a mano", si conserva. */
+.campo-admin { background: var(--giallo-light); }
+
+/* --- Pulsanti ----------------------------------------------------------- */
+.button {
+  min-height: var(--tocco);
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--raggio);
+  border-width: 2px;
+}
+.button.is-small { min-height: 42px; font-size: .9375rem; }
+
+.button.is-link, .button.is-primary, .button.is-info {
+  background: var(--blu); border-color: var(--blu); color: #fff;
+}
+.button.is-link:hover, .button.is-primary:hover, .button.is-info:hover {
+  background: var(--blu-dark); border-color: var(--blu-dark); color: #fff;
+}
+.button.is-light {
+  background: var(--superficie); border-color: var(--blu); color: var(--blu);
+}
+.button.is-light:hover { background: var(--blu-light); color: var(--blu-dark); }
+
+.button.is-success { background: var(--ok); border-color: var(--ok); color: #fff; }
+.button.is-success:hover { background: #0F5C34; border-color: #0F5C34; }
+
+/* Il giallo pieno regge solo testo blu scuro (5.7:1). */
+.button.is-warning, .button.is-evidenza {
+  background: var(--giallo); border-color: var(--giallo); color: var(--blu-dark);
+}
+.button.is-warning:hover, .button.is-evidenza:hover { background: #E6BC00; border-color: #E6BC00; }
+
+.button.is-danger { background: var(--errore); border-color: var(--errore); color: #fff; }
+.button.is-danger.is-outlined {
+  background: var(--superficie); border-color: var(--errore); color: var(--errore);
+}
+.button.is-danger.is-outlined:hover { background: var(--errore); color: #fff; }
+
+/* --- Blocchi ------------------------------------------------------------ */
+.section-title, .family-title, .unit-header, .section-header {
+  font-size: .9375rem;   /* le etichette maiuscole partivano da .85rem */
+  letter-spacing: .02em;
+}
+.notification { font-size: 1rem; border-radius: var(--raggio); }
+
+/* --- Tabelle ------------------------------------------------------------ */
+.custom-table th, .rtable th {
+  font-size: .9375rem;
+  color: var(--testo-soft);
+  letter-spacing: .02em;
+}
+.custom-table td, .rtable td { font-size: 1rem; }
+.custom-table tbody tr:nth-child(even), .rtable tbody tr:nth-child(even) {
+  background: var(--riga-alt);
+}
+/* Una tabella larga scorre dentro il suo riquadro invece di allargare la pagina */
+.tabella-scorrevole { overflow-x: auto; }
+
+/* --- Logo --------------------------------------------------------------- */
+.logo-testata { height: 56px; width: auto; display: block; }
+@media screen and (max-width: 768px) { .logo-testata { height: 44px; } }

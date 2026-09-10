@@ -5,20 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
   <style>
-    body { background-color: #e9ecef; margin: 0; font-family: sans-serif; }
+    body { margin: 0; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .container-main { max-width: 1100px; margin: 20px auto 180px; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,.1); }
-    .section-title { background: #1a73e8; color: #fff; padding: 8px 15px; border-radius: 5px; margin-top: 25px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
-    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: #212529; color: #fff; padding: 15px; z-index: 1000; border-top: 4px solid #1a73e8; box-shadow: 0 -5px 15px rgba(0,0,0,.3); }
-    .val-label { font-size: .75rem; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px; }
-    .val-amount { font-size: 1.8rem; font-weight: 800; display: block; line-height: 1; margin-top: 5px; }
-    #searchZone { display: none; background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffeeba; }
-    .result-item { cursor: pointer; padding: 10px; background: #fff; transition: .2s; }
-    .result-item:hover { background: #eff5fb; }
-    .label { font-size: .85rem; margin-bottom: .2rem; color: #495057; }
-    .family-title { background: #198754; color: #fff; padding: 8px 15px; border-radius: 5px; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
-    #payerResults { border: 1px solid #ddd; border-radius: 4px; display: none; position: relative; z-index: 100; background: #fff; }
+    .section-title { background: var(--blu); color: #fff; padding: 10px 16px; border-radius: 5px; margin-top: 25px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
+    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: var(--testo); color: #fff; padding: 15px; z-index: 1000; border-top: 5px solid var(--giallo); box-shadow: 0 -5px 15px rgba(0,0,0,.3); }
+    .val-label { font-size: .9375rem; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px; }
+    .val-amount { font-size: 2rem; font-weight: 800; display: block; line-height: 1; margin-top: 5px; }
+    #searchZone { display: none; background: var(--giallo-light); padding: 15px; border-radius: var(--raggio); margin-bottom: 20px; border: 2px solid var(--giallo); }
+    .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--bordo); }
+    .result-item:hover { background: var(--blu-light); }
+    .label { margin-bottom: .25rem; }
+    .family-title { background: var(--ok); color: #fff; padding: 8px 15px; border-radius: 5px; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
+    #payerResults { border: 2px solid var(--bordo); border-radius: 4px; display: none; position: relative; z-index: 100; background: #fff; }
     .payer-section-disabled { opacity: .5; pointer-events: none; }
     @media screen and (max-width: 768px) {
       .total-box .columns { display: flex; flex-wrap: wrap; }
@@ -32,10 +33,11 @@
 
 <div class="container-main">
   <div class="level is-mobile mb-4">
-    <div class="level-left"><h1 class="title is-4 mb-0">Gestione Soci</h1></div>
+    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Gestione Soci</h1></div>
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
       <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>
@@ -84,18 +86,18 @@
     <div class="columns mt-1">
       <div class="column is-6">
         <label class="label">Partenza Sabato</label>
-        <div id="check_sabato" class="control p-2" style="background:#f8f9fa;border-radius:5px"></div>
+        <div id="check_sabato" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
       </div>
       <div class="column is-6">
         <label class="label">Partenza Domenica</label>
-        <div id="check_domenica" class="control p-2" style="background:#f8f9fa;border-radius:5px"></div>
+        <div id="check_domenica" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
       </div>
     </div>
 
     <div class="section-title">Amministrazione</div>
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label">Numero Polizza</label><input class="input" id="f_numero_polizza" style="background:#fff9c4"></div>
-      <div class="column is-4"><label class="label">Numero Tessera</label><input class="input" id="f_numero_tessera" style="background:#fff9c4" placeholder="Es. 2026-0001"></div>
+      <div class="column is-4"><label class="label">Numero Polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
+      <div class="column is-4"><label class="label">Numero Tessera</label><input class="input campo-admin" id="f_numero_tessera" placeholder="Es. 2026-0001"></div>
       <div class="column is-4"><label class="label">Acconto Versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
     </div>
 
@@ -136,7 +138,7 @@
   <div class="container">
     <div class="columns is-mobile is-vcentered">
       <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount" id="v_totale">0€</span></div>
-      <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount" id="v_saldo" style="color:#ffca28">0€</span></div>
+      <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
       <div class="column is-5"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">SALVA SOCIO</button></div>
     </div>
   </div>
@@ -217,7 +219,7 @@
     const { totale, saldo } = totaliNucleo(socioCorrente, familiariACarico);
     el("v_totale").textContent = fmt(totale);
     el("v_saldo").textContent = fmt(saldo);
-    el("v_saldo").style.color = saldo > 0 ? "#ffca28" : "#25d366";
+    el("v_saldo").style.color = saldo > 0 ? "var(--giallo)" : "#7BD8A6";
   }
 
   // -------------------------------------------------------------------------
@@ -431,14 +433,14 @@
               <td><strong>${s.cognome} ${s.nome}</strong></td>
               <td>${s.numero_tessera || "—"}</td>
               <td style="text-align:right">${fmt(s.totale)}</td>
-              <td style="text-align:right;font-weight:bold;color:${s.saldo > 0 ? "#d9534f" : "#198754"}">${fmt(s.saldo)}</td>
+              <td style="text-align:right;font-weight:bold;color:${s.saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(s.saldo)}</td>
               <td><button type="button" class="button is-small is-link is-light" data-id="${s.id}">Modifica</button></td>
             </tr>`).join("")}
         </tbody>
         <tfoot><tr style="background:#d4edda;font-weight:bold">
           <td colspan="2">TOTALE NUCLEO (${data.length} familiari)</td>
           <td style="text-align:right">${fmt(totali.totale)}</td>
-          <td style="text-align:right;color:${totali.saldo > 0 ? "#d9534f" : "#198754"}">${fmt(totali.saldo)}</td>
+          <td style="text-align:right;color:${totali.saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(totali.saldo)}</td>
           <td></td>
         </tr></tfoot>
       </table>`;

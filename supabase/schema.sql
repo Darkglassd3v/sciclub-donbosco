@@ -355,3 +355,479 @@ begin
     alter publication supabase_realtime add table public.soci;
   end if;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Chiusura della stagione
+--
+-- A settembre si ricomincia da capo: le anagrafiche restano (sono le stesse
+-- persone, anno dopo anno), mentre tesseramento, pagamenti, partenze e nuclei
+-- familiari appartengono alla stagione appena finita e vanno azzerati.
+--
+-- Nella 1.x questo si faceva a mano sul foglio: si duplicava il file, si
+-- selezionavano le colonne e si cancellavano. Bastava una selezione storta per
+-- perdere un'anagrafica, e la stagione precedente restava in un file sparso su
+-- Drive che nessuno ritrovava più.
+--
+-- Qui il vecchio contenuto viene prima copiato in soci_storico e solo dopo
+-- azzerato, nella stessa transazione: la stagione chiusa resta consultabile e
+-- un errore non lascia i dati a metà.
+--
+-- Cosa viene azzerato: polizza, tessera, tipologia tessera, agevolazione
+-- famiglia, abbonamento, corso, partenze, totale, acconto, capofamiglia
+-- (payer_id), note e data di iscrizione.
+-- Cosa resta: nome, cognome, nascita, codice fiscale, residenza, telefono,
+-- email, legacy_id.
+-- ---------------------------------------------------------------------------
+
+-- Inizio della stagione (1° settembre) a cui appartiene un istante qualsiasi.
+-- stagione_corrente() diventa il caso particolare "adesso".
+create or replace function public.stagione_di(quando timestamptz)
+returns timestamptz
+language sql
+immutable
+as $$
+  select case
+    when extract(month from quando) >= 9
+      then make_timestamptz(extract(year from quando)::int,     9, 1, 0, 0, 0)
+    else   make_timestamptz(extract(year from quando)::int - 1, 9, 1, 0, 0, 0)
+  end;
+$$;
+
+comment on function public.stagione_di is 'Il 1° settembre della stagione in cui cade il timestamp passato.';
+
+create or replace function public.stagione_corrente()
+returns timestamptz
+language sql
+stable
+as $$
+  select public.stagione_di(now());
+$$;
+
+-- Dopo la chiusura un socio non è iscritto a nessuna stagione finché non lo si
+-- risalva dal form: data_iscrizione deve poter essere vuota. Le viste del
+-- riepilogo filtrano con `>= stagione_corrente()`, che scarta già i NULL.
+alter table public.soci alter column data_iscrizione drop not null;
+
+create table if not exists public.soci_storico (
+  id              uuid primary key default gen_random_uuid(),
+  archiviato_il   timestamptz not null default now(),
+
+  -- 1° settembre della stagione archiviata: è la chiave con cui si rilegge
+  -- "com'era andata" un anno preciso.
+  stagione        timestamptz not null,
+
+  -- Il socio è ancora in anagrafica: qui si tiene solo il riferimento più
+  -- cognome e nome, perché una riga di storico deve restare leggibile anche se
+  -- l'anagrafica viene poi corretta.
+  socio_id        uuid not null references public.soci (id) on delete cascade,
+  cognome         text not null,
+  nome            text not null,
+
+  numero_polizza        text,
+  numero_tessera        text,
+  tipologia_tessera     text,
+  agevolazioni_famiglia text,
+  tipo_abbonamento      text,
+  tipologia_corso       text,
+  partenze_sabato       text,
+  partenza_domenica     text,
+  totale                numeric(10, 2) not null default 0,
+  acconto               numeric(10, 2) not null default 0,
+  payer_id              uuid,
+  note                  text,
+  data_iscrizione       timestamptz
+);
+
+create index if not exists soci_storico_stagione_idx on public.soci_storico (stagione);
+create index if not exists soci_storico_socio_idx    on public.soci_storico (socio_id);
+
+comment on table public.soci_storico is 'Fotografia dei dati di stagione prima di ogni chiusura. Sola lettura: ci scrive solo chiudi_stagione().';
+
+-- Quante righe verrebbero toccate da una chiusura, per stagione. Serve al
+-- pannello per dire in anticipo cosa sta per succedere.
+create or replace view public.stagioni_aperte as
+select
+  public.stagione_di(coalesce(data_iscrizione, now())) as stagione,
+  count(*)                    as soci,
+  coalesce(sum(totale),  0)   as totale,
+  coalesce(sum(acconto), 0)   as incassato,
+  coalesce(sum(saldo),   0)   as da_incassare
+from public.soci
+where data_iscrizione is not null
+   or numero_polizza is not null or numero_tessera is not null
+   or tipologia_tessera is not null or agevolazioni_famiglia is not null
+   or tipo_abbonamento is not null or tipologia_corso is not null
+   or partenze_sabato is not null or partenza_domenica is not null
+   or payer_id is not null or totale <> 0 or acconto <> 0
+group by 1
+order by 1 desc;
+
+alter view public.stagioni_aperte set (security_invoker = true);
+
+/**
+ * Archivia e azzera i dati di stagione di tutti i soci.
+ *
+ * `conferma` deve valere esattamente 'CHIUDI STAGIONE': è l'ultimo ostacolo
+ * prima di un'operazione che tocca tutte le righe, e obbliga chi la lancia a
+ * scriverlo, non solo a cliccare.
+ *
+ * Restituisce quante righe sono state archiviate e azzerate.
+ */
+create or replace function public.chiudi_stagione(conferma text)
+returns table (archiviati bigint, stagione_chiusa timestamptz)
+language plpgsql
+security invoker
+as $$
+declare
+  quante bigint;
+  quale  timestamptz;
+begin
+  if conferma is distinct from 'CHIUDI STAGIONE' then
+    raise exception 'Conferma mancante: per chiudere la stagione serve la frase esatta CHIUDI STAGIONE.';
+  end if;
+
+  quale := public.stagione_corrente();
+
+  with da_archiviare as (
+    select * from public.soci
+     where data_iscrizione is not null
+        or numero_polizza is not null or numero_tessera is not null
+        or tipologia_tessera is not null or agevolazioni_famiglia is not null
+        or tipo_abbonamento is not null or tipologia_corso is not null
+        or partenze_sabato is not null or partenza_domenica is not null
+        or payer_id is not null or totale <> 0 or acconto <> 0
+  ), copiati as (
+    insert into public.soci_storico (
+      stagione, socio_id, cognome, nome,
+      numero_polizza, numero_tessera, tipologia_tessera, agevolazioni_famiglia,
+      tipo_abbonamento, tipologia_corso, partenze_sabato, partenza_domenica,
+      totale, acconto, payer_id, note, data_iscrizione)
+    select
+      public.stagione_di(coalesce(d.data_iscrizione, now())),
+      d.id, d.cognome, d.nome,
+      d.numero_polizza, d.numero_tessera, d.tipologia_tessera, d.agevolazioni_famiglia,
+      d.tipo_abbonamento, d.tipologia_corso, d.partenze_sabato, d.partenza_domenica,
+      d.totale, d.acconto, d.payer_id, d.note, d.data_iscrizione
+    from da_archiviare d
+    returning 1
+  )
+  select count(*) into quante from copiati;
+
+  -- Un solo UPDATE su tutta la tabella: le anagrafiche non sono nominate,
+  -- quindi non c'è modo che questa riga le tocchi.
+  update public.soci set
+    numero_polizza        = null,
+    numero_tessera        = null,
+    tipologia_tessera     = null,
+    agevolazioni_famiglia = null,
+    tipo_abbonamento      = null,
+    tipologia_corso       = null,
+    partenze_sabato       = null,
+    partenza_domenica     = null,
+    totale                = 0,
+    acconto               = 0,
+    payer_id              = null,
+    note                  = null,
+    data_iscrizione       = null;
+
+  return query select quante, quale;
+end;
+$$;
+
+comment on function public.chiudi_stagione is 'Archivia in soci_storico e azzera i dati di stagione di tutti i soci. Conserva le anagrafiche.';
+
+alter table public.soci_storico enable row level security;
+
+drop policy if exists soci_storico_select on public.soci_storico;
+drop policy if exists soci_storico_insert on public.soci_storico;
+
+-- Lo storico si legge e si scrive solo passando da chiudi_stagione(), che gira
+-- come l'utente collegato: serve quindi il permesso di inserire, ma non quelli
+-- di modificare o cancellare. Una stagione archiviata non si ritocca.
+create policy soci_storico_select on public.soci_storico
+  for select to authenticated using (true);
+
+create policy soci_storico_insert on public.soci_storico
+  for insert to authenticated with check (true);
+
+-- ---------------------------------------------------------------------------
+-- Saldo di un nucleo familiare
+--
+-- Al banchetto si incassa per famiglia, non per persona: arriva il
+-- capofamiglia, paga quello che deve tutto il nucleo e se ne va. Il pannello
+-- pagamenti fa solo questo, e lo fa qui dentro perché le righe del nucleo
+-- devono cambiare tutte insieme: se si aggiornassero una alla volta dal
+-- browser, una connessione caduta a metà lascerebbe metà famiglia pagata.
+--
+-- Chi ha già pagato più del dovuto non viene toccato (`saldo > 0`): un acconto
+-- in eccesso è un caso da sistemare a mano, non da azzerare in silenzio.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.salda_nucleo(capofamiglia uuid)
+returns table (soci_saldati bigint, importo numeric)
+language plpgsql
+security invoker
+as $$
+declare
+  quanti bigint;
+  quanto numeric(10, 2);
+begin
+  select count(*), coalesce(sum(saldo), 0)
+    into quanti, quanto
+    from public.soci
+   where (id = capofamiglia or payer_id = capofamiglia)
+     and saldo > 0;
+
+  if quanti = 0 then
+    return query select 0::bigint, 0::numeric;
+    return;
+  end if;
+
+  update public.soci
+     set acconto = totale
+   where (id = capofamiglia or payer_id = capofamiglia)
+     and saldo > 0;
+
+  return query select quanti, quanto;
+end;
+$$;
+
+comment on function public.salda_nucleo is 'Porta a zero il saldo del capofamiglia e dei suoi familiari a carico. Restituisce quante righe e quanto è stato incassato.';
+
+-- ---------------------------------------------------------------------------
+-- Abbonamenti a viaggi
+--
+-- Il listino vende "Abbonamento 5 viaggi SABATO / DOMENICA / MARTEDÌ / JOLLY",
+-- ma finora l'abbonamento era solo una scritta nella riga del socio: quante
+-- gite fossero state fatte non lo sapeva nessuno, e a metà stagione si andava
+-- a memoria.
+--
+-- Quante gite comprende un abbonamento e per che giorno vale sono proprietà
+-- del listino, non del socio: stanno qui, accanto al prezzo. Il socio continua
+-- a puntare al listino con `tipo_abbonamento`, come già faceva.
+--
+-- JOLLY vale qualunque giorno: è un giorno come gli altri in tabella, e sono
+-- le query a decidere se includerlo.
+-- ---------------------------------------------------------------------------
+
+alter table public.prezzi add column if not exists viaggi int;
+alter table public.prezzi add column if not exists giorno text;
+
+alter table public.prezzi drop constraint if exists prezzi_giorno_valido;
+alter table public.prezzi add constraint prezzi_giorno_valido
+  check (giorno is null or giorno in ('SABATO', 'DOMENICA', 'MARTEDI', 'JOLLY'));
+
+alter table public.prezzi drop constraint if exists prezzi_viaggi_positivi;
+alter table public.prezzi add constraint prezzi_viaggi_positivi
+  check (viaggi is null or viaggi > 0);
+
+comment on column public.prezzi.viaggi is 'Quante gite comprende l''abbonamento. NULL per tutto ciò che non è un abbonamento a viaggi.';
+comment on column public.prezzi.giorno is 'Giorno dell''abbonamento. JOLLY = utilizzabile in qualsiasi giorno.';
+
+-- Viaggi e giorno si leggono dal nome dell'opzione ("Abbonamento 5 viaggi
+-- SABATO"): il listino arriva dal foglio Excel, dove sono scritti lì dentro e
+-- basta.
+--
+-- Il riempimento è un trigger e non un UPDATE una tantum perché lo schema si
+-- lancia PRIMA di caricare i dati: un UPDATE qui non troverebbe nessuna riga,
+-- e il listino entrerebbe senza abbonamenti riconoscibili. Così invece ogni
+-- riga si sistema da sé quando entra, in qualsiasi ordine si facciano le cose.
+--
+-- Tocca solo i campi lasciati vuoti: una correzione fatta a mano dalla
+-- dashboard resta dov'è.
+create or replace function public.prezzi_deduci_abbonamento()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.categoria = 'ABBONAMENTO' and new.viaggi is null and new.giorno is null then
+    new.viaggi := nullif(substring(new.nome from '(\d+)\s*[vV]iagg'), '')::int;
+    new.giorno := case
+      when upper(new.nome) like '%SABATO%'   then 'SABATO'
+      when upper(new.nome) like '%DOMENICA%' then 'DOMENICA'
+      when upper(new.nome) like '%MARTED%'   then 'MARTEDI'
+      when upper(new.nome) like '%JOLLY%'    then 'JOLLY'
+    end;
+
+    -- Un abbonamento senza numero di viaggi (es. il corso di presciistica)
+    -- non è un abbonamento a gite: resta senza giorno.
+    if new.viaggi is null then
+      new.giorno := null;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists prezzi_deduci_abbonamento on public.prezzi;
+create trigger prezzi_deduci_abbonamento
+  before insert or update on public.prezzi
+  for each row execute function public.prezzi_deduci_abbonamento();
+
+-- Le righe già in tabella (database creato prima di questa aggiunta) passano
+-- dal trigger con un aggiornamento a vuoto.
+update public.prezzi set nome = nome
+ where categoria = 'ABBONAMENTO' and viaggi is null and giorno is null;
+
+-- ---------------------------------------------------------------------------
+-- Gite usate
+--
+-- Una riga = una gita. Chi la segna è sul pullman alle sette del mattino: preme
+-- un più e basta. Niente data da scegliere (è quella del giorno in cui si
+-- preme) e niente numero di persone: se salgono in due, si preme due volte.
+--
+-- La data serve a poter tornare indietro su una registrazione sbagliata, non a
+-- dire com'è andata la stagione: se il pulmino è partito ieri e la gita viene
+-- segnata stamattina, il conto resta giusto lo stesso.
+--
+-- Le righe non si cancellano a fine stagione: portano la stagione con sé, e
+-- così l'anno prossimo si può ancora guardare com'era andata.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.gite_usate (
+  id            uuid primary key default gen_random_uuid(),
+  socio_id      uuid not null references public.soci (id) on delete cascade,
+
+  -- Fissata alla registrazione: se una gita viene segnata a settembre inoltrato
+  -- resta nella stagione in cui è stata fatta.
+  stagione      timestamptz not null default public.stagione_corrente(),
+
+  data_gita     date not null default current_date,
+  registrato_il timestamptz not null default now()
+);
+
+-- Prima una riga poteva valere più gite e portarsi dietro i nomi di chi era
+-- salito: adesso vale una gita e basta, e le colonne vanno tolte anche dai
+-- database creati con la versione precedente.
+alter table public.gite_usate drop column if exists quante;
+alter table public.gite_usate drop column if exists partecipanti;
+alter table public.gite_usate drop column if exists nota;
+
+create index if not exists gite_usate_socio_idx    on public.gite_usate (socio_id);
+create index if not exists gite_usate_stagione_idx on public.gite_usate (stagione);
+
+comment on table public.gite_usate is 'Registro delle gite scalate dagli abbonamenti: una riga per gita. Ci si scrive solo con usa_gite().';
+
+-- Stato di ogni abbonamento della stagione: quante gite comprende, quante ne
+-- restano, e i contatti per chiamare chi non si è ancora visto.
+create or replace view public.abbonamenti_gite as
+select
+  s.id                                as socio_id,
+  s.cognome,
+  s.nome,
+  s.telefono,
+  s.email,
+  s.payer_id,
+  p.nome                              as abbonamento,
+  p.giorno,
+  p.viaggi                            as viaggi_totali,
+  coalesce(u.usate, 0)::int           as viaggi_usati,
+  (p.viaggi - coalesce(u.usate, 0))::int as viaggi_residui
+from public.soci s
+join public.prezzi p
+  on  p.categoria = 'ABBONAMENTO'
+  and p.nome      = s.tipo_abbonamento
+  and p.viaggi is not null
+left join (
+  select socio_id, count(*) as usate
+    from public.gite_usate
+   where stagione = public.stagione_corrente()
+   group by socio_id
+) u on u.socio_id = s.id
+where s.data_iscrizione >= public.stagione_corrente();
+
+alter view public.abbonamenti_gite set (security_invoker = true);
+
+comment on view public.abbonamenti_gite is 'Abbonamenti a viaggi della stagione corrente con gite fatte e residue.';
+
+/**
+ * Scala una gita dall'abbonamento di un socio.
+ *
+ * Il controllo sul residuo sta qui e non nella pagina: due telefoni che
+ * segnano la stessa gita nello stesso momento non possono far scendere il
+ * contatore sotto zero.
+ */
+-- La firma è cambiata (prima accettava numero di gite, data e partecipanti):
+-- `create or replace` da solo lascerebbe in giro le vecchie versioni come
+-- funzioni sovrapposte, e la chiamata diventerebbe ambigua.
+drop function if exists public.usa_gite(uuid, int, date, text, text);
+drop function if exists public.usa_gite(uuid, int, date);
+
+create or replace function public.usa_gite(socio uuid)
+returns table (viaggi_usati int, viaggi_residui int)
+language plpgsql
+security invoker
+as $$
+declare
+  residui int;
+begin
+  -- FOR UPDATE sulla riga del socio: chi arriva secondo aspetta e rilegge il
+  -- residuo aggiornato invece di scalare sullo stesso conteggio.
+  perform 1 from public.soci where id = socio for update;
+
+  select a.viaggi_residui into residui
+    from public.abbonamenti_gite a
+   where a.socio_id = socio;
+
+  if residui is null then
+    raise exception 'Questo socio non ha un abbonamento a viaggi in questa stagione.';
+  end if;
+
+  if residui < 1 then
+    raise exception 'Abbonamento esaurito: non restano gite da scalare.';
+  end if;
+
+  insert into public.gite_usate (socio_id) values (socio);
+
+  return query
+    select a.viaggi_usati, a.viaggi_residui
+      from public.abbonamenti_gite a
+     where a.socio_id = socio;
+end;
+$$;
+
+comment on function public.usa_gite is 'Scala una gita dall''abbonamento del socio, con la data di oggi.';
+
+/**
+ * Annulla una registrazione sbagliata. Si cancella una riga precisa, non
+ * "l'ultima": chi corregge deve vedere cosa sta togliendo.
+ */
+create or replace function public.annulla_gita(gita uuid)
+returns table (viaggi_usati int, viaggi_residui int)
+language plpgsql
+security invoker
+as $$
+declare
+  socio uuid;
+begin
+  delete from public.gite_usate where id = gita returning socio_id into socio;
+  if socio is null then
+    raise exception 'Questa registrazione non esiste più.';
+  end if;
+
+  return query
+    select a.viaggi_usati, a.viaggi_residui
+      from public.abbonamenti_gite a
+     where a.socio_id = socio;
+end;
+$$;
+
+comment on function public.annulla_gita is 'Cancella una gita registrata per errore e restituisce il nuovo residuo.';
+
+alter table public.gite_usate enable row level security;
+
+drop policy if exists gite_usate_select on public.gite_usate;
+drop policy if exists gite_usate_insert on public.gite_usate;
+drop policy if exists gite_usate_delete on public.gite_usate;
+
+-- Si scrive e si corregge solo passando dalle due funzioni, che girano come
+-- l'utente collegato. Manca apposta l'update: una gita sbagliata si annulla e
+-- si riscrive, non si ritocca.
+create policy gite_usate_select on public.gite_usate
+  for select to authenticated using (true);
+
+create policy gite_usate_insert on public.gite_usate
+  for insert to authenticated with check (true);
+
+create policy gite_usate_delete on public.gite_usate
+  for delete to authenticated using (true);

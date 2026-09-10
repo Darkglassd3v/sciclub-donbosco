@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Abbonamenti Gite — Sci Club Don Bosco</title>
+  <link rel="icon" href="logo_sciclubdonbosco.png">
+  <link rel="stylesheet" href="stile.css">
+</head>
+<body>
+
+<div id="vistaLogin" class="login" hidden>
+  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+  <h1>Abbonamenti Gite</h1>
+  <form id="formLogin">
+    <div class="campo">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+    </div>
+    <div class="campo">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn-blu" type="submit">Entra</button>
+    <p id="erroreLogin" class="avviso avviso-errore" hidden></p>
+  </form>
+</div>
+
+<div id="contenuto" class="wrap" hidden>
+  <header class="testata">
+    <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+    <h1>Abbonamenti Gite</h1>
+    <div class="spinta">
+      <a class="btn-chiaro" href="index.html">Soci</a>
+      <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
+    </div>
+  </header>
+
+  <div class="cerca">
+    <label for="q">Cerca per cognome o nome</label>
+    <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+           placeholder="Lascia vuoto per vederli tutti">
+
+    <div class="giorni" id="giorni">
+      <button type="button" data-giorno="" aria-pressed="true">Tutti</button>
+      <button type="button" data-giorno="SABATO" aria-pressed="false">Sabato</button>
+      <button type="button" data-giorno="DOMENICA" aria-pressed="false">Domenica</button>
+      <button type="button" data-giorno="MARTEDI" aria-pressed="false">Martedì</button>
+      <button type="button" data-giorno="JOLLY" aria-pressed="false">Jolly</button>
+    </div>
+
+    <label class="opzione-jolly" id="rigaJolly" hidden>
+      <input type="checkbox" id="conJolly" checked>
+      Mostra anche i Jolly (valgono qualsiasi giorno)
+    </label>
+  </div>
+
+  <!-- L'esito sta sopra l'elenco: dopo aver segnato una gita in fondo alla
+       pagina, un messaggio in fondo alla pagina non lo vedrebbe nessuno. -->
+  <p id="avviso" class="avviso" hidden></p>
+  <p class="conteggio" id="conteggio" hidden></p>
+  <ul class="risultati" id="risultati"></ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="comune.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  const NOME_GIORNO = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
+
+  let abbonamenti = [];       // tutti gli abbonamenti della stagione
+  let giornoScelto = "";      // "" = tutti
+
+  const lista = () => el("risultati");
+
+  /** Inizio della stagione, per leggere solo le gite di quest'anno. */
+  function inizioStagione() {
+    const oggi = new Date();
+    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
+    return new Date(anno, 8, 1).toISOString();
+  }
+
+  function messaggio(testoMsg, classe) {
+    const a = el("avviso");
+    a.textContent = testoMsg;
+    a.className = "avviso " + classe;
+    a.hidden = false;
+  }
+
+  // -------------------------------------------------------------------------
+  // Dati
+  //
+  // Gli abbonamenti di una stagione sono qualche decina: si scaricano tutti
+  // una volta e si filtrano qui. Nessuna query ad ogni lettera digitata.
+  // -------------------------------------------------------------------------
+
+  async function caricaAbbonamenti() {
+    const { data, error } = await sb
+      .from("abbonamenti_gite").select("*").order("cognome").order("nome");
+    if (error) throw error;
+    abbonamenti = data;
+  }
+
+  async function caricaGite(socioId) {
+    const { data, error } = await sb
+      .from("gite_usate").select("id, data_gita")
+      .eq("socio_id", socioId)
+      .gte("stagione", inizioStagione())
+      .order("data_gita", { ascending: false });
+    if (error) throw error;
+    return data;
+  }
+
+  // -------------------------------------------------------------------------
+  // Filtri
+  // -------------------------------------------------------------------------
+
+  /**
+   * Il Jolly vale qualsiasi giorno: quando si cerca "chi ha l'abbonamento del
+   * sabato" chi ha un Jolly può salire lo stesso, quindi di norma compare.
+   * Si può togliere, ma non è il caso normale.
+   */
+  function filtrati() {
+    const parti = pezzi(el("q").value);
+    const conJolly = el("conJolly").checked;
+
+    return abbonamenti.filter((a) => {
+      if (giornoScelto && giornoScelto !== "JOLLY") {
+        const suoGiorno = a.giorno === giornoScelto || (conJolly && a.giorno === "JOLLY");
+        if (!suoGiorno) return false;
+      } else if (giornoScelto === "JOLLY" && a.giorno !== "JOLLY") {
+        return false;
+      }
+      return parti.every((p) =>
+        String(a.cognome).toLowerCase().startsWith(p) || String(a.nome).toLowerCase().startsWith(p));
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Disegno
+  // -------------------------------------------------------------------------
+
+  function schedaHtml(a, parti) {
+    const finito = a.viaggi_residui <= 0;
+    const usati = a.viaggi_totali - a.viaggi_residui;
+    const percento = a.viaggi_totali ? Math.round((usati / a.viaggi_totali) * 100) : 0;
+
+    return `
+      <div class="scheda" id="scheda_${a.socio_id}">
+        <div class="nomi">
+          <span>${evidenzia(a.cognome, parti)} ${evidenzia(a.nome, parti)}</span>
+          <span class="etichetta">${NOME_GIORNO[a.giorno] || esc(testo(a.giorno))}</span>
+        </div>
+
+        <div class="conto">
+          <span class="fatte">${usati}/${a.viaggi_totali}</span>
+          <span class="libere ${finito ? "esaurito" : ""}">
+            ${finito ? "ESAURITO" : "LIBERE " + a.viaggi_residui}
+          </span>
+        </div>
+        <div class="barra"><span style="width:${percento}%"></span></div>
+
+        <div class="azioni-pannello" style="margin-top:14px">
+          <button class="btn-verde grande" data-segna="${a.socio_id}" ${finito ? "disabled" : ""}>
+            ＋ Segna una gita
+          </button>
+          <button class="btn-chiaro" data-registro="${a.socio_id}">Gite fatte (${usati})</button>
+        </div>
+
+        <div id="zona_${a.socio_id}"></div>
+      </div>`;
+  }
+
+  function disegna() {
+    const parti = pezzi(el("q").value);
+    const elenco = filtrati();
+
+    el("conteggio").textContent = elenco.length === 1
+      ? "1 abbonamento" : `${elenco.length} abbonamenti`;
+    el("conteggio").hidden = false;
+
+    if (!elenco.length) {
+      lista().innerHTML = "";
+      messaggio("Nessun abbonamento con questi filtri.", "avviso-vuoto");
+      return;
+    }
+    el("avviso").hidden = true;
+    lista().innerHTML = elenco.map((a) => `<li>${schedaHtml(a, parti)}</li>`).join("");
+
+    lista().querySelectorAll("[data-segna]").forEach((b) =>
+      b.addEventListener("click", () => segna(b.dataset.segna, b)));
+    lista().querySelectorAll("[data-registro]").forEach((b) =>
+      b.addEventListener("click", () => apriRegistro(b.dataset.registro)));
+
+  }
+
+  // -------------------------------------------------------------------------
+  // Segna una gita
+  //
+  // Un tocco, una gita, con la data di oggi. Chi la preme è sul pullman alle
+  // sette del mattino: non c'è niente da compilare e niente da confermare. Se
+  // salgono in due si preme due volte; se si preme di troppo c'è "Gite fatte".
+  // -------------------------------------------------------------------------
+
+  function confermaNellaScheda(socioId, testoMsg) {
+    const zona = el("zona_" + socioId);
+    if (zona) zona.innerHTML = `<p class="avviso avviso-ok">${esc(testoMsg)}</p>`;
+  }
+
+  async function segna(socioId, bottone) {
+    // Il doppio tocco involontario è la cosa più facile da fare su un telefono
+    // ballerino: finché la scrittura è in corso il pulsante non risponde.
+    if (bottone.disabled) return;
+    bottone.disabled = true;
+
+    try {
+      const { error } = await sb.rpc("usa_gite", { socio: socioId });
+      if (error) throw error;
+
+      await caricaAbbonamenti();
+      disegna();
+      const a = abbonamenti.find((x) => x.socio_id === socioId);
+      confermaNellaScheda(socioId, a && a.viaggi_residui === 0
+        ? "Gita segnata. Era l'ultima: abbonamento esaurito."
+        : `Gita segnata. Ne restano ${a ? a.viaggi_residui : "—"}.`);
+    } catch (errore) {
+      bottone.disabled = false;
+      messaggio(messaggioErrore(errore), "avviso-errore");
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Gite già fatte
+  // -------------------------------------------------------------------------
+
+  async function apriRegistro(socioId) {
+    const zona = el("zona_" + socioId);
+    if (!zona) return;
+
+    let gite = [];
+    try {
+      gite = await caricaGite(socioId);
+    } catch (errore) {
+      messaggio(messaggioErrore(errore), "avviso-errore");
+      return;
+    }
+
+    zona.innerHTML = gite.length
+      ? `<ul class="registro">${gite.map((g) => `
+          <li>
+            <span class="quando">${new Date(g.data_gita).toLocaleDateString("it-IT")}</span>
+            <span class="chi">1 gita</span>
+            <button class="btn-chiaro" data-annulla="${g.id}">Annulla</button>
+          </li>`).join("")}
+        </ul>
+        <div class="azioni-pannello" style="margin-top:12px">
+          <button class="btn-chiaro" data-chiudi-registro>Chiudi</button>
+        </div>`
+      : `<p class="aiuto">Nessuna gita registrata quest'anno.</p>`;
+
+    zona.querySelectorAll("[data-annulla]").forEach((b) =>
+      b.addEventListener("click", () => annulla(b.dataset.annulla, socioId)));
+    const chiudi = zona.querySelector("[data-chiudi-registro]");
+    if (chiudi) chiudi.addEventListener("click", () => { zona.innerHTML = ""; });
+  }
+
+  async function annulla(gitaId, socioId) {
+    try {
+      const { error } = await sb.rpc("annulla_gita", { gita: gitaId });
+      if (error) throw error;
+      await caricaAbbonamenti();
+      disegna();
+      await apriRegistro(socioId);
+    } catch (errore) {
+      messaggio(messaggioErrore(errore), "avviso-errore");
+    }
+  }
+
+  // -------------------------------------------------------------------------
+
+  async function avvia() {
+    el("q").addEventListener("input", disegna);
+    el("conJolly").addEventListener("change", disegna);
+
+    el("giorni").querySelectorAll("button").forEach((b) => {
+      b.addEventListener("click", () => {
+        giornoScelto = b.dataset.giorno;
+        el("giorni").querySelectorAll("button").forEach((x) =>
+          x.setAttribute("aria-pressed", String(x === b)));
+        // La scelta sul Jolly ha senso solo quando si è chiesto un giorno preciso.
+        el("rigaJolly").hidden = !giornoScelto || giornoScelto === "JOLLY";
+        disegna();
+      });
+    });
+
+    try {
+      await caricaAbbonamenti();
+      disegna();
+    } catch (errore) {
+      messaggio(messaggioErrore(errore), "avviso-errore");
+    }
+  }
+
+  proteggiPagina(avvia);
+})();
+</script>
+</body>
+</html>

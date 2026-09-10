@@ -40,6 +40,10 @@ web/
 3. Aprire **SQL Editor**, incollare il contenuto di `supabase/schema.sql`, premere **Run**.
 
 Lo script è rieseguibile: lanciarlo due volte non crea duplicati né errori.
+Va rilanciato anche su un database già in uso ogni volta che `schema.sql` cambia:
+è così che arrivano le aggiunte fatte dopo il primo giro: l'archivio
+`soci_storico`, il registro `gite_usate` con la vista `abbonamenti_gite`, e le
+funzioni `chiudi_stagione()`, `salda_nucleo()`, `usa_gite()`, `annulla_gita()`.
 
 ## Passo 2 — Caricare i dati
 

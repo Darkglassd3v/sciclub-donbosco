@@ -5,25 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
   <style>
-    body { background: #eef1f5; font-family: sans-serif; }
+    body { }
     .container-main { max-width: 1200px; margin: 20px auto 60px; padding: 0 15px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
-    .kpi { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center; height: 100%; }
-    .kpi-label { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; color: #6c757d; }
-    .kpi-value { font-size: 1.7rem; font-weight: 800; margin-top: 6px; }
-    .section-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); height: 100%; }
+    .kpi { background: #fff; border-radius: 10px; padding: 18px; box-shadow: var(--ombra); text-align: center; height: 100%; }
+    .kpi-label { font-size: .9375rem; text-transform: uppercase; letter-spacing: .02em; color: var(--testo-soft); }
+    .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 6px; }
+    .section-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--ombra); height: 100%; }
     .section-header { color: #fff; padding: 10px 15px; font-weight: 700; }
-    .bg-blue { background: #1a73e8; } .bg-teal { background: #0f9b8e; }
-    .bg-purple { background: #7048e8; } .bg-orange { background: #e8710a; }
+    .bg-blue { background: var(--blu); } .bg-teal { background: #0F5C34; }
+    .bg-purple { background: var(--blu-dark); } .bg-orange { background: var(--giallo-dark); }
     .section-body { padding: 12px 15px; }
-    .rtable { width: 100%; border-collapse: collapse; font-size: .88rem; }
-    .rtable th { text-align: left; color: #6c757d; font-size: .72rem; text-transform: uppercase; padding: 6px 4px; }
-    .rtable td { padding: 7px 4px; border-top: 1px solid #f1f3f5; }
-    .total-row td { font-weight: 700; border-top: 2px solid #dee2e6; }
-    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-weight: 700; font-size: .8rem; }
-    .badge-blue { background: #e7f1ff; color: #1a73e8; }
-    .badge-green { background: #e6f6ec; color: #198754; }
+    .rtable { width: 100%; border-collapse: collapse; }
+    .rtable th { text-align: left; text-transform: uppercase; padding: 10px 6px; }
+    .rtable td { padding: 12px 6px; border-top: 1px solid var(--bordo); }
+    .total-row td { font-weight: 700; border-top: 3px solid var(--testo-soft); }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: .9375rem; }
+    .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
+    .badge-green { background: var(--ok-bg); color: var(--ok); }
   </style>
 </head>
 <body>
@@ -34,6 +35,7 @@
   <div class="level is-mobile mb-4">
     <div class="level-left">
       <div>
+        <img class="logo-testata mb-2" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
         <h1 class="title is-4 mb-1">Riepilogo Stagione</h1>
         <p class="has-text-grey is-size-7" id="lastUpdate"></p>
       </div>
@@ -41,6 +43,7 @@
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="index.html">Soci</a>
       <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>

@@ -1,0 +1,160 @@
+/* Stile comune alle pagine del sito di ricerca.
+ * Colori e misure da docs/brand-guidelines.md. Questo sito è separato dal
+ * gestionale e non ne condivide i file: i valori sono ricopiati qui.
+ *
+ * Si parte dal telefono: è lì che si usano queste pagine, in piedi accanto al
+ * pulmino. Su schermo grande le stesse cose stanno più larghe, niente di più.
+ */
+
+:root {
+  --blu: #084C8D; --blu-dark: #06396A; --blu-light: #E7EFF7;
+  --giallo: #FCCF02; --giallo-dark: #6B5200; --giallo-light: #FFF6D0;
+  --sfondo: #F2F5F8; --superficie: #fff; --riga-alt: #F7F9FB;
+  --testo: #14202E; --testo-soft: #4A5A6B; --bordo: #C7D0DA;
+  --ok: #147A45; --ok-bg: #E4F3EA; --errore: #B3261E; --errore-bg: #FBE9E7;
+  --raggio: 8px; --ombra: 0 2px 10px rgba(20,32,46,.10); --tocco: 48px;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 17px; }
+body {
+  margin: 0; background: var(--sfondo); color: var(--testo);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.55;
+}
+.wrap { max-width: 820px; margin: 0 auto; padding: 16px 14px 60px; }
+
+/* --- Testata ------------------------------------------------------------ */
+header.testata { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+header.testata img { height: 52px; width: auto; }
+header.testata h1 { font-size: 1.4rem; margin: 0; }
+header.testata .spinta { margin-left: auto; display: flex; gap: 8px; }
+
+/* --- Comandi ------------------------------------------------------------
+ * Tutto ciò che si tocca è alto almeno 48px e scritto a 17px: si usa col
+ * pollice, spesso col guanto, e non tutti hanno vent'anni. */
+button, input, select {
+  font: inherit; font-size: 1rem; min-height: var(--tocco);
+  border-radius: var(--raggio); border: 2px solid var(--bordo);
+  color: var(--testo); background: var(--superficie);
+}
+button { cursor: pointer; font-weight: 600; padding: 0 16px; }
+.btn-blu { background: var(--blu); border-color: var(--blu); color: #fff; }
+.btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
+.btn-chiaro { color: var(--blu); border-color: var(--blu); }
+.btn-chiaro:hover { background: var(--blu-light); }
+.btn-verde { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn-giallo { background: var(--giallo); border-color: var(--giallo); color: var(--blu-dark); }
+/* Un link che deve sembrare un pulsante (la navigazione fra le due pagine). */
+a.btn-chiaro { display: inline-flex; align-items: center; justify-content: center;
+               min-height: var(--tocco); padding: 0 16px; border: 2px solid var(--blu);
+               border-radius: var(--raggio); text-decoration: none; font-weight: 600; }
+button[disabled] { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--giallo); outline-offset: 2px; }
+
+label { display: block; font-weight: 600; margin-bottom: 6px; }
+input, select { width: 100%; padding: 10px 14px; }
+input:focus, select:focus { border-color: var(--blu); }
+input::placeholder { color: var(--testo-soft); opacity: 1; }
+
+/* --- Ricerca ------------------------------------------------------------ */
+.cerca { background: var(--superficie); border-radius: var(--raggio); box-shadow: var(--ombra); padding: 16px; }
+.cerca input[type="search"] { font-size: 1.25rem; min-height: 58px; }
+.aiuto { margin: 10px 2px 0; color: var(--testo-soft); font-size: .9375rem; }
+.conteggio { margin: 20px 2px 10px; font-weight: 700; }
+
+/* --- Risultati ---------------------------------------------------------- */
+ul.risultati { list-style: none; margin: 0; padding: 0; }
+ul.risultati li { margin-bottom: 12px; }
+
+.scheda { background: var(--superficie); border: 2px solid var(--bordo);
+          border-radius: var(--raggio); box-shadow: var(--ombra); padding: 16px; }
+.scheda .nomi { font-size: 1.25rem; font-weight: 700; color: var(--blu-dark);
+                display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.scheda mark { background: var(--giallo); color: var(--blu-dark); padding: 0 2px; }
+
+.etichetta { display: inline-block; padding: 4px 12px; border-radius: 20px;
+             font-size: .9375rem; font-weight: 700; background: var(--blu-light); color: var(--blu-dark); }
+.et-ok { background: var(--ok-bg); color: var(--ok); }
+.et-finito { background: var(--errore-bg); color: var(--errore); }
+
+/* Etichetta sopra e valore sotto: una email lunga non ha modo di finire
+ * addosso alla colonna accanto. */
+.campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 20px; margin: 12px 0 0; }
+.campi div { display: flex; flex-direction: column; gap: 2px; padding: 9px 0; border-top: 1px solid var(--riga-alt); }
+.campi dt { color: var(--testo-soft); font-size: .9375rem; }
+.campi dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.campi a { color: var(--blu); }
+
+/* --- Contatti rapidi ---------------------------------------------------
+ * Chiamare e scrivere sono le due cose che si fanno davvero dopo aver
+ * trovato qualcuno: due pulsanti larghi, non due link in mezzo al testo. */
+.contatti { display: flex; gap: 10px; margin-top: 14px; }
+.contatti a {
+  flex: 1 1 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 12px; border-radius: var(--raggio);
+  font-weight: 700; text-decoration: none; border: 2px solid transparent;
+}
+.contatti .chiama { background: var(--blu); color: #fff; }
+.contatti .whatsapp { background: #E4F3EA; color: #0B6B3A; border-color: #0B6B3A; }
+.contatti a:active { transform: translateY(1px); }
+
+/* --- Avvisi ------------------------------------------------------------- */
+.avviso { padding: 14px 16px; border-radius: var(--raggio); margin-top: 16px; font-weight: 600; }
+.avviso-errore { background: var(--errore-bg); color: var(--errore); }
+.avviso-vuoto  { background: var(--giallo-light); color: var(--giallo-dark); }
+.avviso-ok     { background: var(--ok-bg); color: var(--ok); }
+
+/* --- Login -------------------------------------------------------------- */
+.login { max-width: 420px; margin: 6vh auto; background: var(--superficie);
+         padding: 26px; border-radius: var(--raggio); box-shadow: var(--ombra); }
+.login img { display: block; margin: 0 auto 18px; max-width: 200px; }
+.login h1 { font-size: 1.35rem; text-align: center; margin: 0 0 20px; }
+.login .campo { margin-bottom: 14px; }
+.login button { width: 100%; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 480px) {
+  header.testata h1 { font-size: 1.2rem; }
+  header.testata .spinta { width: 100%; margin-left: 0; }
+  header.testata .spinta button, header.testata .spinta a { flex: 1 1 0; }
+}
+
+/* --- Gite: filtri per giorno -------------------------------------------
+ * Cinque pulsanti che restano pulsanti anche sul telefono: vanno a capo, non
+ * si stringono fino a diventare intoccabili. */
+.giorni { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.giorni button { flex: 1 1 130px; }
+.giorni button[aria-pressed="true"] {
+  background: var(--blu); border-color: var(--blu); color: #fff;
+}
+.opzione-jolly { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-weight: 600; }
+.opzione-jolly input { width: 24px; height: 24px; min-height: 0; margin: 0; }
+
+/* --- Gite: contatore ---------------------------------------------------
+ * Fatte e libere hanno lo stesso peso: al mattino si guarda "quante ne ho
+ * ancora", non "quante ne ho fatte", e un numero più piccolo dell'altro si
+ * legge per ultimo. */
+.conto { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.conto .fatte  { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--testo-soft); }
+.conto .libere { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--blu-dark); }
+.conto .libere.esaurito { color: var(--errore); }
+.barra { height: 12px; border-radius: 6px; background: var(--riga-alt);
+         border: 1px solid var(--bordo); overflow: hidden; margin-top: 10px; }
+.barra span { display: block; height: 100%; background: var(--blu); }
+
+/* --- Gite: azioni della scheda ------------------------------------------ */
+.azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }
+.azioni-pannello button { flex: 1 1 140px; }
+/* Il pulsante che si preme davvero, col pollice, in movimento. */
+.azioni-pannello button.grande { flex: 2 1 220px; min-height: 62px; font-size: 1.2rem; }
+
+/* --- Gite: registro ----------------------------------------------------- */
+.registro { list-style: none; margin: 12px 0 0; padding: 0; }
+.registro li { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+               padding: 12px 0; border-top: 1px solid var(--riga-alt); }
+.registro .quando { font-weight: 700; }
+.registro .chi { color: var(--testo-soft); }
+.registro button { margin-left: auto; min-height: 42px; font-size: .9375rem;
+                   color: var(--errore); border-color: var(--errore); }

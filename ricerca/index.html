@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ricerca Socio — Sci Club Don Bosco</title>
+  <link rel="icon" href="logo_sciclubdonbosco.png">
+  <link rel="stylesheet" href="stile.css">
+</head>
+<body>
+
+<div id="vistaLogin" class="login" hidden>
+  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+  <h1>Ricerca Socio</h1>
+  <form id="formLogin">
+    <div class="campo">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required>
+    </div>
+    <div class="campo">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn-blu" type="submit">Entra</button>
+    <p id="erroreLogin" class="avviso avviso-errore" hidden></p>
+  </form>
+</div>
+
+<div id="contenuto" class="wrap" hidden>
+  <header class="testata">
+    <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+    <h1>Ricerca Socio</h1>
+    <div class="spinta">
+      <a class="btn-chiaro" href="gite.html">Gite</a>
+      <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
+    </div>
+  </header>
+
+  <div class="cerca">
+    <label for="q">Cerca per cognome o nome</label>
+    <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
+           placeholder="Es. cos oppure fede">
+    <p class="aiuto">
+      Scrivi anche solo l'inizio: <strong>cos</strong> trova Cossetta,
+      <strong>fede</strong> trova tutti i Federico.
+      Due pezzi insieme restringono: <strong>cos fede</strong>.
+    </p>
+  </div>
+
+  <!-- L'esito sta sopra l'elenco: dopo aver segnato una gita in fondo alla
+       pagina, un messaggio in fondo alla pagina non lo vedrebbe nessuno. -->
+  <p id="avviso" class="avviso" hidden></p>
+  <p class="conteggio" id="conteggio" hidden></p>
+  <ul class="risultati" id="risultati"></ul>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="comune.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  // Solo le informazioni di base. Codice fiscale, indirizzo e importi restano
+  // fuori: qui si cerca un contatto, non si fa amministrazione, e quello che
+  // non si scarica non si può neanche lasciare in giro.
+  const CAMPI = "id, cognome, nome, telefono, email, tipologia_tessera, numero_tessera, tipo_abbonamento";
+  const MAX = 40;
+
+  const lista = () => el("risultati");
+  const conteggio = () => el("conteggio");
+  const avviso = () => el("avviso");
+
+  // -------------------------------------------------------------------------
+  // Ricerca
+  //
+  // Come il foglio "RICERCA SOCIO" del file Excel: si scrive e i risultati
+  // compaiono, senza premere niente. Ogni pezzo di testo deve corrispondere
+  // all'inizio del cognome oppure del nome, così "cos" trova Cossetta Federico
+  // e Cosetta Gabriele, "fede" trova Cossetta Federico e Rossi Federico, e
+  // "cos fede" trova solo il primo.
+  // -------------------------------------------------------------------------
+
+  async function cerca(testoCercato) {
+    const parti = pezzi(testoCercato);
+    if (!parti.length) return null;
+
+    let query = sb.from("soci").select(CAMPI);
+    // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
+    for (const p of parti) {
+      query = query.or(`cognome.ilike.${p}%,nome.ilike.${p}%`);
+    }
+    const { data, error } = await query.order("cognome").order("nome").limit(MAX);
+    if (error) throw error;
+    return data;
+  }
+
+  function schedaHtml(s, parti) {
+    const tessera = s.numero_tessera
+      ? `<span class="etichetta">Tessera ${esc(s.numero_tessera)}</span>` : "";
+    const riga = (etichetta, valore) => `<div><dt>${etichetta}</dt><dd>${valore}</dd></div>`;
+    const email = s.email
+      ? `<a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : "—";
+
+    return `
+      <div class="scheda">
+        <div class="nomi">
+          <span>${evidenzia(s.cognome, parti)} ${evidenzia(s.nome, parti)}</span>
+          ${tessera}
+        </div>
+        <dl class="campi">
+          ${riga("Telefono", esc(testo(s.telefono)))}
+          ${riga("Email", email)}
+          ${riga("Tessera", esc(testo(s.tipologia_tessera)))}
+          ${riga("Abbonamento", esc(testo(s.tipo_abbonamento)))}
+        </dl>
+        ${contattiHtml(s.telefono)}
+      </div>`;
+  }
+
+  function svuota() {
+    lista().innerHTML = "";
+    conteggio().hidden = true;
+    avviso().hidden = true;
+  }
+
+  function messaggio(testoMsg, classe) {
+    avviso().textContent = testoMsg;
+    avviso().className = "avviso " + classe;
+    avviso().hidden = false;
+  }
+
+  // -------------------------------------------------------------------------
+  // Digitazione
+  //
+  // 200ms di attesa: abbastanza da non partire a ogni tasto, poco da sembrare
+  // istantaneo. Il contatore scarta le risposte arrivate in ritardo, altrimenti
+  // una ricerca lenta sovrascriverebbe i risultati di quella scritta dopo.
+  // -------------------------------------------------------------------------
+
+  let attesa, ultima = 0;
+
+  function avvia() {
+    el("q").focus();
+    el("q").addEventListener("input", (e) => {
+      const testoCercato = e.target.value;
+      clearTimeout(attesa);
+      if (pezzi(testoCercato).length === 0) { svuota(); return; }
+
+      attesa = setTimeout(async () => {
+        const mio = ++ultima;
+        try {
+          const soci = await cerca(testoCercato);
+          if (mio !== ultima) return;
+          avviso().hidden = true;
+          if (!soci || !soci.length) {
+            lista().innerHTML = "";
+            conteggio().hidden = true;
+            messaggio("Nessun socio trovato con «" + testoCercato.trim() + "».", "avviso-vuoto");
+            return;
+          }
+          conteggio().textContent = soci.length >= MAX
+            ? `Primi ${MAX} risultati: scrivi qualche lettera in più.`
+            : `Trovati: ${soci.length}`;
+          conteggio().hidden = false;
+          const parti = pezzi(testoCercato);
+          lista().innerHTML = soci.map((s) => `<li>${schedaHtml(s, parti)}</li>`).join("");
+        } catch (errore) {
+          if (mio !== ultima) return;
+          lista().innerHTML = "";
+          conteggio().hidden = true;
+          messaggio(messaggioErrore(errore), "avviso-errore");
+        }
+      }, 200);
+    });
+  }
+
+  proteggiPagina(avvia);
+})();
+</script>
+</body>
+</html>

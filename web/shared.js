@@ -65,9 +65,15 @@ function setLoading(attivo) {
 
 const num = (v) => parseFloat(v) || 0;
 
-/** Formatta un importo in euro. */
+/**
+ * Formatta un importo in euro. Con il separatore delle migliaia: "€ 51.230,00"
+ * si legge a colpo d'occhio, "€ 51230,00" va contato con il dito.
+ */
 function fmt(v) {
-  return "€ " + num(v).toFixed(2).replace(".", ",");
+  return "€ " + num(v).toLocaleString("it-IT", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 /**

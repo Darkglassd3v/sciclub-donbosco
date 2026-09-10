@@ -20,10 +20,14 @@ supabase/migration_seed.sql
 *.xls
 *.csv
 
-# Chiavi e configurazioni locali
+# Chiavi e configurazioni locali — MAI committare
 .env
 .env.*
 !.env.example
+.github_token
+*_token
+*.pem
+*.key
 
 # Screenshot: possono contenere chiavi o dati della dashboard
 screen/

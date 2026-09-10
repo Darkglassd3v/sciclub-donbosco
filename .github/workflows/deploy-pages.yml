@@ -1,6 +1,11 @@
 name: Deploy pagine su GitHub Pages
 
-# Pubblica il contenuto di web/ su GitHub Pages.
+# Pubblica due siti sulla stessa GitHub Pages:
+#   web/     -> radice del sito (il gestionale)
+#   ricerca/ -> sottocartella /ricerca/ (solo la ricerca dei soci)
+#
+# Sono due applicazioni separate: non si linkano fra loro e non condividono
+# file. Vivono sullo stesso dominio perché un repository ha una sola Pages.
 #
 # Prerequisito da fare una volta a mano:
 #   Settings > Pages > Build and deployment > Source: "GitHub Actions"
@@ -16,6 +21,7 @@ on:
     branches: ["2.0"]
     paths:
       - "web/**"
+      - "ricerca/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -36,30 +42,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Scrivi config.js dalle variabili di repository (se impostate)
+      - name: Scrivi i config.js dalle variabili di repository (se impostate)
         env:
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
         run: |
           if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
-            cat > web/config.js <<EOF
+            for dir in web ricerca; do
+              cat > $dir/config.js <<EOF
           window.SUPABASE_CONFIG = {
             url: "$SUPABASE_URL",
             anonKey: "$SUPABASE_ANON_KEY",
           };
           EOF
-            echo "config.js generato dalle variabili di repository"
+            done
+            echo "config.js generati dalle variabili di repository"
           else
-            echo "Variabili non impostate: uso web/config.js versionato"
+            echo "Variabili non impostate: uso i config.js versionati"
           fi
 
-      - name: Verifica che config.js sia stato compilato
+      - name: Verifica che i config.js siano compilati
         run: |
-          if grep -q "IL-TUO-PROGETTO" web/config.js; then
-            echo "::error::web/config.js contiene ancora i valori segnaposto."
-            echo "::error::Compila il file oppure imposta le variabili SUPABASE_URL e SUPABASE_ANON_KEY."
-            exit 1
-          fi
+          for file in web/config.js ricerca/config.js; do
+            if grep -q "IL-TUO-PROGETTO" $file; then
+              echo "::error::$file contiene ancora i valori segnaposto."
+              echo "::error::Compila il file oppure imposta le variabili SUPABASE_URL e SUPABASE_ANON_KEY."
+              exit 1
+            fi
+          done
+
+      - name: Controlla la ricerca soci
+        run: node ricerca/test-ricerca.js
+
+      # I due siti finiscono in un'unica cartella: web/ alla radice, ricerca/
+      # sotto /ricerca/.
+      - name: Prepara il pacchetto da pubblicare
+        run: |
+          rm -rf _site
+          mkdir -p _site
+          cp -r web/. _site/
+          cp -r ricerca _site/ricerca
+          rm -f _site/ricerca/test-ricerca.js
 
       # enablement: attiva GitHub Pages se non lo è già, invece di fallire con
       # "Get Pages site failed". Non sostituisce la regola sui branch: quella
@@ -71,7 +94,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: _site
 
   deploy:
     needs: build
