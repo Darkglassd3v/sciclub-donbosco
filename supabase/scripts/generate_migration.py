@@ -260,16 +260,16 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
     lines += ["-- Listino", ""]
     for categoria, nome, prezzo in prezzi:
         lines.append(
-            "insert into public.prezzi (categoria, nome, prezzo) values "
+            "insert into public.prices (category, name, price) values "
             f"({sql_str(categoria)}, {sql_str(nome)}, {sql_num(prezzo)}) "
-            "on conflict (categoria, nome) do update set prezzo = excluded.prezzo;"
+            "on conflict (category, name) do update set price = excluded.price;"
         )
 
     lines += ["", "-- Luoghi di partenza", ""]
     for giorno, luogo in partenze:
         lines.append(
-            "insert into public.partenze (giorno, luogo) values "
-            f"({sql_str(giorno)}, {sql_str(luogo)}) on conflict (giorno, luogo) do nothing;"
+            "insert into public.departures (day, place) values "
+            f"({sql_str(giorno)}, {sql_str(luogo)}) on conflict (day, place) do nothing;"
         )
 
     lines += [
@@ -281,10 +281,10 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
 
     # ----------------------------------------------------------- soci
     columns = (
-        "created_at, data_iscrizione, legacy_id, legacy_payer_id, numero_polizza, cognome, nome, luogo_nascita, "
-        "provincia_nascita, codice_fiscale, data_nascita, indirizzo, citta, provincia, "
-        "cap, telefono, email, tipologia_tessera, agevolazioni_famiglia, tipo_abbonamento, "
-        "partenza_domenica, partenze_sabato, tipologia_corso, totale, acconto, numero_tessera"
+        "created_at, enrolled_at, legacy_id, legacy_payer_id, policy_number, last_name, first_name, birth_place, "
+        "birth_province, tax_code, birth_date, address, city, province, "
+        "postal_code, phone, email, card_type, family_discount, pass_type, "
+        "sunday_departure, saturday_departure, course_type, total, paid, card_number"
     )
 
     for indice, blocco in enumerate(blocchi_soci):
@@ -299,7 +299,7 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
                 "I collegamenti familiari NON vengono risolti qui: lo fa l'ultimo file.",
             ],
         )
-        lines.append(f"insert into public.soci ({columns}) values")
+        lines.append(f"insert into public.members ({columns}) values")
         lines.append(",\n".join(riga_socio(r) for r in blocco))
         lines.append("on conflict (legacy_id) do nothing;")
         lines += ["", "commit;", ""]
@@ -316,9 +316,9 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
     )
     lines += [
         "-- Risoluzione dei collegamenti: legacy_payer_id -> payer_id",
-        "update public.soci d",
+        "update public.members d",
         "   set payer_id = c.id",
-        "  from public.soci c",
+        "  from public.members c",
         " where d.legacy_payer_id is not null",
         "   and d.legacy_payer_id <> ''",
         "   and c.legacy_id = d.legacy_payer_id",
@@ -330,7 +330,7 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
         "declare orfani int;",
         "begin",
         "  select count(*) into orfani",
-        "    from public.soci",
+        "    from public.members",
         "   where legacy_payer_id is not null and legacy_payer_id <> '' and payer_id is null;",
         "  if orfani > 0 then",
         "    raise notice 'Collegamenti familiari non risolti: %', orfani;",
@@ -342,7 +342,7 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
         "-- Controllo finale: quante anagrafiche sono state caricate.",
         "select count(*) as soci_caricati,",
         "       count(payer_id) as con_capofamiglia",
-        "  from public.soci;",
+        "  from public.members;",
         "",
     ]
     files.append((f"{totale_file:02d}_collegamenti_familiari.sql", "\n".join(lines)))

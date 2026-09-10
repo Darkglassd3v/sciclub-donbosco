@@ -200,9 +200,9 @@
       : '<option value="0" data-nome="">Nessuna opzione</option>';
     (PREZZI[categoria] || []).forEach((p) => {
       const opzione = document.createElement("option");
-      opzione.value = p.prezzo;
-      opzione.dataset.nome = p.nome;
-      opzione.text = `${p.nome} (${p.prezzo}€)`;
+      opzione.value = p.price;
+      opzione.dataset.nome = p.name;
+      opzione.text = `${p.name} (${p.price}€)`;
       select.add(opzione);
     });
   }
@@ -252,9 +252,9 @@
     box.innerHTML = risultati.length
       ? risultati.map((s) => `
           <div class="result-item box p-2 mb-1" data-id="${s.id}">
-            <strong>${s.cognome} ${s.nome}</strong>
-            ${s.codice_fiscale ? `<span class="tag is-light ml-2">${s.codice_fiscale}</span>` : ""}
-            ${s.numero_tessera ? `<span class="tag is-info is-light ml-2">N° ${s.numero_tessera}</span>` : ""}
+            <strong>${s.last_name} ${s.first_name}</strong>
+            ${s.tax_code ? `<span class="tag is-light ml-2">${s.tax_code}</span>` : ""}
+            ${s.card_number ? `<span class="tag is-info is-light ml-2">N° ${s.card_number}</span>` : ""}
           </div>`).join("")
       : '<p class="help">Nessun risultato.</p>';
 
@@ -265,16 +265,16 @@
 
   async function cercaNelDatabase(query, limite, escludiId) {
     const termini = query.split(/\s+/).filter(Boolean);
-    let richiesta = sb.from("soci").select("*").limit(limite);
+    let richiesta = sb.from("members").select("*").limit(limite);
 
     // Ogni termine deve comparire in cognome, nome o codice fiscale.
     termini.forEach((termine) => {
       const t = termine.replace(/[%,()]/g, "");
-      richiesta = richiesta.or(`cognome.ilike.%${t}%,nome.ilike.%${t}%,codice_fiscale.ilike.%${t}%`);
+      richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`);
     });
     if (escludiId) richiesta = richiesta.neq("id", escludiId);
 
-    const { data, error } = await richiesta.order("cognome").order("nome");
+    const { data, error } = await richiesta.order("last_name").order("first_name");
     if (error) { showToast(messaggioErrore(error), "is-danger"); return []; }
     return data;
   }
@@ -283,29 +283,44 @@
   // Caricamento socio
   // -------------------------------------------------------------------------
 
+  // Colonna del form (suffisso di f_...) -> colonna del database. I campi
+  // HTML restano in italiano, la tabella members no: questa mappa fa da ponte.
+  const CAMPI_TESTO = {
+    cognome: "last_name", nome: "first_name", luogo_nascita: "birth_place",
+    provincia_nascita: "birth_province", codice_fiscale: "tax_code", data_nascita: "birth_date",
+    indirizzo: "address", citta: "city", provincia: "province", cap: "postal_code",
+    telefono: "phone", email: "email", numero_polizza: "policy_number",
+    numero_tessera: "card_number", acconto: "paid",
+  };
+
+  const CAMPI_SELECT_DB = {
+    f_tipologia_tessera: "card_type",
+    f_agevolazioni_famiglia: "family_discount",
+    f_tipo_abbonamento: "pass_type",
+    f_tipologia_corso: "course_type",
+  };
+
   async function caricaSocio(id) {
     setLoading(true);
     try {
-      const { data: socio, error } = await sb.from("soci").select("*").eq("id", id).single();
+      const { data: socio, error } = await sb.from("members").select("*").eq("id", id).single();
       if (error) throw error;
 
       el("f_id").value = socio.id;
-      ["cognome", "nome", "luogo_nascita", "provincia_nascita", "codice_fiscale", "data_nascita",
-       "indirizzo", "citta", "provincia", "cap", "telefono", "email", "numero_polizza",
-       "numero_tessera", "acconto"].forEach((campo) => {
-        el("f_" + campo).value = socio[campo] ?? "";
+      Object.entries(CAMPI_TESTO).forEach(([campo, colonna]) => {
+        el("f_" + campo).value = socio[colonna] ?? "";
       });
 
       Object.keys(SELECT_CATEGORIE).forEach((idSelect) =>
-        selezionaPerNome(idSelect, socio[idSelect.replace("f_", "")]));
-      spuntaPartenze("check_sabato", socio.partenze_sabato);
-      spuntaPartenze("check_domenica", socio.partenza_domenica);
+        selezionaPerNome(idSelect, socio[CAMPI_SELECT_DB[idSelect]]));
+      spuntaPartenze("check_sabato", socio.saturday_departure);
+      spuntaPartenze("check_domenica", socio.sunday_departure);
 
       if (socio.payer_id) {
-        const { data: pagante } = await sb.from("soci").select("cognome, nome").eq("id", socio.payer_id).single();
+        const { data: pagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
         abilitaSezionePagante();
         el("f_payer_id").value = socio.payer_id;
-        el("f_payerDisplay").value = pagante ? `${pagante.cognome} ${pagante.nome}` : socio.payer_id;
+        el("f_payerDisplay").value = pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id;
         confermaPagante(el("f_payerDisplay").value);
       } else {
         disabilitaSezionePagante();
@@ -383,9 +398,9 @@
 
     box.style.display = "block";
     box.innerHTML = risultati.map((s) => `
-      <div class="result-item" data-id="${s.id}" data-nome="${s.cognome} ${s.nome}">
-        <strong>${s.cognome} ${s.nome}</strong>
-        <span class="tag is-light ml-2">${s.codice_fiscale || "No CF"}</span>
+      <div class="result-item" data-id="${s.id}" data-nome="${s.last_name} ${s.first_name}">
+        <strong>${s.last_name} ${s.first_name}</strong>
+        <span class="tag is-light ml-2">${s.tax_code || "No CF"}</span>
       </div>`).join("");
 
     box.querySelectorAll(".result-item").forEach((riga) => {
@@ -421,13 +436,13 @@
 
     if (!idSocio) { panel.style.display = "none"; return; }
 
-    const { data, error } = await sb.from("soci").select("*").eq("payer_id", idSocio).order("cognome");
+    const { data, error } = await sb.from("members").select("*").eq("payer_id", idSocio).order("last_name");
     if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
 
     familiariACarico = data;
     if (!data.length) { panel.style.display = "none"; ricalcola(); return; }
 
-    const totali = totaliNucleo({ totale: 0, acconto: 0 }, data);
+    const totali = totaliNucleo({ total: 0, paid: 0 }, data);
     el("familyList").innerHTML = `
       <table class="table is-fullwidth is-striped is-hoverable is-size-7 mt-2">
         <thead><tr style="background:#e8f5e9">
@@ -437,10 +452,10 @@
         <tbody>
           ${data.map((s) => `
             <tr>
-              <td><strong>${s.cognome} ${s.nome}</strong></td>
-              <td>${s.numero_tessera || "—"}</td>
-              <td style="text-align:right">${fmt(s.totale)}</td>
-              <td style="text-align:right;font-weight:bold;color:${s.saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(s.saldo)}</td>
+              <td><strong>${s.last_name} ${s.first_name}</strong></td>
+              <td>${s.card_number || "—"}</td>
+              <td style="text-align:right">${fmt(s.total)}</td>
+              <td style="text-align:right;font-weight:bold;color:${s.balance > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(s.balance)}</td>
               <td><button type="button" class="button is-small is-link is-light" data-id="${s.id}">Modifica</button></td>
             </tr>`).join("")}
         </tbody>
@@ -484,44 +499,44 @@
 
     // Il saldo non viene inviato: è una colonna generata dal database.
     //
-    // data_iscrizione viene riscritta ad ogni salvataggio, come faceva la 1.x
+    // enrolled_at viene riscritta ad ogni salvataggio, come faceva la 1.x
     // con la colonna "Informazioni cronologiche": è così che un'anagrafica
     // d'archivio rientra nella stagione corrente quando la persona si re-iscrive.
     const socio = {
-      data_iscrizione: new Date().toISOString(),
-      cognome: el("f_cognome").value.trim().toUpperCase(),
-      nome: el("f_nome").value.trim().toUpperCase(),
-      luogo_nascita: el("f_luogo_nascita").value.trim().toUpperCase() || null,
-      provincia_nascita: el("f_provincia_nascita").value.trim().toUpperCase() || null,
-      codice_fiscale: el("f_codice_fiscale").value.trim().toUpperCase() || null,
-      data_nascita: el("f_data_nascita").value || null,
-      indirizzo: el("f_indirizzo").value.trim().toUpperCase() || null,
-      citta: el("f_citta").value.trim().toUpperCase() || null,
-      provincia: el("f_provincia").value.trim().toUpperCase() || null,
-      cap: el("f_cap").value.trim() || null,
-      telefono: el("f_telefono").value.trim(),
+      enrolled_at: new Date().toISOString(),
+      last_name: el("f_cognome").value.trim().toUpperCase(),
+      first_name: el("f_nome").value.trim().toUpperCase(),
+      birth_place: el("f_luogo_nascita").value.trim().toUpperCase() || null,
+      birth_province: el("f_provincia_nascita").value.trim().toUpperCase() || null,
+      tax_code: el("f_codice_fiscale").value.trim().toUpperCase() || null,
+      birth_date: el("f_data_nascita").value || null,
+      address: el("f_indirizzo").value.trim().toUpperCase() || null,
+      city: el("f_citta").value.trim().toUpperCase() || null,
+      province: el("f_provincia").value.trim().toUpperCase() || null,
+      postal_code: el("f_cap").value.trim() || null,
+      phone: el("f_telefono").value.trim(),
       email: el("f_email").value.trim() || null,
-      tipologia_tessera: nomeSelezionato("f_tipologia_tessera"),
-      agevolazioni_famiglia: nomeSelezionato("f_agevolazioni_famiglia"),
-      tipo_abbonamento: nomeSelezionato("f_tipo_abbonamento"),
-      tipologia_corso: nomeSelezionato("f_tipologia_corso"),
-      partenze_sabato: partenzeSelezionate("check_sabato"),
-      partenza_domenica: partenzeSelezionate("check_domenica"),
-      numero_polizza: el("f_numero_polizza").value.trim() || null,
-      numero_tessera: el("f_numero_tessera").value.trim() || null,
-      totale: totaleIndividuale(),
-      acconto: parseFloat(el("f_acconto").value) || 0,
+      card_type: nomeSelezionato("f_tipologia_tessera"),
+      family_discount: nomeSelezionato("f_agevolazioni_famiglia"),
+      pass_type: nomeSelezionato("f_tipo_abbonamento"),
+      course_type: nomeSelezionato("f_tipologia_corso"),
+      saturday_departure: partenzeSelezionate("check_sabato"),
+      sunday_departure: partenzeSelezionate("check_domenica"),
+      policy_number: el("f_numero_polizza").value.trim() || null,
+      card_number: el("f_numero_tessera").value.trim() || null,
+      total: totaleIndividuale(),
+      paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
     };
 
     try {
       const idEsistente = el("f_id").value;
       const { error } = idEsistente
-        ? await sb.from("soci").update(socio).eq("id", idEsistente)
-        : await sb.from("soci").insert(socio);
+        ? await sb.from("members").update(socio).eq("id", idEsistente)
+        : await sb.from("members").insert(socio);
       if (error) throw error;
 
-      showToast(`${socio.cognome} ${socio.nome} salvato`);
+      showToast(`${socio.last_name} ${socio.first_name} salvato`);
       resetForm();
     } catch (error) {
       showToast(messaggioErrore(error), "is-danger");

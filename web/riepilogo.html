@@ -120,30 +120,30 @@
     if (!silenzioso) setLoading(true);
     try {
       const [kpi, tessere, abbonamenti, corsi, partenze] = await Promise.all([
-        sb.from("riepilogo_stagione").select("*").single(),
-        sb.from("riepilogo_tessere").select("*"),
-        sb.from("riepilogo_abbonamenti").select("*"),
-        sb.from("riepilogo_corsi").select("*"),
-        sb.from("riepilogo_partenze").select("*"),
+        sb.from("season_totals").select("*").single(),
+        sb.from("card_counts").select("*"),
+        sb.from("pass_counts").select("*"),
+        sb.from("course_counts").select("*"),
+        sb.from("departure_counts").select("*"),
       ]);
 
       const errore = [kpi, tessere, abbonamenti, corsi, partenze].find((r) => r.error);
       if (errore) throw errore.error;
 
-      el("kSoci").textContent = kpi.data.totale_soci;
-      el("kTeor").textContent = fmt(kpi.data.totale_teorico);
-      el("kInc").textContent = fmt(kpi.data.totale_incassato);
-      el("kDa").textContent = fmt(kpi.data.da_incassare);
+      el("kSoci").textContent = kpi.data.total_members;
+      el("kTeor").textContent = fmt(kpi.data.total_due);
+      el("kInc").textContent = fmt(kpi.data.total_collected);
+      el("kDa").textContent = fmt(kpi.data.outstanding);
       el("lastUpdate").textContent = "Aggiornato: " + new Date().toLocaleString("it-IT");
 
       const perGiorno = (giorno) => partenze.data
-        .filter((r) => r.giorno === giorno)
-        .map((r) => [r.luogo, Number(r.conteggio)]);
+        .filter((r) => r.day === giorno)
+        .map((r) => [r.place, Number(r.count)]);
 
       riempiConteggi("tGiteSab", perGiorno("SABATO"));
       riempiConteggi("tGiteDom", perGiorno("DOMENICA"));
-      riempiConteggi("tCorsi", corsi.data.map((r) => [r.nome, Number(r.conteggio)]));
-      riempiConteggi("tAbb", abbonamenti.data.map((r) => [r.nome, Number(r.conteggio)]));
+      riempiConteggi("tCorsi", corsi.data.map((r) => [r.name, Number(r.count)]));
+      riempiConteggi("tAbb", abbonamenti.data.map((r) => [r.name, Number(r.count)]));
       riempiTessere(tessere.data);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -171,16 +171,16 @@
       tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
       return;
     }
-    const ordinate = righe.sort((a, b) => Number(b.conteggio) - Number(a.conteggio));
-    const totN = ordinate.reduce((s, r) => s + Number(r.conteggio), 0);
-    const totEuro = ordinate.reduce((s, r) => s + Number(r.totale || 0), 0);
+    const ordinate = righe.sort((a, b) => Number(b.count) - Number(a.count));
+    const totN = ordinate.reduce((s, r) => s + Number(r.count), 0);
+    const totEuro = ordinate.reduce((s, r) => s + Number(r.total || 0), 0);
     tbody.innerHTML =
       ordinate.map((r) => `
         <tr>
-          <td>${r.nome}</td>
-          <td><span class="badge badge-blue">${r.conteggio}</span></td>
-          <td>${r.prezzo ? fmt(r.prezzo) : "—"}</td>
-          <td>${r.totale ? fmt(r.totale) : "—"}</td>
+          <td>${r.name}</td>
+          <td><span class="badge badge-blue">${r.count}</span></td>
+          <td>${r.price ? fmt(r.price) : "—"}</td>
+          <td>${r.total ? fmt(r.total) : "—"}</td>
         </tr>`).join("") +
       `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${fmt(totEuro)}</td></tr>`;
   }

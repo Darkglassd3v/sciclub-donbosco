@@ -102,17 +102,17 @@
 
   async function caricaAbbonamenti() {
     const { data, error } = await sb
-      .from("abbonamenti_gite").select("*").order("cognome").order("nome");
+      .from("trip_passes").select("*").order("last_name").order("first_name");
     if (error) throw error;
     abbonamenti = data;
   }
 
   async function caricaGite(socioId) {
     const { data, error } = await sb
-      .from("gite_usate").select("id, data_gita")
-      .eq("socio_id", socioId)
-      .gte("stagione", inizioStagione())
-      .order("data_gita", { ascending: false });
+      .from("trip_uses").select("id, trip_date")
+      .eq("member_id", socioId)
+      .gte("season", inizioStagione())
+      .order("trip_date", { ascending: false });
     if (error) throw error;
     return data;
   }
@@ -132,13 +132,13 @@
 
     return abbonamenti.filter((a) => {
       if (giornoScelto && giornoScelto !== "JOLLY") {
-        const suoGiorno = a.giorno === giornoScelto || (conJolly && a.giorno === "JOLLY");
+        const suoGiorno = a.day === giornoScelto || (conJolly && a.day === "JOLLY");
         if (!suoGiorno) return false;
-      } else if (giornoScelto === "JOLLY" && a.giorno !== "JOLLY") {
+      } else if (giornoScelto === "JOLLY" && a.day !== "JOLLY") {
         return false;
       }
       return parti.every((p) =>
-        String(a.cognome).toLowerCase().startsWith(p) || String(a.nome).toLowerCase().startsWith(p));
+        String(a.last_name).toLowerCase().startsWith(p) || String(a.first_name).toLowerCase().startsWith(p));
     });
   }
 
@@ -147,33 +147,33 @@
   // -------------------------------------------------------------------------
 
   function schedaHtml(a, parti) {
-    const finito = a.viaggi_residui <= 0;
-    const usati = a.viaggi_totali - a.viaggi_residui;
-    const percento = a.viaggi_totali ? Math.round((usati / a.viaggi_totali) * 100) : 0;
+    const finito = a.trips_left <= 0;
+    const usati = a.trips_total - a.trips_left;
+    const percento = a.trips_total ? Math.round((usati / a.trips_total) * 100) : 0;
 
     return `
-      <div class="scheda" id="scheda_${a.socio_id}">
+      <div class="scheda" id="scheda_${a.member_id}">
         <div class="nomi">
-          <span>${evidenzia(a.cognome, parti)} ${evidenzia(a.nome, parti)}</span>
-          ${etichettaGiorno(a.giorno)}
+          <span>${evidenzia(a.last_name, parti)} ${evidenzia(a.first_name, parti)}</span>
+          ${etichettaGiorno(a.day)}
         </div>
 
         <div class="conto">
-          <span class="fatte">${usati}/${a.viaggi_totali}</span>
+          <span class="fatte">${usati}/${a.trips_total}</span>
           <span class="libere ${finito ? "esaurito" : ""}">
-            ${finito ? "ESAURITO" : "LIBERE " + a.viaggi_residui}
+            ${finito ? "ESAURITO" : "LIBERE " + a.trips_left}
           </span>
         </div>
-        <div class="barra ${(GIORNI[a.giorno] || {}).classe || ""}"><span style="width:${percento}%"></span></div>
+        <div class="barra ${(GIORNI[a.day] || {}).classe || ""}"><span style="width:${percento}%"></span></div>
 
         <div class="azioni-pannello" style="margin-top:14px">
-          <button class="btn-verde grande" data-segna="${a.socio_id}" ${finito ? "disabled" : ""}>
+          <button class="btn-verde grande" data-segna="${a.member_id}" ${finito ? "disabled" : ""}>
             ＋ Segna una gita
           </button>
-          <button class="btn-chiaro" data-registro="${a.socio_id}">Gite fatte (${usati})</button>
+          <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usati})</button>
         </div>
 
-        <div id="zona_${a.socio_id}"></div>
+        <div id="zona_${a.member_id}"></div>
       </div>`;
   }
 
@@ -220,15 +220,15 @@
     bottone.disabled = true;
 
     try {
-      const { error } = await sb.rpc("usa_gite", { socio: socioId });
+      const { error } = await sb.rpc("use_trip", { member_id: socioId });
       if (error) throw error;
 
       await caricaAbbonamenti();
       disegna();
-      const a = abbonamenti.find((x) => x.socio_id === socioId);
-      confermaNellaScheda(socioId, a && a.viaggi_residui === 0
+      const a = abbonamenti.find((x) => x.member_id === socioId);
+      confermaNellaScheda(socioId, a && a.trips_left === 0
         ? "Gita segnata. Era l'ultima: abbonamento esaurito."
-        : `Gita segnata. Ne restano ${a ? a.viaggi_residui : "—"}.`);
+        : `Gita segnata. Ne restano ${a ? a.trips_left : "—"}.`);
     } catch (errore) {
       bottone.disabled = false;
       messaggio(messaggioErrore(errore), "avviso-errore");
@@ -254,7 +254,7 @@
     zona.innerHTML = gite.length
       ? `<ul class="registro">${gite.map((g) => `
           <li>
-            <span class="quando">${new Date(g.data_gita).toLocaleDateString("it-IT")}</span>
+            <span class="quando">${new Date(g.trip_date).toLocaleDateString("it-IT")}</span>
             <span class="chi">1 gita</span>
             <button class="btn-chiaro" data-annulla="${g.id}">Annulla</button>
           </li>`).join("")}
@@ -272,7 +272,7 @@
 
   async function annulla(gitaId, socioId) {
     try {
-      const { error } = await sb.rpc("annulla_gita", { gita: gitaId });
+      const { error } = await sb.rpc("cancel_trip", { trip_id: gitaId });
       if (error) throw error;
       await caricaAbbonamenti();
       disegna();

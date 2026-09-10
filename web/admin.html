@@ -105,30 +105,30 @@
   })();
 
   /**
-   * L'aggregazione per nucleo familiare è calcolata dalla vista
-   * nuclei_familiari: nella 1.x era codice JS lato Apps Script che rileggeva
-   * tutto il foglio ad ogni chiamata.
+   * L'aggregazione per nucleo familiare è calcolata dalla vista households:
+   * nella 1.x era codice JS lato Apps Script che rileggeva tutto il foglio ad
+   * ogni chiamata.
    */
   async function caricaDati({ silenzioso = false } = {}) {
     if (!silenzioso) setLoading(true);
     try {
       let query = sb
-        .from("nuclei_familiari")
+        .from("households")
         .select("*")
-        .gte("data_iscrizione", inizioStagione())
-        .order("cognome");
+        .gte("enrolled_at", inizioStagione())
+        .order("last_name");
 
-      if (el("soloInsoluti").checked) query = query.gt("saldo_nucleo", 0);
+      if (el("soloInsoluti").checked) query = query.gt("household_balance", 0);
 
       const { data: nuclei, error } = await query;
       if (error) throw error;
 
       // I familiari a carico dei nuclei mostrati, in una sola query.
-      const idPaganti = nuclei.map((n) => n.payer_id);
+      const idPaganti = nuclei.map((n) => n.head_id);
       let familiari = [];
       if (idPaganti.length) {
         const { data, error: erroreFam } = await sb
-          .from("soci").select("*").in("payer_id", idPaganti).order("cognome");
+          .from("members").select("*").in("payer_id", idPaganti).order("last_name");
         if (erroreFam) throw erroreFam;
         familiari = data;
       }
@@ -144,7 +144,7 @@
 
   async function caricaCapofamiglia(ids) {
     if (!ids.length) return {};
-    const { data, error } = await sb.from("soci").select("*").in("id", ids);
+    const { data, error } = await sb.from("members").select("*").in("id", ids);
     if (error) throw error;
     return Object.fromEntries(data.map((s) => [s.id, s]));
   }
@@ -156,7 +156,7 @@
   }
 
   function render(nuclei, capofamiglia, familiari) {
-    const totale = nuclei.reduce((somma, n) => somma + parseFloat(n.saldo_nucleo || 0), 0);
+    const totale = nuclei.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
     el("totalInsoluti").textContent = fmt(totale);
     el("conteggioNuclei").textContent = `${nuclei.length} nuclei · ${familiari.length} familiari a carico`;
 
@@ -168,16 +168,16 @@
     }
 
     contenitore.innerHTML = nuclei.map((nucleo) => {
-      const pagante = capofamiglia[nucleo.payer_id];
-      const aCarico = familiari.filter((f) => f.payer_id === nucleo.payer_id);
+      const pagante = capofamiglia[nucleo.head_id];
+      const aCarico = familiari.filter((f) => f.payer_id === nucleo.head_id);
       if (!pagante) return "";
-      const saldo = parseFloat(nucleo.saldo_nucleo || 0);
+      const saldo = parseFloat(nucleo.household_balance || 0);
 
       return `
         <div class="unit-card">
           <div class="unit-header">
-            <span class="unit-title">${nucleo.cognome} ${nucleo.nome}</span>
-            <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.totale_nucleo)}</span>
+            <span class="unit-title">${nucleo.last_name} ${nucleo.first_name}</span>
+            <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>
           </div>
           <div class="tabella-scorrevole">
             <table class="custom-table">
@@ -190,7 +190,7 @@
               </tbody>
             </table>
           </div>
-          ${barraSaldo(nucleo.payer_id, saldo)}
+          ${barraSaldo(nucleo.head_id, saldo)}
         </div>`;
     }).join("");
 
@@ -201,19 +201,19 @@
 
   /** Riga in sola lettura: in questa pagina non si modifica niente del socio. */
   function rigaSocio(socio, eFamiliare) {
-    const saldo = parseFloat(socio.saldo || 0);
-    const dettagli = [socio.tipologia_tessera, socio.agevolazioni_famiglia,
-                      socio.tipo_abbonamento, socio.tipologia_corso]
+    const saldo = parseFloat(socio.balance || 0);
+    const dettagli = [socio.card_type, socio.family_discount,
+                      socio.pass_type, socio.course_type]
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `
       <tr class="${eFamiliare ? "row-dependent" : ""}">
         <td>
-          <b>${socio.cognome} ${socio.nome}</b>${eFamiliare ? " <small>(a carico)</small>" : ""}
+          <b>${socio.last_name} ${socio.first_name}</b>${eFamiliare ? " <small>(a carico)</small>" : ""}
           <div class="dettagli-socio">${dettagli.map((d) => `<span>${d}</span>`).join("")}</div>
         </td>
-        <td class="num">${fmt(socio.totale)}</td>
-        <td class="num">${fmt(socio.acconto)}</td>
+        <td class="num">${fmt(socio.total)}</td>
+        <td class="num">${fmt(socio.paid)}</td>
         <td class="num" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>
       </tr>`;
   }
@@ -257,19 +257,19 @@
 
   /**
    * Porta a zero il saldo di tutta la famiglia. Il calcolo sta in
-   * salda_nucleo() sul database: le righe del nucleo cambiano tutte insieme,
-   * e non esiste il caso "metà famiglia risulta pagata" per una connessione
-   * caduta a metà elenco.
+   * settle_household() sul database: le righe del nucleo cambiano tutte
+   * insieme, e non esiste il caso "metà famiglia risulta pagata" per una
+   * connessione caduta a metà elenco.
    */
   async function salda(idPagante) {
     setLoading(true);
     try {
-      const { data, error } = await sb.rpc("salda_nucleo", { capofamiglia: idPagante });
+      const { data, error } = await sb.rpc("settle_household", { head_id: idPagante });
       if (error) throw error;
 
       const esito = Array.isArray(data) ? data[0] : data;
-      showToast(esito && esito.soci_saldati
-        ? `Incassati ${fmt(esito.importo)} — ${esito.soci_saldati} soci saldati`
+      showToast(esito && esito.members_settled
+        ? `Incassati ${fmt(esito.amount)} — ${esito.members_settled} soci saldati`
         : "Questo nucleo era già saldato.");
       await caricaDati({ silenzioso: true });
     } catch (error) {

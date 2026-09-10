@@ -81,14 +81,14 @@ function fmt(v) {
  * funzione serve per l'anteprima nel form, prima che la riga venga salvata.
  */
 function saldoDi(socio) {
-  return num(socio.totale) - num(socio.acconto);
+  return num(socio.total) - num(socio.paid);
 }
 
 /** Totale, acconto e saldo di un capofamiglia più i suoi familiari a carico. */
 function totaliNucleo(capofamiglia, familiari = []) {
   const righe = [capofamiglia, ...familiari].filter(Boolean);
-  const totale = righe.reduce((s, r) => s + num(r.totale), 0);
-  const acconto = righe.reduce((s, r) => s + num(r.acconto), 0);
+  const totale = righe.reduce((s, r) => s + num(r.total), 0);
+  const acconto = righe.reduce((s, r) => s + num(r.paid), 0);
   return { totale, acconto, saldo: totale - acconto };
 }
 
@@ -99,16 +99,16 @@ function totaliNucleo(capofamiglia, familiari = []) {
 /** Listino raggruppato per categoria: { TESSERA: [...], FAMIGLIA: [...] } */
 async function caricaPrezzi() {
   const { data, error } = await sb
-    .from("prezzi")
-    .select("categoria, nome, prezzo")
-    .eq("attivo", true)
-    .order("categoria")
-    .order("nome");
+    .from("prices")
+    .select("category, name, price")
+    .eq("active", true)
+    .order("category")
+    .order("name");
   if (error) throw error;
 
   const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], CORSO: [] };
   data.forEach((p) => {
-    if (perCategoria[p.categoria]) perCategoria[p.categoria].push(p);
+    if (perCategoria[p.category]) perCategoria[p.category].push(p);
   });
   return perCategoria;
 }
@@ -116,27 +116,28 @@ async function caricaPrezzi() {
 /** Luoghi di partenza: { SABATO: [...], DOMENICA: [...] } */
 async function caricaPartenze() {
   const { data, error } = await sb
-    .from("partenze")
-    .select("giorno, luogo")
-    .eq("attivo", true)
-    .order("luogo");
+    .from("departures")
+    .select("day, place")
+    .eq("active", true)
+    .order("place");
   if (error) throw error;
 
   const perGiorno = { SABATO: [], DOMENICA: [] };
   data.forEach((p) => {
-    if (perGiorno[p.giorno]) perGiorno[p.giorno].push(p.luogo);
+    if (perGiorno[p.day]) perGiorno[p.day].push(p.place);
   });
   return perGiorno;
 }
 
 /**
- * Si iscrive agli aggiornamenti della tabella soci: quando un altro operatore
- * salva, la callback viene richiamata. Sostituisce il refresh manuale della 1.x.
+ * Si iscrive agli aggiornamenti della tabella members: quando un altro
+ * operatore salva, la callback viene richiamata. Sostituisce il refresh
+ * manuale della 1.x.
  */
 function ascoltaSoci(callback) {
   return sb
     .channel("soci-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "soci" }, callback)
+    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, callback)
     .subscribe();
 }
 

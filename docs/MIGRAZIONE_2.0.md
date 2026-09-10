@@ -15,6 +15,7 @@ La 1.x resta intatta in `legacy/` (cartelle `gestione-soci/`, `pannello-pagament
 
 ```
 supabase/
+  reset_legacy.sql            rimuove uno schema con i nomi italiani, se presente (una tantum)
   schema.sql                  tabelle, viste, policy di sicurezza (RLS)
   verifica.sql                17 controlli post-migrazione (sola lettura)
   scripts/generate_migration.py   genera i file di migrazione dal foglio esportato
@@ -37,13 +38,18 @@ web/
 
 1. Registrarsi su [supabase.com](https://supabase.com) (piano gratuito) e creare un progetto.
 2. Scegliere una regione europea (es. Frankfurt) e **conservare la password del database**.
-3. Aprire **SQL Editor**, incollare il contenuto di `supabase/schema.sql`, premere **Run**.
+3. Se il progetto viene da uno schema con i nomi italiani (`soci`, `prezzi`,
+   `partenze`...): aprire **SQL Editor**, incollare il contenuto di
+   `supabase/reset_legacy.sql`, premere **Run**. Su un progetto nuovo questo
+   passo si salta: non c'è niente da rimuovere.
+4. Aprire **SQL Editor**, incollare il contenuto di `supabase/schema.sql`, premere **Run**.
 
 Lo script è rieseguibile: lanciarlo due volte non crea duplicati né errori.
 Va rilanciato anche su un database già in uso ogni volta che `schema.sql` cambia:
-è così che arrivano le aggiunte fatte dopo il primo giro: l'archivio
-`soci_storico`, il registro `gite_usate` con la vista `abbonamenti_gite`, e le
-funzioni `chiudi_stagione()`, `salda_nucleo()`, `usa_gite()`, `annulla_gita()`.
+è così che arrivano le aggiunte fatte dopo il primo giro: lo storico
+`season_history`/`season_breakdown`, il registro `trip_uses` con la vista
+`trip_passes`, e le funzioni `close_season()`, `settle_household()`,
+`use_trip()`, `cancel_trip()`.
 
 ## Passo 2 — Caricare i dati
 
@@ -143,10 +149,10 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 | Problema (vedi `docs/DOCUMENTAZIONE.md`) | Come è risolto |
 |---|---|
-| Colonne 21 e 23 del foglio con etichette invertite rispetto al contenuto | Colonne con nome esplicito: `totale`, `acconto`, `saldo` |
-| Colonna `saldo` disallineata, ricalcolata a mano da `Admin.gs` ad ogni lettura | `saldo` è una **colonna generata** (`totale - acconto`): non può andare fuori sincrono |
-| `payerCode` documentato come "codice fiscale" ma contenente un UUID | `payer_id`, chiave esterna vera verso `soci(id)`, con vincolo di integrità |
-| `TOTALE FAMILIARI A CARICO` copiato e mantenuto a mano da `updateFamilyTotal()` | Vista `nuclei_familiari`, sempre coerente perché calcolata |
+| Colonne 21 e 23 del foglio con etichette invertite rispetto al contenuto | Colonne con nome esplicito: `total`, `paid`, `balance` |
+| Colonna `balance` disallineata, ricalcolata a mano da `Admin.gs` ad ogni lettura | `balance` è una **colonna generata** (`total - paid`): non può andare fuori sincrono |
+| `payerCode` documentato come "codice fiscale" ma contenente un UUID | `payer_id`, chiave esterna vera verso `members(id)`, con vincolo di integrità |
+| `TOTALE FAMILIARI A CARICO` copiato e mantenuto a mano da `updateFamilyTotal()` | Vista `households`, sempre coerente perché calcolata |
 | `showToast()` duplicata in 3 file | Una sola implementazione in `web/shared.js` |
 | Calcolo del saldo scritto due volte (`calc()` e `renderRow()`) | Una sola funzione condivisa (`saldoDi`, `totaliNucleo`) |
 | Ogni lettura rileggeva l'intero foglio (`getDataRange()`) | Query indicizzate; la ricerca soci interroga il database invece di scaricare 5.778 righe |
@@ -155,8 +161,8 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 ### Cosa resta uguale di proposito
 
-- La tabella `soci` è cumulativa (una riga per iscrizione stagionale), come il foglio.
-- La stagione parte il **1° settembre**, con la stessa regola della 1.x (funzione `stagione_corrente()`).
+- La tabella `members` è cumulativa (una riga per iscrizione stagionale), come il foglio.
+- La stagione parte il **1° settembre**, con la stessa regola della 1.x (funzione `current_season()`).
 - Le partenze restano liste separate da virgola nello stesso campo.
 
 ### Cosa non è ancora stato portato
@@ -171,10 +177,11 @@ Non è stata portata la **email di riepilogo iscrizione** che la 1.x inviava con
 
 Schema e migrazione sono stati eseguiti su un PostgreSQL 16 reale prima di essere consegnati:
 
-- `schema.sql` e i 14 file di migrazione eseguiti in ordine su un database vuoto, poi rieseguiti singolarmente e fuori ordine: nessun errore, nessun duplicato (5.778 righe stabili);
-- colonna generata `saldo` verificata: modificando l'acconto il saldo si aggiorna da solo, e con esso il totale del nucleo;
-- vista `nuclei_familiari` verificata su un nucleo con capofamiglia e due familiari;
+- `reset_legacy.sql`, `schema.sql` e i 14 file di migrazione eseguiti in ordine su un database vuoto, poi rieseguiti singolarmente e fuori ordine: nessun errore, nessun duplicato (5.778 righe stabili);
+- colonna generata `balance` verificata: modificando `paid` il saldo si aggiorna da solo, e con esso il totale del nucleo;
+- vista `households` verificata su un nucleo con capofamiglia e due familiari;
 - viste del riepilogo verificate (KPI, tessere con prezzo di listino, corsi, abbonamenti, partenze con esplosione delle liste separate da virgola);
+- `close_season()` verificata: scrive `season_history`/`season_breakdown` e azzera solo i dati di stagione, lasciando intatta l'anagrafica; una seconda chiusura sulla stessa stagione somma invece di duplicare;
 - verificato che l'archivio importato **non** inquina le statistiche di stagione e che una re-iscrizione lo fa rientrare correttamente.
 
 Non è stato possibile provare le pagine web contro un vero progetto Supabase (serve un progetto reale con le sue chiavi): il JavaScript è stato controllato sintatticamente e le query sono state verificate contro i nomi di colonna reali dello schema, ma **il collaudo dell'interfaccia va fatto dopo il Passo 4**.

@@ -62,7 +62,7 @@
   // Solo le informazioni di base. Codice fiscale, indirizzo e importi restano
   // fuori: qui si cerca un contatto, non si fa amministrazione, e quello che
   // non si scarica non si può neanche lasciare in giro.
-  const CAMPI = "id, cognome, nome, telefono, email, tipologia_tessera, numero_tessera, tipo_abbonamento";
+  const CAMPI = "id, last_name, first_name, phone, email, card_type, card_number, pass_type";
   const MAX = 40;
 
   const lista = () => el("risultati");
@@ -83,22 +83,22 @@
     const parti = pezzi(testoCercato);
     if (!parti.length) return null;
 
-    let query = sb.from("soci").select(CAMPI);
+    let query = sb.from("members").select(CAMPI);
     // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
     for (const p of parti) {
-      query = query.or(`cognome.ilike.${p}%,nome.ilike.${p}%`);
+      query = query.or(`last_name.ilike.${p}%,first_name.ilike.${p}%`);
     }
-    const { data, error } = await query.order("cognome").order("nome").limit(MAX);
+    const { data, error } = await query.order("last_name").order("first_name").limit(MAX);
     if (error) throw error;
     return data;
   }
 
   function schedaHtml(s, parti) {
-    const tessera = s.numero_tessera
-      ? `<span class="etichetta">Tessera ${esc(s.numero_tessera)}</span>` : "";
+    const tessera = s.card_number
+      ? `<span class="etichetta">Tessera ${esc(s.card_number)}</span>` : "";
     // L'abbonamento a viaggi si riconosce dal colore accanto al nome, senza
     // dover leggere la riga più in basso.
-    const giorno = etichettaGiorno(giornoAbbonamento(s.tipo_abbonamento));
+    const giorno = etichettaGiorno(giornoAbbonamento(s.pass_type));
     const riga = (etichetta, valore) => `<div><dt>${etichetta}</dt><dd>${valore}</dd></div>`;
     const email = s.email
       ? `<a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : "—";
@@ -106,16 +106,16 @@
     return `
       <div class="scheda">
         <div class="nomi">
-          <span>${evidenzia(s.cognome, parti)} ${evidenzia(s.nome, parti)}</span>
+          <span>${evidenzia(s.last_name, parti)} ${evidenzia(s.first_name, parti)}</span>
           ${giorno}${tessera}
         </div>
         <dl class="campi">
-          ${riga("Telefono", esc(testo(s.telefono)))}
+          ${riga("Telefono", esc(testo(s.phone)))}
           ${riga("Email", email)}
-          ${riga("Tessera", esc(testo(s.tipologia_tessera)))}
-          ${riga("Abbonamento", esc(testo(s.tipo_abbonamento)))}
+          ${riga("Tessera", esc(testo(s.card_type)))}
+          ${riga("Abbonamento", esc(testo(s.pass_type)))}
         </dl>
-        ${contattiHtml(s.telefono)}
+        ${contattiHtml(s.phone)}
       </div>`;
   }
 

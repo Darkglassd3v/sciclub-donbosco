@@ -47,6 +47,16 @@
     .conferma code { background: #fff; border: 1px solid var(--filo); padding: 3px 10px;
                      border-radius: 6px; font-size: 1rem; }
 
+    /* Il dettaglio per tipologia si apre sotto la riga della stagione chiusa:
+     * stessa lettura del Riepilogo, ma di un anno archiviato. */
+    .riga-dettaglio td { background: var(--riga-alt); padding: 20px 12px; }
+    .dettaglio-stagione { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .dettaglio-blocco h4 { font-size: .9375rem; font-weight: 600; margin-bottom: 8px; color: var(--testo-soft); }
+    .dettaglio-blocco table { width: 100%; border-collapse: collapse; font-size: .9375rem; }
+    .dettaglio-blocco th { text-align: left; padding: 4px 6px; color: var(--testo-soft); font-weight: 600; }
+    .dettaglio-blocco td { padding: 6px 6px; border-top: 1px solid var(--filo); }
+    .dettaglio-vuoto { color: var(--testo-soft); }
+
     @media screen and (max-width: 768px) {
       .riquadro { padding: 22px 18px; }
     }
@@ -91,17 +101,18 @@
     <table class="tabella-stagioni">
       <thead><tr>
         <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
-        <th class="num">Incassato</th><th class="num">Da incassare</th>
+        <th class="num">Incassato</th><th class="num">Da incassare</th><th></th>
       </tr></thead>
-      <tbody id="tabellaChiuse"><tr><td colspan="5">Caricamento…</td></tr></tbody>
+      <tbody id="tabellaChiuse"><tr><td colspan="6">Caricamento…</td></tr></tbody>
     </table>
   </div>
 
   <div class="riquadro">
     <h2>Effetti della chiusura</h2>
     <p class="mb-4">
-      I dati rimossi vengono prima archiviati in <code>soci_storico</code> e
-      restano consultabili nella tabella delle stagioni chiuse.
+      I dati rimossi vengono prima archiviati in <code>season_history</code> e
+      <code>season_breakdown</code> e restano consultabili nella tabella delle
+      stagioni chiuse, con il dettaglio per tipologia.
     </p>
     <div class="due-colonne">
       <div>
@@ -179,18 +190,42 @@
     return `${inizio}/${inizio + 1}`;
   }
 
+  /** Un id HTML valido a partire da una stagione ISO: via tutto ciò che non è lettera o cifra. */
+  const idStagione = (iso) => "s" + iso.replace(/[^a-zA-Z0-9]/g, "");
+
   function righeStagioni(stagioni) {
     return stagioni.map((st) => `
       <tr>
-        <td class="anno">${annoStagione(st.stagione)}</td>
-        <td class="num">${st.soci}</td>
-        <td class="num">${fmt(st.totale)}</td>
-        <td class="num">${fmt(st.incassato)}</td>
-        <td class="num" style="color:${st.da_incassare > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.da_incassare)}</td>
+        <td class="anno">${annoStagione(st.season)}</td>
+        <td class="num">${st.members}</td>
+        <td class="num">${fmt(st.total)}</td>
+        <td class="num">${fmt(st.collected)}</td>
+        <td class="num" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
       </tr>`).join("");
   }
 
-  const vuota = (testoMsg) => `<tr><td colspan="5" class="vuota">${testoMsg}</td></tr>`;
+  /**
+   * Le stagioni chiuse guadagnano una riga in più, vuota, che si riempie al
+   * primo clic sul pulsante Dettaglio e si svuota alla chiusura — lo stesso
+   * meccanismo di apriRegistro() in ricerca/gite.html.
+   */
+  function righeChiuse(stagioni) {
+    return stagioni.map((st) => {
+      const id = idStagione(st.season);
+      return `
+        <tr>
+          <td class="anno">${annoStagione(st.season)}</td>
+          <td class="num">${st.members}</td>
+          <td class="num">${fmt(st.total)}</td>
+          <td class="num">${fmt(st.collected)}</td>
+          <td class="num" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
+          <td><button type="button" class="button is-small is-light" data-dettaglio="${st.season}" data-id="${id}">Dettaglio</button></td>
+        </tr>
+        <tr id="dettaglio_${id}" class="riga-dettaglio" style="display:none"><td colspan="6"></td></tr>`;
+    }).join("");
+  }
+
+  const vuota = (testoMsg, colonne = 5) => `<tr><td colspan="${colonne}" class="vuota">${testoMsg}</td></tr>`;
 
   async function caricaSituazione() {
     setLoading(true);
@@ -199,8 +234,8 @@
       // "a che punto siamo" e "com'erano andate le altre volte". Prima esisteva
       // solo la prima, e chiudere la stagione sembrava cancellarla.
       const [aperte, chiuse] = await Promise.all([
-        sb.from("stagioni_aperte").select("*"),
-        sb.from("stagioni_chiuse").select("*"),
+        sb.from("open_season").select("*"),
+        sb.from("season_history").select("*").order("season", { ascending: false }),
       ]);
       if (aperte.error) throw aperte.error;
       if (chiuse.error) throw chiuse.error;
@@ -210,8 +245,12 @@
         : vuota("Nessuna stagione aperta: i soci sono in anagrafica ma non ancora iscritti.");
 
       el("tabellaChiuse").innerHTML = chiuse.data.length
-        ? righeStagioni(chiuse.data)
-        : vuota("Non è mai stata chiusa una stagione.");
+        ? righeChiuse(chiuse.data)
+        : vuota("Non è mai stata chiusa una stagione.", 6);
+
+      el("tabellaChiuse").querySelectorAll("[data-dettaglio]").forEach((bottone) => {
+        bottone.addEventListener("click", () => toggleDettaglio(bottone.dataset.dettaglio, bottone.dataset.id));
+      });
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -219,18 +258,82 @@
     }
   }
 
+  // ---------------------------------------------------------------------
+  // Dettaglio per tipologia di una stagione chiusa
+  // ---------------------------------------------------------------------
+
+  const ETICHETTE_CATEGORIA = { CARD: "Tessere", PASS: "Abbonamenti", COURSE: "Corsi", DEPARTURE: "Partenze" };
+
+  function blocchettoDettaglio(titolo, voci, conTotale) {
+    if (!voci.length) return "";
+    return `
+      <div class="dettaglio-blocco">
+        <h4>${titolo}</h4>
+        <table>
+          <thead><tr><th>Tipo</th><th>N.</th>${conTotale ? "<th>Totale</th>" : ""}</tr></thead>
+          <tbody>
+            ${voci.map((v) => `
+              <tr>
+                <td>${v.label}${v.day ? " (" + v.day.charAt(0) + v.day.slice(1).toLowerCase() + ")" : ""}</td>
+                <td>${v.count}</td>
+                ${conTotale ? `<td>${v.total ? fmt(v.total) : "—"}</td>` : ""}
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function dettaglioHtml(righe) {
+    if (!righe.length) return '<p class="dettaglio-vuoto">Nessun dato per questa stagione.</p>';
+
+    const gruppo = (categoria) => righe
+      .filter((r) => r.category === categoria)
+      .sort((a, b) => b.count - a.count);
+
+    return `
+      <div class="dettaglio-stagione">
+        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.CARD, gruppo("CARD"), true)}
+        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.PASS, gruppo("PASS"), false)}
+        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.COURSE, gruppo("COURSE"), false)}
+        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.DEPARTURE, gruppo("DEPARTURE"), false)}
+      </div>`;
+  }
+
+  async function toggleDettaglio(stagioneIso, id) {
+    const riga = el("dettaglio_" + id);
+    if (!riga) return;
+    const cella = riga.querySelector("td");
+
+    if (riga.style.display !== "none") {
+      riga.style.display = "none";
+      cella.innerHTML = "";
+      return;
+    }
+
+    cella.innerHTML = "Caricamento…";
+    riga.style.display = "table-row";
+
+    try {
+      const { data, error } = await sb.from("season_breakdown").select("*").eq("season", stagioneIso);
+      if (error) throw error;
+      cella.innerHTML = dettaglioHtml(data);
+    } catch (error) {
+      cella.innerHTML = `<p class="dettaglio-vuoto">${messaggioErrore(error)}</p>`;
+    }
+  }
+
   async function chiudi() {
     setLoading(true);
     el("btnChiudi").disabled = true;
     try {
-      const { data, error } = await sb.rpc("chiudi_stagione", { conferma: FRASE });
+      const { data, error } = await sb.rpc("close_season", { confirmation: FRASE });
       if (error) throw error;
 
       const esito = Array.isArray(data) ? data[0] : data;
       el("esito").innerHTML = `
         <div class="notification is-success">
-          <b>Stagione ${annoStagione(esito.stagione_chiusa)} chiusa.</b><br>
-          Archiviate ${esito.archiviati} posizioni. Le anagrafiche sono rimaste al loro posto:
+          <b>Stagione ${annoStagione(esito.season_closed)} chiusa.</b><br>
+          Archiviate ${esito.archived} posizioni. Le anagrafiche sono rimaste al loro posto:
           si riparte iscrivendo i soci dalla pagina <a href="index.html">Soci</a>.
         </div>`;
       el("frase").value = "";

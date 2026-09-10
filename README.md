@@ -49,7 +49,7 @@ si mescolano.
 
 Il listino vende abbonamenti da 5 viaggi per sabato, domenica, martedì o jolly
 (jolly = qualsiasi giorno). Quante gite comprende e per che giorno vale sono
-colonne del listino (`prezzi.viaggi`, `prezzi.giorno`), riempite dal nome
+colonne del listino (`prices.trips`, `prices.day`), riempite dal nome
 dell'opzione la prima volta che si lancia lo schema.
 
 Su `ricerca/gite.html` si filtra per giorno — chiedendo un giorno preciso
@@ -62,8 +62,8 @@ persone da indicare: chi lo usa è sul pullman alle sette del mattino, e se
 salgono in due si preme due volte. La data serve solo a ritrovare una
 registrazione sbagliata, non a raccontare la stagione.
 
-Ogni pressione è una riga in `gite_usate` e si annulla da «Gite fatte». Il
-controllo sul residuo sta nella funzione `usa_gite()` sul database, non nella
+Ogni pressione è una riga in `trip_uses` e si annulla da «Gite fatte». Il
+controllo sul residuo sta nella funzione `use_trip()` sul database, non nella
 pagina: due telefoni che segnano la stessa gita non possono portare il
 contatore sotto zero.
 
@@ -74,11 +74,15 @@ di ricerca mostrano qualcosa.
 
 A settembre, prima di aprire le iscrizioni nuove, si va su `web/stagione.html`
 e si chiude l'anno. Le anagrafiche restano; tesseramento, pagamenti, partenze,
-nuclei familiari, note e data di iscrizione vengono prima copiati in
-`soci_storico` e poi azzerati. Le gite già registrate restano: portano con sé
-la stagione in cui sono state fatte, e a ripartire da zero sono solo i
-contatori dell'anno nuovo. Serve scrivere a mano la frase `CHIUDI STAGIONE`:
-non basta un clic.
+nuclei familiari, note e data di iscrizione vengono prima riepilogati in
+`season_history` (i cinque totali della stagione) e `season_breakdown` (i
+conteggi per tipologia) e poi azzerati — a differenza dell'anagrafica, che non
+viene mai duplicata: resta la stessa riga in `members`, anno dopo anno. Le
+gite già registrate restano: portano con sé la stagione in cui sono state
+fatte, e a ripartire da zero sono solo i contatori dell'anno nuovo. Serve
+scrivere a mano la frase `CHIUDI STAGIONE`: non basta un clic. Ogni stagione
+chiusa ha un pulsante Dettaglio che mostra i conteggi per tipologia di
+quell'anno.
 
 Il listino prezzi e i luoghi di partenza non vengono toccati: se cambiano le
 quote, si aggiornano da Supabase.
