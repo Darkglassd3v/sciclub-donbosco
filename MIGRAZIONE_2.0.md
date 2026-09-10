@@ -16,6 +16,7 @@ La 1.x (cartelle `gestione-soci/`, `pannello-pagamenti/`, `riepilogo-2026/`) res
 ```
 supabase/
   schema.sql                  tabelle, viste, policy di sicurezza (RLS)
+  verifica.sql                17 controlli post-migrazione (sola lettura)
   scripts/generate_migration.py   genera i file di migrazione dal foglio esportato
   migration/                  NON versionato: 14 file generati in locale (vedi Passo 2)
 
@@ -75,6 +76,13 @@ for f in supabase/migration/*.sql; do
        -v ON_ERROR_STOP=1 -f "$f"
 done
 ```
+
+### Verificare che sia andato tutto bene
+
+A caricamento finito, eseguire `supabase/verifica.sql` nell'editor SQL: restituisce una tabella
+di 17 controlli (conteggi, duplicati, viste, RLS, colonna saldo generata, realtime, collegamenti
+familiari) con esito `OK` o `!! CONTROLLARE`. È in sola lettura e si può rilanciare quando si
+vuole. Serve anche per capire a che punto si è arrivati se ci si perde tra i file.
 
 Ogni file apre e chiude la propria transazione ed è **rieseguibile**: se ci si perde il conto, si può rilanciare un file già eseguito senza creare duplicati né errori. L'unico vincolo è che `14_collegamenti_familiari.sql` vada eseguito dopo i file dei soci (e comunque lo si può rilanciare in seguito).
 
