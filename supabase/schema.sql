@@ -488,33 +488,38 @@ begin
 
   quale := public.stagione_corrente();
 
-  with da_archiviare as (
-    select * from public.soci
-     where data_iscrizione is not null
-        or numero_polizza is not null or numero_tessera is not null
-        or tipologia_tessera is not null or agevolazioni_famiglia is not null
-        or tipo_abbonamento is not null or tipologia_corso is not null
-        or partenze_sabato is not null or partenza_domenica is not null
-        or payer_id is not null or totale <> 0 or acconto <> 0
-  ), copiati as (
-    insert into public.soci_storico (
-      stagione, socio_id, cognome, nome,
-      numero_polizza, numero_tessera, tipologia_tessera, agevolazioni_famiglia,
-      tipo_abbonamento, tipologia_corso, partenze_sabato, partenza_domenica,
-      totale, acconto, payer_id, note, data_iscrizione)
-    select
-      public.stagione_di(coalesce(d.data_iscrizione, now())),
-      d.id, d.cognome, d.nome,
-      d.numero_polizza, d.numero_tessera, d.tipologia_tessera, d.agevolazioni_famiglia,
-      d.tipo_abbonamento, d.tipologia_corso, d.partenze_sabato, d.partenza_domenica,
-      d.totale, d.acconto, d.payer_id, d.note, d.data_iscrizione
-    from da_archiviare d
-    returning 1
-  )
-  select count(*) into quante from copiati;
+  -- Le righe da chiudere si decidono una volta sola e si tengono da parte:
+  -- archiviazione e azzeramento devono lavorare esattamente sulle stesse, e
+  -- ripetere il filtro due volte sarebbe due occasioni di scriverlo diverso.
+  create temporary table da_chiudere on commit drop as
+  select id from public.soci
+   where data_iscrizione is not null
+      or numero_polizza is not null or numero_tessera is not null
+      or tipologia_tessera is not null or agevolazioni_famiglia is not null
+      or tipo_abbonamento is not null or tipologia_corso is not null
+      or partenze_sabato is not null or partenza_domenica is not null
+      or payer_id is not null or totale <> 0 or acconto <> 0;
 
-  -- Un solo UPDATE su tutta la tabella: le anagrafiche non sono nominate,
-  -- quindi non c'è modo che questa riga le tocchi.
+  select count(*) into quante from da_chiudere;
+
+  insert into public.soci_storico (
+    stagione, socio_id, cognome, nome,
+    numero_polizza, numero_tessera, tipologia_tessera, agevolazioni_famiglia,
+    tipo_abbonamento, tipologia_corso, partenze_sabato, partenza_domenica,
+    totale, acconto, payer_id, note, data_iscrizione)
+  select
+    public.stagione_di(coalesce(d.data_iscrizione, now())),
+    d.id, d.cognome, d.nome,
+    d.numero_polizza, d.numero_tessera, d.tipologia_tessera, d.agevolazioni_famiglia,
+    d.tipo_abbonamento, d.tipologia_corso, d.partenze_sabato, d.partenza_domenica,
+    d.totale, d.acconto, d.payer_id, d.note, d.data_iscrizione
+  from public.soci d
+  join da_chiudere t on t.id = d.id;
+
+  -- Un solo UPDATE, e con il WHERE: le anagrafiche non sono nominate, quindi
+  -- non c'è modo che questa riga le tocchi. Il WHERE serve anche a Supabase,
+  -- che rifiuta gli UPDATE senza (estensione safeupdate): un "azzera tutto"
+  -- scritto per sbaglio non deve poter partire.
   update public.soci set
     numero_polizza        = null,
     numero_tessera        = null,
@@ -528,7 +533,8 @@ begin
     acconto               = 0,
     payer_id              = null,
     note                  = null,
-    data_iscrizione       = null;
+    data_iscrizione       = null
+  where id in (select id from da_chiudere);
 
   return query select quante, quale;
 end;
