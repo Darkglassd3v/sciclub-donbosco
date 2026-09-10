@@ -61,7 +61,13 @@ jobs:
             exit 1
           fi
 
+      # enablement: attiva GitHub Pages se non lo è già, invece di fallire con
+      # "Get Pages site failed". Non sostituisce la regola sui branch: quella
+      # va impostata a mano in Settings > Environments > github-pages, dove il
+      # branch di deploy va autorizzato esplicitamente.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
