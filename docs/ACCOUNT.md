@@ -172,7 +172,7 @@ Se serve:
 
 ## Ordine consigliato
 
-1. **Supabase** (punto 2) — crea progetto, esegui `supabase/schema.sql`, carica i dati (vedi `MIGRAZIONE_2.0.md`).
+1. **Supabase** (punto 2) — crea progetto, esegui `supabase/schema.sql`, carica i dati (vedi `docs/MIGRAZIONE_2.0.md`).
 2. **Utenti** (punto 3) — almeno il proprio, per poter provare.
 3. **Chiavi in `config.js`** — copia URL e chiave anon.
 4. **Prova in locale:** `cd web && python3 -m http.server 8000`, poi apri `http://localhost:8000/login.html`.

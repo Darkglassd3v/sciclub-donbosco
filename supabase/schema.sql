@@ -3,7 +3,9 @@
 --
 -- Eseguire una sola volta su un progetto Supabase nuovo:
 --   Supabase Dashboard > SQL Editor > incolla questo file > Run
--- Poi eseguire supabase/migration_seed.sql per caricare i dati esistenti.
+-- Poi eseguire in ordine i file di supabase/migration/ per caricare i dati,
+-- e supabase/verifica.sql per controllare che sia andato tutto bene.
+-- Istruzioni complete: docs/MIGRAZIONE_2.0.md
 
 -- ---------------------------------------------------------------------------
 -- Tabelle di configurazione (ex fogli PREZZI e PARTENZE)
@@ -38,7 +40,7 @@ comment on table public.partenze is 'Luoghi di partenza per giorno: ex foglio PA
 -- stagione avviene in lettura (vedi funzione stagione_corrente()).
 --
 -- Differenze volute rispetto al foglio Google (fix ai problemi documentati in
--- DOCUMENTAZIONE.md):
+-- docs/DOCUMENTAZIONE.md):
 --   * `saldo` è una colonna GENERATA (totale - acconto): non può più andare
 --     fuori sincrono. Nella 1.x la colonna saldo del foglio era stale e
 --     Admin.gs doveva ricalcolarla a mano ad ogni lettura.

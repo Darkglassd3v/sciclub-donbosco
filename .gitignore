@@ -25,6 +25,9 @@ supabase/migration_seed.sql
 .env.*
 !.env.example
 
+# Screenshot: possono contenere chiavi o dati della dashboard
+screen/
+
 # Strumenti di sviluppo
 graphify-out/
 .claude/

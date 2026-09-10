@@ -8,10 +8,14 @@
 // NON inserire qui la chiave "service_role": quella scavalca la RLS e va usata
 // solo dalla dashboard Supabase o da script eseguiti fuori dal browser.
 //
-// Compilare dopo aver creato il progetto su supabase.com:
-//   Project Settings > API > Project URL / anon public key
+// Dove trovarli nella dashboard Supabase:
+//   url     -> Project Settings > Data API > Project URL
+//   anonKey -> Project Settings > API Keys > scheda "Legacy anon, service_role"
+//
+// Le nuove chiavi "sb_publishable_..." richiedono una versione di supabase-js
+// più recente di quella caricata dalle pagine: restare sulla chiave anon JWT.
 
 window.SUPABASE_CONFIG = {
-  url: "https://IL-TUO-PROGETTO.supabase.co",
-  anonKey: "LA-TUA-CHIAVE-ANON",
+  url: "https://rkuuthpauuohilbzmdnn.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrdXV0aHBhdXVvaGlsYnptZG5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzQwNzEsImV4cCI6MjEwNDYxMDA3MX0.XhZAfLiuc4xssSac6wsEMdMXPZlSHlxZae0NjaQ4Ffc",
 };

@@ -2,7 +2,7 @@
 
 Passaggio da Google Apps Script + Google Sheet a **Supabase (Postgres) + pagine statiche su GitHub Pages**.
 
-La 1.x (cartelle `gestione-soci/`, `pannello-pagamenti/`, `riepilogo-2026/`) resta intatta sul branch `main`: finché la 2.0 non è collaudata si può continuare a usarla.
+La 1.x resta intatta in `legacy/` (cartelle `gestione-soci/`, `pannello-pagamenti/`, `riepilogo-2026/`) e continua a funzionare finché la 2.0 non è collaudata.
 
 ---
 
@@ -24,9 +24,9 @@ web/
   config.js                   URL e chiave anon di Supabase (da compilare)
   shared.js                   client Supabase, login, toast, calcoli importi
   login.html                  accesso del direttivo
-  index.html                  gestione soci        (era gestione-soci/Index.html)
-  admin.html                  pannello pagamenti   (era pannello-pagamenti/AdminIndex.html)
-  riepilogo.html              riepilogo stagione   (era riepilogo-2026/RiepilogoIndex.html)
+  index.html                  gestione soci        (era legacy/gestione-soci/Index.html)
+  admin.html                  pannello pagamenti   (era legacy/pannello-pagamenti/AdminIndex.html)
+  riepilogo.html              riepilogo stagione   (era legacy/riepilogo-2026/RiepilogoIndex.html)
 
 .github/workflows/deploy-pages.yml   pubblicazione automatica di web/ su GitHub Pages
 ```
@@ -137,7 +137,7 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 ### Problemi risolti
 
-| Problema (vedi `DOCUMENTAZIONE.md`) | Come è risolto |
+| Problema (vedi `docs/DOCUMENTAZIONE.md`) | Come è risolto |
 |---|---|
 | Colonne 21 e 23 del foglio con etichette invertite rispetto al contenuto | Colonne con nome esplicito: `totale`, `acconto`, `saldo` |
 | Colonna `saldo` disallineata, ricalcolata a mano da `Admin.gs` ad ogni lettura | `saldo` è una **colonna generata** (`totale - acconto`): non può andare fuori sincrono |
@@ -157,7 +157,7 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 ### Cosa non è ancora stato portato
 
-Non erano presenti nemmeno nella 1.x — sono le voci del vecchio Excel `soci 26_originale.xlsx` elencate in `DOCUMENTAZIONE.md`: uscite e compensi maestri, saldo dell'anno precedente, assicurazioni come voce separata, pass giornalieri, grafici. Vanno decise a parte: il posto naturale è il riepilogo.
+Non erano presenti nemmeno nella 1.x — sono le voci del vecchio Excel `soci 26_originale.xlsx` elencate in `docs/DOCUMENTAZIONE.md`: uscite e compensi maestri, saldo dell'anno precedente, assicurazioni come voce separata, pass giornalieri, grafici. Vanno decise a parte: il posto naturale è il riepilogo.
 
 Non è stata portata la **email di riepilogo iscrizione** che la 1.x inviava con `MailApp` (funzione `sendSummaryEmail`). Su Supabase serve un servizio esterno (es. Resend, piano gratuito) chiamato da una Edge Function. Da valutare se serve davvero: oggi l'email arrivava a un solo indirizzo fisso.
 

@@ -19,9 +19,9 @@ Sistema riscritto come **3 web app separate su Google Apps Script (GAS)**, tutte
 
 | App | Cartella | File server | File client | Scopo |
 |---|---|---|---|---|
-| Gestione Soci | `gestione-soci/` | `codice.gs` | `Index.html` | Form iscrizione/anagrafica, creazione/modifica socio, invio email riepilogo |
-| Pannello Pagamenti | `pannello-pagamenti/` | `Admin.gs` | `AdminIndex.html` | Vista amministrativa: nuclei familiari, saldi da incassare, aggiornamento acconto |
-| Riepilogo 2026 | `riepilogo-2026/` | `Riepilogo.gs` | `RiepilogoIndex.html` | Dashboard statistiche stagione corrente (KPI, conteggi tessere/corsi/gite) |
+| Gestione Soci | `legacy/gestione-soci/` | `codice.gs` | `Index.html` | Form iscrizione/anagrafica, creazione/modifica socio, invio email riepilogo |
+| Pannello Pagamenti | `legacy/pannello-pagamenti/` | `Admin.gs` | `AdminIndex.html` | Vista amministrativa: nuclei familiari, saldi da incassare, aggiornamento acconto |
+| Riepilogo 2026 | `legacy/riepilogo-2026/` | `Riepilogo.gs` | `RiepilogoIndex.html` | Dashboard statistiche stagione corrente (KPI, conteggi tessere/corsi/gite) |
 
 Ogni app è deployata **separatamente** come web app GAS (3 URL `/exec` o `/dev` distinti — vedi §6), ma legge/scrive tutte sullo stesso foglio Google Sheets, sui fogli `SOCI`, `PREZZI`, `PARTENZE`.
 
