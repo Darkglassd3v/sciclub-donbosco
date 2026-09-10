@@ -776,7 +776,12 @@ create table if not exists public.trip_uses (
   season        timestamptz not null default public.current_season(),
 
   trip_date     date not null default current_date,
-  logged_at     timestamptz not null default now()
+  logged_at     timestamptz not null default now(),
+
+  -- Identificativo della pressione, generato dal telefono PRIMA di partire con
+  -- la chiamata. Serve a distinguere "l'operatore ha premuto due volte" da "ha
+  -- premuto una volta e la risposta si è persa": vedi use_trip().
+  client_id     uuid
 );
 
 -- Prima una riga poteva valere più gite e portarsi dietro i nomi di chi era
@@ -785,6 +790,15 @@ create table if not exists public.trip_uses (
 alter table public.trip_uses drop column if exists quante;
 alter table public.trip_uses drop column if exists partecipanti;
 alter table public.trip_uses drop column if exists nota;
+
+alter table public.trip_uses add column if not exists client_id uuid;
+
+-- Le righe segnate prima di questa aggiunta hanno client_id nullo, e in
+-- Postgres i NULL non fanno conflitto fra loro: restano dov'erano.
+alter table public.trip_uses drop constraint if exists trip_uses_client_id_key;
+alter table public.trip_uses add constraint trip_uses_client_id_key unique (client_id);
+
+comment on column public.trip_uses.client_id is 'Id della pressione, generato dal telefono. Rende use_trip() ripetibile senza scalare due gite.';
 
 create index if not exists trip_uses_member_idx on public.trip_uses (member_id);
 create index if not exists trip_uses_season_idx on public.trip_uses (season);
@@ -829,15 +843,28 @@ comment on view public.trip_passes is 'Abbonamenti a viaggi della stagione corre
  * Il controllo sul residuo sta qui e non nella pagina: due telefoni che
  * segnano la stessa gita nello stesso momento non possono far scendere il
  * contatore sotto zero.
+ *
+ * `client_id` è l'id della pressione, generato dal telefono prima di
+ * chiamare. Chi segna le gite è sul pullman alle sette del mattino, dove la
+ * linea va e viene: se la richiesta arriva ma la risposta si perde, la pagina
+ * non può sapere se la gita è stata scalata, e riprovare rischierebbe di
+ * scalarla due volte. Con l'id della pressione il secondo tentativo viene
+ * riconosciuto come lo stesso gesto e non scala niente: la chiamata si può
+ * ripetere quante volte serve.
  */
--- La firma è cambiata più volte in passato (prima accettava numero di gite,
--- data e partecipanti): `create or replace` da solo lascerebbe in giro le
--- vecchie versioni come funzioni sovrapposte, e la chiamata diventerebbe
--- ambigua.
+-- La firma è cambiata più volte (prima accettava numero di gite, data e
+-- partecipanti; poi il solo socio): `create or replace` da solo lascerebbe in
+-- giro le vecchie versioni come funzioni sovrapposte, e la chiamata
+-- diventerebbe ambigua.
 drop function if exists public.use_trip(uuid, int, date, text, text);
 drop function if exists public.use_trip(uuid, int, date);
+drop function if exists public.use_trip(uuid);
 
-create or replace function public.use_trip(member_id uuid)
+-- client_id ha un default perché una pagina già aperta sul telefono, rimasta
+-- alla versione precedente, continua a chiamare con il solo socio: meglio che
+-- funzioni senza ritentativi sicuri piuttosto che rispondere "funzione non
+-- trovata" a chi sta caricando il pullman.
+create or replace function public.use_trip(member_id uuid, client_id uuid default gen_random_uuid())
 returns table (trips_used int, trips_left int)
 language plpgsql
 security invoker
@@ -846,8 +873,20 @@ declare
   left_over int;
 begin
   -- FOR UPDATE sulla riga del socio: chi arriva secondo aspetta e rilegge il
-  -- residuo aggiornato invece di scalare sullo stesso conteggio.
+  -- residuo aggiornato invece di scalare sullo stesso conteggio. Serializza
+  -- anche i ritentativi, che quindi trovano già scritta la pressione di prima.
   perform 1 from public.members where id = member_id for update;
+
+  -- Questa pressione è già registrata: è un ritentativo, non una gita nuova.
+  -- Si risponde com'era andata la prima volta, senza errore "esaurito" nel
+  -- caso quella di prima fosse l'ultima gita disponibile.
+  if exists (select 1 from public.trip_uses u where u.client_id = use_trip.client_id) then
+    return query
+      select a.trips_used, a.trips_left
+        from public.trip_passes a
+       where a.member_id = use_trip.member_id;
+    return;
+  end if;
 
   select a.trips_left into left_over
     from public.trip_passes a
@@ -861,7 +900,11 @@ begin
     raise exception 'Abbonamento esaurito: non restano gite da scalare.';
   end if;
 
-  insert into public.trip_uses (member_id) values (member_id);
+  -- `on conflict` è la rete di sicurezza sotto al controllo qui sopra: due
+  -- richieste con lo stesso id arrivate insieme non possono diventare due
+  -- righe, qualunque cosa faccia il lock.
+  insert into public.trip_uses (member_id, client_id) values (member_id, client_id)
+  on conflict on constraint trip_uses_client_id_key do nothing;
 
   return query
     select a.trips_used, a.trips_left
@@ -870,7 +913,7 @@ begin
 end;
 $$;
 
-comment on function public.use_trip is 'Scala una gita dall''abbonamento del socio, con la data di oggi.';
+comment on function public.use_trip is 'Scala una gita dall''abbonamento del socio, con la data di oggi. Ripetibile: la stessa client_id non scala due gite.';
 
 /**
  * Annulla una registrazione sbagliata. Si cancella una riga precisa, non

@@ -12,10 +12,10 @@ const path = require("path");
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
 const { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-        giornoAbbonamento, etichettaGiorno } =
+        giornoAbbonamento, etichettaGiorno, messaggioErrore } =
   (0, eval)(`(() => { ${sorgente}
     return { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-             giornoAbbonamento, etichettaGiorno }; })()`);
+             giornoAbbonamento, etichettaGiorno, messaggioErrore }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
 
@@ -107,5 +107,23 @@ assert.strictEqual(contattiHtml(null), "");
 const bottoni = contattiHtml("380 340 9158");
 assert.ok(bottoni.includes('href="tel:3803409158"'), "manca il link di chiamata");
 assert.ok(bottoni.includes("https://wa.me/393803409158"), "manca il link WhatsApp");
+
+// --- Errori ----------------------------------------------------------------
+
+// Il guasto di rete ha un nome diverso per ogni browser, e nessuno dei tre
+// dice niente a chi sta caricando il pullman: conta sapere che è la linea e
+// che si può riprovare.
+const RETE = "Connessione assente o troppo debole: riprova.";
+assert.strictEqual(messaggioErrore({ name: "TypeError", message: "Failed to fetch" }), RETE);
+assert.strictEqual(messaggioErrore({ message: "Load failed" }), RETE);
+assert.strictEqual(messaggioErrore({ message: "NetworkError when attempting to fetch resource." }), RETE);
+
+// Un rifiuto del database invece va riportato così com'è: dice una cosa vera
+// sull'abbonamento, non sulla connessione.
+assert.strictEqual(
+  messaggioErrore({ message: "Abbonamento esaurito: non restano gite da scalare." }),
+  "Abbonamento esaurito: non restano gite da scalare.");
+assert.strictEqual(messaggioErrore({ code: "PGRST301" }), "Sessione scaduta: esci e rientra.");
+assert.strictEqual(messaggioErrore(null), "Errore sconosciuto");
 
 console.log("ok — ricerca");

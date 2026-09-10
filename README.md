@@ -67,6 +67,14 @@ controllo sul residuo sta nella funzione `use_trip()` sul database, non nella
 pagina: due telefoni che segnano la stessa gita non possono portare il
 contatore sotto zero.
 
+Sul pullman la linea va e viene, e una richiesta può arrivare al database
+senza che la risposta torni indietro: la pagina non saprebbe se la gita è
+stata scalata, e riprovare rischierebbe di scalarla due volte. Per questo
+ogni pressione porta con sé un id generato dal telefono
+(`trip_uses.client_id`): se la stessa chiamata parte due volte, il database
+riconosce la seconda come lo stesso gesto e non scala niente. Riprovare è
+sempre sicuro.
+
 L'accesso richiede un utente Supabase: senza login né il gestionale né il sito
 di ricerca mostrano qualcosa.
 

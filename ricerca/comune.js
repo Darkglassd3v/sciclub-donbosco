@@ -169,11 +169,29 @@ async function proteggiPagina(alPronto) {
   mostra(data.session);
 }
 
+/**
+ * Distingue "la rete non ha funzionato" da "il database ha detto di no".
+ * I nomi del guasto cambiano da browser a browser: Chrome dice "Failed to
+ * fetch", Safari "Load failed", Firefox "NetworkError".
+ */
+function erroreDiRete(errore) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  const descrizione = String((errore && errore.message) || "");
+  return /failed to fetch|networkerror|network request failed|load failed/i.test(descrizione);
+}
+
 /** Messaggio leggibile a partire da un errore Supabase. */
 function messaggioErrore(errore) {
   if (!errore) return "Errore sconosciuto";
   if (errore.code === "PGRST301" || errore.status === 401) {
     return "Sessione scaduta: esci e rientra.";
+  }
+  // "Failed to fetch" non dice niente a chi è sul pullman alle sette. Quello
+  // che serve sapere è che è colpa della linea e che si può riprovare: la
+  // gita porta con sé l'id della pressione, quindi un secondo tentativo non
+  // la scala due volte nemmeno se il primo era arrivato.
+  if (erroreDiRete(errore)) {
+    return "Connessione assente o troppo debole: riprova.";
   }
   return errore.message || String(errore);
 }

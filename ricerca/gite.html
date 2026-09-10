@@ -213,6 +213,17 @@
     if (zona) zona.innerHTML = `<p class="avviso avviso-ok">${esc(testoMsg)}</p>`;
   }
 
+  /** Id univoco della pressione, per rendere ripetibile la chiamata. */
+  function nuovoId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    // Pagina aperta in http o browser vecchio: basta che due pressioni non
+    // ottengano mai lo stesso id.
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  }
+
   async function segna(socioId, bottone) {
     // Il pulsante resta bloccato finché la scrittura è in corso: evita che un
     // doppio tocco involontario scali due gite.
@@ -220,9 +231,20 @@
     bottone.disabled = true;
 
     try {
-      const { error } = await sb.rpc("use_trip", { member_id: socioId });
+      // L'id viaggia con la richiesta: se questa chiamata dovesse partire due
+      // volte, il database riconosce la seconda come lo stesso gesto.
+      const { error } = await sb.rpc("use_trip", { member_id: socioId, client_id: nuovoId() });
       if (error) throw error;
+    } catch (errore) {
+      bottone.disabled = false;
+      messaggio(messaggioErrore(errore), "avviso-errore");
+      return;
+    }
 
+    // Da qui in poi la gita è scritta. Rileggere i totali è una seconda
+    // chiamata di rete, che con la linea del pullman può fallire da sola:
+    // mostrarla come errore farebbe segnare la gita una seconda volta.
+    try {
       await caricaAbbonamenti();
       disegna();
       const a = abbonamenti.find((x) => x.member_id === socioId);
@@ -230,8 +252,8 @@
         ? "Gita segnata. Era l'ultima: abbonamento esaurito."
         : `Gita segnata. Ne restano ${a ? a.trips_left : "—"}.`);
     } catch (errore) {
-      bottone.disabled = false;
-      messaggio(messaggioErrore(errore), "avviso-errore");
+      confermaNellaScheda(socioId,
+        "Gita segnata. Il conteggio qui sopra non si è aggiornato: ricarica la pagina per rivederlo.");
     }
   }
 
