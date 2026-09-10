@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accesso — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <style>
+    body { background: #e9ecef; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .card-login { max-width: 420px; width: 100%; background: #fff; padding: 32px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,.1); }
+  </style>
+</head>
+<body>
+
+<div class="card-login">
+  <h1 class="title is-4 has-text-centered">Sci Club Don Bosco</h1>
+  <p class="subtitle is-6 has-text-centered has-text-grey">Accesso riservato al direttivo</p>
+
+  <form id="loginForm">
+    <div class="field">
+      <label class="label">Email</label>
+      <input class="input" type="email" id="email" required autocomplete="username">
+    </div>
+    <div class="field">
+      <label class="label">Password</label>
+      <input class="input" type="password" id="password" required autocomplete="current-password">
+    </div>
+    <button class="button is-link is-fullwidth has-text-weight-bold" id="btnLogin" type="submit">ENTRA</button>
+  </form>
+
+  <p id="errore" class="help is-danger mt-3" style="display:none"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const paginaSuccessiva = new URLSearchParams(location.search).get("next") || "index.html";
+
+  // Se la sessione è già valida si salta il login.
+  sb.auth.getSession().then(({ data }) => {
+    if (data.session) location.replace(paginaSuccessiva);
+  });
+
+  document.getElementById("loginForm").addEventListener("submit", async (evento) => {
+    evento.preventDefault();
+    const bottone = document.getElementById("btnLogin");
+    const errore = document.getElementById("errore");
+    errore.style.display = "none";
+    bottone.classList.add("is-loading");
+
+    const { error } = await sb.auth.signInWithPassword({
+      email: document.getElementById("email").value.trim(),
+      password: document.getElementById("password").value,
+    });
+
+    bottone.classList.remove("is-loading");
+    if (error) {
+      errore.textContent = "Accesso non riuscito: " + messaggioErrore(error);
+      errore.style.display = "block";
+      return;
+    }
+    location.replace(paginaSuccessiva);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Riepilogo — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <style>
+    body { background: #eef1f5; font-family: sans-serif; }
+    .container-main { max-width: 1200px; margin: 20px auto 60px; padding: 0 15px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    .kpi { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center; height: 100%; }
+    .kpi-label { font-size: .75rem; text-transform: uppercase; letter-spacing: 1px; color: #6c757d; }
+    .kpi-value { font-size: 1.7rem; font-weight: 800; margin-top: 6px; }
+    .section-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); height: 100%; }
+    .section-header { color: #fff; padding: 10px 15px; font-weight: 700; }
+    .bg-blue { background: #1a73e8; } .bg-teal { background: #0f9b8e; }
+    .bg-purple { background: #7048e8; } .bg-orange { background: #e8710a; }
+    .section-body { padding: 12px 15px; }
+    .rtable { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .rtable th { text-align: left; color: #6c757d; font-size: .72rem; text-transform: uppercase; padding: 6px 4px; }
+    .rtable td { padding: 7px 4px; border-top: 1px solid #f1f3f5; }
+    .total-row td { font-weight: 700; border-top: 2px solid #dee2e6; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-weight: 700; font-size: .8rem; }
+    .badge-blue { background: #e7f1ff; color: #1a73e8; }
+    .badge-green { background: #e6f6ec; color: #198754; }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+
+<div class="container-main">
+  <div class="level is-mobile mb-4">
+    <div class="level-left">
+      <div>
+        <h1 class="title is-4 mb-1">Riepilogo Stagione</h1>
+        <p class="has-text-grey is-size-7" id="lastUpdate"></p>
+      </div>
+    </div>
+    <div class="level-right">
+      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
+      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
+      <button class="button is-small is-light" onclick="logout()">Esci</button>
+    </div>
+  </div>
+
+  <div class="columns is-multiline mb-2">
+    <div class="column is-3"><div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
+    <div class="column is-3"><div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div></div>
+    <div class="column is-3"><div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value has-text-success" id="kInc">—</div></div></div>
+    <div class="column is-3"><div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
+  </div>
+
+  <div class="columns is-multiline">
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-blue">⛷️ Gite Sabato</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteSab"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-blue">⛷️ Gite Domenica</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteDom"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-orange">🎿 Corsi</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Corso</th><th>Iscritti</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-4">
+      <div class="section-card">
+        <div class="section-header bg-teal">🎫 Abbonamenti</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>Iscritti</th></tr></thead><tbody id="tAbb"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-8">
+      <div class="section-card">
+        <div class="section-header bg-purple">🪪 Tessere</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+
+  (async function init() {
+    if (!(await requireAuth())) return;
+    await carica();
+    ascoltaSoci(() => carica({ silenzioso: true }));
+  })();
+
+  /**
+   * Tutte le aggregazioni arrivano da viste SQL: nella 1.x erano cicli JS su
+   * tutte le righe del foglio, rifatti ad ogni apertura della pagina.
+   */
+  async function carica({ silenzioso = false } = {}) {
+    if (!silenzioso) setLoading(true);
+    try {
+      const [kpi, tessere, abbonamenti, corsi, partenze] = await Promise.all([
+        sb.from("riepilogo_stagione").select("*").single(),
+        sb.from("riepilogo_tessere").select("*"),
+        sb.from("riepilogo_abbonamenti").select("*"),
+        sb.from("riepilogo_corsi").select("*"),
+        sb.from("riepilogo_partenze").select("*"),
+      ]);
+
+      const errore = [kpi, tessere, abbonamenti, corsi, partenze].find((r) => r.error);
+      if (errore) throw errore.error;
+
+      el("kSoci").textContent = kpi.data.totale_soci;
+      el("kTeor").textContent = fmt(kpi.data.totale_teorico);
+      el("kInc").textContent = fmt(kpi.data.totale_incassato);
+      el("kDa").textContent = fmt(kpi.data.da_incassare);
+      el("lastUpdate").textContent = "Aggiornato: " + new Date().toLocaleString("it-IT");
+
+      const perGiorno = (giorno) => partenze.data
+        .filter((r) => r.giorno === giorno)
+        .map((r) => [r.luogo, Number(r.conteggio)]);
+
+      riempiConteggi("tGiteSab", perGiorno("SABATO"));
+      riempiConteggi("tGiteDom", perGiorno("DOMENICA"));
+      riempiConteggi("tCorsi", corsi.data.map((r) => [r.nome, Number(r.conteggio)]));
+      riempiConteggi("tAbb", abbonamenti.data.map((r) => [r.nome, Number(r.conteggio)]));
+      riempiTessere(tessere.data);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function riempiConteggi(id, voci) {
+    const tbody = el(id);
+    if (!voci.length) {
+      tbody.innerHTML = '<tr><td colspan="2" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
+      return;
+    }
+    const ordinate = voci.sort((a, b) => b[1] - a[1]);
+    const totale = ordinate.reduce((s, [, v]) => s + v, 0);
+    tbody.innerHTML =
+      ordinate.map(([nome, n]) => `<tr><td>${nome}</td><td><span class="badge badge-blue">${n}</span></td></tr>`).join("") +
+      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totale}</span></td></tr>`;
+  }
+
+  function riempiTessere(righe) {
+    const tbody = el("tTess");
+    if (!righe.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
+      return;
+    }
+    const ordinate = righe.sort((a, b) => Number(b.conteggio) - Number(a.conteggio));
+    const totN = ordinate.reduce((s, r) => s + Number(r.conteggio), 0);
+    const totEuro = ordinate.reduce((s, r) => s + Number(r.totale || 0), 0);
+    tbody.innerHTML =
+      ordinate.map((r) => `
+        <tr>
+          <td>${r.nome}</td>
+          <td><span class="badge badge-blue">${r.conteggio}</span></td>
+          <td>${r.prezzo ? fmt(r.prezzo) : "—"}</td>
+          <td>${r.totale ? fmt(r.totale) : "—"}</td>
+        </tr>`).join("") +
+      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${fmt(totEuro)}</td></tr>`;
+  }
+</script>
+</body>
+</html>

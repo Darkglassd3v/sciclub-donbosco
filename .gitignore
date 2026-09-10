@@ -1,1 +1,38 @@
 .idea/
+
+# ---------------------------------------------------------------------------
+# DATI PERSONALI — NON COMMITTARE MAI
+#
+# Il repository è pubblico. Questi file contengono anagrafiche reali di soci
+# (nome, cognome, data di nascita, indirizzo, telefono, codice fiscale), minori
+# inclusi: pubblicarli sarebbe una violazione del GDPR, e resterebbero nella
+# cronologia git anche se cancellati in un secondo momento.
+#
+# I fogli originali vanno tenuti solo in locale o su Drive.
+# migration_seed.sql si rigenera quando serve:
+#   python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx" \
+#           supabase/migration_seed.sql
+# ---------------------------------------------------------------------------
+original_data/
+new_structure/
+supabase/migration_seed.sql
+*.xlsx
+*.xls
+*.csv
+
+# Chiavi e configurazioni locali
+.env
+.env.*
+!.env.example
+
+# Strumenti di sviluppo
+graphify-out/
+.claude/
+.claude-flow/
+.swarm/
+.hive-mind/
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db

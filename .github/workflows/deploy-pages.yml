@@ -1,0 +1,78 @@
+name: Deploy pagine su GitHub Pages
+
+# Pubblica il contenuto di web/ su GitHub Pages.
+#
+# Prerequisito da fare una volta a mano:
+#   Settings > Pages > Build and deployment > Source: "GitHub Actions"
+#
+# Le credenziali Supabase (URL e chiave anon) non sono segreti: stanno in
+# web/config.js. Se si preferisce tenerle fuori dal repository, impostare le
+# variabili di repository SUPABASE_URL e SUPABASE_ANON_KEY
+# (Settings > Secrets and variables > Actions > Variables): se presenti,
+# sovrascrivono config.js in fase di deploy.
+
+on:
+  push:
+    branches: ["2.0"]
+    paths:
+      - "web/**"
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un deploy alla volta; non annulla quello in corso per non lasciare
+# la pagina pubblicata a metà.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scrivi config.js dalle variabili di repository (se impostate)
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
+            cat > web/config.js <<EOF
+          window.SUPABASE_CONFIG = {
+            url: "$SUPABASE_URL",
+            anonKey: "$SUPABASE_ANON_KEY",
+          };
+          EOF
+            echo "config.js generato dalle variabili di repository"
+          else
+            echo "Variabili non impostate: uso web/config.js versionato"
+          fi
+
+      - name: Verifica che config.js sia stato compilato
+        run: |
+          if grep -q "IL-TUO-PROGETTO" web/config.js; then
+            echo "::error::web/config.js contiene ancora i valori segnaposto."
+            echo "::error::Compila il file oppure imposta le variabili SUPABASE_URL e SUPABASE_ANON_KEY."
+            exit 1
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
