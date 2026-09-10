@@ -108,9 +108,26 @@ create table if not exists public.soci (
   note              text
 );
 
+-- ---------------------------------------------------------------------------
+-- Aggiornamento di database già esistenti
+--
+-- `create table if not exists` NON aggiunge colonne a una tabella già creata:
+-- su un database nato da una versione precedente di questo file le colonne
+-- nuove verrebbero saltate in silenzio, e la migrazione fallirebbe con
+-- "column ... does not exist". Queste ALTER rendono lo script capace di
+-- aggiornare, non solo di creare. Su un database nuovo non fanno nulla.
+-- ---------------------------------------------------------------------------
+
+alter table public.soci add column if not exists data_iscrizione timestamptz not null default now();
+alter table public.soci add column if not exists legacy_payer_id text;
+alter table public.soci add column if not exists numero_tessera   text;
+alter table public.soci add column if not exists note             text;
+
 comment on column public.soci.saldo is 'Colonna generata: sempre totale - acconto. Non scrivibile.';
 comment on column public.soci.payer_id is 'Capofamiglia che paga per questo socio. NULL = socio indipendente.';
 comment on column public.soci.legacy_id is 'ID della riga nel Google Sheet 1.x (colonna 24). Solo tracciabilità.';
+comment on column public.soci.legacy_payer_id is 'ID del pagante nel Google Sheet 1.x (colonna 26). Traccia: la fonte di verità è payer_id.';
+comment on column public.soci.data_iscrizione is 'Data di iscrizione alla stagione: è questa a decidere in che stagione ricade il socio.';
 
 create index if not exists soci_cognome_nome_idx  on public.soci (cognome, nome);
 create index if not exists soci_codice_fiscale_idx on public.soci (codice_fiscale);
