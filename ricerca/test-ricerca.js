@@ -11,9 +11,11 @@ const path = require("path");
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
-const { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo } =
+const { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+        giornoAbbonamento, etichettaGiorno } =
   (0, eval)(`(() => { ${sorgente}
-    return { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo }; })()`);
+    return { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+             giornoAbbonamento, etichettaGiorno }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
 
@@ -55,6 +57,24 @@ assert.strictEqual(testo(" no "), "—");
 assert.strictEqual(testo(""), "—");
 assert.strictEqual(testo(null), "—");
 assert.strictEqual(testo("STAGIONALE"), "STAGIONALE");
+
+// --- Abbonamenti a viaggi --------------------------------------------------
+
+// I nomi arrivano dal listino così come sono scritti nel foglio.
+assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi SABATO"), "SABATO");
+assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi DOMENICA"), "DOMENICA");
+assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi MARTEDÌ"), "MARTEDI");
+assert.strictEqual(giornoAbbonamento("abbonamento 10 viaggi jolly"), "JOLLY");
+
+// Quello che non è un abbonamento a viaggi non prende nessun colore.
+assert.strictEqual(giornoAbbonamento("CORSO PRESCIISTICA"), null);
+assert.strictEqual(giornoAbbonamento("NO"), null);
+assert.strictEqual(giornoAbbonamento(null), null);
+
+// Il colore non è mai l'unica informazione: il nome del giorno resta scritto.
+assert.ok(etichettaGiorno("SABATO").includes("Sabato"), "manca il nome del giorno");
+assert.ok(etichettaGiorno("SABATO").includes("giorno-sabato"), "manca la classe del colore");
+assert.strictEqual(etichettaGiorno(null), "");
 
 // --- Telefono --------------------------------------------------------------
 

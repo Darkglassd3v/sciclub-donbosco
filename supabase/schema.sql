@@ -464,6 +464,27 @@ order by 1 desc;
 
 alter view public.stagioni_aperte set (security_invoker = true);
 
+comment on view public.stagioni_aperte is 'La stagione in corso: righe di soci che portano ancora dati di stagione. Dopo una chiusura è vuota finché non si iscrive qualcuno.';
+
+-- Le stagioni già chiuse, lette dall'archivio. Senza questa vista chiudere la
+-- stagione sembrava cancellarla: i dati c'erano ancora in soci_storico, ma la
+-- pagina non aveva niente da mostrare e la tabella restava vuota.
+create or replace view public.stagioni_chiuse as
+select
+  stagione,
+  count(*)                                as soci,
+  coalesce(sum(totale),  0)               as totale,
+  coalesce(sum(acconto), 0)               as incassato,
+  coalesce(sum(totale - acconto), 0)      as da_incassare,
+  max(archiviato_il)                      as chiusa_il
+from public.soci_storico
+group by stagione
+order by stagione desc;
+
+alter view public.stagioni_chiuse set (security_invoker = true);
+
+comment on view public.stagioni_chiuse is 'Riepilogo delle stagioni archiviate: soci, quote, incassato e da incassare com''erano alla chiusura.';
+
 /**
  * Archivia e azzera i dati di stagione di tutti i soci.
  *
@@ -559,11 +580,10 @@ create policy soci_storico_insert on public.soci_storico
 -- ---------------------------------------------------------------------------
 -- Saldo di un nucleo familiare
 --
--- Al banchetto si incassa per famiglia, non per persona: arriva il
--- capofamiglia, paga quello che deve tutto il nucleo e se ne va. Il pannello
--- pagamenti fa solo questo, e lo fa qui dentro perché le righe del nucleo
--- devono cambiare tutte insieme: se si aggiornassero una alla volta dal
--- browser, una connessione caduta a metà lascerebbe metà famiglia pagata.
+-- L'incasso avviene per nucleo familiare: il capofamiglia salda l'intero
+-- importo dovuto dal nucleo. La funzione sta sul database perché le righe del
+-- nucleo devono cambiare in un'unica transazione: aggiornandole una alla volta
+-- dal browser, una connessione interrotta lascerebbe il nucleo saldato a metà.
 --
 -- Chi ha già pagato più del dovuto non viene toccato (`saldo > 0`): un acconto
 -- in eccesso è un caso da sistemare a mano, non da azzerare in silenzio.
@@ -604,13 +624,12 @@ comment on function public.salda_nucleo is 'Porta a zero il saldo del capofamigl
 -- Abbonamenti a viaggi
 --
 -- Il listino vende "Abbonamento 5 viaggi SABATO / DOMENICA / MARTEDÌ / JOLLY",
--- ma finora l'abbonamento era solo una scritta nella riga del socio: quante
--- gite fossero state fatte non lo sapeva nessuno, e a metà stagione si andava
--- a memoria.
+-- ma l'abbonamento era finora solo un valore testuale nella riga del socio,
+-- senza alcun conteggio delle gite effettuate.
 --
--- Quante gite comprende un abbonamento e per che giorno vale sono proprietà
--- del listino, non del socio: stanno qui, accanto al prezzo. Il socio continua
--- a puntare al listino con `tipo_abbonamento`, come già faceva.
+-- Numero di gite e giorno di validità sono proprietà del listino, non del
+-- socio: stanno qui, accanto al prezzo. Il socio continua a puntare al listino
+-- con `tipo_abbonamento`.
 --
 -- JOLLY vale qualunque giorno: è un giorno come gli altri in tabella, e sono
 -- le query a decidere se includerlo.
@@ -678,13 +697,13 @@ update public.prezzi set nome = nome
 -- ---------------------------------------------------------------------------
 -- Gite usate
 --
--- Una riga = una gita. Chi la segna è sul pullman alle sette del mattino: preme
--- un più e basta. Niente data da scegliere (è quella del giorno in cui si
--- preme) e niente numero di persone: se salgono in due, si preme due volte.
+-- Una riga = una gita. La registrazione è una sola pressione: nessuna data da
+-- scegliere (viene usata quella del giorno) e nessun numero di persone (per
+-- due partecipanti si registra due volte).
 --
--- La data serve a poter tornare indietro su una registrazione sbagliata, non a
--- dire com'è andata la stagione: se il pulmino è partito ieri e la gita viene
--- segnata stamattina, il conto resta giusto lo stesso.
+-- La data serve a ritrovare e annullare una registrazione sbagliata, non a
+-- ricostruire il calendario della stagione: una gita segnata il giorno dopo
+-- lascia comunque il conteggio corretto.
 --
 -- Le righe non si cancellano a fine stagione: portano la stagione con sé, e
 -- così l'anno prossimo si può ancora guardare com'era andata.

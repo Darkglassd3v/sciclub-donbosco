@@ -39,11 +39,9 @@
   <div class="cerca">
     <label for="q">Cerca per cognome o nome</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-           placeholder="Es. cos oppure fede">
-    <p class="aiuto">
-      Scrivi anche solo l'inizio: <strong>cos</strong> trova Cossetta,
-      <strong>fede</strong> trova tutti i Federico.
-      Due pezzi insieme restringono: <strong>cos fede</strong>.
+           placeholder="Cognome o nome">
+    <p class="suggerimento">
+      La ricerca funziona anche con le prime lettere. Più termini restringono il risultato.
     </p>
   </div>
 
@@ -98,6 +96,9 @@
   function schedaHtml(s, parti) {
     const tessera = s.numero_tessera
       ? `<span class="etichetta">Tessera ${esc(s.numero_tessera)}</span>` : "";
+    // L'abbonamento a viaggi si riconosce dal colore accanto al nome, senza
+    // dover leggere la riga più in basso.
+    const giorno = etichettaGiorno(giornoAbbonamento(s.tipo_abbonamento));
     const riga = (etichetta, valore) => `<div><dt>${etichetta}</dt><dd>${valore}</dd></div>`;
     const email = s.email
       ? `<a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : "—";
@@ -106,7 +107,7 @@
       <div class="scheda">
         <div class="nomi">
           <span>${evidenzia(s.cognome, parti)} ${evidenzia(s.nome, parti)}</span>
-          ${tessera}
+          ${giorno}${tessera}
         </div>
         <dl class="campi">
           ${riga("Telefono", esc(testo(s.telefono)))}

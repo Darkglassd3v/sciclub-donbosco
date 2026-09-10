@@ -7,36 +7,44 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
   <style>
-    .container-main { max-width: 1000px; margin: 20px auto 60px; padding: 0 15px; }
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    .container-main { max-width: 1000px; margin: 28px auto 80px; padding: 0 18px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .summary-bar { background: var(--testo); color: #fff; padding: 18px 22px; border-radius: 10px; margin-bottom: 22px; }
-    .summary-label { font-size: .9375rem; color: #C3CCD6; text-transform: uppercase; letter-spacing: .02em; }
-    .summary-value { font-size: 2.1rem; font-weight: 800; color: var(--giallo); line-height: 1.1; }
+    .summary-bar { background: var(--testo); color: #fff; padding: 26px 28px; border-radius: var(--raggio-card); margin-bottom: 28px; }
+    .summary-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
+    .summary-value { font-size: 2.6rem; font-weight: 700; letter-spacing: -.022em; color: var(--giallo); line-height: 1.05; margin-top: 2px; }
     .summary-bar .checkbox { color: #fff; font-size: 1rem; }
-    .summary-bar .checkbox input { width: 22px; height: 22px; vertical-align: -4px; margin-right: 6px; }
+    .summary-bar .checkbox input { width: 22px; height: 22px; vertical-align: -4px; margin-right: 8px; }
 
-    .unit-card { background: #fff; border-radius: 10px; box-shadow: var(--ombra); margin-bottom: 18px; overflow: hidden; }
-    .unit-header { background: var(--blu); color: #fff; padding: 12px 16px; display: flex;
-                   justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .unit-title { font-weight: 700; font-size: 1.15rem; }
-    .unit-badge { background: rgba(255,255,255,.22); padding: 5px 12px; border-radius: 20px; }
+    /* La famiglia è una scheda bianca con il suo titolo, non una riga di
+     * tabella sotto una fascia colorata. Il colore torna a essere un accento. */
+    .unit-card { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); margin-bottom: 20px; overflow: hidden; }
+    .unit-header { padding: 22px 24px 16px; display: flex; justify-content: space-between;
+                   align-items: baseline; flex-wrap: wrap; gap: 10px; }
+    .unit-title { font-weight: 600; font-size: 1.5rem; letter-spacing: -.022em; color: var(--testo); }
+    .unit-badge { color: var(--testo-soft); font-size: .9375rem; }
 
     .custom-table { width: 100%; border-collapse: collapse; }
-    .custom-table th { background: var(--riga-alt); text-align: left; padding: 12px; text-transform: uppercase; }
-    .custom-table td { padding: 14px 12px; border-top: 1px solid var(--bordo); vertical-align: middle; }
+    .custom-table th { text-align: left; padding: 10px 24px; }
+    .custom-table td { padding: 16px 24px; vertical-align: middle; }
     .custom-table .num { text-align: right; white-space: nowrap; }
-    .row-dependent td:first-child { padding-left: 30px; }
+    .row-dependent td:first-child { padding-left: 44px; }
     .dettagli-socio { display: flex; flex-direction: column; margin-top: 4px; color: var(--testo-soft); font-size: .9375rem; }
 
     /* La riga del pagamento sta in fondo alla famiglia, larga e da sola: è
      * l'unica cosa che si può fare in questa pagina. */
-    .barra-saldo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-                   padding: 16px; border-top: 3px solid var(--bordo); background: var(--riga-alt); }
-    .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 800; }
+    .barra-saldo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+                   padding: 20px 24px; border-top: 1px solid var(--filo); }
+    .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; }
     .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
-    .barra-saldo .domanda { font-weight: 700; color: var(--blu-dark); }
-    .nucleo-saldato { color: var(--ok); font-weight: 700; font-size: 1.15rem; }
+    .barra-saldo .domanda { font-weight: 600; color: var(--blu-dark); }
+    .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
+
+    @media screen and (max-width: 768px) {
+      .summary-value { font-size: 2.1rem; }
+      .custom-table th, .custom-table td { padding-left: 18px; padding-right: 18px; }
+      .unit-header, .barra-saldo { padding-left: 18px; padding-right: 18px; }
+    }
   </style>
 </head>
 <body>
@@ -49,7 +57,7 @@
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="index.html">Soci</a>
       <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
-      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>
@@ -67,14 +75,14 @@
         <label class="checkbox mr-4">
           <input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare
         </label>
-        <button class="button is-link" onclick="caricaDati()">🔄 Aggiorna</button>
+        <button class="button is-link" onclick="caricaDati()">Aggiorna</button>
       </div>
     </div>
   </div>
 
-  <p class="mb-4">
-    Qui si incassa e basta. Le quote, la polizza e la tessera si scrivono
-    nella pagina <a href="index.html">Soci</a>, quando si fa l'iscrizione.
+  <p class="suggerimento mb-4">
+    Quote, polizza e numero di tessera si modificano dalla pagina
+    <a href="index.html">Soci</a>.
   </p>
 
   <div id="displayArea"></div>
@@ -217,7 +225,7 @@
    */
   function barraSaldo(idPagante, saldo) {
     if (saldo <= 0) {
-      return `<div class="barra-saldo"><span class="nucleo-saldato">✓ Nucleo saldato</span></div>`;
+      return `<div class="barra-saldo"><span class="nucleo-saldato">Nucleo saldato</span></div>`;
     }
     return `
       <div class="barra-saldo" id="barra_${idPagante}">
@@ -261,11 +269,11 @@
 
       const esito = Array.isArray(data) ? data[0] : data;
       showToast(esito && esito.soci_saldati
-        ? `✅ Incassati ${fmt(esito.importo)} — ${esito.soci_saldati} soci a posto`
+        ? `Incassati ${fmt(esito.importo)} — ${esito.soci_saldati} soci saldati`
         : "Questo nucleo era già saldato.");
       await caricaDati({ silenzioso: true });
     } catch (error) {
-      showToast("❌ " + messaggioErrore(error), "is-danger");
+      showToast(messaggioErrore(error), "is-danger");
     } finally {
       setLoading(false);
     }

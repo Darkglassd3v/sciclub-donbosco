@@ -39,7 +39,7 @@
   <div class="cerca">
     <label for="q">Cerca per cognome o nome</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-           placeholder="Lascia vuoto per vederli tutti">
+           placeholder="Cognome o nome">
 
     <div class="giorni" id="giorni">
       <button type="button" data-giorno="" aria-pressed="true">Tutti</button>
@@ -51,8 +51,13 @@
 
     <label class="opzione-jolly" id="rigaJolly" hidden>
       <input type="checkbox" id="conJolly" checked>
-      Mostra anche i Jolly (valgono qualsiasi giorno)
+      Includi i Jolly
     </label>
+
+    <p class="suggerimento">
+      La registrazione utilizza la data odierna. Le registrazioni errate si
+      annullano da «Gite fatte».
+    </p>
   </div>
 
   <!-- L'esito sta sopra l'elenco: dopo aver segnato una gita in fondo alla
@@ -68,8 +73,6 @@
 <script>
 (() => {
   "use strict";
-
-  const NOME_GIORNO = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
 
   let abbonamenti = [];       // tutti gli abbonamenti della stagione
   let giornoScelto = "";      // "" = tutti
@@ -152,7 +155,7 @@
       <div class="scheda" id="scheda_${a.socio_id}">
         <div class="nomi">
           <span>${evidenzia(a.cognome, parti)} ${evidenzia(a.nome, parti)}</span>
-          <span class="etichetta">${NOME_GIORNO[a.giorno] || esc(testo(a.giorno))}</span>
+          ${etichettaGiorno(a.giorno)}
         </div>
 
         <div class="conto">
@@ -161,7 +164,7 @@
             ${finito ? "ESAURITO" : "LIBERE " + a.viaggi_residui}
           </span>
         </div>
-        <div class="barra"><span style="width:${percento}%"></span></div>
+        <div class="barra ${(GIORNI[a.giorno] || {}).classe || ""}"><span style="width:${percento}%"></span></div>
 
         <div class="azioni-pannello" style="margin-top:14px">
           <button class="btn-verde grande" data-segna="${a.socio_id}" ${finito ? "disabled" : ""}>
@@ -200,9 +203,9 @@
   // -------------------------------------------------------------------------
   // Segna una gita
   //
-  // Un tocco, una gita, con la data di oggi. Chi la preme è sul pullman alle
-  // sette del mattino: non c'è niente da compilare e niente da confermare. Se
-  // salgono in due si preme due volte; se si preme di troppo c'è "Gite fatte".
+  // Un tocco scala una gita, con la data del giorno. Nessun campo da compilare
+  // e nessuna conferma: per due persone si preme due volte, e una pressione di
+  // troppo si annulla da "Gite fatte".
   // -------------------------------------------------------------------------
 
   function confermaNellaScheda(socioId, testoMsg) {
@@ -211,8 +214,8 @@
   }
 
   async function segna(socioId, bottone) {
-    // Il doppio tocco involontario è la cosa più facile da fare su un telefono
-    // ballerino: finché la scrittura è in corso il pulsante non risponde.
+    // Il pulsante resta bloccato finché la scrittura è in corso: evita che un
+    // doppio tocco involontario scali due gite.
     if (bottone.disabled) return;
     bottone.disabled = true;
 
@@ -259,7 +262,7 @@
         <div class="azioni-pannello" style="margin-top:12px">
           <button class="btn-chiaro" data-chiudi-registro>Chiudi</button>
         </div>`
-      : `<p class="aiuto">Nessuna gita registrata quest'anno.</p>`;
+      : `<p class="aiuto">Nessuna gita registrata.</p>`;
 
     zona.querySelectorAll("[data-annulla]").forEach((b) =>
       b.addEventListener("click", () => annulla(b.dataset.annulla, socioId)));

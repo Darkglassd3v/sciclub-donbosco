@@ -7,38 +7,49 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
   <style>
-    .container-main { max-width: 820px; margin: 20px auto 60px; padding: 0 15px; }
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    .container-main { max-width: 860px; margin: 28px auto 80px; padding: 0 18px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
     /* Questa pagina deve sembrare diversa dalle altre appena si apre: chi ci
      * finisce per sbaglio se ne accorge prima di toccare qualcosa. */
     .fascia-pericolo {
-      background: var(--errore); color: #fff; padding: 16px 20px;
-      border-radius: var(--raggio); margin-bottom: 22px; font-size: 1.05rem;
+      background: var(--errore); color: #fff; padding: 22px 26px;
+      border-radius: var(--raggio-card); margin-bottom: 28px; font-size: 1.05rem;
     }
-    .fascia-pericolo strong { color: #fff; display: block; font-size: 1.25rem; margin-bottom: 4px; }
+    .fascia-pericolo strong { color: #fff; display: block; font-size: 1.35rem;
+                              letter-spacing: -.022em; margin-bottom: 6px; }
 
-    .riquadro { background: #fff; border-radius: 10px; box-shadow: var(--ombra);
-                padding: 22px; margin-bottom: 20px; }
-    .riquadro.pericolo { border: 3px solid var(--errore); }
-    .riquadro h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; }
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
+                padding: 30px; margin-bottom: 22px; }
+    .riquadro.pericolo { border: 2px solid var(--errore); }
+    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 6px; }
+    .riquadro h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.022em;
+                   margin: 26px 0 4px; }
+    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
-    .due-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .due-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
     .elenco { margin: 0; padding-left: 22px; list-style: disc; }
     .elenco li { padding: 3px 0; }
-    .resta { color: var(--ok); font-weight: 700; }
-    .via { color: var(--errore); font-weight: 700; }
+    .resta { color: var(--ok); font-weight: 600; }
+    .via { color: var(--errore); font-weight: 600; }
 
     .tabella-stagioni { width: 100%; border-collapse: collapse; }
-    .tabella-stagioni th { text-align: left; padding: 10px 8px; color: var(--testo-soft); text-transform: uppercase; font-size: .9375rem; }
-    .tabella-stagioni td { padding: 12px 8px; border-top: 1px solid var(--bordo); }
+    .tabella-stagioni th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
+                           font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
+    .tabella-stagioni td { padding: 16px 8px; border-top: 1px solid var(--filo); }
     .tabella-stagioni .num { text-align: right; white-space: nowrap; }
+    .tabella-stagioni .anno { font-weight: 600; font-size: 1.1rem; letter-spacing: -.022em; }
+    .tabella-stagioni .vuota { color: var(--testo-soft); }
 
-    .conferma { background: var(--giallo-light); border: 2px solid var(--giallo);
-                border-radius: var(--raggio); padding: 18px; margin-top: 18px; }
-    .conferma label { font-weight: 700; display: block; margin-bottom: 8px; }
-    .conferma code { background: #fff; border: 1px solid var(--bordo); padding: 2px 8px;
-                     border-radius: 4px; font-size: 1rem; }
+    .conferma { background: var(--giallo-light); border: 1px solid var(--giallo);
+                border-radius: var(--raggio-card); padding: 24px; margin-top: 20px; }
+    .conferma label { font-weight: 600; display: block; margin-bottom: 10px; }
+    .conferma code { background: #fff; border: 1px solid var(--filo); padding: 3px 10px;
+                     border-radius: 6px; font-size: 1rem; }
+
+    @media screen and (max-width: 768px) {
+      .riquadro { padding: 22px 18px; }
+    }
   </style>
 </head>
 <body>
@@ -56,14 +67,13 @@
   </div>
 
   <div class="fascia-pericolo">
-    <strong>⚠ Pagina da usare una volta all'anno</strong>
-    Da qui si chiude la stagione: tesseramenti, pagamenti, partenze e nuclei
-    familiari di tutti i soci vengono azzerati in un colpo solo. Non è una
-    pagina da aprire per curiosità.
+    <strong>Chiusura della stagione</strong>
+    Tesseramenti, pagamenti, partenze e nuclei familiari di tutti i soci
+    vengono azzerati in un'unica operazione.
   </div>
 
   <div class="riquadro">
-    <h2>Situazione attuale</h2>
+    <h2>Stagione in corso</h2>
     <table class="tabella-stagioni">
       <thead><tr>
         <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
@@ -71,19 +81,31 @@
       </tr></thead>
       <tbody id="tabellaStagioni"><tr><td colspan="5">Caricamento…</td></tr></tbody>
     </table>
-    <p class="mt-4" id="statoStorico"></p>
+
+    <p class="suggerimento">
+      Può esistere una sola stagione aperta alla volta. Le stagioni chiuse
+      restano consultabili qui sotto.
+    </p>
+
+    <h3>Stagioni chiuse</h3>
+    <table class="tabella-stagioni">
+      <thead><tr>
+        <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
+        <th class="num">Incassato</th><th class="num">Da incassare</th>
+      </tr></thead>
+      <tbody id="tabellaChiuse"><tr><td colspan="5">Caricamento…</td></tr></tbody>
+    </table>
   </div>
 
   <div class="riquadro">
-    <h2>Cosa succede quando chiudi</h2>
+    <h2>Effetti della chiusura</h2>
     <p class="mb-4">
-      Prima di azzerare, tutto quello che viene tolto finisce nell'archivio
-      (<code>soci_storico</code>): la stagione chiusa resta consultabile e
-      niente viene perso davvero.
+      I dati rimossi vengono prima archiviati in <code>soci_storico</code> e
+      restano consultabili nella tabella delle stagioni chiuse.
     </p>
     <div class="due-colonne">
       <div>
-        <p class="resta mb-2">✓ Resta com'è</p>
+        <p class="resta mb-2">Resta invariato</p>
         <ul class="elenco">
           <li>Cognome e nome</li>
           <li>Data e luogo di nascita</li>
@@ -93,7 +115,7 @@
         </ul>
       </div>
       <div>
-        <p class="via mb-2">✗ Viene azzerato</p>
+        <p class="via mb-2">Viene azzerato</p>
         <ul class="elenco">
           <li>Numero di polizza</li>
           <li>Numero e tipologia di tessera</li>
@@ -109,23 +131,19 @@
       </div>
     </div>
     <p class="mt-4">
-      Le gite già registrate non si cancellano: restano legate alla stagione in
-      cui sono state fatte e si possono ancora rileggere. A ripartire da zero
-      sono i contatori della stagione nuova.
+      Le gite registrate restano legate alla stagione in cui sono state fatte:
+      a ripartire da zero sono solo i contatori della stagione nuova.
     </p>
     <p class="mt-4">
-      Dopo la chiusura i soci restano in anagrafica ma non risultano iscritti a
-      nessuna stagione: torneranno nei conteggi quando li si risalva dalla
-      pagina <a href="index.html">Soci</a>. Il listino prezzi e le partenze non
-      vengono toccati: se cambiano le quote, si aggiornano da Supabase prima di
-      aprire le iscrizioni.
+      Dopo la chiusura i soci restano in anagrafica senza risultare iscritti ad
+      alcuna stagione: rientrano nei conteggi quando vengono risalvati dalla
+      pagina <a href="index.html">Soci</a>. Listino prezzi e partenze non
+      vengono modificati.
     </p>
   </div>
 
   <div class="riquadro pericolo">
-    <h2>Chiudi la stagione</h2>
-    <p>Fallo quando le iscrizioni dell'anno sono finite e prima di aprire quelle nuove.</p>
-
+    <h2>Chiusura</h2>
     <div class="conferma">
       <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
       <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
@@ -161,30 +179,39 @@
     return `${inizio}/${inizio + 1}`;
   }
 
+  function righeStagioni(stagioni) {
+    return stagioni.map((st) => `
+      <tr>
+        <td class="anno">${annoStagione(st.stagione)}</td>
+        <td class="num">${st.soci}</td>
+        <td class="num">${fmt(st.totale)}</td>
+        <td class="num">${fmt(st.incassato)}</td>
+        <td class="num" style="color:${st.da_incassare > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.da_incassare)}</td>
+      </tr>`).join("");
+  }
+
+  const vuota = (testoMsg) => `<tr><td colspan="5" class="vuota">${testoMsg}</td></tr>`;
+
   async function caricaSituazione() {
     setLoading(true);
     try {
-      const { data: stagioni, error } = await sb.from("stagioni_aperte").select("*");
-      if (error) throw error;
+      // Le due viste sono separate perché rispondono a due domande diverse:
+      // "a che punto siamo" e "com'erano andate le altre volte". Prima esisteva
+      // solo la prima, e chiudere la stagione sembrava cancellarla.
+      const [aperte, chiuse] = await Promise.all([
+        sb.from("stagioni_aperte").select("*"),
+        sb.from("stagioni_chiuse").select("*"),
+      ]);
+      if (aperte.error) throw aperte.error;
+      if (chiuse.error) throw chiuse.error;
 
-      el("tabellaStagioni").innerHTML = stagioni.length
-        ? stagioni.map((s) => `
-            <tr>
-              <td><b>${annoStagione(s.stagione)}</b></td>
-              <td class="num">${s.soci}</td>
-              <td class="num">${fmt(s.totale)}</td>
-              <td class="num">${fmt(s.incassato)}</td>
-              <td class="num" style="color:${s.da_incassare > 0 ? "var(--errore)" : "var(--ok)"};font-weight:700">${fmt(s.da_incassare)}</td>
-            </tr>`).join("")
-        : '<tr><td colspan="5">Nessuna stagione aperta: i dati sono già stati azzerati.</td></tr>';
+      el("tabellaStagioni").innerHTML = aperte.data.length
+        ? righeStagioni(aperte.data)
+        : vuota("Nessuna stagione aperta: i soci sono in anagrafica ma non ancora iscritti.");
 
-      const { count, error: erroreStorico } = await sb
-        .from("soci_storico").select("*", { count: "exact", head: true });
-      if (erroreStorico) throw erroreStorico;
-
-      el("statoStorico").textContent = count
-        ? `In archivio ci sono ${count} righe di stagioni già chiuse.`
-        : "L'archivio è vuoto: non è mai stata chiusa una stagione.";
+      el("tabellaChiuse").innerHTML = chiuse.data.length
+        ? righeStagioni(chiuse.data)
+        : vuota("Non è mai stata chiusa una stagione.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {

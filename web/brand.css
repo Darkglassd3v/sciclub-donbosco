@@ -4,9 +4,14 @@
  * variabili definite qui invece di ripetere i colori.
  *
  * I due colori vengono dal logo (web/logo_sciclubdonbosco.png) e non cambiano.
- * Tutto il resto è tarato su chi usa il gestionale: volontari del direttivo,
- * spesso non giovani, al banchetto delle iscrizioni. Quindi corpo 17px, campi
- * e pulsanti da 48px, focus giallo sempre visibile.
+ * Le misure sono tarate sull'utenza del gestionale, in buona parte non
+ * abituata alle interfacce dense: corpo 17px, campi e pulsanti da 48px, focus
+ * sempre visibile, contrasti verificati.
+ *
+ * L'impaginazione segue un impianto editoriale: poche linee, spaziatura ampia,
+ * titoli grandi con tracking negativo, pulsanti a pillola, fondo grigio neutro
+ * sotto le schede bianche. Nessuna delle misure di leggibilità è stata ridotta
+ * per ottenerlo.
  */
 
 :root {
@@ -19,12 +24,13 @@
   --giallo-light:#FFF6D0;
 
   /* Neutri */
-  --sfondo:     #F2F5F8;
+  --sfondo:     #F5F5F7;
   --superficie: #FFFFFF;
-  --riga-alt:   #F7F9FB;
+  --riga-alt:   #FAFAFB;
   --testo:      #14202E;
-  --testo-soft: #4A5A6B;
-  --bordo:      #C7D0DA;
+  --testo-soft: #5B6472;
+  --bordo:      #C7D0DA;   /* solo per i campi: devono vedersi */
+  --filo:       #E4E6EB;   /* divisori e contorni delle schede */
 
   /* Stati */
   --ok:      #147A45;
@@ -32,9 +38,12 @@
   --errore:  #B3261E;
   --errore-bg:#FBE9E7;
 
-  --raggio: 8px;
-  --ombra: 0 2px 10px rgba(20, 32, 46, .10);
+  --raggio: 12px;
+  --raggio-card: 18px;
+  --pillola: 980px;
+  --ombra: 0 1px 2px rgba(20, 32, 46, .04), 0 8px 28px rgba(20, 32, 46, .06);
   --tocco: 48px;  /* altezza minima di ogni cosa cliccabile */
+  --aria: 44px;   /* distanza fra una sezione e la successiva */
 }
 
 html { font-size: 17px; }
@@ -43,11 +52,20 @@ body {
   background: var(--sfondo);
   color: var(--testo);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Bulma scrive testo e titoli in #4a4a4a / #363636: troppo chiaro sul bianco. */
-.title, .subtitle, strong, label, .label { color: var(--testo); }
-.label { font-size: 1rem; font-weight: 600; }
+/* --- Titoli -------------------------------------------------------------
+ * Grandi, di peso pieno e con la spaziatura stretta: è quello che fa sembrare
+ * "una pagina" invece di "un pannello". Il maiuscolo sparisce ovunque: si
+ * legge più lentamente e non serve a niente qui. */
+.title, .subtitle, h1, h2, h3 { color: var(--testo); letter-spacing: -.022em; }
+.title { font-weight: 600; }
+.title.is-4 { font-size: 2rem; line-height: 1.15; }
+@media screen and (max-width: 768px) { .title.is-4 { font-size: 1.6rem; } }
+
+strong, label, .label { color: var(--testo); }
+.label { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
 .help, .filtro-attivo { font-size: .9375rem; color: var(--testo-soft); }
 
 /* --- Focus -------------------------------------------------------------
@@ -66,13 +84,16 @@ textarea:focus-visible,
   box-shadow: none;
 }
 
-/* --- Campi -------------------------------------------------------------- */
+/* --- Campi --------------------------------------------------------------
+ * Qui il bordo resta spesso: un campo che non si vede è un campo che non si
+ * compila, e questa è l'unica parte della pagina dove il contorno lavora. */
 .input, .textarea, .select select, .input-field {
   min-height: var(--tocco);
   font-size: 1rem;
   color: var(--testo);
   border: 2px solid var(--bordo);
   border-radius: var(--raggio);
+  box-shadow: none;
 }
 .input:hover, .select select:hover { border-color: var(--testo-soft); }
 .input:focus, .select select:focus { border-color: var(--blu); }
@@ -84,13 +105,20 @@ textarea:focus-visible,
  * come "da compilare a mano", si conserva. */
 .campo-admin { background: var(--giallo-light); }
 
-/* --- Pulsanti ----------------------------------------------------------- */
+/* --- Pulsanti -----------------------------------------------------------
+ * A pillola, senza maiuscolo e senza ombra. Restano alti 48px: la forma è
+ * cambiata, il bersaglio no. */
 .button {
   min-height: var(--tocco);
   font-size: 1rem;
   font-weight: 600;
-  border-radius: var(--raggio);
-  border-width: 2px;
+  letter-spacing: -.01em;
+  border-radius: var(--pillola);
+  border-width: 1px;
+  padding-left: 1.25em;
+  padding-right: 1.25em;
+  box-shadow: none;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 .button.is-small { min-height: 42px; font-size: .9375rem; }
 
@@ -101,9 +129,9 @@ textarea:focus-visible,
   background: var(--blu-dark); border-color: var(--blu-dark); color: #fff;
 }
 .button.is-light {
-  background: var(--superficie); border-color: var(--blu); color: var(--blu);
+  background: var(--superficie); border: 1px solid var(--filo); color: var(--blu);
 }
-.button.is-light:hover { background: var(--blu-light); color: var(--blu-dark); }
+.button.is-light:hover { background: var(--blu-light); border-color: var(--blu-light); color: var(--blu-dark); }
 
 .button.is-success { background: var(--ok); border-color: var(--ok); color: #fff; }
 .button.is-success:hover { background: #0F5C34; border-color: #0F5C34; }
@@ -116,29 +144,53 @@ textarea:focus-visible,
 
 .button.is-danger { background: var(--errore); border-color: var(--errore); color: #fff; }
 .button.is-danger.is-outlined {
-  background: var(--superficie); border-color: var(--errore); color: var(--errore);
+  background: var(--superficie); border: 1px solid var(--errore); color: var(--errore);
 }
 .button.is-danger.is-outlined:hover { background: var(--errore); color: #fff; }
 
-/* --- Blocchi ------------------------------------------------------------ */
-.section-title, .family-title, .unit-header, .section-header {
-  font-size: .9375rem;   /* le etichette maiuscole partivano da .85rem */
-  letter-spacing: .02em;
+/* --- Titoli di sezione --------------------------------------------------
+ * Le sezioni erano separate da barre blu piene. Ora la separazione è affidata
+ * allo spazio, con una linea sottile a chiudere il blocco. */
+.section-title, .family-title {
+  background: none;
+  color: var(--testo);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -.022em;
+  text-transform: none;
+  padding: 0 0 12px;
+  margin-top: var(--aria);
+  border-bottom: 1px solid var(--filo);
+  border-radius: 0;
 }
+.family-title { color: var(--ok); }
+
 .notification { font-size: 1rem; border-radius: var(--raggio); }
 
-/* --- Tabelle ------------------------------------------------------------ */
+/* --- Tabelle ------------------------------------------------------------
+ * Divisori sottili al posto dei bordi marcati; intestazioni in tondo minuscolo
+ * invece che in maiuscolo. */
 .custom-table th, .rtable th {
   font-size: .9375rem;
+  font-weight: 600;
   color: var(--testo-soft);
-  letter-spacing: .02em;
+  letter-spacing: 0;
+  text-transform: none;
+  background: none;
+  border-bottom: 1px solid var(--filo);
 }
-.custom-table td, .rtable td { font-size: 1rem; }
+.custom-table td, .rtable td { font-size: 1rem; border-top: 1px solid var(--filo); }
 .custom-table tbody tr:nth-child(even), .rtable tbody tr:nth-child(even) {
   background: var(--riga-alt);
 }
 /* Una tabella larga scorre dentro il suo riquadro invece di allargare la pagina */
 .tabella-scorrevole { overflow-x: auto; }
+
+/* --- Suggerimenti -------------------------------------------------------
+ * Una riga discreta sopra il contenuto: indica come si usa la pagina senza
+ * competere con i titoli. */
+.suggerimento { color: var(--testo-soft); font-size: .9375rem; margin: 0 0 .5rem; }
+.suggerimento a { color: var(--blu); }
 
 /* --- Logo --------------------------------------------------------------- */
 .logo-testata { height: 56px; width: auto; display: block; }

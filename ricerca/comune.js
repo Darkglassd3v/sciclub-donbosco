@@ -34,6 +34,40 @@ function evidenzia(parola, parti) {
 }
 
 // ---------------------------------------------------------------------------
+// Abbonamenti a viaggi
+//
+// Ogni giorno ha il suo colore, sempre lo stesso in tutte le pagine: si
+// riconosce il tipo di abbonamento senza leggere. Il nome del giorno resta
+// scritto dentro l'etichetta, così l'informazione non è affidata al solo
+// colore.
+// ---------------------------------------------------------------------------
+
+const GIORNI = {
+  SABATO:   { nome: "Sabato",   classe: "giorno-sabato" },
+  DOMENICA: { nome: "Domenica", classe: "giorno-domenica" },
+  MARTEDI:  { nome: "Martedì",  classe: "giorno-martedi" },
+  JOLLY:    { nome: "Jolly",    classe: "giorno-jolly" },
+};
+
+/** Il giorno di un abbonamento, ricavato dal nome dell'opzione di listino. */
+function giornoAbbonamento(tipoAbbonamento) {
+  const t = String(tipoAbbonamento || "").toUpperCase();
+  if (!/\d+\s*VIAGG/.test(t)) return null;
+  if (t.includes("SABATO")) return "SABATO";
+  if (t.includes("DOMENICA")) return "DOMENICA";
+  if (t.includes("MARTED")) return "MARTEDI";
+  if (t.includes("JOLLY")) return "JOLLY";
+  return null;
+}
+
+/** L'etichetta colorata del giorno, o stringa vuota se il giorno non c'è. */
+function etichettaGiorno(giorno) {
+  const g = GIORNI[giorno];
+  if (!g) return "";
+  return `<span class="etichetta ${g.classe}">${g.nome}</span>`;
+}
+
+// ---------------------------------------------------------------------------
 // Telefono
 //
 // I numeri in anagrafica sono scritti come capita: "380 340 9158",
@@ -71,8 +105,8 @@ function contattiHtml(telefono) {
 
   return `
     <div class="contatti">
-      ${chiamata ? `<a class="chiama" href="tel:${esc(chiamata)}">📞 Chiama</a>` : ""}
-      ${whatsapp ? `<a class="whatsapp" href="https://wa.me/${esc(whatsapp)}" target="_blank" rel="noopener">💬 WhatsApp</a>` : ""}
+      ${chiamata ? `<a class="chiama" href="tel:${esc(chiamata)}">Chiama</a>` : ""}
+      ${whatsapp ? `<a class="whatsapp" href="https://wa.me/${esc(whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
     </div>`;
 }
 

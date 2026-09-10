@@ -4,9 +4,14 @@
 > Stato: Attivo
 > Fonte dei colori: `web/logo_sciclubdonbosco.png` (il logo non si tocca)
 
-Il gestionale lo usa il direttivo: volontari, non tutti giovani, spesso di fretta
-al banchetto delle iscrizioni. Il brand è moderno ma la leggibilità viene prima
-dell'estetica: testo grande, contrasto alto, bersagli grossi.
+Il gestionale è usato dal direttivo, in buona parte non abituato alle interfacce
+dense. La leggibilità viene prima dell'estetica: testo grande, contrasto alto,
+bersagli ampi.
+
+L'impaginazione segue un impianto editoriale: spaziatura ampia, poche linee,
+titoli grandi con spaziatura stretta, pulsanti a pillola, fondo grigio neutro
+sotto schede bianche. Nessuna misura di leggibilità è stata ridotta per
+ottenerlo.
 
 ## Quick Reference
 
@@ -52,11 +57,13 @@ testo bianco: su giallo si scrive solo blu scuro.
 
 | Name | Hex | RGB | Usage |
 |------|-----|-----|-------|
-| Background | #F2F5F8 | rgb(242,245,248) | sfondo pagina |
+| Background | #F5F5F7 | rgb(245,245,247) | sfondo pagina |
 | Surface | #FFFFFF | rgb(255,255,255) | schede, tabelle, form |
+| Riga alternata | #FAFAFB | rgb(250,250,251) | righe pari delle tabelle |
 | Text Primary | #14202E | rgb(20,32,46) | testo e titoli |
-| Text Secondary | #4A5A6B | rgb(74,90,107) | etichette, testo secondario |
-| Border | #C7D0DA | rgb(199,208,218) | bordi campi e divisori |
+| Text Secondary | #5B6472 | rgb(91,100,114) | etichette, testo secondario |
+| Border | #C7D0DA | rgb(199,208,218) | bordi dei campi |
+| Filo | #E4E6EB | rgb(228,230,235) | divisori e contorni delle schede |
 
 ### Semantic Colors
 
@@ -67,6 +74,22 @@ testo bianco: su giallo si scrive solo blu scuro.
 | Error | #B3261E | errori, cancellazioni, saldi negativi |
 | Info | #084C8D | messaggi informativi |
 
+### Codice colore degli abbonamenti
+
+Ogni giorno di abbonamento ha un colore fisso, uguale in tutte le pagine. Il
+nome del giorno resta sempre scritto dentro l'etichetta: il colore accelera la
+lettura, non la sostituisce.
+
+| Giorno | Etichetta (fondo / testo) | Contrasto | Elementi pieni |
+|--------|---------------------------|-----------|----------------|
+| Sabato | #E7EFF7 / #06396A | 10.0:1 | #084C8D |
+| Domenica | #FFF6D0 / #6B5200 | 6.8:1 | #FCCF02 |
+| Martedì | #FBE9E7 / #B3261E | 5.6:1 | #B3261E |
+| Jolly | #E4F3EA / #147A45 | 4.7:1 | #147A45 |
+
+Gli elementi pieni (barre di avanzamento, pallini dei filtri) non portano testo:
+lì il colore vivo si può usare senza vincoli di contrasto.
+
 ### Accessibility
 
 Rapporti di contrasto verificati su sfondo bianco:
@@ -75,7 +98,7 @@ Rapporti di contrasto verificati su sfondo bianco:
 |--------|----------|---------|
 | #14202E su #FFFFFF | 15.4:1 | AAA |
 | #084C8D su #FFFFFF | 8.7:1 | AAA |
-| #4A5A6B su #FFFFFF | 6.9:1 | AAA |
+| #5B6472 su #FFFFFF | 5.9:1 | AA |
 | #147A45 su #FFFFFF | 5.5:1 | AA |
 | #B3261E su #FFFFFF | 6.6:1 | AA |
 | #084C8D su #FCCF02 | 5.7:1 | AA |
@@ -119,8 +142,9 @@ Base 17px invece dei consueti 16: un punto in più si legge, non si nota.
 | Small | 15px | 15px | 400 | 1.5 |
 | Importi (KPI) | 34px | 28px | 800 | 1.1 |
 
-Mai `text-transform: uppercase` su frasi intere: si legge più lentamente. Resta
-solo sulle intestazioni di sezione, che sono di due o tre parole.
+Mai `text-transform: uppercase`: si legge più lentamente e non aggiunge
+informazione. I titoli si distinguono per corpo e peso, non per maiuscolo.
+I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ---
 
@@ -202,16 +226,19 @@ Le misure servono a chi ha la vista lunga e il mouse impreciso.
 
 | Type | Background | Text | Altezza min | Border Radius |
 |------|------------|------|-------------|---------------|
-| Primary | #084C8D | #FFFFFF | 48px | 8px |
-| Secondary | #FFFFFF (bordo 2px #084C8D) | #084C8D | 48px | 8px |
-| Evidenza | #FCCF02 | #084C8D | 48px | 8px |
-| Pericolo | #FFFFFF (bordo 2px #B3261E) | #B3261E | 48px | 8px |
+| Primary | #084C8D | #FFFFFF | 48px | pillola |
+| Secondary | #FFFFFF (bordo 1px #E4E6EB) | #084C8D | 48px | pillola |
+| Evidenza | #FCCF02 | #084C8D | 48px | pillola |
+| Pericolo | #FFFFFF (bordo 1px #B3261E) | #B3261E | 48px | pillola |
+
+Raggi: 12px sui campi, 18px sulle schede, pillola sui pulsanti e sulle etichette.
 
 Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Campi
 
-- Altezza minima 48px, testo 17px, bordo 2px #C7D0DA.
+- Altezza minima 48px, testo 17px, bordo 2px #C7D0DA (i campi sono l'unico
+  elemento con contorno marcato: devono vedersi).
 - I campi amministrativi (polizza, tessera) restano su #FFF6D0: è un codice
   colore che il direttivo usa già.
 - L'etichetta sta sopra il campo, mai dentro come placeholder.
@@ -219,7 +246,8 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 ### Tabelle
 
 - Righe alte almeno 52px, padding 14px, riga alternata #F7F9FB.
-- Intestazioni in #4A5A6B a 15px, non minuscole schiacciate.
+- Intestazioni in #5B6472 a 15px, in tondo minuscolo: mai in maiuscolo.
+- Divisori a filo sottile (#E4E6EB), non bordi marcati.
 - Su mobile la tabella scorre in orizzontale dentro il suo contenitore.
 
 ---

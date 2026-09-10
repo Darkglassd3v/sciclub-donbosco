@@ -7,22 +7,33 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
   <style>
-    body { }
-    .container-main { max-width: 1200px; margin: 20px auto 60px; padding: 0 15px; }
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
-    .kpi { background: #fff; border-radius: 10px; padding: 18px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; text-transform: uppercase; letter-spacing: .02em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2rem; font-weight: 800; margin-top: 6px; }
-    .section-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: var(--ombra); height: 100%; }
-    .section-header { color: #fff; padding: 10px 15px; font-weight: 700; }
-    .bg-blue { background: var(--blu); } .bg-teal { background: #0F5C34; }
-    .bg-purple { background: var(--blu-dark); } .bg-orange { background: var(--giallo-dark); }
-    .section-body { padding: 12px 15px; }
+    .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
+
+    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
+    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
+    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
+
+    .section-card { background: #fff; border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra); height: 100%; }
+
+    /* Il colore era una fascia piena in testa a ogni riquadro: quattro bande
+     * accese una sopra l'altra. Adesso è un punto, e il titolo si legge nero. */
+    .section-header { color: var(--testo); padding: 20px 22px 12px; font-weight: 600;
+                      font-size: 1.2rem; letter-spacing: -.022em;
+                      display: flex; align-items: center; gap: 10px; }
+    .section-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+    /* Stesso codice colore degli abbonamenti: sabato blu, domenica giallo. */
+    .bg-blue::before   { background: var(--blu); }
+    .bg-yellow::before { background: var(--giallo); }
+    .bg-green::before  { background: var(--ok); }
+    .bg-grey::before   { background: var(--testo-soft); }
+
+    .section-body { padding: 0 22px 20px; }
     .rtable { width: 100%; border-collapse: collapse; }
-    .rtable th { text-align: left; text-transform: uppercase; padding: 10px 6px; }
-    .rtable td { padding: 12px 6px; border-top: 1px solid var(--bordo); }
-    .total-row td { font-weight: 700; border-top: 3px solid var(--testo-soft); }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: .9375rem; }
+    .rtable th { text-align: left; padding: 10px 6px; }
+    .rtable td { padding: 14px 6px; }
+    .total-row td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: var(--pillola); font-weight: 600; font-size: .9375rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
   </style>
@@ -43,7 +54,7 @@
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="index.html">Soci</a>
       <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
-      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>
@@ -58,31 +69,31 @@
   <div class="columns is-multiline">
     <div class="column is-4">
       <div class="section-card">
-        <div class="section-header bg-blue">⛷️ Gite Sabato</div>
+        <div class="section-header bg-blue">Gite del sabato</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteSab"></tbody></table></div>
       </div>
     </div>
     <div class="column is-4">
       <div class="section-card">
-        <div class="section-header bg-blue">⛷️ Gite Domenica</div>
+        <div class="section-header bg-yellow">Gite della domenica</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteDom"></tbody></table></div>
       </div>
     </div>
     <div class="column is-4">
       <div class="section-card">
-        <div class="section-header bg-orange">🎿 Corsi</div>
+        <div class="section-header bg-green">Corsi</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Corso</th><th>Iscritti</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
       </div>
     </div>
     <div class="column is-4">
       <div class="section-card">
-        <div class="section-header bg-teal">🎫 Abbonamenti</div>
+        <div class="section-header bg-grey">Abbonamenti</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>Iscritti</th></tr></thead><tbody id="tAbb"></tbody></table></div>
       </div>
     </div>
     <div class="column is-8">
       <div class="section-card">
-        <div class="section-header bg-purple">🪪 Tessere</div>
+        <div class="section-header bg-blue">Tessere</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
       </div>
     </div>

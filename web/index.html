@@ -8,20 +8,24 @@
   <link rel="stylesheet" href="brand.css">
   <style>
     body { margin: 0; }
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.9); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-    .container-main { max-width: 1100px; margin: 20px auto 180px; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,.1); }
-    .section-title { background: var(--blu); color: #fff; padding: 10px 16px; border-radius: 5px; margin-top: 25px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
-    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: var(--testo); color: #fff; padding: 15px; z-index: 1000; border-top: 5px solid var(--giallo); box-shadow: 0 -5px 15px rgba(0,0,0,.3); }
-    .val-label { font-size: .9375rem; color: #adb5bd; text-transform: uppercase; letter-spacing: 1px; }
-    .val-amount { font-size: 2rem; font-weight: 800; display: block; line-height: 1; margin-top: 5px; }
-    #searchZone { display: none; background: var(--giallo-light); padding: 15px; border-radius: var(--raggio); margin-bottom: 20px; border: 2px solid var(--giallo); }
-    .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--bordo); }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+    .container-main { max-width: 1100px; margin: 28px auto 200px; background: #fff; padding: 40px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
+
+    /* La barra dei totali resta incollata in basso, ma smette di sembrare una
+     * barra di stato: fondo scuro pieno, un filo giallo e basta. */
+    .total-box { position: fixed; bottom: 0; left: 0; right: 0; background: var(--testo); color: #fff; padding: 18px 15px; z-index: 1000; border-top: 3px solid var(--giallo); }
+    .val-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
+    .val-amount { font-size: 2.1rem; font-weight: 700; letter-spacing: -.022em; display: block; line-height: 1; margin-top: 4px; }
+
+    #searchZone { display: none; background: var(--giallo-light); padding: 18px; border-radius: var(--raggio-card); margin-bottom: 24px; border: 1px solid var(--giallo); }
+    .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--filo); }
     .result-item:hover { background: var(--blu-light); }
-    .label { margin-bottom: .25rem; }
-    .family-title { background: var(--ok); color: #fff; padding: 8px 15px; border-radius: 5px; margin-top: 5px; font-weight: bold; text-transform: uppercase; font-size: .85rem; }
-    #payerResults { border: 2px solid var(--bordo); border-radius: 4px; display: none; position: relative; z-index: 100; background: #fff; }
-    .payer-section-disabled { opacity: .5; pointer-events: none; }
+    .label { margin-bottom: .3rem; }
+    #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
+    .payer-section-disabled { opacity: .45; pointer-events: none; }
+
     @media screen and (max-width: 768px) {
+      .container-main { padding: 24px 18px; margin: 16px auto 220px; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
       .total-box .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
     }
@@ -29,7 +33,7 @@
 </head>
 <body>
 
-<div id="loader"><div class="button is-loading is-large is-white"></div><p class="mt-4 has-text-weight-bold">CARICAMENTO...</p></div>
+<div id="loader"><div class="button is-loading is-large is-white"></div><p class="mt-4 has-text-weight-bold">Caricamento…</p></div>
 
 <div class="container-main">
   <div class="level is-mobile mb-4">
@@ -37,19 +41,24 @@
     <div class="level-right">
       <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
       <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
-      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">⚠ Amministrazione</a>
+      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
       <button class="button is-small is-light" onclick="logout()">Esci</button>
     </div>
   </div>
 
   <div class="columns is-mobile mb-5">
     <div class="column is-6">
-      <button onclick="mostraRicerca()" class="button is-link is-fullwidth has-text-weight-bold">🔄 MODIFICA SOCIO</button>
+      <button onclick="mostraRicerca()" class="button is-link is-fullwidth">Modifica socio</button>
     </div>
     <div class="column is-6">
-      <button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">➕ NUOVO SOCIO</button>
+      <button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">Nuovo socio</button>
     </div>
   </div>
+
+  <p class="suggerimento mb-4">
+    I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
+    automaticamente in base alle voci selezionate.
+  </p>
 
   <div id="searchZone">
     <input id="searchInput" class="input" type="text" placeholder="Cerca cognome, nome o codice fiscale..." autocomplete="off">
@@ -59,59 +68,57 @@
   <form id="memberForm">
     <input type="hidden" id="f_id">
 
-    <div class="section-title">Anagrafica Socio</div>
+    <div class="section-title">Anagrafica</div>
     <div class="columns is-multiline mt-1">
       <div class="column is-3"><label class="label">Cognome*</label><input class="input" id="f_cognome" required></div>
       <div class="column is-3"><label class="label">Nome*</label><input class="input" id="f_nome" required></div>
-      <div class="column is-4"><label class="label">Città Nascita</label><input class="input" id="f_luogo_nascita"></div>
-      <div class="column is-2"><label class="label">Prov Nascita</label><input class="input" id="f_provincia_nascita" maxlength="2"></div>
-      <div class="column is-4"><label class="label">Codice Fiscale</label><input class="input" id="f_codice_fiscale" maxlength="16"></div>
-      <div class="column is-4"><label class="label">Data Nascita</label><input class="input" type="date" id="f_data_nascita"></div>
+      <div class="column is-4"><label class="label">Città di nascita</label><input class="input" id="f_luogo_nascita"></div>
+      <div class="column is-2"><label class="label">Provincia di nascita</label><input class="input" id="f_provincia_nascita" maxlength="2"></div>
+      <div class="column is-4"><label class="label">Codice fiscale</label><input class="input" id="f_codice_fiscale" maxlength="16"></div>
+      <div class="column is-4"><label class="label">Data di nascita</label><input class="input" type="date" id="f_data_nascita"></div>
       <div class="column is-4"><label class="label">Telefono*</label><input class="input" id="f_telefono" required></div>
-      <div class="column is-6"><label class="label">Indirizzo Residenza</label><input class="input" id="f_indirizzo"></div>
-      <div class="column is-3"><label class="label">Città Residenza</label><input class="input" id="f_citta"></div>
-      <div class="column is-1"><label class="label">Prov</label><input class="input" id="f_provincia" maxlength="2"></div>
+      <div class="column is-6"><label class="label">Indirizzo di residenza</label><input class="input" id="f_indirizzo"></div>
+      <div class="column is-3"><label class="label">Città di residenza</label><input class="input" id="f_citta"></div>
+      <div class="column is-1"><label class="label">Provincia</label><input class="input" id="f_provincia" maxlength="2"></div>
       <div class="column is-2"><label class="label">CAP</label><input class="input" id="f_cap"></div>
       <div class="column is-12"><label class="label">Email</label><input class="input" type="email" id="f_email"></div>
     </div>
 
-    <div class="section-title">Scelte Iscrizione</div>
+    <div class="section-title">Iscrizione</div>
     <div class="columns is-multiline mt-1">
-      <div class="column is-6"><label class="label">Tipologia Tessera*</label><div class="select is-fullwidth"><select id="f_tipologia_tessera" required></select></div></div>
-      <div class="column is-6"><label class="label">Agevolazione Famiglia</label><div class="select is-fullwidth"><select id="f_agevolazioni_famiglia"></select></div></div>
+      <div class="column is-6"><label class="label">Tipologia tessera*</label><div class="select is-fullwidth"><select id="f_tipologia_tessera" required></select></div></div>
+      <div class="column is-6"><label class="label">Agevolazione famiglia</label><div class="select is-fullwidth"><select id="f_agevolazioni_famiglia"></select></div></div>
       <div class="column is-6"><label class="label">Abbonamento</label><div class="select is-fullwidth"><select id="f_tipo_abbonamento"></select></div></div>
-      <div class="column is-6"><label class="label">Corso Sci/Snow</label><div class="select is-fullwidth"><select id="f_tipologia_corso"></select></div></div>
+      <div class="column is-6"><label class="label">Corso sci o snowboard</label><div class="select is-fullwidth"><select id="f_tipologia_corso"></select></div></div>
     </div>
 
     <div class="columns mt-1">
       <div class="column is-6">
-        <label class="label">Partenza Sabato</label>
+        <label class="label">Partenza del sabato</label>
         <div id="check_sabato" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
       </div>
       <div class="column is-6">
-        <label class="label">Partenza Domenica</label>
+        <label class="label">Partenza della domenica</label>
         <div id="check_domenica" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
       </div>
     </div>
 
     <div class="section-title">Amministrazione</div>
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label">Numero Polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
-      <div class="column is-4"><label class="label">Numero Tessera</label><input class="input campo-admin" id="f_numero_tessera" placeholder="Es. 2026-0001"></div>
-      <div class="column is-4"><label class="label">Acconto Versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
+      <div class="column is-4"><label class="label">Numero polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
+      <div class="column is-4"><label class="label">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" placeholder="Es. 2026-0001"></div>
+      <div class="column is-4"><label class="label">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
     </div>
 
     <div class="section-title">
-      Pagamento Familiare
-      <button type="button" id="btnAbilitaPagante" class="button is-success is-small is-pulled-right" onclick="abilitaSezionePagante()" style="margin-top:-2px">➕ AGGIUNGI PAGANTE</button>
+      Pagamento familiare
+      <button type="button" id="btnAbilitaPagante" class="button is-success is-small is-pulled-right" onclick="abilitaSezionePagante()" style="margin-top:-2px">Aggiungi pagante</button>
     </div>
 
     <div id="payerSection" class="payer-section-disabled">
       <div class="columns mt-1">
         <div class="column is-8">
-          <label class="label">Pagato da
-            <span class="tag is-light ml-2" style="font-weight:normal;text-transform:none">cerca il capofamiglia che paga</span>
-          </label>
+          <label class="label">Pagato da</label>
           <div class="field has-addons mb-0">
             <div class="control is-expanded">
               <input class="input" id="f_payerDisplay" placeholder="Cerca capofamiglia per cognome..." autocomplete="off" disabled>
@@ -139,7 +146,7 @@
     <div class="columns is-mobile is-vcentered">
       <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount" id="v_totale">0€</span></div>
       <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
-      <div class="column is-5"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">SALVA SOCIO</button></div>
+      <div class="column is-5"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
     </div>
   </div>
 </div>
@@ -514,10 +521,10 @@
         : await sb.from("soci").insert(socio);
       if (error) throw error;
 
-      showToast(`✅ ${socio.cognome} ${socio.nome} salvato`);
+      showToast(`${socio.cognome} ${socio.nome} salvato`);
       resetForm();
     } catch (error) {
-      showToast("❌ " + messaggioErrore(error), "is-danger");
+      showToast(messaggioErrore(error), "is-danger");
     } finally {
       bottone.disabled = false;
       setLoading(false);
