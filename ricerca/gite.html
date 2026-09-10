@@ -55,13 +55,15 @@
     </label>
 
     <p class="suggerimento">
-      La registrazione utilizza la data odierna. Le registrazioni errate si
+      La registrazione utilizza la data odierna e funziona anche senza campo:
+      le gite partono da sole appena la linea torna. Le registrazioni errate si
       annullano da «Gite fatte».
     </p>
   </div>
 
   <!-- L'esito sta sopra l'elenco: dopo aver segnato una gita in fondo alla
        pagina, un messaggio in fondo alla pagina non lo vedrebbe nessuno. -->
+  <p id="daInviare" class="da-inviare" hidden></p>
   <p id="avviso" class="avviso" hidden></p>
   <p class="conteggio" id="conteggio" hidden></p>
   <ul class="risultati" id="risultati"></ul>
@@ -74,10 +76,118 @@
 (() => {
   "use strict";
 
-  let abbonamenti = [];       // tutti gli abbonamenti della stagione
+  let abbonamenti = [];       // gli abbonamenti della stagione, come li vede il database
   let giornoScelto = "";      // "" = tutti
 
   const lista = () => el("risultati");
+
+  // -------------------------------------------------------------------------
+  // Coda delle gite da inviare
+  //
+  // Chi segna le gite è sul pullman alle sette del mattino, dove la linea va e
+  // viene. Premere non aspetta più il database: la gita entra in coda, il
+  // conteggio a schermo si aggiorna subito, e l'invio va avanti per conto suo
+  // riprovando finché non passa.
+  //
+  // Ogni voce porta l'id della pressione, generato al momento del tocco e
+  // riusato ad ogni tentativo: è quello che permette di ritentare senza
+  // scalare due gite (vedi use_trip() in supabase/schema.sql). L'id nasce col
+  // gesto, non col tentativo — è tutta la differenza fra "riprovo" e "ne
+  // segno un'altra".
+  //
+  // La coda sta in localStorage e non in memoria: se la pagina si ricarica o
+  // il browser viene chiuso, le gite segnate sono ancora lì e partono alla
+  // riapertura.
+  // -------------------------------------------------------------------------
+
+  const CHIAVE_CODA = "sciclub-gite-da-inviare";
+
+  let coda = leggiCoda();
+  let inviando = false;
+  let attesaRitentativo = 0;  // ms del prossimo tentativo, 0 = nessuna attesa in corso
+  let timerRitentativo = null;
+  let timerScomparsa = null;
+
+  /** Id univoco della pressione, per rendere ripetibile la chiamata. */
+  function nuovoId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    // Pagina aperta in http o browser vecchio: basta che due pressioni non
+    // ottengano mai lo stesso id.
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+  }
+
+  function leggiCoda() {
+    // localStorage può mancare del tutto (navigazione privata, cookie
+    // bloccati): la pagina deve funzionare lo stesso, solo senza memoria fra
+    // una apertura e l'altra.
+    try {
+      const salvato = JSON.parse(localStorage.getItem(CHIAVE_CODA) || "[]");
+      return Array.isArray(salvato) ? salvato : [];
+    } catch (errore) {
+      return [];
+    }
+  }
+
+  function salvaCoda() {
+    try {
+      localStorage.setItem(CHIAVE_CODA, JSON.stringify(coda));
+    } catch (errore) {
+      // Spazio finito o storage negato: la coda resta buona in memoria.
+    }
+  }
+
+  function togliDallaCoda(voceId) {
+    coda = coda.filter((v) => v.id !== voceId);
+    salvaCoda();
+  }
+
+  /** Quante gite di questo socio non sono ancora arrivate al database. */
+  function inAttesa(socioId) {
+    return coda.filter((v) => v.socio === socioId).length;
+  }
+
+  /**
+   * L'abbonamento come va mostrato adesso: quello che dice il database più le
+   * gite ancora in coda. Senza questa somma il contatore tornerebbe indietro
+   * ad ogni pressione fatta senza linea, e sembrerebbe che il tocco non abbia
+   * funzionato.
+   */
+  function conAttesa(a) {
+    const quante = inAttesa(a.member_id);
+    if (!quante) return a;
+    return Object.assign({}, a, {
+      trips_used: a.trips_used + quante,
+      trips_left: Math.max(0, a.trips_left - quante),
+    });
+  }
+
+  /** La riga che dice quante gite devono ancora partire. */
+  function aggiornaDaInviare(appenaFinito) {
+    const riga = el("daInviare");
+    clearTimeout(timerScomparsa);
+
+    if (coda.length) {
+      riga.textContent = coda.length === 1
+        ? "1 gita da inviare: parte da sola appena c'è linea."
+        : `${coda.length} gite da inviare: partono da sole appena c'è linea.`;
+      riga.className = "da-inviare";
+      riga.hidden = false;
+      return;
+    }
+
+    if (appenaFinito) {
+      riga.textContent = "Tutte le gite sono state inviate.";
+      riga.className = "da-inviare inviate";
+      riga.hidden = false;
+      timerScomparsa = setTimeout(() => { riga.hidden = true; }, 4000);
+      return;
+    }
+
+    riga.hidden = true;
+  }
 
   /** Inizio della stagione, per leggere solo le gite di quest'anno. */
   function inizioStagione() {
@@ -181,6 +291,8 @@
     const parti = pezzi(el("q").value);
     const elenco = filtrati();
 
+    aggiornaDaInviare();
+
     el("conteggio").textContent = elenco.length === 1
       ? "1 abbonamento" : `${elenco.length} abbonamenti`;
     el("conteggio").hidden = false;
@@ -191,7 +303,8 @@
       return;
     }
     el("avviso").hidden = true;
-    lista().innerHTML = elenco.map((a) => `<li>${schedaHtml(a, parti)}</li>`).join("");
+    // conAttesa: a schermo il contatore comprende anche le gite ancora in coda.
+    lista().innerHTML = elenco.map((a) => `<li>${schedaHtml(conAttesa(a), parti)}</li>`).join("");
 
     lista().querySelectorAll("[data-segna]").forEach((b) =>
       b.addEventListener("click", () => segna(b.dataset.segna, b)));
@@ -206,6 +319,11 @@
   // Un tocco scala una gita, con la data del giorno. Nessun campo da compilare
   // e nessuna conferma: per due persone si preme due volte, e una pressione di
   // troppo si annulla da "Gite fatte".
+  //
+  // Il tocco non aspetta il database: mette la gita in coda e aggiorna subito
+  // il conteggio. Non c'è più bisogno di bloccare il pulsante durante l'invio,
+  // perché non c'è nessuna attesa in cui premere per sbaglio: il numero scende
+  // sotto al dito.
   // -------------------------------------------------------------------------
 
   function confermaNellaScheda(socioId, testoMsg) {
@@ -213,48 +331,88 @@
     if (zona) zona.innerHTML = `<p class="avviso avviso-ok">${esc(testoMsg)}</p>`;
   }
 
-  /** Id univoco della pressione, per rendere ripetibile la chiamata. */
-  function nuovoId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    // Pagina aperta in http o browser vecchio: basta che due pressioni non
-    // ottengano mai lo stesso id.
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
-    });
+  function segna(socioId, bottone) {
+    if (bottone.disabled) return;
+
+    // L'id nasce qui, con la pressione, e resta lo stesso per tutti i
+    // tentativi di invio: è così che un reinvio non diventa una seconda gita.
+    coda.push({ id: nuovoId(), socio: socioId });
+    salvaCoda();
+
+    const rimaste = inAttesa(socioId);
+    disegna();
+    const a = abbonamenti.find((x) => x.member_id === socioId);
+    const residuo = a ? Math.max(0, a.trips_left - rimaste) : null;
+    confermaNellaScheda(socioId, residuo === 0
+      ? "Gita segnata. Era l'ultima: abbonamento esaurito."
+      : `Gita segnata. Ne restano ${residuo === null ? "—" : residuo}.`);
+
+    svuotaCoda();
   }
 
-  async function segna(socioId, bottone) {
-    // Il pulsante resta bloccato finché la scrittura è in corso: evita che un
-    // doppio tocco involontario scali due gite.
-    if (bottone.disabled) return;
-    bottone.disabled = true;
+  // -------------------------------------------------------------------------
+  // Invio
+  // -------------------------------------------------------------------------
+
+  /**
+   * Manda al database le gite in coda, una alla volta e in ordine.
+   *
+   * Un errore di rete non consuma la voce: resta in coda e si riprova più
+   * tardi. Un rifiuto del database invece è definitivo — abbonamento
+   * esaurito, socio senza abbonamento — e riprovare darebbe lo stesso esito
+   * per sempre, bloccando tutta la coda dietro: la voce esce e chi ha segnato
+   * viene avvisato, col nome del socio, perché con più gite in coda un
+   * messaggio senza nome non dice a chi si riferisce.
+   */
+  async function svuotaCoda() {
+    if (inviando || !coda.length) return;
+    inviando = true;
+    clearTimeout(timerRitentativo);
+
+    // I rifiuti si mostrano alla fine, non appena capitano: disegna() ripulisce
+    // l'avviso, e un messaggio scritto durante il giro sparirebbe col primo
+    // ridisegno senza che nessuno l'abbia letto.
+    const rifiutate = [];
 
     try {
-      // L'id viaggia con la richiesta: se questa chiamata dovesse partire due
-      // volte, il database riconosce la seconda come lo stesso gesto.
-      const { error } = await sb.rpc("use_trip", { member_id: socioId, client_id: nuovoId() });
-      if (error) throw error;
-    } catch (errore) {
-      bottone.disabled = false;
-      messaggio(messaggioErrore(errore), "avviso-errore");
-      return;
-    }
+      while (coda.length) {
+        const voce = coda[0];
+        try {
+          const { error } = await sb.rpc("use_trip", { member_id: voce.socio, client_id: voce.id });
+          if (error) throw error;
+          togliDallaCoda(voce.id);
+          attesaRitentativo = 0;
+        } catch (errore) {
+          if (ritentabile(errore)) {
+            programmaRitentativo();
+            return;
+          }
+          const chi = abbonamenti.find((x) => x.member_id === voce.socio);
+          togliDallaCoda(voce.id);
+          rifiutate.push((chi ? `${chi.last_name} ${chi.first_name}: ` : "") + messaggioErrore(errore));
+        }
+        aggiornaDaInviare();
+      }
 
-    // Da qui in poi la gita è scritta. Rileggere i totali è una seconda
-    // chiamata di rete, che con la linea del pullman può fallire da sola:
-    // mostrarla come errore farebbe segnare la gita una seconda volta.
-    try {
+      // Coda vuota: si rileggono i totali veri, che ora comprendono tutto.
       await caricaAbbonamenti();
       disegna();
-      const a = abbonamenti.find((x) => x.member_id === socioId);
-      confermaNellaScheda(socioId, a && a.trips_left === 0
-        ? "Gita segnata. Era l'ultima: abbonamento esaurito."
-        : `Gita segnata. Ne restano ${a ? a.trips_left : "—"}.`);
+      aggiornaDaInviare(rifiutate.length === 0);
     } catch (errore) {
-      confermaNellaScheda(socioId,
-        "Gita segnata. Il conteggio qui sopra non si è aggiornato: ricarica la pagina per rivederlo.");
+      // Qui può fallire solo la rilettura finale: le gite sono già scritte, e
+      // dirlo come errore farebbe segnare tutto una seconda volta.
+      disegna();
+    } finally {
+      if (rifiutate.length) messaggio(rifiutate.join(" · "), "avviso-errore");
+      inviando = false;
     }
+  }
+
+  /** Riprova più tardi, aspettando ogni volta un po' di più: 3s, 6s, 12s… fino a un minuto. */
+  function programmaRitentativo() {
+    attesaRitentativo = attesaRitentativo ? Math.min(attesaRitentativo * 2, 60000) : 3000;
+    clearTimeout(timerRitentativo);
+    timerRitentativo = setTimeout(svuotaCoda, attesaRitentativo);
   }
 
   // -------------------------------------------------------------------------
@@ -265,29 +423,54 @@
     const zona = el("zona_" + socioId);
     if (!zona) return;
 
+    // Le gite ancora in coda non sono nel database, ma vanno mostrate lo
+    // stesso: una segnata senza linea sembrerebbe sparita, e soprattutto non
+    // ci sarebbe modo di annullarla prima che parta.
+    const attesa = coda.filter((v) => v.socio === socioId);
+
+    // Senza linea lo storico non si legge, ma le gite in coda sì: sono qui
+    // sul telefono, e sono proprio quelle che può servire annullare adesso.
+    // Rinunciare ad aprire il registro toglierebbe l'unico modo di correggere
+    // una pressione sbagliata fatta sul pullman.
     let gite = [];
+    let letturaFallita = false;
     try {
       gite = await caricaGite(socioId);
     } catch (errore) {
-      messaggio(messaggioErrore(errore), "avviso-errore");
-      return;
+      letturaFallita = true;
     }
 
-    zona.innerHTML = gite.length
-      ? `<ul class="registro">${gite.map((g) => `
-          <li>
-            <span class="quando">${new Date(g.trip_date).toLocaleDateString("it-IT")}</span>
-            <span class="chi">1 gita</span>
-            <button class="btn-chiaro" data-annulla="${g.id}">Annulla</button>
-          </li>`).join("")}
-        </ul>
-        <div class="azioni-pannello" style="margin-top:12px">
-          <button class="btn-chiaro" data-chiudi-registro>Chiudi</button>
-        </div>`
-      : `<p class="aiuto">Nessuna gita registrata.</p>`;
+    const righeAttesa = attesa.map((v) => `
+      <li>
+        <span class="quando">Oggi</span>
+        <span class="chi">da inviare</span>
+        <button class="btn-chiaro" data-scarta="${v.id}">Annulla</button>
+      </li>`).join("");
+
+    const righeSalvate = gite.map((g) => `
+      <li>
+        <span class="quando">${new Date(g.trip_date).toLocaleDateString("it-IT")}</span>
+        <span class="chi">1 gita</span>
+        <button class="btn-chiaro" data-annulla="${g.id}">Annulla</button>
+      </li>`).join("");
+
+    const corpo = (attesa.length || gite.length)
+      ? `<ul class="registro">${righeAttesa}${righeSalvate}</ul>`
+      : letturaFallita ? "" : `<p class="aiuto">Nessuna gita registrata.</p>`;
+
+    const nota = letturaFallita
+      ? `<p class="aiuto">Le gite già inviate non si vedono: manca la linea.</p>`
+      : "";
+
+    zona.innerHTML = `${corpo}${nota}
+      <div class="azioni-pannello" style="margin-top:12px">
+        <button class="btn-chiaro" data-chiudi-registro>Chiudi</button>
+      </div>`;
 
     zona.querySelectorAll("[data-annulla]").forEach((b) =>
       b.addEventListener("click", () => annulla(b.dataset.annulla, socioId)));
+    zona.querySelectorAll("[data-scarta]").forEach((b) =>
+      b.addEventListener("click", () => scarta(b.dataset.scarta, socioId)));
     const chiudi = zona.querySelector("[data-chiudi-registro]");
     if (chiudi) chiudi.addEventListener("click", () => { zona.innerHTML = ""; });
   }
@@ -302,6 +485,16 @@
     } catch (errore) {
       messaggio(messaggioErrore(errore), "avviso-errore");
     }
+  }
+
+  /**
+   * Toglie dalla coda una gita che non è ancora partita: non c'è niente da
+   * annullare sul database, perché non ci è mai arrivata.
+   */
+  function scarta(voceId, socioId) {
+    togliDallaCoda(voceId);
+    disegna();
+    apriRegistro(socioId);
   }
 
   // -------------------------------------------------------------------------
@@ -321,12 +514,23 @@
       });
     });
 
+    // La linea è tornata: si riparte subito, senza aspettare il timer.
+    window.addEventListener("online", () => {
+      attesaRitentativo = 0;
+      svuotaCoda();
+    });
+
     try {
       await caricaAbbonamenti();
       disegna();
     } catch (errore) {
       messaggio(messaggioErrore(errore), "avviso-errore");
     }
+
+    // Gite rimaste in coda da un'apertura precedente — pagina chiusa mentre
+    // non c'era campo — partono adesso.
+    aggiornaDaInviare();
+    svuotaCoda();
   }
 
   proteggiPagina(avvia);

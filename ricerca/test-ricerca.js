@@ -12,10 +12,10 @@ const path = require("path");
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
 const { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-        giornoAbbonamento, etichettaGiorno, messaggioErrore } =
+        giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile } =
   (0, eval)(`(() => { ${sorgente}
     return { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-             giornoAbbonamento, etichettaGiorno, messaggioErrore }; })()`);
+             giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
 
@@ -125,5 +125,21 @@ assert.strictEqual(
   "Abbonamento esaurito: non restano gite da scalare.");
 assert.strictEqual(messaggioErrore({ code: "PGRST301" }), "Sessione scaduta: esci e rientra.");
 assert.strictEqual(messaggioErrore(null), "Errore sconosciuto");
+
+// --- Cosa si riprova a mandare ---------------------------------------------
+
+// Se il database ha risposto, la risposta non cambia riprovando: la gita esce
+// dalla coda, altrimenti resterebbe lì a bloccare tutte quelle dietro.
+assert.strictEqual(ritentabile({ code: "P0001", message: "Abbonamento esaurito: non restano gite da scalare." }), false);
+assert.strictEqual(ritentabile({ code: "42501", message: "permission denied" }), false);
+assert.strictEqual(ritentabile({ code: "PGRST301" }), false);
+
+// Se invece non è arrivata risposta è la linea, e quella torna.
+assert.strictEqual(ritentabile({ message: "Failed to fetch" }), true);
+assert.strictEqual(ritentabile({ message: "Load failed" }), true);
+// Un guasto che non sappiamo leggere si riprova: perdere una gita è peggio
+// che riprovare a vuoto.
+assert.strictEqual(ritentabile({ message: "qualcosa di inatteso" }), true);
+assert.strictEqual(ritentabile(null), true);
 
 console.log("ok — ricerca");

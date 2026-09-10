@@ -180,6 +180,19 @@ function erroreDiRete(errore) {
   return /failed to fetch|networkerror|network request failed|load failed/i.test(descrizione);
 }
 
+/**
+ * Vale la pena rimandare questa richiesta?
+ *
+ * Se il database ha risposto — anche solo per dire di no — l'errore porta un
+ * codice, e riprovare darebbe lo stesso esito all'infinito: una voce così
+ * bloccherebbe la coda dietro di sé per sempre. Se il codice non c'è, non è
+ * arrivata risposta: è la linea, e quella prima o poi torna.
+ */
+function ritentabile(errore) {
+  if (erroreDiRete(errore)) return true;
+  return !(errore && errore.code);
+}
+
 /** Messaggio leggibile a partire da un errore Supabase. */
 function messaggioErrore(errore) {
   if (!errore) return "Errore sconosciuto";

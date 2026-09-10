@@ -67,13 +67,24 @@ controllo sul residuo sta nella funzione `use_trip()` sul database, non nella
 pagina: due telefoni che segnano la stessa gita non possono portare il
 contatore sotto zero.
 
-Sul pullman la linea va e viene, e una richiesta può arrivare al database
-senza che la risposta torni indietro: la pagina non saprebbe se la gita è
-stata scalata, e riprovare rischierebbe di scalarla due volte. Per questo
-ogni pressione porta con sé un id generato dal telefono
-(`trip_uses.client_id`): se la stessa chiamata parte due volte, il database
-riconosce la seconda come lo stesso gesto e non scala niente. Riprovare è
-sempre sicuro.
+Sul pullman la linea va e viene, quindi premere non aspetta il database: la
+gita entra in una coda, il conteggio a schermo si aggiorna subito e l'invio va
+avanti per conto suo, riprovando con attese crescenti e appena la linea torna.
+La coda sta in `localStorage`, quindi sopravvive alla ricarica e alla chiusura
+del browser: le gite segnate senza campo partono alla riapertura. Una riga in
+cima dice quante ne restano da inviare, e finché sono lì si annullano da «Gite
+fatte» senza toccare il database.
+
+L'id di ogni pressione nasce col tocco, non col tentativo
+(`trip_uses.client_id`, con vincolo unico): il ritentativo ripete sempre lo
+stesso id, quindi una richiesta arrivata al database la cui risposta si è
+persa non diventa una seconda gita. Un rifiuto del database — abbonamento
+esaurito — invece non si ritenta: quella gita esce dalla coda con un avviso
+che dice di chi si tratta, così non blocca quelle dietro.
+
+La pagina va però aperta almeno una volta con la linea: l'elenco degli
+abbonamenti non è in cache, quindi aprendola da zero senza campo non si vede
+nessuna scheda. Le gite già in coda partono lo stesso.
 
 L'accesso richiede un utente Supabase: senza login né il gestionale né il sito
 di ricerca mostrano qualcosa.

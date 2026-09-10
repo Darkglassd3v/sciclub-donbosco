@@ -123,6 +123,13 @@ ul.risultati li { margin-bottom: 12px; }
 .avviso-vuoto  { background: var(--giallo-light); color: var(--giallo-dark); }
 .avviso-ok     { background: var(--ok-bg); color: var(--ok); }
 
+/* Gite segnate che aspettano ancora la linea. Non è un errore, è un lavoro in
+   corso: resta in vista finché non è finito, così chi scende dal pullman vede
+   se è rimasto qualcosa indietro. */
+.da-inviare { padding: 14px 18px; border-radius: var(--raggio); margin-top: 16px;
+              font-weight: 600; background: var(--giallo-light); color: var(--giallo-dark); }
+.da-inviare.inviate { background: var(--ok-bg); color: var(--ok); }
+
 /* --- Login -------------------------------------------------------------- */
 .login { max-width: 420px; margin: 8vh auto; background: var(--superficie);
          padding: 40px 34px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
