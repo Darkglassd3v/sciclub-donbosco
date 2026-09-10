@@ -70,6 +70,11 @@ create table if not exists public.soci (
   -- storici non sono UUID validi (formati misti), quindi restano testo.
   legacy_id         text unique,
 
+  -- id del pagante nel vecchio foglio (colonna "ID PAGANTE"). Serve alla
+  -- migrazione per ricostruire i nuclei familiari e resta come traccia: la
+  -- fonte di verità per i collegamenti è payer_id.
+  legacy_payer_id   text,
+
   numero_polizza    text,
   cognome           text not null,
   nome              text not null,

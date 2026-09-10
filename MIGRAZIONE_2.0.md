@@ -8,7 +8,7 @@ La 1.x (cartelle `gestione-soci/`, `pannello-pagamenti/`, `riepilogo-2026/`) res
 
 ## Cosa c'è in questo branch
 
-> ⚠️ **Il repository è pubblico.** I fogli Excel e il file `migration_seed.sql` contengono
+> ⚠️ **Il repository è pubblico.** I fogli Excel e i file in `supabase/migration/` contengono
 > anagrafiche reali (nome, indirizzo, telefono, codice fiscale, anche di minori) e sono
 > esclusi da git tramite `.gitignore`. Vanno tenuti solo in locale o su Drive: non
 > committarli mai, nemmeno temporaneamente, perché resterebbero nella cronologia git.
@@ -16,8 +16,8 @@ La 1.x (cartelle `gestione-soci/`, `pannello-pagamenti/`, `riepilogo-2026/`) res
 ```
 supabase/
   schema.sql                  tabelle, viste, policy di sicurezza (RLS)
-  scripts/generate_migration.py   genera migration_seed.sql dal foglio esportato
-  migration_seed.sql          NON versionato: si genera in locale (vedi Passo 2)
+  scripts/generate_migration.py   genera i file di migrazione dal foglio esportato
+  migration/                  NON versionato: 14 file generati in locale (vedi Passo 2)
 
 web/
   config.js                   URL e chiave anon di Supabase (da compilare)
@@ -42,25 +42,41 @@ Lo script è rieseguibile: lanciarlo due volte non crea duplicati né errori.
 
 ## Passo 2 — Caricare i dati
 
-Prima si genera il file SQL dal foglio esportato (non è nel repository perché contiene dati personali):
+Prima si generano i file SQL dal foglio esportato (non sono nel repository perché contengono dati personali):
 
 ```bash
 pip install openpyxl
-python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx" supabase/migration_seed.sql
+python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx"
 ```
 
-Il file prodotto pesa circa 1,2 MB: l'editor SQL del browser può essere lento. Due strade:
+Vengono creati **14 file numerati** in `supabase/migration/`, da circa 140 KB l'uno:
 
-**A — dall'editor SQL** (semplice): incollare il file e premere Run. Se il browser fatica, usare l'opzione B.
+```
+01_listino_e_partenze.sql       listino prezzi e luoghi di partenza
+02_soci_00001_00500.sql   ...   le 5.778 anagrafiche, 500 per file
+13_soci_05501_05778.sql
+14_collegamenti_familiari.sql   collega ogni socio al capofamiglia
+```
 
-**B — da riga di comando** (consigliata):
+Un unico file da 1,2 MB veniva rifiutato dall'editor SQL con *"Query is too large"*: da qui la divisione.
+
+**Dall'editor SQL** (Supabase Dashboard > SQL Editor): aprire i file **in ordine di numero**, incollare il contenuto di uno alla volta e premere **Run**. Sono 14 operazioni, ognuna di pochi secondi.
+
+Se anche 140 KB risultassero troppi, si rigenerano più piccoli indicando quante righe per file:
 ```bash
-# la stringa di connessione sta in Project Settings > Database > Connection string > URI
-psql "postgresql://postgres:[PASSWORD]@db.[PROGETTO].supabase.co:5432/postgres" \
-     -v ON_ERROR_STOP=1 -f supabase/migration_seed.sql
+python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx" supabase/migration 250
 ```
 
-Anche questo script è rieseguibile: `on conflict (legacy_id) do nothing` evita i duplicati.
+**Da riga di comando**, se si ha `psql` (più veloce, un colpo solo):
+```bash
+# stringa di connessione: Project Settings > Database > Connection string > URI
+for f in supabase/migration/*.sql; do
+  psql "postgresql://postgres:[PASSWORD]@db.[PROGETTO].supabase.co:5432/postgres" \
+       -v ON_ERROR_STOP=1 -f "$f"
+done
+```
+
+Ogni file apre e chiude la propria transazione ed è **rieseguibile**: se ci si perde il conto, si può rilanciare un file già eseguito senza creare duplicati né errori. L'unico vincolo è che `14_collegamenti_familiari.sql` vada eseguito dopo i file dei soci (e comunque lo si può rilanciare in seguito).
 
 ### Cosa viene migrato
 
@@ -143,7 +159,7 @@ Non è stata portata la **email di riepilogo iscrizione** che la 1.x inviava con
 
 Schema e migrazione sono stati eseguiti su un PostgreSQL 16 reale prima di essere consegnati:
 
-- `schema.sql` e `migration_seed.sql` applicati due volte di fila senza errori e senza duplicati (5.778 righe stabili);
+- `schema.sql` e i 14 file di migrazione eseguiti in ordine su un database vuoto, poi rieseguiti singolarmente e fuori ordine: nessun errore, nessun duplicato (5.778 righe stabili);
 - colonna generata `saldo` verificata: modificando l'acconto il saldo si aggiorna da solo, e con esso il totale del nucleo;
 - vista `nuclei_familiari` verificata su un nucleo con capofamiglia e due familiari;
 - viste del riepilogo verificate (KPI, tessere con prezzo di listino, corsi, abbonamenti, partenze con esplosione delle liste separate da virgola);

@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""Genera supabase/migration_seed.sql dai fogli del file Google Sheet esportato.
+"""Genera i file SQL di migrazione dal foglio Google esportato.
 
 Uso:
-    python3 supabase/scripts/generate_migration.py \
-        "new_structure/SOCI 2026.xlsx" supabase/migration_seed.sql
+    python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx"
+    python3 supabase/scripts/generate_migration.py "SOCI 2026.xlsx" supabase/migration 300
 
-Richiede openpyxl. Rigenerare il file SQL dopo ogni nuovo export del foglio.
+Argomenti: file .xlsx di partenza, cartella di destinazione (default
+supabase/migration), righe per file (default 500 — abbassarlo se l'editor SQL
+di Supabase rifiuta ancora il file).
+
+Produce più file numerati da eseguire in ordine, invece di un unico file da
+1,2 MB che l'editor SQL rifiuta ("Query is too large"). Ogni file ha la propria
+transazione ed è rieseguibile senza creare duplicati.
+
+Richiede openpyxl. Rigenerare dopo ogni nuovo export del foglio.
 """
 
 import re
@@ -48,7 +56,9 @@ COL = {
     "legacy_payer_id": 26,
 }
 
-BATCH_SIZE = 500
+# Anagrafiche per file. 500 righe stanno intorno ai 140 KB, sotto il limite
+# dell'editor SQL di Supabase. Si può abbassare da riga di comando.
+RIGHE_PER_FILE = 500
 
 # Le righe importate sono un archivio anagrafico: nel foglio la colonna
 # "Informazioni cronologiche" è vuota al 100%, quindi non esiste una data di
@@ -178,29 +188,76 @@ def read_partenze(worksheet):
     return out
 
 
-def build_sql(soci, prezzi, partenze, source_name):
-    lines = [
-        "-- Sci Club Don Bosco 2.0 — dati iniziali",
+def intestazione(titolo, numero, totale, source_name, extra=()):
+    """Intestazione comune a ogni file: dice cos'è e in che ordine va eseguito."""
+    righe = [
+        f"-- Sci Club Don Bosco 2.0 — {titolo}",
+        f"-- File {numero} di {totale} — eseguire i file in ordine di numero.",
         f"-- Generato da {source_name} con supabase/scripts/generate_migration.py",
-        "-- Eseguire DOPO supabase/schema.sql.",
         "--",
-        "-- La migrazione è in due fasi: prima si inseriscono i soci conservando",
-        "-- l'ID storico del foglio, poi si risolvono i collegamenti familiari",
-        "-- (legacy_payer_id -> payer_id). Gli ID del foglio non sono UUID validi,",
-        "-- quindi restano in legacy_id e ogni socio riceve un UUID nuovo.",
-        "--",
-        f"-- created_at è forzato a {DATA_ARCHIVIO}: le righe importate sono un",
-        "-- archivio anagrafico senza data di iscrizione (la colonna del foglio è",
-        "-- vuota) e non devono essere conteggiate nella stagione corrente.",
-        "",
-        "begin;",
-        "",
-        "-- --------------------------------------------------------------------",
-        "-- Listino",
-        "-- --------------------------------------------------------------------",
-        "",
+        "-- Prerequisito: supabase/schema.sql già eseguito.",
+        "-- Ogni file è indipendente e rieseguibile: rilanciarlo non crea duplicati.",
     ]
+    righe += [f"-- {r}" for r in extra]
+    righe += ["", "begin;", ""]
+    return righe
 
+
+def riga_socio(record, columns_count=None):
+    """Una tupla VALUES per un socio."""
+    data_nascita = record["data_nascita"]
+    values = ", ".join([
+        f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
+        f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
+        sql_str(record["legacy_id"]),
+        sql_str(record["legacy_payer_id"]),
+        sql_str(record["numero_polizza"]),
+        sql_str(record["cognome"]),
+        sql_str(record["nome"]),
+        sql_str(record["luogo_nascita"]),
+        sql_str(record["provincia_nascita"]),
+        sql_str(record["codice_fiscale"]),
+        f"DATE '{data_nascita.isoformat()}'" if data_nascita else "NULL",
+        sql_str(record["indirizzo"]),
+        sql_str(record["citta"]),
+        sql_str(record["provincia"]),
+        sql_str(record["cap"]),
+        sql_str(record["telefono"]),
+        sql_str(record["email"]),
+        sql_str(record["tipologia_tessera"]),
+        sql_str(record["agevolazioni_famiglia"]),
+        sql_str(record["tipo_abbonamento"]),
+        sql_str(record["partenza_domenica"]),
+        sql_str(record["partenze_sabato"]),
+        sql_str(record["tipologia_corso"]),
+        sql_num(record["totale"]),
+        sql_num(record["acconto"]),
+        sql_str(record["numero_tessera"]),
+    ])
+    return f"  ({values})"
+
+
+def build_files(soci, prezzi, partenze, source_name, righe_per_file):
+    """Produce la lista (nome_file, contenuto) dei file di migrazione.
+
+    L'editor SQL di Supabase rifiuta le query troppo grandi, quindi i soci
+    vengono divisi in più file. Ogni file apre e chiude la propria transazione:
+    si possono lanciare uno alla volta, anche a distanza di tempo, e rilanciare
+    senza produrre duplicati.
+    """
+    blocchi_soci = [soci[i:i + righe_per_file] for i in range(0, len(soci), righe_per_file)]
+    # setup + blocchi soci + finalizzazione
+    totale_file = len(blocchi_soci) + 2
+    files = []
+
+    # ---------------------------------------------------------------- setup
+    lines = intestazione(
+        "listino, partenze e preparazione", 1, totale_file, source_name,
+        extra=[
+            "Carica il listino prezzi e i luoghi di partenza.",
+        ],
+    )
+    lines += ["-- Listino", ""]
     for categoria, nome, prezzo in prezzi:
         lines.append(
             "insert into public.prezzi (categoria, nome, prezzo) values "
@@ -208,13 +265,7 @@ def build_sql(soci, prezzi, partenze, source_name):
             "on conflict (categoria, nome) do update set prezzo = excluded.prezzo;"
         )
 
-    lines += [
-        "",
-        "-- --------------------------------------------------------------------",
-        "-- Luoghi di partenza",
-        "-- --------------------------------------------------------------------",
-        "",
-    ]
+    lines += ["", "-- Luoghi di partenza", ""]
     for giorno, luogo in partenze:
         lines.append(
             "insert into public.partenze (giorno, luogo) values "
@@ -223,17 +274,12 @@ def build_sql(soci, prezzi, partenze, source_name):
 
     lines += [
         "",
-        "-- --------------------------------------------------------------------",
-        f"-- Soci ({len(soci)} righe)",
-        "--",
-        "-- legacy_payer_id è una colonna temporanea: serve solo a ricostruire i",
-        "-- collegamenti familiari e viene rimossa in fondo al file.",
-        "-- --------------------------------------------------------------------",
-        "",
-        "alter table public.soci add column if not exists legacy_payer_id text;",
+        "commit;",
         "",
     ]
+    files.append(("01_listino_e_partenze.sql", "\n".join(lines)))
 
+    # ----------------------------------------------------------- soci
     columns = (
         "created_at, data_iscrizione, legacy_id, legacy_payer_id, numero_polizza, cognome, nome, luogo_nascita, "
         "provincia_nascita, codice_fiscale, data_nascita, indirizzo, citta, provincia, "
@@ -241,60 +287,35 @@ def build_sql(soci, prezzi, partenze, source_name):
         "partenza_domenica, partenze_sabato, tipologia_corso, totale, acconto, numero_tessera"
     )
 
-    # Le righe vengono raggruppate in insert multi-valore: con 5.000+ soci una
-    # insert per riga produce un file troppo grande per l'editor SQL di Supabase.
-    batch = []
-    for record in soci:
-        data_nascita = record["data_nascita"]
-        values = ", ".join([
-            f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
-            f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
-            sql_str(record["legacy_id"]),
-            sql_str(record["legacy_payer_id"]),
-            sql_str(record["numero_polizza"]),
-            sql_str(record["cognome"]),
-            sql_str(record["nome"]),
-            sql_str(record["luogo_nascita"]),
-            sql_str(record["provincia_nascita"]),
-            sql_str(record["codice_fiscale"]),
-            f"DATE '{data_nascita.isoformat()}'" if data_nascita else "NULL",
-            sql_str(record["indirizzo"]),
-            sql_str(record["citta"]),
-            sql_str(record["provincia"]),
-            sql_str(record["cap"]),
-            sql_str(record["telefono"]),
-            sql_str(record["email"]),
-            sql_str(record["tipologia_tessera"]),
-            sql_str(record["agevolazioni_famiglia"]),
-            sql_str(record["tipo_abbonamento"]),
-            sql_str(record["partenza_domenica"]),
-            sql_str(record["partenze_sabato"]),
-            sql_str(record["tipologia_corso"]),
-            sql_num(record["totale"]),
-            sql_num(record["acconto"]),
-            sql_str(record["numero_tessera"]),
-        ])
-        batch.append(f"  ({values})")
+    for indice, blocco in enumerate(blocchi_soci):
+        numero_file = indice + 2
+        primo = indice * righe_per_file + 1
+        ultimo = primo + len(blocco) - 1
 
-        if len(batch) == BATCH_SIZE:
-            lines.append(f"insert into public.soci ({columns}) values")
-            lines.append(",\n".join(batch))
-            lines.append("on conflict (legacy_id) do nothing;")
-            lines.append("")
-            batch = []
-
-    if batch:
+        lines = intestazione(
+            f"soci {primo}-{ultimo}", numero_file, totale_file, source_name,
+            extra=[
+                f"{len(blocco)} anagrafiche su {len(soci)} totali.",
+                "I collegamenti familiari NON vengono risolti qui: lo fa l'ultimo file.",
+            ],
+        )
         lines.append(f"insert into public.soci ({columns}) values")
-        lines.append(",\n".join(batch))
+        lines.append(",\n".join(riga_socio(r) for r in blocco))
         lines.append("on conflict (legacy_id) do nothing;")
-        lines.append("")
+        lines += ["", "commit;", ""]
 
+        files.append((f"{numero_file:02d}_soci_{primo:05d}_{ultimo:05d}.sql", "\n".join(lines)))
+
+    # -------------------------------------------------------- finalizzazione
+    lines = intestazione(
+        "collegamenti familiari", totale_file, totale_file, source_name,
+        extra=[
+            "Da eseguire SOLO dopo tutti i file dei soci: collega ogni socio al",
+            "proprio capofamiglia.",
+        ],
+    )
     lines += [
-        "",
-        "-- --------------------------------------------------------------------",
-        "-- Fase 2: risoluzione dei collegamenti familiari",
-        "-- --------------------------------------------------------------------",
-        "",
+        "-- Risoluzione dei collegamenti: legacy_payer_id -> payer_id",
         "update public.soci d",
         "   set payer_id = c.id",
         "  from public.soci c",
@@ -304,7 +325,7 @@ def build_sql(soci, prezzi, partenze, source_name):
         "   and c.id <> d.id;",
         "",
         "-- Collegamenti rimasti irrisolti (pagante non presente nel foglio):",
-        "-- vengono elencati e lasciati senza payer_id, non scartati.",
+        "-- vengono segnalati e lasciati senza payer_id, non scartati.",
         "do $$",
         "declare orfani int;",
         "begin",
@@ -316,34 +337,50 @@ def build_sql(soci, prezzi, partenze, source_name):
         "  end if;",
         "end $$;",
         "",
-        "alter table public.soci drop column if exists legacy_payer_id;",
-        "",
         "commit;",
         "",
+        "-- Controllo finale: quante anagrafiche sono state caricate.",
+        "select count(*) as soci_caricati,",
+        "       count(payer_id) as con_capofamiglia",
+        "  from public.soci;",
+        "",
     ]
-    return "\n".join(lines)
+    files.append((f"{totale_file:02d}_collegamenti_familiari.sql", "\n".join(lines)))
+
+    return files
 
 
 def main():
-    if len(sys.argv) != 3:
+    if not 2 <= len(sys.argv) <= 4:
         print(__doc__)
         return 1
 
     source = Path(sys.argv[1])
-    target = Path(sys.argv[2])
+    target_dir = Path(sys.argv[2] if len(sys.argv) > 2 else "supabase/migration")
+    righe_per_file = int(sys.argv[3]) if len(sys.argv) > 3 else RIGHE_PER_FILE
 
     workbook = openpyxl.load_workbook(source, data_only=True)
     soci = read_soci(workbook["SOCI"])
     prezzi = read_prezzi(workbook["PREZZI"])
     partenze = read_partenze(workbook["PARTENZE"])
 
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(build_sql(soci, prezzi, partenze, source.name), encoding="utf-8")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    # Rimuove i file di una generazione precedente: se il numero di blocchi
+    # cala, i vecchi file resterebbero lì e verrebbero eseguiti per sbaglio.
+    for vecchio in target_dir.glob("*.sql"):
+        vecchio.unlink()
+
+    files = build_files(soci, prezzi, partenze, source.name, righe_per_file)
+    for nome, contenuto in files:
+        (target_dir / nome).write_text(contenuto, encoding="utf-8")
 
     senza_data = sum(1 for r in soci if r["data_nascita"] is None)
     print(f"soci: {len(soci)} (senza data di nascita valida: {senza_data})")
     print(f"prezzi: {len(prezzi)}  partenze: {len(partenze)}")
-    print(f"scritto: {target}")
+    print(f"\n{len(files)} file scritti in {target_dir}/ — eseguirli in ordine:\n")
+    for nome, contenuto in files:
+        kb = len(contenuto.encode("utf-8")) / 1024
+        print(f"  {nome:40s} {kb:7.0f} KB")
     return 0
 
 
