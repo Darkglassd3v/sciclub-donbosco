@@ -125,19 +125,35 @@ Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pa
 
 ### Come nasce un account, e perché non arriva nessuna mail
 
-Il pannello non usa la registrazione di Supabase: chiama la funzione `public.crea_utente()`
-(in `supabase/schema.sql`), che scrive l'account direttamente in `auth.users` con la password già
-cifrata e la mail già segnata come confermata. La persona entra subito con email e password, e non
-parte nessun messaggio.
+Il pannello fa esattamente quello che fa **Add user > Create new user** nella dashboard, non
+*Send invitation*: chiama `auth.admin.createUser()` con `email_confirm`, che crea l'account con la
+sua password e la mail già confermata **senza spedire nessun messaggio**. (Quella che manda
+l'invito è un'altra funzione, `inviteUserByEmail()`, che qui non si usa.)
 
-Le altre due strade erano peggiori, ed è utile sapere perché se un giorno si è tentati di tornarci:
+L'Admin API richiede però la chiave `service_role`, che scavalca ogni regola di sicurezza. La
+documentazione Supabase è esplicita: va usata solo da un server, mai dal browser. Per questo la
+chiamata non sta nella pagina ma in una **Edge Function**, `supabase/functions/crea-utente/`, dove
+la chiave resta sul server di Supabase e non arriva mai a chi apre il sito.
 
-- l'**Admin API** vuole la chiave `service_role`, che scavalca ogni regola di sicurezza e in un sito statico sarebbe pubblica;
-- **`signUp()`** obbliga ad aprire le registrazioni a chiunque abbia la chiave anon — che è in chiaro in `config.js`, in un repository pubblico — e manda una mail di conferma che il piano gratuito esaurisce dopo pochi account (*email rate limit exceeded*).
+**Da pubblicare una volta sola**, con la [Supabase CLI](https://supabase.com/docs/guides/cli):
 
-Quindi in **Authentication > Sign In / Providers > Email** l'interruttore **"Allow new users to
-sign up"** va lasciato **spento**: nessuno può crearsi un account da solo, gli account nascono solo
-dal pannello e solo per mano di un superadmin. Non serve toccare nient'altro.
+```bash
+supabase login
+supabase link --project-ref rkuuthpauuohilbzmdnn
+supabase functions deploy crea-utente
+```
+
+`SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` le fornisce Supabase da sé all'ambiente della
+funzione: non vanno impostate a mano e non vanno **mai** scritte nel repository. In alternativa
+alla CLI si può incollare il contenuto di `index.ts` in **Dashboard > Edge Functions > Deploy a new
+function**.
+
+Finché la funzione non è pubblicata, il pulsante «Crea utente» lo dice chiaramente invece di dare
+un errore di rete.
+
+L'interruttore **"Allow new users to sign up"** (Authentication > Sign In / Providers > Email) va
+lasciato **spento**: nessuno può crearsi un account da solo, gli account nascono solo dal pannello
+e solo per mano di un superadmin. Non serve toccare nient'altro, né configurare SMTP.
 
 Per sicurezza ogni account nasce comunque con il ruolo `ospite`, che non può fare **niente**: se un
 giorno quell'interruttore venisse acceso per sbaglio, chi si registrasse otterrebbe un account

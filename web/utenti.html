@@ -218,16 +218,14 @@
     bottone.disabled = true;
     setLoading(true);
     try {
-      // L'account viene scritto direttamente in auth.users da crea_utente()
-      // (vedi supabase/schema.sql): password già cifrata, mail già confermata,
-      // nessun messaggio inviato. Il ruolo lo assegna la funzione stessa,
-      // nella stessa transazione.
-      const { error } = await sb.rpc("crea_utente", {
-        email_nuovo: email,
-        password_nuova: PASSWORD_INIZIALE,
-        ruolo,
+      // La Edge Function crea-utente chiama auth.admin.createUser() con la
+      // service_role, che sta su Supabase e non qui: è il "Add user" della
+      // dashboard, che non manda nessuna mail. Vedi
+      // supabase/functions/crea-utente/index.ts.
+      const { error } = await sb.functions.invoke("crea-utente", {
+        body: { email, password: PASSWORD_INIZIALE, ruolo },
       });
-      if (error) throw error;
+      if (error) throw await conMessaggioDelServer(error);
 
       showToast(`${email} creato come ${ruolo}. Password: ${PASSWORD_INIZIALE}`);
       campoEmail.value = "";
@@ -241,15 +239,28 @@
   }
 
   /**
-   * I messaggi che crea_utente() solleva sono già in italiano e già chiari.
-   * Serve tradurre solo il caso in cui la funzione non esista ancora, che
-   * arriva come sigla di PostgREST e non dice niente a nessuno.
+   * functions.invoke() riduce qualunque risposta non riuscita a un generico
+   * "Edge Function returned a non-2xx status code" e mette la risposta vera in
+   * error.context. Il motivo che la funzione ha scritto è lì dentro: senza
+   * tirarlo fuori, a schermo non arriverebbe mai.
    */
+  async function conMessaggioDelServer(error) {
+    if (!error || !error.context || typeof error.context.json !== "function") return error;
+    try {
+      const corpo = await error.context.json();
+      if (corpo && corpo.errore) return new Error(corpo.errore);
+    } catch (_) {
+      // Risposta non leggibile come JSON: resta buono l'errore originale.
+    }
+    return error;
+  }
+
+  /** L'unico caso che va tradotto: la funzione non è ancora stata pubblicata. */
   function spiegaErroreCreazione(error) {
     const testo = String((error && error.message) || "");
-    if (error && (error.code === "PGRST202" || /crea_utente/.test(testo) && /function/i.test(testo))) {
-      return "Manca la funzione crea_utente sul database: esegui supabase/schema.sql "
-        + "aggiornato da Supabase Dashboard > SQL Editor.";
+    if (/failed to send a request|not found|failed to fetch/i.test(testo)) {
+      return "La funzione «crea-utente» non risponde: va pubblicata una volta sola su "
+        + "Supabase (vedi docs/ACCOUNT.md), altrimenti gli account non si possono creare da qui.";
     }
     return "Errore: " + messaggioErrore(error);
   }
