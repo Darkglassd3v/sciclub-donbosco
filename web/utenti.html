@@ -7,17 +7,33 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
   <style>
-    .container-main { max-width: 720px; margin: 28px auto 80px; padding: 0 18px; }
+    .container-main { max-width: 820px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; }
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; margin-bottom: 24px; }
+    .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 4px; }
+    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
     .tabella-utenti { width: 100%; border-collapse: collapse; }
     .tabella-utenti th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
                           font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
     .tabella-utenti td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-utenti .vuota { color: var(--testo-soft); }
-    .tabella-utenti select { min-width: 160px; }
+    .tabella-utenti select { min-width: 150px; }
+    .tabella-utenti .azioni { text-align: right; white-space: nowrap; }
+    .tabella-utenti .azioni button { margin-left: 6px; }
+    /* Conferma sta quasi sempre spento, ed è il suo essere spento a dire che
+       non c'è niente da salvare: deve leggersi come inattivo da solo, non per
+       il mezzo velo che Bulma mette sopra al blu pieno. */
+    .tabella-utenti .azioni button:disabled {
+      background: var(--riga-alt); border-color: var(--filo);
+      color: var(--testo-soft); opacity: 1; box-shadow: none;
+    }
+    .tabella-utenti tr.ospite td { background: var(--riga-alt); }
+
+    .riga-nuovo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .riga-nuovo input[type="email"] { flex: 1 1 260px; }
+    .domanda { color: var(--errore); font-weight: 600; margin-right: 4px; }
 
     #bloccato { display: none; }
   </style>
@@ -39,19 +55,38 @@
   </div>
 
   <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: solo i superadmin possono gestire i ruoli.
+    Non hai i permessi per questa pagina: solo i superadmin possono gestire gli utenti.
   </div>
 
-  <div id="contenuto" class="riquadro">
-    <p class="suggerimento mb-4">
-      Il ruolo si applica dal login successivo. Chi non ha ancora fatto
-      nessun login non compare qui: va creato prima da
-      <b>Supabase Dashboard &gt; Authentication &gt; Users</b>.
-    </p>
-    <table class="tabella-utenti">
-      <thead><tr><th>Email</th><th>Ruolo</th></tr></thead>
-      <tbody id="tabellaUtenti"><tr><td colspan="2" class="vuota">Caricamento…</td></tr></tbody>
-    </table>
+  <div id="contenuto">
+    <div class="riquadro">
+      <h2>Nuovo utente</h2>
+      <p class="occhiello">
+        L'account nasce già con il ruolo scelto e la password
+        <b id="passwordIniziale"></b>, da cambiare al primo accesso.
+      </p>
+      <div class="riga-nuovo">
+        <input class="input" type="email" id="nuovaEmail" placeholder="email@esempio.it" autocomplete="off" required>
+        <select class="input" id="nuovoRuolo" style="flex:0 0 auto"></select>
+        <button type="button" class="button is-link" id="btnCrea">+ Crea utente</button>
+      </div>
+    </div>
+
+    <div class="riquadro">
+      <h2>Utenti registrati</h2>
+      <p class="occhiello">
+        Il ruolo cambiato vale dal login successivo: scegli il nuovo ruolo e premi
+        <b>Conferma</b>. <b>Rimuovi</b> revoca l'accesso — l'account resta in
+        Supabase ma senza ruolo non vede più niente; per cancellarlo del tutto
+        serve <b>Dashboard &gt; Authentication &gt; Users &gt; Delete user</b>.
+        Chi compare come <b>ospite</b> si è registrato da solo e non ha ancora
+        alcun permesso.
+      </p>
+      <table class="tabella-utenti">
+        <thead><tr><th>Email</th><th>Ruolo</th><th></th></tr></thead>
+        <tbody id="tabellaUtenti"><tr><td colspan="3" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -60,26 +95,99 @@
 <script src="shared.js"></script>
 <script>
   const el = (id) => document.getElementById(id);
-  const RUOLI = ["kiosk", "utente", "admin", "superadmin"];
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  const RUOLI = ["ospite", "kiosk", "utente", "admin", "superadmin"];
+  const PASSWORD_INIZIALE = "donbosco26!";
+
+  // signUp() è l'unico modo di creare un account avendo solo la chiave anon:
+  // l'Admin API vuole la service_role, che in un sito statico sarebbe pubblica
+  // (vedi docs/ACCOUNT.md). Gira su un client a parte perché signUp() apre la
+  // sessione del nuovo account: sul client condiviso scalzerebbe quella del
+  // superadmin, buttandolo fuori dalla pagina a metà lavoro. Con
+  // persistSession:false quella sessione non viene nemmeno scritta da nessuna
+  // parte e muore con la chiamata.
+  const sbRegistrazione = window.supabase.createClient(
+    window.SUPABASE_CONFIG.url,
+    window.SUPABASE_CONFIG.anonKey,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+  );
+
+  let mioUserId = null;
 
   (async function init() {
-    if (!(await requireRole("superadmin"))) {
+    const sessione = await requireRole("superadmin");
+    if (!sessione) {
       el("bloccato").style.display = "block";
       el("contenuto").style.display = "none";
       return;
     }
+    mioUserId = sessione.user.id;
+
+    el("passwordIniziale").textContent = PASSWORD_INIZIALE;
+    el("nuovoRuolo").innerHTML = RUOLI
+      .map((r) => `<option value="${r}" ${r === "utente" ? "selected" : ""}>${r}</option>`)
+      .join("");
+    el("btnCrea").addEventListener("click", creaUtente);
+
     await caricaUtenti();
   })();
+
+  // ---------------------------------------------------------------------
+  // Elenco
+  // ---------------------------------------------------------------------
+
+  function azioniHtml() {
+    return `
+      <button type="button" class="button is-small is-link" data-conferma disabled>Conferma</button>
+      <button type="button" class="button is-small is-danger is-light" data-rimuovi>Rimuovi</button>`;
+  }
 
   function rigaUtente(profilo) {
     const opzioni = RUOLI
       .map((r) => `<option value="${r}" ${r === profilo.role ? "selected" : ""}>${r}</option>`)
       .join("");
+
+    // La propria riga non si tocca: l'unico superadmin che si retrocedesse o
+    // si rimuovesse chiuderebbe fuori tutti, e per rientrare resterebbe solo
+    // l'SQL Editor della dashboard.
+    const sonoIo = profilo.user_id === mioUserId;
+
     return `
-      <tr data-id="${profilo.user_id}">
-        <td>${profilo.email}</td>
-        <td><select class="input" data-ruolo>${opzioni}</select></td>
+      <tr data-id="${profilo.user_id}" data-ruolo-salvato="${profilo.role}" class="${profilo.role === "ospite" ? "ospite" : ""}">
+        <td>${esc(profilo.email)}${sonoIo ? ' <span class="tag is-light ml-1">tu</span>' : ""}</td>
+        <td><select class="input" data-ruolo ${sonoIo ? "disabled" : ""}>${opzioni}</select></td>
+        <td class="azioni">${sonoIo ? "" : azioniHtml()}</td>
       </tr>`;
+  }
+
+  function collegaRiga(riga) {
+    const select = riga.querySelector("[data-ruolo]");
+    if (!riga.querySelector("[data-conferma]")) return;
+
+    // Il salvataggio non parte da solo al cambio del menu: si arma il pulsante
+    // e tocca a chi guarda dire di sì. Un ruolo cambiato per sbaglio con lo
+    // scroll del dito non deve arrivare al database.
+    //
+    // Il pulsante si ricerca ogni volta perché la cella viene riscritta: mentre
+    // è in corso la domanda "revocare l'accesso?" non c'è, e il menu invece si
+    // può ancora muovere. Ci pensa collegaAzioni() a rimetterlo nello stato
+    // giusto quando torna.
+    select.addEventListener("change", () => {
+      const conferma = riga.querySelector("[data-conferma]");
+      if (conferma) conferma.disabled = select.value === riga.dataset.ruoloSalvato;
+    });
+    collegaAzioni(riga);
+  }
+
+  /** Solo i pulsanti: la cella azioni viene riscritta e va riagganciata da sé. */
+  function collegaAzioni(riga) {
+    const select = riga.querySelector("[data-ruolo]");
+    const conferma = riga.querySelector("[data-conferma]");
+    conferma.disabled = select.value === riga.dataset.ruoloSalvato;
+    conferma.addEventListener("click", () => cambiaRuolo(riga));
+    riga.querySelector("[data-rimuovi]").addEventListener("click", () => chiediRimozione(riga));
   }
 
   async function caricaUtenti() {
@@ -93,11 +201,9 @@
 
       el("tabellaUtenti").innerHTML = data.length
         ? data.map(rigaUtente).join("")
-        : '<tr><td colspan="2" class="vuota">Nessun utente ha ancora fatto login.</td></tr>';
+        : '<tr><td colspan="3" class="vuota">Nessun utente registrato.</td></tr>';
 
-      el("tabellaUtenti").querySelectorAll("[data-ruolo]").forEach((select) => {
-        select.addEventListener("change", (e) => cambiaRuolo(e.target));
-      });
+      el("tabellaUtenti").querySelectorAll("tr[data-id]").forEach(collegaRiga);
     } catch (error) {
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -105,20 +211,111 @@
     }
   }
 
-  async function cambiaRuolo(select) {
-    const riga = select.closest("tr");
-    const userId = riga.dataset.id;
-    const nuovoRuolo = select.value;
-    select.disabled = true;
+  // ---------------------------------------------------------------------
+  // Creazione
+  // ---------------------------------------------------------------------
+
+  async function creaUtente() {
+    const campoEmail = el("nuovaEmail");
+    if (!campoEmail.value.trim() || !campoEmail.checkValidity()) {
+      campoEmail.reportValidity();
+      return;
+    }
+    const email = campoEmail.value.trim();
+    const ruolo = el("nuovoRuolo").value;
+
+    const bottone = el("btnCrea");
+    bottone.disabled = true;
+    setLoading(true);
     try {
-      const { error } = await sb.from("profiles").update({ role: nuovoRuolo }).eq("user_id", userId);
+      const { data, error } = await sbRegistrazione.auth.signUp({
+        email, password: PASSWORD_INIZIALE,
+      });
       if (error) throw error;
-      showToast("Ruolo aggiornato.");
+
+      // Email già registrata: Supabase non lo dice apertamente, perché a
+      // chiunque abbia la chiave anon basterebbe per scoprire chi ha un
+      // account. Risponde con un utente senza identità collegate, ed è da lì
+      // che si riconosce il caso.
+      if (!data.user || (data.user.identities || []).length === 0) {
+        showToast("Esiste già un account con questa email.", "is-warning");
+        return;
+      }
+
+      // Il trigger on_auth_user_created ha appena creato la riga profiles come
+      // 'ospite', che non può fare niente: qui le si dà il ruolo scelto.
+      const { data: promosse, error: erroreRuolo } = await sb
+        .from("profiles").update({ role: ruolo }).eq("user_id", data.user.id).select();
+      if (erroreRuolo) throw erroreRuolo;
+
+      showToast(promosse.length
+        ? `${email} creato come ${ruolo}. Password: ${PASSWORD_INIZIALE}`
+        : `${email} creato, ma il ruolo non si è applicato: assegnalo dall'elenco.`,
+        promosse.length ? "is-success" : "is-warning");
+
+      campoEmail.value = "";
+      await caricaUtenti();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
-      await caricaUtenti();
+    } finally {
+      bottone.disabled = false;
+      setLoading(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Ruolo e rimozione
+  // ---------------------------------------------------------------------
+
+  async function cambiaRuolo(riga) {
+    const select = riga.querySelector("[data-ruolo]");
+    const conferma = riga.querySelector("[data-conferma]");
+    const nuovoRuolo = select.value;
+
+    select.disabled = true;
+    conferma.disabled = true;
+    try {
+      const { error } = await sb
+        .from("profiles").update({ role: nuovoRuolo }).eq("user_id", riga.dataset.id);
+      if (error) throw error;
+      riga.dataset.ruoloSalvato = nuovoRuolo;
+      riga.className = nuovoRuolo === "ospite" ? "ospite" : "";
+      showToast("Ruolo aggiornato: vale dal prossimo login.");
+    } catch (error) {
+      select.value = riga.dataset.ruoloSalvato;
+      conferma.disabled = false;
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
       select.disabled = false;
+    }
+  }
+
+  /** Togliere l'accesso a qualcuno non è un gesto da un clic solo. */
+  function chiediRimozione(riga) {
+    const azioni = riga.querySelector(".azioni");
+    azioni.innerHTML = `
+      <span class="domanda">Revocare l'accesso?</span>
+      <button type="button" class="button is-small is-danger" data-si>Sì, rimuovi</button>
+      <button type="button" class="button is-small is-light" data-no>Annulla</button>`;
+
+    azioni.querySelector("[data-si]").addEventListener("click", () => rimuovi(riga));
+    azioni.querySelector("[data-no]").addEventListener("click", () => {
+      azioni.innerHTML = azioniHtml();
+      collegaAzioni(riga);
+    });
+  }
+
+  async function rimuovi(riga) {
+    riga.querySelectorAll("button").forEach((b) => { b.disabled = true; });
+    try {
+      const { error } = await sb.from("profiles").delete().eq("user_id", riga.dataset.id);
+      if (error) throw error;
+      showToast("Accesso revocato.");
+      await caricaUtenti();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      riga.querySelector(".azioni").innerHTML = azioniHtml();
+      collegaAzioni(riga);
     }
   }
 </script>

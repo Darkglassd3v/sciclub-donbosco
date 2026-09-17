@@ -31,12 +31,13 @@ async function logout() {
 // ---------------------------------------------------------------------------
 // Ruoli
 //
-// Gerarchia: kiosk < utente < admin < superadmin. Il ruolo vive nella
-// tabella profiles (vedi supabase/schema.sql), una riga per utente creata al
-// primo login.
+// Gerarchia: ospite < kiosk < utente < admin < superadmin. Il ruolo vive nella
+// tabella profiles (vedi supabase/schema.sql), una riga per utente creata alla
+// nascita dell'account. 'ospite' non può fare niente: è dove nasce ogni nuovo
+// account finché un superadmin non lo promuove dal pannello Utenti.
 // ---------------------------------------------------------------------------
 
-const LIVELLO_RUOLO = { kiosk: 0, utente: 1, admin: 2, superadmin: 3 };
+const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, utente: 2, admin: 3, superadmin: 4 };
 let _profiloCache = null;
 
 /** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */

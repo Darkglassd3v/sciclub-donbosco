@@ -280,8 +280,10 @@ group by trim(place);
 -- ---------------------------------------------------------------------------
 -- Ruoli
 --
--- Quattro livelli, dal più al meno privilegiato: superadmin > admin > utente >
--- kiosk. Ogni livello include tutto ciò che può fare quello sotto.
+-- Cinque livelli, dal più al meno privilegiato: superadmin > admin > utente >
+-- kiosk > ospite. Ogni livello include tutto ciò che può fare quello sotto.
+--   ospite     — account appena nato: non può fare NIENTE, ogni policy lo
+--                nega. È il ruolo di partenza di chiunque si registri.
 --   kiosk      — tablet in negozio: solo ricerca socio a campi ridotti.
 --   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
 --   admin      — direttivo: tutto quello che c'è oggi (quello che prima era
@@ -304,14 +306,23 @@ create table if not exists public.profiles (
 
 alter table public.profiles drop constraint if exists profiles_role_valid;
 alter table public.profiles add constraint profiles_role_valid
-  check (role in ('kiosk', 'utente', 'admin', 'superadmin'));
+  check (role in ('ospite', 'kiosk', 'utente', 'admin', 'superadmin'));
 
-comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Riga creata al primo login dal trigger on_auth_user_created.';
+comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Riga creata alla nascita dell''account dal trigger on_auth_user_created.';
 
--- Ogni nuovo login crea la propria riga (ruolo di partenza: utente, il più
--- basso tra chi lavora davvero con i soci). security definer perché al primo
--- login non esiste ancora nessuna riga profiles per fare passare l'insert
--- dalle policy normali.
+-- Ogni account appena creato si porta dietro la propria riga, con il ruolo che
+-- non permette niente: è il superadmin a promuoverlo dal pannello Utenti.
+--
+-- 'ospite' e non 'utente' perché dalla 2.2 gli account nascono da
+-- web/utenti.html, che li crea con signUp() e la chiave anon — l'unica strada
+-- da un sito statico, ma anche una chiave pubblica: chiunque la legga da
+-- config.js può registrarsi da sé. Se il ruolo di partenza desse accesso ai
+-- soci, quella registrazione spontanea sarebbe un buco; così invece un
+-- estraneo ottiene un account che non vede nulla, e il superadmin se lo trova
+-- in elenco da rimuovere.
+--
+-- security definer perché alla nascita dell'account non esiste ancora nessuna
+-- riga profiles per fare passare l'insert dalle policy normali.
 create or replace function public.handle_new_profile()
 returns trigger
 language plpgsql
@@ -320,7 +331,7 @@ set search_path = public
 as $$
 begin
   insert into public.profiles (user_id, email, role)
-  values (new.id, new.email, 'utente')
+  values (new.id, new.email, 'ospite')
   on conflict (user_id) do nothing;
   return new;
 end;
@@ -333,11 +344,15 @@ create trigger on_auth_user_created
 
 -- Fotografia una tantum: chi ha già un account oggi è il direttivo, che ha
 -- già accesso pieno. Non li retrocede al ruolo minimo dei nuovi login.
--- Rieseguibile: on conflict non tocca chi ha già una riga (compresi i nuovi
--- account creati dopo la prima esecuzione di questo file, che restano al loro
--- ruolo assegnato invece di tornare ad admin ad ogni rilancio dello script).
+--
+-- "where not exists" la limita alla primissima esecuzione, quando profiles è
+-- ancora vuota. Senza, riguarderebbe anche chi è stato rimosso dal pannello
+-- Utenti — la rimozione cancella la riga profiles, non l'account Auth — e un
+-- rilancio dello script rimetterebbe in gioco come admin proprio le persone a
+-- cui l'accesso era stato tolto.
 insert into public.profiles (user_id, email, role)
 select id, email, 'admin' from auth.users
+where not exists (select 1 from public.profiles)
 on conflict (user_id) do nothing;
 
 -- Nessuno è superadmin subito dopo questa migration: va promosso a mano,
@@ -379,6 +394,7 @@ as $$
     when 'admin'      then min_role in ('admin', 'utente', 'kiosk')
     when 'utente'     then min_role in ('utente', 'kiosk')
     when 'kiosk'      then min_role = 'kiosk'
+    when 'ospite'     then false
     else false
   end;
 $$;
@@ -390,6 +406,7 @@ alter table public.profiles enable row level security;
 drop policy if exists profiles_select_own        on public.profiles;
 drop policy if exists profiles_select_superadmin on public.profiles;
 drop policy if exists profiles_update_superadmin on public.profiles;
+drop policy if exists profiles_delete_superadmin on public.profiles;
 
 -- Ognuno legge la propria riga (serve a current_role() per funzionare per
 -- chiunque); il superadmin le legge e le modifica tutte per gestire i ruoli
@@ -405,6 +422,15 @@ create policy profiles_update_superadmin on public.profiles
   for update to authenticated
   using (public.has_role('superadmin'))
   with check (public.has_role('superadmin'));
+
+-- Rimuovere un utente dal pannello Utenti cancella la sua riga qui: senza
+-- ruolo current_role() torna null e ogni policy lo nega, quindi l'accesso è
+-- revocato anche se l'account Auth resta in piedi (cancellarlo davvero
+-- richiede la service_role, che da un sito statico non si può usare). Il
+-- trigger non lo riporta in vita: scatta all'insert dell'account, non al
+-- login.
+create policy profiles_delete_superadmin on public.profiles
+  for delete to authenticated using (public.has_role('superadmin'));
 
 -- Livello minimo per vedere/scegliere una voce di listino. Rilevante solo per
 -- category='ABBONAMENTO' (es. "ABBONAMENTO DIRETTIVO" a min_role=superadmin);

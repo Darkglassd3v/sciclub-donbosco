@@ -115,47 +115,67 @@ Il piano gratuito **non** include backup automatici. Consiglio: una volta al mes
 
 ## 3. Utenti del direttivo — chi può accedere alle pagine
 
-Le pagine non sono aperte al pubblico: senza login non si vede nulla. Non esiste registrazione
-autonoma, gli account li crea l'amministratore.
+Le pagine non sono aperte al pubblico: senza login non si vede nulla.
 
-**Per ogni persona del direttivo che deve usare il gestionale:**
-
-1. Dashboard Supabase > **Authentication** > **Users**.
-2. **Add user** > **Create new user**.
-3. Inserire email e una password iniziale.
-4. Spuntare **Auto Confirm User** (altrimenti la persona resta in attesa di una conferma via email che il piano gratuito non invia).
-5. Comunicare le credenziali alla persona e chiederle di cambiarle al primo accesso.
+Dalla 2.2 gli account si creano dal **pannello Utenti** (`web/utenti.html`, riservato ai superadmin):
+email, ruolo, **+ Crea utente**. La password iniziale è sempre `donbosco26!` e va cambiata al primo
+accesso. Non serve più passare dalla dashboard, tranne che per il primissimo superadmin (sotto).
 
 Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pagamenti. Non serve creare account per i soci: i soci non accedono al sistema.
 
+### Due interruttori da sistemare una volta sola
+
+Il pannello crea gli account con `signUp()`, l'unica strada possibile da un sito statico: l'API di
+amministrazione vorrebbe la chiave `service_role`, che in `web/` sarebbe pubblica. Quindi, in
+**Authentication > Sign In / Providers > Email**:
+
+- **"Allow new users to sign up"**: deve essere **acceso**, altrimenti il pulsante «Crea utente» risponde *Signups not allowed*.
+- **"Confirm email"**: deve essere **spento**, altrimenti la persona resta in attesa di una mail di conferma che il piano gratuito non manda.
+
+Acceso il primo interruttore, chiunque legga la chiave anon da `config.js` può registrarsi da sé:
+è il motivo per cui ogni account nasce con il ruolo `ospite`, che non può fare **niente**. Un
+estraneo che si registri ottiene un account cieco e compare in fondo al pannello Utenti, evidenziato,
+da rimuovere. I permessi veri li dà solo un superadmin.
+
 ### Chi vede cosa
 
-Dalla 2.1 esistono quattro ruoli, ciascuno con tutti i permessi di quello sotto (tabella `profiles`, vedi `supabase/schema.sql`):
+Cinque ruoli, ciascuno con tutti i permessi di quello sotto (tabella `profiles`, vedi `supabase/schema.sql`):
 
 | Ruolo | Chi è | Può fare |
 |---|---|---|
+| `ospite` | account appena nato | **niente**: ogni tabella gli è negata. È il punto di partenza di chiunque, compreso chi si registra da solo |
 | `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi. Deve scrivere nome **e** cognome per intero: con le prime lettere si sfoglierebbe il club |
 | `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti |
 | `admin` | direttivo | tutto quello di `utente`, più chiusura stagione |
-| `superadmin` | direttivo con delega | tutto quello di `admin`, più pannello impostazioni costi/partenze e gestione ruoli degli altri utenti |
+| `superadmin` | direttivo con delega | tutto quello di `admin`, più pannello impostazioni costi/partenze e gestione degli altri utenti |
 
-**Ogni nuovo account** (creato in dashboard come al punto 3 qui sopra) diventa `utente` al primo login: va promosso a mano.
+Un account creato dal pannello nasce già con il ruolo scelto lì. Il cambio di ruolo dall'elenco
+chiede sempre una conferma esplicita (si sceglie il ruolo, poi si preme **Conferma**) e vale dal
+login successivo di quella persona.
 
-**Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): far fare un primo login alla persona, poi da **Supabase Dashboard > SQL Editor**:
+**Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): creare l'account da **Authentication > Users > Add user** spuntando **Auto Confirm User**, poi da **Supabase Dashboard > SQL Editor**:
 
 ```sql
 update public.profiles set role = 'superadmin' where email = 'email-della-persona@esempio.it';
 ```
 
-Dopo questo, il pannello **Utenti** (`web/utenti.html`, riservato ai superadmin) permette di cambiare il ruolo di chiunque abbia già fatto almeno un login, senza tornare in SQL Editor.
+Da lì in poi tutto il resto si fa dal pannello Utenti, senza tornare in SQL Editor.
 
-**Account kiosk per il tablet in negozio**: si crea come un account normale al punto 3, poi si promuove con lo stesso comando SQL (o dal pannello Utenti) a `role = 'kiosk'`.
-
-Chi invece lascia il direttivo si elimina come descritto sotto (**Delete user**): la riga `profiles` collegata sparisce da sola (`on delete cascade`).
+**Account kiosk per il tablet in negozio**: si crea dal pannello come gli altri, scegliendo il ruolo `kiosk`.
 
 ### Se qualcuno lascia il direttivo
 
-**Authentication** > **Users** > selezionare l'utente > **Delete user**. L'accesso viene revocato subito.
+Pannello **Utenti** > **Rimuovi** > **Sì, rimuovi**. Cancella la riga `profiles`: senza ruolo ogni
+richiesta al database gli viene negata, quindi l'accesso è revocato subito anche se l'account
+Supabase resta in piedi. Per farlo sparire davvero — o per poter riusare quella stessa email con un
+account nuovo — serve anche **Authentication > Users > Delete user** dalla dashboard.
+
+In alternativa, per una sospensione temporanea che si annulla con un clic, basta rimetterlo a
+`ospite` dall'elenco invece di rimuoverlo.
+
+> Nota: un superadmin non può cambiare il proprio ruolo né rimuovere sé stesso. Serve a non
+> restare chiusi fuori: se l'unico superadmin si retrocedesse, nessuno potrebbe più promuovere
+> nessuno e si tornerebbe a dover usare l'SQL Editor.
 
 ---
 

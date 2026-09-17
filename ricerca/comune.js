@@ -212,12 +212,13 @@ async function proteggiPagina(alPronto) {
 // ---------------------------------------------------------------------------
 // Ruoli
 //
-// Gerarchia: kiosk < utente < admin < superadmin, letta dalla tabella
+// Gerarchia: ospite < kiosk < utente < admin < superadmin, letta dalla tabella
 // profiles (vedi supabase/schema.sql). Stesso pattern di web/shared.js, non
-// condiviso perché i due siti non condividono file.
+// condiviso perché i due siti non condividono file. 'ospite' non può fare
+// niente: è dove nasce ogni account finché un superadmin non lo promuove.
 // ---------------------------------------------------------------------------
 
-const LIVELLO_RUOLO = { kiosk: 0, utente: 1, admin: 2, superadmin: 3 };
+const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, utente: 2, admin: 3, superadmin: 4 };
 let _profiloCache = null;
 
 /** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
