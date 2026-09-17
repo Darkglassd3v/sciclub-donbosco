@@ -121,6 +121,7 @@ quote, si aggiornano da Supabase.
 cd web && python3 -m http.server 8000     # gestionale, su /login.html
 cd ricerca && python3 -m http.server 8001 # sito di ricerca
 node ricerca/test-ricerca.js              # controlla la logica della ricerca
+./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```
 
 Non c'è nessuno step di build: le pagine sono HTML e JavaScript serviti così come sono.

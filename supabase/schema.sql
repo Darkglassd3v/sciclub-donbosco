@@ -344,13 +344,22 @@ on conflict (user_id) do nothing;
 -- vedi docs/ACCOUNT.md ("Promuovere il primo superadmin").
 
 -- Il ruolo dell'utente collegato, o null se non loggato / senza riga
--- profiles. security invoker: legge solo la propria riga, sempre leggibile
--- per la policy profiles_select_own qui sotto (nessun rischio di ricorsione).
+-- profiles.
+--
+-- security definer NON e' opzionale qui: la policy profiles_select_superadmin
+-- qui sotto chiama has_role(), che chiama questa funzione, che rilegge
+-- profiles, che rivaluta le policy... Con security invoker ogni lettura di un
+-- ruolo finisce in ricorsione infinita ("stack depth limit exceeded") appena
+-- la RLS e' attiva, cioe' per ogni utente reale (il test come superuser
+-- postgres non lo vede: il superuser bypassa la RLS). Da definer la funzione
+-- gira come proprietario della tabella e la RLS di profiles non si applica,
+-- quindi la catena si ferma. Legge comunque solo la riga di auth.uid().
 create or replace function public.current_role()
 returns text
 language sql
 stable
-security invoker
+security definer
+set search_path = public
 as $$
   select role from public.profiles where user_id = auth.uid();
 $$;
