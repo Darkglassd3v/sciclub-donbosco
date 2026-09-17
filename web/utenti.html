@@ -275,9 +275,14 @@
     select.disabled = true;
     conferma.disabled = true;
     try {
-      const { error } = await sb
-        .from("profiles").update({ role: nuovoRuolo }).eq("user_id", riga.dataset.id);
+      // .select() non serve a rileggere: serve a sapere se la riga è stata
+      // toccata davvero. Una scrittura che la RLS rifiuta non torna come
+      // errore, torna come zero righe — e senza questo controllo la pagina
+      // annuncerebbe un cambiamento che non è avvenuto.
+      const { data, error } = await sb
+        .from("profiles").update({ role: nuovoRuolo }).eq("user_id", riga.dataset.id).select();
       if (error) throw error;
+      if (!data.length) throw new Error("il database non ha accettato la modifica: controlla di essere ancora superadmin.");
       riga.dataset.ruoloSalvato = nuovoRuolo;
       riga.className = nuovoRuolo === "ospite" ? "ospite" : "";
       showToast("Ruolo aggiornato: vale dal prossimo login.");
@@ -308,8 +313,13 @@
   async function rimuovi(riga) {
     riga.querySelectorAll("button").forEach((b) => { b.disabled = true; });
     try {
-      const { error } = await sb.from("profiles").delete().eq("user_id", riga.dataset.id);
+      // Come sopra: una delete che la RLS nega non dà errore, toglie zero
+      // righe. Dire "accesso revocato" a chi non l'ha perso è la bugia
+      // peggiore che questa pagina possa raccontare.
+      const { data, error } = await sb
+        .from("profiles").delete().eq("user_id", riga.dataset.id).select();
       if (error) throw error;
+      if (!data.length) throw new Error("il database non ha accettato la rimozione: va applicato supabase/schema.sql aggiornato.");
       showToast("Accesso revocato.");
       await caricaUtenti();
     } catch (error) {
