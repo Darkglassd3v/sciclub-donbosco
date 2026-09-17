@@ -62,18 +62,16 @@ async function hasRole(minRuolo) {
 }
 
 /**
- * Come requireAuth(), ma blocca anche chi è loggato senza il ruolo minimo.
- * Da chiamare dopo requireAuth() nelle pagine riservate (es. impostazioni,
- * utenti).
+ * Come requireAuth(), ma per le pagine riservate a un ruolo minimo (es.
+ * impostazioni, utenti). Senza sessione redirige al login come requireAuth();
+ * con sessione ma ruolo insufficiente NON redirige (evita lo sbattimento di
+ * una pagina che appare e sparisce): ritorna null e tocca alla pagina
+ * mostrare un messaggio al posto del contenuto.
  */
 async function requireRole(minRuolo) {
   const sessione = await requireAuth();
   if (!sessione) return null;
-  if (!(await hasRole(minRuolo))) {
-    showToast("Non hai i permessi per questa pagina.", "is-danger");
-    location.replace("index.html");
-    return null;
-  }
+  if (!(await hasRole(minRuolo))) return null;
   return sessione;
 }
 

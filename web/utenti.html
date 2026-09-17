@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Utenti — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <style>
+    .container-main { max-width: 720px; margin: 28px auto 80px; padding: 0 18px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
+
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; }
+
+    .tabella-utenti { width: 100%; border-collapse: collapse; }
+    .tabella-utenti th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
+                          font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
+    .tabella-utenti td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
+    .tabella-utenti .vuota { color: var(--testo-soft); }
+    .tabella-utenti select { min-width: 160px; }
+
+    #bloccato { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+
+<div class="container-main">
+  <div class="level is-mobile mb-4">
+    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Utenti</h1></div>
+    <div class="level-right">
+      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
+      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
+      <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
+      <button class="button is-small is-light" onclick="logout()">Esci</button>
+    </div>
+  </div>
+
+  <div id="bloccato" class="notification is-warning">
+    Non hai i permessi per questa pagina: solo i superadmin possono gestire i ruoli.
+  </div>
+
+  <div id="contenuto" class="riquadro">
+    <p class="suggerimento mb-4">
+      Il ruolo si applica dal login successivo. Chi non ha ancora fatto
+      nessun login non compare qui: va creato prima da
+      <b>Supabase Dashboard &gt; Authentication &gt; Users</b>.
+    </p>
+    <table class="tabella-utenti">
+      <thead><tr><th>Email</th><th>Ruolo</th></tr></thead>
+      <tbody id="tabellaUtenti"><tr><td colspan="2" class="vuota">Caricamento…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+  const RUOLI = ["kiosk", "utente", "admin", "superadmin"];
+
+  (async function init() {
+    if (!(await requireRole("superadmin"))) {
+      el("bloccato").style.display = "block";
+      el("contenuto").style.display = "none";
+      return;
+    }
+    await caricaUtenti();
+  })();
+
+  function rigaUtente(profilo) {
+    const opzioni = RUOLI
+      .map((r) => `<option value="${r}" ${r === profilo.role ? "selected" : ""}>${r}</option>`)
+      .join("");
+    return `
+      <tr data-id="${profilo.user_id}">
+        <td>${profilo.email}</td>
+        <td><select class="input" data-ruolo>${opzioni}</select></td>
+      </tr>`;
+  }
+
+  async function caricaUtenti() {
+    setLoading(true);
+    try {
+      const { data, error } = await sb
+        .from("profiles")
+        .select("user_id, email, role")
+        .order("email");
+      if (error) throw error;
+
+      el("tabellaUtenti").innerHTML = data.length
+        ? data.map(rigaUtente).join("")
+        : '<tr><td colspan="2" class="vuota">Nessun utente ha ancora fatto login.</td></tr>';
+
+      el("tabellaUtenti").querySelectorAll("[data-ruolo]").forEach((select) => {
+        select.addEventListener("change", (e) => cambiaRuolo(e.target));
+      });
+    } catch (error) {
+      showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function cambiaRuolo(select) {
+    const riga = select.closest("tr");
+    const userId = riga.dataset.id;
+    const nuovoRuolo = select.value;
+    select.disabled = true;
+    try {
+      const { error } = await sb.from("profiles").update({ role: nuovoRuolo }).eq("user_id", userId);
+      if (error) throw error;
+      showToast("Ruolo aggiornato.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      await caricaUtenti();
+    } finally {
+      select.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

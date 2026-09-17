@@ -7,7 +7,7 @@ Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque mac
 - [x] Task 0 — Tab colorati filtro giorno (`ricerca/stile.css`)
 - [x] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
 - [ ] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
-- [ ] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
+- [x] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
 - [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html`
 - [ ] Task 5 — Irrigidimento kiosk (`ricerca/index.html`)
 
@@ -101,6 +101,8 @@ CRUD unico per `prices` (tutte le categorie: TESSERA, FAMIGLIA, ABBONAMENTO incl
 Lista di `profiles` (email + ruolo attuale), select per cambiare ruolo di ciascun utente (via update RLS-protetto, solo superadmin può scrivere `profiles.role` altrui, vedi Task 1). Pagina protetta con `requireRole('superadmin')`. Nessuna creazione di nuovi account Supabase Auth da qui (resta manuale da dashboard, come oggi per tutti gli account) — questa pagina serve solo ad assegnare/cambiare il ruolo a chi ha già fatto almeno un login (quindi ha già una riga `profiles` grazie al trigger del Task 1).
 
 **Verifica**: da superadmin, cambiare il ruolo di un utente di test da `utente` a `admin`, verificare che il cambiamento sia visibile rileggendo la tabella e che quell'utente ottenga i permessi `admin` al login successivo.
+
+**Stato: FATTO** (committato). `requireRole()` (Task 1) è stato aggiustato durante questo task: non redirige più a `index.html` quando il ruolo è insufficiente (solo quando manca proprio la sessione), per evitare lo sbattimento "pagina che appare e sparisce" — ritorna `null` e la pagina mostra un messaggio al posto del contenuto. Aggiunto anche il link "Utenti" nella nav di `index.html`/`admin.html`/`riepilogo.html`/`stagione.html`. Non ancora verificato contro un vero progetto Supabase.
 
 ---
 
