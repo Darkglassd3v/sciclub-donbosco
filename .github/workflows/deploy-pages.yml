@@ -18,7 +18,7 @@ name: Deploy pagine su GitHub Pages
 
 on:
   push:
-    branches: ["2.1"]
+    branches: ["2.2"]
   workflow_dispatch:
 
 # Niente filtro paths: quando si crea il branch di una nuova release non c'è
