@@ -18,7 +18,7 @@ name: Deploy pagine su GitHub Pages
 
 on:
   push:
-    branches: ["2.0"]
+    branches: ["2.1"]
     paths:
       - "web/**"
       - "ricerca/**"
