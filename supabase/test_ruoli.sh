@@ -32,7 +32,40 @@ psql_() { docker exec -i -e PGOPTIONS="-c client_min_messages=warning" "$CONTENI
 # sessione, ruolo authenticated.
 psql_ <<'SQL'
 create schema if not exists auth;
-create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text);
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
+
+-- auth.users e auth.identities ridotte all'osso, ma con tutte le colonne che
+-- crea_utente() scrive davvero: senza, la funzione non sarebbe provabile qui.
+create table if not exists auth.users (
+  instance_id            uuid,
+  id                     uuid primary key default gen_random_uuid(),
+  aud                    text,
+  role                   text,
+  email                  text unique,
+  encrypted_password     text,
+  email_confirmed_at     timestamptz,
+  created_at             timestamptz,
+  updated_at             timestamptz,
+  raw_app_meta_data      jsonb,
+  raw_user_meta_data     jsonb,
+  confirmation_token     text,
+  recovery_token         text,
+  email_change           text,
+  email_change_token_new text
+);
+
+create table if not exists auth.identities (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null references auth.users (id) on delete cascade,
+  provider_id     text not null,
+  identity_data   jsonb not null,
+  provider        text not null,
+  last_sign_in_at timestamptz,
+  created_at      timestamptz,
+  updated_at      timestamptz,
+  unique (provider, provider_id)
+);
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('test.uid', true), '')::uuid;
 $$;
@@ -50,6 +83,12 @@ psql_ <<'SQL'
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
 grant execute on all functions in schema public to authenticated;
+
+-- Solo perché il test possa controllare com'è venuto l'account: in Supabase
+-- authenticated su auth.users non ha nessun permesso, ed è giusto così. La
+-- creazione passa comunque da crea_utente(), che è security definer.
+grant select on auth.users, auth.identities to authenticated;
+grant usage on schema extensions to authenticated;
 SQL
 
 psql_ <<'SQL'
@@ -211,6 +250,80 @@ begin
   assert not public.has_role('kiosk'), 'un utente rimosso ha ancora un ruolo';
   assert (select count(*) from public.members_kiosk_search) = 0,
          'un utente rimosso vede ancora la vista kiosk';
+end $$;
+
+-- crea_utente(): l'account nasce completo e pronto al login, senza che parta
+-- nessuna mail e senza aprire le registrazioni a chiunque abbia la chiave anon.
+do $$
+declare
+  creato uuid;
+begin
+  -- Ogni rifiuto va verificato sul messaggio, non sul solo fatto che qualcosa
+  -- sia andato storto: con un "when others" muto basta un'email scritta male
+  -- per far passare il controllo sbagliato e credere di essere protetti.
+
+  -- Chi non è superadmin non lo può fare, anche se la funzione è definer.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  begin
+    perform public.crea_utente('intruso@test.it', 'unapasswordlunga', 'superadmin');
+    raise exception 'ASSERZIONE: un admin ha potuto creare un account';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%superadmin%', 'rifiutato, ma non per il ruolo: ' || sqlerrm;
+  end;
+
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  creato := public.crea_utente('  NUOVO@Test.it ', 'donbosco26!', 'admin');
+
+  assert (select email from auth.users where id = creato) = 'nuovo@test.it',
+         'email non normalizzata a minuscole senza spazi';
+  assert (select email_confirmed_at from auth.users where id = creato) is not null,
+         'account creato senza conferma: non potrebbe entrare';
+  assert (select encrypted_password from auth.users where id = creato)
+         = extensions.crypt('donbosco26!', (select encrypted_password from auth.users where id = creato)),
+         'la password non verifica';
+  assert (select count(*) from auth.identities where user_id = creato and provider = 'email') = 1,
+         'manca la riga in auth.identities: il login con password verrebbe rifiutato';
+  assert (select role from public.profiles where user_id = creato) = 'admin',
+         'il ruolo scelto non è stato applicato';
+
+  -- Stessa email due volte, ruolo inventato, password troppo corta: tutti no.
+  begin
+    perform public.crea_utente('nuovo@test.it', 'donbosco26!', 'utente');
+    raise exception 'ASSERZIONE: ha accettato due account con la stessa email';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%Esiste già%', 'rifiutato, ma non per il doppione: ' || sqlerrm;
+  end;
+
+  begin
+    perform public.crea_utente('altro@test.it', 'donbosco26!', 'padrone');
+    raise exception 'ASSERZIONE: ha accettato un ruolo inventato';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%Ruolo non valido%', 'rifiutato, ma non per il ruolo: ' || sqlerrm;
+  end;
+
+  begin
+    perform public.crea_utente('altro@test.it', 'corta', 'utente');
+    raise exception 'ASSERZIONE: ha accettato una password di cinque caratteri';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%almeno 8 caratteri%', 'rifiutato, ma non per la password: ' || sqlerrm;
+  end;
+
+  begin
+    perform public.crea_utente('senza-chiocciola', 'donbosco26!', 'utente');
+    raise exception 'ASSERZIONE: ha accettato un indirizzo che non è una email';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%Email non valida%', 'rifiutato, ma non per l''email: ' || sqlerrm;
+  end;
+
+  -- Il nuovo account entra e vede quello che il suo ruolo permette.
+  perform set_config('test.uid', creato::text, false);
+  assert public.has_role('admin') and not public.has_role('superadmin'),
+         'il nuovo account non ha i permessi del ruolo che gli è stato dato';
 end $$;
 
 reset role;

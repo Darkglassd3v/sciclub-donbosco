@@ -123,19 +123,25 @@ accesso. Non serve più passare dalla dashboard, tranne che per il primissimo su
 
 Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pagamenti. Non serve creare account per i soci: i soci non accedono al sistema.
 
-### Due interruttori da sistemare una volta sola
+### Come nasce un account, e perché non arriva nessuna mail
 
-Il pannello crea gli account con `signUp()`, l'unica strada possibile da un sito statico: l'API di
-amministrazione vorrebbe la chiave `service_role`, che in `web/` sarebbe pubblica. Quindi, in
-**Authentication > Sign In / Providers > Email**:
+Il pannello non usa la registrazione di Supabase: chiama la funzione `public.crea_utente()`
+(in `supabase/schema.sql`), che scrive l'account direttamente in `auth.users` con la password già
+cifrata e la mail già segnata come confermata. La persona entra subito con email e password, e non
+parte nessun messaggio.
 
-- **"Allow new users to sign up"**: deve essere **acceso**, altrimenti il pulsante «Crea utente» risponde *Signups not allowed*.
-- **"Confirm email"**: deve essere **spento**, altrimenti la persona resta in attesa di una mail di conferma che il piano gratuito non manda.
+Le altre due strade erano peggiori, ed è utile sapere perché se un giorno si è tentati di tornarci:
 
-Acceso il primo interruttore, chiunque legga la chiave anon da `config.js` può registrarsi da sé:
-è il motivo per cui ogni account nasce con il ruolo `ospite`, che non può fare **niente**. Un
-estraneo che si registri ottiene un account cieco e compare in fondo al pannello Utenti, evidenziato,
-da rimuovere. I permessi veri li dà solo un superadmin.
+- l'**Admin API** vuole la chiave `service_role`, che scavalca ogni regola di sicurezza e in un sito statico sarebbe pubblica;
+- **`signUp()`** obbliga ad aprire le registrazioni a chiunque abbia la chiave anon — che è in chiaro in `config.js`, in un repository pubblico — e manda una mail di conferma che il piano gratuito esaurisce dopo pochi account (*email rate limit exceeded*).
+
+Quindi in **Authentication > Sign In / Providers > Email** l'interruttore **"Allow new users to
+sign up"** va lasciato **spento**: nessuno può crearsi un account da solo, gli account nascono solo
+dal pannello e solo per mano di un superadmin. Non serve toccare nient'altro.
+
+Per sicurezza ogni account nasce comunque con il ruolo `ospite`, che non può fare **niente**: se un
+giorno quell'interruttore venisse acceso per sbaglio, chi si registrasse otterrebbe un account
+cieco, visibile in elenco ed evidenziato, invece che l'accesso all'anagrafica dei soci.
 
 ### Chi vede cosa
 

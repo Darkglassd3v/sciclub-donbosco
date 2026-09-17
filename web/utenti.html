@@ -83,8 +83,7 @@
         <b>Conferma</b>. <b>Rimuovi</b> revoca l'accesso — l'account resta in
         Supabase ma senza ruolo non vede più niente; per cancellarlo del tutto
         serve <b>Dashboard &gt; Authentication &gt; Users &gt; Delete user</b>.
-        Chi compare come <b>ospite</b> si è registrato da solo e non ha ancora
-        alcun permesso.
+        Chi compare come <b>ospite</b> non ha ancora alcun permesso.
       </p>
       <table class="tabella-utenti">
         <thead><tr><th>Email</th><th>Ruolo</th><th></th></tr></thead>
@@ -104,19 +103,6 @@
 
   const RUOLI = ["ospite", "kiosk", "utente", "admin", "superadmin"];
   const PASSWORD_INIZIALE = "donbosco26!";
-
-  // signUp() è l'unico modo di creare un account avendo solo la chiave anon:
-  // l'Admin API vuole la service_role, che in un sito statico sarebbe pubblica
-  // (vedi docs/ACCOUNT.md). Gira su un client a parte perché signUp() apre la
-  // sessione del nuovo account: sul client condiviso scalzerebbe quella del
-  // superadmin, buttandolo fuori dalla pagina a metà lavoro. Con
-  // persistSession:false quella sessione non viene nemmeno scritta da nessuna
-  // parte e muore con la chiamata.
-  const sbRegistrazione = window.supabase.createClient(
-    window.SUPABASE_CONFIG.url,
-    window.SUPABASE_CONFIG.anonKey,
-    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-  );
 
   let mioUserId = null;
 
@@ -232,31 +218,18 @@
     bottone.disabled = true;
     setLoading(true);
     try {
-      const { data, error } = await sbRegistrazione.auth.signUp({
-        email, password: PASSWORD_INIZIALE,
+      // L'account viene scritto direttamente in auth.users da crea_utente()
+      // (vedi supabase/schema.sql): password già cifrata, mail già confermata,
+      // nessun messaggio inviato. Il ruolo lo assegna la funzione stessa,
+      // nella stessa transazione.
+      const { error } = await sb.rpc("crea_utente", {
+        email_nuovo: email,
+        password_nuova: PASSWORD_INIZIALE,
+        ruolo,
       });
       if (error) throw error;
 
-      // Email già registrata: Supabase non lo dice apertamente, perché a
-      // chiunque abbia la chiave anon basterebbe per scoprire chi ha un
-      // account. Risponde con un utente senza identità collegate, ed è da lì
-      // che si riconosce il caso.
-      if (!data.user || (data.user.identities || []).length === 0) {
-        showToast("Esiste già un account con questa email.", "is-warning");
-        return;
-      }
-
-      // Il trigger on_auth_user_created ha appena creato la riga profiles come
-      // 'ospite', che non può fare niente: qui le si dà il ruolo scelto.
-      const { data: promosse, error: erroreRuolo } = await sb
-        .from("profiles").update({ role: ruolo }).eq("user_id", data.user.id).select();
-      if (erroreRuolo) throw erroreRuolo;
-
-      showToast(promosse.length
-        ? `${email} creato come ${ruolo}. Password: ${PASSWORD_INIZIALE}`
-        : `${email} creato, ma il ruolo non si è applicato: assegnalo dall'elenco.`,
-        promosse.length ? "is-success" : "is-warning");
-
+      showToast(`${email} creato come ${ruolo}. Password: ${PASSWORD_INIZIALE}`);
       campoEmail.value = "";
       await caricaUtenti();
     } catch (error) {
@@ -268,20 +241,15 @@
   }
 
   /**
-   * I due errori che non dipendono da chi sta usando la pagina ma da come è
-   * configurato il progetto Supabase. Detti in inglese e per sigle non
-   * aiutano nessuno: qui diventano l'interruttore preciso da girare.
+   * I messaggi che crea_utente() solleva sono già in italiano e già chiari.
+   * Serve tradurre solo il caso in cui la funzione non esista ancora, che
+   * arriva come sigla di PostgREST e non dice niente a nessuno.
    */
   function spiegaErroreCreazione(error) {
-    const testo = String((error && error.message) || "").toLowerCase();
-    if (testo.includes("rate limit")) {
-      return "Supabase sta cercando di mandare una mail di conferma e ha finito le poche "
-        + "concesse dal piano gratuito. Spegni «Confirm email» in Authentication > "
-        + "Sign In / Providers > Email: senza conferme non parte nessuna mail.";
-    }
-    if (testo.includes("signups not allowed") || testo.includes("signup is disabled")) {
-      return "Le registrazioni sono chiuse. Accendi «Allow new users to sign up» in "
-        + "Authentication > Sign In / Providers > Email.";
+    const testo = String((error && error.message) || "");
+    if (error && (error.code === "PGRST202" || /crea_utente/.test(testo) && /function/i.test(testo))) {
+      return "Manca la funzione crea_utente sul database: esegui supabase/schema.sql "
+        + "aggiornato da Supabase Dashboard > SQL Editor.";
     }
     return "Errore: " + messaggioErrore(error);
   }
