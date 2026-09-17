@@ -460,6 +460,42 @@ create policy members_update on public.members
 -- La cancellazione resta esclusa: si archivia, non si cancella. Se serve
 -- davvero, si fa dalla dashboard Supabase con l'utente service_role.
 
+-- La RLS sopra basta a dire "chi può scrivere su members", ma non "quale
+-- pass_type può scrivere": min_role vive su prices, non su members, quindi
+-- serve un controllo in più. Senza questo trigger, filtrare le opzioni
+-- riservate solo nel form (web/index.html, ricerca/gite.html) sarebbe un
+-- controllo di sola facciata: basterebbe chiamare l'API direttamente per
+-- assegnare comunque un abbonamento come ABBONAMENTO DIRETTIVO.
+create or replace function public.check_pass_type_role()
+returns trigger
+language plpgsql
+as $$
+declare
+  cambiato  boolean;
+  richiesto text;
+begin
+  cambiato := (tg_op = 'INSERT' and new.pass_type is not null)
+           or (tg_op = 'UPDATE' and new.pass_type is distinct from old.pass_type);
+  if not cambiato or new.pass_type is null then
+    return new;
+  end if;
+
+  select min_role into richiesto
+    from public.prices
+   where category = 'ABBONAMENTO' and name = new.pass_type;
+
+  if richiesto is not null and not public.has_role(richiesto) then
+    raise exception 'Non hai il permesso di assegnare l''abbonamento "%".', new.pass_type;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists check_pass_type_role on public.members;
+create trigger check_pass_type_role
+  before insert or update on public.members
+  for each row execute function public.check_pass_type_role();
+
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
 create policy prices_select on public.prices

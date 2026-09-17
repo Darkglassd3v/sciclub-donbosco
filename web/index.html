@@ -204,19 +204,21 @@
     select.innerHTML = id === "f_tipologia_tessera"
       ? '<option value="0" data-nome="" disabled selected>-- Seleziona --</option>'
       : '<option value="0" data-nome="">Nessuna opzione</option>';
-    (PREZZI[categoria] || [])
-      // Le voci ABBONAMENTO riservate (es. "ABBONAMENTO DIRETTIVO") non
-      // compaiono a chi non ha il ruolo minimo richiesto: se un socio ha già
-      // quella tipologia, la select mostra "Nessuna opzione" invece del
-      // valore vero finché non la apre chi ha il permesso.
-      .filter((p) => categoria !== "ABBONAMENTO" || LIVELLO_RUOLO[p.min_role] <= livelloRuolo)
-      .forEach((p) => {
-        const opzione = document.createElement("option");
-        opzione.value = p.price;
-        opzione.dataset.nome = p.name;
-        opzione.text = `${p.name} (${p.price}€)`;
-        select.add(opzione);
-      });
+    (PREZZI[categoria] || []).forEach((p) => {
+      const opzione = document.createElement("option");
+      opzione.value = p.price;
+      opzione.dataset.nome = p.name;
+      opzione.text = `${p.name} (${p.price}€)`;
+      // Le voci ABBONAMENTO riservate (es. "ABBONAMENTO DIRETTIVO") restano
+      // disabilitate per chi non ha il ruolo minimo richiesto: non si possono
+      // scegliere di nuovo, ma se un socio le ha già selezionaPerNome() le
+      // trova comunque e il valore non sparisce al primo salvataggio fatto
+      // da chi non ha il permesso di sceglierle.
+      if (categoria === "ABBONAMENTO" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
+        opzione.disabled = true;
+      }
+      select.add(opzione);
+    });
   }
 
   function riempiPartenze(contenitore, luoghi) {

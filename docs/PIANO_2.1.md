@@ -8,7 +8,7 @@ Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque mac
 - [x] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
 - [x] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
 - [x] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
-- [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html`
+- [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html` (IN CORSO, vedi nota sotto)
 - [ ] Task 5 — Irrigidimento kiosk (`ricerca/index.html`)
 
 ## Context
@@ -115,6 +115,21 @@ Lista di `profiles` (email + ruolo attuale), select per cambiare ruolo di ciascu
 Nella scheda di un socio senza `pass_type` impostato (oggi la vista `trip_passes` filtra solo chi ha già un abbonamento — verificare se la ricerca socio di `gite.html` mostra anche chi non ne ha uno, o se va aggiunta una query separata su `members` per i soci senza pass_type prima di poter offrire l'azione), aggiungere un'azione "Assegna abbonamento": select delle voci `prices` categoria ABBONAMENTO filtrate per `min_role <= ruolo dell'operatore corrente` (usa `getProfilo()`/`richiediRuolo()` del Task 1 — un operatore `utente` non deve vedere/poter scegliere una voce `min_role='superadmin'` come "ABBONAMENTO DIRETTIVO"), poi update di `members.pass_type` (e ricalcolo di `members.total` sommando il prezzo scelto, coerente con come già fa `web/index.html:492-547`).
 
 **Verifica**: da operatore `utente`, cercare un socio senza abbonamento, verificare che il selettore NON mostri le voci `min_role='superadmin'`; assegnare un abbonamento normale e verificare che il socio compaia poi nella vista `trip_passes`/lista principale di `gite.html`. Da `superadmin`, verificare che le voci riservate siano invece selezionabili.
+
+**Stato: IN CORSO — punto esatto dove riprendere.**
+
+Fatto e committato in questo giro:
+1. **Bugfix al Task 1** (`web/index.html`): il filtro `min_role` sulle select ABBONAMENTO nascondeva del tutto le voci riservate. Se un socio le aveva già, riaprirlo e salvare da un operatore senza il ruolo giusto azzerava silenziosamente `pass_type` (perché `salva()` scrive sempre il valore corrente della select). Corretto: le voci riservate restano nell'elenco ma `disabled`, così `selezionaPerNome()` le trova e le preserva, ma non si possono scegliere di nuovo.
+2. **Nuovo trigger `check_pass_type_role`** (`supabase/schema.sql`, dopo la policy `members_update`): la RLS di `members` controllava solo "chi può scrivere", non "quale `pass_type` può scrivere" — senza questo trigger, il filtro `min_role` sarebbe stato di sola facciata lato JS, aggirabile chiamando l'API Supabase direttamente. Il trigger, su insert/update di `members`, blocca il salvataggio se `pass_type` cambia verso una voce ABBONAMENTO il cui `min_role` supera `has_role()` di chi scrive. **Non ancora testato** contro un Postgres locale (il test era in corso quando la sessione si è interrotta) — da testare come i test del Task 1 (docker postgres + schema fittizio auth) prima di fidarsi: in particolare verificare che un `utente` NON possa impostare un `pass_type` con `min_role='superadmin'` (deve fallire) e che un `superadmin` invece possa.
+
+**Ancora da fare per chiudere il Task 4** (non iniziato):
+- In `ricerca/gite.html`: nuova sezione "Assegna abbonamento a chi non ce l'ha" (`trip_passes` non include chi non ha già un abbonamento — serve una query separata su `members` con `pass_type is null`, stesso pattern di ricerca di `ricerca/index.html` — vedi `cerca()`/debounce 200ms lì).
+- Riusare `getProfilo()`/`LIVELLO_RUOLO` (Task 1, già in `ricerca/comune.js`) per filtrare le opzioni ABBONAMENTO mostrabili: query `prices` con `category='ABBONAMENTO' and active=true and trips is not null` (solo abbonamenti a viaggi, ha senso solo per quelli in questa pagina), poi `.filter(p => LIVELLO_RUOLO[p.min_role] <= livelloOperatore)`.
+- Azione "Assegna": leggere `members.total` attuale, `update({ pass_type: nome, total: totaleAttuale + prezzo })` — il trigger del punto 2 rifiuta da solo se il ruolo non basta, quindi il catch dell'errore Supabase deve mostrare `messaggioErrore(errore)` all'operatore invece di un generico "errore di rete".
+- Dopo l'assegnazione: richiamare `caricaAbbonamenti()` + `disegna()` per far comparire subito il socio nella lista principale, e far sparire la sua scheda dai risultati "senza abbonamento" (o semplicemente rilanciare la ricerca).
+- Nav: nessun link nuovo da aggiungere (`gite.html` esiste già ed è raggiungibile da `ricerca/index.html`).
+
+Nessun cambiamento è stato fatto a `ricerca/gite.html` finora in questo task.
 
 ---
 
