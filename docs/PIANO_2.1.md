@@ -5,7 +5,7 @@
 Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque macchina/sessione (anche mobile) leggendo solo questo file.
 
 - [x] Task 0 — Tab colorati filtro giorno (`ricerca/stile.css`)
-- [ ] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
+- [x] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
 - [ ] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
 - [ ] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
 - [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html`
@@ -61,7 +61,7 @@ Schema:
 - `public.profiles(user_id uuid primary key references auth.users(id) on delete cascade, email text not null, role text not null default 'utente' check (role in ('kiosk','utente','admin','superadmin')), created_at timestamptz not null default now())`.
 - Trigger `after insert on auth.users` → crea la riga `profiles` con `role='utente'` ed `email = NEW.email` (pattern standard Supabase, `security definer`).
 - Backfill one-off nella stessa migration: `insert into profiles (user_id, email, role) select id, email, 'admin' from auth.users on conflict do nothing` (fotografa il direttivo di oggi come admin).
-- Funzione `public.current_role() returns text` (`security definer`, legge `profiles.role` per `auth.uid()`, ritorna `null` se non loggato) e helper `public.has_role(min_role text) returns boolean` che confronta la gerarchia `kiosk(0) < utente(1) < admin(2) < superadmin(3)`.
+- Funzione `public.current_role() returns text` (implementata `security invoker`, non `definer` come ipotizzato sopra: legge solo la riga `profiles` dell'utente stesso, sempre leggibile per la policy `profiles_select_own`, quindi niente bisogno di bypassare la RLS) e helper `public.has_role(min_role text) returns boolean` che confronta la gerarchia `kiosk < utente < admin < superadmin`. Verificato con un Postgres locale usable via docker (schema fittizio `auth.users`/`auth.uid()`): la matrice `has_role` è corretta su tutte le 20 combinazioni, `null` (nessun profilo) nega sempre.
 - Colonna `public.prices.min_role text not null default 'utente' check (min_role in ('utente','admin','superadmin'))` — rilevante solo per `category='ABBONAMENTO'`, ma la colonna esiste su tutte le righe per semplicità (le altre categorie restano sempre a `'utente'`, cioè visibili a tutti).
 - Nuova vista `public.members_kiosk_search` (`security_invoker`) che espone solo `id, last_name, first_name, phone, email, card_type, pass_type` da `members` — niente `card_number`, `tax_code`, importi, indirizzo (usata dal task 5).
 - Riscrivere le RLS esistenti (tutte oggi `to authenticated using (true)`) per richiedere il ruolo minimo giusto per tabella/operazione, usando `has_role(...)`:
@@ -76,9 +76,11 @@ Frontend (helper riusabili dai task 2-5, non pagine):
 - `web/shared.js`: aggiungere `getProfile()` (fetch la riga `profiles` dell'utente corrente, cache in memoria) e `requireRole(minRuolo)` (come `requireAuth()` ma redirige/mostra errore se il ruolo è insufficiente).
 - `ricerca/comune.js`: stesso pattern (`getProfilo()`/`richiediRuolo()`), coerente con `proteggiPagina()` esistente.
 
-Documentazione: aggiornare `docs/ACCOUNT.md` §3 ("Chi vede cosa") con la nuova gerarchia di ruoli e il comando SQL una tantum per promuovere il primo superadmin e l'account kiosk.
+Documentazione: aggiornato `docs/ACCOUNT.md` §3 ("Chi vede cosa") con la nuova gerarchia di ruoli e il comando SQL una tantum per promuovere il primo superadmin e l'account kiosk.
 
-**Verifica**: rieseguire `supabase/schema.sql` su un progetto Supabase di test pulito (idempotente, usa già `create table if not exists`/`alter table add column if not exists` come il resto del file); loggarsi con un utente pre-esistente e verificare che sia `admin` di default; promuovere manualmente un utente a `superadmin` via SQL e verificare che `has_role('superadmin')` torni true per lui e false per un `admin` normale.
+**Aggiunta non prevista nella stesura originale, necessaria a chiudere un buco di sicurezza**: il form completo `web/index.html` (`riempiSelect()`) filtrava già tutte le voci ABBONAMENTO senza guardare `min_role` — un operatore `utente` avrebbe potuto scegliere "ABBONAMENTO DIRETTIVO" da lì anche dopo il Task 4, che tocca solo `ricerca/gite.html`. Aggiunto lo stesso filtro `min_role` anche in `web/index.html` (righe vicino a `riempiSelect`/`init()`), riusando `LIVELLO_RUOLO`/`getProfile()` di `web/shared.js`.
+
+**Stato: FATTO** (committato). Verificato con Postgres locale via docker (schema fittizio `auth.users`/`auth.uid()`, non un vero progetto Supabase — quello resta da fare al primo deploy reale): schema.sql rieseguibile due volte senza errori, trigger `on_auth_user_created` crea la riga `profiles` al primo login con `role='utente'`, `prices.min_role` esiste con default `'utente'`, vista `members_kiosk_search` espone solo le 7 colonne previste, `test-ricerca.js` continua a passare. **Non ancora verificato su un vero progetto Supabase** (serve farlo al primo deploy: promuovere un utente a `superadmin` da SQL Editor e controllare che il pannello Utenti del Task 3 lo veda).
 
 ---
 

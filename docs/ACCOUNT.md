@@ -130,9 +130,28 @@ Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pa
 
 ### Chi vede cosa
 
-Al momento **tutti gli utenti autenticati hanno gli stessi permessi**: possono leggere e modificare tutte le anagrafiche e tutti i pagamenti. È lo stesso livello della versione precedente, dove chiunque avesse il link e un account Google autorizzato poteva fare tutto.
+Dalla 2.1 esistono quattro ruoli, ciascuno con tutti i permessi di quello sotto (tabella `profiles`, vedi `supabase/schema.sql`):
 
-Se in futuro servisse distinguere i ruoli (es. chi inserisce iscrizioni ma non tocca gli incassi), si fa modificando le policy in `supabase/schema.sql`. Non è previsto in questa prima versione.
+| Ruolo | Chi è | Può fare |
+|---|---|---|
+| `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi |
+| `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti |
+| `admin` | direttivo | tutto quello di `utente`, più chiusura stagione |
+| `superadmin` | direttivo con delega | tutto quello di `admin`, più pannello impostazioni costi/partenze e gestione ruoli degli altri utenti |
+
+**Ogni nuovo account** (creato in dashboard come al punto 3 qui sopra) diventa `utente` al primo login: va promosso a mano.
+
+**Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): far fare un primo login alla persona, poi da **Supabase Dashboard > SQL Editor**:
+
+```sql
+update public.profiles set role = 'superadmin' where email = 'email-della-persona@esempio.it';
+```
+
+Dopo questo, il pannello **Utenti** (`web/utenti.html`, riservato ai superadmin) permette di cambiare il ruolo di chiunque abbia già fatto almeno un login, senza tornare in SQL Editor.
+
+**Account kiosk per il tablet in negozio**: si crea come un account normale al punto 3, poi si promuove con lo stesso comando SQL (o dal pannello Utenti) a `role = 'kiosk'`.
+
+Chi invece lascia il direttivo si elimina come descritto sotto (**Delete user**): la riga `profiles` collegata sparisce da sola (`on delete cascade`).
 
 ### Se qualcuno lascia il direttivo
 

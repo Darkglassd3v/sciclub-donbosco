@@ -157,6 +157,7 @@
 <script>
   let PREZZI = {};
   let familiariACarico = [];
+  let livelloRuolo = 0; // aggiornato in init(), usato per nascondere le voci ABBONAMENTO riservate
 
   const el = (id) => document.getElementById(id);
 
@@ -173,6 +174,9 @@
     if (!(await requireAuth())) return;
     setLoading(true);
     try {
+      const profilo = await getProfile();
+      livelloRuolo = LIVELLO_RUOLO[profilo?.role] ?? 0;
+
       PREZZI = await caricaPrezzi();
       Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiSelect(id, categoria));
 
@@ -198,13 +202,19 @@
     select.innerHTML = id === "f_tipologia_tessera"
       ? '<option value="0" data-nome="" disabled selected>-- Seleziona --</option>'
       : '<option value="0" data-nome="">Nessuna opzione</option>';
-    (PREZZI[categoria] || []).forEach((p) => {
-      const opzione = document.createElement("option");
-      opzione.value = p.price;
-      opzione.dataset.nome = p.name;
-      opzione.text = `${p.name} (${p.price}€)`;
-      select.add(opzione);
-    });
+    (PREZZI[categoria] || [])
+      // Le voci ABBONAMENTO riservate (es. "ABBONAMENTO DIRETTIVO") non
+      // compaiono a chi non ha il ruolo minimo richiesto: se un socio ha già
+      // quella tipologia, la select mostra "Nessuna opzione" invece del
+      // valore vero finché non la apre chi ha il permesso.
+      .filter((p) => categoria !== "ABBONAMENTO" || LIVELLO_RUOLO[p.min_role] <= livelloRuolo)
+      .forEach((p) => {
+        const opzione = document.createElement("option");
+        opzione.value = p.price;
+        opzione.dataset.nome = p.name;
+        opzione.text = `${p.name} (${p.price}€)`;
+        select.add(opzione);
+      });
   }
 
   function riempiPartenze(contenitore, luoghi) {

@@ -278,6 +278,149 @@ where enrolled_at >= public.current_season()
 group by trim(place);
 
 -- ---------------------------------------------------------------------------
+-- Ruoli
+--
+-- Quattro livelli, dal più al meno privilegiato: superadmin > admin > utente >
+-- kiosk. Ogni livello include tutto ciò che può fare quello sotto.
+--   kiosk      — tablet in negozio: solo ricerca socio a campi ridotti.
+--   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
+--   admin      — direttivo: tutto quello che c'è oggi (quello che prima era
+--                "qualunque utente autenticato").
+--   superadmin — modifica il listino prezzi/partenze e i ruoli degli altri
+--                utenti, unico livello che vede le voci di listino marcate
+--                riservate (es. "ABBONAMENTO DIRETTIVO").
+--
+-- Il ruolo vive in profiles, non in auth.users, per poterlo leggere/scrivere
+-- con RLS normali invece che con l'Admin API (che richiede service_role e non
+-- va usata dal browser, vedi docs/ACCOUNT.md).
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.profiles (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  email      text not null,
+  role       text not null default 'utente',
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles drop constraint if exists profiles_role_valid;
+alter table public.profiles add constraint profiles_role_valid
+  check (role in ('kiosk', 'utente', 'admin', 'superadmin'));
+
+comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Riga creata al primo login dal trigger on_auth_user_created.';
+
+-- Ogni nuovo login crea la propria riga (ruolo di partenza: utente, il più
+-- basso tra chi lavora davvero con i soci). security definer perché al primo
+-- login non esiste ancora nessuna riga profiles per fare passare l'insert
+-- dalle policy normali.
+create or replace function public.handle_new_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (user_id, email, role)
+  values (new.id, new.email, 'utente')
+  on conflict (user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_profile();
+
+-- Fotografia una tantum: chi ha già un account oggi è il direttivo, che ha
+-- già accesso pieno. Non li retrocede al ruolo minimo dei nuovi login.
+-- Rieseguibile: on conflict non tocca chi ha già una riga (compresi i nuovi
+-- account creati dopo la prima esecuzione di questo file, che restano al loro
+-- ruolo assegnato invece di tornare ad admin ad ogni rilancio dello script).
+insert into public.profiles (user_id, email, role)
+select id, email, 'admin' from auth.users
+on conflict (user_id) do nothing;
+
+-- Nessuno è superadmin subito dopo questa migration: va promosso a mano,
+-- vedi docs/ACCOUNT.md ("Promuovere il primo superadmin").
+
+-- Il ruolo dell'utente collegato, o null se non loggato / senza riga
+-- profiles. security invoker: legge solo la propria riga, sempre leggibile
+-- per la policy profiles_select_own qui sotto (nessun rischio di ricorsione).
+create or replace function public.current_role()
+returns text
+language sql
+stable
+security invoker
+as $$
+  select role from public.profiles where user_id = auth.uid();
+$$;
+
+comment on function public.current_role is 'Ruolo di chi ha fatto la richiesta corrente, o null.';
+
+-- true se il ruolo di chi ha fatto la richiesta è min_role o superiore nella
+-- gerarchia kiosk < utente < admin < superadmin.
+create or replace function public.has_role(min_role text)
+returns boolean
+language sql
+stable
+security invoker
+as $$
+  select case public.current_role()
+    when 'superadmin' then true
+    when 'admin'      then min_role in ('admin', 'utente', 'kiosk')
+    when 'utente'     then min_role in ('utente', 'kiosk')
+    when 'kiosk'      then min_role = 'kiosk'
+    else false
+  end;
+$$;
+
+comment on function public.has_role is 'true se chi ha fatto la richiesta ha almeno il ruolo min_role.';
+
+alter table public.profiles enable row level security;
+
+drop policy if exists profiles_select_own        on public.profiles;
+drop policy if exists profiles_select_superadmin on public.profiles;
+drop policy if exists profiles_update_superadmin on public.profiles;
+
+-- Ognuno legge la propria riga (serve a current_role() per funzionare per
+-- chiunque); il superadmin le legge e le modifica tutte per gestire i ruoli
+-- altrui. L'insert passa solo dal trigger: niente policy insert per
+-- authenticated, quindi è bloccato di default.
+create policy profiles_select_own on public.profiles
+  for select to authenticated using (user_id = auth.uid());
+
+create policy profiles_select_superadmin on public.profiles
+  for select to authenticated using (public.has_role('superadmin'));
+
+create policy profiles_update_superadmin on public.profiles
+  for update to authenticated
+  using (public.has_role('superadmin'))
+  with check (public.has_role('superadmin'));
+
+-- Livello minimo per vedere/scegliere una voce di listino. Rilevante solo per
+-- category='ABBONAMENTO' (es. "ABBONAMENTO DIRETTIVO" a min_role=superadmin);
+-- le altre categorie restano a 'utente', cioè visibili a chiunque possa
+-- vedere il listino.
+alter table public.prices add column if not exists min_role text not null default 'utente';
+
+alter table public.prices drop constraint if exists prices_min_role_valid;
+alter table public.prices add constraint prices_min_role_valid
+  check (min_role in ('utente', 'admin', 'superadmin'));
+
+comment on column public.prices.min_role is 'Ruolo minimo per vedere/selezionare questa voce di listino (solo per category=ABBONAMENTO).';
+
+-- Campi minimi per la ricerca da kiosk: niente numero tessera, codice
+-- fiscale, indirizzo o importi. Non è security_invoker apposta: deve restare
+-- leggibile da chi ha ruolo kiosk, che non ha accesso a members (sotto), e il
+-- filtro sta nel WHERE invece che nella RLS della tabella sottostante.
+create or replace view public.members_kiosk_search as
+select id, last_name, first_name, phone, email, card_type, pass_type
+from public.members
+where public.has_role('kiosk');
+
+comment on view public.members_kiosk_search is 'Ricerca socio per il tablet in negozio: campi ridotti, nessun dato sensibile.';
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 --
 -- Nella 1.x l'accesso era protetto dal login Google: le web app Apps Script
@@ -290,6 +433,10 @@ group by trim(place);
 --
 -- Gli account del direttivo si creano dalla dashboard Supabase
 -- (Authentication > Users > Add user). Non c'è registrazione self-service.
+--
+-- Dalla 2.1 le policy non sono più piatte (basta essere autenticati): ogni
+-- tabella richiede il ruolo minimo giusto tramite has_role(), vedi la
+-- sezione Ruoli qui sopra.
 -- ---------------------------------------------------------------------------
 
 alter table public.members    enable row level security;
@@ -302,13 +449,13 @@ drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 
 create policy members_select on public.members
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('utente'));
 
 create policy members_insert on public.members
-  for insert to authenticated with check (true);
+  for insert to authenticated with check (public.has_role('utente'));
 
 create policy members_update on public.members
-  for update to authenticated using (true) with check (true);
+  for update to authenticated using (public.has_role('utente')) with check (public.has_role('utente'));
 
 -- La cancellazione resta esclusa: si archivia, non si cancella. Se serve
 -- davvero, si fa dalla dashboard Supabase con l'utente service_role.
@@ -316,16 +463,16 @@ create policy members_update on public.members
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
 create policy prices_select on public.prices
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('utente'));
 create policy prices_write on public.prices
-  for all to authenticated using (true) with check (true);
+  for all to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
 
 drop policy if exists departures_select on public.departures;
 drop policy if exists departures_write  on public.departures;
 create policy departures_select on public.departures
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('utente'));
 create policy departures_write on public.departures
-  for all to authenticated using (true) with check (true);
+  for all to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
 
 -- Le viste ereditano la RLS delle tabelle sottostanti (security invoker).
 alter view public.households      set (security_invoker = true);
@@ -619,20 +766,21 @@ drop policy if exists season_breakdown_update on public.season_breakdown;
 
 -- Lo storico si legge e si scrive solo passando da close_season(), che gira
 -- come l'utente collegato: servono quindi insert e update (per l'upsert), ma
--- non delete. Una stagione archiviata non si cancella.
+-- non delete. Una stagione archiviata non si cancella. Chiudere la stagione è
+-- un'operazione da direttivo: richiede almeno admin.
 create policy season_history_select on public.season_history
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('admin'));
 create policy season_history_insert on public.season_history
-  for insert to authenticated with check (true);
+  for insert to authenticated with check (public.has_role('admin'));
 create policy season_history_update on public.season_history
-  for update to authenticated using (true) with check (true);
+  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 
 create policy season_breakdown_select on public.season_breakdown
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('admin'));
 create policy season_breakdown_insert on public.season_breakdown
-  for insert to authenticated with check (true);
+  for insert to authenticated with check (public.has_role('admin'));
 create policy season_breakdown_update on public.season_breakdown
-  for update to authenticated using (true) with check (true);
+  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 
 -- ---------------------------------------------------------------------------
 -- Saldo di un nucleo familiare
@@ -951,10 +1099,10 @@ drop policy if exists trip_uses_delete on public.trip_uses;
 -- l'utente collegato. Manca apposta l'update: una gita sbagliata si annulla e
 -- si riscrive, non si ritocca.
 create policy trip_uses_select on public.trip_uses
-  for select to authenticated using (true);
+  for select to authenticated using (public.has_role('utente'));
 
 create policy trip_uses_insert on public.trip_uses
-  for insert to authenticated with check (true);
+  for insert to authenticated with check (public.has_role('utente'));
 
 create policy trip_uses_delete on public.trip_uses
-  for delete to authenticated using (true);
+  for delete to authenticated using (public.has_role('utente'));

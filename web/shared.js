@@ -29,6 +29,55 @@ async function logout() {
 }
 
 // ---------------------------------------------------------------------------
+// Ruoli
+//
+// Gerarchia: kiosk < utente < admin < superadmin. Il ruolo vive nella
+// tabella profiles (vedi supabase/schema.sql), una riga per utente creata al
+// primo login.
+// ---------------------------------------------------------------------------
+
+const LIVELLO_RUOLO = { kiosk: 0, utente: 1, admin: 2, superadmin: 3 };
+let _profiloCache = null;
+
+/** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
+async function getProfile() {
+  if (_profiloCache) return _profiloCache;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await sb
+    .from("profiles")
+    .select("role, email")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  _profiloCache = data;
+  return data;
+}
+
+/** true se l'utente collegato ha almeno il ruolo minRuolo. */
+async function hasRole(minRuolo) {
+  const profilo = await getProfile();
+  if (!profilo) return false;
+  return LIVELLO_RUOLO[profilo.role] >= LIVELLO_RUOLO[minRuolo];
+}
+
+/**
+ * Come requireAuth(), ma blocca anche chi è loggato senza il ruolo minimo.
+ * Da chiamare dopo requireAuth() nelle pagine riservate (es. impostazioni,
+ * utenti).
+ */
+async function requireRole(minRuolo) {
+  const sessione = await requireAuth();
+  if (!sessione) return null;
+  if (!(await hasRole(minRuolo))) {
+    showToast("Non hai i permessi per questa pagina.", "is-danger");
+    location.replace("index.html");
+    return null;
+  }
+  return sessione;
+}
+
+// ---------------------------------------------------------------------------
 // Notifiche
 // ---------------------------------------------------------------------------
 
@@ -100,7 +149,7 @@ function totaliNucleo(capofamiglia, familiari = []) {
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price")
+    .select("category, name, price, min_role")
     .eq("active", true)
     .order("category")
     .order("name");

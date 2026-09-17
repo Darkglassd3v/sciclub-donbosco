@@ -169,6 +169,57 @@ async function proteggiPagina(alPronto) {
   mostra(data.session);
 }
 
+// ---------------------------------------------------------------------------
+// Ruoli
+//
+// Gerarchia: kiosk < utente < admin < superadmin, letta dalla tabella
+// profiles (vedi supabase/schema.sql). Stesso pattern di web/shared.js, non
+// condiviso perché i due siti non condividono file.
+// ---------------------------------------------------------------------------
+
+const LIVELLO_RUOLO = { kiosk: 0, utente: 1, admin: 2, superadmin: 3 };
+let _profiloCache = null;
+
+/** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
+async function getProfilo() {
+  if (_profiloCache) return _profiloCache;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await sb
+    .from("profiles")
+    .select("role, email")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  _profiloCache = data;
+  return data;
+}
+
+/** true se l'utente collegato ha almeno il ruolo minRuolo. */
+async function haRuolo(minRuolo) {
+  const profilo = await getProfilo();
+  if (!profilo) return false;
+  return LIVELLO_RUOLO[profilo.role] >= LIVELLO_RUOLO[minRuolo];
+}
+
+/**
+ * Da chiamare dentro alPronto() di proteggiPagina() nelle pagine riservate:
+ * se il ruolo non basta, nasconde #contenuto e mostra un messaggio al suo
+ * posto. Ritorna true/false così la pagina sa se continuare il proprio init.
+ */
+async function richiediRuolo(minRuolo) {
+  if (await haRuolo(minRuolo)) return true;
+  const contenuto = el("contenuto");
+  if (contenuto) {
+    contenuto.hidden = true;
+    contenuto.insertAdjacentHTML(
+      "afterend",
+      '<p id="permessiMancanti" class="aiuto">Non hai i permessi per questa pagina.</p>'
+    );
+  }
+  return false;
+}
+
 /**
  * Distingue "la rete non ha funzionato" da "il database ha detto di no".
  * I nomi del guasto cambiano da browser a browser: Chrome dice "Failed to
