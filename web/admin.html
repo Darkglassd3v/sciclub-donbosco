@@ -49,20 +49,27 @@
 </head>
 <body>
 
-<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html">Soci</a>
+      <a href="admin.html">Pagamenti</a>
+      <a href="riepilogo.html">Riepilogo</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
+      <a href="utenti.html">Utenti</a>
+      <a href="impostazioni.html">Impostazioni</a>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
 
 <div class="container-main">
-  <div class="level is-mobile mb-4">
-    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Pannello Pagamenti</h1></div>
-    <div class="level-right">
-      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
-      <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
-      <a class="button is-small is-danger is-outlined mr-2" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
-      <a class="button is-small is-light mr-2" href="utenti.html">Utenti</a>
-      <a class="button is-small is-light mr-2" href="impostazioni.html">Impostazioni</a>
-      <button class="button is-small is-light" onclick="logout()">Esci</button>
-    </div>
-  </div>
+  <h1 class="title is-4 mb-4">Pannello Pagamenti</h1>
 
   <div class="summary-bar">
     <div class="level is-mobile">

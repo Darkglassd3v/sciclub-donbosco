@@ -195,3 +195,135 @@ textarea:focus-visible,
 /* --- Logo --------------------------------------------------------------- */
 .logo-testata { height: 56px; width: auto; display: block; }
 @media screen and (max-width: 768px) { .logo-testata { height: 44px; } }
+
+/* --- Impaginazione stabile ----------------------------------------------
+ * Il margine di default del body veniva azzerato solo da Bulma, che arriva da
+ * un CDN: se tarda o non risponde, tutta la pagina scivola di otto pixel. */
+body { margin: 0; }
+
+/* Una tabella più larga dello schermo trascinava di lato l'intera pagina — su
+ * telefono bastava sfiorare per veder scorrere via titoli e barra. Dentro
+ * questo contenitore scorre solo la tabella, e il resto non si muove. */
+.tabella-scorrevole {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Barra di navigazione ------------------------------------------------
+ * Identica su ogni pagina e sempre nello stesso posto: prima ogni pagina
+ * toglieva dall'elenco la voce di sé stessa, così passando da una all'altra
+ * cambiavano numero e posizione di tutti i pulsanti, e si finiva per premere
+ * quello sbagliato. Qui le voci ci sono sempre tutte, nello stesso ordine, e
+ * quella della pagina aperta è solo colorata.
+ *
+ * L'altezza è fissa e dichiarata (--barra-h): la barra non cresce, non va a
+ * capo e non si muove quando il contenuto sotto si ricarica. Su schermo
+ * stretto l'elenco scorre di lato invece di andare a capo, che è ciò che la
+ * faceva cambiare altezza. */
+:root { --barra-h: 68px; }
+
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--filo);
+}
+
+.barra-dentro {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px;
+  height: var(--barra-h);
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.barra-marchio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  text-decoration: none;
+  color: var(--testo);
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.barra-marchio img { height: 40px; width: auto; display: block; }
+
+.barra-voci {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.barra-voci::-webkit-scrollbar { display: none; }
+
+.barra-voci a, .barra-voci button {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--filo);
+  border-radius: 999px;
+  background: var(--superficie);
+  color: var(--blu);
+  font: inherit;
+  font-size: .9375rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.barra-voci a:hover, .barra-voci button:hover {
+  background: var(--blu-light);
+  border-color: var(--blu-light);
+}
+.barra-voci [aria-current="page"] {
+  background: var(--blu);
+  border-color: var(--blu);
+  color: #fff;
+}
+/* Amministrazione chiude la stagione: si distingue anche da qui. */
+.barra-voci .voce-rischiosa { color: var(--errore); }
+.barra-voci .voce-rischiosa[aria-current="page"] {
+  background: var(--errore);
+  border-color: var(--errore);
+  color: #fff;
+}
+
+/* Il filo di avanzamento vive dentro la barra, alto 3px e sempre presente:
+ * segnala il caricamento senza coprire la pagina di bianco e senza spostare
+ * di un pixel quello che c'è sotto. */
+.barra-avanzamento {
+  height: 3px;
+  margin-bottom: -1px;
+  background: transparent;
+  overflow: hidden;
+}
+.barra-avanzamento.attiva::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: var(--blu);
+  animation: barra-scorre 1.1s ease-in-out infinite;
+}
+@keyframes barra-scorre {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .barra-avanzamento.attiva::after { animation: none; width: 100%; opacity: .5; }
+}
+
+@media screen and (max-width: 768px) {
+  :root { --barra-h: 60px; }
+  .barra-dentro { padding: 0 12px; gap: 10px; }
+  .barra-marchio img { height: 32px; }
+  .barra-marchio span { display: none; }
+  .barra-voci a, .barra-voci button { height: 38px; padding: 0 12px; font-size: .875rem; }
+}

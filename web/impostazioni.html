@@ -29,19 +29,27 @@
 </head>
 <body>
 
-<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html">Soci</a>
+      <a href="admin.html">Pagamenti</a>
+      <a href="riepilogo.html">Riepilogo</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
+      <a href="utenti.html">Utenti</a>
+      <a href="impostazioni.html">Impostazioni</a>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
 
 <div class="container-main">
-  <div class="level is-mobile mb-4">
-    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Impostazioni</h1></div>
-    <div class="level-right">
-      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
-      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
-      <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
-      <a class="button is-small is-light mr-2" href="utenti.html">Utenti</a>
-      <button class="button is-small is-light" onclick="logout()">Esci</button>
-    </div>
-  </div>
+  <h1 class="title is-4 mb-4">Impostazioni</h1>
 
   <div id="bloccato" class="notification is-warning">
     Non hai i permessi per questa pagina: solo i superadmin possono modificare listino e partenze.
@@ -55,53 +63,57 @@
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
         Nessuna voce si cancella davvero: si disattiva.
       </p>
-      <table class="tabella-costi">
-        <thead><tr>
-          <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Ruolo min.</th><th>Attiva</th><th></th>
-        </tr></thead>
-        <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
-        <tfoot><tr class="riga-nuova">
-          <td>
-            <select id="nuovoCategoria">
-              <option value="TESSERA">TESSERA</option>
-              <option value="FAMIGLIA">FAMIGLIA</option>
-              <option value="ABBONAMENTO">ABBONAMENTO</option>
-              <option value="CORSO">CORSO</option>
-            </select>
-          </td>
-          <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
-          <td><input type="number" id="nuovoPrezzo" step="0.01" min="0" placeholder="0.00"></td>
-          <td>
-            <select id="nuovoMinRole">
-              <option value="utente">utente</option>
-              <option value="admin">admin</option>
-              <option value="superadmin">superadmin</option>
-            </select>
-          </td>
-          <td></td>
-          <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
-        </tr></tfoot>
-      </table>
+      <div class="tabella-scorrevole">
+        <table class="tabella-costi">
+          <thead><tr>
+            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Ruolo min.</th><th>Attiva</th><th></th>
+          </tr></thead>
+          <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
+          <tfoot><tr class="riga-nuova">
+            <td>
+              <select id="nuovoCategoria">
+                <option value="TESSERA">TESSERA</option>
+                <option value="FAMIGLIA">FAMIGLIA</option>
+                <option value="ABBONAMENTO">ABBONAMENTO</option>
+                <option value="CORSO">CORSO</option>
+              </select>
+            </td>
+            <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
+            <td><input type="number" id="nuovoPrezzo" step="0.01" min="0" placeholder="0.00"></td>
+            <td>
+              <select id="nuovoMinRole">
+                <option value="utente">utente</option>
+                <option value="admin">admin</option>
+                <option value="superadmin">superadmin</option>
+              </select>
+            </td>
+            <td></td>
+            <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
+          </tr></tfoot>
+        </table>
+      </div>
     </div>
 
     <div class="riquadro">
       <h2>Partenze</h2>
       <p class="occhiello">Luoghi di partenza del pullman per sabato e domenica.</p>
-      <table class="tabella-costi">
-        <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th></th></tr></thead>
-        <tbody id="tabellaPartenze"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
-        <tfoot><tr class="riga-nuova">
-          <td>
-            <select id="nuovoGiorno">
-              <option value="SABATO">SABATO</option>
-              <option value="DOMENICA">DOMENICA</option>
-            </select>
-          </td>
-          <td><input type="text" id="nuovoLuogo" placeholder="Luogo"></td>
-          <td></td>
-          <td><button type="button" class="button is-small is-link" id="btnAggiungiPartenza">+ Aggiungi</button></td>
-        </tr></tfoot>
-      </table>
+      <div class="tabella-scorrevole">
+        <table class="tabella-costi">
+          <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th></th></tr></thead>
+          <tbody id="tabellaPartenze"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
+          <tfoot><tr class="riga-nuova">
+            <td>
+              <select id="nuovoGiorno">
+                <option value="SABATO">SABATO</option>
+                <option value="DOMENICA">DOMENICA</option>
+              </select>
+            </td>
+            <td><input type="text" id="nuovoLuogo" placeholder="Luogo"></td>
+            <td></td>
+            <td><button type="button" class="button is-small is-link" id="btnAggiungiPartenza">+ Aggiungi</button></td>
+          </tr></tfoot>
+        </table>
+      </div>
     </div>
   </div>
 </div>

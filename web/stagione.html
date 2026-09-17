@@ -64,19 +64,27 @@
 </head>
 <body>
 
-<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html">Soci</a>
+      <a href="admin.html">Pagamenti</a>
+      <a href="riepilogo.html">Riepilogo</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
+      <a href="utenti.html">Utenti</a>
+      <a href="impostazioni.html">Impostazioni</a>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
 
 <div class="container-main">
-  <div class="level is-mobile mb-4">
-    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Amministrazione</h1></div>
-    <div class="level-right">
-      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
-      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
-      <a class="button is-small is-light mr-2" href="utenti.html">Utenti</a>
-      <a class="button is-small is-light mr-2" href="impostazioni.html">Impostazioni</a>
-      <button class="button is-small is-light" onclick="logout()">Esci</button>
-    </div>
-  </div>
+  <h1 class="title is-4 mb-4">Amministrazione</h1>
 
   <div class="fascia-pericolo">
     <strong>Chiusura della stagione</strong>
@@ -86,13 +94,15 @@
 
   <div class="riquadro">
     <h2>Stagione in corso</h2>
-    <table class="tabella-stagioni">
-      <thead><tr>
-        <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
-        <th class="num">Incassato</th><th class="num">Da incassare</th>
-      </tr></thead>
-      <tbody id="tabellaStagioni"><tr><td colspan="5">Caricamento…</td></tr></tbody>
-    </table>
+    <div class="tabella-scorrevole">
+      <table class="tabella-stagioni">
+        <thead><tr>
+          <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
+          <th class="num">Incassato</th><th class="num">Da incassare</th>
+        </tr></thead>
+        <tbody id="tabellaStagioni"><tr><td colspan="5">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
 
     <p class="suggerimento">
       Può esistere una sola stagione aperta alla volta. Le stagioni chiuse
@@ -100,13 +110,15 @@
     </p>
 
     <h3>Stagioni chiuse</h3>
-    <table class="tabella-stagioni">
-      <thead><tr>
-        <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
-        <th class="num">Incassato</th><th class="num">Da incassare</th><th></th>
-      </tr></thead>
-      <tbody id="tabellaChiuse"><tr><td colspan="6">Caricamento…</td></tr></tbody>
-    </table>
+    <div class="tabella-scorrevole">
+      <table class="tabella-stagioni">
+        <thead><tr>
+          <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
+          <th class="num">Incassato</th><th class="num">Da incassare</th><th></th>
+        </tr></thead>
+        <tbody id="tabellaChiuse"><tr><td colspan="6">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="riquadro">

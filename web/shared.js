@@ -83,6 +83,9 @@ async function requireRole(minRuolo) {
 /**
  * Mostra un messaggio temporaneo. Crea da sé il contenitore se la pagina non
  * ce l'ha, così ogni pagina può chiamarla senza markup dedicato.
+ *
+ * Sta sotto la barra e non sopra: comparendo in cima copriva i pulsanti di
+ * navigazione proprio mentre si stava cercando di premerli.
  */
 function showToast(messaggio, tipo = "is-success") {
   let toast = document.getElementById("statusToast");
@@ -94,18 +97,47 @@ function showToast(messaggio, tipo = "is-success") {
   toast.textContent = messaggio;
   toast.className = `notification ${tipo}`;
   toast.style.cssText =
-    "display:block;position:fixed;top:20px;left:50%;transform:translateX(-50%);" +
-    "z-index:3000;min-width:300px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.2);";
+    "display:block;position:fixed;top:calc(var(--barra-h, 68px) + 12px);left:50%;" +
+    "transform:translateX(-50%);z-index:90;max-width:min(92vw,520px);text-align:center;" +
+    "box-shadow:0 4px 12px rgba(0,0,0,.2);";
   clearTimeout(showToast._timer);
   showToast._timer = setTimeout(() => {
     toast.style.display = "none";
   }, 4000);
 }
 
+/**
+ * Segnala che si sta caricando con il filo dentro la barra.
+ *
+ * Prima calava un velo bianco su tutta la pagina: ad ogni salvataggio lo
+ * schermo sbiancava e poi tornava, e il contenuto sembrava ricaricarsi da
+ * capo. Il filo dice la stessa cosa senza far sparire niente.
+ */
 function setLoading(attivo) {
-  const loader = document.getElementById("loader");
-  if (loader) loader.style.display = attivo ? "flex" : "none";
+  const filo = document.getElementById("avanzamento");
+  if (filo) filo.classList.toggle("attiva", !!attivo);
 }
+
+/**
+ * Colora la voce della pagina aperta. La barra è identica in tutti i file
+ * proprio per non spostare niente fra una pagina e l'altra: l'unica differenza
+ * la mette qui il browser, e non cambia nessun ingombro.
+ */
+(function segnaPaginaCorrente() {
+  const attuale = location.pathname.split("/").pop() || "index.html";
+  document.addEventListener("DOMContentLoaded", () => {
+    const elenco = document.querySelector(".barra-voci");
+    if (!elenco) return;
+    const voce = elenco.querySelector(`a[href="${attuale}"]`);
+    if (!voce) return;
+    voce.setAttribute("aria-current", "page");
+
+    // Volutamente non si scorre l'elenco per portare in vista la voce attiva:
+    // sposterebbe la striscia di una quantità diversa su ogni pagina, cioè di
+    // nuovo pulsanti che cambiano posto. Su quale pagina si è lo dice il
+    // titolo grande subito sotto la barra, che non si muove mai.
+  });
+})();
 
 // ---------------------------------------------------------------------------
 // Importi
