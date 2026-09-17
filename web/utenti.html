@@ -33,6 +33,10 @@
 
     .riga-nuovo { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .riga-nuovo input[type="email"] { flex: 1 1 260px; }
+    /* La classe .input di Bulma vale width:100%: su un select dentro una riga
+       flex basta a mandare a capo tutto il resto. Qui la larghezza se la
+       prende dal contenuto. */
+    .riga-nuovo select { flex: 0 0 auto; width: auto; min-width: 150px; }
     .domanda { color: var(--errore); font-weight: 600; margin-right: 4px; }
 
     #bloccato { display: none; }
@@ -67,7 +71,7 @@
       </p>
       <div class="riga-nuovo">
         <input class="input" type="email" id="nuovaEmail" placeholder="email@esempio.it" autocomplete="off" required>
-        <select class="input" id="nuovoRuolo" style="flex:0 0 auto"></select>
+        <select class="input" id="nuovoRuolo"></select>
         <button type="button" class="button is-link" id="btnCrea">+ Crea utente</button>
       </div>
     </div>
@@ -256,11 +260,30 @@
       campoEmail.value = "";
       await caricaUtenti();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast(spiegaErroreCreazione(error), "is-danger");
     } finally {
       bottone.disabled = false;
       setLoading(false);
     }
+  }
+
+  /**
+   * I due errori che non dipendono da chi sta usando la pagina ma da come è
+   * configurato il progetto Supabase. Detti in inglese e per sigle non
+   * aiutano nessuno: qui diventano l'interruttore preciso da girare.
+   */
+  function spiegaErroreCreazione(error) {
+    const testo = String((error && error.message) || "").toLowerCase();
+    if (testo.includes("rate limit")) {
+      return "Supabase sta cercando di mandare una mail di conferma e ha finito le poche "
+        + "concesse dal piano gratuito. Spegni «Confirm email» in Authentication > "
+        + "Sign In / Providers > Email: senza conferme non parte nessuna mail.";
+    }
+    if (testo.includes("signups not allowed") || testo.includes("signup is disabled")) {
+      return "Le registrazioni sono chiuse. Accendi «Allow new users to sign up» in "
+        + "Authentication > Sign In / Providers > Email.";
+    }
+    return "Errore: " + messaggioErrore(error);
   }
 
   // ---------------------------------------------------------------------
