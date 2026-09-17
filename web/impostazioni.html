@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Impostazioni — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <style>
+    .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
+
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; margin-bottom: 24px; }
+    .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 4px; }
+    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
+
+    .tabella-costi { width: 100%; border-collapse: collapse; }
+    .tabella-costi th { text-align: left; padding: 8px 6px; color: var(--testo-soft);
+                         font-weight: 600; font-size: .875rem; border-bottom: 1px solid var(--filo); }
+    .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
+    .tabella-costi input, .tabella-costi select { font-size: .9375rem; }
+    .tabella-costi input[type="text"] { min-width: 180px; }
+    .tabella-costi input[type="number"] { width: 100px; }
+    .tabella-costi .vuota { color: var(--testo-soft); }
+    .tabella-costi .riga-nuova td { background: var(--riga-alt); }
+
+    #bloccato { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loader"><div class="button is-loading is-large is-white"></div></div>
+
+<div class="container-main">
+  <div class="level is-mobile mb-4">
+    <div class="level-left"><img class="logo-testata mr-3" src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco"><h1 class="title is-4 mb-0">Impostazioni</h1></div>
+    <div class="level-right">
+      <a class="button is-small is-light mr-2" href="index.html">Soci</a>
+      <a class="button is-small is-light mr-2" href="admin.html">Pagamenti</a>
+      <a class="button is-small is-light mr-2" href="riepilogo.html">Riepilogo</a>
+      <a class="button is-small is-light mr-2" href="utenti.html">Utenti</a>
+      <button class="button is-small is-light" onclick="logout()">Esci</button>
+    </div>
+  </div>
+
+  <div id="bloccato" class="notification is-warning">
+    Non hai i permessi per questa pagina: solo i superadmin possono modificare listino e partenze.
+  </div>
+
+  <div id="contenuto">
+    <div class="riquadro">
+      <h2>Listino prezzi</h2>
+      <p class="occhiello">
+        Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi/presciistica) e corsi.
+        Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
+        Nessuna voce si cancella davvero: si disattiva.
+      </p>
+      <table class="tabella-costi">
+        <thead><tr>
+          <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Ruolo min.</th><th>Attiva</th><th></th>
+        </tr></thead>
+        <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
+        <tfoot><tr class="riga-nuova">
+          <td>
+            <select id="nuovoCategoria">
+              <option value="TESSERA">TESSERA</option>
+              <option value="FAMIGLIA">FAMIGLIA</option>
+              <option value="ABBONAMENTO">ABBONAMENTO</option>
+              <option value="CORSO">CORSO</option>
+            </select>
+          </td>
+          <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
+          <td><input type="number" id="nuovoPrezzo" step="0.01" min="0" placeholder="0.00"></td>
+          <td>
+            <select id="nuovoMinRole">
+              <option value="utente">utente</option>
+              <option value="admin">admin</option>
+              <option value="superadmin">superadmin</option>
+            </select>
+          </td>
+          <td></td>
+          <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <div class="riquadro">
+      <h2>Partenze</h2>
+      <p class="occhiello">Luoghi di partenza del pullman per sabato e domenica.</p>
+      <table class="tabella-costi">
+        <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th></th></tr></thead>
+        <tbody id="tabellaPartenze"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
+        <tfoot><tr class="riga-nuova">
+          <td>
+            <select id="nuovoGiorno">
+              <option value="SABATO">SABATO</option>
+              <option value="DOMENICA">DOMENICA</option>
+            </select>
+          </td>
+          <td><input type="text" id="nuovoLuogo" placeholder="Luogo"></td>
+          <td></td>
+          <td><button type="button" class="button is-small is-link" id="btnAggiungiPartenza">+ Aggiungi</button></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+
+  (async function init() {
+    if (!(await requireRole("superadmin"))) {
+      el("bloccato").style.display = "block";
+      el("contenuto").style.display = "none";
+      return;
+    }
+    el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
+    el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
+    await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte()]);
+  })();
+
+  // ---------------------------------------------------------------------
+  // Listino prezzi
+  // ---------------------------------------------------------------------
+
+  function rigaPrezzo(p) {
+    const selettoreRuolo = p.category === "ABBONAMENTO"
+      ? `<select data-min-role>
+           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>utente</option>
+           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin</option>
+           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>superadmin</option>
+         </select>`
+      : "—";
+    return `
+      <tr data-id="${p.id}">
+        <td>${p.category}</td>
+        <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
+        <td><input type="number" data-prezzo step="0.01" min="0" value="${p.price}"></td>
+        <td>${selettoreRuolo}</td>
+        <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
+        <td><button type="button" class="button is-small" data-salva>Salva</button></td>
+      </tr>`;
+  }
+
+  async function caricaPrezziTutti() {
+    setLoading(true);
+    try {
+      const { data, error } = await sb
+        .from("prices")
+        .select("id, category, name, price, active, min_role")
+        .order("category")
+        .order("name");
+      if (error) throw error;
+
+      el("tabellaPrezzi").innerHTML = data.length
+        ? data.map(rigaPrezzo).join("")
+        : '<tr><td colspan="6" class="vuota">Nessuna voce in listino.</td></tr>';
+
+      el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
+        bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
+      });
+    } catch (error) {
+      showToast("Errore di caricamento listino: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function salvaPrezzo(riga) {
+    const id = riga.dataset.id;
+    const bottone = riga.querySelector("[data-salva]");
+    const selettoreRuolo = riga.querySelector("[data-min-role]");
+    const patch = {
+      name: riga.querySelector("[data-nome]").value.trim(),
+      price: parseFloat(riga.querySelector("[data-prezzo]").value) || 0,
+      active: riga.querySelector("[data-attivo]").checked,
+    };
+    if (selettoreRuolo) patch.min_role = selettoreRuolo.value;
+
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("prices").update(patch).eq("id", id);
+      if (error) throw error;
+      showToast("Voce aggiornata.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  async function aggiungiPrezzo() {
+    const nome = el("nuovoNome").value.trim();
+    if (!nome) {
+      showToast("Inserisci un nome.", "is-warning");
+      return;
+    }
+    const bottone = el("btnAggiungiPrezzo");
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("prices").insert({
+        category: el("nuovoCategoria").value,
+        name: nome,
+        price: parseFloat(el("nuovoPrezzo").value) || 0,
+        min_role: el("nuovoMinRole").value,
+      });
+      if (error) throw error;
+      el("nuovoNome").value = "";
+      el("nuovoPrezzo").value = "";
+      showToast("Voce aggiunta.");
+      await caricaPrezziTutti();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Partenze
+  // ---------------------------------------------------------------------
+
+  function rigaPartenza(p) {
+    return `
+      <tr data-id="${p.id}">
+        <td>${p.day}</td>
+        <td><input type="text" data-luogo value="${p.place.replace(/"/g, "&quot;")}"></td>
+        <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
+        <td><button type="button" class="button is-small" data-salva>Salva</button></td>
+      </tr>`;
+  }
+
+  async function caricaPartenzeTutte() {
+    try {
+      const { data, error } = await sb
+        .from("departures")
+        .select("id, day, place, active")
+        .order("day")
+        .order("place");
+      if (error) throw error;
+
+      el("tabellaPartenze").innerHTML = data.length
+        ? data.map(rigaPartenza).join("")
+        : '<tr><td colspan="4" class="vuota">Nessuna partenza.</td></tr>';
+
+      el("tabellaPartenze").querySelectorAll("[data-salva]").forEach((bottone) => {
+        bottone.addEventListener("click", () => salvaPartenza(bottone.closest("tr")));
+      });
+    } catch (error) {
+      showToast("Errore di caricamento partenze: " + messaggioErrore(error), "is-danger");
+    }
+  }
+
+  async function salvaPartenza(riga) {
+    const id = riga.dataset.id;
+    const bottone = riga.querySelector("[data-salva]");
+    const patch = {
+      place: riga.querySelector("[data-luogo]").value.trim(),
+      active: riga.querySelector("[data-attivo]").checked,
+    };
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("departures").update(patch).eq("id", id);
+      if (error) throw error;
+      showToast("Partenza aggiornata.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  async function aggiungiPartenza() {
+    const luogo = el("nuovoLuogo").value.trim();
+    if (!luogo) {
+      showToast("Inserisci un luogo.", "is-warning");
+      return;
+    }
+    const bottone = el("btnAggiungiPartenza");
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("departures").insert({
+        day: el("nuovoGiorno").value,
+        place: luogo,
+      });
+      if (error) throw error;
+      el("nuovoLuogo").value = "";
+      showToast("Partenza aggiunta.");
+      await caricaPartenzeTutte();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

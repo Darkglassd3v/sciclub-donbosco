@@ -6,7 +6,7 @@ Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque mac
 
 - [x] Task 0 — Tab colorati filtro giorno (`ricerca/stile.css`)
 - [x] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
-- [ ] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
+- [x] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
 - [x] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
 - [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html`
 - [ ] Task 5 — Irrigidimento kiosk (`ricerca/index.html`)
@@ -91,6 +91,8 @@ Documentazione: aggiornato `docs/ACCOUNT.md` §3 ("Chi vede cosa") con la nuova 
 CRUD unico per `prices` (tutte le categorie: TESSERA, FAMIGLIA, ABBONAMENTO incluso `trips`/`day`, CORSO) e `departures`, riusando `caricaPrezzi()`/`caricaPartenze()` da `web/shared.js` per la lettura e aggiungendo insert/update/toggle-`active` (niente delete fisico, segue la stessa scelta già fatta su `members`: si disattiva con `active=false`, non si cancella). Per le righe `category='ABBONAMENTO'`, selettore aggiuntivo per `min_role` (utente/admin/superadmin) — esempio d'uso: creare/segnare "ABBONAMENTO DIRETTIVO" con `min_role='superadmin'`. Pagina protetta con `requireRole('superadmin')`.
 
 **Verifica**: da superadmin, creare una nuova voce ABBONAMENTO con `min_role='superadmin'`, salvare, ricaricare e verificare che compaia; da account `admin` (non superadmin) verificare che la pagina sia bloccata da `requireRole`.
+
+**Stato: FATTO** (committato). Tabelle inline (input diretti nelle righe + bottone Salva per riga, niente form modale) per listino (`prices`, tutte le categorie) e partenze (`departures`); `trips`/`day` restano impliciti (li deduce da soli il trigger `fill_pass_details` già in Task 1 dal nome scritto). Selettore `min_role` mostrato solo sulle righe ABBONAMENTO. Aggiunto link "Impostazioni" in nav su tutte le pagine `web/`. Non ancora verificato contro un vero progetto Supabase.
 
 ---
 
