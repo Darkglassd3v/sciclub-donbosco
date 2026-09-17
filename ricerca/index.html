@@ -31,7 +31,7 @@
     <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
     <h1>Ricerca Socio</h1>
     <div class="spinta">
-      <a class="btn-chiaro" href="gite.html">Gite</a>
+      <a class="btn-chiaro" id="linkGite" href="gite.html">Gite</a>
       <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
     </div>
   </header>
@@ -40,7 +40,7 @@
     <label for="q">Cerca per cognome o nome</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
            placeholder="Cognome o nome">
-    <p class="suggerimento">
+    <p class="suggerimento" id="suggerimento">
       La ricerca funziona anche con le prime lettere. Più termini restringono il risultato.
     </p>
   </div>
@@ -65,6 +65,35 @@
   const CAMPI = "id, last_name, first_name, phone, email, card_type, card_number, pass_type";
   const MAX = 40;
 
+  // -------------------------------------------------------------------------
+  // Tablet in negozio (ruolo kiosk)
+  //
+  // Stessa pagina, ma chi la usa è chiunque passi dal negozio, non un
+  // volontario del direttivo. Tre differenze, tutte per lo stesso motivo: chi
+  // è lì deve poter ritrovare la propria scheda, non sfogliare il club.
+  //   1. i dati arrivano dalla vista members_kiosk_search, che il numero di
+  //      tessera non ce l'ha proprio (la RLS gli chiude members del tutto,
+  //      quindi non è una scelta della pagina: è il database);
+  //   2. serve nome E cognome, scritti per intero o quasi — con le prime
+  //      lettere uscirebbe l'elenco di tutti quelli che iniziano così;
+  //   3. pochi risultati: due omonimi ci stanno, mezza rubrica no.
+  //
+  // Per tutti gli altri ruoli la pagina resta quella di prima, numero di
+  // tessera compreso: a chi incassa serve, ed è lo stesso dato che ha già
+  // sotto gli occhi nel gestionale.
+  // -------------------------------------------------------------------------
+
+  const CAMPI_KIOSK = "id, last_name, first_name, phone, email, card_type, pass_type";
+  const MAX_KIOSK = 3;
+
+  let daKiosk = false;
+
+  /** I pezzi con cui cercare, o null se il kiosk non ne ha scritti abbastanza. */
+  function partiRicerca(testoCercato) {
+    const parti = pezzi(testoCercato);
+    return daKiosk ? pezziKiosk(parti) : parti;
+  }
+
   const lista = () => el("risultati");
   const conteggio = () => el("conteggio");
   const avviso = () => el("avviso");
@@ -80,15 +109,19 @@
   // -------------------------------------------------------------------------
 
   async function cerca(testoCercato) {
-    const parti = pezzi(testoCercato);
-    if (!parti.length) return null;
+    const parti = partiRicerca(testoCercato);
+    if (!parti || !parti.length) return null;
 
-    let query = sb.from("members").select(CAMPI);
+    let query = sb
+      .from(daKiosk ? "members_kiosk_search" : "members")
+      .select(daKiosk ? CAMPI_KIOSK : CAMPI);
     // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
     for (const p of parti) {
-      query = query.or(`last_name.ilike.${p}%,first_name.ilike.${p}%`);
+      query = query.or(filtroPezzo(p, daKiosk));
     }
-    const { data, error } = await query.order("last_name").order("first_name").limit(MAX);
+    const { data, error } = await query
+      .order("last_name").order("first_name")
+      .limit(daKiosk ? MAX_KIOSK : MAX);
     if (error) throw error;
     return data;
   }
@@ -141,12 +174,41 @@
 
   let attesa, ultima = 0;
 
-  function avvia() {
+  async function avvia() {
+    // richiediRuolo('kiosk') è il livello più basso: chiude la pagina solo a
+    // chi non ha una riga profiles. Serve comunque a sapere CHI sta cercando,
+    // che è quello che decide vista e ricerca qui sotto.
+    try {
+      if (!(await richiediRuolo("kiosk"))) return;
+      const profilo = await getProfilo();
+      daKiosk = !!profilo && profilo.role === "kiosk";
+    } catch (errore) {
+      // Il ruolo non si è potuto leggere: meglio non cercare affatto che
+      // cercare come se fosse un operatore pieno.
+      messaggio(messaggioErrore(errore), "avviso-errore");
+      return;
+    }
+
+    if (daKiosk) {
+      el("suggerimento").textContent =
+        "Scrivi il tuo nome e il tuo cognome per intero.";
+      // Il pannello gite legge trip_passes, che al kiosk la RLS chiude: il
+      // link porterebbe solo a una pagina vuota.
+      el("linkGite").hidden = true;
+    }
+
     el("q").focus();
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
       clearTimeout(attesa);
       if (pezzi(testoCercato).length === 0) { svuota(); return; }
+
+      if (!partiRicerca(testoCercato)) {
+        lista().innerHTML = "";
+        conteggio().hidden = true;
+        messaggio("Servono nome e cognome, scritti per intero.", "avviso-vuoto");
+        return;
+      }
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;
@@ -160,11 +222,14 @@
             messaggio("Nessun socio trovato con «" + testoCercato.trim() + "».", "avviso-vuoto");
             return;
           }
-          conteggio().textContent = soci.length >= MAX
+          // Il consiglio di scrivere qualche lettera in più vale per chi cerca
+          // a prefisso: dal kiosk si scrive già il nome intero, e i risultati
+          // sono comunque pochi.
+          conteggio().textContent = !daKiosk && soci.length >= MAX
             ? `Primi ${MAX} risultati: scrivi qualche lettera in più.`
             : `Trovati: ${soci.length}`;
           conteggio().hidden = false;
-          const parti = pezzi(testoCercato);
+          const parti = partiRicerca(testoCercato) || [];
           lista().innerHTML = soci.map((s) => `<li>${schedaHtml(s, parti)}</li>`).join("");
         } catch (errore) {
           if (mio !== ultima) return;

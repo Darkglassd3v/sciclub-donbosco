@@ -8,8 +8,8 @@ Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque mac
 - [x] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
 - [x] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
 - [x] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
-- [ ] Task 4 — Assegna abbonamento da `ricerca/gite.html` (IN CORSO, vedi nota sotto)
-- [ ] Task 5 — Irrigidimento kiosk (`ricerca/index.html`)
+- [x] Task 4 — Assegna abbonamento da `ricerca/gite.html`
+- [x] Task 5 — Irrigidimento kiosk (`ricerca/index.html`)
 
 ## Context
 
@@ -61,7 +61,7 @@ Schema:
 - `public.profiles(user_id uuid primary key references auth.users(id) on delete cascade, email text not null, role text not null default 'utente' check (role in ('kiosk','utente','admin','superadmin')), created_at timestamptz not null default now())`.
 - Trigger `after insert on auth.users` → crea la riga `profiles` con `role='utente'` ed `email = NEW.email` (pattern standard Supabase, `security definer`).
 - Backfill one-off nella stessa migration: `insert into profiles (user_id, email, role) select id, email, 'admin' from auth.users on conflict do nothing` (fotografa il direttivo di oggi come admin).
-- Funzione `public.current_role() returns text` (implementata `security invoker`, non `definer` come ipotizzato sopra: legge solo la riga `profiles` dell'utente stesso, sempre leggibile per la policy `profiles_select_own`, quindi niente bisogno di bypassare la RLS) e helper `public.has_role(min_role text) returns boolean` che confronta la gerarchia `kiosk < utente < admin < superadmin`. Verificato con un Postgres locale usable via docker (schema fittizio `auth.users`/`auth.uid()`): la matrice `has_role` è corretta su tutte le 20 combinazioni, `null` (nessun profilo) nega sempre.
+- Funzione `public.current_role() returns text` (`security definer`, vedi la correzione nel Task 4: la prima stesura la faceva `security invoker` e andava in ricorsione infinita) e helper `public.has_role(min_role text) returns boolean` che confronta la gerarchia `kiosk < utente < admin < superadmin`. Verificato con un Postgres locale usabile via docker (schema fittizio `auth.users`/`auth.uid()`): la matrice `has_role` è corretta su tutte le combinazioni, `null` (nessun profilo) nega sempre.
 - Colonna `public.prices.min_role text not null default 'utente' check (min_role in ('utente','admin','superadmin'))` — rilevante solo per `category='ABBONAMENTO'`, ma la colonna esiste su tutte le righe per semplicità (le altre categorie restano sempre a `'utente'`, cioè visibili a tutti).
 - Nuova vista `public.members_kiosk_search` (`security_invoker`) che espone solo `id, last_name, first_name, phone, email, card_type, pass_type` da `members` — niente `card_number`, `tax_code`, importi, indirizzo (usata dal task 5).
 - Riscrivere le RLS esistenti (tutte oggi `to authenticated using (true)`) per richiedere il ruolo minimo giusto per tabella/operazione, usando `has_role(...)`:
@@ -116,20 +116,17 @@ Nella scheda di un socio senza `pass_type` impostato (oggi la vista `trip_passes
 
 **Verifica**: da operatore `utente`, cercare un socio senza abbonamento, verificare che il selettore NON mostri le voci `min_role='superadmin'`; assegnare un abbonamento normale e verificare che il socio compaia poi nella vista `trip_passes`/lista principale di `gite.html`. Da `superadmin`, verificare che le voci riservate siano invece selezionabili.
 
-**Stato: IN CORSO — punto esatto dove riprendere.**
+**Stato: FATTO** (da committare).
 
-Fatto e committato in questo giro:
+Fatto in due giri di lavoro:
+
 1. **Bugfix al Task 1** (`web/index.html`): il filtro `min_role` sulle select ABBONAMENTO nascondeva del tutto le voci riservate. Se un socio le aveva già, riaprirlo e salvare da un operatore senza il ruolo giusto azzerava silenziosamente `pass_type` (perché `salva()` scrive sempre il valore corrente della select). Corretto: le voci riservate restano nell'elenco ma `disabled`, così `selezionaPerNome()` le trova e le preserva, ma non si possono scegliere di nuovo.
-2. **Nuovo trigger `check_pass_type_role`** (`supabase/schema.sql`, dopo la policy `members_update`): la RLS di `members` controllava solo "chi può scrivere", non "quale `pass_type` può scrivere" — senza questo trigger, il filtro `min_role` sarebbe stato di sola facciata lato JS, aggirabile chiamando l'API Supabase direttamente. Il trigger, su insert/update di `members`, blocca il salvataggio se `pass_type` cambia verso una voce ABBONAMENTO il cui `min_role` supera `has_role()` di chi scrive. **Non ancora testato** contro un Postgres locale (il test era in corso quando la sessione si è interrotta) — da testare come i test del Task 1 (docker postgres + schema fittizio auth) prima di fidarsi: in particolare verificare che un `utente` NON possa impostare un `pass_type` con `min_role='superadmin'` (deve fallire) e che un `superadmin` invece possa.
+2. **Nuovo trigger `check_pass_type_role`** (`supabase/schema.sql`): la RLS di `members` controllava solo "chi può scrivere", non "quale `pass_type` può scrivere" — senza questo trigger il filtro `min_role` sarebbe stato di sola facciata lato JS, aggirabile chiamando l'API Supabase direttamente. Adesso il salvataggio viene rifiutato se `pass_type` cambia verso una voce ABBONAMENTO con `min_role` superiore al ruolo di chi scrive. **Testato** (vedi punto 4).
+3. **Bugfix grave al Task 1, trovato proprio scrivendo quel test**: `public.current_role()` era `security invoker`, ma la policy `profiles_select_superadmin` chiama `has_role()`, che chiama `current_role()`, che rilegge `profiles`, che rivaluta le policy… Sotto RLS ogni lettura di ruolo finiva in `stack depth limit exceeded`: con quella versione **nessuna pagina della 2.1 avrebbe funzionato per nessun utente reale**. Il test del Task 1 non l'aveva visto perché girava come superuser `postgres`, che la RLS la salta. Ora è `security definer` con `search_path` fissato, e legge comunque solo la riga di `auth.uid()`.
+4. **Nuovo `supabase/test_ruoli.sh`**: un comando solo (serve docker) che crea un Postgres usa-e-getta, ci mette un finto schema `auth`, esegue `schema.sql` due volte (controllo di rieseguibilità) e prova tutto **dentro il ruolo `authenticated`**, non da superuser — è questa la differenza che aveva nascosto il bug. Copre: gerarchia `has_role` sui 4 ruoli più il caso "nessun profilo", trigger che crea `profiles` al primo login, `profiles` visibili solo a sé stessi (tutte solo al superadmin), cambio ruolo riservato al superadmin, `members` invisibile al kiosk ma `members_kiosk_search` sì, listino scrivibile solo dal superadmin, e le quattro combinazioni del trigger `check_pass_type_role`. Verificato che il test fallisce davvero se si rimette `current_role()` a `security invoker`.
+5. **`ricerca/gite.html`**: nuova sezione "Soci senza abbonamento" sotto l'elenco principale. Cerca su `members` (chi non ha `pass_type` non è in `trip_passes`) fra gli iscritti della stagione corrente, con lo stesso debounce da 200ms di `ricerca/index.html` e lo scarto delle risposte in ritardo. Ogni scheda ha una select delle voci ABBONAMENTO con `trips` valorizzato (solo abbonamenti a gite) filtrate per `min_role <= ruolo dell'operatore`, e un bottone che scrive `pass_type` e somma il prezzo a `total`. Dopo l'assegnazione il socio sparisce da questa sezione e compare in quella principale (`caricaAbbonamenti()` + `disegna()`). L'errore del trigger viene mostrato nella scheda con `messaggioErrore()`, non come generico errore di rete.
 
-**Ancora da fare per chiudere il Task 4** (non iniziato):
-- In `ricerca/gite.html`: nuova sezione "Assegna abbonamento a chi non ce l'ha" (`trip_passes` non include chi non ha già un abbonamento — serve una query separata su `members` con `pass_type is null`, stesso pattern di ricerca di `ricerca/index.html` — vedi `cerca()`/debounce 200ms lì).
-- Riusare `getProfilo()`/`LIVELLO_RUOLO` (Task 1, già in `ricerca/comune.js`) per filtrare le opzioni ABBONAMENTO mostrabili: query `prices` con `category='ABBONAMENTO' and active=true and trips is not null` (solo abbonamenti a viaggi, ha senso solo per quelli in questa pagina), poi `.filter(p => LIVELLO_RUOLO[p.min_role] <= livelloOperatore)`.
-- Azione "Assegna": leggere `members.total` attuale, `update({ pass_type: nome, total: totaleAttuale + prezzo })` — il trigger del punto 2 rifiuta da solo se il ruolo non basta, quindi il catch dell'errore Supabase deve mostrare `messaggioErrore(errore)` all'operatore invece di un generico "errore di rete".
-- Dopo l'assegnazione: richiamare `caricaAbbonamenti()` + `disegna()` per far comparire subito il socio nella lista principale, e far sparire la sua scheda dai risultati "senza abbonamento" (o semplicemente rilanciare la ricerca).
-- Nav: nessun link nuovo da aggiungere (`gite.html` esiste già ed è raggiungibile da `ricerca/index.html`).
-
-Nessun cambiamento è stato fatto a `ricerca/gite.html` finora in questo task.
+**Non ancora verificato contro un vero progetto Supabase**, come i task 2 e 3: al primo deploy va provato il giro completo (operatore `utente` che non vede le voci riservate, `superadmin` che le vede, assegnazione che aggiorna `total`).
 
 ---
 
@@ -143,6 +140,21 @@ Nessun cambiamento è stato fatto a `ricerca/gite.html` finora in questo task.
 - Proteggere la pagina con `richiediRuolo('kiosk')` (livello minimo, quindi chiunque loggato la vede, ma con campi/ricerca ridotti solo per chi è effettivamente `kiosk`; `utente`/`admin`/`superadmin` continuano a vedere la ricerca attuale a prefisso libero con i campi già ridotti esistenti, MENO `card_number` che va tolto per tutti visto che l'utente ha detto esplicitamente che il kiosk non deve vederlo — decidere in review se toglierlo solo al kiosk o a tutti).
 
 **Verifica**: da account kiosk, cercare un nome parziale e verificare che serva il nome+cognome quasi completo, che non compaia `card_number`, e che non ci sia alcun modo di impostare un tipo di abbonamento. Da `utente`/`admin`, verificare che la ricerca a prefisso continui a funzionare.
+
+**Stato: FATTO** (da committare).
+
+- **Vista ridotta**: con ruolo `kiosk` la pagina legge da `members_kiosk_search` invece che da `members`, e chiede i campi senza `card_number`. Non è solo una scelta della pagina: la RLS chiude `members` al kiosk del tutto (provato in `supabase/test_ruoli.sh`), quindi anche chiamando l'API a mano non ne uscirebbe niente.
+- **Ricerca a parola intera**: la corrispondenza per prefisso resta agli altri ruoli (è il modo in cui il direttivo ha sempre cercato); dal kiosk ogni pezzo deve essere una parola intera del nome o del cognome, e ne servono due. Così «cos fed» dal negozio non trova niente, «cossetta federico» sì. Nuove funzioni pure `pezziKiosk()`/`filtroPezzo()` in `ricerca/comune.js`, con i casi in `ricerca/test-ricerca.js`.
+- **Perché a parola intera e non "almeno N lettere"**: il minimo di lettere non impediva affatto di sfogliare (con «cos fed» si passava lo stesso) e rompeva i cognomi corti veri, tipo RE. Le quattro forme del filtro (`de`, `de %`, `% de`, `% de %`) tengono invece insieme le due cose: i cognomi composti restano cercabili («de luca mario» trova DE LUCA MARIO) e RE IVO pure.
+- **Risultati limitati a 3** dal kiosk (40 per gli altri): due omonimi ci stanno, mezza rubrica no.
+- **Link «Gite» nascosto** al kiosk: `trip_passes` gli è chiusa dalla RLS, il link porterebbe a una pagina vuota.
+- **Nessuna azione di scrittura**: `ricerca/index.html` era già di sola lettura (ricerca + link `tel:`/`mailto:`) ed è rimasta tale — non c'è nessuna scelta di tipologia abbonamento da nascondere.
+- **`card_number` resta visibile agli altri ruoli** (era il punto lasciato aperto in fase di stesura): a chi incassa serve, ed è lo stesso dato che ha già sotto gli occhi nel gestionale. Al kiosk non arriva perché la vista non ce l'ha. Se si preferisce toglierlo a tutti, è una riga in `CAMPI`.
+- **Protezione pagina**: `richiediRuolo('kiosk')` — che essendo il livello più basso chiude la pagina solo a chi non ha una riga `profiles` — serve soprattutto a sapere *chi* sta cercando. Se il ruolo non si riesce a leggere la pagina non cerca affatto, invece di ripiegare sul comportamento da operatore pieno.
+
+**Strappo alla regola dei file condivisi**: `pezziKiosk()`/`filtroPezzo()` sono finite in `ricerca/comune.js`, che i task 2-5 non dovevano toccare. La regola serviva a non far collidere agent paralleli: qui i task 2-4 sono già chiusi e nessun altro sta lavorando, e quelle due funzioni sono logica pura — in fondo a un `<script>` dentro l'HTML non sarebbero state collaudabili da `test-ricerca.js`, che è proprio il posto dove serve un confine di riservatezza.
+
+**Verificato**: `test-ricerca.js` passa (compresi i nuovi casi kiosk); le quattro forme del filtro provate sia come `ilike` SQL su Postgres sia **contro un vero PostgREST** (le forme con lo spazio dentro vanno fra virgolette, altrimenti il filtro non le legge come un valore solo — era l'unico modo di esserne sicuri). Resta da provare su un vero progetto Supabase, come i task 2-4.
 
 ---
 

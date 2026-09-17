@@ -11,10 +11,10 @@ const path = require("path");
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
-const { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+const { pezzi, pezziKiosk, filtroPezzo, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
         giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile } =
   (0, eval)(`(() => { ${sorgente}
-    return { pezzi, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+    return { pezzi, pezziKiosk, filtroPezzo, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
              giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
@@ -37,6 +37,30 @@ assert.deepStrictEqual(pezzi("cos*,ni.eq.1"), ["cos", "nieq"]);
 
 // Al massimo quattro pezzi: oltre, la URL del filtro cresce senza servire.
 assert.strictEqual(pezzi("a1 bb cc dd ee ff").length, 4);
+
+// --- Ricerca dal tablet in negozio (ruolo kiosk) ----------------------------
+//
+// Qui il confine è di riservatezza, non di comodità: da operatore si cerca con
+// le prime lettere, dal negozio no, altrimenti si sfoglierebbe il club.
+
+// Servono nome e cognome: uno solo aprirebbe l'elenco degli omonimi.
+assert.deepStrictEqual(pezziKiosk(pezzi("cossetta federico")), ["cossetta", "federico"]);
+assert.strictEqual(pezziKiosk(pezzi("cossetta")), null);
+assert.strictEqual(pezziKiosk(pezzi("cos")), null);
+assert.strictEqual(pezziKiosk(pezzi("")), null);
+
+// Da operatore il filtro è quello di sempre: inizio della parola.
+assert.strictEqual(filtroPezzo("cos", false),
+  "last_name.ilike.cos%,first_name.ilike.cos%");
+
+// Dal negozio il pezzo deve essere una parola intera, in qualunque posizione
+// del nome o del cognome. Le virgolette stanno solo dove c'è uno spazio.
+assert.strictEqual(filtroPezzo("de", true),
+  'last_name.ilike.de,last_name.ilike."de %",last_name.ilike."% de",last_name.ilike."% de %",' +
+  'first_name.ilike.de,first_name.ilike."de %",first_name.ilike."% de",first_name.ilike."% de %"');
+
+// Nessuna forma è un prefisso: "cos" dal negozio non può trovare COSSETTA.
+assert.ok(!filtroPezzo("cos", true).includes("cos%"));
 
 // L'evidenziazione marca solo l'inizio della parola, e solo se corrisponde.
 assert.strictEqual(evidenzia("Cossetta", ["cos"]), "<mark>Cos</mark>setta");

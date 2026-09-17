@@ -134,7 +134,7 @@ Dalla 2.1 esistono quattro ruoli, ciascuno con tutti i permessi di quello sotto 
 
 | Ruolo | Chi è | Può fare |
 |---|---|---|
-| `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi |
+| `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi. Deve scrivere nome **e** cognome per intero: con le prime lettere si sfoglierebbe il club |
 | `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti |
 | `admin` | direttivo | tutto quello di `utente`, più chiusura stagione |
 | `superadmin` | direttivo con delega | tutto quello di `admin`, più pannello impostazioni costi/partenze e gestione ruoli degli altri utenti |

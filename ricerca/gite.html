@@ -67,6 +67,13 @@
   <p id="avviso" class="avviso" hidden></p>
   <p class="conteggio" id="conteggio" hidden></p>
   <ul class="risultati" id="risultati"></ul>
+
+  <!-- Chi non ha ancora un abbonamento non compare in trip_passes (la vista
+       nasce dal join col listino): va cercato a parte, sui soci della
+       stagione. Da qui gli si assegna un abbonamento senza dover aprire il
+       form soci completo del gestionale. -->
+  <p class="conteggio" id="titoloSenza" hidden>Soci senza abbonamento</p>
+  <ul class="risultati" id="senzaAbbonamento"></ul>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -78,6 +85,12 @@
 
   let abbonamenti = [];       // gli abbonamenti della stagione, come li vede il database
   let giornoScelto = "";      // "" = tutti
+
+  // Assegnazione abbonamento (vedi in fondo): voci di listino che questo
+  // operatore può scegliere, e soci trovati che non hanno ancora un
+  // abbonamento.
+  let opzioniAbbonamento = [];
+  let senzaAbbonamento = [];
 
   const lista = () => el("risultati");
 
@@ -498,9 +511,155 @@
   }
 
   // -------------------------------------------------------------------------
+  // Assegna un abbonamento a chi non ce l'ha
+  //
+  // trip_passes nasce da un join col listino: un socio senza pass_type non
+  // c'è, quindi la ricerca qui sopra non lo trova e non c'è modo di dargli un
+  // abbonamento senza aprire il gestionale. Questa sezione cerca a parte, fra
+  // i soci iscritti alla stagione, quelli che l'abbonamento non ce l'hanno.
+  //
+  // Le voci riservate (es. "ABBONAMENTO DIRETTIVO", min_role='superadmin')
+  // non compaiono nemmeno nell'elenco a chi non ha il ruolo: il filtro qui è
+  // per non far scegliere una cosa che verrebbe rifiutata, non è il controllo
+  // vero — quello sta nel trigger check_pass_type_role del database, che
+  // rifiuta anche chi chiamasse l'API a mano.
+  // -------------------------------------------------------------------------
+
+  const MAX_SENZA = 20;
+  let timerRicerca = null;
+  let ultimaRicerca = 0;   // scarta le risposte arrivate in ritardo
+
+  async function caricaOpzioniAbbonamento() {
+    const profilo = await getProfilo();
+    const livello = LIVELLO_RUOLO[profilo && profilo.role];
+    // Nessun profilo o ruolo sconosciuto: nessuna voce assegnabile.
+    if (livello === undefined) return;
+
+    const { data, error } = await sb
+      .from("prices")
+      .select("name, price, min_role")
+      .eq("category", "ABBONAMENTO")
+      .eq("active", true)
+      .not("trips", "is", null)   // solo abbonamenti a gite: gli altri non c'entrano con questa pagina
+      .order("name");
+    if (error) throw error;
+    opzioniAbbonamento = data.filter((v) => LIVELLO_RUOLO[v.min_role] <= livello);
+  }
+
+  async function cercaSenzaAbbonamento() {
+    const parti = pezzi(el("q").value);
+    // Senza ricerca scritta l'elenco resta chiuso: sono migliaia di soci, e
+    // qui interessa solo la persona che si ha davanti.
+    if (!parti.length || !opzioniAbbonamento.length) {
+      senzaAbbonamento = [];
+      disegnaSenza();
+      return;
+    }
+
+    let query = sb
+      .from("members")
+      .select("id, last_name, first_name, total")
+      .gte("enrolled_at", inizioStagione())
+      // Nel foglio di partenza "NO" voleva dire "niente abbonamento": vale
+      // come il campo vuoto.
+      .or("pass_type.is.null,pass_type.eq.NO");
+    for (const pezzo of parti) {
+      query = query.or(filtroPezzo(pezzo, false));
+    }
+
+    const mia = ++ultimaRicerca;
+    try {
+      const { data, error } = await query.order("last_name").order("first_name").limit(MAX_SENZA);
+      if (error) throw error;
+      if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
+      senzaAbbonamento = data;
+      disegnaSenza();
+    } catch (errore) {
+      if (mia !== ultimaRicerca) return;
+      // Non è un errore che merita il messaggio in cima: l'elenco principale
+      // funziona lo stesso, e senza linea non si assegna niente comunque.
+      senzaAbbonamento = [];
+      disegnaSenza();
+    }
+  }
+
+  function schedaSenzaHtml(s, parti) {
+    const opzioni = opzioniAbbonamento
+      .map((v) => `<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.price)}€)</option>`)
+      .join("");
+
+    return `
+      <div class="scheda" id="senza_${s.id}">
+        <div class="nomi">
+          <span>${evidenzia(s.last_name, parti)} ${evidenzia(s.first_name, parti)}</span>
+        </div>
+        <div style="margin-top:12px">
+          <select data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${opzioni}</select>
+        </div>
+        <div class="azioni-pannello" style="margin-top:10px">
+          <button class="btn-blu" data-assegna="${s.id}">Assegna abbonamento</button>
+        </div>
+        <div id="esito_${s.id}"></div>
+      </div>`;
+  }
+
+  function disegnaSenza() {
+    const parti = pezzi(el("q").value);
+    el("titoloSenza").hidden = !senzaAbbonamento.length;
+    el("senzaAbbonamento").innerHTML = senzaAbbonamento
+      .map((s) => `<li>${schedaSenzaHtml(s, parti)}</li>`).join("");
+
+    el("senzaAbbonamento").querySelectorAll("[data-assegna]").forEach((b) =>
+      b.addEventListener("click", () => assegna(b.dataset.assegna, b)));
+  }
+
+  async function assegna(socioId, bottone) {
+    const socio = senzaAbbonamento.find((s) => s.id === socioId);
+    const scelta = el("senzaAbbonamento").querySelector(`[data-scelta="${socioId}"]`);
+    if (!socio || !scelta) return;
+
+    const voce = opzioniAbbonamento.find((v) => v.name === scelta.value);
+    if (!voce) return;
+
+    bottone.disabled = true;
+    try {
+      const { error } = await sb
+        .from("members")
+        .update({
+          pass_type: voce.name,
+          // Stesso conto del form soci completo: l'abbonamento si somma a
+          // quello che il socio già deve.
+          total: Number(socio.total || 0) + Number(voce.price || 0),
+        })
+        .eq("id", socioId);
+      // Qui arriva anche il rifiuto del trigger check_pass_type_role, che dice
+      // già cosa è successo: va mostrato com'è, non come "errore di rete".
+      if (error) throw error;
+
+      // Adesso il socio ha un abbonamento: esce da questo elenco ed entra in
+      // quello principale, dove gli si possono segnare le gite.
+      senzaAbbonamento = senzaAbbonamento.filter((s) => s.id !== socioId);
+      await caricaAbbonamenti();
+      disegna();
+      disegnaSenza();
+      messaggio(`Abbonamento «${voce.name}» assegnato a ${socio.last_name} ${socio.first_name}.`, "avviso-ok");
+    } catch (errore) {
+      bottone.disabled = false;
+      const esito = el("esito_" + socioId);
+      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">${esc(messaggioErrore(errore))}</p>`;
+    }
+  }
+
+  // -------------------------------------------------------------------------
 
   async function avvia() {
     el("q").addEventListener("input", disegna);
+    // La ricerca fra i soci senza abbonamento va sul database, quindi non
+    // parte ad ogni tasto: 200ms come la ricerca di ricerca/index.html.
+    el("q").addEventListener("input", () => {
+      clearTimeout(timerRicerca);
+      timerRicerca = setTimeout(cercaSenzaAbbonamento, 200);
+    });
     el("conJolly").addEventListener("change", disegna);
 
     el("giorni").querySelectorAll("button").forEach((b) => {
@@ -523,6 +682,10 @@
     try {
       await caricaAbbonamenti();
       disegna();
+      // Dopo il primo disegno: se il listino non si carica (o il ruolo non
+      // permette di assegnare niente) la pagina deve funzionare lo stesso per
+      // quello che serve di più, cioè segnare le gite.
+      await caricaOpzioniAbbonamento();
     } catch (errore) {
       messaggio(messaggioErrore(errore), "avviso-errore");
     }

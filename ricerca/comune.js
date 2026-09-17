@@ -17,6 +17,46 @@ function pezzi(testoCercato) {
     .slice(0, 4);
 }
 
+/**
+ * I pezzi utilizzabili dal tablet in negozio (ruolo kiosk), o null se chi
+ * cerca non ha ancora scritto abbastanza.
+ *
+ * Lì davanti c'è chiunque passi dal negozio, non un volontario del direttivo:
+ * deve poter ritrovare la propria scheda, non sfogliare il club. Perciò
+ * servono due pezzi, cioè nome e cognome: uno solo aprirebbe l'elenco di
+ * tutti gli omonimi.
+ */
+function pezziKiosk(parti) {
+  return (parti || []).length >= 2 ? parti : null;
+}
+
+/**
+ * Il filtro per un pezzo di ricerca.
+ *
+ * Da operatore la corrispondenza è all'inizio della parola: si scrive "cos" e
+ * si trova Cossetta, che è il modo in cui il direttivo ha sempre cercato.
+ *
+ * Dal tablet in negozio no: con le prime lettere si sfoglierebbe il club.
+ * Lì il pezzo deve essere una parola intera del nome o del cognome — "cos
+ * fed" non trova niente, "cossetta federico" sì. Le quattro forme servono ai
+ * cognomi composti: "de luca" trova DE LUCA perché "de" è la prima parola e
+ * "luca" l'ultima, mentre un cognome corto come RE resta cercabile, cosa che
+ * un minimo di lettere impedirebbe.
+ */
+function filtroPezzo(pezzo, paroleIntere) {
+  const forme = paroleIntere
+    ? [pezzo, pezzo + " %", "% " + pezzo, "% " + pezzo + " %"]
+    : [pezzo + "%"];
+  // Le virgolette servono solo alle forme con lo spazio dentro, che altrimenti
+  // il filtro non leggerebbe come un valore solo. Senza spazio si scrive come
+  // si è sempre scritto.
+  return ["last_name", "first_name"]
+    .map((colonna) => forme
+      .map((f) => `${colonna}.ilike.${f.includes(" ") ? `"${f}"` : f}`)
+      .join(","))
+    .join(",");
+}
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
