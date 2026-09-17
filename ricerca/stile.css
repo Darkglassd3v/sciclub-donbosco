@@ -161,6 +161,21 @@ ul.risultati li { margin-bottom: 12px; }
 .giorni button[aria-pressed="true"] {
   background: var(--testo); border-color: var(--testo); color: #fff;
 }
+/* Da premuto il tab prende il colore pieno del giorno, non solo il pallino:
+ * deve essere ovvio a colpo d'occhio per cosa si sta filtrando. */
+.giorni button[aria-pressed="true"][data-giorno="SABATO"] {
+  background: var(--blu); border-color: var(--blu); color: #fff;
+}
+.giorni button[aria-pressed="true"][data-giorno="DOMENICA"] {
+  background: var(--giallo); border-color: var(--giallo); color: var(--giallo-dark);
+}
+.giorni button[aria-pressed="true"][data-giorno="MARTEDI"] {
+  background: var(--errore); border-color: var(--errore); color: #fff;
+}
+.giorni button[aria-pressed="true"][data-giorno="JOLLY"] {
+  background: var(--ok); border-color: var(--ok); color: #fff;
+}
+.giorni button[aria-pressed="true"]::before { background: currentColor; }
 .opzione-jolly { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-weight: 600; }
 .opzione-jolly input { width: 24px; height: 24px; min-height: 0; margin: 0; }
 

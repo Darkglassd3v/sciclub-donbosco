@@ -4,7 +4,7 @@
 
 Aggiornato ad ogni commit di questo piano, così è ripartibile da qualunque macchina/sessione (anche mobile) leggendo solo questo file.
 
-- [ ] Task 0 — Tab colorati filtro giorno (`ricerca/stile.css`)
+- [x] Task 0 — Tab colorati filtro giorno (`ricerca/stile.css`)
 - [ ] Task 1 — Fondazione ruoli (RLS + profiles) — blocca 2,3,4,5
 - [ ] Task 2 — Pannello impostazioni costi (`web/impostazioni.html`)
 - [ ] Task 3 — Gestione utenti/ruoli (`web/utenti.html`)
