@@ -139,6 +139,19 @@ function setLoading(attivo) {
   });
 })();
 
+/**
+ * Le voci con data-ruolo nascono nascoste nel markup e compaiono solo a chi
+ * ha quel ruolo: partendo nascoste non lampeggiano davanti a chi non deve
+ * vederle mentre il ruolo si carica. È solo la barra: ogni pagina riservata
+ * controlla il ruolo da sé, e il database con le sue policy.
+ */
+document.addEventListener("DOMContentLoaded", async () => {
+  // Una alla volta: la prima carica il profilo, le altre lo trovano in cache.
+  for (const voce of document.querySelectorAll(".barra-voci [data-ruolo]")) {
+    voce.hidden = !(await hasRole(voce.dataset.ruolo).catch(() => false));
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Importi
 // ---------------------------------------------------------------------------

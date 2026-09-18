@@ -25,6 +25,7 @@ supabase/migration_seed.sql
 .env.*
 !.env.example
 .github_token
+.postgre_connect
 *_token
 *.pem
 *.key

@@ -286,11 +286,10 @@ group by trim(place);
 --                nega. È il ruolo di partenza di chiunque si registri.
 --   kiosk      — tablet in negozio: solo ricerca socio a campi ridotti.
 --   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
---   admin      — direttivo: tutto quello che c'è oggi (quello che prima era
---                "qualunque utente autenticato").
---   superadmin — modifica il listino prezzi/partenze e i ruoli degli altri
---                utenti, unico livello che vede le voci di listino marcate
---                riservate (es. "ABBONAMENTO DIRETTIVO").
+--   admin      — direttivo: come utente, più le tessere riservate
+--                (es. "TESSERA DIRETTIVO", min_role='admin').
+--   superadmin — Amministrazione (chiusura stagione e storico), listino
+--                prezzi/partenze e ruoli degli altri utenti.
 --
 -- Il ruolo vive in profiles, non in auth.users, per poterlo leggere/scrivere
 -- con RLS normali invece che con l'Admin API (che richiede service_role e non
@@ -432,17 +431,26 @@ create policy profiles_update_superadmin on public.profiles
 create policy profiles_delete_superadmin on public.profiles
   for delete to authenticated using (public.has_role('superadmin'));
 
--- Livello minimo per vedere/scegliere una voce di listino. Rilevante solo per
--- category='ABBONAMENTO' (es. "ABBONAMENTO DIRETTIVO" a min_role=superadmin);
--- le altre categorie restano a 'utente', cioè visibili a chiunque possa
--- vedere il listino.
+-- Livello minimo per vedere/scegliere una voce di listino. Vale solo per
+-- category='TESSERA' (es. "TESSERA DIRETTIVO" a min_role='admin'); le altre
+-- categorie restano a 'utente', cioè visibili a chiunque possa vedere il
+-- listino. Il vincolo prices_min_role_only_card lo impone: prima valeva per
+-- gli abbonamenti, e un abbonamento rimasto riservato da allora torna a
+-- 'utente' qui sotto invece di far fallire lo script.
 alter table public.prices add column if not exists min_role text not null default 'utente';
 
 alter table public.prices drop constraint if exists prices_min_role_valid;
 alter table public.prices add constraint prices_min_role_valid
   check (min_role in ('utente', 'admin', 'superadmin'));
 
-comment on column public.prices.min_role is 'Ruolo minimo per vedere/selezionare questa voce di listino (solo per category=ABBONAMENTO).';
+update public.prices set min_role = 'utente'
+ where category <> 'TESSERA' and min_role <> 'utente';
+
+alter table public.prices drop constraint if exists prices_min_role_only_card;
+alter table public.prices add constraint prices_min_role_only_card
+  check (category = 'TESSERA' or min_role = 'utente');
+
+comment on column public.prices.min_role is 'Ruolo minimo per vedere/selezionare questa voce di listino (solo per category=TESSERA).';
 
 -- Campi minimi per la ricerca da kiosk: niente numero tessera, codice
 -- fiscale, indirizzo o importi. Non è security_invoker apposta: deve restare
@@ -496,12 +504,18 @@ create policy members_update on public.members
 -- davvero, si fa dalla dashboard Supabase con l'utente service_role.
 
 -- La RLS sopra basta a dire "chi può scrivere su members", ma non "quale
--- pass_type può scrivere": min_role vive su prices, non su members, quindi
+-- card_type può scrivere": min_role vive su prices, non su members, quindi
 -- serve un controllo in più. Senza questo trigger, filtrare le opzioni
--- riservate solo nel form (web/index.html, ricerca/gite.html) sarebbe un
--- controllo di sola facciata: basterebbe chiamare l'API direttamente per
--- assegnare comunque un abbonamento come ABBONAMENTO DIRETTIVO.
-create or replace function public.check_pass_type_role()
+-- riservate solo nel form (web/index.html) sarebbe un controllo di sola
+-- facciata: basterebbe chiamare l'API direttamente per assegnare comunque una
+-- tessera come TESSERA DIRETTIVO.
+--
+-- Fino alla 2.2 il controllo era sugli abbonamenti (check_pass_type_role):
+-- lo si toglie qui, così su un database esistente non ne restano due.
+drop trigger if exists check_pass_type_role on public.members;
+drop function if exists public.check_pass_type_role();
+
+create or replace function public.check_card_type_role()
 returns trigger
 language plpgsql
 as $$
@@ -509,27 +523,27 @@ declare
   cambiato  boolean;
   richiesto text;
 begin
-  cambiato := (tg_op = 'INSERT' and new.pass_type is not null)
-           or (tg_op = 'UPDATE' and new.pass_type is distinct from old.pass_type);
-  if not cambiato or new.pass_type is null then
+  cambiato := (tg_op = 'INSERT' and new.card_type is not null)
+           or (tg_op = 'UPDATE' and new.card_type is distinct from old.card_type);
+  if not cambiato or new.card_type is null then
     return new;
   end if;
 
   select min_role into richiesto
     from public.prices
-   where category = 'ABBONAMENTO' and name = new.pass_type;
+   where category = 'TESSERA' and name = new.card_type;
 
   if richiesto is not null and not public.has_role(richiesto) then
-    raise exception 'Non hai il permesso di assegnare l''abbonamento "%".', new.pass_type;
+    raise exception 'Non hai il permesso di assegnare la tessera "%".', new.card_type;
   end if;
   return new;
 end;
 $$;
 
-drop trigger if exists check_pass_type_role on public.members;
-create trigger check_pass_type_role
+drop trigger if exists check_card_type_role on public.members;
+create trigger check_card_type_role
   before insert or update on public.members
-  for each row execute function public.check_pass_type_role();
+  for each row execute function public.check_card_type_role();
 
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
@@ -838,20 +852,22 @@ drop policy if exists season_breakdown_update on public.season_breakdown;
 -- Lo storico si legge e si scrive solo passando da close_season(), che gira
 -- come l'utente collegato: servono quindi insert e update (per l'upsert), ma
 -- non delete. Una stagione archiviata non si cancella. Chiudere la stagione è
--- un'operazione da direttivo: richiede almeno admin.
+-- riservato al superadmin, come la pagina Amministrazione che la lancia: senza
+-- il permesso di scrivere lo storico close_season() fallisce prima di
+-- azzerare, anche chiamata dall'API a mano.
 create policy season_history_select on public.season_history
-  for select to authenticated using (public.has_role('admin'));
+  for select to authenticated using (public.has_role('superadmin'));
 create policy season_history_insert on public.season_history
-  for insert to authenticated with check (public.has_role('admin'));
+  for insert to authenticated with check (public.has_role('superadmin'));
 create policy season_history_update on public.season_history
-  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
+  for update to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
 
 create policy season_breakdown_select on public.season_breakdown
-  for select to authenticated using (public.has_role('admin'));
+  for select to authenticated using (public.has_role('superadmin'));
 create policy season_breakdown_insert on public.season_breakdown
-  for insert to authenticated with check (public.has_role('admin'));
+  for insert to authenticated with check (public.has_role('superadmin'));
 create policy season_breakdown_update on public.season_breakdown
-  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
+  for update to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
 
 -- ---------------------------------------------------------------------------
 -- Saldo di un nucleo familiare

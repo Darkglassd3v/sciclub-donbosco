@@ -56,7 +56,8 @@ psql_ <<'SQL'
 -- Dati di prova -------------------------------------------------------------
 insert into public.prices (category, name, price, min_role) values
   ('ABBONAMENTO', 'PROVA 10 VIAGGI SABATO', 200, 'utente'),
-  ('ABBONAMENTO', 'PROVA 10 VIAGGI DIRETTIVO', 0, 'superadmin')
+  ('TESSERA', 'PROVA TESSERA ORDINARIA', 35, 'utente'),
+  ('TESSERA', 'PROVA TESSERA DIRETTIVO', 0, 'admin')
 on conflict (category, name) do update set min_role = excluded.min_role;
 
 insert into auth.users (id, email) values
@@ -156,27 +157,27 @@ begin
   assert quante = 0, 'un admin ha potuto modificare il listino';
 end $$;
 
--- Trigger check_pass_type_role: il filtro min_role non è solo lato pagina.
+-- Trigger check_card_type_role: il filtro min_role non è solo lato pagina.
 do $$ begin
   perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
 
-  update public.members set pass_type = 'PROVA 10 VIAGGI SABATO'
+  update public.members set card_type = 'PROVA TESSERA ORDINARIA', pass_type = 'PROVA 10 VIAGGI SABATO'
    where id = '99999999-9999-9999-9999-999999999999';
-  assert (select pass_type from public.members where id = '99999999-9999-9999-9999-999999999999')
-         = 'PROVA 10 VIAGGI SABATO', 'un utente non ha potuto assegnare un abbonamento normale';
+  assert (select card_type from public.members where id = '99999999-9999-9999-9999-999999999999')
+         = 'PROVA TESSERA ORDINARIA', 'un utente non ha potuto assegnare una tessera normale';
 
   begin
-    update public.members set pass_type = 'PROVA 10 VIAGGI DIRETTIVO'
+    update public.members set card_type = 'PROVA TESSERA DIRETTIVO'
      where id = '99999999-9999-9999-9999-999999999999';
-    raise exception 'ASSERZIONE: un utente ha potuto assegnare una voce riservata';
+    raise exception 'ASSERZIONE: un utente ha potuto assegnare una tessera riservata';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
 
   begin
-    insert into public.members (last_name, first_name, pass_type)
-    values ('VERDI', 'LUIGI', 'PROVA 10 VIAGGI DIRETTIVO');
-    raise exception 'ASSERZIONE: un utente ha potuto iscrivere un socio con una voce riservata';
+    insert into public.members (last_name, first_name, card_type)
+    values ('VERDI', 'LUIGI', 'PROVA TESSERA DIRETTIVO');
+    raise exception 'ASSERZIONE: un utente ha potuto iscrivere un socio con una tessera riservata';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
@@ -184,11 +185,37 @@ do $$ begin
   -- Salvare un altro campo non deve inciampare nel controllo.
   update public.members set phone = '333' where id = '99999999-9999-9999-9999-999999999999';
 
-  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  update public.members set pass_type = 'PROVA 10 VIAGGI DIRETTIVO'
+  -- Basta admin: la tessera del direttivo la vede e la assegna il direttivo.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  update public.members set card_type = 'PROVA TESSERA DIRETTIVO'
    where id = '99999999-9999-9999-9999-999999999999';
-  assert (select pass_type from public.members where id = '99999999-9999-9999-9999-999999999999')
-         = 'PROVA 10 VIAGGI DIRETTIVO', 'il superadmin non ha potuto assegnare la voce riservata';
+  assert (select card_type from public.members where id = '99999999-9999-9999-9999-999999999999')
+         = 'PROVA TESSERA DIRETTIVO', 'un admin non ha potuto assegnare la tessera riservata';
+end $$;
+
+-- Il livello di visibilità vale solo per le tessere: un abbonamento riservato
+-- lo rifiuta il database, non solo il pannello Impostazioni. Da superadmin,
+-- così a dire di no è il vincolo e non la RLS del listino.
+do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.prices set min_role = 'admin' where name = 'PROVA 10 VIAGGI SABATO';
+  raise exception 'ASSERZIONE: un abbonamento è diventato riservato';
+exception when others then
+  if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+end $$;
+
+-- Amministrazione è solo del superadmin: un admin non scrive lo storico,
+-- quindi close_season() gli fallisce prima di azzerare qualunque cosa.
+do $$ begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  begin
+    insert into public.season_history (season, members, total, collected, outstanding)
+    values ('2001-09-01', 1, 0, 0, 0);
+    raise exception 'ASSERZIONE: un admin ha potuto scrivere lo storico stagioni';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
 end $$;
 
 -- Rimozione dal pannello Utenti: la fa solo il superadmin, e chi resta senza

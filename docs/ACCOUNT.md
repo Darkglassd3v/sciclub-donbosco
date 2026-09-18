@@ -168,8 +168,12 @@ Cinque ruoli, ciascuno con tutti i permessi di quello sotto (tabella `profiles`,
 | `ospite` | account appena nato | **niente**: ogni tabella gli è negata. È il punto di partenza di chiunque, compreso chi si registra da solo |
 | `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi. Deve scrivere nome **e** cognome per intero: con le prime lettere si sfoglierebbe il club |
 | `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti |
-| `admin` | direttivo | tutto quello di `utente`, più chiusura stagione |
-| `superadmin` | direttivo con delega | tutto quello di `admin`, più pannello impostazioni costi/partenze e gestione degli altri utenti |
+| `admin` | direttivo | tutto quello di `utente`, più le tessere riservate (oggi solo **TESSERA DIRETTIVO**) |
+| `superadmin` | direttivo con delega | tutto quello di `admin`, più le tre voci rosse della barra: **Amministrazione** (chiusura stagione e storico), **Utenti** e **Impostazioni** (costi/partenze). Agli altri ruoli quelle voci non compaiono proprio |
+
+Il **Ruolo min.** del listino (pannello Impostazioni) vale solo per le **tessere**: una tessera
+con ruolo minimo `admin` non compare nell'elenco a chi è `utente`, e il database rifiuta
+comunque di assegnarla. Gli abbonamenti non hanno livelli: li vedono tutti.
 
 Un account creato dal pannello nasce già con il ruolo scelto lì. Il cambio di ruolo dall'elenco
 chiede sempre una conferma esplicita (si sceglie il ruolo, poi si preme **Conferma**) e vale dal

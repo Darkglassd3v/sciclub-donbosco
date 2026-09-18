@@ -39,9 +39,9 @@
       <a href="index.html">Soci</a>
       <a href="admin.html">Pagamenti</a>
       <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
-      <a href="utenti.html">Utenti</a>
-      <a href="impostazioni.html">Impostazioni</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
+      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
+      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -140,7 +140,9 @@
   // ---------------------------------------------------------------------
 
   function rigaPrezzo(p) {
-    const selettoreRuolo = p.category === "ABBONAMENTO"
+    // Il livello di visibilità vale solo per le tessere (vincolo
+    // prices_min_role_only_card nel database).
+    const selettoreRuolo = p.category === "TESSERA"
       ? `<select data-min-role>
            <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>utente</option>
            <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin</option>
@@ -214,11 +216,12 @@
     const bottone = el("btnAggiungiPrezzo");
     bottone.disabled = true;
     try {
+      const categoria = el("nuovoCategoria").value;
       const { error } = await sb.from("prices").insert({
-        category: el("nuovoCategoria").value,
+        category: categoria,
         name: nome,
         price: parseFloat(el("nuovoPrezzo").value) || 0,
-        min_role: el("nuovoMinRole").value,
+        min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
       });
       if (error) throw error;
       el("nuovoNome").value = "";

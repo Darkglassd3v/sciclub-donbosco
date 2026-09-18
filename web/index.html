@@ -43,9 +43,9 @@
       <a href="index.html">Soci</a>
       <a href="admin.html">Pagamenti</a>
       <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
-      <a href="utenti.html">Utenti</a>
-      <a href="impostazioni.html">Impostazioni</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
+      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
+      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -216,13 +216,13 @@
       opzione.value = p.price;
       opzione.dataset.nome = p.name;
       opzione.text = `${p.name} (${p.price}€)`;
-      // Le voci ABBONAMENTO riservate (es. "ABBONAMENTO DIRETTIVO") restano
-      // disabilitate per chi non ha il ruolo minimo richiesto: non si possono
-      // scegliere di nuovo, ma se un socio le ha già selezionaPerNome() le
-      // trova comunque e il valore non sparisce al primo salvataggio fatto
-      // da chi non ha il permesso di sceglierle.
-      if (categoria === "ABBONAMENTO" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
-        opzione.disabled = true;
+      // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono
+      // nell'elenco a chi non ha il ruolo minimo richiesto. Restano però
+      // nella select, nascoste e disabilitate: se un socio le ha già
+      // selezionaPerNome() le trova comunque e il valore non sparisce al
+      // primo salvataggio fatto da chi non ha il permesso di sceglierle.
+      if (categoria === "TESSERA" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
+        opzione.hidden = opzione.disabled = true;
       }
       select.add(opzione);
     });

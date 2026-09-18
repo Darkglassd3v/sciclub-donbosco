@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="brand.css">
   <style>
     .container-main { max-width: 860px; margin: 28px auto 80px; padding: 0 18px; }
+    #bloccato { display: none; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
     /* Questa pagina deve sembrare diversa dalle altre appena si apre: chi ci
@@ -74,9 +75,9 @@
       <a href="index.html">Soci</a>
       <a href="admin.html">Pagamenti</a>
       <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione">Amministrazione</a>
-      <a href="utenti.html">Utenti</a>
-      <a href="impostazioni.html">Impostazioni</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
+      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
+      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -86,6 +87,11 @@
 <div class="container-main">
   <h1 class="title is-4 mb-4">Amministrazione</h1>
 
+  <div id="bloccato" class="notification is-warning">
+    Non hai i permessi per questa pagina: solo i superadmin possono chiudere la stagione.
+  </div>
+
+  <div id="contenuto">
   <div class="fascia-pericolo">
     <strong>Chiusura della stagione</strong>
     Tesseramenti, pagamenti, partenze e nuclei familiari di tutti i soci
@@ -177,6 +183,7 @@
 
     <div id="esito" class="mt-4"></div>
   </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -187,7 +194,11 @@
   const FRASE = "CHIUDI STAGIONE";
 
   (async function init() {
-    if (!(await requireAuth())) return;
+    if (!(await requireRole("superadmin"))) {
+      el("bloccato").style.display = "block";
+      el("contenuto").style.display = "none";
+      return;
+    }
 
     // Il pulsante si accende solo con la frase esatta: un clic distratto non
     // basta a chiudere una stagione.

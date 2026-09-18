@@ -518,11 +518,8 @@
   // abbonamento senza aprire il gestionale. Questa sezione cerca a parte, fra
   // i soci iscritti alla stagione, quelli che l'abbonamento non ce l'hanno.
   //
-  // Le voci riservate (es. "ABBONAMENTO DIRETTIVO", min_role='superadmin')
-  // non compaiono nemmeno nell'elenco a chi non ha il ruolo: il filtro qui è
-  // per non far scegliere una cosa che verrebbe rifiutata, non è il controllo
-  // vero — quello sta nel trigger check_pass_type_role del database, che
-  // rifiuta anche chi chiamasse l'API a mano.
+  // Gli abbonamenti non hanno voci riservate: il livello di visibilità del
+  // listino (min_role) vale solo per le tessere, quindi qui compaiono tutti.
   // -------------------------------------------------------------------------
 
   const MAX_SENZA = 20;
@@ -530,20 +527,15 @@
   let ultimaRicerca = 0;   // scarta le risposte arrivate in ritardo
 
   async function caricaOpzioniAbbonamento() {
-    const profilo = await getProfilo();
-    const livello = LIVELLO_RUOLO[profilo && profilo.role];
-    // Nessun profilo o ruolo sconosciuto: nessuna voce assegnabile.
-    if (livello === undefined) return;
-
     const { data, error } = await sb
       .from("prices")
-      .select("name, price, min_role")
+      .select("name, price")
       .eq("category", "ABBONAMENTO")
       .eq("active", true)
       .not("trips", "is", null)   // solo abbonamenti a gite: gli altri non c'entrano con questa pagina
       .order("name");
     if (error) throw error;
-    opzioniAbbonamento = data.filter((v) => LIVELLO_RUOLO[v.min_role] <= livello);
+    opzioniAbbonamento = data;
   }
 
   async function cercaSenzaAbbonamento() {
@@ -632,8 +624,8 @@
           total: Number(socio.total || 0) + Number(voce.price || 0),
         })
         .eq("id", socioId);
-      // Qui arriva anche il rifiuto del trigger check_pass_type_role, che dice
-      // già cosa è successo: va mostrato com'è, non come "errore di rete".
+      // Un rifiuto del database dice già cosa è successo: va mostrato com'è,
+      // non come "errore di rete".
       if (error) throw error;
 
       // Adesso il socio ha un abbonamento: esce da questo elenco ed entra in

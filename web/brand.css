@@ -287,8 +287,11 @@ body { margin: 0; }
   border-color: var(--blu);
   color: #fff;
 }
-/* Amministrazione chiude la stagione: si distingue anche da qui. */
+/* Le voci da superadmin (Amministrazione, Utenti, Impostazioni) si
+   distinguono anche da qui. */
 .barra-voci .voce-rischiosa { color: var(--errore); }
+/* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */
+.barra-voci [hidden] { display: none; }
 .barra-voci .voce-rischiosa[aria-current="page"] {
   background: var(--errore);
   border-color: var(--errore);

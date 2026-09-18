@@ -68,6 +68,10 @@ RIGHE_PER_FILE = 500
 # precedente a qualsiasi stagione: le nuove iscrizioni avranno la data vera.
 DATA_ARCHIVIO = "2000-01-01T00:00:00+00:00"
 
+# Tessere che solo admin e superadmin vedono e assegnano (prices.min_role).
+# Il foglio non ha una colonna per dirlo: si decide qui.
+TESSERE_RISERVATE = {"TESSERA DIRETTIVO": "admin"}
+
 TEXT_FIELDS = [
     "numero_polizza", "cognome", "nome", "luogo_nascita", "provincia_nascita",
     "codice_fiscale", "indirizzo", "citta", "provincia", "cap", "telefono",
@@ -259,9 +263,12 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
     )
     lines += ["-- Listino", ""]
     for categoria, nome, prezzo in prezzi:
+        # Il ruolo minimo vale solo alla nascita della voce: un rilancio
+        # aggiorna il prezzo ma non tocca quello scelto poi da Impostazioni.
+        ruolo = TESSERE_RISERVATE.get(nome, "utente") if categoria == "TESSERA" else "utente"
         lines.append(
-            "insert into public.prices (category, name, price) values "
-            f"({sql_str(categoria)}, {sql_str(nome)}, {sql_num(prezzo)}) "
+            "insert into public.prices (category, name, price, min_role) values "
+            f"({sql_str(categoria)}, {sql_str(nome)}, {sql_num(prezzo)}, {sql_str(ruolo)}) "
             "on conflict (category, name) do update set price = excluded.price;"
         )
 
