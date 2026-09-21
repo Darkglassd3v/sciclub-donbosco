@@ -33,9 +33,9 @@ misure stanno in `web/brand.css`, che nasce da
 | `web/index.html` | anagrafica e iscrizione soci, con gestione del capofamiglia |
 | `web/admin.html` | incassi: un pulsante per nucleo familiare, niente altro |
 | `web/riepilogo.html` | riepilogo della stagione: soci, incassato, da incassare, conteggi |
-| `web/stagione.html` | chiusura della stagione: archivia e azzera i dati dell'anno (solo superadmin) |
+| `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
 | `ricerca/index.html` | sito a parte: si cerca un socio, con i pulsanti per chiamarlo o scrivergli su WhatsApp |
-| `ricerca/gite.html` | abbonamenti a viaggi: chi ne ha uno, quante gite ha ancora, e si scalano da qui |
+| `ricerca/gite.html` | abbonamenti a viaggi: chi ne ha uno, quante gite ha ancora, e si scalano da qui; ai tesserati senza abbonamento se ne assegna uno, pagato o da pagare, anche senza linea |
 
 Il pannello pagamenti fa una cosa sola: portare a zero il saldo di una famiglia.
 Le quote, la polizza e la tessera si scrivono dove si fa l'iscrizione, nella

@@ -8,7 +8,8 @@
 - [x] 3. Pannello gite: solo tesserati in "senza abbonamento"
 - [x] 4. Pannello gite: assegnazione in coda (update condizionato)
 - [x] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
-- [ ] 6. Prova sul telefono, README/DOCUMENTAZIONE, `graphify update .`
+- [x] 6a. README, `graphify update .`
+- [ ] 6b. DA FARE: rieseguire `schema.sql` in Supabase (vista admin_summary), poi prova sul telefono (vedi §3)
 
 ## Decisioni prese
 
