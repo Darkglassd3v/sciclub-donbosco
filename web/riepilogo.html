@@ -61,13 +61,20 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Riepilogo Stagione</h1>
+  <h1 class="title is-4 mb-4" id="titolo">Riepilogo Stagione</h1>
+
+  <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
+  <div class="notification is-warning is-light" id="fasciaStorico" hidden>
+    <b id="fasciaTesto"></b>
+    <span id="fasciaCorsi"></span>
+    <a href="riepilogo.html">Torna alla stagione in corso</a>
+  </div>
 
   <div class="columns is-multiline mb-2">
     <div class="column is-3"><div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
     <div class="column is-3"><div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div></div>
     <div class="column is-3"><div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value has-text-success" id="kInc">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
+    <div class="column is-3"><div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
   </div>
 
   <div class="columns is-multiline">
@@ -110,11 +117,76 @@
 <script>
   const el = (id) => document.getElementById(id);
 
+  // Stagione chiusa da mostrare (1° settembre, AAAA-MM-GG); null = quella in corso.
+  const STAGIONE = new URLSearchParams(location.search).get("stagione");
+
   (async function init() {
     if (!(await requireAuth())) return;
     await carica();
-    ascoltaSoci(() => carica({ silenzioso: true }));
+    // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
+    if (!STAGIONE) ascoltaSoci(() => carica({ silenzioso: true }));
   })();
+
+  /** I cinque insiemi di dati della stagione in corso, dalle viste live. */
+  async function datiCorrenti() {
+    const risposte = await Promise.all([
+      sb.from("season_totals").select("*").single(),
+      sb.from("card_counts").select("*"),
+      sb.from("pass_counts").select("*"),
+      sb.from("course_counts").select("*"),
+      sb.from("departure_counts").select("*"),
+    ]);
+    const errore = risposte.find((r) => r.error);
+    if (errore) throw errore.error;
+    const [kpi, tessere, abbonamenti, corsi, partenze] = risposte.map((r) => r.data);
+    return { kpi, tessere, abbonamenti, corsi, partenze };
+  }
+
+  /**
+   * Gli stessi cinque insiemi per una stagione chiusa, da season_history e
+   * season_breakdown, nella forma delle viste live: il disegno resta uno solo.
+   * Stagione inesistente o non leggibile (lo storico è solo del superadmin):
+   * errore, mai un ripiego sulla stagione in corso.
+   */
+  async function datiStorici(giorno) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(giorno)) throw new Error("Stagione non valida.");
+    const season = `${giorno}T00:00:00+00:00`;
+    const [storia, righe] = await Promise.all([
+      sb.from("season_history").select("*").eq("season", season).maybeSingle(),
+      sb.from("season_breakdown").select("*").eq("season", season),
+    ]);
+    if (storia.error) throw storia.error;
+    if (righe.error) throw righe.error;
+    if (!storia.data) throw new Error("Stagione non trovata, o non disponibile per il tuo ruolo.");
+
+    const di = (categoria) => righe.data.filter((r) => r.category === categoria);
+    const incasso = di("COURSE_INCOME")[0];
+    return {
+      kpi: {
+        total_members: storia.data.members, total_due: storia.data.total,
+        total_collected: storia.data.collected, outstanding: storia.data.outstanding,
+      },
+      // Il prezzo non è archiviato: si ricava solo dove c'è il totale.
+      tessere: di("CARD").map((r) => ({
+        name: r.label, count: r.count, total: r.total,
+        price: r.total != null && r.count ? r.total / r.count : null,
+      })),
+      abbonamenti: di("PASS").map((r) => ({ name: r.label, count: r.count })),
+      corsi: di("COURSE").map((r) => ({ name: r.label, count: r.count })),
+      partenze: di("DEPARTURE").map((r) => ({ day: r.day, place: r.label, count: r.count })),
+      incassoCorsi: incasso ? incasso.total : null,
+    };
+  }
+
+  function mostraFasciaStorico(dati) {
+    const anno = Number(STAGIONE.slice(0, 4));
+    const nome = `${anno}/${String(anno + 1).slice(2)}`;
+    el("titolo").textContent = `Riepilogo Stagione ${nome}`;
+    el("fasciaTesto").textContent = `Stagione ${nome} chiusa, sola lettura.`;
+    el("fasciaCorsi").textContent = dati.incassoCorsi != null ? ` Incasso corsi: ${fmt(dati.incassoCorsi)}.` : "";
+    el("lDa").textContent = "Rimasto da incassare";
+    el("fasciaStorico").hidden = false;
+  }
 
   /**
    * Tutte le aggregazioni arrivano da viste SQL: nella 1.x erano cicli JS su
@@ -123,31 +195,24 @@
   async function carica({ silenzioso = false } = {}) {
     if (!silenzioso) setLoading(true);
     try {
-      const [kpi, tessere, abbonamenti, corsi, partenze] = await Promise.all([
-        sb.from("season_totals").select("*").single(),
-        sb.from("card_counts").select("*"),
-        sb.from("pass_counts").select("*"),
-        sb.from("course_counts").select("*"),
-        sb.from("departure_counts").select("*"),
-      ]);
+      const dati = STAGIONE ? await datiStorici(STAGIONE) : await datiCorrenti();
+      const { kpi, tessere, abbonamenti, corsi, partenze } = dati;
+      if (STAGIONE) mostraFasciaStorico(dati);
 
-      const errore = [kpi, tessere, abbonamenti, corsi, partenze].find((r) => r.error);
-      if (errore) throw errore.error;
+      el("kSoci").textContent = kpi.total_members;
+      el("kTeor").textContent = fmt(kpi.total_due);
+      el("kInc").textContent = fmt(kpi.total_collected);
+      el("kDa").textContent = fmt(kpi.outstanding);
 
-      el("kSoci").textContent = kpi.data.total_members;
-      el("kTeor").textContent = fmt(kpi.data.total_due);
-      el("kInc").textContent = fmt(kpi.data.total_collected);
-      el("kDa").textContent = fmt(kpi.data.outstanding);
-
-      const perGiorno = (giorno) => partenze.data
+      const perGiorno = (giorno) => partenze
         .filter((r) => r.day === giorno)
         .map((r) => [r.place, Number(r.count)]);
 
       riempiConteggi("tGiteSab", perGiorno("SABATO"));
       riempiConteggi("tGiteDom", perGiorno("DOMENICA"));
-      riempiConteggi("tCorsi", corsi.data.map((r) => [r.name, Number(r.count)]));
-      riempiConteggi("tAbb", abbonamenti.data.map((r) => [r.name, Number(r.count)]));
-      riempiTessere(tessere.data);
+      riempiConteggi("tCorsi", corsi.map((r) => [r.name, Number(r.count)]));
+      riempiConteggi("tAbb", abbonamenti.map((r) => [r.name, Number(r.count)]));
+      riempiTessere(tessere);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -177,6 +242,8 @@
     const ordinate = righe.sort((a, b) => Number(b.count) - Number(a.count));
     const totN = ordinate.reduce((s, r) => s + Number(r.count), 0);
     const totEuro = ordinate.reduce((s, r) => s + Number(r.total || 0), 0);
+    // Stagioni archiviate senza importi per tessera: "—", non € 0,00.
+    const conImporti = ordinate.some((r) => r.total != null);
     tbody.innerHTML =
       ordinate.map((r) => `
         <tr>
@@ -185,7 +252,7 @@
           <td>${r.price ? fmt(r.price) : "—"}</td>
           <td>${r.total ? fmt(r.total) : "—"}</td>
         </tr>`).join("") +
-      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${fmt(totEuro)}</td></tr>`;
+      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${conImporti ? fmt(totEuro) : "—"}</td></tr>`;
   }
 </script>
 </body>

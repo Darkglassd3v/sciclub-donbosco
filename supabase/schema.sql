@@ -686,7 +686,7 @@ comment on table public.season_history is 'Un socio per stagione chiusa: i cinqu
 -- la stessa lettura del Riepilogo ma di un anno archiviato.
 create table if not exists public.season_breakdown (
   season  timestamptz not null,
-  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'DEPARTURE')),
+  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'DEPARTURE')),
   label   text not null,
   -- Valorizzato solo per le partenze (SABATO/DOMENICA), stringa vuota altrove:
   -- fa parte della chiave, quindi non può essere NULL.
@@ -697,6 +697,12 @@ create table if not exists public.season_breakdown (
   total   numeric(10, 2),
   primary key (season, category, label, day)
 );
+
+-- COURSE_INCOME: una riga sola, l'incasso dei corsi (iscritti x listino), che
+-- il Riepilogo di una stagione chiusa mostra come riquadro e non come corso.
+alter table public.season_breakdown drop constraint if exists season_breakdown_category_check;
+alter table public.season_breakdown add constraint season_breakdown_category_check
+  check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'DEPARTURE'));
 
 comment on table public.season_breakdown is 'Conteggi per tipologia (tessere/abbonamenti/corsi/partenze) di una stagione chiusa. Scrive solo close_season().';
 
@@ -812,6 +818,12 @@ begin
     join da_chiudere t on t.id = m.id
     where m.course_type is not null and upper(m.course_type) <> 'NO'
     group by m.course_type
+    union all
+    select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
+    from public.members m
+    join da_chiudere t on t.id = m.id
+    join public.prices p on p.category = 'CORSO' and p.name = m.course_type
+    having count(*) > 0
     union all
     select which, 'DEPARTURE', trim(place), 'SABATO', count(*), null
     from public.members m

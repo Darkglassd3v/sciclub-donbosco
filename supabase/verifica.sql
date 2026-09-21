@@ -42,6 +42,8 @@ with
   n_fam         as (select count(payer_id)::bigint c from public.members),
   n_tesserati   as (select coalesce(sum(count), 0)::bigint c from public.card_counts),
   n_riepilogo   as (select card_holders::bigint c from public.admin_summary),
+  n_incassi_corsi as (select count(*)::bigint c from public.season_breakdown
+                      where category = 'COURSE' and label ilike 'INCASSO%'),
   n_fam_orfani  as (select count(*)::bigint c from public.members
                      where legacy_payer_id is not null and legacy_payer_id <> '' and payer_id is null),
   n_archivio    as (select count(*)::bigint c from public.members
@@ -102,6 +104,9 @@ select * from (
         '4879', (select c::text from n_tel), 'info'),
     (18,'Tesserati nel resoconto uguali al conteggio tessere',
         (select c::text from n_tesserati), (select c::text from n_riepilogo),
-        case when (select c from n_tesserati) = (select c from n_riepilogo) then 'OK' else '!! CONTROLLARE' end)
+        case when (select c from n_tesserati) = (select c from n_riepilogo) then 'OK' else '!! CONTROLLARE' end),
+    (19,'Incassi corsi dello storico fuori da COURSE_INCOME',
+        '0', (select c::text from n_incassi_corsi),
+        case when (select c from n_incassi_corsi) = 0 then 'OK' else '!! CONTROLLARE' end)
 ) as t(n, controllo, atteso, trovato, esito)
 order by n;
