@@ -337,7 +337,9 @@ body { margin: 0; }
  * comparire quando arriva la risposta del database. shared.js poi verifica il
  * ruolo e corregge l'attributo se è cambiato. Decide solo cosa mostrare:
  * ogni pagina riservata controlla il ruolo da sé, e il database le policy. */
-html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden] { display: inline-flex; }
+html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden],
+html[data-ruolo="admin"] .barra-voci [data-ruolo="admin"][hidden],
+html[data-ruolo="superadmin"] .barra-voci [data-ruolo="admin"][hidden] { display: inline-flex; }
 
 /* Cambio pagina: la barra resta dov'è, sfuma solo il contenuto sotto.
  * Dove il browser non lo supporta si ricarica come prima. */

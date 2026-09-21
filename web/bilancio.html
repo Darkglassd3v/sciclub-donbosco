@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bilancio — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <style>
+    .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
+    #bloccato { display: none; }
+
+    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
+    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
+    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
+    /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
+    .kpi.evidenza { border: 2px solid var(--blu); }
+    .kpi.evidenza .kpi-value { font-size: 3rem; color: var(--blu); }
+
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
+                padding: 30px; margin-bottom: 22px; }
+    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 14px; }
+
+    .riga-saldo { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .riga-saldo .field { margin: 0; min-width: 200px; }
+
+    /* Il form dei movimenti sta su una riga sola da tablet in su, come una riga del quaderno. */
+    .riga-movimento { display: grid; gap: 12px; align-items: end;
+                      grid-template-columns: 150px 130px minmax(150px, 1.2fr) minmax(150px, 1.5fr) 90px 120px auto; }
+    .riga-movimento .field { margin: 0; }
+    .riga-movimento label { font-size: .875rem; }
+    .importo-anteprima { color: var(--testo-soft); margin-top: 10px; }
+
+    .tabella-movimenti { width: 100%; border-collapse: collapse; }
+    .tabella-movimenti th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
+                            font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
+    .tabella-movimenti td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
+    .tabella-movimenti .num { text-align: right; white-space: nowrap; }
+    .tabella-movimenti .vuota { color: var(--testo-soft); }
+    .entrata { color: var(--ok); font-weight: 600; }
+    .uscita { color: var(--errore); font-weight: 600; }
+    .riga-totale td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
+    .azioni { white-space: nowrap; text-align: right; }
+
+    @media screen and (max-width: 1023px) {
+      .riga-movimento { grid-template-columns: 1fr 1fr; }
+    }
+    @media screen and (max-width: 768px) {
+      .riquadro { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html">Soci</a>
+      <a href="admin.html">Pagamenti</a>
+      <a href="riepilogo.html">Riepilogo</a>
+      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
+      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
+      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <h1 class="title is-4 mb-4" id="titolo">Bilancio</h1>
+
+  <div id="bloccato" class="notification is-warning">
+    Non hai i permessi per questa pagina: il bilancio è riservato agli admin.
+  </div>
+
+  <div id="contenuto">
+  <div class="columns is-multiline mb-2">
+    <div class="column is-12"><div class="kpi evidenza"><div class="kpi-label">Saldo attuale</div><div class="kpi-value" id="kSaldo">—</div></div></div>
+    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Incassato soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
+    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Entrate extra</div><div class="kpi-value" id="kExtra">—</div></div></div>
+    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Totale incassato</div><div class="kpi-value" id="kTotale">—</div></div></div>
+    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div></div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Saldo banca inizio stagione</h2>
+    <form class="riga-saldo" id="formSaldo">
+      <div class="field">
+        <label class="label" for="saldoInizio">Importo (€)</label>
+        <input class="input" id="saldoInizio" type="number" step="0.01" inputmode="decimal" required>
+      </div>
+      <button class="button is-link" type="submit" id="btnSaldo">Salva</button>
+    </form>
+    <p class="help mt-2" id="saldoProposto" hidden>Proposto dalla stagione precedente: salvalo per confermarlo.</p>
+  </div>
+
+  <div class="riquadro">
+    <h2>Movimenti</h2>
+    <form id="formMovimento">
+      <div class="riga-movimento">
+        <div class="field">
+          <label class="label" for="mData">Data</label>
+          <input class="input" id="mData" type="date" required>
+        </div>
+        <div class="field">
+          <label class="label" for="mTipo">Tipo</label>
+          <div class="select is-fullwidth">
+            <select id="mTipo">
+              <option value="ENTRATA">Entrata</option>
+              <option value="USCITA">Uscita</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label" for="mVoce">Voce</label>
+          <input class="input" id="mVoce" list="voci" autocomplete="off" required>
+          <datalist id="voci">
+            <option value="Skipass Sestriere"></option>
+            <option value="Tapis"></option>
+            <option value="Giornalieri"></option>
+            <option value="Invito"></option>
+            <option value="Baby"></option>
+            <option value="Gita singola"></option>
+            <option value="Maestri"></option>
+            <option value="Pullman"></option>
+            <option value="Assicurazioni"></option>
+            <option value="Altro"></option>
+          </datalist>
+        </div>
+        <div class="field">
+          <label class="label" for="mDescrizione">Descrizione</label>
+          <input class="input" id="mDescrizione" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="label" for="mQuantita">Quantità</label>
+          <input class="input" id="mQuantita" type="number" min="0.01" step="0.01" value="1" required>
+        </div>
+        <div class="field">
+          <label class="label" for="mPrezzo">Prezzo unit. (€)</label>
+          <input class="input" id="mPrezzo" type="number" min="0" step="0.01" inputmode="decimal" required>
+        </div>
+        <button class="button is-link" type="submit" id="btnAggiungi">Aggiungi</button>
+      </div>
+      <p class="importo-anteprima" aria-live="polite">Importo: <b id="mImporto">€ 0,00</b></p>
+    </form>
+
+    <div class="tabella-scorrevole mt-5">
+      <table class="tabella-movimenti">
+        <thead><tr>
+          <th>Data</th><th>Voce</th><th>Descrizione</th>
+          <th class="num">Q.tà</th><th class="num">Prezzo</th><th class="num">Importo</th><th></th>
+        </tr></thead>
+        <tbody id="elencoMovimenti"><tr><td colspan="7" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+  const oggi = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale
+  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  let stagione = null; // season della vista season_balance: filtra i movimenti
+
+  (async function init() {
+    if (!(await requireRole("admin"))) {
+      el("bloccato").style.display = "block";
+      el("contenuto").style.display = "none";
+      return;
+    }
+    el("mData").value = oggi();
+    for (const id of ["mQuantita", "mPrezzo"]) el(id).addEventListener("input", anteprima);
+    el("formSaldo").addEventListener("submit", salvaSaldo);
+    el("formMovimento").addEventListener("submit", aggiungi);
+    el("elencoMovimenti").addEventListener("click", azioneRiga);
+    await ricarica();
+  })();
+
+  function anteprima() {
+    el("mImporto").textContent = fmt(num(el("mQuantita").value) * num(el("mPrezzo").value));
+  }
+
+  /** Bilancio prima (dà la stagione), poi i movimenti di quella stagione. */
+  async function ricarica() {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.from("season_balance").select("*").single();
+      if (error) throw error;
+      stagione = data.season;
+      const anno = new Date(stagione).getFullYear();
+      el("titolo").textContent = `Bilancio ${anno}/${String(anno + 1).slice(2)}`;
+      el("kSaldo").textContent = fmt(data.bank_current);
+      el("kSoci").textContent = fmt(data.members_collected);
+      el("kExtra").textContent = fmt(data.other_income);
+      el("kTotale").textContent = fmt(data.total_collected);
+      el("kUscite").textContent = fmt(data.expenses);
+      // Non sovrascrive un valore che si sta scrivendo.
+      if (document.activeElement !== el("saldoInizio")) el("saldoInizio").value = num(data.bank_opening).toFixed(2);
+      el("saldoProposto").hidden = data.bank_opening_set;
+      await caricaMovimenti();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function caricaMovimenti() {
+    const { data, error } = await sb.from("ledger_entries").select("*")
+      .eq("season", stagione)
+      .order("entry_date", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    if (!data.length) {
+      el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento in questa stagione.</td></tr>`;
+      return;
+    }
+    // Totale netto: entrate meno uscite.
+    const totale = data.reduce((s, m) => s + (m.kind === "USCITA" ? -1 : 1) * num(m.amount), 0);
+    el("elencoMovimenti").innerHTML = data.map((m) => {
+      const uscita = m.kind === "USCITA";
+      return `
+        <tr>
+          <td>${new Date(m.entry_date + "T00:00").toLocaleDateString("it-IT")}</td>
+          <td>${esc(m.category)}</td>
+          <td>${esc(m.description)}</td>
+          <td class="num">${num(m.quantity).toLocaleString("it-IT")}</td>
+          <td class="num">${fmt(m.unit_price)}</td>
+          <td class="num ${uscita ? "uscita" : "entrata"}">${uscita ? "−" : "+"} ${fmt(m.amount)}</td>
+          <td class="azioni" data-id="${m.id}">${pulsanteElimina()}</td>
+        </tr>`;
+    }).join("") + `
+      <tr class="riga-totale">
+        <td colspan="5">Totale movimenti</td>
+        <td class="num ${totale < 0 ? "uscita" : "entrata"}">${fmt(totale)}</td>
+        <td></td>
+      </tr>`;
+  }
+
+  const pulsanteElimina = () =>
+    `<button type="button" class="button is-small is-light" data-azione="chiedi">Elimina</button>`;
+
+  /** Elimina con conferma nella riga stessa: il primo clic chiede, il secondo cancella. */
+  async function azioneRiga(e) {
+    const btn = e.target.closest("button[data-azione]");
+    if (!btn) return;
+    const cella = btn.closest("td");
+    const azione = btn.dataset.azione;
+    if (azione === "chiedi") {
+      cella.innerHTML = `Eliminare?
+        <button type="button" class="button is-small is-danger" data-azione="elimina">Sì, elimina</button>
+        <button type="button" class="button is-small" data-azione="annulla">No</button>`;
+    } else if (azione === "annulla") {
+      cella.innerHTML = pulsanteElimina();
+    } else if (azione === "elimina") {
+      btn.disabled = true;
+      await scrivi(() => sb.from("ledger_entries").delete().eq("id", cella.dataset.id), "Movimento eliminato.");
+    }
+  }
+
+  /** Esegue una scrittura, avvisa e ricarica tutto: i totali li calcola il database. */
+  async function scrivi(operazione, messaggio) {
+    setLoading(true);
+    try {
+      const { error } = await operazione();
+      if (error) throw error;
+      showToast(messaggio);
+      await ricarica();
+      return true;
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function salvaSaldo(e) {
+    e.preventDefault();
+    el("btnSaldo").disabled = true;
+    await scrivi(() => sb.from("season_accounts").upsert({
+      season: stagione, bank_opening: num(el("saldoInizio").value), updated_at: new Date().toISOString(),
+    }), "Saldo di inizio stagione salvato.");
+    el("btnSaldo").disabled = false;
+  }
+
+  async function aggiungi(e) {
+    e.preventDefault();
+    el("btnAggiungi").disabled = true;
+    const ok = await scrivi(() => sb.from("ledger_entries").insert({
+      entry_date: el("mData").value,
+      kind: el("mTipo").value,
+      category: el("mVoce").value.trim(),
+      description: el("mDescrizione").value.trim() || null,
+      quantity: num(el("mQuantita").value),
+      unit_price: num(el("mPrezzo").value),
+    }), "Movimento aggiunto.");
+    el("btnAggiungi").disabled = false;
+    if (ok) {
+      // Data e tipo restano: spesso si registrano più movimenti dello stesso giorno.
+      for (const id of ["mVoce", "mDescrizione", "mPrezzo"]) el(id).value = "";
+      el("mQuantita").value = 1;
+      anteprima();
+      el("mVoce").focus();
+    }
+  }
+</script>
+</body>
+</html>
