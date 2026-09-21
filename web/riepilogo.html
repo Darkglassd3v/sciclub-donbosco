@@ -51,6 +51,7 @@
       <a href="index.html">Soci</a>
       <a href="admin.html">Pagamenti</a>
       <a href="riepilogo.html">Riepilogo</a>
+      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
       <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
@@ -67,6 +68,7 @@
   <div class="notification is-warning is-light" id="fasciaStorico" hidden>
     <b id="fasciaTesto"></b>
     <span id="fasciaCorsi"></span>
+    <span id="fasciaBanca"></span>
     <a href="riepilogo.html">Torna alla stagione in corso</a>
   </div>
 
@@ -175,6 +177,7 @@
       corsi: di("COURSE").map((r) => ({ name: r.label, count: r.count })),
       partenze: di("DEPARTURE").map((r) => ({ day: r.day, place: r.label, count: r.count })),
       incassoCorsi: incasso ? incasso.total : null,
+      bancaInizio: storia.data.bank_opening, bancaFine: storia.data.bank_closing,
     };
   }
 
@@ -184,6 +187,10 @@
     el("titolo").textContent = `Riepilogo Stagione ${nome}`;
     el("fasciaTesto").textContent = `Stagione ${nome} chiusa, sola lettura.`;
     el("fasciaCorsi").textContent = dati.incassoCorsi != null ? ` Incasso corsi: ${fmt(dati.incassoCorsi)}.` : "";
+    // Stagioni chiuse prima del bilancio: i saldi banca non esistono.
+    el("fasciaBanca").textContent = dati.bancaInizio != null && dati.bancaFine != null
+      ? ` Banca: ${fmt(dati.bancaInizio)} → ${fmt(dati.bancaFine)}.`
+      : " Banca: n.d.";
     el("lDa").textContent = "Rimasto da incassare";
     el("fasciaStorico").hidden = false;
   }
