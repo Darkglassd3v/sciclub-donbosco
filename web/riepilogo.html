@@ -79,35 +79,36 @@
     <div class="column is-3"><div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
   </div>
 
+  <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. -->
   <div class="columns is-multiline">
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-blue">Gite del sabato</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteSab"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-yellow">Gite della domenica</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteDom"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-green">Corsi</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Corso</th><th>Iscritti</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-grey">Abbonamenti</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>Iscritti</th></tr></thead><tbody id="tAbb"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-8">
+    <div class="column is-6">
       <div class="section-card">
         <div class="section-header bg-blue">Tessere</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-yellow">Abbonamenti gite</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-green">Corsi</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-grey">Entrate extra</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-6">
+      <div class="section-card">
+        <div class="section-header bg-grey">Uscite</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -136,12 +137,54 @@
       sb.from("card_counts").select("*"),
       sb.from("pass_counts").select("*"),
       sb.from("course_counts").select("*"),
-      sb.from("departure_counts").select("*"),
+      sb.from("prices").select("category, name, price"),
+      // I movimenti li legge solo l'admin: per gli altri la RLS dà un elenco vuoto.
+      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
     ]);
     const errore = risposte.find((r) => r.error);
     if (errore) throw errore.error;
-    const [kpi, tessere, abbonamenti, corsi, partenze] = risposte.map((r) => r.data);
-    return { kpi, tessere, abbonamenti, corsi, partenze };
+    const [kpi, tessere, abbonamenti, corsi, listino, movimenti] = risposte.map((r) => r.data);
+
+    // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
+    const conPrezzo = (righe, categoria) => righe.map((r) => {
+      const voce = listino.find((p) => p.category === categoria && p.name === r.name);
+      const prezzo = voce ? Number(voce.price) : null;
+      return { name: r.name, count: r.count, price: prezzo, total: prezzo != null ? prezzo * Number(r.count) : null };
+    });
+    return {
+      kpi, tessere,
+      abbonamenti: conPrezzo(abbonamenti, "ABBONAMENTO"),
+      corsi: conPrezzo(corsi, "CORSO"),
+      ...perVoce(movimenti),
+    };
+  }
+
+  /** Inizio della stagione in corso (1° settembre), come nel pannello Pagamenti. */
+  function inizioStagione() {
+    const oggi = new Date();
+    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
+    return new Date(anno, 8, 1).toISOString();
+  }
+
+  /**
+   * Movimenti raggruppati per voce, separati in entrate e uscite. Il prezzo si
+   * mostra solo se è lo stesso per tutti i movimenti della voce.
+   */
+  function perVoce(movimenti) {
+    const gruppi = (tipo) => {
+      const voci = {};
+      for (const m of movimenti.filter((x) => x.kind === tipo)) {
+        const v = voci[m.category] || (voci[m.category] = { name: m.category, count: 0, total: 0, prezzi: new Set() });
+        v.count += Number(m.quantity);
+        v.total += Number(m.amount);
+        v.prezzi.add(Number(m.unit_price));
+      }
+      return Object.values(voci).map((v) => ({
+        name: v.name, count: v.count, total: v.total,
+        price: v.prezzi.size === 1 ? [...v.prezzi][0] : null,
+      }));
+    };
+    return { entrate: gruppi("ENTRATA"), uscite: gruppi("USCITA") };
   }
 
   /**
@@ -153,12 +196,14 @@
   async function datiStorici(giorno) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(giorno)) throw new Error("Stagione non valida.");
     const season = `${giorno}T00:00:00+00:00`;
-    const [storia, righe] = await Promise.all([
+    const [storia, righe, movimenti] = await Promise.all([
       sb.from("season_history").select("*").eq("season", season).maybeSingle(),
       sb.from("season_breakdown").select("*").eq("season", season),
+      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").eq("season", season),
     ]);
     if (storia.error) throw storia.error;
     if (righe.error) throw righe.error;
+    if (movimenti.error) throw movimenti.error;
     if (!storia.data) throw new Error("Stagione non trovata, o non disponibile per il tuo ruolo.");
 
     const di = (categoria) => righe.data.filter((r) => r.category === categoria);
@@ -169,15 +214,20 @@
         total_collected: storia.data.collected, outstanding: storia.data.outstanding,
       },
       // Il prezzo non è archiviato: si ricava solo dove c'è il totale.
-      tessere: di("CARD").map((r) => ({
-        name: r.label, count: r.count, total: r.total,
-        price: r.total != null && r.count ? r.total / r.count : null,
-      })),
-      abbonamenti: di("PASS").map((r) => ({ name: r.label, count: r.count })),
-      corsi: di("COURSE").map((r) => ({ name: r.label, count: r.count })),
-      partenze: di("DEPARTURE").map((r) => ({ day: r.day, place: r.label, count: r.count })),
+      tessere: di("CARD").map(conTotaleArchiviato),
+      abbonamenti: di("PASS").map(conTotaleArchiviato),
+      corsi: di("COURSE").map(conTotaleArchiviato),
+      ...perVoce(movimenti.data),
       incassoCorsi: incasso ? incasso.total : null,
       bancaInizio: storia.data.bank_opening, bancaFine: storia.data.bank_closing,
+    };
+  }
+
+  /** Riga archiviata: il prezzo si ricava dal totale, se è stato salvato. */
+  function conTotaleArchiviato(r) {
+    return {
+      name: r.label, count: r.count, total: r.total,
+      price: r.total != null && r.count ? r.total / r.count : null,
     };
   }
 
@@ -203,7 +253,7 @@
     if (!silenzioso) setLoading(true);
     try {
       const dati = STAGIONE ? await datiStorici(STAGIONE) : await datiCorrenti();
-      const { kpi, tessere, abbonamenti, corsi, partenze } = dati;
+      const { kpi, tessere, abbonamenti, corsi } = dati;
       if (STAGIONE) mostraFasciaStorico(dati);
 
       el("kSoci").textContent = kpi.total_members;
@@ -211,15 +261,11 @@
       el("kInc").textContent = fmt(kpi.total_collected);
       el("kDa").textContent = fmt(kpi.outstanding);
 
-      const perGiorno = (giorno) => partenze
-        .filter((r) => r.day === giorno)
-        .map((r) => [r.place, Number(r.count)]);
-
-      riempiConteggi("tGiteSab", perGiorno("SABATO"));
-      riempiConteggi("tGiteDom", perGiorno("DOMENICA"));
-      riempiConteggi("tCorsi", corsi.map((r) => [r.name, Number(r.count)]));
-      riempiConteggi("tAbb", abbonamenti.map((r) => [r.name, Number(r.count)]));
-      riempiTessere(tessere);
+      riempiVoci("tTess", tessere);
+      riempiVoci("tAbb", abbonamenti);
+      riempiVoci("tCorsi", corsi);
+      riempiVoci("tEntrate", dati.entrate);
+      riempiVoci("tUscite", dati.uscite);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -227,21 +273,9 @@
     }
   }
 
-  function riempiConteggi(id, voci) {
+  /** Tabella di una voce di bilancio: numero, prezzo e totale, "—" dove manca. */
+  function riempiVoci(id, righe) {
     const tbody = el(id);
-    if (!voci.length) {
-      tbody.innerHTML = '<tr><td colspan="2" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
-      return;
-    }
-    const ordinate = voci.sort((a, b) => b[1] - a[1]);
-    const totale = ordinate.reduce((s, [, v]) => s + v, 0);
-    tbody.innerHTML =
-      ordinate.map(([nome, n]) => `<tr><td>${nome}</td><td><span class="badge badge-blue">${n}</span></td></tr>`).join("") +
-      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totale}</span></td></tr>`;
-  }
-
-  function riempiTessere(righe) {
-    const tbody = el("tTess");
     if (!righe.length) {
       tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
       return;
@@ -254,7 +288,7 @@
     tbody.innerHTML =
       ordinate.map((r) => `
         <tr>
-          <td>${r.name}</td>
+          <td>${esc(r.name)}</td>
           <td><span class="badge badge-blue">${r.count}</span></td>
           <td>${r.price ? fmt(r.price) : "—"}</td>
           <td>${r.total ? fmt(r.total) : "—"}</td>
