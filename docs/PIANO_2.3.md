@@ -11,7 +11,7 @@
 - [x] 6a. README, `graphify update .`
 - [x] 6b. Vista admin_summary applicata in Supabase (2026-09-21)
 - [ ] 6c. DA FARE: prova sul telefono (vedi §3)
-- Deciso: finché l'abbonamento è in coda il socio non compare nell'elenco principale (§1d non implementato, voluto)
+- [x] 7. Socio con abbonamento in coda subito nell'elenco principale, «in invio» (§1d)
 
 ## Decisioni prese
 

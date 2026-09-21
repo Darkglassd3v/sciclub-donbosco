@@ -227,7 +227,25 @@
     const { data, error } = await sb
       .from("trip_passes").select("*").order("last_name").order("first_name");
     if (error) throw error;
-    abbonamenti = data;
+    abbonamenti = conProvvisori(data);
+  }
+
+  /**
+   * Aggiunge all'elenco chi ha un abbonamento ancora in coda: compare subito,
+   * con la dicitura «in invio», e gli si possono già segnare le gite. Le gite
+   * partono dopo l'abbonamento perché la coda va in ordine. Chi è già arrivato
+   * al database non viene duplicato.
+   */
+  function conProvvisori(elenco) {
+    const inCoda = coda
+      .filter((v) => v.tipo === "abbonamento" && !elenco.some((a) => a.member_id === v.socio))
+      .map((v) => ({
+        member_id: v.socio, last_name: v.cognome || v.chi || "", first_name: v.nome_socio || "",
+        pass_name: v.nome, day: v.day, trips_total: v.trips || 0, trips_used: 0,
+        trips_left: v.trips || 0, inInvio: true,
+      }));
+    return elenco.concat(inCoda).sort((a, b) =>
+      `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
   }
 
   async function caricaGite(socioId) {
@@ -279,6 +297,7 @@
         <div class="nomi">
           <span>${evidenzia(a.last_name, parti)} ${evidenzia(a.first_name, parti)}</span>
           ${etichettaGiorno(a.day)}
+          ${a.inInvio ? '<span class="in-invio">in invio</span>' : ""}
         </div>
 
         <div class="conto">
@@ -569,7 +588,7 @@
   async function caricaOpzioniAbbonamento() {
     const { data, error } = await sb
       .from("prices")
-      .select("name, price")
+      .select("name, price, trips, day")
       .eq("category", "ABBONAMENTO")
       .eq("active", true)
       .not("trips", "is", null)   // solo abbonamenti a gite: gli altri non c'entrano con questa pagina
@@ -675,15 +694,19 @@
     coda.push({
       id: nuovoId(), tipo: "abbonamento", socio: socioId,
       chi: `${socio.last_name} ${socio.first_name}`,
+      cognome: socio.last_name, nome_socio: socio.first_name,
       nome: voce.name, prezzo: Number(voce.price || 0), pagato,
+      trips: Number(voce.trips || 0), day: voce.day,
       total: Number(socio.total || 0), paid: Number(socio.paid || 0),
     });
     salvaCoda();
 
-    // Esce da questo elenco subito; entra in quello principale appena
-    // l'invio arriva, e da lì gli si segnano le gite.
+    // Passa subito all'elenco principale, «in invio»: le gite gli si segnano
+    // anche senza linea e partono dopo l'abbonamento.
     senzaAbbonamento = senzaAbbonamento.filter((s) => s.id !== socioId);
+    abbonamenti = conProvvisori(abbonamenti);
     disegnaSenza();
+    disegna();
     messaggio(`Abbonamento «${voce.name}» a ${socio.last_name} ${socio.first_name}: in invio.`, "avviso-ok");
     svuotaCoda();
   }
