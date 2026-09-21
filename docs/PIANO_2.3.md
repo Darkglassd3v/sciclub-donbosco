@@ -7,7 +7,7 @@
 - [x] 2. Riquadri in `web/stagione.html` (voce di menu "Amministrazione", solo superadmin)
 - [x] 3. Pannello gite: solo tesserati in "senza abbonamento"
 - [x] 4. Pannello gite: assegnazione in coda (update condizionato)
-- [ ] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
+- [x] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
 - [ ] 6. Prova sul telefono, README/DOCUMENTAZIONE, `graphify update .`
 
 ## Decisioni prese

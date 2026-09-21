@@ -632,7 +632,8 @@
           <select data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${opzioni}</select>
         </div>
         <div class="azioni-pannello" style="margin-top:10px">
-          <button class="btn-blu" data-assegna="${s.id}">Assegna abbonamento</button>
+          <button class="btn-blu" data-assegna="${s.id}" data-pagato="1">Assegna · pagato</button>
+          <button class="btn-blu" data-assegna="${s.id}">Assegna · da pagare</button>
         </div>
         <div id="esito_${s.id}"></div>
       </div>`;
@@ -645,7 +646,7 @@
       .map((s) => `<li>${schedaSenzaHtml(s, parti)}</li>`).join("");
 
     el("senzaAbbonamento").querySelectorAll("[data-assegna]").forEach((b) =>
-      b.addEventListener("click", () => assegna(b.dataset.assegna, b)));
+      b.addEventListener("click", () => assegna(b.dataset.assegna, b, b.dataset.pagato === "1")));
   }
 
   /**
