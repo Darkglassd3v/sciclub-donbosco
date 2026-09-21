@@ -42,3 +42,13 @@ Il volantino con gli spazi a pagamento è già deciso; i social sono un suppleme
 ### D. Rilascio
 - [ ] `.github/workflows/deploy-pages.yml`: il deploy parte dal branch `2.2`, da portare a `2.3` al rilascio
 - [ ] `graphify update .`, README, tag `2.3`
+
+### E. Bilancio stagione (fuori piano social, fatto il 2026-09-21)
+- [x] DB: `ledger_entries` (movimenti extra), `season_accounts` (saldo banca iniziale), vista `season_balance`, colonne banca in `season_history`, `close_season()` le scrive; totali abbonamenti/corsi archiviati alla chiusura
+- [x] Pagina `web/bilancio.html` (admin): saldo iniziale, incassato soci, entrate extra, uscite, saldo attuale, movimenti
+- [x] Amministrazione: chiusura con finestra di conferma
+- [x] Riepilogo: solo voci di bilancio (tessere, abbonamenti, corsi, entrate extra, uscite) con prezzo e totale; stagione chiusa con banca
+- [ ] Prova manuale: checklist in scratchpad (`checklist_bilancio.md`), in particolare da admin e da utente
+- [ ] `supabase/test_ruoli.sh` da eseguire (serve docker)
+- [ ] Saldi banca 2025/26 da inserire quando disponibili (`season_history.bank_opening`/`bank_closing`)
+- [ ] Provare `close_season()` nuova su una copia del database prima di una chiusura vera
