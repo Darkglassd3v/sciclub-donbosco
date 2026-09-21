@@ -619,8 +619,12 @@
   }
 
   function schedaSenzaHtml(s, parti) {
+    // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
     const opzioni = opzioniAbbonamento
-      .map((v) => `<option value="${esc(v.name)}">${esc(v.name)} (${esc(v.price)}€)</option>`)
+      .map((v) => `<label class="scelta">
+          <input type="radio" name="abb_${s.id}" value="${esc(v.name)}">
+          <span>${esc(v.name)}</span><span class="prezzo">${esc(v.price)} €</span>
+        </label>`)
       .join("");
 
     return `
@@ -629,11 +633,11 @@
           <span>${evidenzia(s.last_name, parti)} ${evidenzia(s.first_name, parti)}</span>
         </div>
         <div style="margin-top:12px">
-          <select data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${opzioni}</select>
+          <fieldset class="scelte" data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${opzioni}</fieldset>
         </div>
         <div class="azioni-pannello" style="margin-top:10px">
-          <button class="btn-blu" data-assegna="${s.id}" data-pagato="1">Assegna · pagato</button>
-          <button class="btn-blu" data-assegna="${s.id}">Assegna · da pagare</button>
+          <button class="btn-verde" data-assegna="${s.id}" data-pagato="1">Assegna · pagato</button>
+          <button class="btn-rosso" data-assegna="${s.id}">Assegna · da pagare</button>
         </div>
         <div id="esito_${s.id}"></div>
       </div>`;
@@ -656,8 +660,13 @@
    */
   function assegna(socioId, bottone, pagato = false) {
     const socio = senzaAbbonamento.find((s) => s.id === socioId);
-    const scelta = el("senzaAbbonamento").querySelector(`[data-scelta="${socioId}"]`);
-    if (!socio || !scelta) return;
+    const scelta = el("senzaAbbonamento").querySelector(`input[name="abb_${socioId}"]:checked`);
+    if (!socio) return;
+    if (!scelta) {
+      const esito = el("esito_" + socioId);
+      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">Scegli prima l'abbonamento.</p>`;
+      return;
+    }
 
     const voce = opzioniAbbonamento.find((v) => v.name === scelta.value);
     if (!voce) return;
