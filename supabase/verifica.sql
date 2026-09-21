@@ -40,6 +40,8 @@ with
   n_cf          as (select count(*)::bigint c from public.members where tax_code is not null),
   n_tel         as (select count(*)::bigint c from public.members where phone is not null),
   n_fam         as (select count(payer_id)::bigint c from public.members),
+  n_tesserati   as (select coalesce(sum(count), 0)::bigint c from public.card_counts),
+  n_riepilogo   as (select card_holders::bigint c from public.admin_summary),
   n_fam_orfani  as (select count(*)::bigint c from public.members
                      where legacy_payer_id is not null and legacy_payer_id <> '' and payer_id is null),
   n_archivio    as (select count(*)::bigint c from public.members
@@ -97,6 +99,9 @@ select * from (
     (16,'Anagrafiche con codice fiscale',
         '1138 (il foglio non lo aveva per tutti)', (select c::text from n_cf), 'info'),
     (17,'Anagrafiche con telefono',
-        '4879', (select c::text from n_tel), 'info')
+        '4879', (select c::text from n_tel), 'info'),
+    (18,'Tesserati nel resoconto uguali al conteggio tessere',
+        (select c::text from n_tesserati), (select c::text from n_riepilogo),
+        case when (select c from n_tesserati) = (select c from n_riepilogo) then 'OK' else '!! CONTROLLARE' end)
 ) as t(n, controllo, atteso, trovato, esito)
 order by n;

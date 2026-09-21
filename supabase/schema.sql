@@ -259,6 +259,22 @@ where enrolled_at >= public.current_season()
   and upper(course_type) <> 'NO'
 group by course_type;
 
+-- Resoconto rapido del pannello amministrazione: tre numeri della stagione.
+-- Incasso corsi = iscritti al corso x prezzo di listino (sabato o domenica
+-- indifferente): paid e' un acconto unico per riga, quindi l'incassato per voce
+-- non esiste. Tesserati = chi ha una tessera, "NO" vale come vuoto.
+create or replace view public.admin_summary as
+select
+  (select coalesce(sum(p.price), 0)
+     from public.members m
+     join public.prices p on p.category = 'CORSO' and p.name = m.course_type
+    where m.enrolled_at >= public.current_season())            as courses_income,
+  (select coalesce(sum(paid), 0) from public.members
+    where enrolled_at >= public.current_season())              as total_collected,
+  (select count(*) from public.members
+    where enrolled_at >= public.current_season()
+      and card_type is not null and upper(card_type) <> 'NO')  as card_holders;
+
 -- Le partenze sono liste separate da virgola come nella 1.x: vengono esplose.
 create or replace view public.departure_counts as
 select 'SABATO' as day, trim(place) as place, count(*) as count
@@ -566,6 +582,7 @@ alter view public.card_counts     set (security_invoker = true);
 alter view public.pass_counts     set (security_invoker = true);
 alter view public.course_counts   set (security_invoker = true);
 alter view public.departure_counts set (security_invoker = true);
+alter view public.admin_summary    set (security_invoker = true);
 
 -- ---------------------------------------------------------------------------
 -- Realtime: permette alle pagine di ricevere gli aggiornamenti via websocket

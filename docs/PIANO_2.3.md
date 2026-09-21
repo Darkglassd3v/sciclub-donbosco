@@ -3,7 +3,7 @@
 ## Stato (aggiornato a ogni commit)
 
 - [x] Piano scritto
-- [ ] 1. Vista `admin_summary` + controllo in `verifica.sql`
+- [x] 1. Vista `admin_summary` + controllo in `verifica.sql`
 - [ ] 2. Riquadri in `web/admin.html`
 - [ ] 3. Pannello gite: solo tesserati in "senza abbonamento"
 - [ ] 4. Pannello gite: assegnazione in coda (update condizionato)
