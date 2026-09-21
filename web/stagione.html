@@ -61,6 +61,9 @@
     @media screen and (max-width: 768px) {
       .riquadro { padding: 22px 18px; }
     }
+    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
+    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
+    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
   </style>
 </head>
 <body>
@@ -92,6 +95,12 @@
   </div>
 
   <div id="contenuto">
+  <!-- Resoconto rapido: incasso corsi = iscritti al corso x listino. -->
+  <div class="columns is-mobile is-multiline mb-5">
+    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso corsi</div><div class="kpi-value" id="kCorsi">—</div></div></div>
+    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div></div>
+    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div></div>
+  </div>
   <div class="fascia-pericolo">
     <strong>Chiusura della stagione</strong>
     Tesseramenti, pagamenti, partenze e nuclei familiari di tutti i soci
@@ -207,8 +216,16 @@
     });
     el("btnChiudi").addEventListener("click", chiudi);
 
-    await caricaSituazione();
+    await Promise.all([caricaSituazione(), caricaResoconto()]);
   })();
+
+  async function caricaResoconto() {
+    const { data, error } = await sb.from("admin_summary").select("*").single();
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    el("kCorsi").textContent = fmt(data.courses_income);
+    el("kIncasso").textContent = fmt(data.total_collected);
+    el("kTesserati").textContent = data.card_holders;
+  }
 
   function annoStagione(iso) {
     const inizio = new Date(iso).getFullYear();

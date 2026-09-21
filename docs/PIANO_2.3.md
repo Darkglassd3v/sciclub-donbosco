@@ -4,7 +4,7 @@
 
 - [x] Piano scritto
 - [x] 1. Vista `admin_summary` + controllo in `verifica.sql`
-- [ ] 2. Riquadri in `web/admin.html`
+- [x] 2. Riquadri in `web/stagione.html` (voce di menu "Amministrazione", solo superadmin)
 - [ ] 3. Pannello gite: solo tesserati in "senza abbonamento"
 - [ ] 4. Pannello gite: assegnazione in coda (update condizionato)
 - [ ] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
@@ -80,7 +80,7 @@ subito: vanno in coda dopo l'abbonamento e partono nell'ordine giusto.
 
 `assegna()` attuale: sostituita dall'accodamento.
 
-## 2. Pannello amministrazione (`web/admin.html`)
+## 2. Pannello amministrazione (`web/stagione.html`)
 
 ### 2a. Vista `admin_summary` (`supabase/schema.sql`)
 
