@@ -159,7 +159,7 @@
 
   /** Quante gite di questo socio non sono ancora arrivate al database. */
   function inAttesa(socioId) {
-    return coda.filter((v) => v.socio === socioId).length;
+    return coda.filter((v) => v.socio === socioId && v.tipo !== "abbonamento").length;
   }
 
   /**
@@ -391,8 +391,12 @@
       while (coda.length) {
         const voce = coda[0];
         try {
-          const { error } = await sb.rpc("use_trip", { member_id: voce.socio, client_id: voce.id });
-          if (error) throw error;
+          if (voce.tipo === "abbonamento") {
+            await inviaAbbonamento(voce);
+          } else {
+            const { error } = await sb.rpc("use_trip", { member_id: voce.socio, client_id: voce.id });
+            if (error) throw error;
+          }
           togliDallaCoda(voce.id);
           attesaRitentativo = 0;
         } catch (errore) {
@@ -401,8 +405,9 @@
             return;
           }
           const chi = abbonamenti.find((x) => x.member_id === voce.socio);
+          const nome = voce.chi || (chi ? `${chi.last_name} ${chi.first_name}` : "");
           togliDallaCoda(voce.id);
-          rifiutate.push((chi ? `${chi.last_name} ${chi.first_name}: ` : "") + messaggioErrore(errore));
+          rifiutate.push((nome ? `${nome}: ` : "") + messaggioErrore(errore));
         }
         aggiornaDaInviare();
       }
@@ -418,6 +423,41 @@
     } finally {
       if (rifiutate.length) messaggio(rifiutate.join(" · "), "avviso-errore");
       inviando = false;
+    }
+  }
+
+  /**
+   * Assegna l'abbonamento di una voce in coda.
+   *
+   * L'update scatta solo se il socio non ha ancora un abbonamento: il primo
+   * invio riuscito cambia la condizione, quindi un reinvio (risposta persa per
+   * strada) non trova più la riga e non somma una seconda volta.
+   */
+  async function inviaAbbonamento(v) {
+    // ponytail: total e paid sono quelli letti all'assegnazione, come nel form
+    // soci; una modifica fatta intanto da un altro operatore viene sovrascritta.
+    // Se capita, la somma va spostata in una funzione del database.
+    const { data, error } = await sb
+      .from("members")
+      .update({
+        pass_type: v.nome,
+        total: v.total + v.prezzo,
+        paid: v.paid + (v.pagato ? v.prezzo : 0),
+      })
+      .eq("id", v.socio)
+      .or("pass_type.is.null,pass_type.eq.NO")
+      .select("id");
+    if (error) throw error;
+    if (data.length) return;
+
+    // Nessuna riga toccata: o era un reinvio già arrivato, o un altro
+    // telefono gli ha dato nel frattempo un abbonamento diverso.
+    const { data: riga, error: errLettura } = await sb
+      .from("members").select("pass_type").eq("id", v.socio).single();
+    if (errLettura) throw errLettura;
+    if (riga.pass_type !== v.nome) {
+      // Con un code il rifiuto è definitivo: la voce esce dalla coda.
+      throw Object.assign(new Error(`ha già l'abbonamento «${riga.pass_type}»`), { code: "GIA_ASSEGNATO" });
     }
   }
 
@@ -439,7 +479,7 @@
     // Le gite ancora in coda non sono nel database, ma vanno mostrate lo
     // stesso: una segnata senza linea sembrerebbe sparita, e soprattutto non
     // ci sarebbe modo di annullarla prima che parta.
-    const attesa = coda.filter((v) => v.socio === socioId);
+    const attesa = coda.filter((v) => v.socio === socioId && v.tipo !== "abbonamento");
 
     // Senza linea lo storico non si legge, ma le gite in coda sì: sono qui
     // sul telefono, e sono proprio quelle che può servire annullare adesso.
@@ -608,7 +648,12 @@
       b.addEventListener("click", () => assegna(b.dataset.assegna, b)));
   }
 
-  async function assegna(socioId, bottone) {
+  /**
+   * Mette in coda l'assegnazione: parte subito se c'è linea, altrimenti appena
+   * torna, con le stesse regole delle gite. Il prezzo viene dal listino, come
+   * nel form soci; "pagato" lo somma anche all'acconto.
+   */
+  function assegna(socioId, bottone, pagato = false) {
     const socio = senzaAbbonamento.find((s) => s.id === socioId);
     const scelta = el("senzaAbbonamento").querySelector(`[data-scelta="${socioId}"]`);
     if (!socio || !scelta) return;
@@ -617,32 +662,20 @@
     if (!voce) return;
 
     bottone.disabled = true;
-    try {
-      const { error } = await sb
-        .from("members")
-        .update({
-          pass_type: voce.name,
-          // Stesso conto del form soci completo: l'abbonamento si somma a
-          // quello che il socio già deve.
-          total: Number(socio.total || 0) + Number(voce.price || 0),
-        })
-        .eq("id", socioId);
-      // Un rifiuto del database dice già cosa è successo: va mostrato com'è,
-      // non come "errore di rete".
-      if (error) throw error;
+    coda.push({
+      id: nuovoId(), tipo: "abbonamento", socio: socioId,
+      chi: `${socio.last_name} ${socio.first_name}`,
+      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
+      total: Number(socio.total || 0), paid: Number(socio.paid || 0),
+    });
+    salvaCoda();
 
-      // Adesso il socio ha un abbonamento: esce da questo elenco ed entra in
-      // quello principale, dove gli si possono segnare le gite.
-      senzaAbbonamento = senzaAbbonamento.filter((s) => s.id !== socioId);
-      await caricaAbbonamenti();
-      disegna();
-      disegnaSenza();
-      messaggio(`Abbonamento «${voce.name}» assegnato a ${socio.last_name} ${socio.first_name}.`, "avviso-ok");
-    } catch (errore) {
-      bottone.disabled = false;
-      const esito = el("esito_" + socioId);
-      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">${esc(messaggioErrore(errore))}</p>`;
-    }
+    // Esce da questo elenco subito; entra in quello principale appena
+    // l'invio arriva, e da lì gli si segnano le gite.
+    senzaAbbonamento = senzaAbbonamento.filter((s) => s.id !== socioId);
+    disegnaSenza();
+    messaggio(`Abbonamento «${voce.name}» a ${socio.last_name} ${socio.first_name}: in invio.`, "avviso-ok");
+    svuotaCoda();
   }
 
   // -------------------------------------------------------------------------
