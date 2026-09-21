@@ -550,8 +550,11 @@
 
     let query = sb
       .from("members")
-      .select("id, last_name, first_name, total")
+      .select("id, last_name, first_name, total, paid")
       .gte("enrolled_at", inizioStagione())
+      // L'abbonamento si vende solo a chi è tesserato.
+      .not("card_type", "is", null)
+      .neq("card_type", "NO")
       // Nel foglio di partenza "NO" voleva dire "niente abbonamento": vale
       // come il campo vuoto.
       .or("pass_type.is.null,pass_type.eq.NO");

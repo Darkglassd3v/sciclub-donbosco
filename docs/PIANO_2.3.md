@@ -5,7 +5,7 @@
 - [x] Piano scritto
 - [x] 1. Vista `admin_summary` + controllo in `verifica.sql`
 - [x] 2. Riquadri in `web/stagione.html` (voce di menu "Amministrazione", solo superadmin)
-- [ ] 3. Pannello gite: solo tesserati in "senza abbonamento"
+- [x] 3. Pannello gite: solo tesserati in "senza abbonamento"
 - [ ] 4. Pannello gite: assegnazione in coda (update condizionato)
 - [ ] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
 - [ ] 6. Prova sul telefono, README/DOCUMENTAZIONE, `graphify update .`
