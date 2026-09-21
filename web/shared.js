@@ -183,6 +183,9 @@ const num = (v) => parseFloat(v) || 0;
  */
 function fmt(v) {
   return "€ " + num(v).toLocaleString("it-IT", {
+    // In italiano il punto delle migliaia manca sotto i 10.000 (5000,00 ma
+    // 11.000,00): "always" lo mette sempre, così gli importi si confrontano.
+    useGrouping: "always",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

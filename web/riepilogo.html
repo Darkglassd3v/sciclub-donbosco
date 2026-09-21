@@ -33,6 +33,12 @@
     .rtable { width: 100%; border-collapse: collapse; }
     .rtable th { text-align: left; padding: 10px 6px; }
     .rtable td { padding: 14px 6px; }
+    /* Stesse colonne in ogni sezione: numeri a destra, importi su una riga. */
+    .rtable { table-layout: fixed; }
+    .rtable th:nth-child(n+2), .rtable td:nth-child(n+2) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .rtable th:nth-child(2) { width: 64px; }
+    .rtable th:nth-child(3) { width: 108px; }
+    .rtable th:nth-child(4) { width: 128px; }
     .total-row td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
     .badge { display: inline-block; padding: 4px 12px; border-radius: var(--pillola); font-weight: 600; font-size: .9375rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
