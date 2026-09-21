@@ -706,6 +706,101 @@ alter table public.season_breakdown add constraint season_breakdown_category_che
 
 comment on table public.season_breakdown is 'Conteggi per tipologia (tessere/abbonamenti/corsi/partenze) di una stagione chiusa. Scrive solo close_season().';
 
+-- Il bilancio di una stagione chiusa. NULL = stagione chiusa prima che il
+-- bilancio esistesse: dato non disponibile, non zero.
+alter table public.season_history add column if not exists bank_opening numeric(10, 2);
+alter table public.season_history add column if not exists other_income numeric(10, 2);
+alter table public.season_history add column if not exists expenses     numeric(10, 2);
+alter table public.season_history add column if not exists bank_closing numeric(10, 2);
+
+-- Movimenti extra: entrate e uscite non legate alle quote dei soci (skipass,
+-- pullman, maestri...). Non si azzerano alla chiusura: restano legati alla
+-- loro stagione.
+create table if not exists public.ledger_entries (
+  id          uuid primary key default gen_random_uuid(),
+  season      timestamptz not null default public.current_season(),
+  entry_date  date not null default current_date,
+  kind        text not null check (kind in ('ENTRATA', 'USCITA')),
+  category    text not null,
+  description text,
+  quantity    numeric(10, 2) not null default 1 check (quantity > 0),
+  unit_price  numeric(10, 2) not null check (unit_price >= 0),
+  amount      numeric(10, 2) generated always as (quantity * unit_price) stored,
+  created_by  uuid default auth.uid(),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists ledger_entries_season_idx on public.ledger_entries (season);
+
+comment on table public.ledger_entries is 'Movimenti extra (entrate/uscite) di una stagione, oltre alle quote dei soci.';
+
+-- Il saldo in banca a inizio stagione, scritto a mano dal direttivo.
+create table if not exists public.season_accounts (
+  season       timestamptz primary key,
+  bank_opening numeric(10, 2) not null default 0,
+  updated_at   timestamptz not null default now()
+);
+
+drop trigger if exists season_accounts_set_updated_at on public.season_accounts;
+create trigger season_accounts_set_updated_at
+  before update on public.season_accounts
+  for each row execute function public.set_updated_at();
+
+comment on table public.season_accounts is 'Saldo banca a inizio stagione.';
+
+-- Saldo di chiusura dell'ultima stagione chiusa prima di `before`. Security
+-- definer apposta: lo storico lo legge solo il superadmin, ma il saldo da
+-- proporre serve anche all'admin che compila il bilancio, e questa funzione
+-- restituisce quel numero e nient'altro.
+create or replace function public.previous_bank_closing(before timestamptz)
+returns numeric
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select h.bank_closing from public.season_history h
+   where h.season < before order by h.season desc limit 1;
+$$;
+
+revoke all on function public.previous_bank_closing(timestamptz) from public;
+grant execute on function public.previous_bank_closing(timestamptz) to authenticated;
+
+-- Il bilancio della stagione corrente, una riga. Senza saldo iniziale scritto
+-- propone la chiusura della stagione precedente (bank_opening_set = false).
+create or replace view public.season_balance as
+with s as (
+  select public.current_season() as season
+), t as (
+  select
+    s.season,
+    a.bank_opening as bank_opening_manual,
+    public.previous_bank_closing(s.season) as bank_opening_prev,
+    (select coalesce(sum(m.paid), 0) from public.members m
+      where m.enrolled_at >= s.season) as members_collected,
+    (select coalesce(sum(l.amount), 0) from public.ledger_entries l
+      where l.season = s.season and l.kind = 'ENTRATA') as other_income,
+    (select coalesce(sum(l.amount), 0) from public.ledger_entries l
+      where l.season = s.season and l.kind = 'USCITA') as expenses
+  from s
+  left join public.season_accounts a on a.season = s.season
+)
+select
+  season,
+  coalesce(bank_opening_manual, bank_opening_prev, 0)                  as bank_opening,
+  bank_opening_manual is not null                                      as bank_opening_set,
+  members_collected,
+  other_income,
+  expenses,
+  members_collected + other_income                                     as total_collected,
+  coalesce(bank_opening_manual, bank_opening_prev, 0)
+    + members_collected + other_income - expenses                      as bank_current
+from t;
+
+alter view public.season_balance set (security_invoker = true);
+
+comment on view public.season_balance is 'Bilancio della stagione corrente: saldo iniziale, incassi soci, movimenti extra, saldo attuale.';
+
 -- Quante righe verrebbero toccate da una chiusura, per stagione. Serve al
 -- pannello per dire in anticipo cosa sta per succedere.
 create or replace view public.open_season as
@@ -840,6 +935,28 @@ begin
       count = public.season_breakdown.count + excluded.count,
       total = coalesce(public.season_breakdown.total, 0) + coalesce(excluded.total, 0);
 
+    -- Il bilancio della stagione: si imposta (non si somma), perché movimenti
+    -- e saldo iniziale non si azzerano e una seconda chiusura li rilegge
+    -- interi. collected è già quello aggiornato dall'upsert qui sopra.
+    update public.season_history h set
+      bank_opening = b.bank_opening,
+      other_income = b.other_income,
+      expenses     = b.expenses,
+      bank_closing = b.bank_opening + h.collected + b.other_income - b.expenses
+    from (
+      select
+        coalesce(
+          (select a.bank_opening from public.season_accounts a where a.season = which),
+          (select p.bank_closing from public.season_history p
+            where p.season < which order by p.season desc limit 1),
+          0) as bank_opening,
+        coalesce((select sum(l.amount) from public.ledger_entries l
+                   where l.season = which and l.kind = 'ENTRATA'), 0) as other_income,
+        coalesce((select sum(l.amount) from public.ledger_entries l
+                   where l.season = which and l.kind = 'USCITA'), 0) as expenses
+    ) b
+    where h.season = which;
+
   end if;
 
   -- Un solo UPDATE, e con il WHERE: le anagrafiche non sono nominate, quindi
@@ -897,6 +1014,35 @@ create policy season_breakdown_insert on public.season_breakdown
   for insert to authenticated with check (public.has_role('superadmin'));
 create policy season_breakdown_update on public.season_breakdown
   for update to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
+
+alter table public.ledger_entries  enable row level security;
+alter table public.season_accounts enable row level security;
+
+drop policy if exists ledger_entries_select  on public.ledger_entries;
+drop policy if exists ledger_entries_insert  on public.ledger_entries;
+drop policy if exists ledger_entries_update  on public.ledger_entries;
+drop policy if exists ledger_entries_delete  on public.ledger_entries;
+drop policy if exists season_accounts_select on public.season_accounts;
+drop policy if exists season_accounts_insert on public.season_accounts;
+drop policy if exists season_accounts_update on public.season_accounts;
+
+-- Il bilancio è degli admin: movimenti liberi (un errore si corregge o si
+-- cancella), saldo iniziale scrivibile ma non cancellabile.
+create policy ledger_entries_select on public.ledger_entries
+  for select to authenticated using (public.has_role('admin'));
+create policy ledger_entries_insert on public.ledger_entries
+  for insert to authenticated with check (public.has_role('admin'));
+create policy ledger_entries_update on public.ledger_entries
+  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
+create policy ledger_entries_delete on public.ledger_entries
+  for delete to authenticated using (public.has_role('admin'));
+
+create policy season_accounts_select on public.season_accounts
+  for select to authenticated using (public.has_role('admin'));
+create policy season_accounts_insert on public.season_accounts
+  for insert to authenticated with check (public.has_role('admin'));
+create policy season_accounts_update on public.season_accounts
+  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 
 -- ---------------------------------------------------------------------------
 -- Saldo di un nucleo familiare

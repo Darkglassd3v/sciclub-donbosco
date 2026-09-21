@@ -47,7 +47,20 @@ with
   n_fam_orfani  as (select count(*)::bigint c from public.members
                      where legacy_payer_id is not null and legacy_payer_id <> '' and payer_id is null),
   n_archivio    as (select count(*)::bigint c from public.members
-                     where enrolled_at < date '2001-01-01')
+                     where enrolled_at < date '2001-01-01'),
+  -- Bilancio stagione (2.3): movimenti extra, saldo banca, storico chiuso.
+  n_rls_bil     as (select count(*)::bigint c from pg_tables
+                     where schemaname = 'public'
+                       and tablename in ('ledger_entries','season_accounts')
+                       and rowsecurity),
+  bil           as (select * from public.season_balance),
+  bil_calc      as (select bank_opening + members_collected + other_income - expenses c from bil),
+  n_chiuse_err  as (select count(*)::bigint c from public.season_history
+                     where bank_closing is not null
+                       and bank_closing is distinct from
+                           (bank_opening + collected + other_income - expenses)),
+  n_mov_err     as (select count(*)::bigint c from public.ledger_entries
+                     where amount <= 0 or kind is null or kind not in ('ENTRATA','USCITA'))
 
 select * from (
   values
@@ -107,6 +120,24 @@ select * from (
         case when (select c from n_tesserati) = (select c from n_riepilogo) then 'OK' else '!! CONTROLLARE' end),
     (19,'Incassi corsi dello storico fuori da COURSE_INCOME',
         '0', (select c::text from n_incassi_corsi),
-        case when (select c from n_incassi_corsi) = 0 then 'OK' else '!! CONTROLLARE' end)
+        case when (select c from n_incassi_corsi) = 0 then 'OK' else '!! CONTROLLARE' end),
+    (20,'Row Level Security attiva (ledger_entries, season_accounts)',
+        '2', (select c::text from n_rls_bil),
+        case when (select c from n_rls_bil) = 2 then 'OK' else '!! CONTROLLARE' end),
+    (21,'Bilancio: banca attuale = iniziale + quote + entrate - uscite',
+        (select c::text from bil_calc), (select bank_current::text from bil),
+        case when (select bank_current from bil) = (select c from bil_calc) then 'OK' else '!! CONTROLLARE' end),
+    (22,'Bilancio: quote incassate uguali al riepilogo stagione',
+        (select total_collected::text from public.season_totals), (select members_collected::text from bil),
+        case when (select members_collected from bil) = (select total_collected from public.season_totals)
+             then 'OK' else '!! CONTROLLARE' end),
+    (23,'Stagioni chiuse con saldo banca finale incoerente',
+        '0', (select c::text from n_chiuse_err),
+        case when (select c from n_chiuse_err) = 0 then 'OK' else '!! CONTROLLARE' end),
+    -- amount <= 0 dovrebbe essere impossibile (quantity > 0) salvo prezzo
+    -- unitario 0: un movimento da zero euro è comunque da guardare.
+    (24,'Movimenti con importo <= 0 o tipo non valido',
+        '0', (select c::text from n_mov_err),
+        case when (select c from n_mov_err) = 0 then 'OK' else '!! CONTROLLARE' end)
 ) as t(n, controllo, atteso, trovato, esito)
 order by n;

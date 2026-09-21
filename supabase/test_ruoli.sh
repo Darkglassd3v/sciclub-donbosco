@@ -218,6 +218,58 @@ do $$ begin
   assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
 end $$;
 
+-- Bilancio (ledger_entries, season_accounts): solo admin in su. L'admin
+-- scrive per primo, così "utente non vede niente" non passa per tabella vuota.
+do $$
+declare quante int;
+begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  insert into public.ledger_entries (kind, category, quantity, unit_price)
+  values ('USCITA', 'PROVA PULLMAN', 2, 150);
+  assert (select amount from public.ledger_entries where category = 'PROVA PULLMAN') = 300,
+         'un admin non legge il movimento appena inserito';
+  insert into public.season_accounts (season, bank_opening) values ('2001-09-01', 1000);
+  assert (select count(*) from public.season_accounts) = 1, 'un admin non legge il saldo iniziale';
+end $$;
+
+do $$
+declare
+  chi text;
+  quante int;
+begin
+  foreach chi in array array['11111111-1111-1111-1111-111111111111',   -- utente
+                             '55555555-5555-5555-5555-555555555555'] loop -- ospite
+    perform set_config('test.uid', chi, false);
+    assert (select count(*) from public.ledger_entries) = 0, 'un non admin legge i movimenti';
+    assert (select count(*) from public.season_accounts) = 0, 'un non admin legge il saldo iniziale';
+
+    with x as (delete from public.ledger_entries returning 1) select count(*) into quante from x;
+    assert quante = 0, 'un non admin ha cancellato un movimento';
+
+    begin
+      insert into public.ledger_entries (kind, category, quantity, unit_price)
+      values ('ENTRATA', 'PROVA ABUSIVA', 1, 10);
+      raise exception 'ASSERZIONE: un non admin ha inserito un movimento';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
+
+    begin
+      insert into public.season_accounts (season, bank_opening) values ('2002-09-01', 1);
+      raise exception 'ASSERZIONE: un non admin ha scritto il saldo iniziale';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
+  end loop;
+
+  -- L'admin cancella il suo movimento: il database torna com'era.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  with x as (delete from public.ledger_entries where category = 'PROVA PULLMAN' returning 1)
+  select count(*) into quante from x;
+  assert quante = 1, 'un admin non ha potuto cancellare un movimento';
+  assert (select count(*) from public.ledger_entries) = 0, 'movimenti rimasti dopo la pulizia';
+end $$;
+
 -- Rimozione dal pannello Utenti: la fa solo il superadmin, e chi resta senza
 -- riga profiles resta senza accessi, anche se il suo account Auth esiste
 -- ancora (cancellarlo davvero vorrebbe la service_role).
@@ -241,6 +293,8 @@ begin
 end $$;
 
 reset role;
+-- season_accounts non ha policy di delete: la riga di prova la toglie postgres.
+delete from public.season_accounts where season = '2001-09-01';
 SQL
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
