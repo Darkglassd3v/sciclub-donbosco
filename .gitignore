@@ -44,3 +44,6 @@ node_modules/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# PNG generati da social/export.sh: si rigenerano
+social/export/
