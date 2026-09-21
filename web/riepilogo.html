@@ -138,7 +138,6 @@
       el("kTeor").textContent = fmt(kpi.data.total_due);
       el("kInc").textContent = fmt(kpi.data.total_collected);
       el("kDa").textContent = fmt(kpi.data.outstanding);
-      el("lastUpdate").textContent = "Aggiornato: " + new Date().toLocaleString("it-IT");
 
       const perGiorno = (giorno) => partenze.data
         .filter((r) => r.day === giorno)
