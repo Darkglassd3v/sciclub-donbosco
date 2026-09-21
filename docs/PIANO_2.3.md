@@ -9,7 +9,9 @@
 - [x] 4. Pannello gite: assegnazione in coda (update condizionato)
 - [x] 5. Pannello gite: pulsanti «Assegna · pagato» / «Assegna · da pagare»
 - [x] 6a. README, `graphify update .`
-- [ ] 6b. DA FARE: rieseguire `schema.sql` in Supabase (vista admin_summary), poi prova sul telefono (vedi §3)
+- [x] 6b. Vista admin_summary applicata in Supabase (2026-09-21)
+- [ ] 6c. DA FARE: prova sul telefono (vedi §3)
+- Deciso: finché l'abbonamento è in coda il socio non compare nell'elenco principale (§1d non implementato, voluto)
 
 ## Decisioni prese
 
