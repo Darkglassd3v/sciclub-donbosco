@@ -48,7 +48,7 @@ Il volantino con gli spazi a pagamento è già deciso; i social sono un suppleme
 - [x] Pagina `web/bilancio.html` (admin): saldo iniziale, incassato soci, entrate extra, uscite, saldo attuale, movimenti
 - [x] Amministrazione: chiusura con finestra di conferma
 - [x] Riepilogo: solo voci di bilancio (tessere, abbonamenti, corsi, entrate extra, uscite) con prezzo e totale; stagione chiusa con banca
-- [ ] Prova manuale: checklist in scratchpad (`checklist_bilancio.md`), in particolare da admin e da utente
+- [ ] Prova manuale: `docs/CHECKLIST_BILANCIO.md`, in particolare da admin e da utente
 - [ ] `supabase/test_ruoli.sh` da eseguire (serve docker)
 - [ ] Saldi banca 2025/26 da inserire quando disponibili (`season_history.bank_opening`/`bank_closing`)
 - [ ] Provare `close_season()` nuova su una copia del database prima di una chiusura vera
