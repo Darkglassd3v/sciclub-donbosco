@@ -902,17 +902,19 @@ begin
     where m.card_type is not null and upper(m.card_type) <> 'NO'
     group by m.card_type, p.price
     union all
-    select which, 'PASS', m.pass_type, '', count(*), null
+    select which, 'PASS', m.pass_type, '', count(*), count(*) * p.price
     from public.members m
     join da_chiudere t on t.id = m.id
+    left join public.prices p on p.category = 'ABBONAMENTO' and p.name = m.pass_type
     where m.pass_type is not null and upper(m.pass_type) <> 'NO'
-    group by m.pass_type
+    group by m.pass_type, p.price
     union all
-    select which, 'COURSE', m.course_type, '', count(*), null
+    select which, 'COURSE', m.course_type, '', count(*), count(*) * p.price
     from public.members m
     join da_chiudere t on t.id = m.id
+    left join public.prices p on p.category = 'CORSO' and p.name = m.course_type
     where m.course_type is not null and upper(m.course_type) <> 'NO'
-    group by m.course_type
+    group by m.course_type, p.price
     union all
     select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
     from public.members m
