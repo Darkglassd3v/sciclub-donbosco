@@ -24,6 +24,7 @@ async function requireAuth() {
 }
 
 async function logout() {
+  ricordaRuolo(null);
   await sb.auth.signOut();
   location.replace("login.html");
 }
@@ -44,7 +45,7 @@ let _profiloCache = null;
 async function getProfile() {
   if (_profiloCache) return _profiloCache;
   const { data: { user } } = await sb.auth.getUser();
-  if (!user) return null;
+  if (!user) { ricordaRuolo(null); return null; }
   const { data, error } = await sb
     .from("profiles")
     .select("role, email")
@@ -52,7 +53,22 @@ async function getProfile() {
     .maybeSingle();
   if (error) throw error;
   _profiloCache = data;
+  ricordaRuolo(data && data.role);
   return data;
+}
+
+/**
+ * Ruolo per la barra della prossima pagina: lo legge lo script nell'head
+ * prima del primo disegno (vedi brand.css). null lo dimentica (logout, niente
+ * sessione). Sta in localStorage così vale anche in una scheda nuova.
+ */
+function ricordaRuolo(ruolo) {
+  try {
+    if (ruolo) localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: ruolo }));
+    else localStorage.removeItem("sciclub-ruolo");
+  } catch (e) { /* storage negato: la barra si aggiorna come prima */ }
+  if (ruolo) document.documentElement.dataset.ruolo = ruolo;
+  else delete document.documentElement.dataset.ruolo;
 }
 
 /** true se l'utente collegato ha almeno il ruolo minRuolo. */

@@ -330,3 +330,16 @@ body { margin: 0; }
   .barra-marchio span { display: none; }
   .barra-voci a, .barra-voci button { height: 38px; padding: 0 12px; font-size: .875rem; }
 }
+
+/* --- Barra ferma fra una pagina e l'altra --------------------------------
+ * Il ruolo dell'ultima visita è scritto su <html> da uno script nell'head,
+ * prima del primo disegno: le voci riservate nascono già visibili invece di
+ * comparire quando arriva la risposta del database. shared.js poi verifica il
+ * ruolo e corregge l'attributo se è cambiato. Decide solo cosa mostrare:
+ * ogni pagina riservata controlla il ruolo da sé, e il database le policy. */
+html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden] { display: inline-flex; }
+
+/* Cambio pagina: la barra resta dov'è, sfuma solo il contenuto sotto.
+ * Dove il browser non lo supporta si ricarica come prima. */
+@view-transition { navigation: auto; }
+.barra { view-transition-name: barra; }
