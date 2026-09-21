@@ -170,7 +170,6 @@
 <script>
   const el = (id) => document.getElementById(id);
   const oggi = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale
-  const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
   let stagione = null; // season della vista season_balance: filtra i movimenti
 
   (async function init() {

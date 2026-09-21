@@ -168,6 +168,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+/** Testo scritto dagli utenti, pronto per innerHTML. */
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 // ---------------------------------------------------------------------------
 // Importi
 // ---------------------------------------------------------------------------
