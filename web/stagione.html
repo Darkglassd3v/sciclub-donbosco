@@ -12,15 +12,6 @@
     #bloccato { display: none; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    /* Questa pagina deve sembrare diversa dalle altre appena si apre: chi ci
-     * finisce per sbaglio se ne accorge prima di toccare qualcosa. */
-    .fascia-pericolo {
-      background: var(--errore); color: #fff; padding: 22px 26px;
-      border-radius: var(--raggio-card); margin-bottom: 28px; font-size: 1.05rem;
-    }
-    .fascia-pericolo strong { color: #fff; display: block; font-size: 1.35rem;
-                              letter-spacing: -.022em; margin-bottom: 6px; }
-
     .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
                 padding: 30px; margin-bottom: 22px; }
     .riquadro.pericolo { border: 2px solid var(--errore); }
@@ -50,7 +41,13 @@
                      border-radius: 6px; font-size: 1rem; }
 
 
+    #dlgChiudi { border: 0; border-radius: var(--raggio-card); padding: 30px;
+                 width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+    #dlgChiudi::backdrop { background: rgba(0,0,0,.45); }
+    #dlgChiudi h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
+
     @media screen and (max-width: 768px) {
+      #dlgChiudi { padding: 22px 18px; }
       .riquadro { padding: 22px 18px; }
     }
     .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
@@ -70,6 +67,7 @@
       <a href="index.html">Soci</a>
       <a href="admin.html">Pagamenti</a>
       <a href="riepilogo.html">Riepilogo</a>
+      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
       <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
@@ -93,12 +91,6 @@
     <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div></div>
     <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div></div>
   </div>
-  <div class="fascia-pericolo">
-    <strong>Chiusura della stagione</strong>
-    Tesseramenti, pagamenti, partenze e nuclei familiari di tutti i soci
-    vengono azzerati in un'unica operazione.
-  </div>
-
   <div class="riquadro">
     <h2>Stagione in corso</h2>
     <div class="tabella-scorrevole">
@@ -128,64 +120,58 @@
     </div>
   </div>
 
-  <div class="riquadro">
-    <h2>Effetti della chiusura</h2>
-    <p class="mb-4">
-      I dati rimossi vengono prima archiviati in <code>season_history</code> e
-      <code>season_breakdown</code> e restano consultabili nella tabella delle
-      stagioni chiuse: il pulsante Riepilogo apre la stagione archiviata.
-    </p>
-    <div class="due-colonne">
-      <div>
-        <p class="resta mb-2">Resta invariato</p>
-        <ul class="elenco">
-          <li>Cognome e nome</li>
-          <li>Data e luogo di nascita</li>
-          <li>Codice fiscale</li>
-          <li>Indirizzo, città, CAP</li>
-          <li>Telefono ed email</li>
-        </ul>
-      </div>
-      <div>
-        <p class="via mb-2">Viene azzerato</p>
-        <ul class="elenco">
-          <li>Numero di polizza</li>
-          <li>Numero e tipologia di tessera</li>
-          <li>Agevolazione famiglia</li>
-          <li>Abbonamento e corso</li>
-          <li>Partenze del sabato e della domenica</li>
-          <li>Quota, acconto e saldo</li>
-          <li>Capofamiglia che paga (nuclei familiari)</li>
-          <li>Note</li>
-          <li>Data di iscrizione</li>
-          <li>Contatori delle gite (ripartono da zero)</li>
-        </ul>
-      </div>
-    </div>
-    <p class="mt-4">
-      Le gite registrate restano legate alla stagione in cui sono state fatte:
-      a ripartire da zero sono solo i contatori della stagione nuova.
-    </p>
-    <p class="mt-4">
-      Dopo la chiusura i soci restano in anagrafica senza risultare iscritti ad
-      alcuna stagione: rientrano nei conteggi quando vengono risalvati dalla
-      pagina <a href="index.html">Soci</a>. Listino prezzi e partenze non
-      vengono modificati.
-    </p>
-  </div>
-
   <div class="riquadro pericolo">
-    <h2>Chiusura</h2>
-    <div class="conferma">
-      <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
-      <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
-      <button class="button is-danger mt-4" id="btnChiudi" disabled>Chiudi la stagione e azzera i dati</button>
-    </div>
-
+    <h2>Chiusura della stagione</h2>
+    <p class="mb-4">Archivia la stagione in corso e azzera tesseramenti e pagamenti: le anagrafiche restano.</p>
+    <button type="button" class="button is-danger" id="btnApri">Chiudi stagione…</button>
     <div id="esito" class="mt-4"></div>
   </div>
   </div>
 </div>
+
+<!-- Conferma della chiusura: la spiegazione sta qui, davanti a chi sta per
+     farlo, e non più sparsa nella pagina. -->
+<dialog id="dlgChiudi" aria-labelledby="dlgTitolo">
+  <h2 id="dlgTitolo">Chiudere la stagione?</h2>
+  <p class="mb-4">
+    I dati della stagione vengono prima archiviati e restano consultabili fra
+    le stagioni chiuse (pulsante Riepilogo). Le gite registrate e i movimenti
+    del bilancio restano legati alla loro stagione.
+  </p>
+  <div class="due-colonne">
+    <div>
+      <p class="resta mb-2">Resta invariato</p>
+      <ul class="elenco">
+        <li>Cognome, nome, nascita, codice fiscale</li>
+        <li>Indirizzo, telefono ed email</li>
+        <li>Listino prezzi e partenze</li>
+      </ul>
+    </div>
+    <div>
+      <p class="via mb-2">Viene azzerato</p>
+      <ul class="elenco">
+        <li>Polizza, tessera, agevolazione famiglia</li>
+        <li>Abbonamento, corso e partenze</li>
+        <li>Quota, acconto e saldo, capofamiglia che paga</li>
+        <li>Note e data di iscrizione</li>
+        <li>Contatori delle gite</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mt-4">
+    I soci restano in anagrafica senza stagione: rientrano nei conteggi quando
+    vengono risalvati dalla pagina Soci.
+  </p>
+  <p class="mt-4">Saldo banca finale previsto: <b id="saldoFinale">…</b></p>
+  <div class="conferma">
+    <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
+    <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
+    <div class="buttons mt-4">
+      <button type="button" class="button" id="btnAnnulla">Annulla</button>
+      <button type="button" class="button is-danger" id="btnChiudi" disabled>Chiudi la stagione</button>
+    </div>
+  </div>
+</dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -207,6 +193,8 @@
       el("btnChiudi").disabled = e.target.value.trim().toUpperCase() !== FRASE;
     });
     el("btnChiudi").addEventListener("click", chiudi);
+    el("btnApri").addEventListener("click", apriConferma);
+    el("btnAnnulla").addEventListener("click", () => el("dlgChiudi").close());
 
     await Promise.all([caricaSituazione(), caricaResoconto()]);
   })();
@@ -286,7 +274,18 @@
     }
   }
 
+  /** Apre la conferma e legge il saldo banca a cui si chiuderà la stagione. */
+  async function apriConferma() {
+    el("frase").value = "";
+    el("btnChiudi").disabled = true;
+    el("saldoFinale").textContent = "…";
+    el("dlgChiudi").showModal();
+    const { data, error } = await sb.from("season_balance").select("bank_current").maybeSingle();
+    el("saldoFinale").textContent = error || !data ? "n.d." : fmt(data.bank_current);
+  }
+
   async function chiudi() {
+    el("dlgChiudi").close();
     setLoading(true);
     el("btnChiudi").disabled = true;
     try {
