@@ -120,7 +120,7 @@ end $$;
 do $$ begin
   perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
   assert (select count(*) from public.members) = 0, 'un ospite vede i soci';
-  assert (select count(*) from public.members_kiosk_search) = 0, 'un ospite vede la vista kiosk';
+  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 0, 'un ospite usa la ricerca kiosk';
   assert (select count(*) from public.prices) = 0, 'un ospite vede il listino';
   assert (select count(*) from public.profiles) = 1, 'un ospite vede profili non suoi';
 end $$;
@@ -140,11 +140,20 @@ begin
   assert quante = 1, 'il superadmin non ha potuto cambiare un ruolo';
 end $$;
 
--- Il kiosk non vede members, ma vede la vista a campi ridotti.
+-- Il kiosk non vede members, ma trova sé stesso con nome e cognome interi.
+-- Le regole della pagina valgono anche chiamando l'API a mano: con una
+-- parola sola, con le prime lettere o con i jolly del like non esce niente.
 do $$ begin
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
   assert (select count(*) from public.members) = 0, 'il kiosk vede la tabella members';
-  assert (select count(*) from public.members_kiosk_search) = 1, 'il kiosk non vede la vista ridotta';
+  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 1, 'il kiosk non trova il socio';
+  assert (select count(*) from public.kiosk_search(array['MARIO', 'Rossi'])) = 1, 'la ricerca kiosk distingue le maiuscole';
+  assert (select count(*) from public.kiosk_search(array['rossi'])) = 0, 'il kiosk cerca con una parola sola';
+  assert (select count(*) from public.kiosk_search(array['rossi', 'rossi'])) = 0, 'il kiosk aggira le due parole ripetendone una';
+  assert (select count(*) from public.kiosk_search(array['ros', 'mar'])) = 0, 'il kiosk cerca per prefisso';
+  assert (select count(*) from public.kiosk_search(array['%', '%'])) = 0, 'il kiosk usa i jolly del like';
+  assert (select count(*) from public.kiosk_search(array['r_ssi', 'mario'])) = 0, 'il kiosk usa il jolly _';
+  assert (select count(*) from public.kiosk_search(null)) = 0, 'il kiosk cerca senza parole';
 end $$;
 
 -- Il listino lo scrive solo il superadmin.
@@ -288,8 +297,8 @@ begin
 
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
   assert not public.has_role('kiosk'), 'un utente rimosso ha ancora un ruolo';
-  assert (select count(*) from public.members_kiosk_search) = 0,
-         'un utente rimosso vede ancora la vista kiosk';
+  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 0,
+         'un utente rimosso usa ancora la ricerca kiosk';
 end $$;
 
 reset role;

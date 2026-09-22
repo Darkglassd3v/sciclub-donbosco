@@ -468,16 +468,59 @@ alter table public.prices add constraint prices_min_role_only_card
 
 comment on column public.prices.min_role is 'Ruolo minimo per vedere/selezionare questa voce di listino (solo per category=TESSERA).';
 
--- Campi minimi per la ricerca da kiosk: niente numero tessera, codice
--- fiscale, indirizzo o importi. Non è security_invoker apposta: deve restare
--- leggibile da chi ha ruolo kiosk, che non ha accesso a members (sotto), e il
--- filtro sta nel WHERE invece che nella RLS della tabella sottostante.
-create or replace view public.members_kiosk_search as
-select id, last_name, first_name, phone, email, card_type, pass_type
-from public.members
-where public.has_role('kiosk');
+-- Ricerca socio dal tablet in negozio (ruolo kiosk). Campi minimi: niente
+-- numero tessera, codice fiscale, indirizzo o importi.
+--
+-- Fino alla 2.2 era una vista security definer: i campi erano ridotti, ma
+-- il filtro lo sceglieva il client, quindi chiamando l'API a mano il kiosk
+-- scaricava telefono ed email di tutto il club. Qui le regole della pagina
+-- (ricerca/comune.js, pezziKiosk e filtroPezzo) le impone il database:
+-- almeno due parole diverse, ognuna una parola intera del cognome o del nome,
+-- e al massimo tre risultati.
+--
+-- security definer perché il kiosk non ha accesso a members (sotto): questa
+-- funzione è l'unica porta, e restituisce solo quello che serve.
+drop view if exists public.members_kiosk_search;
 
-comment on view public.members_kiosk_search is 'Ricerca socio per il tablet in negozio: campi ridotti, nessun dato sensibile.';
+create or replace function public.kiosk_search(parti text[])
+returns table (id uuid, last_name text, first_name text, phone text,
+               email text, card_type text, pass_type text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  -- Stessa pulizia di pezzi() in comune.js: toglie anche % e _, che nel like
+  -- sotto farebbero da jolly. Distinct perché "rossi rossi" è un pezzo solo.
+  with p as (
+    select distinct pezzo
+      from (select regexp_replace(lower(x), '[^a-zàèéìòóùç''’-]', '', 'g') as pezzo
+              from unnest(parti) x) t
+     where length(pezzo) >= 2
+  )
+  select m.id, m.last_name, m.first_name, m.phone, m.email, m.card_type, m.pass_type
+    from public.members m
+   where public.has_role('kiosk')
+     and (select count(*) from p) >= 2
+     and not exists (
+       select 1 from p
+        where ' ' || lower(m.last_name)  || ' ' not like '% ' || p.pezzo || ' %'
+          and ' ' || lower(m.first_name) || ' ' not like '% ' || p.pezzo || ' %')
+   order by m.last_name, m.first_name
+   limit 3;
+$$;
+
+-- Supabase dà execute ad anon di default: senza login la funzione non
+-- restituirebbe comunque niente (has_role è false), ma la porta resta chiusa.
+revoke all on function public.kiosk_search(text[]) from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.kiosk_search(text[]) from anon;
+  end if;
+end $$;
+grant execute on function public.kiosk_search(text[]) to authenticated;
+
+comment on function public.kiosk_search is 'Ricerca socio per il tablet in negozio: nome e cognome per intero, campi ridotti, al massimo 3 risultati.';
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security

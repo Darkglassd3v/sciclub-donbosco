@@ -71,20 +71,19 @@
   // Stessa pagina, ma chi la usa è chiunque passi dal negozio, non un
   // volontario del direttivo. Tre differenze, tutte per lo stesso motivo: chi
   // è lì deve poter ritrovare la propria scheda, non sfogliare il club.
-  //   1. i dati arrivano dalla vista members_kiosk_search, che il numero di
+  //   1. i dati arrivano dalla funzione kiosk_search, che il numero di
   //      tessera non ce l'ha proprio (la RLS gli chiude members del tutto,
   //      quindi non è una scelta della pagina: è il database);
   //   2. serve nome E cognome, scritti per intero o quasi — con le prime
   //      lettere uscirebbe l'elenco di tutti quelli che iniziano così;
   //   3. pochi risultati: due omonimi ci stanno, mezza rubrica no.
+  // Il 2 e il 3 li controlla anche kiosk_search: qui servono solo a non
+  // mandare richieste che tornerebbero comunque vuote.
   //
   // Per tutti gli altri ruoli la pagina resta quella di prima, numero di
   // tessera compreso: a chi incassa serve, ed è lo stesso dato che ha già
   // sotto gli occhi nel gestionale.
   // -------------------------------------------------------------------------
-
-  const CAMPI_KIOSK = "id, last_name, first_name, phone, email, card_type, pass_type";
-  const MAX_KIOSK = 3;
 
   let daKiosk = false;
 
@@ -112,16 +111,20 @@
     const parti = partiRicerca(testoCercato);
     if (!parti || !parti.length) return null;
 
-    let query = sb
-      .from(daKiosk ? "members_kiosk_search" : "members")
-      .select(daKiosk ? CAMPI_KIOSK : CAMPI);
+    if (daKiosk) {
+      const { data, error } = await sb.rpc("kiosk_search", { parti });
+      if (error) throw error;
+      return data;
+    }
+
+    let query = sb.from("members").select(CAMPI);
     // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
     for (const p of parti) {
-      query = query.or(filtroPezzo(p, daKiosk));
+      query = query.or(filtroPezzo(p, false));
     }
     const { data, error } = await query
       .order("last_name").order("first_name")
-      .limit(daKiosk ? MAX_KIOSK : MAX);
+      .limit(MAX);
     if (error) throw error;
     return data;
   }
