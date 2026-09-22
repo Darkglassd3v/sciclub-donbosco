@@ -49,6 +49,7 @@ Il volantino con gli spazi a pagamento è già deciso; i social sono un suppleme
 - [x] Amministrazione: chiusura con finestra di conferma
 - [x] Riepilogo: solo voci di bilancio (tessere, abbonamenti, corsi, entrate extra, uscite) con prezzo e totale; stagione chiusa con banca
 - [ ] Prova manuale: `docs/CHECKLIST_BILANCIO.md`, in particolare da admin e da utente
-- [ ] `supabase/test_ruoli.sh` da eseguire (serve docker)
+- [x] `supabase/test_ruoli.sh` eseguito (2026-09-22)
+- [x] Stagione aperta = quella dopo l'ultima chiusa, non più il calendario: `current_season()` legge `season_history`, i filtri soci diventano `enrolled_at is not null`, `open_season` una riga sola (2026-09-22)
 - [ ] Saldi banca 2025/26 da inserire quando disponibili (`season_history.bank_opening`/`bank_closing`)
 - [ ] Provare `close_season()` nuova su una copia del database prima di una chiusura vera

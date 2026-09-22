@@ -103,6 +103,11 @@ scrivere a mano la frase `CHIUDI STAGIONE`: non basta un clic. Ogni stagione
 chiusa ha un pulsante Dettaglio che mostra i conteggi per tipologia di
 quell'anno.
 
+La stagione in corso non cambia da sola il 1° settembre: resta aperta finché
+non la si chiude qui, poi diventa quella dell'anno dopo. Fino alla chiusura
+Riepilogo, Bilancio, gite e movimenti restano sulla stagione vecchia, anche a
+ottobre; dopo la chiusura, anche fatta a giugno, vanno tutti sulla nuova.
+
 Il listino prezzi e i luoghi di partenza non vengono toccati: se cambiano le
 quote, si aggiornano da Supabase.
 

@@ -38,7 +38,8 @@ comment on table public.departures is 'Luoghi di partenza per giorno: ex foglio 
 --
 -- Come nella 1.x, la tabella è cumulativa: ogni iscrizione stagionale è una
 -- riga. Una persona che si iscrive per più stagioni ha più righe. Il filtro di
--- stagione avviene in lettura (vedi funzione current_season()).
+-- stagione avviene in lettura: close_season() svuota enrolled_at, quindi chi
+-- ce l'ha è iscritto alla stagione aperta (vedi current_season()).
 --
 -- Differenze volute rispetto al foglio Google (fix ai problemi documentati in
 -- docs/DOCUMENTAZIONE.md):
@@ -163,6 +164,8 @@ create trigger members_set_updated_at
 --
 -- Stessa regola della 1.x: la stagione parte il 1° settembre. Se siamo a
 -- settembre o dopo, parte quest'anno; altrimenti l'anno scorso.
+-- Qui serve solo alle viste che seguono: più sotto, dopo season_history,
+-- current_season() diventa "la stagione aperta".
 -- ---------------------------------------------------------------------------
 
 create or replace function public.current_season()
@@ -224,7 +227,7 @@ select
   coalesce(sum(paid),  0)                   as total_collected,
   coalesce(sum(balance), 0)                 as outstanding
 from public.members
-where enrolled_at >= public.current_season();
+where enrolled_at is not null;
 
 comment on view public.season_totals is 'KPI della stagione corrente. Sostituisce i totali calcolati in getRiepilogo().';
 
@@ -238,7 +241,7 @@ select
 from public.members m
 left join public.prices p
   on p.category = 'TESSERA' and p.name = m.card_type
-where m.enrolled_at >= public.current_season()
+where m.enrolled_at is not null
   and m.card_type is not null
   and upper(m.card_type) <> 'NO'
 group by m.card_type, p.price;
@@ -246,7 +249,7 @@ group by m.card_type, p.price;
 create or replace view public.pass_counts as
 select pass_type as name, count(*) as count
 from public.members
-where enrolled_at >= public.current_season()
+where enrolled_at is not null
   and pass_type is not null
   and upper(pass_type) <> 'NO'
 group by pass_type;
@@ -254,7 +257,7 @@ group by pass_type;
 create or replace view public.course_counts as
 select course_type as name, count(*) as count
 from public.members
-where enrolled_at >= public.current_season()
+where enrolled_at is not null
   and course_type is not null
   and upper(course_type) <> 'NO'
 group by course_type;
@@ -268,18 +271,18 @@ select
   (select coalesce(sum(p.price), 0)
      from public.members m
      join public.prices p on p.category = 'CORSO' and p.name = m.course_type
-    where m.enrolled_at >= public.current_season())            as courses_income,
+    where m.enrolled_at is not null)            as courses_income,
   (select coalesce(sum(paid), 0) from public.members
-    where enrolled_at >= public.current_season())              as total_collected,
+    where enrolled_at is not null)              as total_collected,
   (select count(*) from public.members
-    where enrolled_at >= public.current_season()
+    where enrolled_at is not null
       and card_type is not null and upper(card_type) <> 'NO')  as card_holders;
 
 -- Le partenze sono liste separate da virgola come nella 1.x: vengono esplose.
 create or replace view public.departure_counts as
 select 'SABATO' as day, trim(place) as place, count(*) as count
 from public.members, unnest(string_to_array(saturday_departure, ',')) as place
-where enrolled_at >= public.current_season()
+where enrolled_at is not null
   and saturday_departure is not null
   and upper(saturday_departure) <> 'NO'
   and trim(place) <> ''
@@ -287,7 +290,7 @@ group by trim(place)
 union all
 select 'DOMENICA' as day, trim(place) as place, count(*) as count
 from public.members, unnest(string_to_array(sunday_departure, ',')) as place
-where enrolled_at >= public.current_season()
+where enrolled_at is not null
   and sunday_departure is not null
   and upper(sunday_departure) <> 'NO'
   and trim(place) <> ''
@@ -681,7 +684,6 @@ end $$;
 -- ---------------------------------------------------------------------------
 
 -- Inizio della stagione (1° settembre) a cui appartiene un istante qualsiasi.
--- current_season() diventa il caso particolare "adesso".
 create or replace function public.season_of(moment timestamptz)
 returns timestamptz
 language sql
@@ -696,17 +698,10 @@ $$;
 
 comment on function public.season_of is 'Il 1° settembre della stagione in cui cade il timestamp passato.';
 
-create or replace function public.current_season()
-returns timestamptz
-language sql
-stable
-as $$
-  select public.season_of(now());
-$$;
-
 -- Dopo la chiusura un socio non è iscritto a nessuna stagione finché non lo si
 -- risalva dal form: enrolled_at deve poter essere vuota. Le viste del
--- riepilogo filtrano con `>= current_season()`, che scarta già i NULL.
+-- riepilogo filtrano con `enrolled_at is not null`: dopo la chiusura restano
+-- solo gli iscritti alla stagione aperta.
 alter table public.members alter column enrolled_at drop not null;
 
 -- Una riga per stagione chiusa: i cinque totali che servono al direttivo.
@@ -724,6 +719,29 @@ create table if not exists public.season_history (
 );
 
 comment on table public.season_history is 'Un socio per stagione chiusa: i cinque totali che servivano nel Riepilogo. Scrive solo close_season().';
+
+-- La stagione aperta: quella dopo l'ultima chiusa, o quella del calendario se
+-- non se n'è mai chiusa una. Dalla 2.3 la stagione cambia quando il direttivo
+-- la chiude, non il 1° settembre: una stagione chiusa a ottobre deve restare
+-- aperta fino ad allora, con quote, movimenti e saldo banca al loro posto, e
+-- la chiusura deve archiviarla con la sua etichetta e non con quella nuova.
+--
+-- Security definer perché season_history la legge solo il superadmin: senza,
+-- all'admin la stagione tornerebbe quella del calendario. Restituisce solo
+-- una data.
+create or replace function public.current_season()
+returns timestamptz
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(
+    (select max(h.season) from public.season_history h) + interval '1 year',
+    public.season_of(now()));
+$$;
+
+comment on function public.current_season is 'Inizio della stagione aperta: quella dopo l''ultima chiusa, altrimenti la stagione del calendario (1 settembre).';
 
 -- I conteggi per tipologia di una stagione chiusa: poche decine di righe,
 -- la stessa lettura del Riepilogo ma di un anno archiviato.
@@ -820,7 +838,7 @@ with s as (
     a.bank_opening as bank_opening_manual,
     public.previous_bank_closing(s.season) as bank_opening_prev,
     (select coalesce(sum(m.paid), 0) from public.members m
-      where m.enrolled_at >= s.season) as members_collected,
+      where m.enrolled_at is not null) as members_collected,
     (select coalesce(sum(l.amount), 0) from public.ledger_entries l
       where l.season = s.season and l.kind = 'ENTRATA') as other_income,
     (select coalesce(sum(l.amount), 0) from public.ledger_entries l
@@ -848,7 +866,7 @@ comment on view public.season_balance is 'Bilancio della stagione corrente: sald
 -- pannello per dire in anticipo cosa sta per succedere.
 create or replace view public.open_season as
 select
-  public.season_of(coalesce(enrolled_at, now())) as season,
+  public.current_season()     as season,
   count(*)                    as members,
   coalesce(sum(total), 0)     as total,
   coalesce(sum(paid),  0)     as collected,
@@ -860,8 +878,7 @@ where enrolled_at is not null
    or pass_type is not null or course_type is not null
    or saturday_departure is not null or sunday_departure is not null
    or payer_id is not null or total <> 0 or paid <> 0
-group by 1
-order by 1 desc;
+having count(*) > 0;
 
 alter view public.open_season set (security_invoker = true);
 
@@ -1286,7 +1303,7 @@ left join (
    where season = public.current_season()
    group by member_id
 ) u on u.member_id = m.id
-where m.enrolled_at >= public.current_season();
+where m.enrolled_at is not null;
 
 alter view public.trip_passes set (security_invoker = true);
 

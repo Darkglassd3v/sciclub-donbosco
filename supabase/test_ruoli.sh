@@ -320,4 +320,59 @@ do $$ begin
 end $$;
 SQL
 
+# La stagione aperta la decide l'ultima chiusura, non il calendario. Si
+# finge una stagione 2030 già chiusa: la stagione aperta diventa la 2031 in
+# qualunque giorno giri il test, ed è proprio il caso "oggi il calendario dice
+# un'altra cosa" che una chiusura in ritardo produce davvero.
+psql_ <<'SQL'
+do $$ begin
+  assert public.current_season() = public.season_of(now()),
+         'senza stagioni chiuse la stagione aperta non è quella del calendario';
+end $$;
+
+insert into public.season_history (season, members, bank_closing) values ('2030-09-01', 0, 500);
+update public.members set paid = 50 where id = '99999999-9999-9999-9999-999999999999';
+
+set role authenticated;
+do $$
+declare chiusa timestamptz;
+begin
+  -- L'admin non legge season_history, ma la stagione aperta la vede giusta.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
+  assert public.current_season() = '2030-09-01'::timestamptz + interval '1 year',
+         'per l''admin la stagione aperta non segue l''ultima chiusura';
+
+  insert into public.ledger_entries (kind, category, quantity, unit_price)
+  values ('ENTRATA', 'PROVA SPONSOR', 1, 200);
+  assert (select season from public.ledger_entries where category = 'PROVA SPONSOR') = '2031-09-01',
+         'un movimento nuovo non va nella stagione aperta';
+
+  -- Il socio si è iscritto "oggi", prima del 2031: conta lo stesso, perché
+  -- dopo una chiusura chi ha enrolled_at è iscritto alla stagione aperta.
+  assert (select season from public.season_balance) = '2031-09-01', 'il bilancio non è della stagione aperta';
+  assert (select members_collected from public.season_balance) = 50, 'il bilancio perde le quote dei soci';
+  assert (select bank_opening from public.season_balance) = 500, 'il saldo proposto non è la chiusura precedente';
+  assert (select bank_current from public.season_balance) = 750, 'saldo banca attuale sbagliato';
+  assert (select count(*) from public.open_season) = 1, 'la stagione aperta è spezzata in più righe';
+  assert (select season from public.open_season) = '2031-09-01', 'open_season ha l''etichetta sbagliata';
+
+  -- La chiusura archivia con l'etichetta della stagione aperta, non con
+  -- quella del calendario.
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  select season_closed into chiusa from public.close_season('CHIUDI STAGIONE');
+  assert chiusa = '2031-09-01', 'la chiusura ha usato l''etichetta del calendario';
+  assert (select bank_closing from public.season_history where season = '2031-09-01') = 750,
+         'saldo di chiusura sbagliato';
+  assert public.current_season() = '2032-09-01', 'dopo la chiusura la stagione aperta non avanza';
+  assert (select count(*) from public.open_season) = 0, 'dopo la chiusura resta una stagione aperta';
+  assert (select members_collected from public.season_balance) = 0, 'dopo la chiusura restano quote nel bilancio';
+end $$;
+
+reset role;
+delete from public.ledger_entries where category = 'PROVA SPONSOR';
+delete from public.season_breakdown where season >= '2030-09-01';
+delete from public.season_history where season >= '2030-09-01';
+SQL
+
 echo "test ruoli: tutto a posto"

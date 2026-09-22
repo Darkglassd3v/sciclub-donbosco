@@ -29,6 +29,8 @@ Prima: eseguire supabase/verifica.sql, controlli 20-24 tutti OK.
 - [ ] Il dialog spiega cosa succede e mostra il saldo finale previsto (= banca attuale della pagina Bilancio).
 - [ ] Senza scrivere CHIUDI STAGIONE la chiusura non parte; Annulla/Esc chiude senza effetti.
 - [ ] Dopo la chiusura i movimenti della stagione chiusa restano in ledger_entries (non azzerati).
+- [ ] La stagione cambia alla chiusura, non il 1° settembre: prima di chiudere, anche dopo il 1/9, il Bilancio mostra ancora la stagione vecchia con le sue quote; dopo la chiusura mostra la stagione successiva, quote a 0 e saldo iniziale proposto = saldo finale appena archiviato.
+- [ ] Un movimento aggiunto dopo la chiusura finisce nella stagione nuova.
 
 ## Riepilogo stagione chiusa (riepilogo.html?stagione=...)
 - [ ] Stagione chiusa dopo la 2.3: la fascia mostra "Banca: <iniziale> → <finale>" e il finale torna con verifica.sql n. 23.
