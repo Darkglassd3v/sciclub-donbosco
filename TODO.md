@@ -14,9 +14,13 @@
   `use_trip(member_id, client_id, day)` scala dal giorno scelto, poi JOLLY, poi il più vecchio;
   `add_pass()` per il pannello gite; Riepilogo e chiusura contano gli abbonamenti venduti
 - ruolo `assicurazione` (vede solo `web/assicurazione.html`): tesserati senza polizza, CF e
-  polizza modificabili, ricerca per correggere anche i già assicurati, Excel "da assicurare" e
-  "tutti i soci"; accesso ai dati solo da `insurance_members()` e `set_insurance()`. Gli altri
-  ruoli ci arrivano dal pulsante nel Riepilogo (nella barra del superadmin non c'era posto)
+  polizza modificabili, ricerca per correggere anche i già assicurati (`insurance_search()`, al
+  massimo 20 risultati), Excel "da assicurare". L'Excel di **tutti** i soci della stagione sta nel
+  Riepilogo e l'assicurazione non può scaricarlo (il database non glielo dà). Voce Assicurazione
+  nella barra da assicurazione in su: per starci, la barra del superadmin usa tutta la larghezza
+  e il testo a 17px
+- creazione account: la pagina Utenti crea sempre come `ospite` e poi assegna il ruolo scelto, così
+  un ruolo nuovo non richiede di ripubblicare la Edge Function
 - superadmin: "Togli dalla stagione" nella pagina Soci (`remove_from_season()`), si ferma se il
   socio paga per dei familiari o ha gite segnate
 - backup CSV di produzione preso prima dello schema nella scratchpad della sessione
@@ -24,11 +28,12 @@
 ## Da fare subito
 
 - **TODO(assicurazione): tracciato dell'Excel** da definire con le specifiche dell'assicurazione:
-  `COLONNE_EXCEL` in `web/assicurazione.html` (ora colonne provvisorie). Se servono campi nuovi,
-  aggiungerli a `insurance_members()` in `supabase/schema.sql`
-- **ripubblicare la Edge Function** `crea-utente` (conosce il ruolo `assicurazione`):
-  `supabase login` e `supabase functions deploy crea-utente` (docs/ACCOUNT.md). Finché non è
-  fatto, creare l'account come `utente` e cambiargli ruolo dall'elenco del pannello Utenti
+  `COLONNE_ASSICURAZIONE` in `web/shared.js` (ora colonne provvisorie), usate sia dalla pagina
+  Assicurazione sia dal Riepilogo. Se servono campi nuovi, aggiungerli a `insurance_members()` in
+  `supabase/schema.sql` e alla select di `scaricaSoci()` in `web/riepilogo.html`
+- facoltativo: ripubblicare la Edge Function `crea-utente` (`supabase login` e `supabase functions
+  deploy crea-utente`) perché la sua lista di ruoli nel repository conosce `assicurazione`. Non
+  serve più per creare gli account (vedi sopra)
 - provare sul sito con i dati reali: numero tessera proposto, secondo abbonamento, pannello gite
   sul telefono con due abbonamenti, pagina Assicurazione con un account `assicurazione`
 - dopo un eventuale caricamento da Excel (`generate_migration.py`) rilanciare `schema.sql`: crea

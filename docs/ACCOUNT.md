@@ -168,8 +168,8 @@ ha quelli del `kiosk`), tabella `profiles`, vedi `supabase/schema.sql`:
 |---|---|---|
 | `ospite` | account appena nato | **niente**: ogni tabella gli è negata. È il punto di partenza di chiunque, compreso chi si registra da solo |
 | `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi. Deve scrivere nome **e** cognome per intero: con le prime lettere si sfoglierebbe il club |
-| `assicurazione` | chi manda i soci all'assicurazione | **solo** la pagina **Assicurazione**: tesserati della stagione (nome, nascita, codice fiscale, polizza), scarica l'Excel, scrive codice fiscale e numero di polizza. Non vede soci, quote, abbonamenti né il sito di ricerca: il database gli dà solo le funzioni `insurance_members()` e `set_insurance()`. Aprendo un'altra pagina viene riportato lì |
-| `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti, pagina Assicurazione (dal Riepilogo) |
+| `assicurazione` | chi manda i soci all'assicurazione | **solo** la pagina **Assicurazione**: tesserati ancora senza polizza, Excel "da assicurare", codice fiscale e numero di polizza da scrivere, ricerca (al massimo 20 risultati) per correggere chi è già assicurato. Non vede soci, quote, abbonamenti, l'elenco completo dei tesserati (Excel nel Riepilogo) né il sito di ricerca: il database gli dà solo `insurance_members()`, `insurance_search()` e `set_insurance()`. Aprendo un'altra pagina viene riportato lì |
+| `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti, pagina Assicurazione, Excel di tutti i tesserati dal Riepilogo |
 | `admin` | direttivo | tutto quello di `utente`, più le tessere riservate (oggi solo **TESSERA DIRETTIVO**) |
 | `superadmin` | direttivo con delega | tutto quello di `admin`, più le tre voci rosse della barra: **Amministrazione** (chiusura stagione e storico), **Utenti** e **Impostazioni** (costi/partenze), e nella pagina Soci il pulsante **Togli dalla stagione** per chi è stato tesserato per sbaglio. Agli altri ruoli quelle voci non compaiono proprio |
 
