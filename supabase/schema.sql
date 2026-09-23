@@ -14,7 +14,7 @@
 
 create table if not exists public.prices (
   id          bigint generated always as identity primary key,
-  category    text not null check (category in ('TESSERA', 'FAMIGLIA', 'ABBONAMENTO', 'CORSO')),
+  category    text not null check (category in ('TESSERA', 'FAMIGLIA', 'ABBONAMENTO', 'CORSO', 'PRESCIISTICA')),
   name        text not null,
   price       numeric(10, 2) not null default 0,
   active      boolean not null default true,
@@ -97,6 +97,9 @@ create table if not exists public.members (
   card_type         text,
   family_discount   text,
   pass_type         text,
+  -- La presciistica è un corso in palestra che si aggiunge a tutto il resto:
+  -- con una colonna sua non esclude l'abbonamento alle gite.
+  preski_type       text,
   sunday_departure  text,
   saturday_departure text,
   course_type       text,
@@ -127,6 +130,7 @@ alter table public.members add column if not exists enrolled_at timestamptz not 
 alter table public.members add column if not exists legacy_payer_id text;
 alter table public.members add column if not exists card_number     text;
 alter table public.members add column if not exists notes           text;
+alter table public.members add column if not exists preski_type     text;
 
 comment on column public.members.balance is 'Colonna generata: sempre total - paid. Non scrivibile.';
 comment on column public.members.payer_id is 'Capofamiglia che paga per questo socio. NULL = socio indipendente.';
@@ -261,6 +265,14 @@ where enrolled_at is not null
   and course_type is not null
   and upper(course_type) <> 'NO'
 group by course_type;
+
+create or replace view public.preski_counts as
+select preski_type as name, count(*) as count
+from public.members
+where enrolled_at is not null
+  and preski_type is not null
+  and upper(preski_type) <> 'NO'
+group by preski_type;
 
 -- Resoconto rapido del pannello amministrazione: tre numeri della stagione.
 -- Incasso corsi = iscritti al corso x prezzo di listino (sabato o domenica
@@ -627,6 +639,7 @@ alter view public.season_totals   set (security_invoker = true);
 alter view public.card_counts     set (security_invoker = true);
 alter view public.pass_counts     set (security_invoker = true);
 alter view public.course_counts   set (security_invoker = true);
+alter view public.preski_counts   set (security_invoker = true);
 alter view public.departure_counts set (security_invoker = true);
 alter view public.admin_summary    set (security_invoker = true);
 
@@ -747,7 +760,7 @@ comment on function public.current_season is 'Inizio della stagione aperta: quel
 -- la stessa lettura del Riepilogo ma di un anno archiviato.
 create table if not exists public.season_breakdown (
   season  timestamptz not null,
-  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'DEPARTURE')),
+  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE')),
   label   text not null,
   -- Valorizzato solo per le partenze (SABATO/DOMENICA), stringa vuota altrove:
   -- fa parte della chiave, quindi non può essere NULL.
@@ -763,7 +776,7 @@ create table if not exists public.season_breakdown (
 -- il Riepilogo di una stagione chiusa mostra come riquadro e non come corso.
 alter table public.season_breakdown drop constraint if exists season_breakdown_category_check;
 alter table public.season_breakdown add constraint season_breakdown_category_check
-  check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'DEPARTURE'));
+  check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE'));
 
 comment on table public.season_breakdown is 'Conteggi per tipologia (tessere/abbonamenti/corsi/partenze) di una stagione chiusa. Scrive solo close_season().';
 
@@ -875,7 +888,7 @@ from public.members
 where enrolled_at is not null
    or policy_number is not null or card_number is not null
    or card_type is not null or family_discount is not null
-   or pass_type is not null or course_type is not null
+   or pass_type is not null or course_type is not null or preski_type is not null
    or saturday_departure is not null or sunday_departure is not null
    or payer_id is not null or total <> 0 or paid <> 0
 having count(*) > 0;
@@ -920,7 +933,7 @@ begin
    where enrolled_at is not null
       or policy_number is not null or card_number is not null
       or card_type is not null or family_discount is not null
-      or pass_type is not null or course_type is not null
+      or pass_type is not null or course_type is not null or preski_type is not null
       or saturday_departure is not null or sunday_departure is not null
       or payer_id is not null or total <> 0 or paid <> 0;
 
@@ -975,6 +988,13 @@ begin
     left join public.prices p on p.category = 'CORSO' and p.name = m.course_type
     where m.course_type is not null and upper(m.course_type) <> 'NO'
     group by m.course_type, p.price
+    union all
+    select which, 'PRESKI', m.preski_type, '', count(*), count(*) * p.price
+    from public.members m
+    join da_chiudere t on t.id = m.id
+    left join public.prices p on p.category = 'PRESCIISTICA' and p.name = m.preski_type
+    where m.preski_type is not null and upper(m.preski_type) <> 'NO'
+    group by m.preski_type, p.price
     union all
     select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
     from public.members m
@@ -1031,6 +1051,7 @@ begin
     card_type          = null,
     family_discount    = null,
     pass_type          = null,
+    preski_type        = null,
     course_type        = null,
     saturday_departure = null,
     sunday_departure   = null,
@@ -1430,3 +1451,29 @@ create policy trip_uses_insert on public.trip_uses
 
 create policy trip_uses_delete on public.trip_uses
   for delete to authenticated using (public.has_role('utente'));
+
+-- ---------------------------------------------------------------------------
+-- Presciistica: da abbonamento a voce a sé
+--
+-- Era una voce del listino fra gli ABBONAMENTO e finiva in pass_type: chi
+-- aveva l'abbonamento alle gite non poteva avere anche la presciistica, e dal
+-- pannello gite a chi aveva la presciistica non si poteva dare un
+-- abbonamento. Ora ha categoria e colonna sue (preski_type).
+--
+-- Il check della categoria è scritto nel create table, che su un database
+-- già esistente non viene rieseguito: qui si rimpiazza. Le due UPDATE
+-- spostano quello che c'era; rieseguite non trovano più niente da spostare.
+-- ---------------------------------------------------------------------------
+
+alter table public.prices drop constraint if exists prices_category_check;
+alter table public.prices add constraint prices_category_check
+  check (category in ('TESSERA', 'FAMIGLIA', 'ABBONAMENTO', 'CORSO', 'PRESCIISTICA'));
+
+update public.prices p set category = 'PRESCIISTICA'
+ where p.category = 'ABBONAMENTO'
+   and upper(p.name) like '%PRESCIISTIC%'
+   and not exists (select 1 from public.prices q
+                    where q.category = 'PRESCIISTICA' and q.name = p.name);
+
+update public.members set preski_type = pass_type, pass_type = null
+ where upper(pass_type) like '%PRESCIISTIC%';

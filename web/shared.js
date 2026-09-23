@@ -251,7 +251,7 @@ async function caricaPrezzi() {
     .order("name");
   if (error) throw error;
 
-  const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], CORSO: [] };
+  const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], PRESCIISTICA: [], CORSO: [] };
   data.forEach((p) => {
     if (perCategoria[p.category]) perCategoria[p.category].push(p);
   });

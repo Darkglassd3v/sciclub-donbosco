@@ -116,6 +116,12 @@
     </div>
     <div class="column is-12">
       <div class="section-card">
+        <div class="section-header bg-green">Presciistica</div>
+        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
+      </div>
+    </div>
+    <div class="column is-12">
+      <div class="section-card">
         <div class="section-header bg-grey">Entrate extra</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
       </div>
@@ -152,13 +158,14 @@
       sb.from("card_counts").select("*"),
       sb.from("pass_counts").select("*"),
       sb.from("course_counts").select("*"),
+      sb.from("preski_counts").select("*"),
       sb.from("prices").select("category, name, price"),
       // I movimenti li legge solo l'admin: per gli altri la RLS dà un elenco vuoto.
       sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
     ]);
     const errore = risposte.find((r) => r.error);
     if (errore) throw errore.error;
-    const [kpi, tessere, abbonamenti, corsi, listino, movimenti] = risposte.map((r) => r.data);
+    const [kpi, tessere, abbonamenti, corsi, presciistica, listino, movimenti] = risposte.map((r) => r.data);
 
     // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
     const conPrezzo = (righe, categoria) => righe.map((r) => {
@@ -170,6 +177,7 @@
       kpi, tessere,
       abbonamenti: conPrezzo(abbonamenti, "ABBONAMENTO"),
       corsi: conPrezzo(corsi, "CORSO"),
+      presciistica: conPrezzo(presciistica, "PRESCIISTICA"),
       ...perVoce(movimenti),
     };
   }
@@ -232,6 +240,8 @@
       tessere: di("CARD").map(conTotaleArchiviato),
       abbonamenti: di("PASS").map(conTotaleArchiviato),
       corsi: di("COURSE").map(conTotaleArchiviato),
+      // Le stagioni chiuse prima della 2.3 hanno la presciistica fra gli abbonamenti.
+      presciistica: di("PRESKI").map(conTotaleArchiviato),
       ...perVoce(movimenti.data),
       incassoCorsi: incasso ? incasso.total : null,
       bancaInizio: storia.data.bank_opening, bancaFine: storia.data.bank_closing,
@@ -279,6 +289,7 @@
       riempiVoci("tTess", tessere);
       riempiVoci("tAbb", abbonamenti);
       riempiVoci("tCorsi", corsi);
+      riempiVoci("tPresc", dati.presciistica);
       riempiVoci("tEntrate", dati.entrate);
       riempiVoci("tUscite", dati.uscite);
     } catch (error) {

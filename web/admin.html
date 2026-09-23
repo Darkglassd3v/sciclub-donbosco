@@ -216,7 +216,7 @@
   function rigaSocio(socio, eFamiliare) {
     const saldo = parseFloat(socio.balance || 0);
     const dettagli = [socio.card_type, socio.family_discount,
-                      socio.pass_type, socio.course_type]
+                      socio.pass_type, socio.preski_type, socio.course_type]
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `

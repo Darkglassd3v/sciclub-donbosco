@@ -177,7 +177,13 @@ def read_prezzi(worksheet):
         prezzo = worksheet.cell(row=row_index, column=3).value
         if not categoria or not nome:
             continue
-        out.append((str(categoria).strip().upper(), str(nome).strip(), prezzo))
+        categoria = str(categoria).strip().upper()
+        nome = str(nome).strip()
+        # Nel foglio la presciistica sta fra gli abbonamenti; nel database ha
+        # una categoria sua, così non esclude l'abbonamento alle gite.
+        if categoria == "ABBONAMENTO" and "PRESCIISTIC" in nome.upper():
+            categoria = "PRESCIISTICA"
+        out.append((categoria, nome, prezzo))
     return out
 
 
