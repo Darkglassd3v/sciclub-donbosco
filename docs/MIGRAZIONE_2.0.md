@@ -87,6 +87,10 @@ for f in supabase/migration/*.sql; do
 done
 ```
 
+**Dopo il caricamento, rilanciare `supabase/schema.sql`** (dalla 2.4): il foglio scrive
+l'abbonamento nella colonna del socio (`pass_type`), mentre le pagine leggono gli abbonamenti
+dalla tabella `member_passes`. È lo schema, rieseguito, a creare le righe mancanti.
+
 ### Verificare che sia andato tutto bene
 
 A caricamento finito, eseguire `supabase/verifica.sql` nell'editor SQL: restituisce una tabella

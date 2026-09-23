@@ -1,4 +1,42 @@
-# Ripresa lavori — aggiornato il 2026-09-23
+# Ripresa lavori — aggiornato il 2026-09-24
+
+## Fatto nella 2.4-SNAPSHOT (schema applicato in produzione il 2026-09-24)
+
+- validatore del codice fiscale (`web/codicefiscale.js`, test `node web/test-codicefiscale.js`):
+  avviso sotto il campo con il codice proposto, non blocca il salvataggio; il comune di nascita
+  non si verifica (solo la forma)
+- numero tessera proposto nel form Soci = il più alto numerico + 1 (`next_card_number()`), vincolo
+  `members_card_number_key` (unico nella stagione, la chiusura lo azzera); se il proposto è stato
+  preso da un altro operatore la pagina ne propone un altro
+- più abbonamenti gite per socio, anche di giorni diversi: tabella `member_passes`,
+  `trip_uses.pass_id`, viste `pass_status` (per abbonamento) e `trip_passes` (per socio, con
+  `days`); `members.pass_type` è un riassunto scritto dal trigger `sync_pass_type`;
+  `use_trip(member_id, client_id, day)` scala dal giorno scelto, poi JOLLY, poi il più vecchio;
+  `add_pass()` per il pannello gite; Riepilogo e chiusura contano gli abbonamenti venduti
+- ruolo `assicurazione` (vede solo `web/assicurazione.html`): tesserati senza polizza, CF e
+  polizza modificabili, ricerca per correggere anche i già assicurati, Excel "da assicurare" e
+  "tutti i soci"; accesso ai dati solo da `insurance_members()` e `set_insurance()`. Gli altri
+  ruoli ci arrivano dal pulsante nel Riepilogo (nella barra del superadmin non c'era posto)
+- superadmin: "Togli dalla stagione" nella pagina Soci (`remove_from_season()`), si ferma se il
+  socio paga per dei familiari o ha gite segnate
+- backup CSV di produzione preso prima dello schema nella scratchpad della sessione
+
+## Da fare subito
+
+- **TODO(assicurazione): tracciato dell'Excel** da definire con le specifiche dell'assicurazione:
+  `COLONNE_EXCEL` in `web/assicurazione.html` (ora colonne provvisorie). Se servono campi nuovi,
+  aggiungerli a `insurance_members()` in `supabase/schema.sql`
+- **ripubblicare la Edge Function** `crea-utente` (conosce il ruolo `assicurazione`):
+  `supabase login` e `supabase functions deploy crea-utente` (docs/ACCOUNT.md). Finché non è
+  fatto, creare l'account come `utente` e cambiargli ruolo dall'elenco del pannello Utenti
+- provare sul sito con i dati reali: numero tessera proposto, secondo abbonamento, pannello gite
+  sul telefono con due abbonamenti, pagina Assicurazione con un account `assicurazione`
+- dopo un eventuale caricamento da Excel (`generate_migration.py`) rilanciare `schema.sql`: crea
+  le righe di `member_passes` dagli abbonamenti scritti nella colonna del socio
+
+---
+
+# Ripresa lavori — 2026-09-23
 
 ## Fatto nella 2.3 (committato, pushato, online)
 
