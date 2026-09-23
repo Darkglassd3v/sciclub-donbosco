@@ -102,6 +102,10 @@ async function requireRole(minRuolo) {
  *
  * Sta sotto la barra e non sopra: comparendo in cima copriva i pulsanti di
  * navigazione proprio mentre si stava cercando di premerli.
+ *
+ * Un errore resta finché non lo si chiude: dopo quattro secondi spariva prima
+ * che chi legge piano arrivasse in fondo, e il socio restava non salvato
+ * senza che nessuno se ne accorgesse. Le conferme se ne vanno da sole.
  */
 function showToast(messaggio, tipo = "is-success") {
   let toast = document.getElementById("statusToast");
@@ -110,16 +114,27 @@ function showToast(messaggio, tipo = "is-success") {
     toast.id = "statusToast";
     document.body.appendChild(toast);
   }
+  const errore = tipo === "is-danger";
   toast.textContent = messaggio;
   toast.className = `notification ${tipo}`;
+  toast.setAttribute("role", errore ? "alert" : "status");
   toast.style.cssText =
     "display:block;position:fixed;top:calc(var(--barra-h, 68px) + 12px);left:50%;" +
     "transform:translateX(-50%);z-index:90;max-width:min(92vw,520px);text-align:center;" +
     "box-shadow:0 4px 12px rgba(0,0,0,.2);";
   clearTimeout(showToast._timer);
+  if (errore) {
+    const chiudi = document.createElement("button");
+    chiudi.type = "button";
+    chiudi.className = "button is-light is-fullwidth mt-3";
+    chiudi.textContent = "Chiudi";
+    chiudi.addEventListener("click", () => (toast.style.display = "none"));
+    toast.appendChild(chiudi);
+    return;
+  }
   showToast._timer = setTimeout(() => {
     toast.style.display = "none";
-  }, 4000);
+  }, 8000);
 }
 
 /**

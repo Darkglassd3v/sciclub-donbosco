@@ -59,11 +59,11 @@ testo bianco: su giallo si scrive solo blu scuro.
 |------|-----|-----|-------|
 | Background | #F5F5F7 | rgb(245,245,247) | sfondo pagina |
 | Surface | #FFFFFF | rgb(255,255,255) | schede, tabelle, form |
-| Riga alternata | #FAFAFB | rgb(250,250,251) | righe pari delle tabelle |
+| Riga alternata | #EEF2F6 | rgb(238,242,246) | righe pari delle tabelle |
 | Text Primary | #14202E | rgb(20,32,46) | testo e titoli |
-| Text Secondary | #5B6472 | rgb(91,100,114) | etichette, testo secondario |
-| Border | #C7D0DA | rgb(199,208,218) | bordi dei campi |
-| Filo | #E4E6EB | rgb(228,230,235) | divisori e contorni delle schede |
+| Text Secondary | #4A5361 | rgb(74,83,97) | etichette, testo secondario |
+| Border | #7B8794 | rgb(123,135,148) | bordi dei campi |
+| Filo | #D5DAE1 | rgb(213,218,225) | divisori e contorni delle schede |
 
 ### Semantic Colors
 
@@ -98,11 +98,13 @@ Rapporti di contrasto verificati su sfondo bianco:
 |--------|----------|---------|
 | #14202E su #FFFFFF | 15.4:1 | AAA |
 | #084C8D su #FFFFFF | 8.7:1 | AAA |
-| #5B6472 su #FFFFFF | 5.9:1 | AA |
+| #4A5361 su #FFFFFF | 7.8:1 | AAA |
 | #147A45 su #FFFFFF | 5.5:1 | AA |
 | #B3261E su #FFFFFF | 6.6:1 | AA |
 | #084C8D su #FCCF02 | 5.7:1 | AA |
-| #FCCF02 su #FFFFFF | 1.5:1 | **mai per testo** |
+| #FCCF02 su #FFFFFF | 1.5:1 | **mai per testo né da solo come anello di focus** |
+| #7B8794 su #FFFFFF (bordo campi) | 3.7:1 | contorni: minimo 3:1 |
+| #06396A su #FFFFFF (anello di focus) | 11.7:1 | AAA |
 
 Regole non negoziabili:
 
@@ -227,7 +229,7 @@ Le misure servono a chi ha la vista lunga e il mouse impreciso.
 | Type | Background | Text | Altezza min | Border Radius |
 |------|------------|------|-------------|---------------|
 | Primary | #084C8D | #FFFFFF | 48px | pillola |
-| Secondary | #FFFFFF (bordo 1px #E4E6EB) | #084C8D | 48px | pillola |
+| Secondary | #FFFFFF (bordo 1px #D5DAE1) | #084C8D | 48px | pillola |
 | Evidenza | #FCCF02 | #084C8D | 48px | pillola |
 | Pericolo | #FFFFFF (bordo 1px #B3261E) | #B3261E | 48px | pillola |
 
@@ -237,7 +239,7 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Campi
 
-- Altezza minima 48px, testo 17px, bordo 2px #C7D0DA (i campi sono l'unico
+- Altezza minima 48px, testo 17px, bordo 2px #7B8794 (i campi sono l'unico
   elemento con contorno marcato: devono vedersi).
 - I campi amministrativi (polizza, tessera) restano su #FFF6D0: è un codice
   colore che il direttivo usa già.
@@ -245,9 +247,9 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Tabelle
 
-- Righe alte almeno 52px, padding 14px, riga alternata #F7F9FB.
-- Intestazioni in #5B6472 a 15px, in tondo minuscolo: mai in maiuscolo.
-- Divisori a filo sottile (#E4E6EB), non bordi marcati.
+- Righe alte almeno 52px, padding 14px, riga alternata #EEF2F6.
+- Intestazioni in #4A5361 a 16px, in tondo minuscolo: mai in maiuscolo.
+- Divisori a filo sottile (#D5DAE1), non bordi marcati.
 - Su mobile la tabella scorre in orizzontale dentro il suo contenitore.
 
 ---

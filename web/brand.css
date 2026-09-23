@@ -26,11 +26,11 @@
   /* Neutri */
   --sfondo:     #F5F5F7;
   --superficie: #FFFFFF;
-  --riga-alt:   #FAFAFB;
+  --riga-alt:   #EEF2F6;   /* la riga pari si deve distinguere, non solo esserci */
   --testo:      #14202E;
-  --testo-soft: #5B6472;
-  --bordo:      #C7D0DA;   /* solo per i campi: devono vedersi */
-  --filo:       #E4E6EB;   /* divisori e contorni delle schede */
+  --testo-soft: #4A5361;   /* 7.8:1: è il testo delle etichette, va letto */
+  --bordo:      #7B8794;   /* solo per i campi: 3.7:1, il minimo per vederne il contorno è 3:1 */
+  --filo:       #D5DAE1;   /* divisori e contorni delle schede */
 
   /* Stati */
   --ok:      #147A45;
@@ -70,7 +70,9 @@ strong, label, .label { color: var(--testo); }
 
 /* --- Focus -------------------------------------------------------------
  * Bulma toglie l'outline e lascia solo un'ombra tenue: su schermi vecchi o
- * poco contrastati non si vede dove si è arrivati col TAB. */
+ * poco contrastati non si vede dove si è arrivati col TAB. L'anello è blu
+ * scuro (11.7:1 sul bianco) con il giallo del marchio in mezzo: il giallo da
+ * solo sul bianco sta a 1.5:1 e chi vede poco non lo trova. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -79,9 +81,9 @@ textarea:focus-visible,
 .button:focus-visible,
 .input:focus-visible,
 .select select:focus-visible {
-  outline: 3px solid var(--giallo);
+  outline: 3px solid var(--blu-dark);
   outline-offset: 2px;
-  box-shadow: none;
+  box-shadow: 0 0 0 5px var(--giallo);
 }
 
 /* --- Campi --------------------------------------------------------------
@@ -100,6 +102,11 @@ textarea:focus-visible,
 .input::placeholder { color: var(--testo-soft); opacity: 1; }
 .select:not(.is-multiple) { height: auto; }
 .select:not(.is-multiple):not(.is-loading)::after { border-color: var(--blu); }
+
+/* Caselle di spunta: quelle del browser sono di 13px, troppo piccole da
+ * vedere e da centrare. Tutta l'etichetta resta cliccabile. */
+.checkbox { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tocco); }
+.checkbox input[type="checkbox"] { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
 
 /* Campi amministrativi (polizza, tessera): il direttivo usa già il giallo
  * come "da compilare a mano", si conserva. */
@@ -166,6 +173,10 @@ textarea:focus-visible,
 .family-title { color: var(--ok); }
 
 .notification { font-size: 1rem; border-radius: var(--raggio); }
+/* Il rosso e il verde di Bulma col testo bianco stanno a 3.6:1 e 2.1:1: un
+ * errore che non si riesce a leggere è peggio di nessun avviso. */
+.notification.is-danger:not(.is-light)  { background: var(--errore); color: #fff; }
+.notification.is-success:not(.is-light) { background: var(--ok); color: #fff; }
 
 /* --- Tabelle ------------------------------------------------------------
  * Divisori sottili al posto dei bordi marcati; intestazioni in tondo minuscolo
@@ -329,6 +340,13 @@ body { margin: 0; }
   .barra-marchio img { height: 32px; }
   .barra-marchio span { display: none; }
   .barra-voci a, .barra-voci button { height: 38px; padding: 0 12px; font-size: .875rem; }
+}
+
+/* Schermo basso (portatile con lo zoom al 150-200%, telefono in orizzontale):
+ * una barra incollata in alto ruberebbe una fetta di quel poco che si vede.
+ * Resta in cima alla pagina e scorre via con il resto. */
+@media screen and (max-height: 560px) {
+  .barra { position: static; }
 }
 
 /* --- Barra ferma fra una pagina e l'altra --------------------------------
