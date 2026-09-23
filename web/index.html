@@ -257,7 +257,7 @@
   }
 
   function ricalcola() {
-    const socioCorrente = { totale: totaleIndividuale(), acconto: el("f_acconto").value };
+    const socioCorrente = { total: totaleIndividuale(), paid: el("f_acconto").value };
     const { totale, saldo } = totaliNucleo(socioCorrente, familiariACarico);
     el("v_totale").textContent = fmt(totale);
     el("v_saldo").textContent = fmt(saldo);
