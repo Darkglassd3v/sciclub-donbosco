@@ -6,7 +6,7 @@
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
   <style>
     .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -31,7 +31,7 @@
 
     /* Su telefono la tabella scorre di lato invece di schiacciare le voci. */
     .section-body { padding: 0 22px 20px; overflow-x: auto; }
-    .rtable { width: 100%; min-width: 600px; border-collapse: collapse; }
+    .rtable { width: 100%; min-width: 35rem; border-collapse: collapse; }
     .rtable th { text-align: left; padding: 10px 8px; font-size: 1rem; }
     /* Le voci si leggono da lontano: 21px, importi in grassetto. Per starci
      * ogni sezione occupa tutta la larghezza invece di metà. */
@@ -40,9 +40,9 @@
     /* Stesse colonne in ogni sezione: numeri a destra, importi su una riga. */
     .rtable { table-layout: fixed; }
     .rtable th:nth-child(n+2), .rtable td:nth-child(n+2) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .rtable th:nth-child(2) { width: 90px; }
-    .rtable th:nth-child(3) { width: 150px; }
-    .rtable th:nth-child(4) { width: 200px; }
+    .rtable th:nth-child(2) { width: 5.3rem; }
+    .rtable th:nth-child(3) { width: 8.8rem; }
+    .rtable th:nth-child(4) { width: 11.8rem; }
     /* La somma della sezione (tutti gli abbonamenti insieme) è il numero che
      * si cerca: blu e più grande. I totali delle singole voci restano neri
      * come i prezzi, così la somma non si confonde con loro. */
@@ -69,6 +69,7 @@
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
       <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>

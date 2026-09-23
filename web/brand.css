@@ -47,6 +47,10 @@
 }
 
 html { font-size: 17px; }
+/* Pulsante A+ della barra (cambiaTesto() in shared.js): le misure delle
+ * pagine sono in rem, quindi crescono insieme testo, campi e tabelle. */
+html[data-testo="1"] { font-size: 19px; }
+html[data-testo="2"] { font-size: 21px; }
 
 body {
   background: var(--sfondo);
@@ -237,6 +241,9 @@ body { margin: 0; }
   position: sticky;
   top: 0;
   z-index: 100;
+  /* La barra resta in px anche col testo ingrandito: più grande non ci
+   * starebbe su una riga, e deve restare sempre uguale e al suo posto. */
+  font-size: 17px;
   background: var(--superficie);
   border-bottom: 1px solid var(--filo);
 }
@@ -285,7 +292,7 @@ body { margin: 0; }
   background: var(--superficie);
   color: var(--blu);
   font: inherit;
-  font-size: 1.0625rem;
+  font-size: 18px;
   font-weight: 600;
   /* Unica eccezione al tondo minuscolo: le voci della barra sono poche e
    * sempre le stesse, in maiuscolo si trovano a colpo d'occhio. Il tracking
@@ -295,9 +302,17 @@ body { margin: 0; }
   text-decoration: none;
   cursor: pointer;
 }
-/* Il superadmin ha otto voci: in maiuscolo non ci stanno accanto al nome del
- * club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome si toglie. */
+/* Il superadmin ha otto voci più A+: in maiuscolo non ci stanno accanto al
+ * nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome
+ * si toglie, e le voci si stringono un poco. */
 html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
+html[data-ruolo="superadmin"] .barra-voci a,
+html[data-ruolo="superadmin"] .barra-voci button { padding: 0 12px; }
+
+/* A+ diventa A− all'ultima grandezza: premendolo si torna al testo normale. */
+.barra-voci .voce-testo { font-weight: 700; letter-spacing: 0; }
+.barra-voci .voce-testo::before { content: "A+"; }
+html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 .barra-voci a:hover, .barra-voci button:hover {
   background: var(--blu-light);
   border-color: var(--blu-light);
@@ -348,7 +363,7 @@ html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
   .barra-dentro { padding: 0 12px; gap: 10px; }
   .barra-marchio img { height: 32px; }
   .barra-marchio span { display: none; }
-  .barra-voci a, .barra-voci button { height: 44px; padding: 0 14px; font-size: 1rem; }
+  .barra-voci a, .barra-voci button { height: 44px; padding: 0 14px; font-size: 17px; }
 }
 
 /* Schermo basso (portatile con lo zoom al 150-200%, telefono in orizzontale):

@@ -6,7 +6,7 @@
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
   <style>
     .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -21,7 +21,7 @@
     .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-costi input, .tabella-costi select { font-size: .9375rem; }
     .tabella-costi input[type="text"] { min-width: 180px; }
-    .tabella-costi input[type="number"] { width: 100px; }
+    .tabella-costi input[type="number"] { width: 6rem; }
     .tabella-costi .vuota { color: var(--testo-soft); }
     .tabella-costi .riga-nuova td { background: var(--riga-alt); }
 
@@ -44,6 +44,7 @@
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
       <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>

@@ -138,6 +138,20 @@ function showToast(messaggio, tipo = "is-success") {
 }
 
 /**
+ * Pulsante A+ della barra: tre grandezze del testo (17, 19, 21px), poi si
+ * torna alla normale. La scelta resta in questo browser; lo script nell'head
+ * di ogni pagina la rimette prima del primo disegno, così il testo non
+ * salta da piccolo a grande a ogni cambio di pagina.
+ */
+function cambiaTesto() {
+  const html = document.documentElement;
+  const livello = (Number(html.dataset.testo || 0) + 1) % 3;
+  if (livello) html.dataset.testo = livello;
+  else delete html.dataset.testo;
+  try { localStorage.setItem("sciclub-testo", livello); } catch (e) {}
+}
+
+/**
  * Segnala che si sta caricando con il filo dentro la barra.
  *
  * Prima calava un velo bianco su tutta la pagina: ad ogni salvataggio lo
@@ -233,6 +247,7 @@ async function caricaPrezzi() {
     .select("category, name, price, min_role")
     .eq("active", true)
     .order("category")
+    .order("price")
     .order("name");
   if (error) throw error;
 
