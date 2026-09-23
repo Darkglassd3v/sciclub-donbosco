@@ -302,12 +302,15 @@ body { margin: 0; }
   text-decoration: none;
   cursor: pointer;
 }
-/* Il superadmin ha otto voci più A+: in maiuscolo non ci stanno accanto al
+/* Il superadmin ha nove voci più A+: in maiuscolo non ci stanno accanto al
  * nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome
- * si toglie, e le voci si stringono un poco. */
+ * si toglie, la barra usa tutta la larghezza della finestra invece dei 1180px
+ * delle pagine, e le voci si stringono un poco (17px invece di 18): così a
+ * 1280px ci sta anche Assicurazione, con una quindicina di pixel di scarto. */
 html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
+html[data-ruolo="superadmin"] .barra-dentro { max-width: none; }
 html[data-ruolo="superadmin"] .barra-voci a,
-html[data-ruolo="superadmin"] .barra-voci button { padding: 0 12px; }
+html[data-ruolo="superadmin"] .barra-voci button { padding: 0 10px; font-size: 17px; }
 
 /* A+ diventa A− all'ultima grandezza: premendolo si torna al testo normale. */
 .barra-voci .voce-testo { font-weight: 700; letter-spacing: 0; }
@@ -382,12 +385,13 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden],
 html[data-ruolo="admin"] .barra-voci [data-ruolo="admin"][hidden],
 html[data-ruolo="superadmin"] .barra-voci [data-ruolo="admin"][hidden],
-html[data-ruolo="assicurazione"] .barra-voci [data-ruolo="assicurazione"][hidden] { display: inline-flex; }
+html[data-ruolo="assicurazione"] .barra-voci [data-ruolo="assicurazione"][hidden],
+html[data-ruolo="utente"] .barra-voci [data-ruolo="assicurazione"][hidden],
+html[data-ruolo="admin"] .barra-voci [data-ruolo="assicurazione"][hidden],
+html[data-ruolo="superadmin"] .barra-voci [data-ruolo="assicurazione"][hidden] { display: inline-flex; }
 
 /* Chi ha il ruolo assicurazione ha una pagina sola: Soci, Pagamenti e
- * Riepilogo non gli compaiono nemmeno per un attimo. La voce Assicurazione
- * invece è solo sua (data-solo): con nove voci la barra del superadmin non
- * sta più in 1280px, e direttivo e volontari ci arrivano dal Riepilogo. */
+ * Riepilogo non gli compaiono nemmeno per un attimo. */
 html[data-ruolo="assicurazione"] .barra-voci [data-ruolo="utente"] { display: none; }
 
 /* Avviso sotto un campo codice fiscale (vedi mostraAvvisoCF in shared.js):

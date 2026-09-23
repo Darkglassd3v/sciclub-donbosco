@@ -55,7 +55,7 @@
       <a href="index.html" data-ruolo="utente">Soci</a>
       <a href="admin.html" data-ruolo="utente">Pagamenti</a>
       <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -232,10 +232,28 @@
       // service_role, che sta su Supabase e non qui: è il "Add user" della
       // dashboard, che non manda nessuna mail. Vedi
       // supabase/functions/crea-utente/index.ts.
-      const { error } = await sb.functions.invoke("crea-utente", {
-        body: { email, password: PASSWORD_INIZIALE, ruolo },
+      //
+      // L'account nasce sempre come 'ospite', e il ruolo scelto gli si dà
+      // subito dopo da qui, come dal menu dell'elenco. La funzione conosce
+      // solo i ruoli che aveva quando è stata pubblicata: un ruolo nuovo (la
+      // 2.4 ha aggiunto 'assicurazione') lo rifiutava con "Ruolo non valido",
+      // e ripubblicarla richiede la CLI di Supabase. Se il secondo passo
+      // fallisce, resta un ospite, che non vede niente: il caso sicuro.
+      const { data, error } = await sb.functions.invoke("crea-utente", {
+        body: { email, password: PASSWORD_INIZIALE, ruolo: "ospite" },
       });
       if (error) throw await conMessaggioDelServer(error);
+
+      if (ruolo !== "ospite") {
+        // .select(): una scrittura rifiutata dalla RLS torna come zero righe,
+        // non come errore (vedi cambiaRuolo).
+        const { data: righe, error: errRuolo } = await sb
+          .from("profiles").update({ role: ruolo }).eq("user_id", data.user_id).select();
+        if (errRuolo || !righe || !righe.length) {
+          throw new Error(`${email} è stato creato come ospite, ma il ruolo ${ruolo} non è stato applicato: `
+            + "sceglilo dall'elenco qui sotto e premi Conferma.");
+        }
+      }
 
       showToast(`${email} creato come ${ruolo}. Password: ${PASSWORD_INIZIALE}`);
       campoEmail.value = "";

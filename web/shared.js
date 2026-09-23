@@ -193,11 +193,8 @@ function setLoading(attivo) {
  */
 document.addEventListener("DOMContentLoaded", async () => {
   // Una alla volta: la prima carica il profilo, le altre lo trovano in cache.
-  // data-solo: la voce è di quel ruolo e basta, non anche di chi sta sopra.
   for (const voce of document.querySelectorAll(".barra-voci [data-ruolo]")) {
-    voce.hidden = "solo" in voce.dataset
-      ? (await getProfile().catch(() => null))?.role !== voce.dataset.ruolo
-      : !(await hasRole(voce.dataset.ruolo).catch(() => false));
+    voce.hidden = !(await hasRole(voce.dataset.ruolo).catch(() => false));
   }
 });
 
@@ -248,6 +245,97 @@ function mostraAvvisoCF(box, campo, esito, dopo) {
     box.append(usa);
   }
   box.hidden = false;
+}
+
+// ---------------------------------------------------------------------------
+// Excel per l'assicurazione
+//
+// Lo usano due pagine: Assicurazione (i tesserati ancora da assicurare) e
+// Riepilogo (tutti i tesserati della stagione, che il ruolo assicurazione non
+// può scaricare). Stesse colonne per tutti e due i file.
+// ---------------------------------------------------------------------------
+
+/** "2026-01-31" → "31/01/2026". */
+function dataIt(iso) {
+  if (!iso) return "";
+  const [a, m, g] = String(iso).slice(0, 10).split("-");
+  return `${g}/${m}/${a}`;
+}
+
+// TODO(assicurazione): tracciato del file da concordare con l'assicurazione.
+// Quando arrivano le specifiche si cambiano solo queste righe: intestazione
+// della colonna e come si ricava dal socio. Mandare solo le colonne che
+// l'assicurazione chiede: sono dati personali che escono dal club. Un campo
+// nuovo va aggiunto anche dove si leggono i soci: insurance_members() in
+// supabase/schema.sql e scaricaSoci() in riepilogo.html.
+const COLONNE_ASSICURAZIONE = [
+  ["Cognome", (s) => s.last_name],
+  ["Nome", (s) => s.first_name],
+  ["Data di nascita", (s) => dataIt(s.birth_date)],
+  ["Luogo di nascita", (s) => s.birth_place],
+  ["Provincia di nascita", (s) => s.birth_province],
+  ["Codice fiscale", (s) => s.tax_code],
+  ["Indirizzo", (s) => s.address],
+  ["Città", (s) => s.city],
+  ["Provincia", (s) => s.province],
+  ["CAP", (s) => s.postal_code],
+  ["Tessera", (s) => s.card_type],
+  ["Numero tessera", (s) => s.card_number],
+  ["Numero polizza", (s) => s.policy_number],
+];
+
+// SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
+// volte a stagione. È la versione pubblicata su npm, usata solo per
+// SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
+// un giorno si leggerà il file restituito dall'assicurazione, passare alla
+// versione di cdn.sheetjs.com.
+let _xlsxInArrivo = null;
+function caricaXlsx() {
+  if (window.XLSX) return Promise.resolve();
+  _xlsxInArrivo ??= new Promise((ok, ko) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    script.onload = ok;
+    script.onerror = () => {
+      _xlsxInArrivo = null;
+      script.remove();
+      ko(new Error("non riesco a scaricare il modulo per l'Excel: controlla la connessione e riprova."));
+    };
+    document.head.append(script);
+  });
+  return _xlsxInArrivo;
+}
+
+/** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
+async function scaricaExcel(righe, nome) {
+  if (!righe.length) { showToast("Non c'è nessun socio da scaricare."); return; }
+  await caricaXlsx();
+  const foglio = XLSX.utils.aoa_to_sheet([
+    COLONNE_ASSICURAZIONE.map(([titolo]) => titolo),
+    ...righe.map((s) => COLONNE_ASSICURAZIONE.map(([, valore]) => valore(s) ?? "")),
+  ]);
+  foglio["!cols"] = COLONNE_ASSICURAZIONE.map(([titolo]) => ({ wch: Math.max(14, titolo.length + 2) }));
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, foglio, "Soci");
+  XLSX.writeFile(libro, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast(righe.length === 1 ? "Scaricato 1 socio." : `Scaricati ${righe.length} soci.`);
+}
+
+/**
+ * Tutte le righe di una lettura, a pagine di 1000: Supabase non ne dà di più
+ * per chiamata, e un elenco tagliato in silenzio (la stagione 2025 aveva 677
+ * soci, non lontano) arriverebbe all'assicurazione senza che nessuno se ne
+ * accorga. `crea` rifà la stessa richiesta, che deve avere un ordine stabile.
+ */
+async function tutteLeRighe(crea) {
+  const PAGINA = 1000;
+  const righe = [];
+  for (let da = 0; ; da += PAGINA) {
+    const { data, error } = await crea().range(da, da + PAGINA - 1);
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < PAGINA) return righe;
+  }
 }
 
 /** Testo scritto dagli utenti, pronto per innerHTML. */

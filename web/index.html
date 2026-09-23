@@ -51,9 +51,11 @@
     .abbonamenti li.vuoto { border: 2px dashed var(--filo); background: #fff; }
     .abbonamenti .gite { font-weight: 700; }
     .abbonamenti .button, .scelta.aggiungi .button { margin-left: auto; flex: none; }
-    .scelta.aggiungi { cursor: default; }
+    /* Nome su una riga, prezzo e pulsante sotto: tutti e tre sulla stessa
+     * riga, a testo grande il pulsante usciva dal riquadro. */
+    .scelta.aggiungi { cursor: default; flex-wrap: wrap; row-gap: 8px; }
+    .scelta.aggiungi .nome { flex: 1 1 100%; }
     .scelta.aggiungi .prezzo { margin-left: 0; }
-    .scelta.aggiungi .nome { flex: 1; }
     .togli-stagione .domanda { display: block; font-weight: 700; margin-bottom: 8px; }
     .label { margin-bottom: .3rem; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
@@ -86,7 +88,7 @@
       <a href="index.html" data-ruolo="utente">Soci</a>
       <a href="admin.html" data-ruolo="utente">Pagamenti</a>
       <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>

@@ -351,9 +351,10 @@ group by trim(place);
 --   assicurazione — chi manda i soci all'assicurazione e ne riporta le
 --                polizze: vede solo i tesserati della stagione (nome,
 --                nascita, codice fiscale, polizza) e scrive solo codice
---                fiscale e polizza, passando da insurance_members() e
---                set_insurance(). Non vede members né la ricerca del
---                tablet, che restituisce telefoni ed email: non gli servono.
+--                fiscale e polizza, passando da insurance_members(),
+--                insurance_search() e set_insurance(). Non vede members,
+--                l'elenco completo dei soci né la ricerca del tablet, che
+--                restituisce telefoni ed email: non gli servono.
 --   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
 --   admin      — direttivo: come utente, più le tessere riservate
 --                (es. "TESSERA DIRETTIVO", min_role='admin').
@@ -592,14 +593,20 @@ comment on function public.kiosk_search is 'Ricerca socio per il tablet in negoz
 -- sceglie le righe, non le colonne.
 -- ---------------------------------------------------------------------------
 
--- Le colonne restituite cambieranno con il tracciato che chiede
--- l'assicurazione (TODO in web/assicurazione.html): `create or replace` non
--- può cambiare le colonne di una funzione, quindi prima la si toglie.
+-- Fino al primo rilascio della 2.4 insurance_members(only_pending) dava, con
+-- false, tutti i tesserati della stagione: l'assicurazione poteva scaricare
+-- l'elenco completo dei soci chiamando l'API a mano. L'elenco completo è del
+-- Riepilogo (utente in su, che legge members con la sua RLS); qui restano
+-- chi è da assicurare e una ricerca con pochi risultati per le correzioni.
 drop function if exists public.insurance_members(boolean);
+-- Le colonne restituite cambieranno con il tracciato che chiede
+-- l'assicurazione (TODO in web/shared.js): `create or replace` non può
+-- cambiare le colonne di una funzione, quindi prima la si toglie.
+drop function if exists public.insurance_members();
 
--- I tesserati della stagione aperta; only_pending = solo quelli ancora senza
--- polizza. "NO" come tessera vale come nessuna tessera, come nel Riepilogo.
-create or replace function public.insurance_members(only_pending boolean default true)
+-- I tesserati della stagione aperta ancora senza polizza. "NO" come tessera
+-- vale come nessuna tessera, come nel Riepilogo.
+create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
                address text, city text, province text, postal_code text,
@@ -617,11 +624,52 @@ as $$
    where public.has_role('assicurazione')
      and m.enrolled_at is not null
      and m.card_type is not null and upper(m.card_type) <> 'NO'
-     and (not only_pending or nullif(trim(m.policy_number), '') is null)
-   order by m.last_name, m.first_name;
+     and nullif(trim(m.policy_number), '') is null
+   -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
+   -- l'altra (la pagina legge a blocchi di 1000, vedi tutteLeRighe()).
+   order by m.last_name, m.first_name, m.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta per l''assicurazione; only_pending = solo quelli senza polizza.';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora senza polizza, per l''assicurazione.';
+
+-- Per correggere una polizza o un codice fiscale già salvati: cerca fra i
+-- tesserati della stagione, anche quelli già assicurati. Ogni parola (almeno
+-- due lettere) deve comparire in cognome, nome, codice fiscale, polizza o
+-- numero tessera. Al massimo 20 risultati e nessun indirizzo: serve a
+-- ritrovare una persona, non a scaricare l'elenco dei soci.
+drop function if exists public.insurance_search(text);
+create or replace function public.insurance_search(testo text)
+returns table (id uuid, last_name text, first_name text, birth_date date,
+               birth_place text, birth_province text, tax_code text,
+               card_number text, policy_number text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  -- Toglie % e _, che nel like sotto farebbero da jolly.
+  with parole as (
+    select distinct p
+      from unnest(string_to_array(upper(regexp_replace(coalesce(testo, ''), '[%_]', '', 'g')), ' ')) p
+     where length(p) >= 2
+  )
+  select m.id, m.last_name, m.first_name, m.birth_date,
+         m.birth_place, m.birth_province, m.tax_code,
+         m.card_number, m.policy_number
+    from public.members m
+   where public.has_role('assicurazione')
+     and (select count(*) from parole) > 0
+     and m.enrolled_at is not null
+     and m.card_type is not null and upper(m.card_type) <> 'NO'
+     and not exists (
+       select 1 from parole
+        where upper(concat_ws(' ', m.last_name, m.first_name, m.tax_code, m.policy_number, m.card_number))
+              not like '%' || parole.p || '%')
+   order by m.last_name, m.first_name
+   limit 20;
+$$;
+
+comment on function public.insurance_search is 'Ricerca fra i tesserati della stagione per correggere polizza o codice fiscale: al massimo 20 risultati, senza indirizzi.';
 
 -- Scrive codice fiscale e polizza di un tesserato della stagione, e nient'altro.
 -- Il codice fiscale si corregge qui perché è qui che lo si controlla prima di
@@ -651,15 +699,18 @@ $$;
 
 comment on function public.set_insurance is 'Scrive codice fiscale e numero di polizza di un iscritto della stagione. Solo per chi ha almeno il ruolo assicurazione.';
 
-revoke all on function public.insurance_members(boolean) from public;
+revoke all on function public.insurance_members() from public;
+revoke all on function public.insurance_search(text) from public;
 revoke all on function public.set_insurance(uuid, text, text) from public;
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'anon') then
-    revoke all on function public.insurance_members(boolean) from anon;
+    revoke all on function public.insurance_members() from anon;
+    revoke all on function public.insurance_search(text) from anon;
     revoke all on function public.set_insurance(uuid, text, text) from anon;
   end if;
 end $$;
-grant execute on function public.insurance_members(boolean) to authenticated;
+grant execute on function public.insurance_members() to authenticated;
+grant execute on function public.insurance_search(text) to authenticated;
 grant execute on function public.set_insurance(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------------------

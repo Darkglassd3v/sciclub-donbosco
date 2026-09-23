@@ -57,7 +57,7 @@
       <a href="index.html" data-ruolo="utente">Soci</a>
       <a href="admin.html" data-ruolo="utente">Pagamenti</a>
       <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -86,7 +86,6 @@
       </p>
       <div class="scarica">
         <button type="button" class="button is-link" id="btnScaricaDa">Scarica l'elenco da assicurare (Excel)</button>
-        <button type="button" class="button is-light" id="btnScaricaTutti">Scarica tutti i soci della stagione (Excel)</button>
       </div>
       <div class="tabella-scorrevole">
         <table class="tabella-assic">
@@ -100,7 +99,8 @@
       <h2>Cerca e correggi</h2>
       <p class="occhiello">
         Per correggere un numero di polizza o un codice fiscale già salvati:
-        cerca fra tutti i tesserati della stagione, anche quelli già assicurati.
+        cerca fra i tesserati della stagione, anche quelli già assicurati.
+        Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
       </p>
       <input class="input mb-4" id="cerca" type="search" autocomplete="off"
              placeholder="Cognome, nome, codice fiscale o numero di polizza…">
@@ -118,17 +118,16 @@
 <script src="shared.js"></script>
 <script src="codicefiscale.js"></script>
 <script>
-  // Tutto passa da due funzioni del database: insurance_members() per
-  // leggere e set_insurance() per scrivere (schema.sql, "Assicurazione").
-  // Chi ha il ruolo assicurazione non ha altro accesso ai soci: niente quote,
-  // telefoni o abbonamenti, e solo codice fiscale e polizza da modificare.
+  // Tutto passa da tre funzioni del database (schema.sql, "Assicurazione"):
+  // insurance_members() dà chi è da assicurare, insurance_search() ritrova
+  // una persona per correggerla, set_insurance() scrive. Chi ha il ruolo
+  // assicurazione non ha altro accesso ai soci: niente quote, telefoni,
+  // abbonamenti né l'elenco completo dei tesserati, che si scarica dal
+  // Riepilogo.
 
   const el = (id) => document.getElementById(id);
 
-  const MAX_RISULTATI = 30;
-
   let daAssicurare = [];   // tesserati senza polizza
-  let tutti = null;        // tutti i tesserati della stagione, letti alla prima ricerca o esportazione
 
   (async function init() {
     const sessione = await requireRole("assicurazione");
@@ -137,24 +136,23 @@
       el("contenuto").style.display = "none";
       return;
     }
-    el("btnScaricaDa").addEventListener("click", () =>
-      esporta(() => daAssicurare, "da-assicurare"));
-    el("btnScaricaTutti").addEventListener("click", () =>
-      esporta(caricaTutti, "soci-stagione"));
-    el("cerca").addEventListener("input", cerca);
+    el("btnScaricaDa").addEventListener("click", scaricaDaAssicurare);
+    el("cerca").addEventListener("input", () => {
+      // Una richiesta quando si smette di scrivere, non una per lettera.
+      clearTimeout(cerca.timer);
+      cerca.timer = setTimeout(cerca, 300);
+    });
     await caricaDaAssicurare();
   })();
 
   // -------------------------------------------------------------------------
-  // Dati
+  // Da assicurare
   // -------------------------------------------------------------------------
 
   async function caricaDaAssicurare() {
     setLoading(true);
     try {
-      const { data, error } = await sb.rpc("insurance_members", { only_pending: true });
-      if (error) throw error;
-      daAssicurare = data;
+      daAssicurare = await tutteLeRighe(() => sb.rpc("insurance_members"));
       disegnaDaAssicurare();
     } catch (error) {
       el("elencoDa").innerHTML = '<tr><td colspan="5" class="vuota">Elenco non disponibile.</td></tr>';
@@ -164,23 +162,30 @@
     }
   }
 
-  async function caricaTutti() {
-    if (tutti) return tutti;
-    const { data, error } = await sb.rpc("insurance_members", { only_pending: false });
-    if (error) throw error;
-    tutti = data;
-    return tutti;
+  function disegnaDaAssicurare() {
+    el("quanti").textContent = `(${daAssicurare.length})`;
+    const corpo = el("elencoDa");
+    if (!daAssicurare.length) {
+      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
+      return;
+    }
+    corpo.replaceChildren(...daAssicurare.map(riga));
+  }
+
+  async function scaricaDaAssicurare() {
+    setLoading(true);
+    try {
+      await scaricaExcel(daAssicurare, "da-assicurare");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // -------------------------------------------------------------------------
   // Righe
   // -------------------------------------------------------------------------
-
-  function dataIt(iso) {
-    if (!iso) return "";
-    const [a, m, g] = String(iso).slice(0, 10).split("-");
-    return `${g}/${m}/${a}`;
-  }
 
   /**
    * Una riga con i due campi scrivibili. Il codice fiscale si controlla
@@ -215,24 +220,13 @@
     cf.addEventListener("change", controlla);
     controlla();
 
-    const bottone = tr.querySelector(".salva-riga");
-    bottone.addEventListener("click", () => salva(s, tr));
+    tr.querySelector(".salva-riga").addEventListener("click", () => salva(s, tr));
     // Invio in uno dei due campi salva la riga: chi ricopia una lista di
     // polizze va avanti con la tastiera, senza cercare il pulsante col mouse.
     [cf, polizza].forEach((campo) => campo.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); salva(s, tr); }
     }));
     return tr;
-  }
-
-  function disegnaDaAssicurare() {
-    el("quanti").textContent = `(${daAssicurare.length})`;
-    const corpo = el("elencoDa");
-    if (!daAssicurare.length) {
-      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
-      return;
-    }
-    corpo.replaceChildren(...daAssicurare.map(riga));
   }
 
   // -------------------------------------------------------------------------
@@ -249,27 +243,20 @@
       const { error } = await sb.rpc("set_insurance", { member_id: s.id, tax_code: codice, policy_number: numero });
       if (error) throw error;
 
-      // Come l'ha scritto il database (maiuscolo, senza spazi), così la
-      // stessa persona si legge uguale nei due elenchi e nell'Excel.
+      // Come l'ha scritto il database (maiuscolo, senza spazi).
       s.tax_code = normalizzaCF(codice) || null;
       s.policy_number = numero.trim() || null;
       tr.querySelector(".cf").value = s.tax_code || "";
       tr.querySelector(".polizza").value = s.policy_number || "";
-      if (tutti) {
-        const inCache = tutti.find((t) => t.id === s.id);
-        if (inCache) Object.assign(inCache, { tax_code: s.tax_code, policy_number: s.policy_number });
-      }
 
-      const assicurato = Boolean(s.policy_number);
       const eraDaAssicurare = daAssicurare.some((d) => d.id === s.id);
-      if (assicurato && eraDaAssicurare) {
+      if (s.policy_number && eraDaAssicurare) {
         daAssicurare = daAssicurare.filter((d) => d.id !== s.id);
         disegnaDaAssicurare();
-      } else if (!assicurato && !eraDaAssicurare) {
-        // Polizza cancellata dalla ricerca: il socio torna da assicurare.
-        daAssicurare = [...daAssicurare, s].sort((a, b) =>
-          `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
-        disegnaDaAssicurare();
+      } else if (!s.policy_number && !eraDaAssicurare) {
+        // Polizza cancellata dalla ricerca: il socio torna da assicurare, e
+        // l'elenco si rilegge per avere anche i campi che la ricerca non dà.
+        await caricaDaAssicurare();
       } else {
         tr.classList.add("salvata");
       }
@@ -284,110 +271,32 @@
 
   // -------------------------------------------------------------------------
   // Cerca e correggi
-  //
-  // Cerca fra i tesserati della stagione, gli stessi che vanno nell'Excel
-  // "tutti i soci": l'elenco lo si scarica una volta e si filtra qui, senza
-  // una chiamata al database per ogni lettera.
   // -------------------------------------------------------------------------
 
   let ultimaRicerca = 0;
 
   async function cerca() {
-    const parole = el("cerca").value.trim().toUpperCase().split(/\s+/).filter((p) => p.length >= 2);
+    const testo = el("cerca").value.trim();
     const corpo = el("elencoCerca");
-    if (!parole.length) { corpo.replaceChildren(); return; }
+    if (testo.replace(/\s/g, "").length < 2) { corpo.replaceChildren(); return; }
 
     const mia = ++ultimaRicerca;
     try {
-      const elenco = await caricaTutti();
+      const { data, error } = await sb.rpc("insurance_search", { testo });
+      if (error) throw error;
       if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
-      const trovati = elenco.filter((s) => {
-        const testo = [s.last_name, s.first_name, s.tax_code, s.policy_number, s.card_number]
-          .filter(Boolean).join(" ").toUpperCase();
-        return parole.every((p) => testo.includes(p));
-      });
-      if (!trovati.length) {
+      if (!data.length) {
         corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione trovato.</td></tr>';
         return;
       }
-      corpo.replaceChildren(...trovati.slice(0, MAX_RISULTATI).map(riga));
-      if (trovati.length > MAX_RISULTATI) {
+      corpo.replaceChildren(...data.map(riga));
+      if (data.length === 20) {
         const altri = document.createElement("tr");
-        altri.innerHTML = `<td colspan="5" class="vuota">Altri ${trovati.length - MAX_RISULTATI} risultati: scrivi qualcosa in più.</td>`;
+        altri.innerHTML = '<td colspan="5" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';
         corpo.append(altri);
       }
     } catch (error) {
-      showToast("Errore nella ricerca: " + messaggioErrore(error), "is-danger");
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Excel
-  // -------------------------------------------------------------------------
-
-  // TODO(assicurazione): tracciato del file da concordare con l'assicurazione.
-  // Quando arrivano le specifiche si cambiano solo queste righe: intestazione
-  // della colonna e come si ricava dal socio. Mandare solo le colonne che
-  // l'assicurazione chiede: sono dati personali che escono dal club. Se serve
-  // un campo che insurance_members() non restituisce, va aggiunto lì
-  // (supabase/schema.sql).
-  const COLONNE_EXCEL = [
-    ["Cognome", (s) => s.last_name],
-    ["Nome", (s) => s.first_name],
-    ["Data di nascita", (s) => dataIt(s.birth_date)],
-    ["Luogo di nascita", (s) => s.birth_place],
-    ["Provincia di nascita", (s) => s.birth_province],
-    ["Codice fiscale", (s) => s.tax_code],
-    ["Indirizzo", (s) => s.address],
-    ["Città", (s) => s.city],
-    ["Provincia", (s) => s.province],
-    ["CAP", (s) => s.postal_code],
-    ["Tessera", (s) => s.card_type],
-    ["Numero tessera", (s) => s.card_number],
-    ["Numero polizza", (s) => s.policy_number],
-  ];
-
-  // SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
-  // volte a stagione. È la versione pubblicata su npm, usata solo per
-  // SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
-  // un giorno si leggerà il file restituito dall'assicurazione, passare alla
-  // versione di cdn.sheetjs.com.
-  let xlsxInArrivo = null;
-  function caricaXlsx() {
-    if (window.XLSX) return Promise.resolve();
-    xlsxInArrivo ??= new Promise((ok, ko) => {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-      script.onload = ok;
-      script.onerror = () => {
-        xlsxInArrivo = null;
-        script.remove();
-        ko(new Error("non riesco a scaricare il modulo per l'Excel: controlla la connessione e riprova."));
-      };
-      document.head.append(script);
-    });
-    return xlsxInArrivo;
-  }
-
-  async function esporta(prendiRighe, nome) {
-    setLoading(true);
-    try {
-      const [righe] = await Promise.all([prendiRighe(), caricaXlsx()]);
-      if (!righe.length) { showToast("Non c'è nessun socio da scaricare."); return; }
-
-      const foglio = XLSX.utils.aoa_to_sheet([
-        COLONNE_EXCEL.map(([titolo]) => titolo),
-        ...righe.map((s) => COLONNE_EXCEL.map(([, valore]) => valore(s) ?? "")),
-      ]);
-      foglio["!cols"] = COLONNE_EXCEL.map(([titolo]) => ({ wch: Math.max(14, titolo.length + 2) }));
-      const libro = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(libro, foglio, "Soci");
-      XLSX.writeFile(libro, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
-      showToast(`Scaricato: ${righe.length} soci.`);
-    } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
-    } finally {
-      setLoading(false);
+      if (mia === ultimaRicerca) showToast("Errore nella ricerca: " + messaggioErrore(error), "is-danger");
     }
   }
 </script>

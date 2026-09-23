@@ -450,13 +450,24 @@ begin
   assert (select count(*) from public.insurance_members()) = 2, 'da assicurare: attesi i due tesserati';
   perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', ' bnc nna 80a41 f205x ', 'POL-1');
   assert (select count(*) from public.insurance_members()) = 1, 'con la polizza il socio resta da assicurare';
-  assert (select count(*) from public.insurance_members(false)) = 2, 'tutti i tesserati: attesi due';
+  -- Il socio assicurato si ritrova con la ricerca, che però non dà l'elenco intero.
+  assert (select count(*) from public.insurance_search('bianchi')) = 1, 'la ricerca non trova un assicurato';
+  assert (select count(*) from public.insurance_search('POL-1')) = 1, 'la ricerca per polizza non trova niente';
+  assert (select count(*) from public.insurance_search('anna bianchi')) = 1, 'la ricerca a due parole non trova niente';
+  assert (select count(*) from public.insurance_search('')) = 0, 'la ricerca vuota restituisce soci';
+  assert (select count(*) from public.insurance_search('%')) = 0, 'la ricerca usa i jolly del like';
+  assert (select count(*) from public.insurance_search('elio')) = 0, 'la ricerca trova chi non ha la tessera';
+  begin
+    perform public.insurance_members(false);
+    raise exception 'ASSERZIONE: esiste ancora l''elenco completo per l''assicurazione';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
 
   -- Correzione di una polizza sbagliata: il socio già assicurato si ritrova
   -- fra tutti i tesserati e si riscrive.
   perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', 'BNCNNA80A41F205X', 'POL-2');
-  assert (select policy_number from public.insurance_members(false)
-           where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'POL-2', 'polizza non corretta';
+  assert (select policy_number from public.insurance_search('bianchi')) = 'POL-2', 'polizza non corretta';
 
   -- Solo codice fiscale: resta da assicurare.
   perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'VRDLCU90A01F205Z', '  ');
@@ -501,7 +512,8 @@ begin
   foreach chi in array array['55555555-5555-5555-5555-555555555555',     -- ospite
                              '33333333-3333-3333-3333-333333333333'] loop -- kiosk
     perform set_config('test.uid', chi, false);
-    assert (select count(*) from public.insurance_members(false)) = 0, 'ospite o kiosk vedono i tesserati';
+    assert (select count(*) from public.insurance_members()) = 0, 'ospite o kiosk vedono i tesserati';
+    assert (select count(*) from public.insurance_search('bianchi')) = 0, 'ospite o kiosk cercano i tesserati';
     begin
       perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ABUSIVA');
       raise exception 'ASSERZIONE: ospite o kiosk hanno scritto una polizza';
@@ -509,6 +521,17 @@ begin
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
   end loop;
+end $$;
+
+-- La ricerca dell'assicurazione si ferma a 20 risultati.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (last_name, first_name, enrolled_at, card_type)
+select 'MOLTI', 'NOME' || i, now(), 'PROVA TESSERA ORDINARIA' from generate_series(1, 25) i;
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert (select count(*) from public.insurance_search('molti')) = 20, 'la ricerca non si ferma a 20 risultati';
 end $$;
 
 -- Più abbonamenti per socio.
@@ -651,7 +674,7 @@ begin
   assert (select last_name from public.members where id = luca) = 'VERDI', 'l''anagrafica è stata toccata';
   assert (select tax_code from public.members where id = luca) = 'VRDLCU90A01F205Z', 'il codice fiscale è stato toccato';
   assert (select count(*) from public.member_passes where member_id = luca) = 0, 'abbonamenti rimasti';
-  assert (select count(*) from public.insurance_members(false) where id = luca) = 0, 'ancora fra i tesserati da assicurare';
+  assert (select count(*) from public.insurance_search('verdi') where id = luca) = 0, 'ancora fra i tesserati della stagione';
 
   begin
     perform public.remove_from_season(luca);

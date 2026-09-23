@@ -65,7 +65,7 @@
       <a href="index.html" data-ruolo="utente">Soci</a>
       <a href="admin.html" data-ruolo="utente">Pagamenti</a>
       <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -80,10 +80,11 @@
 <div class="container-main">
   <h1 class="title is-4 mb-4" id="titolo">Riepilogo Stagione</h1>
 
-  <!-- La pagina Assicurazione non ha una voce nella barra per chi ha altri
-       ruoli (non ci starebbe): ci si arriva da qui. -->
-  <p class="mb-4">
-    <a class="button is-link is-light" href="assicurazione.html">Assicurazione: tesserati da assicurare, polizze ed elenco Excel</a>
+  <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
+       pagina Assicurazione: chi ha quel ruolo non deve poterlo scaricare.
+       Solo per la stagione in corso. -->
+  <p class="mb-4" id="zonaScarica" hidden>
+    <button type="button" class="button is-link is-light" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
   </p>
 
   <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
@@ -153,10 +154,39 @@
 
   (async function init() {
     if (!(await requireAuth())) return;
+    if (!STAGIONE) {
+      el("zonaScarica").hidden = false;
+      el("btnScaricaSoci").addEventListener("click", scaricaSoci);
+    }
     await carica();
     // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
     if (!STAGIONE) ascoltaSoci(() => carica({ silenzioso: true }));
   })();
+
+  /**
+   * Tutti i tesserati della stagione in corso, in Excel per l'assicurazione
+   * (colonne in shared.js). Lo può fare chi vede i soci, da utente in su: il
+   * database lo nega al ruolo assicurazione, che non legge members. "NO" come
+   * tessera vale come nessuna tessera, come nel resto del Riepilogo.
+   */
+  async function scaricaSoci() {
+    setLoading(true);
+    try {
+      const soci = await tutteLeRighe(() => sb
+        .from("members")
+        .select("last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
+          + "address, city, province, postal_code, card_type, card_number, policy_number")
+        .not("enrolled_at", "is", null)
+        .not("card_type", "is", null)
+        .neq("card_type", "NO")
+        .order("last_name").order("first_name").order("id"));
+      await scaricaExcel(soci, "soci-stagione");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   /** I cinque insiemi di dati della stagione in corso, dalle viste live. */
   async function datiCorrenti() {
