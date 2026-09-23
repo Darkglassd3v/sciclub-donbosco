@@ -8,7 +8,9 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
+    /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
+     * listino finiva tagliata a destra. */
+    .container-main { max-width: 1100px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
     .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; margin-bottom: 24px; }
@@ -21,9 +23,14 @@
     .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-costi input, .tabella-costi select { font-size: .9375rem; }
     .tabella-costi input[type="text"] { min-width: 180px; }
+    /* "Salva modifiche" va a capo invece di uscire dalla tabella a testo grande. */
+    .tabella-costi .button { white-space: normal; height: auto; min-height: 2.25em; }
     .tabella-costi input[type="number"] { width: 6rem; }
     .tabella-costi .vuota { color: var(--testo-soft); }
     .tabella-costi .riga-nuova td { background: var(--riga-alt); }
+    /* Riga cambiata e non ancora salvata: si vede anche tornando alla pagina
+     * dopo essersi distratti (vedi sorvegliaRighe). */
+    .tabella-costi tr.modificata td { background: var(--giallo-light); }
 
     #bloccato { display: none; }
   </style>
@@ -141,6 +148,52 @@
   })();
 
   // ---------------------------------------------------------------------
+  // Modifiche non salvate
+  //
+  // Ogni riga si salva col suo pulsante. Prima il pulsante era sempre
+  // uguale: cambiata una voce e passati ad altro, non si capiva più se era
+  // stata salvata. Ora una riga diversa da come è nel database ha il fondo
+  // giallo e il pulsante "Salva modifiche"; salvata, torna com'era. Se si
+  // rimettono a mano i valori di prima, la riga si spegne da sola.
+  // ---------------------------------------------------------------------
+
+  function valoriRiga(riga) {
+    return JSON.stringify([...riga.querySelectorAll("input, select")]
+      .map((c) => (c.type === "checkbox" ? c.checked : c.value)));
+  }
+
+  function aggiornaStatoRiga(riga) {
+    const modificata = valoriRiga(riga) !== riga.dataset.salvato;
+    riga.classList.toggle("modificata", modificata);
+    const bottone = riga.querySelector("[data-salva]");
+    bottone.classList.toggle("is-warning", modificata);
+    bottone.textContent = modificata ? "Salva modifiche" : "Salva";
+  }
+
+  /** Dopo aver disegnato una tabella: fotografa i valori salvati di ogni riga. */
+  function sorvegliaRighe(tabella) {
+    tabella.querySelectorAll("tr[data-id]").forEach((riga) => {
+      riga.dataset.salvato = valoriRiga(riga);
+      riga.addEventListener("input", () => aggiornaStatoRiga(riga));
+      riga.addEventListener("change", () => aggiornaStatoRiga(riga));
+    });
+  }
+
+  /** Salvataggio riuscito: quello che c'è a schermo è ora quello salvato. */
+  function segnaSalvata(riga) {
+    riga.dataset.salvato = valoriRiga(riga);
+    aggiornaStatoRiga(riga);
+  }
+
+  // Lasciare la pagina con righe non salvate: il browser chiede conferma.
+  window.addEventListener("beforeunload", (evento) => {
+    if (document.querySelector("tr.modificata")) {
+      evento.preventDefault();
+      evento.returnValue = "";
+    }
+  });
+
+  // ---------------------------------------------------------------------
   // Listino prezzi
   // ---------------------------------------------------------------------
 
@@ -182,6 +235,7 @@
       el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
       });
+      sorvegliaRighe(el("tabellaPrezzi"));
     } catch (error) {
       showToast("Errore di caricamento listino: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -204,6 +258,7 @@
     try {
       const { error } = await sb.from("prices").update(patch).eq("id", id);
       if (error) throw error;
+      segnaSalvata(riga);
       showToast("Voce aggiornata.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -270,6 +325,7 @@
       el("tabellaPartenze").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPartenza(bottone.closest("tr")));
       });
+      sorvegliaRighe(el("tabellaPartenze"));
     } catch (error) {
       showToast("Errore di caricamento partenze: " + messaggioErrore(error), "is-danger");
     }
@@ -286,6 +342,7 @@
     try {
       const { error } = await sb.from("departures").update(patch).eq("id", id);
       if (error) throw error;
+      segnaSalvata(riga);
       showToast("Partenza aggiornata.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");

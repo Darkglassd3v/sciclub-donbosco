@@ -503,6 +503,104 @@ create policy profiles_update_superadmin on public.profiles
 create policy profiles_delete_superadmin on public.profiles
   for delete to authenticated using (public.has_role('superadmin'));
 
+-- Gli account rimossi dal pannello Utenti: l'account Auth resta (per
+-- cancellarlo serve la service_role), la riga profiles no. Senza queste due
+-- funzioni sparivano dall'elenco del pannello, che legge profiles, e
+-- ricrearli dava "Esiste già un account con questa email": non c'era più
+-- modo di ridargli l'accesso da qui.
+--
+-- Security definer perché auth.users non è leggibile dal browser; entrambe
+-- rispondono solo al superadmin e restituiscono solo id ed email.
+create or replace function public.accounts_without_role()
+returns table (user_id uuid, email text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select u.id, u.email::text
+    from auth.users u
+   where public.has_role('superadmin')
+     and not exists (select 1 from public.profiles p where p.user_id = u.id)
+   order by u.email;
+$$;
+
+comment on function public.accounts_without_role is 'Account Auth senza riga profiles (rimossi dal pannello Utenti). Solo superadmin.';
+
+-- Ridà l'accesso a un account rimosso, con il ruolo scelto. Il ruolo lo
+-- controlla il vincolo profiles_role_valid.
+create or replace function public.restore_account(user_id uuid, role text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.has_role('superadmin') then
+    raise exception 'Solo un superadmin può ridare l''accesso a un account.';
+  end if;
+
+  insert into public.profiles (user_id, email, role)
+  select u.id, u.email, restore_account.role
+    from auth.users u
+   where u.id = restore_account.user_id
+  on conflict on constraint profiles_pkey do update set role = excluded.role;
+
+  if not found then
+    raise exception 'Account non trovato: ricarica la pagina.';
+  end if;
+end;
+$$;
+
+comment on function public.restore_account is 'Ridà l''accesso con il ruolo scelto a un account rimosso dal pannello Utenti. Solo superadmin.';
+
+-- Elimina per sempre un account già rimosso. Prima si passava dalla dashboard
+-- di Supabase (Authentication > Users > Delete user); da qui basta il
+-- pannello Utenti. Gira come proprietario (postgres), l'unico che può
+-- cancellare da auth.users: con l'account se ne vanno a cascata sessioni,
+-- identità e la riga profiles.
+--
+-- Solo su un account già senza ruolo: prima Rimuovi, poi Elimina. Così un
+-- clic sbagliato non cancella un account attivo, e il superadmin non può
+-- eliminare sé stesso (la sua riga non si rimuove, vedi web/utenti.html).
+create or replace function public.delete_account(user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.has_role('superadmin') then
+    raise exception 'Solo un superadmin può eliminare un account.';
+  end if;
+
+  if exists (select 1 from public.profiles p where p.user_id = delete_account.user_id) then
+    raise exception 'Si elimina solo un account già rimosso: prima premi Rimuovi.';
+  end if;
+
+  delete from auth.users u where u.id = delete_account.user_id;
+  if not found then
+    raise exception 'Account non trovato: ricarica la pagina.';
+  end if;
+end;
+$$;
+
+comment on function public.delete_account is 'Elimina per sempre un account Auth già rimosso dal pannello Utenti (senza riga profiles). Solo superadmin.';
+
+revoke all on function public.accounts_without_role() from public;
+revoke all on function public.restore_account(uuid, text) from public;
+revoke all on function public.delete_account(uuid) from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.accounts_without_role() from anon;
+    revoke all on function public.restore_account(uuid, text) from anon;
+    revoke all on function public.delete_account(uuid) from anon;
+  end if;
+end $$;
+grant execute on function public.accounts_without_role() to authenticated;
+grant execute on function public.restore_account(uuid, text) to authenticated;
+grant execute on function public.delete_account(uuid) to authenticated;
+
 -- Livello minimo per vedere/scegliere una voce di listino. Vale solo per
 -- category='TESSERA' (es. "TESSERA DIRETTIVO" a min_role='admin'); le altre
 -- categorie restano a 'utente', cioè visibili a chiunque possa vedere il

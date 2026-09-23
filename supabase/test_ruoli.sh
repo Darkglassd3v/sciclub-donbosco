@@ -402,9 +402,6 @@ SQL
 psql_ <<'SQL'
 insert into auth.users (id, email) values ('66666666-6666-6666-6666-666666666666', 'assic@test');
 update public.profiles set role = 'assicurazione' where email = 'assic@test';
--- Il kiosk era stato rimosso qui sopra: torna, serve per i controlli sotto.
-insert into public.profiles (user_id, email, role)
-values ('33333333-3333-3333-3333-333333333333', 'kiosk@test', 'kiosk');
 
 insert into public.prices (category, name, price) values
   ('ABBONAMENTO', 'Prova 5 viaggi DOMENICA', 100),
@@ -420,6 +417,86 @@ insert into public.members (id, last_name, first_name, enrolled_at, card_type, c
   ('aaaaaaaa-0000-0000-0000-000000000002', 'VERDI',   'LUCA', now(), 'PROVA TESSERA ORDINARIA', 'A-7', null,  35, 35),
   ('aaaaaaaa-0000-0000-0000-000000000003', 'NERI',    'ELIO', now(), null,                      null,  null,  0,  0);
 
+set role authenticated;
+
+-- Il kiosk era stato rimosso qui sopra: l'account Auth c'è ancora, la riga
+-- profiles no. Il superadmin lo vede fra gli account senza accesso e glielo
+-- ridà; nessun altro può farlo.
+do $$ begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- admin
+  assert (select count(*) from public.accounts_without_role()) = 0, 'un admin vede gli account rimossi';
+  begin
+    perform public.restore_account('33333333-3333-3333-3333-333333333333', 'superadmin');
+    raise exception 'ASSERZIONE: un admin ha ridato l''accesso a un account';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  assert (select count(*) from public.accounts_without_role() where email = 'kiosk@test') = 1,
+         'il superadmin non vede l''account rimosso';
+  begin
+    perform public.restore_account('33333333-3333-3333-3333-333333333333', 'capo');
+    raise exception 'ASSERZIONE: ridato l''accesso con un ruolo inesistente';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  perform public.restore_account('33333333-3333-3333-3333-333333333333', 'kiosk');
+  assert (select count(*) from public.accounts_without_role()) = 0, 'account ancora senza accesso dopo il ripristino';
+  assert (select role from public.profiles where email = 'kiosk@test') = 'kiosk', 'ruolo sbagliato dopo il ripristino';
+  -- Ripetuto su un account che ha già un ruolo: lo cambia, non si rompe.
+  perform public.restore_account('33333333-3333-3333-3333-333333333333', 'kiosk');
+
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  assert public.has_role('kiosk'), 'l''account ripristinato non ha il suo ruolo';
+end $$;
+
+-- Eliminare per sempre: solo il superadmin, e solo un account già rimosso.
+reset role;
+insert into auth.users (id, email) values ('77777777-7777-7777-7777-777777777777', 'da-eliminare@test');
+delete from public.profiles where user_id = '77777777-7777-7777-7777-777777777777';
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- admin
+  begin
+    perform public.delete_account('77777777-7777-7777-7777-777777777777');
+    raise exception 'ASSERZIONE: un admin ha eliminato un account';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  -- Un account con un ruolo non si elimina: prima va rimosso.
+  begin
+    perform public.delete_account('11111111-1111-1111-1111-111111111111');
+    raise exception 'ASSERZIONE: eliminato un account ancora attivo';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%prima premi Rimuovi%', 'errore inatteso: ' || sqlerrm;
+  end;
+  begin
+    perform public.delete_account('22222222-2222-2222-2222-222222222222');
+    raise exception 'ASSERZIONE: il superadmin ha eliminato sé stesso';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  perform public.delete_account('77777777-7777-7777-7777-777777777777');
+  assert (select count(*) from public.accounts_without_role() where email = 'da-eliminare@test') = 0,
+         'account eliminato ancora in elenco';
+  begin
+    perform public.delete_account('77777777-7777-7777-7777-777777777777');
+    raise exception 'ASSERZIONE: eliminato due volte';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like 'Account non trovato%', 'errore inatteso: ' || sqlerrm;
+  end;
+end $$;
+reset role;
+do $$ begin
+  assert (select count(*) from auth.users where email = 'da-eliminare@test') = 0, 'l''account Auth è rimasto';
+  assert (select count(*) from auth.users where email = 'utente@test') = 1, 'eliminato l''account sbagliato';
+end $$;
 set role authenticated;
 
 -- Numero tessera: il successivo del più alto numerico, e mai due uguali.

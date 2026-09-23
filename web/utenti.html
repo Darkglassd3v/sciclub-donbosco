@@ -92,9 +92,10 @@
       <h2>Utenti registrati</h2>
       <p class="occhiello">
         Il ruolo cambiato vale dal login successivo: scegli il nuovo ruolo e premi
-        <b>Conferma</b>. <b>Rimuovi</b> revoca l'accesso — l'account resta in
-        Supabase ma senza ruolo non vede più niente; per cancellarlo del tutto
-        serve <b>Dashboard &gt; Authentication &gt; Users &gt; Delete user</b>.
+        <b>Conferma</b>. <b>Rimuovi</b> revoca l'accesso: l'account scende in
+        fondo, <b>senza accesso</b>, e non vede più niente. Da lì si può
+        <b>Riattivare</b> con un ruolo (la password resta quella che aveva) o
+        <b>Eliminare per sempre</b>, che libera anche l'indirizzo email.
         Chi compare come <b>ospite</b> non ha ancora alcun permesso.
       </p>
       <table class="tabella-utenti">
@@ -115,6 +116,9 @@
   const PASSWORD_INIZIALE = "donbosco26!";
 
   let mioUserId = null;
+  // Account rimossi (senza riga profiles): servono anche alla creazione, per
+  // riattivare chi c'era già invece di rispondere "esiste già".
+  let senzaAccesso = [];
 
   (async function init() {
     const sessione = await requireRole("superadmin");
@@ -190,20 +194,94 @@
     riga.querySelector("[data-rimuovi]").addEventListener("click", () => chiediRimozione(riga));
   }
 
+  /**
+   * Account rimosso: l'account Auth c'è ancora ma non ha più un ruolo (vedi
+   * accounts_without_role in schema.sql). Nessun ruolo già scelto: Riattiva
+   * si accende solo dopo averne preso uno.
+   */
+  function rigaSenzaAccesso(account) {
+    const opzioni = ['<option value="" selected>— scegli il ruolo —</option>']
+      .concat(RUOLI.map((r) => `<option value="${r}">${r}</option>`)).join("");
+    return `
+      <tr data-senza="${account.user_id}" class="ospite">
+        <td>${esc(account.email)} <span class="tag is-light ml-1">senza accesso</span></td>
+        <td><select class="input" data-ruolo>${opzioni}</select></td>
+        <td class="azioni">${azioniSenzaAccessoHtml()}</td>
+      </tr>`;
+  }
+
+  function azioniSenzaAccessoHtml() {
+    return `
+      <button type="button" class="button is-small is-link" data-riattiva disabled>Riattiva</button>
+      <button type="button" class="button is-small is-danger is-light" data-elimina>Elimina per sempre</button>`;
+  }
+
+  function collegaRigaSenzaAccesso(riga) {
+    // Il menu si riaggancia una volta sola; i pulsanti ogni volta che la
+    // cella azioni viene riscritta (vedi chiediEliminazione).
+    riga.querySelector("[data-ruolo]").addEventListener("change", () => collegaAzioniSenzaAccesso(riga));
+    collegaAzioniSenzaAccesso(riga);
+  }
+
+  function collegaAzioniSenzaAccesso(riga) {
+    const select = riga.querySelector("[data-ruolo]");
+    const riattiva = riga.querySelector("[data-riattiva]");
+    const elimina = riga.querySelector("[data-elimina]");
+    if (!riattiva) return;   // è aperta la domanda "eliminare?"
+    riattiva.disabled = !select.value;
+    riattiva.onclick = () => riattivaAccount(riga, select.value);
+    elimina.onclick = () => chiediEliminazione(riga);
+  }
+
+  /** Eliminare non si annulla: la domanda è scritta sulla riga, con l'email. */
+  function chiediEliminazione(riga) {
+    const email = riga.querySelector("td").firstChild.textContent.trim();
+    const azioni = riga.querySelector(".azioni");
+    azioni.innerHTML = `
+      <span class="domanda">Eliminare per sempre ${esc(email)}? Non si torna indietro.</span>
+      <button type="button" class="button is-small is-danger" data-si>Sì, elimina</button>
+      <button type="button" class="button is-small is-light" data-no>Annulla</button>`;
+    azioni.querySelector("[data-si]").addEventListener("click", () => eliminaAccount(riga, email));
+    azioni.querySelector("[data-no]").addEventListener("click", () => {
+      azioni.innerHTML = azioniSenzaAccessoHtml();
+      collegaAzioniSenzaAccesso(riga);
+    });
+  }
+
+  async function eliminaAccount(riga, email) {
+    riga.querySelectorAll("select, button").forEach((x) => { x.disabled = true; });
+    try {
+      const { error } = await sb.rpc("delete_account", { user_id: riga.dataset.senza });
+      if (error) throw error;
+      showToast(`${email} eliminato: l'indirizzo è di nuovo libero.`);
+      await caricaUtenti();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      riga.querySelector(".azioni").innerHTML = azioniSenzaAccessoHtml();
+      riga.querySelectorAll("select").forEach((x) => { x.disabled = false; });
+      collegaAzioniSenzaAccesso(riga);
+    }
+  }
+
   async function caricaUtenti() {
     setLoading(true);
     try {
-      const { data, error } = await sb
-        .from("profiles")
-        .select("user_id, email, role")
-        .order("email");
-      if (error) throw error;
+      const [profili, rimossi] = await Promise.all([
+        sb.from("profiles").select("user_id, email, role").order("email"),
+        sb.rpc("accounts_without_role"),
+      ]);
+      if (profili.error) throw profili.error;
+      // Senza l'elenco dei rimossi (es. schema.sql non ancora aggiornato) il
+      // pannello funziona lo stesso: mostra solo chi ha un ruolo.
+      senzaAccesso = rimossi.error ? [] : rimossi.data;
 
-      el("tabellaUtenti").innerHTML = data.length
-        ? data.map(rigaUtente).join("")
+      const righe = profili.data.map(rigaUtente).concat(senzaAccesso.map(rigaSenzaAccesso));
+      el("tabellaUtenti").innerHTML = righe.length
+        ? righe.join("")
         : '<tr><td colspan="3" class="vuota">Nessun utente registrato.</td></tr>';
 
       el("tabellaUtenti").querySelectorAll("tr[data-id]").forEach(collegaRiga);
+      el("tabellaUtenti").querySelectorAll("tr[data-senza]").forEach(collegaRigaSenzaAccesso);
     } catch (error) {
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -228,6 +306,19 @@
     bottone.disabled = true;
     setLoading(true);
     try {
+      // Un indirizzo rimosso in passato ha ancora il suo account: crearlo di
+      // nuovo darebbe "Esiste già un account". Gli si ridà l'accesso.
+      const rimosso = senzaAccesso.find((a) => (a.email || "").toLowerCase() === email.toLowerCase());
+      if (rimosso) {
+        const { error } = await sb.rpc("restore_account", { user_id: rimosso.user_id, role: ruolo });
+        if (error) throw error;
+        showToast(`${email} aveva già un account, rimosso in passato: ora ha di nuovo accesso come ${ruolo}. `
+          + "La password è rimasta quella di prima.");
+        campoEmail.value = "";
+        await caricaUtenti();
+        return;
+      }
+
       // La Edge Function crea-utente chiama auth.admin.createUser() con la
       // service_role, che sta su Supabase e non qui: è il "Add user" della
       // dashboard, che non manda nessuna mail. Vedi
@@ -322,6 +413,19 @@
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
       select.disabled = false;
+    }
+  }
+
+  async function riattivaAccount(riga, ruolo) {
+    riga.querySelectorAll("select, button").forEach((x) => { x.disabled = true; });
+    try {
+      const { error } = await sb.rpc("restore_account", { user_id: riga.dataset.senza, role: ruolo });
+      if (error) throw error;
+      showToast(`Accesso ridato come ${ruolo}: vale dal prossimo login. La password è quella di prima.`);
+      await caricaUtenti();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      riga.querySelectorAll("select, button").forEach((x) => { x.disabled = false; });
     }
   }
 

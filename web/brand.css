@@ -304,11 +304,13 @@ body { margin: 0; }
 }
 /* Il superadmin ha nove voci più A+: in maiuscolo non ci stanno accanto al
  * nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome
- * si toglie, la barra usa tutta la larghezza della finestra invece dei 1180px
- * delle pagine, e le voci si stringono un poco (17px invece di 18): così a
- * 1280px ci sta anche Assicurazione, con una quindicina di pixel di scarto. */
+ * si toglie, la barra si allarga a 1280px invece dei 1180px delle pagine, e
+ * le voci si stringono un poco (17px invece di 18): così su uno schermo da
+ * 1280 ci sta anche Assicurazione, con una quindicina di pixel di scarto.
+ * Un limite e non "nessun limite": sugli schermi larghi la barra resta
+ * centrata, invece di mandare il logo tutto a sinistra e le voci a destra. */
 html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
-html[data-ruolo="superadmin"] .barra-dentro { max-width: none; }
+html[data-ruolo="superadmin"] .barra-dentro { max-width: 1280px; }
 html[data-ruolo="superadmin"] .barra-voci a,
 html[data-ruolo="superadmin"] .barra-voci button { padding: 0 10px; font-size: 17px; }
 
