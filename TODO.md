@@ -21,6 +21,11 @@
   e il testo a 17px
 - creazione account: la pagina Utenti crea sempre come `ospite` e poi assegna il ruolo scelto, così
   un ruolo nuovo non richiede di ripubblicare la Edge Function
+- pannello Utenti: gli account rimossi restano in fondo "senza accesso" (`accounts_without_role()`),
+  con **Riattiva** (`restore_account()`) ed **Elimina per sempre** (`delete_account()`, cancella
+  da auth.users); ricreare un'email rimossa la riattiva invece di dare "esiste già"
+- Impostazioni: la riga del listino o delle partenze modificata e non salvata diventa gialla con
+  "Salva modifiche"; lasciando la pagina con modifiche non salvate il browser chiede conferma
 - superadmin: "Togli dalla stagione" nella pagina Soci (`remove_from_season()`), si ferma se il
   socio paga per dei familiari o ha gite segnate
 - backup CSV di produzione preso prima dello schema nella scratchpad della sessione

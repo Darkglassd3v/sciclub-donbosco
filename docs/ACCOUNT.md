@@ -195,8 +195,13 @@ Da lì in poi tutto il resto si fa dal pannello Utenti, senza tornare in SQL Edi
 
 Pannello **Utenti** > **Rimuovi** > **Sì, rimuovi**. Cancella la riga `profiles`: senza ruolo ogni
 richiesta al database gli viene negata, quindi l'accesso è revocato subito anche se l'account
-Supabase resta in piedi. Per farlo sparire davvero — o per poter riusare quella stessa email con un
-account nuovo — serve anche **Authentication > Users > Delete user** dalla dashboard.
+Supabase resta in piedi. L'account scende in fondo all'elenco, **senza accesso**, e da lì:
+
+- **Riattiva** (dopo aver scelto un ruolo) gli ridà l'accesso, con la password che aveva. Succede
+  anche creando di nuovo la stessa email dal riquadro "Nuovo utente";
+- **Elimina per sempre** cancella l'account da Supabase (funzione `delete_account()`), e l'email si
+  può riusare per un account nuovo. Non si torna indietro. Si elimina solo un account già rimosso:
+  prima Rimuovi, poi Elimina.
 
 In alternativa, per una sospensione temporanea che si annulla con un clic, basta rimetterlo a
 `ospite` dall'elenco invece di rimuoverlo.
