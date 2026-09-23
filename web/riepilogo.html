@@ -29,18 +29,26 @@
     .bg-green::before  { background: var(--ok); }
     .bg-grey::before   { background: var(--testo-soft); }
 
-    .section-body { padding: 0 22px 20px; }
-    .rtable { width: 100%; border-collapse: collapse; }
-    .rtable th { text-align: left; padding: 10px 6px; }
-    .rtable td { padding: 14px 6px; }
+    /* Su telefono la tabella scorre di lato invece di schiacciare le voci. */
+    .section-body { padding: 0 22px 20px; overflow-x: auto; }
+    .rtable { width: 100%; min-width: 600px; border-collapse: collapse; }
+    .rtable th { text-align: left; padding: 10px 8px; font-size: 1rem; }
+    /* Le voci si leggono da lontano: 21px, importi in grassetto. Per starci
+     * ogni sezione occupa tutta la larghezza invece di metà. */
+    .rtable td { padding: 16px 8px; font-size: 1.25rem; vertical-align: middle; }
+    .rtable td:nth-child(n+3) { font-weight: 600; }
     /* Stesse colonne in ogni sezione: numeri a destra, importi su una riga. */
     .rtable { table-layout: fixed; }
     .rtable th:nth-child(n+2), .rtable td:nth-child(n+2) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .rtable th:nth-child(2) { width: 64px; }
-    .rtable th:nth-child(3) { width: 108px; }
-    .rtable th:nth-child(4) { width: 128px; }
-    .total-row td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: var(--pillola); font-weight: 600; font-size: .9375rem; }
+    .rtable th:nth-child(2) { width: 90px; }
+    .rtable th:nth-child(3) { width: 150px; }
+    .rtable th:nth-child(4) { width: 200px; }
+    /* La somma della sezione (tutti gli abbonamenti insieme) è il numero che
+     * si cerca: blu e più grande. I totali delle singole voci restano neri
+     * come i prezzi, così la somma non si confonde con loro. */
+    .total-row td:nth-child(4) { color: var(--blu); font-size: 1.6rem; font-weight: 700; }
+    .total-row td { font-weight: 700; border-top: 2px solid var(--testo-soft); }
+    .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
   </style>
@@ -87,31 +95,31 @@
 
   <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. -->
   <div class="columns is-multiline">
-    <div class="column is-6">
+    <div class="column is-12">
       <div class="section-card">
         <div class="section-header bg-blue">Tessere</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-6">
+    <div class="column is-12">
       <div class="section-card">
         <div class="section-header bg-yellow">Abbonamenti gite</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-6">
+    <div class="column is-12">
       <div class="section-card">
         <div class="section-header bg-green">Corsi</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-6">
+    <div class="column is-12">
       <div class="section-card">
         <div class="section-header bg-grey">Entrate extra</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-6">
+    <div class="column is-12">
       <div class="section-card">
         <div class="section-header bg-grey">Uscite</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
@@ -283,7 +291,7 @@
   function riempiVoci(id, righe) {
     const tbody = el(id);
     if (!righe.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="has-text-centered py-3" style="color:var(--testo-soft)">—</td></tr>';
       return;
     }
     const ordinate = righe.sort((a, b) => Number(b.count) - Number(a.count));
