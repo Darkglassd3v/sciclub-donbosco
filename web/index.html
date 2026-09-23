@@ -25,6 +25,20 @@
      * distinguere due omonimi, devono leggersi come il nome. */
     .result-item .tag { font-size: 1rem; }
     #familyList td { vertical-align: middle; }
+
+    /* Voci del listino: righe grandi con nome e prezzo sempre in vista, al
+     * posto delle tendine che andavano aperte per leggerle. Stesso disegno
+     * della scelta dell'abbonamento in ricerca/stile.css. */
+    .scelte { border: 0; padding: 0; margin: 0 0 1.75rem; min-width: 0; }
+    .scelte-opzioni { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; }
+    .scelta { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 16px; background: #fff;
+              border: 2px solid var(--bordo); border-radius: var(--raggio); cursor: pointer; font-size: 1.05rem; line-height: 1.3; }
+    .scelta:hover { border-color: var(--blu); }
+    .scelta input { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
+    .scelta .prezzo { margin-left: auto; font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
+    .scelta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
+    /* Tessera riservata a un ruolo più alto: compare solo se il socio ce l'ha già. */
+    .scelta.riservata:not(:has(input:checked)) { display: none; }
     .label { margin-bottom: .3rem; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
     .payer-section-disabled { opacity: .45; pointer-events: none; }
@@ -108,11 +122,11 @@
     </div>
 
     <div class="section-title">Iscrizione</div>
-    <div class="columns is-multiline mt-1">
-      <div class="column is-6"><label class="label" for="f_tipologia_tessera">Tipologia tessera*</label><div class="select is-fullwidth"><select id="f_tipologia_tessera" required></select></div></div>
-      <div class="column is-6"><label class="label" for="f_agevolazioni_famiglia">Agevolazione famiglia</label><div class="select is-fullwidth"><select id="f_agevolazioni_famiglia"></select></div></div>
-      <div class="column is-6"><label class="label" for="f_tipo_abbonamento">Abbonamento</label><div class="select is-fullwidth"><select id="f_tipo_abbonamento"></select></div></div>
-      <div class="column is-6"><label class="label" for="f_tipologia_corso">Corso sci o snowboard</label><div class="select is-fullwidth"><select id="f_tipologia_corso"></select></div></div>
+    <div class="mt-4">
+      <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
+      <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
+      <fieldset class="scelte" id="f_tipo_abbonamento"><legend class="label">Abbonamento</legend><div class="scelte-opzioni"></div></fieldset>
+      <fieldset class="scelte" id="f_tipologia_corso"><legend class="label">Corso sci o snowboard</legend><div class="scelte-opzioni"></div></fieldset>
     </div>
 
     <div class="columns mt-1">
@@ -183,9 +197,10 @@
   let livelloRuolo = 0; // aggiornato in init(), usato per nascondere le voci ABBONAMENTO riservate
 
   const el = (id) => document.getElementById(id);
+  const sceltaDi = (id) => el(id).querySelector("input:checked");
 
-  // I campi select portano il prezzo nel value e il nome nel testo: al
-  // salvataggio serve il nome, per il totale serve il prezzo.
+  // Le voci del listino sono gruppi di radio: il prezzo sta nel value e il
+  // nome in data-nome. Al salvataggio serve il nome, per il totale il prezzo.
   const SELECT_CATEGORIE = {
     f_tipologia_tessera: "TESSERA",
     f_agevolazioni_famiglia: "FAMIGLIA",
@@ -201,7 +216,7 @@
       livelloRuolo = LIVELLO_RUOLO[profilo?.role] ?? 0;
 
       PREZZI = await caricaPrezzi();
-      Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiSelect(id, categoria));
+      Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
 
       const partenze = await caricaPartenze();
       riempiPartenze("check_sabato", partenze.SABATO);
@@ -220,26 +235,48 @@
     }
   })();
 
-  function riempiSelect(id, categoria) {
-    const select = el(id);
-    select.innerHTML = id === "f_tipologia_tessera"
-      ? '<option value="0" data-nome="" disabled selected>-- Seleziona --</option>'
-      : '<option value="0" data-nome="">Nessuna opzione</option>';
-    (PREZZI[categoria] || []).forEach((p) => {
-      const opzione = document.createElement("option");
-      opzione.value = p.price;
-      opzione.dataset.nome = p.name;
-      opzione.text = `${p.name} (${p.price}€)`;
-      // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono
-      // nell'elenco a chi non ha il ruolo minimo richiesto. Restano però
-      // nella select, nascoste e disabilitate: se un socio le ha già
-      // selezionaPerNome() le trova comunque e il valore non sparisce al
-      // primo salvataggio fatto da chi non ha il permesso di sceglierle.
-      if (categoria === "TESSERA" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
-        opzione.hidden = opzione.disabled = true;
+  /**
+   * Una riga grande per ogni voce del listino. La tessera è obbligatoria e
+   * parte senza scelta; le altre partono da "Nessuna", che form.reset()
+   * ripristina da sé perché è la scelta di default.
+   */
+  function riempiScelte(id, categoria) {
+    const obbligatoria = id === "f_tipologia_tessera";
+    const voci = obbligatoria ? [] : [{ name: "", price: 0, nessuna: true }];
+    voci.push(...(PREZZI[categoria] || []));
+
+    el(id).querySelector(".scelte-opzioni").replaceChildren(...voci.map((p) => {
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = id;
+      radio.value = p.price;
+      radio.dataset.nome = p.name;
+      radio.required = obbligatoria;
+      radio.defaultChecked = Boolean(p.nessuna);
+
+      const nome = document.createElement("span");
+      nome.textContent = p.nessuna ? "Nessuna" : p.name;
+
+      const scelta = document.createElement("label");
+      scelta.className = "scelta";
+      scelta.append(radio, nome);
+      if (!p.nessuna) {
+        const prezzo = document.createElement("span");
+        prezzo.className = "prezzo";
+        prezzo.textContent = fmt(p.price);
+        scelta.append(prezzo);
       }
-      select.add(opzione);
-    });
+      // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono a chi
+      // non ha il ruolo minimo richiesto. Restano però nel gruppo, nascoste
+      // e disabilitate: se un socio le ha già selezionaPerNome() le trova
+      // comunque e il valore non sparisce al primo salvataggio fatto da chi
+      // non ha il permesso di sceglierle.
+      if (categoria === "TESSERA" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
+        radio.disabled = true;
+        scelta.classList.add("riservata");
+      }
+      return scelta;
+    }));
   }
 
   function riempiPartenze(contenitore, luoghi) {
@@ -253,7 +290,7 @@
   // -------------------------------------------------------------------------
 
   function totaleIndividuale() {
-    return Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(el(id).value) || 0), 0);
+    return Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
   }
 
   function ricalcola() {
@@ -377,16 +414,12 @@
   }
 
   function selezionaPerNome(idSelect, nome) {
-    const select = el(idSelect);
-    select.selectedIndex = 0;
+    const radios = [...el(idSelect).querySelectorAll("input")];
+    radios.forEach((r) => (r.checked = r.defaultChecked));
     if (!nome) return;
     const cercato = nome.toString().trim().toLowerCase();
-    for (let i = 0; i < select.options.length; i++) {
-      if ((select.options[i].dataset.nome || "").trim().toLowerCase() === cercato) {
-        select.selectedIndex = i;
-        return;
-      }
-    }
+    const trovato = radios.find((r) => r.dataset.nome.trim().toLowerCase() === cercato);
+    if (trovato) trovato.checked = true;
   }
 
   function spuntaPartenze(contenitore, valore) {
@@ -517,8 +550,7 @@
   // -------------------------------------------------------------------------
 
   function nomeSelezionato(idSelect) {
-    const select = el(idSelect);
-    return select.selectedIndex > 0 ? select.options[select.selectedIndex].dataset.nome : null;
+    return sceltaDi(idSelect)?.dataset.nome || null;
   }
 
   function partenzeSelezionate(contenitore) {

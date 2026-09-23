@@ -278,17 +278,26 @@ body { margin: 0; }
   align-items: center;
   white-space: nowrap;
   flex: 0 0 auto;
-  height: 40px;
-  padding: 0 14px;
+  height: var(--tocco);
+  padding: 0 16px;
   border: 1px solid var(--filo);
   border-radius: 999px;
   background: var(--superficie);
   color: var(--blu);
   font: inherit;
-  font-size: .9375rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  /* Unica eccezione al tondo minuscolo: le voci della barra sono poche e
+   * sempre le stesse, in maiuscolo si trovano a colpo d'occhio. Il tracking
+   * largo evita che le lettere si impastino. */
+  text-transform: uppercase;
+  letter-spacing: .03em;
   text-decoration: none;
   cursor: pointer;
 }
+/* Il superadmin ha otto voci: in maiuscolo non ci stanno accanto al nome del
+ * club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome si toglie. */
+html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
 .barra-voci a:hover, .barra-voci button:hover {
   background: var(--blu-light);
   border-color: var(--blu-light);
@@ -339,7 +348,7 @@ body { margin: 0; }
   .barra-dentro { padding: 0 12px; gap: 10px; }
   .barra-marchio img { height: 32px; }
   .barra-marchio span { display: none; }
-  .barra-voci a, .barra-voci button { height: 38px; padding: 0 12px; font-size: .875rem; }
+  .barra-voci a, .barra-voci button { height: 44px; padding: 0 14px; font-size: 1rem; }
 }
 
 /* Schermo basso (portatile con lo zoom al 150-200%, telefono in orizzontale):

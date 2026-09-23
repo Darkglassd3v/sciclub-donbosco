@@ -146,6 +146,8 @@ Base 17px invece dei consueti 16: un punto in più si legge, non si nota.
 
 Mai `text-transform: uppercase`: si legge più lentamente e non aggiunge
 informazione. I titoli si distinguono per corpo e peso, non per maiuscolo.
+Unica eccezione le voci della barra di navigazione (18px, 600, tracking
+`.03em`): sono poche parole sempre uguali, e in maiuscolo si trovano prima.
 I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ---
