@@ -21,7 +21,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const RUOLI = ["ospite", "kiosk", "utente", "admin", "superadmin"];
+const RUOLI = ["ospite", "kiosk", "assicurazione", "utente", "admin", "superadmin"];
 
 // La pagina sta su un dominio diverso dal progetto Supabase, quindi il browser
 // manda prima una OPTIONS: senza queste intestazioni la chiamata vera non parte.

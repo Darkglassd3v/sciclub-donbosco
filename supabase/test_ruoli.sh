@@ -14,7 +14,7 @@
 # dentro il ruolo `authenticated`, come fa Supabase.
 set -euo pipefail
 
-CONTENITORE=scdb-test-ruoli
+CONTENITORE="scdb-test-ruoli-$$"
 QUI="$(cd "$(dirname "$0")" && pwd)"
 
 docker rm -f "$CONTENITORE" >/dev/null 2>&1 || true
@@ -306,9 +306,18 @@ reset role;
 delete from public.season_accounts where season = '2001-09-01';
 SQL
 
+# Una gita segnata prima della 2.4, quando l'abbonamento era una colonna del
+# socio: dopo lo schema deve essere attaccata all'abbonamento spostato.
+# Il trigger legge le gite da "N viaggi" scritto minuscolo, come nel listino
+# vero: la voce di prova in maiuscolo va completata a mano.
+psql_ -c "update public.prices set trips = 10, day = 'SABATO' where name = 'PROVA 10 VIAGGI SABATO';"
+psql_ -c "insert into public.trip_uses (member_id) values ('99999999-9999-9999-9999-999999999999');"
+
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
 # "where not exists" gli ridarebbe una riga profiles per giunta da admin.
+# Due volte: lo spostamento degli abbonamenti non deve raddoppiarli.
+psql_ < "$QUI/schema.sql" >/dev/null
 psql_ < "$QUI/schema.sql" >/dev/null
 
 psql_ <<'SQL'
@@ -317,6 +326,17 @@ do $$ begin
          'schema.sql ha resuscitato un utente rimosso';
   assert (select role from public.profiles where email = 'ospite@test') = 'ospite',
          'schema.sql ha promosso ad admin un account già esistente';
+
+  -- L'abbonamento scritto nella vecchia colonna è diventato una riga, una sola.
+  assert (select count(*) from public.member_passes
+           where member_id = '99999999-9999-9999-9999-999999999999') = 1,
+         'lo spostamento degli abbonamenti non ha creato una riga sola';
+  assert (select count(*) from public.trip_uses
+           where member_id = '99999999-9999-9999-9999-999999999999' and pass_id is null) = 0,
+         'la gita di prima non è stata attaccata all''abbonamento';
+  assert (select trips_used from public.trip_passes
+           where member_id = '99999999-9999-9999-9999-999999999999') = 1,
+         'la gita di prima non conta più';
 end $$;
 SQL
 
@@ -373,6 +393,296 @@ reset role;
 delete from public.ledger_entries where category = 'PROVA SPONSOR';
 delete from public.season_breakdown where season >= '2030-09-01';
 delete from public.season_history where season >= '2030-09-01';
+SQL
+
+# ---------------------------------------------------------------------------
+# 2.4: numero tessera, ruolo assicurazione, più abbonamenti per socio,
+# socio tolto dalla stagione
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+insert into auth.users (id, email) values ('66666666-6666-6666-6666-666666666666', 'assic@test');
+update public.profiles set role = 'assicurazione' where email = 'assic@test';
+-- Il kiosk era stato rimosso qui sopra: torna, serve per i controlli sotto.
+insert into public.profiles (user_id, email, role)
+values ('33333333-3333-3333-3333-333333333333', 'kiosk@test', 'kiosk');
+
+insert into public.prices (category, name, price) values
+  ('ABBONAMENTO', 'Prova 5 viaggi DOMENICA', 100),
+  ('ABBONAMENTO', 'Prova 5 viaggi JOLLY', 100)
+on conflict (category, name) do nothing;
+
+-- Due tesserati della stagione e un iscritto senza tessera, che
+-- all'assicurazione non va mandato. Il controllo sulle tessere vuole
+-- qualcuno collegato anche per postgres: si finge il superadmin.
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, card_number, tax_code, total, paid) values
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'BIANCHI', 'ANNA', now(), 'PROVA TESSERA ORDINARIA', '21',  'XXX', 35, 0),
+  ('aaaaaaaa-0000-0000-0000-000000000002', 'VERDI',   'LUCA', now(), 'PROVA TESSERA ORDINARIA', 'A-7', null,  35, 35),
+  ('aaaaaaaa-0000-0000-0000-000000000003', 'NERI',    'ELIO', now(), null,                      null,  null,  0,  0);
+
+set role authenticated;
+
+-- Numero tessera: il successivo del più alto numerico, e mai due uguali.
+do $$ begin
+  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  assert public.next_card_number() = 22, 'numero tessera proposto sbagliato (atteso 22: 21 più uno, A-7 non conta)';
+  begin
+    update public.members set card_number = '21' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
+    raise exception 'ASSERZIONE: due soci con lo stesso numero tessera';
+  exception when unique_violation then null;
+  end;
+end $$;
+
+-- Assicurazione: vede e scrive solo quello che le serve.
+do $$
+declare quante int;
+begin
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert public.has_role('assicurazione'), 'assicurazione non riconosciuta';
+  assert not public.has_role('kiosk'), 'assicurazione usa i permessi del kiosk';
+  assert not public.has_role('utente'), 'assicurazione ha i permessi di un utente';
+  assert (select count(*) from public.members) = 0, 'assicurazione legge la tabella members';
+  assert (select count(*) from public.member_passes) = 0, 'assicurazione legge gli abbonamenti';
+  assert (select count(*) from public.prices) = 0, 'assicurazione legge il listino';
+  assert (select count(*) from public.trip_uses) = 0, 'assicurazione legge le gite';
+  assert (select count(*) from public.kiosk_search(array['bianchi', 'anna'])) = 0, 'assicurazione usa la ricerca del tablet';
+
+  assert (select count(*) from public.insurance_members()) = 2, 'da assicurare: attesi i due tesserati';
+  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', ' bnc nna 80a41 f205x ', 'POL-1');
+  assert (select count(*) from public.insurance_members()) = 1, 'con la polizza il socio resta da assicurare';
+  assert (select count(*) from public.insurance_members(false)) = 2, 'tutti i tesserati: attesi due';
+
+  -- Correzione di una polizza sbagliata: il socio già assicurato si ritrova
+  -- fra tutti i tesserati e si riscrive.
+  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', 'BNCNNA80A41F205X', 'POL-2');
+  assert (select policy_number from public.insurance_members(false)
+           where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'POL-2', 'polizza non corretta';
+
+  -- Solo codice fiscale: resta da assicurare.
+  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'VRDLCU90A01F205Z', '  ');
+  assert (select count(*) from public.insurance_members()) = 1, 'una polizza vuota ha tolto il socio dall''elenco';
+
+  -- La RLS lo tiene fuori da members: niente quote cambiate a mano.
+  with x as (update public.members set total = 0 returning 1) select count(*) into quante from x;
+  assert quante = 0, 'assicurazione ha cambiato le quote';
+
+  -- Chi non è iscritto alla stagione non si tocca.
+  begin
+    perform public.set_insurance('99999999-9999-9999-9999-999999999999', 'X', 'POL-FUORI');
+    raise exception 'ASSERZIONE: polizza scritta a un socio non iscritto';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  -- E non toglie nessuno dalla stagione.
+  begin
+    perform public.remove_from_season('aaaaaaaa-0000-0000-0000-000000000001');
+    raise exception 'ASSERZIONE: assicurazione ha tolto un socio dalla stagione';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+end $$;
+
+do $$ begin
+  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  assert (select tax_code from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'BNCNNA80A41F205X',
+         'il codice fiscale non è stato scritto ripulito';
+  assert (select policy_number from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'POL-2',
+         'la polizza non è stata scritta';
+  assert (select total from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 35,
+         'set_insurance ha toccato altro';
+  -- Un utente fa quello che fa l'assicurazione.
+  assert (select count(*) from public.insurance_members()) = 1, 'un utente non vede l''elenco da assicurare';
+end $$;
+
+do $$
+declare chi text;
+begin
+  foreach chi in array array['55555555-5555-5555-5555-555555555555',     -- ospite
+                             '33333333-3333-3333-3333-333333333333'] loop -- kiosk
+    perform set_config('test.uid', chi, false);
+    assert (select count(*) from public.insurance_members(false)) = 0, 'ospite o kiosk vedono i tesserati';
+    begin
+      perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ABUSIVA');
+      raise exception 'ASSERZIONE: ospite o kiosk hanno scritto una polizza';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
+  end loop;
+end $$;
+
+-- Più abbonamenti per socio.
+do $$
+declare
+  anna constant uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  i int;
+begin
+  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+
+  -- add_pass: ripetibile, e il prezzo finisce nel totale (e nell'acconto se pagato).
+  perform public.add_pass(anna, 'Prova 5 viaggi DOMENICA', true, 'cccccccc-0000-0000-0000-000000000001');
+  perform public.add_pass(anna, 'Prova 5 viaggi DOMENICA', true, 'cccccccc-0000-0000-0000-000000000001');
+  assert (select count(*) from public.member_passes where member_id = anna) = 1, 'add_pass ripetuto ha venduto due abbonamenti';
+  assert (select total from public.members where id = anna) = 135, 'add_pass non ha sommato il prezzo al totale';
+  assert (select paid from public.members where id = anna) = 100, 'add_pass pagato non ha sommato l''acconto';
+
+  perform public.add_pass(anna, 'Prova 5 viaggi JOLLY', false, 'cccccccc-0000-0000-0000-000000000002');
+  assert (select total from public.members where id = anna) = 235, 'secondo abbonamento non sommato';
+  assert (select paid from public.members where id = anna) = 100, 'abbonamento da pagare finito nell''acconto';
+  assert (select pass_type from public.members where id = anna) = 'Prova 5 viaggi DOMENICA + Prova 5 viaggi JOLLY',
+         'riassunto pass_type sbagliato';
+  assert (select trips_total from public.trip_passes where member_id = anna) = 10, 'le gite di due abbonamenti non si sommano';
+  assert (select passes from public.trip_passes where member_id = anna) = 2, 'trip_passes non conta gli abbonamenti';
+
+  -- Ordine di scelta: il giorno scelto, poi JOLLY, poi il più vecchio.
+  perform public.use_trip(anna, 'dddddddd-0000-0000-0000-000000000001', 'DOMENICA');
+  assert (select trips_used from public.pass_status where member_id = anna and pass_type = 'Prova 5 viaggi DOMENICA') = 1,
+         'la gita di domenica non è stata scalata dall''abbonamento della domenica';
+  perform public.use_trip(anna, 'dddddddd-0000-0000-0000-000000000002', 'SABATO');
+  assert (select trips_used from public.pass_status where member_id = anna and pass_type = 'Prova 5 viaggi JOLLY') = 1,
+         'senza abbonamento del sabato la gita non è stata scalata dal jolly';
+  perform public.use_trip(anna, 'dddddddd-0000-0000-0000-000000000002', 'SABATO');
+  assert (select count(*) from public.trip_uses where member_id = anna) = 2, 'un ritentativo ha scalato una seconda gita';
+
+  -- Chiamata della versione precedente (senza giorno): il più vecchio.
+  perform public.use_trip(anna, 'dddddddd-0000-0000-0000-000000000003');
+  assert (select trips_used from public.pass_status where member_id = anna and pass_type = 'Prova 5 viaggi DOMENICA') = 2,
+         'senza giorno la gita non è stata scalata dall''abbonamento più vecchio';
+
+  -- Finiti tutti e due, si rifiuta.
+  for i in 1..7 loop
+    perform public.use_trip(anna, gen_random_uuid(), 'DOMENICA');
+  end loop;
+  assert (select trips_left from public.trip_passes where member_id = anna) = 0, 'residuo sbagliato dopo dieci gite';
+  begin
+    perform public.use_trip(anna, gen_random_uuid(), 'DOMENICA');
+    raise exception 'ASSERZIONE: scalata una gita da abbonamenti esauriti';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like 'Abbonamento esaurito%', 'errore inatteso: ' || sqlerrm;
+  end;
+
+  begin
+    perform public.use_trip('aaaaaaaa-0000-0000-0000-000000000002', gen_random_uuid(), null);
+    raise exception 'ASSERZIONE: scalata una gita a chi non ha abbonamenti';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like 'Questo socio non ha un abbonamento%', 'errore inatteso: ' || sqlerrm;
+  end;
+
+  -- Un abbonamento con gite non si toglie; uno senza sì, e il riassunto segue.
+  begin
+    delete from public.member_passes where member_id = anna and pass_type = 'Prova 5 viaggi JOLLY';
+    raise exception 'ASSERZIONE: tolto un abbonamento con gite già fatte';
+  exception when foreign_key_violation then null;
+  end;
+  insert into public.member_passes (member_id, pass_type) values (anna, 'Prova 5 viaggi DOMENICA');
+  assert (select pass_type from public.members where id = anna) = 'Prova 5 viaggi DOMENICA ×2 + Prova 5 viaggi JOLLY',
+         'riassunto pass_type sbagliato con due abbonamenti uguali';
+  delete from public.member_passes
+   where id = (select pass_id from public.pass_status
+                where member_id = anna and trips_used = 0);
+  assert (select count(*) from public.member_passes where member_id = anna) = 2, 'abbonamento senza gite non tolto';
+
+  assert (select count from public.pass_counts where name = 'Prova 5 viaggi DOMENICA') = 1, 'Riepilogo: abbonamenti venduti sbagliati';
+
+  -- L'ospite non vede e non vende abbonamenti.
+  perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
+  assert (select count(*) from public.member_passes) = 0, 'un ospite vede gli abbonamenti';
+  begin
+    perform public.add_pass(anna, 'Prova 5 viaggi JOLLY', false, gen_random_uuid());
+    raise exception 'ASSERZIONE: un ospite ha venduto un abbonamento';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+end $$;
+
+-- Togliere dalla stagione un socio tesserato per sbaglio: solo il superadmin,
+-- e non se paga per dei familiari o ha gite segnate.
+do $$
+declare
+  luca constant uuid := 'aaaaaaaa-0000-0000-0000-000000000002';
+  elio constant uuid := 'aaaaaaaa-0000-0000-0000-000000000003';
+  chi  text;
+  gita uuid;
+begin
+  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  perform public.add_pass(luca, 'Prova 5 viaggi JOLLY', true, gen_random_uuid());
+  perform public.use_trip(luca, 'eeeeeeee-0000-0000-0000-000000000001', 'JOLLY');
+  update public.members set payer_id = luca where id = elio;
+
+  foreach chi in array array['11111111-1111-1111-1111-111111111111',     -- utente
+                             '44444444-4444-4444-4444-444444444444'] loop -- admin
+    perform set_config('test.uid', chi, false);
+    begin
+      perform public.remove_from_season(luca);
+      raise exception 'ASSERZIONE: un non superadmin ha tolto un socio dalla stagione';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+      assert sqlerrm like 'Solo il superadmin%', 'errore inatteso: ' || sqlerrm;
+    end;
+  end loop;
+
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  begin
+    perform public.remove_from_season(luca);
+    raise exception 'ASSERZIONE: tolto un capofamiglia con familiari a carico';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%paga per dei familiari%', 'errore inatteso: ' || sqlerrm;
+  end;
+
+  update public.members set payer_id = null where id = elio;
+  begin
+    perform public.remove_from_season(luca);
+    raise exception 'ASSERZIONE: tolto un socio con gite segnate';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%gite segnate%', 'errore inatteso: ' || sqlerrm;
+  end;
+
+  select id into gita from public.trip_uses where client_id = 'eeeeeeee-0000-0000-0000-000000000001';
+  perform public.cancel_trip(gita);
+  perform public.remove_from_season(luca);
+
+  assert (select enrolled_at from public.members where id = luca) is null, 'il socio è ancora iscritto';
+  assert (select card_type is null and card_number is null and total = 0 and paid = 0 and pass_type is null
+            from public.members where id = luca), 'dati di stagione non azzerati';
+  assert (select last_name from public.members where id = luca) = 'VERDI', 'l''anagrafica è stata toccata';
+  assert (select tax_code from public.members where id = luca) = 'VRDLCU90A01F205Z', 'il codice fiscale è stato toccato';
+  assert (select count(*) from public.member_passes where member_id = luca) = 0, 'abbonamenti rimasti';
+  assert (select count(*) from public.insurance_members(false) where id = luca) = 0, 'ancora fra i tesserati da assicurare';
+
+  begin
+    perform public.remove_from_season(luca);
+    raise exception 'ASSERZIONE: tolto due volte';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%non è iscritto%', 'errore inatteso: ' || sqlerrm;
+  end;
+end $$;
+
+-- La chiusura conta gli abbonamenti venduti e li toglie dalla stagione nuova.
+do $$
+declare chiusa timestamptz;
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  select season_closed into chiusa from public.close_season('CHIUDI STAGIONE');
+  assert (select count from public.season_breakdown
+           where season = chiusa and category = 'PASS' and label = 'Prova 5 viaggi DOMENICA') = 1,
+         'chiusura: abbonamenti della domenica contati male';
+  assert (select count from public.season_breakdown
+           where season = chiusa and category = 'PASS' and label = 'Prova 5 viaggi JOLLY') = 1,
+         'chiusura: abbonamenti jolly contati male';
+  assert (select pass_type from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
+         'chiusura: riassunto abbonamento non azzerato';
+  assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
+  assert (select count(*) from public.member_passes) > 0, 'chiusura: gli abbonamenti venduti sono stati cancellati';
+end $$;
+
+reset role;
+delete from public.season_breakdown;
+delete from public.season_history;
 SQL
 
 echo "test ruoli: tutto a posto"

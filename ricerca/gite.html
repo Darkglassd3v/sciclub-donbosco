@@ -266,16 +266,21 @@
    * Il Jolly vale qualsiasi giorno: quando si cerca "chi ha l'abbonamento del
    * sabato" chi ha un Jolly può salire lo stesso, quindi di norma compare.
    * Si può togliere, ma non è il caso normale.
+   *
+   * Dalla 2.4 un socio può avere più abbonamenti (days li elenca tutti):
+   * compare sotto ognuno dei suoi giorni. Le voci ancora in coda e le pagine
+   * servite da un database vecchio hanno solo day.
    */
   function filtrati() {
     const parti = pezzi(el("q").value);
     const conJolly = el("conJolly").checked;
 
     return abbonamenti.filter((a) => {
+      const giorni = a.days || [a.day];
       if (giornoScelto && giornoScelto !== "JOLLY") {
-        const suoGiorno = a.day === giornoScelto || (conJolly && a.day === "JOLLY");
+        const suoGiorno = giorni.includes(giornoScelto) || (conJolly && giorni.includes("JOLLY"));
         if (!suoGiorno) return false;
-      } else if (giornoScelto === "JOLLY" && a.day !== "JOLLY") {
+      } else if (giornoScelto === "JOLLY" && !giorni.includes("JOLLY")) {
         return false;
       }
       return parti.every((p) =>
@@ -296,7 +301,8 @@
       <div class="scheda" id="scheda_${a.member_id}">
         <div class="nomi">
           <span>${evidenzia(a.last_name, parti)} ${evidenzia(a.first_name, parti)}</span>
-          ${etichettaGiorno(a.day)}
+          ${(a.days || [a.day]).map(etichettaGiorno).join("")}
+          ${a.passes > 1 ? `<span>${a.passes} abbonamenti</span>` : ""}
           ${a.inInvio ? '<span class="in-invio">in invio</span>' : ""}
         </div>
 
@@ -368,7 +374,10 @@
 
     // L'id nasce qui, con la pressione, e resta lo stesso per tutti i
     // tentativi di invio: è così che un reinvio non diventa una seconda gita.
-    coda.push({ id: nuovoId(), socio: socioId });
+    // Il giorno scelto nel pannello viaggia con la gita: con più abbonamenti
+    // il database scala da quello di quel giorno (vedi use_trip), anche se
+    // la gita parte più tardi, quando torna la linea.
+    coda.push({ id: nuovoId(), socio: socioId, giorno: giornoScelto || null });
     salvaCoda();
 
     const rimaste = inAttesa(socioId);
@@ -413,7 +422,11 @@
           if (voce.tipo === "abbonamento") {
             await inviaAbbonamento(voce);
           } else {
-            const { error } = await sb.rpc("use_trip", { member_id: voce.socio, client_id: voce.id });
+            // Le voci segnate con la versione precedente non hanno il giorno:
+            // senza, il database scala dal primo abbonamento con gite libere.
+            const { error } = await sb.rpc("use_trip", {
+              member_id: voce.socio, client_id: voce.id, ...(voce.giorno ? { day: voce.giorno } : {}),
+            });
             if (error) throw error;
           }
           togliDallaCoda(voce.id);
@@ -448,36 +461,17 @@
   /**
    * Assegna l'abbonamento di una voce in coda.
    *
-   * L'update scatta solo se il socio non ha ancora un abbonamento: il primo
-   * invio riuscito cambia la condizione, quindi un reinvio (risposta persa per
-   * strada) non trova più la riga e non somma una seconda volta.
+   * La somma al totale (e all'acconto, se pagato) la fa il database, sul
+   * valore di quel momento: prima la faceva il telefono su quello letto
+   * all'assegnazione, e una modifica fatta intanto da un altro operatore
+   * andava persa. L'id della voce rende ripetibile l'invio: un reinvio
+   * (risposta persa per strada) non vende un secondo abbonamento.
    */
   async function inviaAbbonamento(v) {
-    // ponytail: total e paid sono quelli letti all'assegnazione, come nel form
-    // soci; una modifica fatta intanto da un altro operatore viene sovrascritta.
-    // Se capita, la somma va spostata in una funzione del database.
-    const { data, error } = await sb
-      .from("members")
-      .update({
-        pass_type: v.nome,
-        total: v.total + v.prezzo,
-        paid: v.paid + (v.pagato ? v.prezzo : 0),
-      })
-      .eq("id", v.socio)
-      .or("pass_type.is.null,pass_type.eq.NO")
-      .select("id");
+    const { error } = await sb.rpc("add_pass", {
+      member_id: v.socio, pass_type: v.nome, paid: Boolean(v.pagato), client_id: v.id,
+    });
     if (error) throw error;
-    if (data.length) return;
-
-    // Nessuna riga toccata: o era un reinvio già arrivato, o un altro
-    // telefono gli ha dato nel frattempo un abbonamento diverso.
-    const { data: riga, error: errLettura } = await sb
-      .from("members").select("pass_type").eq("id", v.socio).single();
-    if (errLettura) throw errLettura;
-    if (riga.pass_type !== v.nome) {
-      // Con un code il rifiuto è definitivo: la voce esce dalla coda.
-      throw Object.assign(new Error(`ha già l'abbonamento «${riga.pass_type}»`), { code: "GIA_ASSEGNATO" });
-    }
   }
 
   /** Riprova più tardi, aspettando ogni volta un po' di più: 3s, 6s, 12s… fino a un minuto. */
@@ -609,7 +603,7 @@
 
     let query = sb
       .from("members")
-      .select("id, last_name, first_name, total, paid")
+      .select("id, last_name, first_name")
       .gte("enrolled_at", inizioStagione())
       // L'abbonamento si vende solo a chi è tesserato.
       .not("card_type", "is", null)
@@ -697,7 +691,6 @@
       cognome: socio.last_name, nome_socio: socio.first_name,
       nome: voce.name, prezzo: Number(voce.price || 0), pagato,
       trips: Number(voce.trips || 0), day: voce.day,
-      total: Number(socio.total || 0), paid: Number(socio.paid || 0),
     });
     salvaCoda();
 

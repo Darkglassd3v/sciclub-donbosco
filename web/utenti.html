@@ -52,9 +52,10 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
+      <a href="index.html" data-ruolo="utente">Soci</a>
+      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
+      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -110,7 +111,7 @@
 <script>
   const el = (id) => document.getElementById(id);
 
-  const RUOLI = ["ospite", "kiosk", "utente", "admin", "superadmin"];
+  const RUOLI = ["ospite", "kiosk", "assicurazione", "utente", "admin", "superadmin"];
   const PASSWORD_INIZIALE = "donbosco26!";
 
   let mioUserId = null;

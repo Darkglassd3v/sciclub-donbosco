@@ -32,13 +32,14 @@ async function logout() {
 // ---------------------------------------------------------------------------
 // Ruoli
 //
-// Gerarchia: ospite < kiosk < utente < admin < superadmin. Il ruolo vive nella
-// tabella profiles (vedi supabase/schema.sql), una riga per utente creata alla
-// nascita dell'account. 'ospite' non può fare niente: è dove nasce ogni nuovo
-// account finché un superadmin non lo promuove dal pannello Utenti.
+// Gerarchia: ospite < kiosk < assicurazione < utente < admin < superadmin. Il
+// ruolo vive nella tabella profiles (vedi supabase/schema.sql), una riga per
+// utente creata alla nascita dell'account. 'ospite' non può fare niente: è
+// dove nasce ogni nuovo account finché un superadmin non lo promuove dal
+// pannello Utenti. 'assicurazione' vede solo la pagina Assicurazione.
 // ---------------------------------------------------------------------------
 
-const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, utente: 2, admin: 3, superadmin: 4 };
+const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, assicurazione: 2, utente: 3, admin: 4, superadmin: 5 };
 let _profiloCache = null;
 
 /** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
@@ -192,10 +193,62 @@ function setLoading(attivo) {
  */
 document.addEventListener("DOMContentLoaded", async () => {
   // Una alla volta: la prima carica il profilo, le altre lo trovano in cache.
+  // data-solo: la voce è di quel ruolo e basta, non anche di chi sta sopra.
   for (const voce of document.querySelectorAll(".barra-voci [data-ruolo]")) {
-    voce.hidden = !(await hasRole(voce.dataset.ruolo).catch(() => false));
+    voce.hidden = "solo" in voce.dataset
+      ? (await getProfile().catch(() => null))?.role !== voce.dataset.ruolo
+      : !(await hasRole(voce.dataset.ruolo).catch(() => false));
   }
 });
+
+/**
+ * Il ruolo assicurazione ha una pagina sola. Le altre non gli mostrerebbero
+ * comunque niente (il database gli nega i soci), ma una pagina Soci vuota
+ * sembra un guasto: lo si porta subito dove può lavorare. Vale anche per il
+ * login, che dopo l'accesso manda su index.html.
+ */
+(async function soloPaginaAssicurazione() {
+  const pagina = location.pathname.split("/").pop() || "index.html";
+  if (pagina === "assicurazione.html" || pagina === "login.html") return;
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return;
+  const profilo = await getProfile().catch(() => null);
+  if (profilo && profilo.role === "assicurazione") location.replace("assicurazione.html");
+})();
+
+/**
+ * Avviso sotto un campo codice fiscale, a partire dall'esito di verificaCF()
+ * (codicefiscale.js): cosa non torna e, se c'è, il pulsante per mettere nel
+ * campo il codice proposto. Non blocca niente: chi ha il documento davanti
+ * decide. `dopo` viene chiamata quando il codice proposto finisce nel campo.
+ */
+function mostraAvvisoCF(box, campo, esito, dopo) {
+  if (!esito || esito.ok) {
+    box.hidden = true;
+    box.replaceChildren();
+    return;
+  }
+  const righe = esito.problemi.map((p) => {
+    const riga = document.createElement("p");
+    riga.textContent = p;
+    return riga;
+  });
+  box.replaceChildren(...righe);
+  if (esito.suggerito) {
+    const usa = document.createElement("button");
+    usa.type = "button";
+    usa.className = "button is-link is-small";
+    usa.innerHTML = `Usa il codice proposto: <code>${esc(esito.suggerito)}</code>`;
+    usa.addEventListener("click", () => {
+      campo.value = esito.suggerito;
+      box.hidden = true;
+      box.replaceChildren();
+      if (dopo) dopo();
+    });
+    box.append(usa);
+  }
+  box.hidden = false;
+}
 
 /** Testo scritto dagli utenti, pronto per innerHTML. */
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -244,7 +297,7 @@ function totaliNucleo(capofamiglia, familiari = []) {
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price, min_role")
+    .select("category, name, price, min_role, trips")
     .eq("active", true)
     .order("category")
     .order("price")

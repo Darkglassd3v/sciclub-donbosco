@@ -39,6 +39,22 @@
     .scelta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
     /* Tessera riservata a un ruolo più alto: compare solo se il socio ce l'ha già. */
     .scelta.riservata:not(:has(input:checked)) { display: none; }
+
+    /* Abbonamenti del socio, uno per riga con le gite fatte. Il listino sotto
+     * ha un pulsante per voce invece di un pallino: un abbonamento si
+     * aggiunge, non si sceglie in alternativa agli altri. */
+    .abbonamenti { list-style: none; margin: 0 0 12px; padding: 0; }
+    .abbonamenti li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-height: 56px; padding: 10px 16px;
+                      margin-bottom: 8px; border: 2px solid var(--blu); border-radius: var(--raggio); background: var(--blu-light);
+                      font-size: 1.05rem; line-height: 1.3; }
+    .abbonamenti li.nuovo { border-style: dashed; background: #fff; }
+    .abbonamenti li.vuoto { border: 2px dashed var(--filo); background: #fff; }
+    .abbonamenti .gite { font-weight: 700; }
+    .abbonamenti .button, .scelta.aggiungi .button { margin-left: auto; flex: none; }
+    .scelta.aggiungi { cursor: default; }
+    .scelta.aggiungi .prezzo { margin-left: 0; }
+    .scelta.aggiungi .nome { flex: 1; }
+    .togli-stagione .domanda { display: block; font-weight: 700; margin-bottom: 8px; }
     .label { margin-bottom: .3rem; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
     .payer-section-disabled { opacity: .45; pointer-events: none; }
@@ -67,9 +83,10 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
+      <a href="index.html" data-ruolo="utente">Soci</a>
+      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
+      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -112,7 +129,10 @@
       <div class="column is-4"><label class="label" for="f_nome">Nome*</label><input class="input" id="f_nome" required></div>
       <div class="column is-4"><label class="label" for="f_luogo_nascita">Città di nascita</label><input class="input" id="f_luogo_nascita"></div>
       <div class="column is-3"><label class="label" for="f_provincia_nascita">Provincia di nascita</label><input class="input" id="f_provincia_nascita" maxlength="2"></div>
-      <div class="column is-5"><label class="label" for="f_codice_fiscale">Codice fiscale</label><input class="input" id="f_codice_fiscale" maxlength="16"></div>
+      <div class="column is-5">
+        <label class="label" for="f_codice_fiscale">Codice fiscale</label><input class="input" id="f_codice_fiscale" maxlength="16" autocomplete="off">
+        <div id="avvisoCF" class="avviso-cf" role="status" hidden></div>
+      </div>
       <div class="column is-4"><label class="label" for="f_data_nascita">Data di nascita</label><input class="input" type="date" id="f_data_nascita"></div>
       <div class="column is-4"><label class="label" for="f_telefono">Telefono*</label><input class="input" id="f_telefono" required></div>
       <div class="column is-8"><label class="label" for="f_indirizzo">Indirizzo di residenza</label><input class="input" id="f_indirizzo"></div>
@@ -126,7 +146,15 @@
     <div class="mt-4">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
-      <fieldset class="scelte" id="f_tipo_abbonamento"><legend class="label">Abbonamento</legend><div class="scelte-opzioni"></div></fieldset>
+      <!-- Gli abbonamenti non sono una scelta sola come le altre voci: chi
+           finisce le cinque gite ne compra un altro, anche di un altro giorno.
+           Sopra quelli che ha, con le gite fatte; sotto il listino, con un
+           pulsante per aggiungerne uno. -->
+      <fieldset class="scelte" id="f_abbonamenti">
+        <legend class="label">Abbonamenti gite</legend>
+        <ul id="elencoAbbonamenti" class="abbonamenti"></ul>
+        <div class="scelte-opzioni" id="listinoAbbonamenti"></div>
+      </fieldset>
       <fieldset class="scelte" id="f_presciistica"><legend class="label">Presciistica</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_tipologia_corso"><legend class="label">Corso sci o snowboard</legend><div class="scelte-opzioni"></div></fieldset>
     </div>
@@ -145,7 +173,10 @@
     <div class="section-title">Amministrazione</div>
     <div class="columns mt-1">
       <div class="column is-4"><label class="label" for="f_numero_polizza">Numero polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
-      <div class="column is-4"><label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" placeholder="Es. 2026-0001"></div>
+      <div class="column is-4">
+        <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
+        <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
+      </div>
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
     </div>
 
@@ -177,6 +208,19 @@
       <div class="family-title">👨‍👩‍👧 Familiari a carico — pagati da questo socio</div>
       <div id="familyList" class="mt-2"></div>
     </div>
+
+    <!-- Solo superadmin, solo su un socio iscritto: rimedio a un tesseramento
+         fatto per sbaglio. Vedi remove_from_season() in schema.sql. -->
+    <div id="zonaTogli" class="togli-stagione" hidden>
+      <div class="section-title">Iscrizione sbagliata</div>
+      <p class="suggerimento">
+        Toglie questa persona dalla stagione: tessera, numero, polizza, abbonamenti,
+        corsi, partenze e quote tornano vuoti. L'anagrafica resta.
+      </p>
+      <div id="azioniTogli">
+        <button type="button" class="button is-danger is-outlined" id="btnTogli">Togli dalla stagione</button>
+      </div>
+    </div>
   </form>
 </div>
 
@@ -193,20 +237,34 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
+<script src="codicefiscale.js"></script>
 <script>
   let PREZZI = {};
   let familiariACarico = [];
-  let livelloRuolo = 0; // aggiornato in init(), usato per nascondere le voci ABBONAMENTO riservate
+  let livelloRuolo = 0; // aggiornato in init(), usato per nascondere le tessere riservate
+
+  // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
+  // con le gite fatte), quelli aggiunti qui e non ancora salvati, e i pass_id
+  // dei salvati da togliere al prossimo salvataggio. Si scrive tutto insieme
+  // al socio, premendo Salva, come le altre voci.
+  let abbonamentiSalvati = [];
+  let abbonamentiNuovi = [];
+  let abbonamentiDaTogliere = new Set();
+
+  // Il numero tessera messo dalla pagina, finché nessuno lo cambia a mano: se
+  // al salvataggio risulta appena preso da un altro operatore, la pagina ne
+  // propone un altro da sé. Uno scritto a mano invece non si tocca.
+  let numeroProposto = null;
 
   const el = (id) => document.getElementById(id);
   const sceltaDi = (id) => el(id).querySelector("input:checked");
 
   // Le voci del listino sono gruppi di radio: il prezzo sta nel value e il
   // nome in data-nome. Al salvataggio serve il nome, per il totale il prezzo.
+  // Gli abbonamenti non ci sono: se ne possono avere più d'uno (vedi sotto).
   const SELECT_CATEGORIE = {
     f_tipologia_tessera: "TESSERA",
     f_agevolazioni_famiglia: "FAMIGLIA",
-    f_tipo_abbonamento: "ABBONAMENTO",
     f_presciistica: "PRESCIISTICA",
     f_tipologia_corso: "CORSO",
   };
@@ -220,6 +278,8 @@
 
       PREZZI = await caricaPrezzi();
       Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
+      riempiListinoAbbonamenti();
+      disegnaAbbonamenti();
 
       const partenze = await caricaPartenze();
       riempiPartenze("check_sabato", partenze.SABATO);
@@ -229,8 +289,15 @@
       el("f_acconto").addEventListener("input", ricalcola);
       el("searchInput").addEventListener("input", cercaSoci);
       el("f_payerDisplay").addEventListener("input", cercaPagante);
+      // "change" e non "input": il controllo parte quando si lascia il campo,
+      // non a ogni lettera, che a metà codice sarebbe sempre "sbagliato".
+      ["f_codice_fiscale", "f_cognome", "f_nome", "f_data_nascita"].forEach((id) =>
+        el(id).addEventListener("change", controllaCF));
+      el("f_numero_tessera").addEventListener("input", () => (el("notaTessera").hidden = true));
+      el("btnTogli").addEventListener("click", chiediTogli);
 
       ricalcola();
+      await proponiNumeroTessera();
     } catch (error) {
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -289,11 +356,175 @@
   }
 
   // -------------------------------------------------------------------------
+  // Abbonamenti gite
+  //
+  // Un socio può averne più d'uno nella stessa stagione, anche di giorni
+  // diversi: chi finisce le cinque gite ne compra un altro. Ogni abbonamento
+  // è una riga di member_passes; qui si vedono quelli che ha, con le gite
+  // fatte, e se ne aggiungono dal listino.
+  // -------------------------------------------------------------------------
+
+  /** Il listino degli abbonamenti a gite, ognuno con il suo "+ Aggiungi". */
+  function riempiListinoAbbonamenti() {
+    // Solo gli abbonamenti a gite (con il numero di viaggi): gli altri non
+    // avrebbero un conto di gite da mostrare.
+    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips);
+    el("listinoAbbonamenti").replaceChildren(...voci.map((p) => {
+      const riga = document.createElement("div");
+      riga.className = "scelta aggiungi";
+      riga.innerHTML = `<span class="nome">${esc(p.name)}</span><span class="prezzo">${fmt(p.price)}</span>`;
+      const aggiungi = document.createElement("button");
+      aggiungi.type = "button";
+      aggiungi.className = "button is-link is-outlined";
+      aggiungi.textContent = "+ Aggiungi";
+      aggiungi.addEventListener("click", () => aggiungiAbbonamento(p));
+      riga.append(aggiungi);
+      return riga;
+    }));
+  }
+
+  /** Quelli che entrano nel totale: i salvati non tolti, più i nuovi. */
+  function abbonamentiDaContare() {
+    return [...abbonamentiSalvati.filter((a) => !abbonamentiDaTogliere.has(a.pass_id)), ...abbonamentiNuovi];
+  }
+
+  function aggiungiAbbonamento(voce) {
+    // client_id nasce qui e resta con la riga: se il salvataggio si
+    // interrompe e si ripreme Salva, il database riconosce la stessa riga e
+    // non vende l'abbonamento due volte.
+    abbonamentiNuovi.push({ client_id: crypto.randomUUID(), pass_type: voce.name, price: voce.price, trips: voce.trips });
+    disegnaAbbonamenti();
+    ricalcola();
+  }
+
+  function disegnaAbbonamenti() {
+    const righe = [];
+
+    abbonamentiSalvati.forEach((a) => {
+      const togliere = abbonamentiDaTogliere.has(a.pass_id);
+      const li = document.createElement("li");
+      if (togliere) li.className = "nuovo";
+      const stato = togliere
+        ? "verrà tolto al salvataggio"
+        : a.trips_left > 0
+          ? `fatte ${a.trips_used} su ${a.trips_total} · restano ${a.trips_left}`
+          : `fatte ${a.trips_used} su ${a.trips_total} · ESAURITO`;
+      li.innerHTML = `<span>${esc(a.pass_type)}</span><span class="gite">${stato}</span>`;
+      // Un abbonamento con gite già fatte non si toglie: sono gite vere, e il
+      // database lo rifiuterebbe comunque.
+      if (a.trips_used === 0) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = togliere ? "button is-light" : "button is-danger is-outlined";
+        b.textContent = togliere ? "Tienilo" : "Togli";
+        b.addEventListener("click", () => {
+          if (togliere) abbonamentiDaTogliere.delete(a.pass_id);
+          else abbonamentiDaTogliere.add(a.pass_id);
+          disegnaAbbonamenti();
+          ricalcola();
+        });
+        li.append(b);
+      }
+      righe.push(li);
+    });
+
+    abbonamentiNuovi.forEach((a) => {
+      const li = document.createElement("li");
+      li.className = "nuovo";
+      li.innerHTML = `<span>${esc(a.pass_type)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "button is-danger is-outlined";
+      b.textContent = "Togli";
+      b.addEventListener("click", () => {
+        abbonamentiNuovi = abbonamentiNuovi.filter((x) => x !== a);
+        disegnaAbbonamenti();
+        ricalcola();
+      });
+      li.append(b);
+      righe.push(li);
+    });
+
+    if (!righe.length) {
+      const li = document.createElement("li");
+      li.className = "vuoto";
+      li.textContent = "Nessun abbonamento in questa stagione.";
+      righe.push(li);
+    }
+    el("elencoAbbonamenti").replaceChildren(...righe);
+  }
+
+  async function caricaAbbonamenti(idSocio) {
+    abbonamentiNuovi = [];
+    abbonamentiDaTogliere = new Set();
+    const { data, error } = await sb.from("pass_status").select("*").eq("member_id", idSocio).order("created_at");
+    if (error) throw error;
+    abbonamentiSalvati = data;
+    disegnaAbbonamenti();
+  }
+
+  // -------------------------------------------------------------------------
+  // Codice fiscale e numero tessera
+  // -------------------------------------------------------------------------
+
+  /** Confronta il codice fiscale con cognome, nome e data (codicefiscale.js). */
+  function controllaCF() {
+    const esito = verificaCF(el("f_codice_fiscale").value, {
+      cognome: el("f_cognome").value,
+      nome: el("f_nome").value,
+      dataNascita: el("f_data_nascita").value,
+    });
+    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito);
+  }
+
+  /**
+   * Mette nel campo vuoto il numero tessera successivo all'ultimo dato. Un
+   * numero già scritto (socio che ce l'ha, o scritto a mano) resta com'è.
+   */
+  async function proponiNumeroTessera() {
+    const campo = el("f_numero_tessera");
+    if (campo.value.trim()) return;
+    const { data, error } = await sb.rpc("next_card_number");
+    // Senza proposta si scrive a mano, come prima: non vale un messaggio.
+    if (error || campo.value.trim()) return;
+    numeroProposto = String(data);
+    campo.value = numeroProposto;
+    el("notaTessera").hidden = false;
+  }
+
+  /** Numero tessera come va salvato: "0021" e "21" sono lo stesso numero. */
+  function numeroTessera() {
+    const v = el("f_numero_tessera").value.trim();
+    return /^\d{1,15}$/.test(v) ? String(BigInt(v)) : v || null;
+  }
+
+  /**
+   * Il numero tessera è già di un altro socio. Se l'aveva messo la pagina,
+   * lo ha preso nel frattempo un altro operatore: se ne propone un altro e
+   * si chiede di risalvare. Se era scritto a mano, si dice e basta.
+   */
+  async function numeroTesseraGiaUsato() {
+    const scritto = el("f_numero_tessera").value.trim();
+    const { data: libero } = await sb.rpc("next_card_number");
+    if (scritto === numeroProposto && libero) {
+      numeroProposto = String(libero);
+      el("f_numero_tessera").value = numeroProposto;
+      el("notaTessera").hidden = false;
+      showToast(`Il numero tessera ${scritto} è appena stato dato a un altro socio. `
+        + `Ho messo il ${libero}: premi di nuovo Salva.`, "is-danger");
+    } else {
+      showToast(`Il numero tessera ${scritto} è già di un altro socio: scegline un altro`
+        + (libero ? ` (il primo dopo l'ultimo dato è ${libero}).` : "."), "is-danger");
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // Totali
   // -------------------------------------------------------------------------
 
   function totaleIndividuale() {
-    return Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
+    const voci = Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
+    return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0);
   }
 
   function ricalcola() {
@@ -371,7 +602,6 @@
   const CAMPI_SELECT_DB = {
     f_tipologia_tessera: "card_type",
     f_agevolazioni_famiglia: "family_discount",
-    f_tipo_abbonamento: "pass_type",
     f_presciistica: "preski_type",
     f_tipologia_corso: "course_type",
   };
@@ -403,6 +633,16 @@
       }
 
       await caricaFamiliari(socio.id);
+      await caricaAbbonamenti(socio.id);
+
+      // Il superadmin può togliere dalla stagione chi ci è finito per sbaglio.
+      el("zonaTogli").hidden = !(socio.enrolled_at && livelloRuolo >= LIVELLO_RUOLO.superadmin);
+      ripristinaTogli();
+
+      controllaCF();
+      numeroProposto = null;
+      el("notaTessera").hidden = true;
+      await proponiNumeroTessera();
 
       el("btnSalva").textContent = "SALVA LE MODIFICHE";
       el("searchZone").style.display = "none";
@@ -591,29 +831,58 @@
       email: el("f_email").value.trim() || null,
       card_type: nomeSelezionato("f_tipologia_tessera"),
       family_discount: nomeSelezionato("f_agevolazioni_famiglia"),
-      pass_type: nomeSelezionato("f_tipo_abbonamento"),
+      // pass_type non si manda: lo scrive il database dagli abbonamenti
+      // (member_passes), vedi sotto.
       preski_type: nomeSelezionato("f_presciistica"),
       course_type: nomeSelezionato("f_tipologia_corso"),
       saturday_departure: partenzeSelezionate("check_sabato"),
       sunday_departure: partenzeSelezionate("check_domenica"),
       policy_number: el("f_numero_polizza").value.trim() || null,
-      card_number: el("f_numero_tessera").value.trim() || null,
+      card_number: numeroTessera(),
       total: totaleIndividuale(),
       paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
     };
 
     try {
-      const idEsistente = el("f_id").value;
-      const { error } = idEsistente
-        ? await sb.from("members").update(socio).eq("id", idEsistente)
-        : await sb.from("members").insert(socio);
-      if (error) throw error;
+      // Prima il socio, poi i suoi abbonamenti: le righe di member_passes
+      // hanno bisogno del suo id, e se il socio non passa (es. numero tessera
+      // già preso) non resta niente di scritto a metà.
+      let id = el("f_id").value;
+      if (id) {
+        const { error } = await sb.from("members").update(socio).eq("id", id);
+        if (error) throw error;
+      } else {
+        const { data, error } = await sb.from("members").insert(socio).select("id").single();
+        if (error) throw error;
+        id = data.id;
+        // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
+        // Salva, va aggiornato, non inserito una seconda volta.
+        el("f_id").value = id;
+      }
+
+      // Ripetibile: la stessa client_id non diventa due righe, quindi un
+      // Salva ripremuto dopo un errore non vende due volte lo stesso
+      // abbonamento. Il totale del socio li conta già (totaleIndividuale).
+      if (abbonamentiNuovi.length) {
+        const { error } = await sb.from("member_passes").upsert(
+          abbonamentiNuovi.map((a) => ({ member_id: id, pass_type: a.pass_type, client_id: a.client_id })),
+          { onConflict: "client_id", ignoreDuplicates: true });
+        if (error) throw error;
+      }
+      if (abbonamentiDaTogliere.size) {
+        const { error } = await sb.from("member_passes").delete().in("id", [...abbonamentiDaTogliere]);
+        if (error) throw error;
+      }
 
       showToast(`${socio.last_name} ${socio.first_name} salvato`);
       resetForm();
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
+      if (error.code === "23505" && /members_card_number_key/.test(error.message || "")) {
+        await numeroTesseraGiaUsato();
+      } else {
+        showToast(messaggioErrore(error), "is-danger");
+      }
     } finally {
       bottone.disabled = false;
       setLoading(false);
@@ -630,8 +899,62 @@
     el("searchResults").innerHTML = "";
     el("btnSalva").textContent = "SALVA SOCIO";
     disabilitaSezionePagante();
+    abbonamentiSalvati = [];
+    abbonamentiNuovi = [];
+    abbonamentiDaTogliere = new Set();
+    disegnaAbbonamenti();
+    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), null);
+    el("zonaTogli").hidden = true;
+    ripristinaTogli();
+    numeroProposto = null;
+    el("notaTessera").hidden = true;
     ricalcola();
     window.scrollTo(0, 0);
+    proponiNumeroTessera();
+  }
+
+  // -------------------------------------------------------------------------
+  // Togliere dalla stagione (solo superadmin)
+  //
+  // Per chi è stato tesserato per sbaglio: il database azzera i dati di
+  // stagione e lascia l'anagrafica (remove_from_season). Si chiede conferma
+  // sulla pagina, con quello che si perde scritto per esteso, e non con una
+  // finestra del browser che si chiude con un Invio distratto.
+  // -------------------------------------------------------------------------
+
+  function ripristinaTogli() {
+    el("azioniTogli").innerHTML =
+      '<button type="button" class="button is-danger is-outlined" id="btnTogli">Togli dalla stagione</button>';
+    el("btnTogli").addEventListener("click", chiediTogli);
+  }
+
+  function chiediTogli() {
+    const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
+    const acconto = num(el("f_acconto").value);
+    el("azioniTogli").innerHTML = `
+      <span class="domanda">Togliere ${esc(nome)} dalla stagione?
+        ${acconto > 0 ? `L'acconto di ${fmt(acconto)} esce dal totale incassato.` : ""}</span>
+      <button type="button" class="button is-danger" id="btnTogliSi">Sì, togli dalla stagione</button>
+      <button type="button" class="button is-light" id="btnTogliNo">Annulla</button>`;
+    el("btnTogliSi").addEventListener("click", togliDallaStagione);
+    el("btnTogliNo").addEventListener("click", ripristinaTogli);
+  }
+
+  async function togliDallaStagione() {
+    const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
+    el("azioniTogli").querySelectorAll("button").forEach((b) => (b.disabled = true));
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("remove_from_season", { member_id: el("f_id").value });
+      if (error) throw error;
+      showToast(`${nome} tolto dalla stagione. L'anagrafica resta.`);
+      resetForm();
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
+      ripristinaTogli();
+    } finally {
+      setLoading(false);
+    }
   }
 </script>
 </body>

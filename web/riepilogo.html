@@ -62,9 +62,10 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
+      <a href="index.html" data-ruolo="utente">Soci</a>
+      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
+      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
+      <a href="assicurazione.html" data-ruolo="assicurazione" data-solo hidden>Assicurazione</a>
       <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
       <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
       <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
@@ -78,6 +79,12 @@
 
 <div class="container-main">
   <h1 class="title is-4 mb-4" id="titolo">Riepilogo Stagione</h1>
+
+  <!-- La pagina Assicurazione non ha una voce nella barra per chi ha altri
+       ruoli (non ci starebbe): ci si arriva da qui. -->
+  <p class="mb-4">
+    <a class="button is-link is-light" href="assicurazione.html">Assicurazione: tesserati da assicurare, polizze ed elenco Excel</a>
+  </p>
 
   <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
   <div class="notification is-warning is-light" id="fasciaStorico" hidden>

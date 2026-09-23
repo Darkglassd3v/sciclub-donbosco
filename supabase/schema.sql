@@ -163,6 +163,41 @@ create trigger members_set_updated_at
   before update on public.members
   for each row execute function public.set_updated_at();
 
+-- Numero tessera: non ci possono essere due soci con lo stesso. close_season()
+-- lo azzera per tutti, quindi "unico nella tabella" vuol dire "unico nella
+-- stagione aperta": l'anno dopo i numeri ripartono. I NULL non si scontrano
+-- fra loro, quindi chi non ha ancora un numero non dà fastidio.
+--
+-- Il form propone il numero da sé (next_card_number(), sotto): due operatori
+-- che iscrivono nello stesso momento si vedono proporre lo stesso, e questo
+-- vincolo fa fallire il secondo salvataggio invece di lasciare passare il
+-- doppione. La pagina a quel punto propone il successivo.
+alter table public.members drop constraint if exists members_card_number_key;
+alter table public.members add constraint members_card_number_key unique (card_number);
+
+-- Il numero da proporre: il più alto già dato, più uno. Non riempie i buchi
+-- apposta: il direttivo si tiene i primi numeri (es. 1-20) ma si tessera più
+-- tardi, e i soci partono dopo (21, 22, ...). Riempire i buchi darebbe a un
+-- socio il numero riservato a un consigliere. Il primo socio della stagione
+-- si numera a mano; da lì in poi la proposta va da sola.
+--
+-- I numeri scritti in altri formati (lettere, trattini) non contano: non
+-- hanno un "successivo". Security invoker: legge solo quello che la RLS di
+-- members lascia già vedere.
+create or replace function public.next_card_number()
+returns bigint
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select coalesce(max(m.card_number::bigint), 0) + 1
+    from public.members m
+   where m.card_number ~ '^[0-9]{1,15}$';
+$$;
+
+comment on function public.next_card_number is 'Numero tessera da proporre: il più alto già dato (solo quelli numerici) più uno.';
+
 -- ---------------------------------------------------------------------------
 -- Stagione
 --
@@ -250,13 +285,9 @@ where m.enrolled_at is not null
   and upper(m.card_type) <> 'NO'
 group by m.card_type, p.price;
 
-create or replace view public.pass_counts as
-select pass_type as name, count(*) as count
-from public.members
-where enrolled_at is not null
-  and pass_type is not null
-  and upper(pass_type) <> 'NO'
-group by pass_type;
+-- pass_counts sta più sotto, con gli abbonamenti dei soci (member_passes):
+-- dalla 2.4 un socio può averne più di uno, e si contano gli abbonamenti
+-- venduti, non le persone.
 
 create or replace view public.course_counts as
 select course_type as name, count(*) as count
@@ -311,11 +342,18 @@ group by trim(place);
 -- ---------------------------------------------------------------------------
 -- Ruoli
 --
--- Cinque livelli, dal più al meno privilegiato: superadmin > admin > utente >
--- kiosk > ospite. Ogni livello include tutto ciò che può fare quello sotto.
+-- Sei livelli, dal più al meno privilegiato: superadmin > admin > utente >
+-- assicurazione > kiosk > ospite. Ogni livello include tutto ciò che può fare
+-- quello sotto, con un'eccezione: assicurazione NON include kiosk.
 --   ospite     — account appena nato: non può fare NIENTE, ogni policy lo
 --                nega. È il ruolo di partenza di chiunque si registri.
 --   kiosk      — tablet in negozio: solo ricerca socio a campi ridotti.
+--   assicurazione — chi manda i soci all'assicurazione e ne riporta le
+--                polizze: vede solo i tesserati della stagione (nome,
+--                nascita, codice fiscale, polizza) e scrive solo codice
+--                fiscale e polizza, passando da insurance_members() e
+--                set_insurance(). Non vede members né la ricerca del
+--                tablet, che restituisce telefoni ed email: non gli servono.
 --   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
 --   admin      — direttivo: come utente, più le tessere riservate
 --                (es. "TESSERA DIRETTIVO", min_role='admin').
@@ -336,7 +374,7 @@ create table if not exists public.profiles (
 
 alter table public.profiles drop constraint if exists profiles_role_valid;
 alter table public.profiles add constraint profiles_role_valid
-  check (role in ('ospite', 'kiosk', 'utente', 'admin', 'superadmin'));
+  check (role in ('ospite', 'kiosk', 'assicurazione', 'utente', 'admin', 'superadmin'));
 
 comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Riga creata alla nascita dell''account dal trigger on_auth_user_created.';
 
@@ -412,7 +450,8 @@ $$;
 comment on function public.current_role is 'Ruolo di chi ha fatto la richiesta corrente, o null.';
 
 -- true se il ruolo di chi ha fatto la richiesta è min_role o superiore nella
--- gerarchia kiosk < utente < admin < superadmin.
+-- gerarchia kiosk < assicurazione < utente < admin < superadmin (assicurazione
+-- esclusa dal kiosk: vedi sopra).
 create or replace function public.has_role(min_role text)
 returns boolean
 language sql
@@ -420,10 +459,11 @@ stable
 security invoker
 as $$
   select case public.current_role()
-    when 'superadmin' then true
-    when 'admin'      then min_role in ('admin', 'utente', 'kiosk')
-    when 'utente'     then min_role in ('utente', 'kiosk')
-    when 'kiosk'      then min_role = 'kiosk'
+    when 'superadmin'    then true
+    when 'admin'         then min_role in ('admin', 'utente', 'assicurazione', 'kiosk')
+    when 'utente'        then min_role in ('utente', 'assicurazione', 'kiosk')
+    when 'assicurazione' then min_role = 'assicurazione'
+    when 'kiosk'         then min_role = 'kiosk'
     when 'ospite'     then false
     else false
   end;
@@ -538,6 +578,91 @@ grant execute on function public.kiosk_search(text[]) to authenticated;
 comment on function public.kiosk_search is 'Ricerca socio per il tablet in negozio: nome e cognome per intero, campi ridotti, al massimo 3 risultati.';
 
 -- ---------------------------------------------------------------------------
+-- Assicurazione
+--
+-- Ogni tesserato va assicurato. Chi se ne occupa manda all'assicurazione
+-- l'elenco dei tesserati nuovi, riceve indietro i numeri di polizza e li
+-- riporta qui; chi ha la polizza esce dall'elenco da mandare. close_season()
+-- azzera le polizze, quindi a ogni stagione si riparte da tutti.
+--
+-- Il ruolo 'assicurazione' non ha policy su members: come per il kiosk, le
+-- sue sole porte sono queste due funzioni, che danno i campi che servono e
+-- scrivono solo codice fiscale e polizza. Con una policy di update, invece,
+-- potrebbe cambiare anche quote e acconti chiamando l'API a mano: la RLS
+-- sceglie le righe, non le colonne.
+-- ---------------------------------------------------------------------------
+
+-- Le colonne restituite cambieranno con il tracciato che chiede
+-- l'assicurazione (TODO in web/assicurazione.html): `create or replace` non
+-- può cambiare le colonne di una funzione, quindi prima la si toglie.
+drop function if exists public.insurance_members(boolean);
+
+-- I tesserati della stagione aperta; only_pending = solo quelli ancora senza
+-- polizza. "NO" come tessera vale come nessuna tessera, come nel Riepilogo.
+create or replace function public.insurance_members(only_pending boolean default true)
+returns table (id uuid, last_name text, first_name text, birth_date date,
+               birth_place text, birth_province text, tax_code text,
+               address text, city text, province text, postal_code text,
+               card_type text, card_number text, policy_number text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.id, m.last_name, m.first_name, m.birth_date,
+         m.birth_place, m.birth_province, m.tax_code,
+         m.address, m.city, m.province, m.postal_code,
+         m.card_type, m.card_number, m.policy_number
+    from public.members m
+   where public.has_role('assicurazione')
+     and m.enrolled_at is not null
+     and m.card_type is not null and upper(m.card_type) <> 'NO'
+     and (not only_pending or nullif(trim(m.policy_number), '') is null)
+   order by m.last_name, m.first_name;
+$$;
+
+comment on function public.insurance_members is 'Tesserati della stagione aperta per l''assicurazione; only_pending = solo quelli senza polizza.';
+
+-- Scrive codice fiscale e polizza di un tesserato della stagione, e nient'altro.
+-- Il codice fiscale si corregge qui perché è qui che lo si controlla prima di
+-- spedirlo; la polizza vuota resta vuota (il socio resta da assicurare).
+create or replace function public.set_insurance(member_id uuid, tax_code text, policy_number text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.has_role('assicurazione') then
+    raise exception 'Non hai il permesso di modificare i dati dell''assicurazione.';
+  end if;
+
+  update public.members m set
+    tax_code      = nullif(upper(regexp_replace(set_insurance.tax_code, '\s', '', 'g')), ''),
+    policy_number = nullif(trim(set_insurance.policy_number), '')
+   where m.id = set_insurance.member_id
+     and m.enrolled_at is not null;
+
+  if not found then
+    raise exception 'Socio non trovato fra gli iscritti della stagione: ricarica la pagina.';
+  end if;
+end;
+$$;
+
+comment on function public.set_insurance is 'Scrive codice fiscale e numero di polizza di un iscritto della stagione. Solo per chi ha almeno il ruolo assicurazione.';
+
+revoke all on function public.insurance_members(boolean) from public;
+revoke all on function public.set_insurance(uuid, text, text) from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.insurance_members(boolean) from anon;
+    revoke all on function public.set_insurance(uuid, text, text) from anon;
+  end if;
+end $$;
+grant execute on function public.insurance_members(boolean) to authenticated;
+grant execute on function public.set_insurance(uuid, text, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 --
 -- Nella 1.x l'accesso era protetto dal login Google: le web app Apps Script
@@ -637,7 +762,6 @@ create policy departures_write on public.departures
 alter view public.households      set (security_invoker = true);
 alter view public.season_totals   set (security_invoker = true);
 alter view public.card_counts     set (security_invoker = true);
-alter view public.pass_counts     set (security_invoker = true);
 alter view public.course_counts   set (security_invoker = true);
 alter view public.preski_counts   set (security_invoker = true);
 alter view public.departure_counts set (security_invoker = true);
@@ -975,12 +1099,15 @@ begin
     where m.card_type is not null and upper(m.card_type) <> 'NO'
     group by m.card_type, p.price
     union all
-    select which, 'PASS', m.pass_type, '', count(*), count(*) * p.price
-    from public.members m
-    join da_chiudere t on t.id = m.id
-    left join public.prices p on p.category = 'ABBONAMENTO' and p.name = m.pass_type
-    where m.pass_type is not null and upper(m.pass_type) <> 'NO'
-    group by m.pass_type, p.price
+    -- Gli abbonamenti venduti, non i soci che li hanno: dalla 2.4 uno stesso
+    -- socio può comprarne più di uno. Le righe di member_passes non si
+    -- azzerano (portano la stagione con sé, come trip_uses).
+    select which, 'PASS', mp.pass_type, '', count(*), count(*) * p.price
+    from public.member_passes mp
+    join da_chiudere t on t.id = mp.member_id
+    left join public.prices p on p.category = 'ABBONAMENTO' and p.name = mp.pass_type
+    where mp.season = which
+    group by mp.pass_type, p.price
     union all
     select which, 'COURSE', m.course_type, '', count(*), count(*) * p.price
     from public.members m
@@ -1067,6 +1194,73 @@ end;
 $$;
 
 comment on function public.close_season is 'Archivia in season_history/season_breakdown e azzera i dati di stagione di tutti i soci. Conserva le anagrafiche.';
+
+/**
+ * Toglie dalla stagione aperta un socio tesserato per sbaglio: la chiusura
+ * della stagione fatta per una persona sola, senza archiviare niente (non è
+ * una stagione finita, è un'iscrizione che non doveva esserci).
+ *
+ * Azzera le stesse colonne di close_season() e cancella i suoi abbonamenti
+ * della stagione; l'anagrafica resta. Riservata al superadmin: sparisce una
+ * quota, e con lei l'eventuale acconto dal totale incassato.
+ *
+ * Si ferma, invece di decidere da sola, in due casi:
+ *   - paga per dei familiari: quelle schede resterebbero legate a un
+ *     capofamiglia non iscritto, e chi paga per loro va deciso a mano;
+ *   - ha gite segnate: sono gite fatte davvero, non si cancellano di
+ *     nascosto. Si annullano prima dal pannello gite, se erano sbagliate.
+ */
+create or replace function public.remove_from_season(member_id uuid)
+returns void
+language plpgsql
+security invoker
+as $$
+begin
+  if not public.has_role('superadmin') then
+    raise exception 'Solo il superadmin può togliere un socio dalla stagione.';
+  end if;
+
+  perform 1 from public.members m
+   where m.id = remove_from_season.member_id and m.enrolled_at is not null
+     for update;
+  if not found then
+    raise exception 'Questo socio non è iscritto alla stagione.';
+  end if;
+
+  if exists (select 1 from public.members d where d.payer_id = remove_from_season.member_id) then
+    raise exception 'Questo socio paga per dei familiari: togli prima il pagante dalle loro schede.';
+  end if;
+
+  if exists (select 1 from public.trip_uses u
+              where u.member_id = remove_from_season.member_id
+                and u.season = public.current_season()) then
+    raise exception 'Questo socio ha già delle gite segnate: se sono sbagliate, annullale prima dal pannello gite.';
+  end if;
+
+  delete from public.member_passes mp
+   where mp.member_id = remove_from_season.member_id
+     and mp.season = public.current_season();
+
+  update public.members m set
+    policy_number      = null,
+    card_number        = null,
+    card_type          = null,
+    family_discount    = null,
+    pass_type          = null,
+    preski_type        = null,
+    course_type        = null,
+    saturday_departure = null,
+    sunday_departure   = null,
+    total              = 0,
+    paid               = 0,
+    payer_id           = null,
+    notes              = null,
+    enrolled_at        = null
+  where m.id = remove_from_season.member_id;
+end;
+$$;
+
+comment on function public.remove_from_season is 'Toglie un socio dalla stagione aperta (iscrizione sbagliata): azzera i dati di stagione, conserva l''anagrafica. Solo superadmin.';
 
 alter table public.season_history   enable row level security;
 alter table public.season_breakdown enable row level security;
@@ -1246,6 +1440,71 @@ update public.prices set name = name
  where category = 'ABBONAMENTO' and trips is null and day is null;
 
 -- ---------------------------------------------------------------------------
+-- Abbonamenti dei soci
+--
+-- Fino alla 2.3 l'abbonamento era una colonna del socio (members.pass_type):
+-- uno a testa. Ma chi finisce le cinque gite ne ricompra un altro, anche di
+-- un giorno diverso (prima SABATO, poi JOLLY), e con una colonna sola il
+-- secondo cancellava il primo insieme al conto delle gite fatte.
+--
+-- Qui una riga = un abbonamento comprato. Come trip_uses, le righe portano la
+-- stagione con sé e non si cancellano alla chiusura: l'anno dopo non
+-- compaiono più (si guarda solo la stagione aperta) ma restano consultabili.
+--
+-- members.pass_type resta, come riassunto scritto dal trigger qui sotto
+-- ("Abbonamento 5 viaggi SABATO ×2 + ..."): lo leggono la ricerca del tablet,
+-- il pannello Pagamenti e il sito di ricerca, che così non cambiano. Nessuno
+-- lo scrive più a mano.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.member_passes (
+  id          uuid primary key default gen_random_uuid(),
+  member_id   uuid not null references public.members (id) on delete cascade,
+  season      timestamptz not null default public.current_season(),
+  -- Il nome della voce di listino (prices.name, categoria ABBONAMENTO): numero
+  -- di gite e giorno stanno lì.
+  pass_type   text not null,
+  created_at  timestamptz not null default now(),
+  -- Id del gesto, generato dalla pagina: rende ripetibile l'aggiunta (vedi
+  -- add_pass() e il salvataggio del form Soci). NULL per le righe spostate
+  -- dalla vecchia colonna.
+  client_id   uuid
+);
+
+alter table public.member_passes drop constraint if exists member_passes_client_id_key;
+alter table public.member_passes add constraint member_passes_client_id_key unique (client_id);
+
+create index if not exists member_passes_member_idx on public.member_passes (member_id, season);
+
+comment on table public.member_passes is 'Abbonamenti a viaggi comprati dai soci: una riga per abbonamento, con la sua stagione.';
+
+-- Il riassunto in members.pass_type. Guarda solo la stagione aperta: un
+-- abbonamento dell'anno scorso non deve far sembrare abbonato chi non lo è.
+create or replace function public.sync_pass_type()
+returns trigger
+language plpgsql
+as $$
+declare
+  chi uuid := coalesce(new.member_id, old.member_id);
+begin
+  update public.members m set pass_type = (
+    select string_agg(t.pass_type || case when t.quanti > 1 then ' ×' || t.quanti else '' end,
+                      ' + ' order by t.primo)
+      from (select mp.pass_type, count(*) as quanti, min(mp.created_at) as primo
+              from public.member_passes mp
+             where mp.member_id = chi and mp.season = public.current_season()
+             group by mp.pass_type) t)
+   where m.id = chi;
+  return null;
+end;
+$$;
+
+drop trigger if exists sync_pass_type on public.member_passes;
+create trigger sync_pass_type
+  after insert or delete on public.member_passes
+  for each row execute function public.sync_pass_type();
+
+-- ---------------------------------------------------------------------------
 -- Gite usate
 --
 -- Una riga = una gita. La registrazione è una sola pressione: nessuna data da
@@ -1298,37 +1557,83 @@ create index if not exists trip_uses_season_idx on public.trip_uses (season);
 
 comment on table public.trip_uses is 'Registro delle gite scalate dagli abbonamenti: una riga per gita. Ci si scrive solo con use_trip().';
 
--- Stato di ogni abbonamento della stagione: quante gite comprende, quante ne
--- restano, e i contatti per chiamare chi non si è ancora visto.
+-- Da quale abbonamento è stata scalata la gita: con più abbonamenti per socio
+-- il conto "fatte/restano" è per abbonamento. NULL per le gite delle stagioni
+-- passate, segnate quando l'abbonamento era uno solo.
+--
+-- Senza "on delete": un abbonamento da cui sono già state scalate gite non si
+-- può cancellare. Toglierlo farebbe sparire gite davvero fatte.
+alter table public.trip_uses add column if not exists pass_id uuid references public.member_passes (id);
+create index if not exists trip_uses_pass_idx on public.trip_uses (pass_id);
+
+-- Ogni abbonamento della stagione aperta, con le sue gite fatte e residue.
+-- La legge il form Soci (un riquadro per abbonamento) e use_trip() per
+-- scegliere da quale scalare.
+create or replace view public.pass_status as
+select
+  mp.id                                 as pass_id,
+  mp.member_id,
+  mp.pass_type,
+  p.day,
+  p.trips                               as trips_total,
+  coalesce(u.used, 0)::int              as trips_used,
+  (p.trips - coalesce(u.used, 0))::int  as trips_left,
+  mp.created_at,
+  -- Il prezzo di listino: il form Soci lo somma nel totale del socio.
+  p.price
+from public.member_passes mp
+join public.prices p
+  on  p.category = 'ABBONAMENTO'
+  and p.name      = mp.pass_type
+  and p.trips is not null
+left join (
+  select pass_id, count(*) as used
+    from public.trip_uses
+   where pass_id is not null
+   group by pass_id
+) u on u.pass_id = mp.id
+where mp.season = public.current_season();
+
+alter view public.pass_status set (security_invoker = true);
+
+comment on view public.pass_status is 'Abbonamenti della stagione aperta, uno per riga, con gite fatte e residue.';
+
+-- Una riga per socio, con le gite di tutti i suoi abbonamenti sommate: è
+-- quello che il pannello gite mostra sul telefono (una scheda per persona).
+-- `day` è il giorno del primo abbonamento, per le pagine rimaste alla
+-- versione precedente; `days` li ha tutti, ed è quello che usa il filtro.
 create or replace view public.trip_passes as
 select
-  m.id                                as member_id,
+  m.id                                  as member_id,
   m.last_name,
   m.first_name,
   m.phone,
   m.email,
   m.payer_id,
-  p.name                              as pass_name,
-  p.day,
-  p.trips                             as trips_total,
-  coalesce(u.used, 0)::int            as trips_used,
-  (p.trips - coalesce(u.used, 0))::int as trips_left
+  m.pass_type                           as pass_name,
+  (array_agg(s.day order by s.created_at))[1] as day,
+  sum(s.trips_total)::int               as trips_total,
+  sum(s.trips_used)::int                as trips_used,
+  sum(s.trips_left)::int                as trips_left,
+  array_agg(distinct s.day)             as days,
+  count(*)::int                         as passes
 from public.members m
-join public.prices p
-  on  p.category = 'ABBONAMENTO'
-  and p.name      = m.pass_type
-  and p.trips is not null
-left join (
-  select member_id, count(*) as used
-    from public.trip_uses
-   where season = public.current_season()
-   group by member_id
-) u on u.member_id = m.id
-where m.enrolled_at is not null;
+join public.pass_status s on s.member_id = m.id
+where m.enrolled_at is not null
+group by m.id, m.last_name, m.first_name, m.phone, m.email, m.payer_id, m.pass_type;
 
 alter view public.trip_passes set (security_invoker = true);
 
-comment on view public.trip_passes is 'Abbonamenti a viaggi della stagione corrente con gite fatte e residue.';
+comment on view public.trip_passes is 'Abbonamenti a viaggi della stagione corrente, sommati per socio, con gite fatte e residue.';
+
+-- Riepilogo: abbonamenti venduti nella stagione aperta, per tipo.
+create or replace view public.pass_counts as
+select mp.pass_type as name, count(*) as count
+from public.member_passes mp
+where mp.season = public.current_season()
+group by mp.pass_type;
+
+alter view public.pass_counts set (security_invoker = true);
 
 /**
  * Scala una gita dall'abbonamento di un socio.
@@ -1352,23 +1657,30 @@ comment on view public.trip_passes is 'Abbonamenti a viaggi della stagione corre
 drop function if exists public.use_trip(uuid, int, date, text, text);
 drop function if exists public.use_trip(uuid, int, date);
 drop function if exists public.use_trip(uuid);
+-- Dalla 2.4 c'è anche il giorno: con due versioni in piedi PostgREST non
+-- saprebbe quale chiamare ("function is not unique").
+drop function if exists public.use_trip(uuid, uuid);
 
--- client_id ha un default perché una pagina già aperta sul telefono, rimasta
--- alla versione precedente, continua a chiamare con il solo socio: meglio che
--- funzioni senza ritentativi sicuri piuttosto che rispondere "funzione non
--- trovata" a chi sta caricando il pullman.
-create or replace function public.use_trip(member_id uuid, client_id uuid default gen_random_uuid())
+-- client_id e day hanno un default perché una pagina già aperta sul
+-- telefono, rimasta alla versione precedente, continua a chiamare con meno
+-- argomenti — e le gite rimaste in coda senza linea partono comunque con il
+-- formato di quando sono state segnate. Meglio che funzionino piuttosto che
+-- rispondere "funzione non trovata" a chi sta caricando il pullman.
+--
+-- `day` è il giorno scelto nel pannello (SABATO, DOMENICA, MARTEDI, JOLLY),
+-- o NULL con "tutti".
+create or replace function public.use_trip(member_id uuid, client_id uuid default gen_random_uuid(), day text default null)
 returns table (trips_used int, trips_left int)
 language plpgsql
 security invoker
 as $$
 declare
-  left_over int;
+  abbonamento uuid;
 begin
   -- FOR UPDATE sulla riga del socio: chi arriva secondo aspetta e rilegge il
   -- residuo aggiornato invece di scalare sullo stesso conteggio. Serializza
   -- anche i ritentativi, che quindi trovano già scritta la pressione di prima.
-  perform 1 from public.members where id = member_id for update;
+  perform 1 from public.members m where m.id = use_trip.member_id for update;
 
   -- Questa pressione è già registrata: è un ritentativo, non una gita nuova.
   -- Si risponde com'era andata la prima volta, senza errore "esaurito" nel
@@ -1381,22 +1693,38 @@ begin
     return;
   end if;
 
-  select a.trips_left into left_over
-    from public.trip_passes a
-   where a.member_id = use_trip.member_id;
+  -- Da quale abbonamento scalare: prima quello del giorno scelto, poi il
+  -- JOLLY (vale tutti i giorni), poi il più vecchio con gite libere.
+  --
+  -- Il giorno è una preferenza, non un divieto: quando si segna la gita il
+  -- socio è già sul pullman, e rifiutarla lascerebbe una gita fatta senza
+  -- traccia. Si rifiuta solo quando non resta niente in nessun abbonamento,
+  -- come prima della 2.4.
+  select s.pass_id into abbonamento
+    from public.pass_status s
+   where s.member_id = use_trip.member_id
+     and s.trips_left > 0
+   order by case
+              when use_trip.day is null     then 0
+              when s.day = use_trip.day     then 0
+              when s.day = 'JOLLY'          then 1
+              else 2
+            end,
+            s.created_at
+   limit 1;
 
-  if left_over is null then
+  if abbonamento is null then
+    if exists (select 1 from public.pass_status s where s.member_id = use_trip.member_id) then
+      raise exception 'Abbonamento esaurito: non restano gite da scalare.';
+    end if;
     raise exception 'Questo socio non ha un abbonamento a viaggi in questa stagione.';
-  end if;
-
-  if left_over < 1 then
-    raise exception 'Abbonamento esaurito: non restano gite da scalare.';
   end if;
 
   -- `on conflict` è la rete di sicurezza sotto al controllo qui sopra: due
   -- richieste con lo stesso id arrivate insieme non possono diventare due
   -- righe, qualunque cosa faccia il lock.
-  insert into public.trip_uses (member_id, client_id) values (member_id, client_id)
+  insert into public.trip_uses (member_id, pass_id, client_id)
+  values (use_trip.member_id, abbonamento, use_trip.client_id)
   on conflict on constraint trip_uses_client_id_key do nothing;
 
   return query
@@ -1406,7 +1734,7 @@ begin
 end;
 $$;
 
-comment on function public.use_trip is 'Scala una gita dall''abbonamento del socio, con la data di oggi. Ripetibile: la stessa client_id non scala due gite.';
+comment on function public.use_trip is 'Scala una gita da un abbonamento del socio (prima quello del giorno, poi JOLLY, poi il più vecchio), con la data di oggi. Ripetibile: la stessa client_id non scala due gite.';
 
 /**
  * Annulla una registrazione sbagliata. Si cancella una riga precisa, non
@@ -1434,6 +1762,59 @@ $$;
 
 comment on function public.cancel_trip is 'Cancella una gita registrata per errore e restituisce il nuovo residuo.';
 
+/**
+ * Vende un abbonamento a un socio dal pannello gite: aggiunge la riga e
+ * mette il prezzo di listino nel totale del socio (e nell'acconto, se
+ * `paid`), tutto nella stessa transazione.
+ *
+ * Fino alla 2.3 il telefono scriveva da sé il nuovo totale, calcolato su
+ * quello letto prima: una modifica fatta nel frattempo da un altro operatore
+ * andava persa. Qui la somma la fa il database sul valore di quel momento.
+ *
+ * Ripetibile come use_trip(): la stessa client_id non vende due abbonamenti.
+ *
+ * Il form Soci non la usa: lì il totale lo ricalcola la pagina da tutte le
+ * voci scelte, e le righe le scrive insieme al socio.
+ */
+create or replace function public.add_pass(member_id uuid, pass_type text, paid boolean default false,
+                                           client_id uuid default gen_random_uuid())
+returns void
+language plpgsql
+security invoker
+as $$
+declare
+  prezzo numeric(10, 2);
+begin
+  perform 1 from public.members m
+   where m.id = add_pass.member_id and m.enrolled_at is not null
+     for update;
+  if not found then
+    raise exception 'Socio non trovato fra gli iscritti della stagione.';
+  end if;
+
+  if exists (select 1 from public.member_passes mp where mp.client_id = add_pass.client_id) then
+    return;
+  end if;
+
+  select p.price into prezzo
+    from public.prices p
+   where p.category = 'ABBONAMENTO' and p.name = add_pass.pass_type and p.trips is not null;
+  if prezzo is null then
+    raise exception 'L''abbonamento «%» non è nel listino.', add_pass.pass_type;
+  end if;
+
+  insert into public.member_passes (member_id, pass_type, client_id)
+  values (add_pass.member_id, add_pass.pass_type, add_pass.client_id);
+
+  update public.members m set
+    total = m.total + prezzo,
+    paid  = m.paid + case when add_pass.paid then prezzo else 0 end
+   where m.id = add_pass.member_id;
+end;
+$$;
+
+comment on function public.add_pass is 'Aggiunge un abbonamento a un socio e ne somma il prezzo al totale (e all''acconto se pagato). Ripetibile con la stessa client_id.';
+
 alter table public.trip_uses enable row level security;
 
 drop policy if exists trip_uses_select on public.trip_uses;
@@ -1450,6 +1831,22 @@ create policy trip_uses_insert on public.trip_uses
   for insert to authenticated with check (public.has_role('utente'));
 
 create policy trip_uses_delete on public.trip_uses
+  for delete to authenticated using (public.has_role('utente'));
+
+-- Abbonamenti dei soci: come members, da utente in su. Niente update: un
+-- abbonamento sbagliato si toglie e si rimette (e se ha già delle gite non si
+-- toglie, vedi trip_uses.pass_id).
+alter table public.member_passes enable row level security;
+
+drop policy if exists member_passes_select on public.member_passes;
+drop policy if exists member_passes_insert on public.member_passes;
+drop policy if exists member_passes_delete on public.member_passes;
+
+create policy member_passes_select on public.member_passes
+  for select to authenticated using (public.has_role('utente'));
+create policy member_passes_insert on public.member_passes
+  for insert to authenticated with check (public.has_role('utente'));
+create policy member_passes_delete on public.member_passes
   for delete to authenticated using (public.has_role('utente'));
 
 -- ---------------------------------------------------------------------------
@@ -1477,3 +1874,33 @@ update public.prices p set category = 'PRESCIISTICA'
 
 update public.members set preski_type = pass_type, pass_type = null
  where upper(pass_type) like '%PRESCIISTIC%';
+
+-- ---------------------------------------------------------------------------
+-- Abbonamenti: dalla colonna del socio alle righe di member_passes
+--
+-- Chi aveva già un abbonamento nella stagione aperta (members.pass_type,
+-- scritto dalle pagine fino alla 2.3) riceve la sua riga, e le gite già
+-- scalate vengono attaccate a quell'abbonamento. Rieseguito, non trova più
+-- niente da spostare: chi ha già una riga nella stagione viene saltato, e le
+-- gite con pass_id già scritto non si toccano.
+--
+-- Va rilanciato anche dopo un caricamento da Excel (generate_migration.py
+-- scrive pass_type come nella 1.x): è così che quei soci ottengono le righe.
+-- ---------------------------------------------------------------------------
+
+insert into public.member_passes (member_id, pass_type, season, created_at)
+select m.id, m.pass_type, public.current_season(), coalesce(m.enrolled_at, now())
+  from public.members m
+ where m.enrolled_at is not null
+   and exists (select 1 from public.prices p
+                where p.category = 'ABBONAMENTO' and p.name = m.pass_type and p.trips is not null)
+   and not exists (select 1 from public.member_passes mp
+                    where mp.member_id = m.id and mp.season = public.current_season());
+
+update public.trip_uses u set pass_id = (
+  select mp.id from public.member_passes mp
+   where mp.member_id = u.member_id and mp.season = u.season
+   order by mp.created_at
+   limit 1)
+ where u.pass_id is null
+   and u.season = public.current_season();
