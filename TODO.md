@@ -1,3 +1,43 @@
+# Ripresa lavori — aggiornato il 2026-09-23
+
+## Fatto nella 2.3 (committato, pushato, online)
+
+- leggibilità (5b00869), fix barra Totale/Residuo (a4674d3), listino a
+  righe grandi e barra in maiuscolo (8ed7e3b), Riepilogo più grande con
+  somma di sezione in evidenza (d4638ad), pulsante A+ e listino dal prezzo
+  più basso (0d77244)
+- presciistica aggiuntiva: categoria PRESCIISTICA nel listino e colonna
+  members.preski_type, scelta propria nella pagina Soci, sezione propria
+  nel Riepilogo (anche per le stagioni chiuse, categoria PRESKI dello
+  storico), fuori dall'incasso corsi; close_season la archivia e la azzera.
+  Schema applicato in produzione il 2026-09-23: nessun socio da spostare,
+  spostata la sola voce di listino (id 18). Backup CSV di prices e members
+  preso prima nella scratchpad della sessione.
+
+## Da fare
+
+- 2.4-SNAPSHOT: funzioni social e campagne Santero. Piano già presente in
+  `docs/PIANO_2.3_SOCIAL.md` (da rinominare o aggiornare per la 2.4?).
+  File Santero non committati da portare qui: `social/santero/958 Santero
+  Vini.png` (in stage), `campagna.html`, `export/`, `santero.png`,
+  `santero-chiaro.png`
+- provare sul sito con i dati reali: righe del listino e ordine per prezzo,
+  presciistica insieme a un abbonamento, totali della pagina Soci,
+  Riepilogo, pulsante A+
+- il tag locale `2.1` è diverso da quello su GitHub (`git fetch --tags` lo
+  rifiuta): capire quale dei due è giusto
+- docker su questa macchina non riesce a fermare i container ("could not
+  kill container: permission denied", probabile AppArmor): restano accesi
+  `scdb-test-presci`, `scdb-test-presci-<pid>`, `scdb-test-ruoli`. Si
+  tolgono dopo `sudo systemctl restart docker` (o un riavvio) con
+  `docker rm -f`
+- il pulsante A+ c'è solo nel gestionale (`web/`), non nel sito di
+  ricerca (`ricerca/`): aggiungerlo se serve
+- il sito di ricerca non mostra la presciistica nella scheda del socio
+  (mostra solo l'abbonamento): aggiungerla se serve
+
+---
+
   Storico aggregato + schema tutto in inglese                                                                                                                                                                           
                                                                                                                                                                                                                            
      Contesto                                                                                                                                                                                                              
