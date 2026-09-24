@@ -1,6 +1,6 @@
 # Ripresa lavori — aggiornato il 2026-09-24 (2.5-SNAPSHOT)
 
-## Fatto nella 2.5-SNAPSHOT (NON ancora applicato in produzione)
+## Fatto nella 2.5-SNAPSHOT (schema applicato in produzione il 2026-09-24)
 
 - release **2.4** chiusa: branch e tag `2.4` su `f35797e`, workflow Pages su `["2.4", "2.5-SNAPSHOT"]`
 - **ruoli per funzione** al posto della scala: `superadmin`, `admin`, `tesoriere`, `assicurazione`,
@@ -20,11 +20,14 @@
   story con sticker link, grazie, copertina; UTM; avvertenza alcolici). Test `node web/test-social.js`
 - `test_ruoli.sh` con la matrice ruoli × permessi (7 ruoli × 28 azioni), vedi come, passaggio 2.4→2.5
 
-## Da fare prima della produzione
+## Produzione (2026-09-24)
 
-- backup di `profiles` e l'elenco degli account con il ruolo; poi `schema.sql` in una transazione
-- subito dopo, dal pannello Utenti: gli `admin` di oggi **perdono il Bilancio**, chi lo usa va messo
-  `tesoriere` o `superadmin`; i vecchi `utente` sono diventati `admin`
+- backup CSV delle tabelle preso prima nella scratchpad della sessione; `schema.sql` applicato in una
+  transazione, dopo una prova con rollback sui dati veri. Account: un superadmin e un admin (resta
+  admin, senza Bilancio: deciso così); nessun utente/ospite/kiosk da spostare
+- **da fare: push di `2.5-SNAPSHOT`**, finché online restano le pagine della 2.4 (vedi STATO_REPO)
+
+## Da fare
 - TODO(social): numeri di telefono veri in `SOCIAL.telefoni` (`web/social-templates.js`)
 - caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
