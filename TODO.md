@@ -25,7 +25,7 @@
 - backup CSV delle tabelle preso prima nella scratchpad della sessione; `schema.sql` applicato in una
   transazione, dopo una prova con rollback sui dati veri. Account: un superadmin e un admin (resta
   admin, senza Bilancio: deciso così); nessun utente/ospite/kiosk da spostare
-- **da fare: push di `2.5-SNAPSHOT`**, finché online restano le pagine della 2.4 (vedi STATO_REPO)
+- pagine della 2.5 pubblicate lo stesso giorno (deploy da `2.5-SNAPSHOT`, `d95fca7`)
 
 ## Da fare
 - TODO(social): numeri di telefono veri in `SOCIAL.telefoni` (`web/social-templates.js`)
