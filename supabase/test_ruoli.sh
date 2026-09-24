@@ -416,6 +416,28 @@ do $$ begin
     raise exception 'ASSERZIONE: colore non esadecimale accettato';
   exception when check_violation then null;
   end;
+
+  -- Eliminare uno sponsor porta via le sue campagne (anche una già
+  -- pubblicata), e solo quelle; chi non ha il permesso social non elimina.
+  insert into public.sponsors (id, name) values ('cccccccc-5555-0000-0000-000000000002', 'PROVA DA TOGLIERE');
+  insert into public.social_events (kind, title, sponsor_id, published_at) values
+    ('sponsor', 'CAMPAGNA 1', 'cccccccc-5555-0000-0000-000000000002', now()),
+    ('sponsor', 'CAMPAGNA 2', 'cccccccc-5555-0000-0000-000000000002', null);
+  insert into public.social_events (kind, title, event_date) values ('gita', 'GITA CHE RESTA', current_date);
+
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- admin
+  delete from public.sponsors where id = 'cccccccc-5555-0000-0000-000000000002';
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  assert (select count(*) from public.social_events where sponsor_id = 'cccccccc-5555-0000-0000-000000000002') = 2,
+         'un admin ha eliminato uno sponsor e le sue campagne';
+
+  delete from public.sponsors where id = 'cccccccc-5555-0000-0000-000000000002';
+  assert (select count(*) from public.sponsors where id = 'cccccccc-5555-0000-0000-000000000002') = 0, 'sponsor non eliminato';
+  assert (select count(*) from public.social_events where title in ('CAMPAGNA 1', 'CAMPAGNA 2')) = 0,
+         'le campagne dello sponsor eliminato sono rimaste';
+  assert (select count(*) from public.social_events where title = 'GITA CHE RESTA') = 1, 'eliminato un post che non c''entrava';
+  assert (select count(*) from public.social_events where sponsor_id = 'cccccccc-5555-0000-0000-000000000001') = 1,
+         'eliminata la campagna di un altro sponsor';
 end $$;
 
 reset role;

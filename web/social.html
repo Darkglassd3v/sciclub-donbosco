@@ -49,6 +49,12 @@
     #testoPost { min-height: 12em; font-family: inherit; }
     .avviso-contrasto { color: var(--errore); font-weight: 600; }
     .salva-modifiche { background: var(--giallo) !important; color: #14202E !important; }
+    /* Un pulsante grande per tipo di post, uno sotto l'altro. */
+    .nuovi { display: grid; gap: 10px; margin-bottom: 14px; }
+    .nuovi .button { justify-content: flex-start; height: auto; padding: 12px 18px; font-weight: 600; }
+    /* Domanda di conferma scritta sulla pagina (chiedi()), al posto dei pulsanti. */
+    .domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
   </style>
 </head>
 <body>
@@ -67,7 +73,7 @@
       <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
       <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
       <a href="social.html" data-permesso="social" hidden>Social</a>
-      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -83,8 +89,11 @@
     <div>
       <div class="riquadro">
         <h2>Post</h2>
-        <div class="buttons">
-          <button type="button" class="button is-link" id="btnNuovo">+ Nuovo post</button>
+        <div class="nuovi" id="azioniNuovo">
+          <button type="button" class="button is-link" data-nuovo="gita">+ Nuova gita</button>
+          <button type="button" class="button is-link" data-nuovo="corso">+ Nuovo corso</button>
+          <button type="button" class="button is-link" data-nuovo="sponsor">+ Nuova campagna sponsor</button>
+          <button type="button" class="button is-link is-light" data-nuovo="cena">+ Altro evento (cena, gara, servizi)</button>
         </div>
         <label class="spunta"><input type="checkbox" id="anchePubblicati"> Mostra anche quelli già pubblicati</label>
         <ul class="elenco-post" id="elencoPost"></ul>
@@ -169,7 +178,7 @@
         </div>
         <p id="linkUtm" class="mb-3" hidden></p>
 
-        <div class="azioni-post">
+        <div class="azioni-post" id="azioniPost">
           <button type="button" class="button is-link" id="btnSalva">Salva</button>
           <button type="button" class="button is-light" id="btnRigenera">Rifai il testo dai dati</button>
           <button type="button" class="button is-light" id="btnCopia">Copia il testo</button>
@@ -201,7 +210,7 @@
         <h2>Sponsor</h2>
         <p class="occhiello">
           Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
-          una campagna nuova: <b>+ Nuovo post</b>, tipo <b>Campagna sponsor</b>.
+          una campagna nuova: <b>+ Nuova campagna sponsor</b>, in cima a sinistra.
         </p>
         <div class="campi">
           <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
@@ -221,8 +230,9 @@
         </div>
         <p class="avviso-contrasto mt-2" id="avvisoContrasto" hidden></p>
         <div class="anteprime" id="anteprimaLoghi"></div>
-        <div class="azioni-post">
+        <div class="azioni-post" id="azioniSponsor">
           <button type="button" class="button is-link" id="btnSalvaSponsor">Salva sponsor</button>
+          <button type="button" class="button is-danger is-light" id="btnEliminaSponsor" hidden>Elimina sponsor</button>
         </div>
       </div>
     </div>
@@ -340,7 +350,8 @@
   }
 
   function collegaForm() {
-    el("btnNuovo").addEventListener("click", () => apri({}));
+    document.querySelectorAll("[data-nuovo]").forEach((b) =>
+      b.addEventListener("click", () => apri({ kind: b.dataset.nuovo })));
     el("anchePubblicati").addEventListener("change", disegnaElenco);
     el("fTipo").addEventListener("change", () => { mostraCampi(); cambiato(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
@@ -363,11 +374,41 @@
     window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
   }
 
+  /**
+   * Domanda scritta sulla pagina al posto di confirm(). Un browser che ha
+   * bloccato le finestre di conferma della pagina fa rispondere a confirm()
+   * "no" da solo, senza mostrare niente: il pulsante sembrava non fare nulla.
+   * `dove` è il riquadro dei pulsanti: finché la domanda è aperta sono
+   * nascosti, poi tornano com'erano.
+   */
+  function chiedi(dove, domanda, si, alSi) {
+    dove.querySelector(".domanda-inline")?.remove();
+    const pulsanti = [...dove.children], nascosti = pulsanti.map((b) => b.hidden);
+    pulsanti.forEach((b) => { b.hidden = true; });
+    const riga = document.createElement("div");
+    riga.className = "domanda-inline";
+    riga.innerHTML = `<span class="domanda">${esc(domanda)}</span>
+      <button type="button" class="button is-danger">${esc(si)}</button>
+      <button type="button" class="button is-light">Annulla</button>`;
+    const chiudi = () => { riga.remove(); pulsanti.forEach((b, i) => { b.hidden = nascosti[i]; }); };
+    const [bSi, bNo] = riga.querySelectorAll("button");
+    bSi.addEventListener("click", () => { chiudi(); alSi(); });
+    bNo.addEventListener("click", chiudi);
+    dove.append(riga);
+    bNo.focus();
+  }
+
+  const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", sponsor: "Nuova campagna sponsor" };
+
   function apri(post) {
-    if (modificato() && !confirm("Il post aperto ha modifiche non salvate. Lasciarle?")) return;
+    if (modificato()) {
+      chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
+        "Sì, lascia le modifiche", () => { salvato = firma(); apri(post); });
+      return;
+    }
     aperto = post;
     const tipo = post.kind || "gita";
-    el("titoloEditor").textContent = post.id ? "Modifica post" : "Nuovo post";
+    el("titoloEditor").textContent = post.id ? "Modifica post" : NOMI_NUOVO[tipo] || "Nuovo evento";
     el("fTipo").value = tipo;
     el("fData").value = post.event_date || "";
     el("fTitolo").value = post.title || "";
@@ -480,9 +521,12 @@
       : "Segna come pubblicato";
   }
 
-  async function elimina() {
-    if (!aperto || !aperto.id) { el("editor").hidden = true; return; }
-    if (!confirm("Eliminare questo post? Non si torna indietro.")) return;
+  function elimina() {
+    if (!aperto || !aperto.id) { salvato = firma(); el("editor").hidden = true; return; }
+    chiedi(el("azioniPost"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
+  }
+
+  async function eliminaDavvero() {
     const { error } = await sb.from("social_events").delete().eq("id", aperto.id);
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     aperto = null;
@@ -659,6 +703,7 @@
     }
     for (const id of ["sScuro", "sChiaro", "sAccento", "sNome", "sLivello"]) el(id).addEventListener("input", anteprimaSponsor);
     el("btnSalvaSponsor").addEventListener("click", salvaSponsor);
+    el("btnEliminaSponsor").addEventListener("click", chiediEliminaSponsor);
   }
 
   function apriSponsor(id) {
@@ -672,7 +717,45 @@
     el("sChiaro").value = sp.color_light || "#FFFFFF";
     el("sAccento").value = sp.color_accent || "#FCCF02";
     el("sAlcol").checked = !!sp.alcohol;
+    el("btnEliminaSponsor").hidden = !sp.id;
     anteprimaSponsor();
+  }
+
+  /**
+   * Eliminare uno sponsor elimina anche le sue campagne (on delete cascade
+   * nel database, nella stessa istruzione): la domanda dice quante sono e
+   * quante sono già uscite, così non si cancella senza saperlo.
+   */
+  function chiediEliminaSponsor() {
+    const sp = sponsors.find((s) => s.id === el("sScegli").value);
+    if (!sp) return;
+    const campagne = posts.filter((p) => p.sponsor_id === sp.id);
+    const uscite = campagne.filter((p) => p.published_at).length;
+    const quante = campagne.length === 1 ? "la sua campagna" : `le sue ${campagne.length} campagne`;
+    const domanda = campagne.length
+      ? `Eliminare ${sp.name} e ${quante}${uscite ? ` (${uscite} già pubblicat${uscite === 1 ? "a" : "e"})` : ""}? Non si torna indietro.`
+      : `Eliminare ${sp.name}? Non si torna indietro.`;
+    chiedi(el("azioniSponsor"), domanda, "Sì, elimina", () => eliminaSponsor(sp, campagne));
+  }
+
+  async function eliminaSponsor(sp, campagne) {
+    setLoading(true);
+    try {
+      const { error } = await sb.from("sponsors").delete().eq("id", sp.id);
+      if (error) throw error;
+      // Il post aperto era una delle sue campagne: non esiste più.
+      if (aperto && campagne.some((c) => c.id === aperto.id)) {
+        aperto = null;
+        el("editor").hidden = true;
+      }
+      el("sScegli").value = "";
+      await Promise.all([caricaPost(), caricaSponsor()]);
+      showToast(`${sp.name} eliminato${campagne.length ? ", con le sue campagne" : ""}.`);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function sponsorDaForm() {

@@ -2220,7 +2220,7 @@ create table if not exists public.social_events (
   -- Foto della meta, ridotta dalla pagina (data URL). Facoltativa.
   photo        text,
   -- Campagne: lo sponsor, il titolo della story e il testo del pulsante.
-  sponsor_id   uuid references public.sponsors (id) on delete restrict,
+  sponsor_id   uuid references public.sponsors (id) on delete cascade,
   story_title  text,
   cta          text,
   -- Il testo da incollare sotto al post, proposto dalla pagina e modificabile.
@@ -2229,6 +2229,13 @@ create table if not exists public.social_events (
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Eliminare uno sponsor elimina le sue campagne, nella stessa istruzione: la
+-- pagina chiede prima conferma dicendo quante sono. Il primo schema della 2.5
+-- le proteggeva (restrict) e lo sponsor non si poteva più togliere.
+alter table public.social_events drop constraint if exists social_events_sponsor_id_fkey;
+alter table public.social_events add constraint social_events_sponsor_id_fkey
+  foreign key (sponsor_id) references public.sponsors (id) on delete cascade;
 
 alter table public.social_events drop constraint if exists social_events_kind_valid;
 alter table public.social_events add constraint social_events_kind_valid
