@@ -55,6 +55,26 @@
     /* Domanda di conferma scritta sulla pagina (chiedi()), al posto dei pulsanti. */
     .domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
+
+    /* Calendario della gita: i giorni di gita nel loro colore, gli altri
+     * bianchi ma sceglibili; il pallino = c'è già un'altra gita. */
+    .cal-gita { max-width: 30rem; }
+    .cal-gita .testa { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 1.2rem; font-weight: 700; }
+    .cal-gita .griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .cal-gita .nome-giorno { text-align: center; font-weight: 600; color: var(--testo-soft); }
+    .cal-gita .griglia button { position: relative; aspect-ratio: 1; border: 1px solid var(--filo); border-radius: 8px;
+      background: #fff; color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+    .cal-gita .griglia button.di-gita { border-color: transparent; font-weight: 800; }
+    .cal-gita .griglia button[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #14202E; z-index: 1; }
+    .cal-gita .occupato { position: absolute; bottom: 4px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: currentColor; }
+    .cal-gita .esito { margin-top: 12px; font-weight: 600; }
+    .cal-gita .esito.fuori { color: var(--errore); }
+    .legenda { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+    .legenda .campione { font-size: .95rem; }
+    .campione { display: inline-block; border-radius: 999px; padding: 3px 14px; font-weight: 700; }
+    .riga-giorno { display: grid; grid-template-columns: 12rem 5rem 1fr; gap: 14px; align-items: center; padding: 6px 0; border-top: 1px solid var(--filo); }
+    .riga-giorno input[type="color"] { height: 2.5em; padding: 2px; }
+    .riga-giorno input[type="color"]:disabled { visibility: hidden; }
   </style>
 </head>
 <body>
@@ -116,9 +136,13 @@
               <option value="sponsor">Campagna sponsor</option>
             </select>
           </div>
-          <div class="field">
+          <div class="field" data-per="evento sponsor">
             <label class="label" for="fData">Data</label>
             <input class="input" type="date" id="fData">
+          </div>
+          <div class="field campo-largo" data-per="gita">
+            <span class="label" id="lCalGita">Giorno della gita</span>
+            <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
           </div>
           <div class="field" data-per="sponsor">
             <label class="label" for="fSponsor">Sponsor</label>
@@ -235,6 +259,20 @@
           <button type="button" class="button is-danger is-light" id="btnEliminaSponsor" hidden>Elimina sponsor</button>
         </div>
       </div>
+
+      <div class="riquadro" id="giorniGita">
+        <h2>Giorni e colori delle gite</h2>
+        <p class="occhiello">
+          Il giorno della settimana decide il colore della gita nei post e nel
+          calendario del mese. Quando inserisci una gita il calendario ti mostra
+          questi giorni colorati; un altro giorno si può scegliere lo stesso.
+        </p>
+        <div id="righeGiorni"></div>
+        <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
+        <div class="azioni-post">
+          <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -267,7 +305,10 @@
     el("calTitolo").addEventListener("input", disegnaCalendarioMese);
     el("calMese").addEventListener("change", () => { el("calTitolo").value = titoloMese(el("calMese").value); disegnaCalendarioMese(); });
     for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", disegnaCopertinaFb);
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi()]);
+    collegaGiorni();
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita()]);
+    // Il calendario del mese può essersi disegnato prima dei colori dei giorni.
+    disegnaCalendarioMese();
     disegnaCopertinaFb();
   })();
 
@@ -295,6 +336,15 @@
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     apriSponsor(el("sScegli").value);
   }
+
+  /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
+  async function caricaGiorniGita() {
+    const { data, error } = await sb.from("trip_days").select("weekday, color");
+    if (error) showToast("Giorni delle gite non caricati, uso i colori di sempre: " + messaggioErrore(error), "is-danger");
+    else impostaColoriGita(mappaColori(data));
+    apriGiorni();
+  }
+  const mappaColori = (righe) => Object.fromEntries(righe.filter((r) => r.color).map((r) => [r.weekday, r.color]));
 
   /** I luoghi di partenza del gestionale, come suggerimenti nel form. */
   async function caricaLuoghi() {
@@ -370,8 +420,9 @@
     el("btnCopia").addEventListener("click", copiaTesto);
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
-    // Uscire con il post modificato e non salvato: il browser chiede conferma.
-    window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
+    el("calGita").addEventListener("click", sceltaCalGita);
+    // Uscire con il post o i giorni modificati e non salvati: il browser chiede conferma.
+    window.addEventListener("beforeunload", (e) => { if (modificato() || giorniModificati()) { e.preventDefault(); e.returnValue = ""; } });
   }
 
   /**
@@ -420,6 +471,7 @@
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
     foto = post.photo || null;
+    meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
     for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
     (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
     (post.prices || []).forEach((r) => aggiungiRiga("fPrezzi", r));
@@ -485,7 +537,7 @@
   async function salva() {
     const riga = daForm();
     if (!riga.title) { showToast("Scrivi la meta o il titolo.", "is-warning"); return; }
-    if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli la data della gita: decide anche il colore.", "is-warning"); return; }
+    if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli il giorno della gita nel calendario: decide anche il colore.", "is-warning"); return; }
     if (riga.kind === "sponsor" && !riga.sponsor_id) { showToast("Scegli lo sponsor.", "is-warning"); return; }
     setLoading(true);
     try {
@@ -571,6 +623,7 @@
   function ridisegna() {
     const post = daForm(), dove = el("anteprime");
     dove.innerHTML = "";
+    if (post.kind === "gita") disegnaCalGita();
     el("btnTogliFoto").hidden = !foto;
     aggiornaPubblicato();
     const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
@@ -648,6 +701,129 @@
       };
       lettore.readAsDataURL(file);
     });
+  }
+
+  // ---------------------------------------------------------------------
+  // Giorno della gita e giorni di gita
+  // ---------------------------------------------------------------------
+
+  const SETTIMANA = [1, 2, 3, 4, 5, 6, 0];  // da lunedì, come i calendari italiani
+  let meseGita = "";                        // "2027-01": il mese mostrato nel calendario della gita
+
+  /** "Martedì" nel suo colore (quello salvato, o `c` dal form non ancora salvato). */
+  const campione = (g, c = COLORI_GITA[g]) =>
+    `<span class="campione" style="background:${c};color:${inchiostro(c)}">${maiuscola(GIORNI[g])}</span>`;
+
+  /**
+   * Il calendario della gita, al posto del campo data libero: un mese alla
+   * volta, i giorni di gita nel loro colore, gli altri bianchi ma sceglibili
+   * lo stesso (una gita spostata per la neve). Il pallino segna i giorni con
+   * già un'altra gita salvata. Scrive in fData, da cui il form legge la data.
+   */
+  function disegnaCalGita() {
+    const scelta = el("fData").value, [a, m] = meseGita.split("-").map(Number);
+    const vuote = (new Date(a, m - 1, 1).getDay() + 6) % 7, giorni = new Date(a, m, 0).getDate();
+    const altre = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (aperto && aperto.id))
+      .map((p) => [p.event_date, String(p.title).split("\n")[0]]));
+    const celle = Array(vuote).fill("<span></span>");
+    for (let n = 1; n <= giorni; n++) {
+      const iso = `${meseGita}-${String(n).padStart(2, "0")}`, cat = categoriaGita(iso), gia = altre.get(iso);
+      const C = categoria(cat), diGita = cat !== "gita";
+      const nome = `${dataLunga(iso)}${diGita ? ", giorno di gita" : ""}${gia ? `, c'è già la gita ${gia}` : ""}`;
+      celle.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === scelta}" aria-label="${esc(nome)}"
+        ${gia ? `title="C'è già: ${esc(gia)}"` : ""} ${diGita ? `class="di-gita" style="background:${C.c};color:${C.ink}"` : ""}>${n}${gia ? '<span class="occupato"></span>' : ""}</button>`);
+    }
+    // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
+    const fuori = scelta && categoriaGita(scelta) === "gita", gia = altre.get(scelta);
+    const esito = !scelta ? "Scegli il giorno: quelli colorati sono i giorni di gita."
+      : fuori ? `${dataLunga(scelta)} non è un giorno di gita: il post avrà il blu del club.`
+      : `✓ ${dataLunga(scelta)}`;
+    el("calGita").innerHTML = `
+      <div class="testa">
+        <button type="button" class="button is-light" data-mese="-1" aria-label="Mese prima">‹</button>
+        <span aria-live="polite">${maiuscola(MESI[m - 1])} ${a}</span>
+        <button type="button" class="button is-light" data-mese="1" aria-label="Mese dopo">›</button>
+      </div>
+      <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${celle.join("")}</div>
+      <p class="esito ${fuori ? "fuori" : ""}">${esc(esito)}${gia ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(gia)}.</span>` : ""}</p>
+      <div class="legenda">${SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")}
+        <a href="#giorniGita">Cambia giorni e colori</a></div>`;
+  }
+
+  function sceltaCalGita(e) {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.mese) {
+      const [a, m] = meseGita.split("-").map(Number), d = new Date(a, m - 1 + Number(b.dataset.mese), 1);
+      meseGita = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      disegnaCalGita();
+    } else {
+      el("fData").value = b.dataset.giorno;
+      cambiato();
+    }
+    // Il calendario è rifatto da capo: il fuoco torna sul pulsante premuto.
+    el("calGita").querySelector(b.dataset.mese ? `[data-mese="${b.dataset.mese}"]` : `[data-giorno="${b.dataset.giorno}"]`).focus();
+  }
+
+  let giorniSalvati = "";  // i giorni com'erano all'ultimo salvataggio, per "Salva modifiche"
+
+  function collegaGiorni() {
+    el("righeGiorni").innerHTML = SETTIMANA.map((g) => `<div class="riga-giorno">
+        <label class="spunta"><input type="checkbox" id="gg${g}"> ${maiuscola(GIORNI[g])}</label>
+        <input class="input" type="color" id="gc${g}" aria-label="Colore delle gite: ${GIORNI[g]}">
+        <span id="gp${g}"></span></div>`).join("");
+    el("righeGiorni").addEventListener("input", (e) => {
+      // Un giorno appena spuntato parte dal blu del club.
+      if (e.target.type === "checkbox" && e.target.checked && !COLORI_GITA[e.target.id.slice(2)]) el(`gc${e.target.id.slice(2)}`).value = "#084C8D";
+      aggiornaGiorni();
+    });
+    el("btnSalvaGiorni").addEventListener("click", salvaGiorni);
+  }
+
+  function apriGiorni() {
+    for (const g of SETTIMANA) {
+      el(`gg${g}`).checked = !!COLORI_GITA[g];
+      el(`gc${g}`).value = COLORI_GITA[g] || "#084C8D";
+    }
+    giorniSalvati = JSON.stringify(giorniDaForm());
+    aggiornaGiorni();
+  }
+
+  const giorniDaForm = () => SETTIMANA.map((g) => ({ weekday: g, color: el(`gg${g}`).checked ? el(`gc${g}`).value.toUpperCase() : null }));
+  const giorniModificati = () => JSON.stringify(giorniDaForm()) !== giorniSalvati;
+
+  /** Campioni accanto ai colori, avviso se la scritta non si legge, "Salva modifiche". */
+  function aggiornaGiorni() {
+    const deboli = [];
+    for (const { weekday: g, color } of giorniDaForm()) {
+      el(`gc${g}`).disabled = !color;
+      el(`gp${g}`).innerHTML = color ? campione(g, color) : "";
+      if (color && contrasto(color, inchiostro(color)) < 4.5) deboli.push(GIORNI[g]);
+    }
+    el("avvisoGiorni").hidden = !deboli.length;
+    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${deboli.join(", ")} la scritta si legge poco. Prova un colore più scuro o più chiaro.`;
+    const m = giorniModificati();
+    el("btnSalvaGiorni").textContent = m ? "Salva modifiche" : "Salva giorni e colori";
+    el("btnSalvaGiorni").classList.toggle("salva-modifiche", m);
+  }
+
+  async function salvaGiorni() {
+    const righe = giorniDaForm();
+    setLoading(true);
+    try {
+      const { error } = await sb.from("trip_days").upsert(righe);
+      if (error) throw error;
+      impostaColoriGita(mappaColori(righe));
+      giorniSalvati = JSON.stringify(righe);
+      aggiornaGiorni();
+      disegnaCalendarioMese();
+      if (!el("editor").hidden) ridisegna();
+      showToast("Giorni e colori delle gite salvati.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // ---------------------------------------------------------------------

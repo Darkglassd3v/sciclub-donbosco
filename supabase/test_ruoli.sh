@@ -202,6 +202,8 @@ begin
     ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
     ('leggi',  'select 1 from public.social_events',                             'SxxxxSx'),
     ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
+    ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
+    ('scrivi', 'update public.trip_days set color = ''#147A45'' where weekday = 5', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
@@ -454,6 +456,8 @@ SQL
 # vero: la voce di prova in maiuscolo va completata a mano.
 psql_ -c "update public.prices set trips = 10, day = 'SABATO' where name = 'PROVA 10 VIAGGI SABATO';"
 psql_ -c "insert into public.trip_uses (member_id) values ('99999999-9999-9999-9999-999999999999');"
+# Giorni delle gite cambiati dalla pagina: il martedì tolto, il sabato giallo.
+psql_ -c "update public.trip_days set color = case weekday when 2 then null when 6 then '#FCCF02' else color end;"
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
@@ -468,6 +472,9 @@ do $$ begin
          'schema.sql ha resuscitato un utente rimosso';
   assert (select count(*) from public.profiles where email = 'senza@test') = 0,
          'schema.sql ha dato un ruolo a un account che non lo aveva';
+  assert (select count(*) from public.trip_days) = 7, 'trip_days non ha una riga per giorno';
+  assert (select color from public.trip_days where weekday = 2) is null, 'schema.sql ha rimesso il martedì tolto';
+  assert (select color from public.trip_days where weekday = 6) = '#FCCF02', 'schema.sql ha rimesso il colore di prima al sabato';
 
   -- L'abbonamento scritto nella vecchia colonna è diventato una riga, una sola.
   assert (select count(*) from public.member_passes

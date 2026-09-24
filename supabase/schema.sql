@@ -2253,16 +2253,47 @@ create trigger social_events_set_updated_at
 
 comment on table public.social_events is 'Post social del club (gite, eventi, campagne sponsor): dati, testo e data di pubblicazione.';
 
+-- Giorni delle gite: il colore di una gita nei post viene dal suo giorno della
+-- settimana, e quando si inserisce una gita il calendario della pagina mostra
+-- questi giorni colorati (senza vietare gli altri). Si cambiano dalla pagina,
+-- riquadro "Giorni e colori delle gite". Sempre sette righe, una per giorno:
+-- colore vuoto = non è un giorno di gita. Così rilanciare lo schema non rimette
+-- un giorno tolto dalla pagina. I colori di partenza sono quelli di sempre
+-- (martedì rosso, sabato blu, domenica giallo), gli stessi degli abbonamenti.
+-- Il colore non si salva sul post: cambiarlo ricolora anche le gite già
+-- salvate, che è quello che si vuole finché non sono pubblicate (le
+-- pubblicate sono già PNG).
+create table if not exists public.trip_days (
+  -- 0 = domenica … 6 = sabato, come getDay() di JavaScript.
+  weekday smallint primary key,
+  color   text
+);
+
+alter table public.trip_days drop constraint if exists trip_days_weekday_valid;
+alter table public.trip_days add constraint trip_days_weekday_valid check (weekday between 0 and 6);
+alter table public.trip_days drop constraint if exists trip_days_color_valid;
+alter table public.trip_days add constraint trip_days_color_valid check (color ~ '^#[0-9A-Fa-f]{6}$');
+
+insert into public.trip_days (weekday, color) values
+  (0, '#FCCF02'), (1, null), (2, '#B3261E'), (3, null), (4, null), (5, null), (6, '#084C8D')
+on conflict (weekday) do nothing;
+
+comment on table public.trip_days is 'Giorni della settimana delle gite e il loro colore nei post social (colore vuoto = non è un giorno di gita).';
+
 alter table public.sponsors      enable row level security;
 alter table public.social_events enable row level security;
+alter table public.trip_days     enable row level security;
 
 drop policy if exists sponsors_all      on public.sponsors;
 drop policy if exists social_events_all on public.social_events;
+drop policy if exists trip_days_all     on public.trip_days;
 
 -- Tutto a chi ha il permesso social (social e superadmin), niente agli altri.
 create policy sponsors_all on public.sponsors
   for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
 create policy social_events_all on public.social_events
+  for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
+create policy trip_days_all on public.trip_days
   for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
 
 -- ---------------------------------------------------------------------------

@@ -17,12 +17,10 @@ const SOCIAL = {
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
 };
 
-/* Una categoria = un colore. Le gite ereditano il codice giorno del gestionale. */
+/* Una categoria = un colore. Le gite prendono il colore dal giorno della
+ * settimana (COLORI_GITA, sotto); qui il resto. */
 const CAT = {
-  mar:     { label: "Gita del martedì",    day: "Mar", c: "#B3261E", ink: "#fff",    txt: "#B3261E" },
-  sab:     { label: "Gita del sabato",     day: "Sab", c: "#084C8D", ink: "#fff",    txt: "#084C8D" },
-  dom:     { label: "Gita della domenica", day: "Dom", c: "#FCCF02", ink: "#06396A", txt: "#6B5200" },
-  // Gite in un altro giorno della settimana: il blu del club.
+  // Gite in un giorno che non è un giorno di gita: il blu del club.
   gita:    { label: "Gita",                day: "",    c: "#084C8D", ink: "#fff",    txt: "#084C8D" },
   corso:   { label: "Corsi",               c: "#147A45", ink: "#fff", txt: "#147A45" },
   gara:    { label: "Gara sociale",        c: "#5B2A86", ink: "#fff", txt: "#5B2A86" },
@@ -75,10 +73,41 @@ function dataCorta(iso) {
   return d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "";
 }
 
-/** Il colore di una gita viene dal giorno: martedì, sabato, domenica. */
+/* I giorni di gita e il loro colore, per giorno della settimana (0 = domenica,
+ * come getDay()): la tabella trip_days, che la pagina carica e passa a
+ * impostaColoriGita(). Finché non arriva, quelli di sempre, gli stessi degli
+ * abbonamenti nel gestionale. */
+let COLORI_GITA = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
+function impostaColoriGita(colori) { COLORI_GITA = colori; }
+
+/** Il colore di una gita viene dal giorno: "g2" se il martedì è un giorno di gita. */
 function categoriaGita(iso) {
   const d = giornoDi(iso);
-  return { 2: "mar", 6: "sab", 0: "dom" }[d ? d.getDay() : -1] || "gita";
+  return d && COLORI_GITA[d.getDay()] ? `g${d.getDay()}` : "gita";
+}
+
+/* Scritta sul colore: bianca o blu scuro, quella che si legge meglio (sul
+ * giallo il blu scuro, come nel resto del gestionale). */
+const inchiostro = (c) => (contrasto(c, "#FFFFFF") >= contrasto(c, "#06396A") ? "#FFFFFF" : "#06396A");
+
+/* Il colore scurito quanto basta per leggersi su bianco (4.5:1): prezzi e
+ * scadenza stanno nel biglietto bianco, e il giallo lì non si leggerebbe. */
+function suBianco(c) {
+  if (contrasto(c, "#FFFFFF") >= 4.5) return c;
+  const n = parseInt(c.slice(1), 16), rgb = [n >> 16, (n >> 8) & 255, n & 255];
+  for (let k = .95; k > 0; k -= .05) {
+    const scuro = "#" + rgb.map((v) => Math.round(v * k).toString(16).padStart(2, "0")).join("");
+    if (contrasto(scuro, "#FFFFFF") >= 4.5) return scuro;
+  }
+  return "#000000";
+}
+
+/** La categoria `k` con i suoi colori; "g0"…"g6" sono i giorni di gita. */
+function categoria(k) {
+  const g = /^g(\d)$/.exec(k);
+  if (!g) return CAT[k];
+  const c = COLORI_GITA[g[1]];
+  return { label: "Gita", day: maiuscola(GIORNI[g[1]].slice(0, 3)), c, ink: inchiostro(c), txt: suBianco(c) };
 }
 
 /** Categoria (colore) di un post del database. */
@@ -118,7 +147,7 @@ const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fil
  * d'occhio anche postando con settimane d'anticipo. Con il corso nello stesso
  * giorno, una coccarda verde a stella sovrapposta come un adesivo. */
 function badge(s, k = 1) {
-  const C = CAT[s.cat], [day, n, month] = s.date.split(" ");
+  const C = categoria(s.cat), [day, n, month] = s.date.split(" ");
   const big = `${n.padStart(2, "0")}/${String(MESI.indexOf(month.toLowerCase()) + 1).padStart(2, "0")}`;
   const box = `border-radius:${28 * k}px;text-align:center;padding:${16 * k}px ${24 * k}px`;
   const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
@@ -219,7 +248,7 @@ function photo(w, h, src) {
 
 /* Righe del calendario: [categoria, "DD/MM", meta, corso]. */
 function calRows(rows) {
-  return rows.map(([k, d, dest, corso]) => { const C = CAT[k];
+  return rows.map(([k, d, dest, corso]) => { const C = categoria(k);
     return `<div style="display:flex;align-items:center;gap:22px;padding:14px 0;border-bottom:2px solid #E4E6EB">
       <span class="pill" style="background:${C.c};color:${C.ink};font-size:28px;padding:8px 0;width:190px;text-align:center">${escS(C.day)} ${escS(d)}</span>
       <span style="font-size:42px;font-weight:700;color:#14202E">${escS(dest)}</span>
@@ -232,7 +261,7 @@ function calRows(rows) {
 
 /** Post o story di una gita o di un evento (modello da modelloPost()). */
 function disegnaPost(s) {
-  const C = CAT[s.cat], st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
+  const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
   const notch = (y, m) => `<div class="abs" style="left:-${m}px;top:${y - m}px;width:${m * 2}px;height:${m * 2}px;border-radius:50%;background:${C.c}"></div>
     <div class="abs" style="right:-${m}px;top:${y - m}px;width:${m * 2}px;height:${m * 2}px;border-radius:50%;background:${C.c}"></div>
     <div class="abs" style="left:${m + 10}px;right:${m + 10}px;top:${y}px;border-top:4px dashed #C7D0DA"></div>`;
@@ -454,6 +483,6 @@ function testoPost(ev, sp, stagione) {
 
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
-  module.exports = { dataLunga, dataCorta, categoriaGita, modelloPost, contrasto, schiarisci,
-                     indirizzoUtm, testoPost, semplice, SOCIAL };
+  module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, inchiostro, modelloPost,
+                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, SOCIAL };
 }

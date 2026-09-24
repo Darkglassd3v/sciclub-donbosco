@@ -5,18 +5,35 @@
 //   node web/test-social.js
 
 const assert = require("assert");
-const { dataLunga, dataCorta, categoriaGita, modelloPost, contrasto, schiarisci,
-        indirizzoUtm, testoPost, SOCIAL } = require("./social-templates.js");
+const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, modelloPost,
+        contrasto, schiarisci, indirizzoUtm, testoPost, SOCIAL } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
 assert.strictEqual(dataLunga("2027-01-12"), "Martedì 12 gennaio");
 assert.strictEqual(dataCorta("2027-01-09"), "09/01");
-assert.strictEqual(categoriaGita("2027-01-12"), "mar");   // martedì: rosso
-assert.strictEqual(categoriaGita("2027-01-16"), "sab");   // sabato: blu
-assert.strictEqual(categoriaGita("2027-01-17"), "dom");   // domenica: giallo
+// Colori di partenza, prima che la pagina carichi trip_days.
+assert.strictEqual(categoriaGita("2027-01-12"), "g2");    // martedì: rosso
+assert.strictEqual(categoriaGita("2027-01-16"), "g6");    // sabato: blu
+assert.strictEqual(categoriaGita("2027-01-17"), "g0");    // domenica: giallo
 assert.strictEqual(categoriaGita("2027-01-15"), "gita");  // venerdì: blu del club
 assert.strictEqual(categoriaGita(null), "gita");
+assert.strictEqual(categoria("g2").c, "#B3261E");
+assert.strictEqual(categoria("g2").day, "Mar");
+assert.strictEqual(categoria("g2").ink, "#FFFFFF");          // bianco sul rosso
+assert.strictEqual(categoria("g0").ink, "#06396A");       // blu scuro sul giallo
+assert.strictEqual(categoria("g2").txt, "#B3261E");       // il rosso si legge già su bianco
+assert.ok(contrasto(categoria("g0").txt, "#FFFFFF") >= 4.5, "il giallo dei prezzi non si legge su bianco");
+assert.strictEqual(categoria("corso").c, "#147A45");      // gli altri tipi non cambiano
+
+// Giorni cambiati dalla pagina: sabato giallo, domenica blu, venerdì verde, niente martedì.
+impostaColoriGita({ 6: "#FCCF02", 0: "#084C8D", 5: "#147A45" });
+assert.strictEqual(categoriaGita("2027-01-12"), "gita", "il martedì tolto colora ancora");
+assert.strictEqual(categoriaGita("2027-01-15"), "g5");
+assert.strictEqual(categoria(categoriaGita("2027-01-16")).c, "#FCCF02");
+assert.strictEqual(categoria(categoriaGita("2027-01-17")).c, "#084C8D");
+assert.strictEqual(modelloPost({ kind: "gita", event_date: "2027-01-15", title: "X" }, "post").cat, "g5");
+impostaColoriGita({ 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" });
 
 // --- Prezzo facoltativo -----------------------------------------------------
 
