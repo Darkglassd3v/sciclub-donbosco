@@ -1,3 +1,37 @@
+# Ripresa lavori — aggiornato il 2026-09-24 (2.5-SNAPSHOT)
+
+## Fatto nella 2.5-SNAPSHOT (NON ancora applicato in produzione)
+
+- release **2.4** chiusa: branch e tag `2.4` su `f35797e`, workflow Pages su `["2.4", "2.5-SNAPSHOT"]`
+- **ruoli per funzione** al posto della scala: `superadmin`, `admin`, `tesoriere`, `assicurazione`,
+  `gite` (a schermo "Utente"), `social`. Permessi in `role_permissions()`, controllo `can()` in tutte
+  le policy, `my_access()` per le pagine; niente più `ospite` e `kiosk` (account nuovo = senza riga
+  profiles = senza accesso; `kiosk_search()` e la ricerca a parole intere tolte)
+- tesoriere incassa senza modificare i soci (`settle_household` security definer); polizza scritta
+  solo con il permesso polizze (trigger `check_policy_number`); pannello gite con `use_trip`,
+  `cancel_trip`, `add_pass` security definer (il ruolo gite legge i soci ma non li modifica)
+- **Vedi come** per il superadmin (`profiles.view_as`, `set_view_as()`), fascia gialla su ogni pagina
+- **un solo ingresso**: la radice → login → pagina del ruolo (`PAGINE_DI_ARRIVO` in `web/shared.js`);
+  `ricerca/` passa dallo stesso login; `next` accettato solo se è una pagina del sito
+- pagina **Gestione** (Amministrazione, Utenti, Impostazioni, Vedi come) al posto delle tre voci rosse
+- Riepilogo: entrate/uscite solo con il bilancio, link alle stagioni chiuse per chi ha lo storico
+- **Social** (`web/social.html`, grafica C): post e story, calendario del mese, copertina FB, prezzo
+  facoltativo, testo copiabile, pubblicato; **campagne sponsor** (tabella `sponsors`, formati collab,
+  story con sticker link, grazie, copertina; UTM; avvertenza alcolici). Test `node web/test-social.js`
+- `test_ruoli.sh` con la matrice ruoli × permessi (7 ruoli × 28 azioni), vedi come, passaggio 2.4→2.5
+
+## Da fare prima della produzione
+
+- backup di `profiles` e l'elenco degli account con il ruolo; poi `schema.sql` in una transazione
+- subito dopo, dal pannello Utenti: gli `admin` di oggi **perdono il Bilancio**, chi lo usa va messo
+  `tesoriere` o `superadmin`; i vecchi `utente` sono diventati `admin`
+- TODO(social): numeri di telefono veri in `SOCIAL.telefoni` (`web/social-templates.js`)
+- caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
+- facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
+  più ruoli); quella pubblicata funziona lo stesso
+
+---
+
 # Ripresa lavori — aggiornato il 2026-09-24
 
 ## Fatto nella 2.4-SNAPSHOT (schema applicato in produzione il 2026-09-24)

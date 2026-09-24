@@ -1,4 +1,6 @@
-# Piano 2.3 — Social: grafica, pagina "Genera post", campagne sponsor
+# Piano social: grafica, pagina "Genera post", campagne sponsor
+
+Nato per la 2.3, fatto nella **2.5** (branch `2.5-SNAPSHOT`). Qui sotto lo stato.
 
 Chi pubblica: una persona sola, da PC, a mano su Instagram e Facebook. La
 pagina prepara immagini e testi; la pubblicazione resta manuale.
@@ -9,20 +11,21 @@ pagina prepara immagini e testi; la pubblicazione resta manuale.
 - [x] Template in `social/templates.html` (direzioni A Linea, B Vetta, C Skipass), export PNG con `social/export.sh`
 - [x] Tavola di confronto `social/confronto.html` per il direttivo
 - [x] Data DD/MM sulla singola gita (per postare in anticipo e capire la data a colpo d'occhio): oggi solo in C
-- [ ] Confermare la direzione scelta (A / B / C) e il formato data, da scrivere qui: **[DIREZIONE]**
-- [ ] Togliere le direzioni scartate da `templates.html`
+- [x] Direzione scelta: **C · Skipass**, data DD/MM nel bollo
+- [x] Prototipi (`social/templates.html`, `confronto.html`, `export.sh`) tolti: restano nella storia di git fino alla 2.4
 
 ### B. Pagina "Genera post" (`web/social.html`)
-- [ ] Tabella `social_events(id, kind, event_date date, title, subtitle, prices jsonb, stops jsonb, facts jsonb, deadline date, corso bool, published_at timestamptz, created_at, updated_at)` in `supabase/schema.sql`, RLS come `departures` (`has_role('admin')`)
-- [ ] Funzioni di disegno spostate da `social/templates.html` a `web/social-templates.js` (una copia sola; `templates.html` e `export.sh` la includono)
-- [ ] Pagina: elenco post da fare ordinato per data, con data DD/MM ben visibile · form · anteprima live post e story
-- [ ] Form: tipo (gita/corso/cena/gara/servizi), `<input type="date">` → giorno e colore calcolati, fermate con luoghi suggeriti da `departures`, scadenza, corso sì/no
-- [ ] Calendario del mese generato dalle gite salvate
-- [ ] Export PNG nel browser (`html-to-image` da cdn.jsdelivr), font e logo same-origin; avviso se il testo sborda
-- [ ] Testo del post generato + pulsante "Copia"
-- [ ] Flag "pubblicato" con data (`published_at`)
-- [ ] Voce "Social" nella barra (`data-ruolo="admin"`), `requireRole('admin')`
-- [ ] Verifica: gita domenica 18/01 → anteprima gialla "Domenica"; PNG uguale a `export.sh`; ruolo `utente` non vede la voce e la RLS nega (`test_ruoli.sh`)
+- [x] Tabella `social_events` in `supabase/schema.sql` (più `show_price`, `photo`, `sponsor_id`, `story_title`, `cta`, `caption`), RLS `can('social')`
+- [x] Disegni in `web/social-templates.js` (una copia sola), funzioni pure provate da `web/test-social.js`
+- [x] Pagina: elenco post da fare ordinato per data, con data DD/MM ben visibile · form · anteprima live post e story
+- [x] Form: tipo (gita/corso/cena/gara/servizi/campagna), data → giorno e colore calcolati, fermate con luoghi suggeriti da `departures`, scadenza, corso sì/no, foto facoltativa, **prezzo facoltativo** ("Mostra il prezzo nel post")
+- [x] Calendario del mese generato dalle gite salvate, e copertina Facebook
+- [x] Export PNG nel browser (`html-to-image` da cdn.jsdelivr, font Barlow incorporati); avviso se il testo sborda
+- [x] Testo del post generato + pulsante "Copia"
+- [x] Flag "pubblicato" con data (`published_at`)
+- [x] Voce "Social" nella barra (`data-permesso="social"`), ruolo `social` che vede solo questa pagina
+- [x] Verifica: domenica gialla, martedì rosso; PNG 1080×1080 e 1080×1920; la RLS nega agli altri ruoli (`test_ruoli.sh`)
+- [ ] TODO(social): numeri di telefono veri su ogni post (`SOCIAL.telefoni` in `web/social-templates.js`)
 
 ### C. Campagne sponsor
 Mockup e listino: canvas "Post sponsor Sci Club" (https://claude.ai/artifact/3VuhRgPXXVdUYSWVaWZ4MU).
@@ -31,10 +34,11 @@ Il volantino con gli spazi a pagamento è già deciso; i social sono un suppleme
 - [ ] Listino social approvato dal direttivo (bozza, da tarare sui follower reali):
   - A, sponsor del comune: Vetrina +50 €, Dedicato +120 €, Dedicato + spinta +200 € (Meta 60 € inclusi)
   - B, sponsor regione/Italia: Partner +450 €, Campagna +1.000 €, Stagione +2.200 € (Meta 150/400/1.000 € inclusi)
-- [ ] Template sponsor in `social-templates.js`: carosello "Grazie a chi ci sostiene" (copertina + griglia 4 sponsor), storia sponsor con spazio per lo sticker link, post collab 4:5, storia campagna, copertina FB con main sponsor
-- [ ] Tabella `sponsors(id, name, logo_path, url, handle, package, offer)`; loghi su Supabase Storage (same-origin per l'export)
-- [ ] Nella pagina: tipo post "sponsor" con scelta di uno o più sponsor
-- [ ] URL con UTM generato e copiabile (`utm_source=instagram|facebook&utm_medium=story|post|paid&utm_campaign=sponsor2627&utm_content=…`)
+- [x] Template sponsor in `social-templates.js`, con i colori e i loghi dello sponsor: post collab 4:5, story con spazio per lo sticker link, pagina "Grazie a chi ci sostiene", copertina FB; avvertenza alcolici su ogni formato
+- [ ] Carosello "Grazie a chi ci sostiene" con più sponsor insieme (griglia): quando gli sponsor saranno più d'uno
+- [x] Tabella `sponsors` (nome, livello, sito, profilo, due loghi, tre colori, alcolici); i loghi stanno nel database come immagini, così l'export non si blocca e non serve lo Storage
+- [x] Nella pagina: tipo post "Campagna sponsor" con lo sponsor; 958 Santero è la prima campagna (da caricare in produzione dalla pagina: sponsor con i loghi di `social/santero/`, poi la campagna)
+- [x] URL con UTM generato e copiabile (`utm_source=instagram&utm_medium=story|post&utm_campaign=<sponsor>-<stagione>&utm_content=<titolo>`)
 - [ ] Resoconto per sponsor a fine stagione: post pubblicati (da `published_at`) + numeri Meta inseriti a mano
 - [ ] Pagina "Sponsor" statica per il link in bio (un pulsante per brand, i pacchetti più alti in alto) + QR sul volantino
 - [ ] Contratto e fattura per ogni sponsor; trattamento fiscale da verificare col commercialista

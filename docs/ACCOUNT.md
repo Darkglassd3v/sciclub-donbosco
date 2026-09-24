@@ -155,41 +155,61 @@ L'interruttore **"Allow new users to sign up"** (Authentication > Sign In / Prov
 lasciato **spento**: nessuno può crearsi un account da solo, gli account nascono solo dal pannello
 e solo per mano di un superadmin. Non serve toccare nient'altro, né configurare SMTP.
 
-Per sicurezza ogni account nasce comunque con il ruolo `ospite`, che non può fare **niente**: se un
-giorno quell'interruttore venisse acceso per sbaglio, chi si registrasse otterrebbe un account
-cieco, visibile in elenco ed evidenziato, invece che l'accesso all'anagrafica dei soci.
+Per sicurezza un account appena nato non ha nessun ruolo, quindi non può fare **niente**: il
+pannello glielo assegna subito dopo averlo creato. Se un giorno quell'interruttore venisse acceso
+per sbaglio, chi si registrasse otterrebbe un account cieco, in fondo all'elenco fra quelli
+**senza accesso**, invece che l'accesso all'anagrafica dei soci.
+
+### Un solo indirizzo per tutti
+
+Il link da dare a chiunque è la radice del sito (`https://darkglassd3v.github.io/sciclub-donbosco/`):
+dopo l'accesso ognuno finisce sulla pagina del suo ruolo. Anche il sito da telefono (`/ricerca/`)
+passa dallo stesso accesso.
 
 ### Chi vede cosa
 
-Sei ruoli, ciascuno con tutti i permessi di quello sotto tranne un'eccezione (`assicurazione` non
-ha quelli del `kiosk`), tabella `profiles`, vedi `supabase/schema.sql`:
+Dalla 2.5 i ruoli non sono più una scala: ognuno ha i suoi **permessi**, scritti in un punto solo
+del database (`role_permissions()` in `supabase/schema.sql`). Il tesoriere vede il Bilancio ma non
+modifica i soci, l'admin modifica i soci ma non vede il Bilancio.
 
-| Ruolo | Chi è | Può fare |
-|---|---|---|
-| `ospite` | account appena nato | **niente**: ogni tabella gli è negata. È il punto di partenza di chiunque, compreso chi si registra da solo |
-| `kiosk` | tablet in negozio | solo ricerca socio a campi ridotti (`ricerca/index.html`), niente numero tessera/codice fiscale/importi. Deve scrivere nome **e** cognome per intero: con le prime lettere si sfoglierebbe il club |
-| `assicurazione` | chi manda i soci all'assicurazione | **solo** la pagina **Assicurazione**: tesserati ancora senza polizza, Excel "da assicurare", codice fiscale e numero di polizza da scrivere, ricerca (al massimo 20 risultati) per correggere chi è già assicurato. Non vede soci, quote, abbonamenti, l'elenco completo dei tesserati (Excel nel Riepilogo) né il sito di ricerca: il database gli dà solo `insurance_members()`, `insurance_search()` e `set_insurance()`. Aprendo un'altra pagina viene riportato lì |
-| `utente` | volontario | iscrizioni, incassi, segna gite, ricerca a campi ridotti, pagina Assicurazione, Excel di tutti i tesserati dal Riepilogo |
-| `admin` | direttivo | tutto quello di `utente`, più le tessere riservate (oggi solo **TESSERA DIRETTIVO**) |
-| `superadmin` | direttivo con delega | tutto quello di `admin`, più le tre voci rosse della barra: **Amministrazione** (chiusura stagione e storico), **Utenti** e **Impostazioni** (costi/partenze), e nella pagina Soci il pulsante **Togli dalla stagione** per chi è stato tesserato per sbaglio. Agli altri ruoli quelle voci non compaiono proprio |
+| Ruolo | Chi è | Arriva su | Può fare |
+|---|---|---|---|
+| `superadmin` | direttivo con delega | Soci | tutto, più la voce rossa **Gestione** (Amministrazione con la chiusura della stagione, Utenti, Impostazioni), **Togli dalla stagione** nella pagina Soci e **Vedi come** |
+| `admin` | chi iscrive e incassa | Soci | iscrivere e modificare i soci, incassare, Riepilogo della **stagione in corso**, pannello gite, tessere riservate (oggi **TESSERA DIRETTIVO**). Non vede Bilancio, stagioni chiuse e Gestione; il numero di polizza lo legge ma non lo cambia |
+| `tesoriere` | chi tiene i conti | Riepilogo | incassare (pagina Pagamenti), Riepilogo anche delle **stagioni chiuse**, **Bilancio**. I soci li legge ma non li modifica |
+| `assicurazione` | chi manda i soci all'assicurazione | Assicurazione | **solo** la pagina Assicurazione: tesserati ancora senza polizza, Excel "da assicurare", codice fiscale e numero di polizza, ricerca (al massimo 20 risultati) per correggere chi è già assicurato. È l'unico, con il superadmin, che scrive le polizze. Non vede soci, quote, abbonamenti né il sito di ricerca |
+| `gite` (a schermo "Utente") | chi è sul pullman | `ricerca/` | dal telefono: cercare un socio, segnare le gite, vendere un abbonamento |
+| `social` | chi pubblica i post | Social | **solo** la pagina Social: post, campagne degli sponsor e sponsor |
 
-Il **Ruolo min.** del listino (pannello Impostazioni) vale solo per le **tessere**: una tessera
-con ruolo minimo `admin` non compare nell'elenco a chi è `utente`, e il database rifiuta
-comunque di assegnarla. Gli abbonamenti non hanno livelli: li vedono tutti.
+Chi apre una pagina che il suo ruolo non può vedere viene riportato alla sua pagina di arrivo.
+La barra mostra a ciascuno solo le sue voci; a decidere davvero è il database.
+
+La colonna **Chi la assegna** del listino (pannello Impostazioni) vale solo per le **tessere**:
+"admin e superadmin" nasconde la tessera a chi non lo è, e il database rifiuta comunque di
+assegnarla. Gli abbonamenti non hanno livelli: li vedono tutti.
 
 Un account creato dal pannello nasce già con il ruolo scelto lì. Il cambio di ruolo dall'elenco
 chiede sempre una conferma esplicita (si sceglie il ruolo, poi si preme **Conferma**) e vale dal
 login successivo di quella persona.
 
+**Vedi come** (pagina Gestione, solo superadmin): si sceglie un ruolo e si guarda il sito come lo
+vede lui. Il database tratta davvero il superadmin da quel ruolo, quindi quello che il ruolo non può
+fare non lo può fare nemmeno lui; una fascia gialla in fondo a ogni pagina lo ricorda, con il
+pulsante **Torna superadmin**. Vale su tutti i dispositivi finché non si torna.
+
 **Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): creare l'account da **Authentication > Users > Add user** spuntando **Auto Confirm User**, poi da **Supabase Dashboard > SQL Editor**:
 
 ```sql
-update public.profiles set role = 'superadmin' where email = 'email-della-persona@esempio.it';
+insert into public.profiles (user_id, email, role)
+select id, email, 'superadmin' from auth.users where email = 'email-della-persona@esempio.it'
+on conflict (user_id) do update set role = 'superadmin';
 ```
 
 Da lì in poi tutto il resto si fa dal pannello Utenti, senza tornare in SQL Editor.
 
-**Account kiosk per il tablet in negozio**: si crea dal pannello come gli altri, scegliendo il ruolo `kiosk`.
+**Dalla 2.4 alla 2.5**: applicando lo schema, gli account `utente` (i volontari che iscrivevano e
+incassavano) diventano `admin`, e quelli `ospite` e `kiosk` restano senza accesso. Gli `admin` di
+prima **perdono il Bilancio**: chi lo usa va messo `tesoriere` o `superadmin` dal pannello Utenti.
 
 ### Se qualcuno lascia il direttivo
 
@@ -203,8 +223,8 @@ Supabase resta in piedi. L'account scende in fondo all'elenco, **senza accesso**
   può riusare per un account nuovo. Non si torna indietro. Si elimina solo un account già rimosso:
   prima Rimuovi, poi Elimina.
 
-In alternativa, per una sospensione temporanea che si annulla con un clic, basta rimetterlo a
-`ospite` dall'elenco invece di rimuoverlo.
+Per una sospensione temporanea basta Rimuovi: **Riattiva** gli ridà l'accesso con la password di
+prima.
 
 > Nota: un superadmin non può cambiare il proprio ruolo né rimuovere sé stesso. Serve a non
 > restare chiusi fuori: se l'unico superadmin si retrocedesse, nessuno potrebbe più promuovere

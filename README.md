@@ -15,7 +15,7 @@ La 1.x resta funzionante e intatta in `legacy/` finché la 2.0 non è collaudata
 ## Struttura
 
 ```
-web/           il gestionale: iscrizioni, pagamenti, riepilogo, amministrazione
+web/           il gestionale: iscrizioni, pagamenti, riepilogo, bilancio, social, gestione
 ricerca/       sito separato per telefono: ricerca soci e abbonamenti gite
 supabase/      schema del database, verifiche e generatore della migrazione
 legacy/        la versione 1.x su Apps Script, lasciata come riferimento
@@ -34,6 +34,8 @@ misure stanno in `web/brand.css`, che nasce da
 | `web/admin.html` | incassi: un pulsante per nucleo familiare, niente altro |
 | `web/riepilogo.html` | riepilogo della stagione: soci, incassato, da incassare, conteggi |
 | `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
+| `web/gestione.html` | solo superadmin: Amministrazione, Utenti e Impostazioni, più "Vedi come" per guardare il sito con gli occhi di un altro ruolo |
+| `web/social.html` | post per Instagram e Facebook (grafica "Skipass"), calendario del mese, copertina, campagne degli sponsor: anteprima, PNG e testo da incollare |
 | `ricerca/index.html` | sito a parte: si cerca un socio, con i pulsanti per chiamarlo o scrivergli su WhatsApp |
 | `ricerca/gite.html` | abbonamenti a viaggi: chi ne ha uno, quante gite ha ancora, e si scalano da qui; ai tesserati senza abbonamento se ne assegna uno, pagato o da pagare, anche senza linea |
 
@@ -44,6 +46,10 @@ pagina Soci.
 Le due pagine di `ricerca/` sono pensate per il telefono e restano separate fra
 loro: una serve a trovare e chiamare un socio, l'altra a scalare le gite. Non
 si mescolano.
+
+Il link da dare a tutti è uno solo, la radice del sito: dopo l'accesso ognuno
+arriva sulla pagina del suo ruolo (ruoli e permessi in
+[docs/ACCOUNT.md](docs/ACCOUNT.md)).
 
 ## Abbonamenti a viaggi
 
@@ -126,11 +132,15 @@ quote, si aggiornano da Supabase.
 cd web && python3 -m http.server 8000     # gestionale, su /login.html
 cd ricerca && python3 -m http.server 8001 # sito di ricerca
 node ricerca/test-ricerca.js              # controlla la logica della ricerca
+node web/test-social.js                   # controlla testi, prezzo facoltativo e UTM dei post
+node web/test-codicefiscale.js            # controlla il validatore del codice fiscale
 ./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```
 
 Non c'è nessuno step di build: le pagine sono HTML e JavaScript serviti così come sono.
 Il workflow di GitHub Pages pubblica `web/` alla radice e `ricerca/` sotto `/ricerca/`.
+Le pagine si linkano come online (il login sta alla radice, `ricerca/` sotto): per
+provarle insieme si serve una cartella con `web/` alla radice e `ricerca/` dentro.
 
 ## Dati personali
 
