@@ -2156,6 +2156,109 @@ update public.trip_uses u set pass_id = (
    and u.season = public.current_season();
 
 -- ---------------------------------------------------------------------------
+-- Social: post e campagne degli sponsor
+--
+-- La pagina web/social.html prepara immagini e testi da pubblicare a mano su
+-- Instagram e Facebook (grafica "C · Skipass", disegni in
+-- web/social-templates.js). Qui restano i dati di ogni post, così si
+-- ritrovano, si correggono e si sa quali sono già usciti.
+--
+-- Una campagna sponsor è un post di tipo 'sponsor' legato a uno sponsor: il
+-- marchio (logo, colori, se è un alcolico) sta in sponsors, i testi della
+-- campagna nel post. Una tabella delle campagne servirà quando uno sponsor
+-- ne avrà più d'una da tenere insieme; per ora un post = una campagna.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.sponsors (
+  id           uuid primary key default gen_random_uuid(),
+  name         text not null unique,
+  -- A schermo nei post: "Main sponsor", "Sponsor", "Partner".
+  level        text not null default 'Sponsor',
+  url          text,
+  -- Profilo Instagram, senza @.
+  handle       text,
+  -- Loghi come immagini dentro il database (data URL): restano sullo stesso
+  -- dominio della pagina, e il PNG del post si genera nel browser senza che
+  -- il browser lo blocchi come immagine di un altro sito. Uno per fondi
+  -- chiari, uno (facoltativo) per fondi scuri.
+  logo         text,
+  logo_dark    text,
+  -- I tre colori del marchio: fondo scuro, fondo chiaro, accento.
+  color_dark   text not null default '#14202E',
+  color_light  text not null default '#FFFFFF',
+  color_accent text not null default '#FCCF02',
+  -- Bevanda alcolica: ogni formato porta l'avvertenza di legge.
+  alcohol      boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+
+alter table public.sponsors drop constraint if exists sponsors_colors_valid;
+alter table public.sponsors add constraint sponsors_colors_valid check (
+  color_dark ~ '^#[0-9A-Fa-f]{6}$' and color_light ~ '^#[0-9A-Fa-f]{6}$' and color_accent ~ '^#[0-9A-Fa-f]{6}$');
+
+comment on table public.sponsors is 'Sponsor del club: marchio e colori per i post delle loro campagne.';
+
+create table if not exists public.social_events (
+  id           uuid primary key default gen_random_uuid(),
+  kind         text not null,
+  -- Il giorno dell'evento; per le gite decide anche il colore (martedì,
+  -- sabato, domenica). Vuoto per corsi e servizi senza una data sola.
+  event_date   date,
+  -- Meta della gita, titolo dell'evento o titolo della campagna.
+  title        text not null default '',
+  subtitle     text,
+  -- [["Adulti", "€ 25"], ["Ragazzi", "€ 15"]]; per una gita [[null, "€ 52"]].
+  prices       jsonb not null default '[]',
+  -- Il prezzo si può tenere fuori dal post (es. quando non è ancora deciso).
+  show_price   boolean not null default true,
+  -- [["6:30", "Asti"], ["6:45", "Moncalvo"]]
+  stops        jsonb not null default '[]',
+  -- [["Età", "5–12 anni"], ["Maestri", "Scuola sci FISI"]]
+  facts        jsonb not null default '[]',
+  deadline     date,
+  course       boolean not null default false,
+  -- Foto della meta, ridotta dalla pagina (data URL). Facoltativa.
+  photo        text,
+  -- Campagne: lo sponsor, il titolo della story e il testo del pulsante.
+  sponsor_id   uuid references public.sponsors (id) on delete restrict,
+  story_title  text,
+  cta          text,
+  -- Il testo da incollare sotto al post, proposto dalla pagina e modificabile.
+  caption      text,
+  published_at timestamptz,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+alter table public.social_events drop constraint if exists social_events_kind_valid;
+alter table public.social_events add constraint social_events_kind_valid
+  check (kind in ('gita', 'corso', 'cena', 'gara', 'servizi', 'sponsor'));
+alter table public.social_events drop constraint if exists social_events_sponsor_needed;
+alter table public.social_events add constraint social_events_sponsor_needed
+  check ((kind = 'sponsor') = (sponsor_id is not null));
+
+create index if not exists social_events_date_idx on public.social_events (event_date);
+
+drop trigger if exists social_events_set_updated_at on public.social_events;
+create trigger social_events_set_updated_at
+  before update on public.social_events
+  for each row execute function public.set_updated_at();
+
+comment on table public.social_events is 'Post social del club (gite, eventi, campagne sponsor): dati, testo e data di pubblicazione.';
+
+alter table public.sponsors      enable row level security;
+alter table public.social_events enable row level security;
+
+drop policy if exists sponsors_all      on public.sponsors;
+drop policy if exists social_events_all on public.social_events;
+
+-- Tutto a chi ha il permesso social (social e superadmin), niente agli altri.
+create policy sponsors_all on public.sponsors
+  for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
+create policy social_events_all on public.social_events
+  for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
+
+-- ---------------------------------------------------------------------------
 -- has_role() della 2.4: la scala dei ruoli non c'è più, ogni policy e
 -- funzione qui sopra usa can(). Si toglie in fondo, dopo che le policy che la
 -- usavano sono state rifatte, altrimenti Postgres rifiuterebbe il drop.

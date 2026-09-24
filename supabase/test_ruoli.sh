@@ -133,6 +133,8 @@ insert into public.ledger_entries (kind, category, quantity, unit_price) values 
 -- Una stagione chiusa l'anno scorso: la stagione aperta resta quella del
 -- calendario (current_season() è quella dopo l'ultima chiusa).
 insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
+insert into public.sponsors (id, name, alcohol) values ('cccccccc-5555-0000-0000-000000000001', 'PROVA SPONSOR', true);
+insert into public.social_events (kind, title, sponsor_id) values ('sponsor', 'PROVA CAMPAGNA', 'cccccccc-5555-0000-0000-000000000001');
 
 -- Una prova della matrice: `leggi` è riuscita se trova almeno una riga,
 -- `scrivi` se non dà errore e tocca almeno una riga (la RLS che nega una
@@ -198,6 +200,10 @@ begin
     ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
     ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
     ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
+    ('leggi',  'select 1 from public.social_events',                             'SxxxxSx'),
+    ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
+    ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
+    ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
     ('scrivi', 'update public.members set policy_number = ''POL-M'' where id = ' || m, 'Sxxxxxx'),
@@ -396,8 +402,26 @@ begin
   assert not public.can('social'), 'un utente rimosso ha ancora i suoi permessi';
 end $$;
 
+-- Una campagna vuole il suo sponsor, e un post normale non ne ha. (L'account
+-- social qui sopra è appena stato rimosso: si prova da superadmin.)
+do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  begin
+    insert into public.social_events (kind, title) values ('sponsor', 'SENZA SPONSOR');
+    raise exception 'ASSERZIONE: campagna senza sponsor';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.sponsors set color_dark = 'marrone';
+    raise exception 'ASSERZIONE: colore non esadecimale accettato';
+  exception when check_violation then null;
+  end;
+end $$;
+
 reset role;
 delete from public.ledger_entries where category = 'PROVA MATRICE';
+delete from public.social_events;
+delete from public.sponsors;
 delete from public.season_history where season = public.season_of(now()) - interval '1 year';
 drop function public.test_prova(uuid, text, text);
 SQL
