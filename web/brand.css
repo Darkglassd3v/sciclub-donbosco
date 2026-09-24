@@ -302,11 +302,12 @@ body { margin: 0; }
   text-decoration: none;
   cursor: pointer;
 }
-/* Il superadmin ha nove voci più A+: in maiuscolo non ci stanno accanto al
- * nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo, il nome
- * si toglie, la barra si allarga a 1280px invece dei 1180px delle pagine, e
- * le voci si stringono un poco (17px invece di 18): così su uno schermo da
- * 1280 ci sta anche Assicurazione, con una quindicina di pixel di scarto.
+/* Il superadmin ha otto voci più A+ ed Esci: in maiuscolo non ci stanno
+ * accanto al nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo,
+ * il nome si toglie, la barra si allarga a 1280px invece dei 1180px delle
+ * pagine, e le voci si stringono un poco (17px invece di 18). Dalla 2.5
+ * Amministrazione, Utenti e Impostazioni stanno dentro Gestione: al loro
+ * posto sono entrate Gite e Social.
  * Un limite e non "nessun limite": sugli schermi larghi la barra resta
  * centrata, invece di mandare il logo tutto a sinistra e le voci a destra. */
 html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
@@ -327,11 +328,13 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
   border-color: var(--blu);
   color: #fff;
 }
-/* Le voci da superadmin (Amministrazione, Utenti, Impostazioni) si
-   distinguono anche da qui. */
+/* La voce da superadmin (Gestione) si distingue anche da qui. */
 .barra-voci .voce-rischiosa { color: var(--errore); }
 /* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */
 .barra-voci [hidden] { display: none; }
+/* Bulma dà display:block alle colonne e inline-flex ai pulsanti, che
+   vincerebbero sull'attributo hidden. */
+.column[hidden], .button[hidden] { display: none; }
 .barra-voci .voce-rischiosa[aria-current="page"] {
   background: var(--errore);
   border-color: var(--errore);
@@ -379,22 +382,30 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 }
 
 /* --- Barra ferma fra una pagina e l'altra --------------------------------
- * Il ruolo dell'ultima visita è scritto su <html> da uno script nell'head,
- * prima del primo disegno: le voci riservate nascono già visibili invece di
- * comparire quando arriva la risposta del database. shared.js poi verifica il
- * ruolo e corregge l'attributo se è cambiato. Decide solo cosa mostrare:
- * ogni pagina riservata controlla il ruolo da sé, e il database le policy. */
-html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden],
-html[data-ruolo="admin"] .barra-voci [data-ruolo="admin"][hidden],
-html[data-ruolo="superadmin"] .barra-voci [data-ruolo="admin"][hidden],
-html[data-ruolo="assicurazione"] .barra-voci [data-ruolo="assicurazione"][hidden],
-html[data-ruolo="utente"] .barra-voci [data-ruolo="assicurazione"][hidden],
-html[data-ruolo="admin"] .barra-voci [data-ruolo="assicurazione"][hidden],
-html[data-ruolo="superadmin"] .barra-voci [data-ruolo="assicurazione"][hidden] { display: inline-flex; }
+ * Ruolo e permessi dell'ultima visita sono scritti su <html> da uno script
+ * nell'head, prima del primo disegno: le voci permesse nascono già visibili
+ * invece di comparire quando arriva la risposta del database. shared.js poi
+ * rilegge i permessi e corregge. Decide solo cosa mostrare: ogni pagina
+ * controlla il permesso da sé, e il database le policy.
+ * `~=` cerca una parola in un elenco separato da spazi: "soci riepilogo …". */
+html[data-permessi~="soci"]      .barra-voci [data-permesso="soci"][hidden],
+html[data-permessi~="pagamenti"] .barra-voci [data-permesso="pagamenti"][hidden],
+html[data-permessi~="riepilogo"] .barra-voci [data-permesso="riepilogo"][hidden],
+html[data-permessi~="gite"]      .barra-voci [data-permesso="gite"][hidden],
+html[data-permessi~="polizze"]   .barra-voci [data-permesso="polizze"][hidden],
+html[data-permessi~="bilancio"]  .barra-voci [data-permesso="bilancio"][hidden],
+html[data-permessi~="social"]    .barra-voci [data-permesso="social"][hidden],
+html[data-permessi~="gestione"]  .barra-voci [data-permesso="gestione"][hidden] { display: inline-flex; }
 
-/* Chi ha il ruolo assicurazione ha una pagina sola: Soci, Pagamenti e
- * Riepilogo non gli compaiono nemmeno per un attimo. */
-html[data-ruolo="assicurazione"] .barra-voci [data-ruolo="utente"] { display: none; }
+/* "Vedi come" del superadmin (mostraVediCome in shared.js): fascia gialla
+ * fissa in fondo, sempre visibile, con il pulsante per tornare sé stessi. */
+.fascia-vedi-come {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 16px; background: var(--giallo, #FCCF02); color: #14202E;
+  font-size: 1.1rem; font-weight: 600; box-shadow: 0 -4px 12px rgba(0,0,0,.2);
+}
+body:has(.fascia-vedi-come) { padding-bottom: 80px; }
 
 /* Avviso sotto un campo codice fiscale (vedi mostraAvvisoCF in shared.js):
  * giallo e non rosso, perché è un dubbio da controllare sul documento e non

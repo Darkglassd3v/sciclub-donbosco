@@ -19,7 +19,7 @@
   <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco" style="display:block;margin:0 auto 18px;max-width:220px">
   <h1 class="title is-4 has-text-centered">Sci Club Don Bosco</h1>
   <p class="sottotitolo">Gestione soci, iscrizioni e pagamenti.</p>
-  <p class="subtitle is-6 has-text-centered has-text-grey">Accesso riservato al direttivo</p>
+  <p class="subtitle is-6 has-text-centered has-text-grey">Accesso riservato ai volontari del club</p>
 
   <form id="loginForm">
     <div class="field">
@@ -33,24 +33,60 @@
     <button class="button is-link is-fullwidth has-text-weight-bold" id="btnLogin" type="submit">Entra</button>
   </form>
 
-  <p id="errore" class="help is-danger mt-3" style="display:none"></p>
+  <p id="errore" class="notification is-danger is-light mt-4" role="alert" style="display:none"></p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
 <script>
-  const paginaSuccessiva = new URLSearchParams(location.search).get("next") || "index.html";
+  // Un solo indirizzo per tutti, la radice del sito: dopo l'accesso ognuno va
+  // dove lo manda il suo ruolo (paginaDiArrivo in shared.js), oppure alla
+  // pagina da cui era stato mandato qui (?next=).
+  //
+  // `next` arriva dall'indirizzo, quindi chiunque può scriverlo: si accetta
+  // solo il nome di una pagina di questo sito (anche in ricerca/), mai un
+  // indirizzo completo, che porterebbe altrove chi ha appena fatto l'accesso.
+  const richiesta = new URLSearchParams(location.search);
+  const next = richiesta.get("next");
+  const paginaChiesta = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
 
-  // Se la sessione è già valida si salta il login.
+  const errore = document.getElementById("errore");
+  function mostraErrore(testo) {
+    errore.textContent = testo;
+    errore.style.display = "block";
+  }
+
+  const SENZA_RUOLO = "Questo account non ha ancora un ruolo, quindi non può vedere niente. "
+    + "Chiedi a chi gestisce gli utenti del club di assegnartelo.";
+  // Rimandato qui da una pagina perché l'account non ha un ruolo: la sessione
+  // non serve a niente, si chiude.
+  if (richiesta.get("senza")) {
+    mostraErrore(SENZA_RUOLO);
+    sb.auth.signOut();
+  }
+
+  /** Dopo l'accesso: la pagina chiesta o quella del ruolo; senza ruolo si resta qui. */
+  async function entra() {
+    const accesso = await getProfile();
+    const arrivo = paginaDiArrivo(accesso);
+    if (!arrivo) {
+      await sb.auth.signOut();
+      mostraErrore(SENZA_RUOLO);
+      return;
+    }
+    location.replace(paginaChiesta || arrivo);
+  }
+
+  // Se la sessione è già valida si salta il login (ma non se si è appena
+  // stati rimandati qui perché senza ruolo).
   sb.auth.getSession().then(({ data }) => {
-    if (data.session) location.replace(paginaSuccessiva);
+    if (data.session && !richiesta.get("senza")) entra().catch((e) => mostraErrore(messaggioErrore(e)));
   });
 
   document.getElementById("loginForm").addEventListener("submit", async (evento) => {
     evento.preventDefault();
     const bottone = document.getElementById("btnLogin");
-    const errore = document.getElementById("errore");
     errore.style.display = "none";
     bottone.classList.add("is-loading");
 
@@ -59,13 +95,13 @@
       password: document.getElementById("password").value,
     });
 
-    bottone.classList.remove("is-loading");
     if (error) {
-      errore.textContent = "Accesso non riuscito: " + messaggioErrore(error);
-      errore.style.display = "block";
+      bottone.classList.remove("is-loading");
+      mostraErrore("Accesso non riuscito: " + messaggioErrore(error));
       return;
     }
-    location.replace(paginaSuccessiva);
+    await entra().catch((e) => mostraErrore(messaggioErrore(e)));
+    bottone.classList.remove("is-loading");
   });
 </script>
 </body>

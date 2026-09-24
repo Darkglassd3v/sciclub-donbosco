@@ -6,10 +6,9 @@
   <title>Bilancio — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
-    #bloccato { display: none; }
 
     .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
     .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
@@ -60,14 +59,14 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html" data-ruolo="utente">Soci</a>
-      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
-      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
-      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -78,9 +77,6 @@
 <div class="container-main">
   <h1 class="title is-4 mb-4" id="titolo">Bilancio</h1>
 
-  <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: il bilancio è riservato agli admin.
-  </div>
 
   <div id="contenuto">
   <div class="columns is-multiline mb-2">
@@ -175,11 +171,7 @@
   let stagione = null; // season della vista season_balance: filtra i movimenti
 
   (async function init() {
-    if (!(await requireRole("admin"))) {
-      el("bloccato").style.display = "block";
-      el("contenuto").style.display = "none";
-      return;
-    }
+    if (!(await requirePermesso("bilancio"))) return;
     el("mData").value = oggi();
     for (const id of ["mQuantita", "mPrezzo"]) el(id).addEventListener("input", anteprima);
     el("formSaldo").addEventListener("submit", salvaSaldo);

@@ -340,26 +340,44 @@ where enrolled_at is not null
 group by trim(place);
 
 -- ---------------------------------------------------------------------------
--- Ruoli
+-- Ruoli e permessi
 --
--- Sei livelli, dal più al meno privilegiato: superadmin > admin > utente >
--- assicurazione > kiosk > ospite. Ogni livello include tutto ciò che può fare
--- quello sotto, con un'eccezione: assicurazione NON include kiosk.
---   ospite     — account appena nato: non può fare NIENTE, ogni policy lo
---                nega. È il ruolo di partenza di chiunque si registri.
---   kiosk      — tablet in negozio: solo ricerca socio a campi ridotti.
---   assicurazione — chi manda i soci all'assicurazione e ne riporta le
---                polizze: vede solo i tesserati della stagione (nome,
---                nascita, codice fiscale, polizza) e scrive solo codice
---                fiscale e polizza, passando da insurance_members(),
---                insurance_search() e set_insurance(). Non vede members,
---                l'elenco completo dei soci né la ricerca del tablet, che
---                restituisce telefoni ed email: non gli servono.
---   utente     — volontario: iscrizioni, incassi, segna gite, NON i costi.
---   admin      — direttivo: come utente, più le tessere riservate
---                (es. "TESSERA DIRETTIVO", min_role='admin').
---   superadmin — Amministrazione (chiusura stagione e storico), listino
---                prezzi/partenze e ruoli degli altri utenti.
+-- Fino alla 2.4 i ruoli erano una scala (ospite < kiosk < assicurazione <
+-- utente < admin < superadmin) e ogni policy chiedeva "almeno il ruolo X".
+-- Dalla 2.5 non regge più: il tesoriere vede il Bilancio e non modifica i
+-- soci, l'admin modifica i soci e non vede il Bilancio. Nessuno dei due sta
+-- "sopra" l'altro. Ogni ruolo ha quindi un elenco di permessi, scritto in un
+-- punto solo (role_permissions), e le policy chiedono un permesso (can()).
+--
+--   superadmin    — tutto, più "vedi come" (view_as) per provare il sito con
+--                   gli occhi di un altro ruolo.
+--   admin         — soci (iscrizioni e modifiche), pagamenti, Riepilogo
+--                   della stagione in corso, pannello gite, tessere riservate.
+--   tesoriere     — pagamenti, Riepilogo con le stagioni chiuse, Bilancio.
+--                   I soci li legge ma non li modifica.
+--   assicurazione — solo codice fiscale e polizze dei tesserati, dalle
+--                   funzioni insurance_*: non ha accesso alla tabella members.
+--   gite          — a schermo "Utente": ricerca soci e pannello gite dal
+--                   telefono (segna le gite, vende un abbonamento).
+--   social        — pagina Social: post e campagne degli sponsor.
+--
+-- Permessi:
+--   soci       members in scrittura, abbonamenti dal form Soci
+--   pagamenti  pagina Pagamenti (settle_household)
+--   riepilogo  pagina Riepilogo ed Excel dei tesserati
+--   storico    stagioni chiuse (season_history, season_breakdown)
+--   bilancio   movimenti e saldo banca
+--   gite       ricerca soci e pannello gite (use_trip, cancel_trip, add_pass)
+--   polizze    codice fiscale e numero di polizza (solo loro li cambiano)
+--   social     post, campagne e sponsor
+--   gestione   Amministrazione (chiusura stagione), Utenti, Impostazioni,
+--              togliere un socio dalla stagione
+--
+-- Non esistono più 'ospite' e 'kiosk'. Un account senza riga in profiles non
+-- può fare niente: è così che nasce un account nuovo (lo crea il pannello
+-- Utenti, che subito dopo gli dà il ruolo scelto) ed è così che resta chi
+-- viene rimosso. Chi si registrasse da solo con la chiave anon pubblica
+-- otterrebbe un account cieco, in elenco fra quelli "senza accesso".
 --
 -- Il ruolo vive in profiles, non in auth.users, per poterlo leggere/scrivere
 -- con RLS normali invece che con l'Admin API (che richiede service_role e non
@@ -369,47 +387,55 @@ group by trim(place);
 create table if not exists public.profiles (
   user_id    uuid primary key references auth.users (id) on delete cascade,
   email      text not null,
-  role       text not null default 'utente',
+  role       text not null,
   created_at timestamptz not null default now()
 );
 
+-- Il superadmin che guarda il sito come un altro ruolo: current_role()
+-- risponde con questo, così policy, pagine e barra si comportano esattamente
+-- come per quel ruolo. Vale solo se il ruolo vero è superadmin.
+alter table public.profiles add column if not exists view_as text;
+alter table public.profiles alter column role drop default;
+
+-- Dalla scala della 2.4 ai ruoli della 2.5. Prima di rimettere il vincolo:
+--   utente (volontario: iscrizioni e incassi) → admin, che fa le stesse cose;
+--   ospite e kiosk → senza accesso (riga tolta), come un account rimosso.
+-- Rieseguite non trovano più niente: il vincolo sotto non ammette quei ruoli.
 alter table public.profiles drop constraint if exists profiles_role_valid;
+alter table public.profiles drop constraint if exists profiles_view_as_valid;
+update public.profiles set role = 'admin' where role = 'utente';
+delete from public.profiles where role in ('ospite', 'kiosk');
+
 alter table public.profiles add constraint profiles_role_valid
-  check (role in ('ospite', 'kiosk', 'assicurazione', 'utente', 'admin', 'superadmin'));
+  check (role in ('gite', 'assicurazione', 'social', 'tesoriere', 'admin', 'superadmin'));
+alter table public.profiles add constraint profiles_view_as_valid
+  check (view_as in ('gite', 'assicurazione', 'social', 'tesoriere', 'admin'));
 
-comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Riga creata alla nascita dell''account dal trigger on_auth_user_created.';
+comment on table public.profiles is 'Un ruolo per utente Supabase Auth. Senza riga: nessun accesso (account nuovo o rimosso).';
+comment on column public.profiles.view_as is 'Solo superadmin: il ruolo con cui sta guardando il sito ("vedi come"). NULL = sé stesso.';
 
--- Ogni account appena creato si porta dietro la propria riga, con il ruolo che
--- non permette niente: è il superadmin a promuoverlo dal pannello Utenti.
---
--- 'ospite' e non 'utente' perché dalla 2.2 gli account nascono da
--- web/utenti.html, che li crea con signUp() e la chiave anon — l'unica strada
--- da un sito statico, ma anche una chiave pubblica: chiunque la legga da
--- config.js può registrarsi da sé. Se il ruolo di partenza desse accesso ai
--- soci, quella registrazione spontanea sarebbe un buco; così invece un
--- estraneo ottiene un account che non vede nulla, e il superadmin se lo trova
--- in elenco da rimuovere.
---
--- security definer perché alla nascita dell'account non esiste ancora nessuna
--- riga profiles per fare passare l'insert dalle policy normali.
-create or replace function public.handle_new_profile()
+-- Chi smette di essere superadmin smette anche di "vedere come".
+create or replace function public.clear_view_as()
 returns trigger
 language plpgsql
-security definer
-set search_path = public
 as $$
 begin
-  insert into public.profiles (user_id, email, role)
-  values (new.id, new.email, 'ospite')
-  on conflict (user_id) do nothing;
+  if new.role <> 'superadmin' then
+    new.view_as := null;
+  end if;
   return new;
 end;
 $$;
 
+drop trigger if exists clear_view_as on public.profiles;
+create trigger clear_view_as
+  before insert or update on public.profiles
+  for each row execute function public.clear_view_as();
+
+-- Fino alla 2.4 ogni account nuovo nasceva con una riga 'ospite'. Adesso
+-- nasce senza riga: stesso effetto (non vede niente), un ruolo in meno.
 drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_profile();
+drop function if exists public.handle_new_profile();
 
 -- Fotografia una tantum: chi ha già un account oggi è il direttivo, che ha
 -- già accesso pieno. Non li retrocede al ruolo minimo dei nuovi login.
@@ -427,50 +453,104 @@ on conflict (user_id) do nothing;
 -- Nessuno è superadmin subito dopo questa migration: va promosso a mano,
 -- vedi docs/ACCOUNT.md ("Promuovere il primo superadmin").
 
--- Il ruolo dell'utente collegato, o null se non loggato / senza riga
--- profiles.
+-- Il ruolo con cui la richiesta va trattata: quello "visto come" per il
+-- superadmin che lo ha scelto, altrimenti il ruolo vero. Null senza riga.
 --
--- security definer NON e' opzionale qui: la policy profiles_select_superadmin
--- qui sotto chiama has_role(), che chiama questa funzione, che rilegge
--- profiles, che rivaluta le policy... Con security invoker ogni lettura di un
--- ruolo finisce in ricorsione infinita ("stack depth limit exceeded") appena
--- la RLS e' attiva, cioe' per ogni utente reale (il test come superuser
--- postgres non lo vede: il superuser bypassa la RLS). Da definer la funzione
--- gira come proprietario della tabella e la RLS di profiles non si applica,
--- quindi la catena si ferma. Legge comunque solo la riga di auth.uid().
+-- security definer NON e' opzionale qui: la policy profiles_select_all qui
+-- sotto chiama can(), che chiama questa funzione, che rilegge profiles, che
+-- rivaluta le policy... Con security invoker ogni lettura di un ruolo finisce
+-- in ricorsione infinita ("stack depth limit exceeded") appena la RLS e'
+-- attiva, cioe' per ogni utente reale (il test come superuser postgres non lo
+-- vede: il superuser bypassa la RLS). Da definer la funzione gira come
+-- proprietario della tabella e la RLS di profiles non si applica, quindi la
+-- catena si ferma. Legge comunque solo la riga di auth.uid().
 create or replace function public.current_role()
 returns text
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
-  select role from public.profiles where user_id = auth.uid();
+  select case when p.role = 'superadmin' and p.view_as is not null then p.view_as else p.role end
+    from public.profiles p
+   where p.user_id = auth.uid();
 $$;
 
-comment on function public.current_role is 'Ruolo di chi ha fatto la richiesta corrente, o null.';
+comment on function public.current_role is 'Ruolo con cui trattare la richiesta corrente ("vedi come" compreso), o null.';
 
--- true se il ruolo di chi ha fatto la richiesta è min_role o superiore nella
--- gerarchia kiosk < assicurazione < utente < admin < superadmin (assicurazione
--- esclusa dal kiosk: vedi sopra).
-create or replace function public.has_role(min_role text)
-returns boolean
+-- I permessi di ogni ruolo: l'unico posto dove sono scritti. Li leggono
+-- can() per le policy e my_access() per le pagine.
+create or replace function public.role_permissions(role text)
+returns text[]
 language sql
-stable
-security invoker
+immutable
 as $$
-  select case public.current_role()
-    when 'superadmin'    then true
-    when 'admin'         then min_role in ('admin', 'utente', 'assicurazione', 'kiosk')
-    when 'utente'        then min_role in ('utente', 'assicurazione', 'kiosk')
-    when 'assicurazione' then min_role = 'assicurazione'
-    when 'kiosk'         then min_role = 'kiosk'
-    when 'ospite'     then false
-    else false
+  select case role
+    when 'superadmin'    then array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+                                    'gite', 'polizze', 'social', 'gestione']
+    when 'admin'         then array['soci', 'pagamenti', 'riepilogo', 'gite']
+    when 'tesoriere'     then array['pagamenti', 'riepilogo', 'storico', 'bilancio']
+    when 'assicurazione' then array['polizze']
+    when 'gite'          then array['gite']
+    when 'social'        then array['social']
+    else array[]::text[]
   end;
 $$;
 
-comment on function public.has_role is 'true se chi ha fatto la richiesta ha almeno il ruolo min_role.';
+comment on function public.role_permissions is 'Permessi di un ruolo. Unico elenco: lo usano can() e my_access().';
+
+-- true se chi ha fatto la richiesta ha almeno uno dei permessi passati.
+-- Nelle policy va scritta dentro una select, `(select public.can('soci'))`:
+-- così Postgres la calcola una volta per query e non per ognuna delle
+-- migliaia di righe di members.
+create or replace function public.can(variadic perms text[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(public.role_permissions(public.current_role()) && perms, false);
+$$;
+
+comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi.';
+
+-- Quello che serve alle pagine per disegnare barra e contenuto: email, ruolo
+-- con cui si sta guardando, ruolo vero e permessi. Una chiamata sola.
+create or replace function public.my_access()
+returns table (email text, role text, real_role text, permissions text[])
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.email, public.current_role(), p.role, public.role_permissions(public.current_role())
+    from public.profiles p
+   where p.user_id = auth.uid();
+$$;
+
+comment on function public.my_access is 'Email, ruolo effettivo, ruolo vero e permessi di chi è collegato.';
+
+-- "Vedi come": solo il superadmin, controllato sul ruolo VERO. Così tornare
+-- sé stessi (null) funziona sempre, anche mentre si guarda come un ruolo che
+-- non potrebbe fare niente.
+create or replace function public.set_view_as(role text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (select p.role from public.profiles p where p.user_id = auth.uid()) is distinct from 'superadmin' then
+    raise exception 'Solo un superadmin può vedere il sito come un altro ruolo.';
+  end if;
+  update public.profiles p
+     set view_as = nullif(set_view_as.role, 'superadmin')
+   where p.user_id = auth.uid();
+end;
+$$;
+
+comment on function public.set_view_as is 'Superadmin: guarda il sito come un altro ruolo (null o superadmin per tornare sé stesso).';
 
 alter table public.profiles enable row level security;
 
@@ -478,39 +558,34 @@ drop policy if exists profiles_select_own        on public.profiles;
 drop policy if exists profiles_select_superadmin on public.profiles;
 drop policy if exists profiles_update_superadmin on public.profiles;
 drop policy if exists profiles_delete_superadmin on public.profiles;
+drop policy if exists profiles_select_all        on public.profiles;
+drop policy if exists profiles_update            on public.profiles;
+drop policy if exists profiles_delete            on public.profiles;
 
--- Ognuno legge la propria riga (serve a current_role() per funzionare per
--- chiunque); il superadmin le legge e le modifica tutte per gestire i ruoli
--- altrui. L'insert passa solo dal trigger: niente policy insert per
--- authenticated, quindi è bloccato di default.
+-- Ognuno legge la propria riga; chi ha il permesso gestione le legge e le
+-- modifica tutte per gestire i ruoli altrui. L'insert passa solo da
+-- restore_account(): niente policy insert, quindi è bloccato di default.
 create policy profiles_select_own on public.profiles
   for select to authenticated using (user_id = auth.uid());
 
-create policy profiles_select_superadmin on public.profiles
-  for select to authenticated using (public.has_role('superadmin'));
+create policy profiles_select_all on public.profiles
+  for select to authenticated using ((select public.can('gestione')));
 
-create policy profiles_update_superadmin on public.profiles
+create policy profiles_update on public.profiles
   for update to authenticated
-  using (public.has_role('superadmin'))
-  with check (public.has_role('superadmin'));
+  using ((select public.can('gestione')))
+  with check ((select public.can('gestione')));
 
 -- Rimuovere un utente dal pannello Utenti cancella la sua riga qui: senza
 -- ruolo current_role() torna null e ogni policy lo nega, quindi l'accesso è
--- revocato anche se l'account Auth resta in piedi (cancellarlo davvero
--- richiede la service_role, che da un sito statico non si può usare). Il
--- trigger non lo riporta in vita: scatta all'insert dell'account, non al
--- login.
-create policy profiles_delete_superadmin on public.profiles
-  for delete to authenticated using (public.has_role('superadmin'));
+-- revocato anche se l'account Auth resta in piedi.
+create policy profiles_delete on public.profiles
+  for delete to authenticated using ((select public.can('gestione')));
 
--- Gli account rimossi dal pannello Utenti: l'account Auth resta (per
--- cancellarlo serve la service_role), la riga profiles no. Senza queste due
--- funzioni sparivano dall'elenco del pannello, che legge profiles, e
--- ricrearli dava "Esiste già un account con questa email": non c'era più
--- modo di ridargli l'accesso da qui.
---
--- Security definer perché auth.users non è leggibile dal browser; entrambe
--- rispondono solo al superadmin e restituiscono solo id ed email.
+-- Gli account senza riga profiles: quelli appena creati e quelli rimossi dal
+-- pannello Utenti. Security definer perché auth.users non è leggibile dal
+-- browser; entrambe rispondono solo a chi ha gestione e restituiscono solo id
+-- ed email.
 create or replace function public.accounts_without_role()
 returns table (user_id uuid, email text)
 language sql
@@ -520,15 +595,16 @@ set search_path = ''
 as $$
   select u.id, u.email::text
     from auth.users u
-   where public.has_role('superadmin')
+   where public.can('gestione')
      and not exists (select 1 from public.profiles p where p.user_id = u.id)
    order by u.email;
 $$;
 
-comment on function public.accounts_without_role is 'Account Auth senza riga profiles (rimossi dal pannello Utenti). Solo superadmin.';
+comment on function public.accounts_without_role is 'Account Auth senza riga profiles (nuovi o rimossi dal pannello Utenti). Solo superadmin.';
 
--- Ridà l'accesso a un account rimosso, con il ruolo scelto. Il ruolo lo
--- controlla il vincolo profiles_role_valid.
+-- Dà l'accesso, con il ruolo scelto, a un account che non ce l'ha: appena
+-- creato dal pannello Utenti, o rimosso in precedenza. Su un account che ha
+-- già un ruolo lo cambia. Il ruolo lo controlla il vincolo profiles_role_valid.
 create or replace function public.restore_account(user_id uuid, role text)
 returns void
 language plpgsql
@@ -536,8 +612,8 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not public.has_role('superadmin') then
-    raise exception 'Solo un superadmin può ridare l''accesso a un account.';
+  if not public.can('gestione') then
+    raise exception 'Solo un superadmin può dare l''accesso a un account.';
   end if;
 
   insert into public.profiles (user_id, email, role)
@@ -552,13 +628,11 @@ begin
 end;
 $$;
 
-comment on function public.restore_account is 'Ridà l''accesso con il ruolo scelto a un account rimosso dal pannello Utenti. Solo superadmin.';
+comment on function public.restore_account is 'Dà l''accesso con il ruolo scelto a un account senza ruolo (nuovo o rimosso). Solo superadmin.';
 
--- Elimina per sempre un account già rimosso. Prima si passava dalla dashboard
--- di Supabase (Authentication > Users > Delete user); da qui basta il
--- pannello Utenti. Gira come proprietario (postgres), l'unico che può
--- cancellare da auth.users: con l'account se ne vanno a cascata sessioni,
--- identità e la riga profiles.
+-- Elimina per sempre un account già rimosso. Gira come proprietario
+-- (postgres), l'unico che può cancellare da auth.users: con l'account se ne
+-- vanno a cascata sessioni, identità e la riga profiles.
 --
 -- Solo su un account già senza ruolo: prima Rimuovi, poi Elimina. Così un
 -- clic sbagliato non cancella un account attivo, e il superadmin non può
@@ -570,7 +644,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not public.has_role('superadmin') then
+  if not public.can('gestione') then
     raise exception 'Solo un superadmin può eliminare un account.';
   end if;
 
@@ -587,26 +661,34 @@ $$;
 
 comment on function public.delete_account is 'Elimina per sempre un account Auth già rimosso dal pannello Utenti (senza riga profiles). Solo superadmin.';
 
-revoke all on function public.accounts_without_role() from public;
-revoke all on function public.restore_account(uuid, text) from public;
-revoke all on function public.delete_account(uuid) from public;
-do $$ begin
-  if exists (select 1 from pg_roles where rolname = 'anon') then
-    revoke all on function public.accounts_without_role() from anon;
-    revoke all on function public.restore_account(uuid, text) from anon;
-    revoke all on function public.delete_account(uuid) from anon;
-  end if;
+-- Supabase dà execute ad anon di default: senza login le funzioni non
+-- farebbero comunque niente, ma la porta resta chiusa.
+do $$
+declare
+  f text;
+begin
+  foreach f in array array[
+    'public.can(text[])', 'public.my_access()', 'public.set_view_as(text)',
+    'public.accounts_without_role()', 'public.restore_account(uuid, text)',
+    'public.delete_account(uuid)'] loop
+    execute format('revoke all on function %s from public', f);
+    if exists (select 1 from pg_roles where rolname = 'anon') then
+      execute format('revoke all on function %s from anon', f);
+    end if;
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
 end $$;
-grant execute on function public.accounts_without_role() to authenticated;
-grant execute on function public.restore_account(uuid, text) to authenticated;
-grant execute on function public.delete_account(uuid) to authenticated;
 
--- Livello minimo per vedere/scegliere una voce di listino. Vale solo per
+-- Chi può vedere/scegliere una voce di listino. Vale solo per
 -- category='TESSERA' (es. "TESSERA DIRETTIVO" a min_role='admin'); le altre
 -- categorie restano a 'utente', cioè visibili a chiunque possa vedere il
 -- listino. Il vincolo prices_min_role_only_card lo impone: prima valeva per
 -- gli abbonamenti, e un abbonamento rimasto riservato da allora torna a
 -- 'utente' qui sotto invece di far fallire lo script.
+--
+-- I valori sono quelli della scala della 2.4 e restano per non riscrivere il
+-- listino: 'utente' = chiunque iscriva soci, 'admin' = admin e superadmin,
+-- 'superadmin' = solo superadmin. Li interpreta card_allowed().
 alter table public.prices add column if not exists min_role text not null default 'utente';
 
 alter table public.prices drop constraint if exists prices_min_role_valid;
@@ -620,61 +702,24 @@ alter table public.prices drop constraint if exists prices_min_role_only_card;
 alter table public.prices add constraint prices_min_role_only_card
   check (category = 'TESSERA' or min_role = 'utente');
 
-comment on column public.prices.min_role is 'Ruolo minimo per vedere/selezionare questa voce di listino (solo per category=TESSERA).';
+comment on column public.prices.min_role is 'Chi vede/sceglie questa voce (solo category=TESSERA): utente = tutti, admin = admin e superadmin, superadmin = solo superadmin.';
 
--- Ricerca socio dal tablet in negozio (ruolo kiosk). Campi minimi: niente
--- numero tessera, codice fiscale, indirizzo o importi.
---
--- Fino alla 2.2 era una vista security definer: i campi erano ridotti, ma
--- il filtro lo sceglieva il client, quindi chiamando l'API a mano il kiosk
--- scaricava telefono ed email di tutto il club. Qui le regole della pagina
--- (ricerca/comune.js, pezziKiosk e filtroPezzo) le impone il database:
--- almeno due parole diverse, ognuna una parola intera del cognome o del nome,
--- e al massimo tre risultati.
---
--- security definer perché il kiosk non ha accesso a members (sotto): questa
--- funzione è l'unica porta, e restituisce solo quello che serve.
-drop view if exists public.members_kiosk_search;
-
-create or replace function public.kiosk_search(parti text[])
-returns table (id uuid, last_name text, first_name text, phone text,
-               email text, card_type text, pass_type text)
+-- true se chi chiama può assegnare una tessera con quel min_role. La stessa
+-- regola la ripete la pagina Soci (tesseraConsentita() in web/shared.js) per
+-- non mostrare le voci che il database rifiuterebbe.
+create or replace function public.card_allowed(min_role text)
+returns boolean
 language sql
 stable
-security definer
-set search_path = ''
 as $$
-  -- Stessa pulizia di pezzi() in comune.js: toglie anche % e _, che nel like
-  -- sotto farebbero da jolly. Distinct perché "rossi rossi" è un pezzo solo.
-  with p as (
-    select distinct pezzo
-      from (select regexp_replace(lower(x), '[^a-zàèéìòóùç''’-]', '', 'g') as pezzo
-              from unnest(parti) x) t
-     where length(pezzo) >= 2
-  )
-  select m.id, m.last_name, m.first_name, m.phone, m.email, m.card_type, m.pass_type
-    from public.members m
-   where public.has_role('kiosk')
-     and (select count(*) from p) >= 2
-     and not exists (
-       select 1 from p
-        where ' ' || lower(m.last_name)  || ' ' not like '% ' || p.pezzo || ' %'
-          and ' ' || lower(m.first_name) || ' ' not like '% ' || p.pezzo || ' %')
-   order by m.last_name, m.first_name
-   limit 3;
+  select coalesce(min_role, 'utente') = 'utente'
+      or public.current_role() = 'superadmin'
+      or public.current_role() = min_role;
 $$;
 
--- Supabase dà execute ad anon di default: senza login la funzione non
--- restituirebbe comunque niente (has_role è false), ma la porta resta chiusa.
-revoke all on function public.kiosk_search(text[]) from public;
-do $$ begin
-  if exists (select 1 from pg_roles where rolname = 'anon') then
-    revoke all on function public.kiosk_search(text[]) from anon;
-  end if;
-end $$;
-grant execute on function public.kiosk_search(text[]) to authenticated;
-
-comment on function public.kiosk_search is 'Ricerca socio per il tablet in negozio: nome e cognome per intero, campi ridotti, al massimo 3 risultati.';
+-- Il tablet in negozio (ruolo kiosk) non c'è più, e con lui la sua ricerca.
+drop function if exists public.kiosk_search(text[]);
+drop view if exists public.members_kiosk_search;
 
 -- ---------------------------------------------------------------------------
 -- Assicurazione
@@ -684,8 +729,8 @@ comment on function public.kiosk_search is 'Ricerca socio per il tablet in negoz
 -- riporta qui; chi ha la polizza esce dall'elenco da mandare. close_season()
 -- azzera le polizze, quindi a ogni stagione si riparte da tutti.
 --
--- Il ruolo 'assicurazione' non ha policy su members: come per il kiosk, le
--- sue sole porte sono queste due funzioni, che danno i campi che servono e
+-- Il ruolo 'assicurazione' non ha policy su members: le sue sole porte sono
+-- queste funzioni, che danno i campi che servono e
 -- scrivono solo codice fiscale e polizza. Con una policy di update, invece,
 -- potrebbe cambiare anche quote e acconti chiamando l'API a mano: la RLS
 -- sceglie le righe, non le colonne.
@@ -694,7 +739,7 @@ comment on function public.kiosk_search is 'Ricerca socio per il tablet in negoz
 -- Fino al primo rilascio della 2.4 insurance_members(only_pending) dava, con
 -- false, tutti i tesserati della stagione: l'assicurazione poteva scaricare
 -- l'elenco completo dei soci chiamando l'API a mano. L'elenco completo è del
--- Riepilogo (utente in su, che legge members con la sua RLS); qui restano
+-- Riepilogo (permesso riepilogo, che legge members con la sua RLS); qui restano
 -- chi è da assicurare e una ricerca con pochi risultati per le correzioni.
 drop function if exists public.insurance_members(boolean);
 -- Le colonne restituite cambieranno con il tracciato che chiede
@@ -719,7 +764,7 @@ as $$
          m.address, m.city, m.province, m.postal_code,
          m.card_type, m.card_number, m.policy_number
     from public.members m
-   where public.has_role('assicurazione')
+   where public.can('polizze')
      and m.enrolled_at is not null
      and m.card_type is not null and upper(m.card_type) <> 'NO'
      and nullif(trim(m.policy_number), '') is null
@@ -755,7 +800,7 @@ as $$
          m.birth_place, m.birth_province, m.tax_code,
          m.card_number, m.policy_number
     from public.members m
-   where public.has_role('assicurazione')
+   where public.can('polizze')
      and (select count(*) from parole) > 0
      and m.enrolled_at is not null
      and m.card_type is not null and upper(m.card_type) <> 'NO'
@@ -779,7 +824,7 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not public.has_role('assicurazione') then
+  if not public.can('polizze') then
     raise exception 'Non hai il permesso di modificare i dati dell''assicurazione.';
   end if;
 
@@ -795,7 +840,7 @@ begin
 end;
 $$;
 
-comment on function public.set_insurance is 'Scrive codice fiscale e numero di polizza di un iscritto della stagione. Solo per chi ha almeno il ruolo assicurazione.';
+comment on function public.set_insurance is 'Scrive codice fiscale e numero di polizza di un iscritto della stagione. Solo con il permesso polizze.';
 
 revoke all on function public.insurance_members() from public;
 revoke all on function public.insurance_search(text) from public;
@@ -826,8 +871,9 @@ grant execute on function public.set_insurance(uuid, text, text) to authenticate
 -- (Authentication > Users > Add user). Non c'è registrazione self-service.
 --
 -- Dalla 2.1 le policy non sono più piatte (basta essere autenticati): ogni
--- tabella richiede il ruolo minimo giusto tramite has_role(), vedi la
--- sezione Ruoli qui sopra.
+-- tabella chiede il permesso giusto tramite can(), vedi la sezione Ruoli e
+-- permessi qui sopra. Leggere i soci serve a chi li iscrive, a chi incassa,
+-- al Riepilogo e al pannello gite; scriverli solo a chi ha il permesso soci.
 -- ---------------------------------------------------------------------------
 
 alter table public.members    enable row level security;
@@ -840,13 +886,13 @@ drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 
 create policy members_select on public.members
-  for select to authenticated using (public.has_role('utente'));
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite')));
 
 create policy members_insert on public.members
-  for insert to authenticated with check (public.has_role('utente'));
+  for insert to authenticated with check ((select public.can('soci')));
 
 create policy members_update on public.members
-  for update to authenticated using (public.has_role('utente')) with check (public.has_role('utente'));
+  for update to authenticated using ((select public.can('soci'))) with check ((select public.can('soci')));
 
 -- La cancellazione resta esclusa: si archivia, non si cancella. Se serve
 -- davvero, si fa dalla dashboard Supabase con l'utente service_role.
@@ -881,7 +927,7 @@ begin
     from public.prices
    where category = 'TESSERA' and name = new.card_type;
 
-  if richiesto is not null and not public.has_role(richiesto) then
+  if richiesto is not null and not public.card_allowed(richiesto) then
     raise exception 'Non hai il permesso di assegnare la tessera "%".', new.card_type;
   end if;
   return new;
@@ -893,19 +939,48 @@ create trigger check_card_type_role
   before insert or update on public.members
   for each row execute function public.check_card_type_role();
 
+-- Il numero di polizza lo scrive solo chi ha il permesso polizze
+-- (assicurazione e superadmin): è il loro lavoro, e un numero cambiato per
+-- sbaglio dal form Soci farebbe risultare assicurato chi non lo è. Il form
+-- Soci lo rimanda indietro uguale a ogni salvataggio, e uguale passa.
+--
+-- Vale per le scritture fatte dalle pagine (ruolo authenticated). Le
+-- funzioni security definer (set_insurance) girano come proprietario e
+-- controllano il permesso da sé; un caricamento dall'SQL Editor gira come
+-- postgres e non ha un utente collegato.
+create or replace function public.check_policy_number()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user = 'authenticated'
+     and new.policy_number is distinct from (case when tg_op = 'UPDATE' then old.policy_number end)
+     and not public.can('polizze') then
+    raise exception 'Il numero di polizza lo scrive solo l''assicurazione.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists check_policy_number on public.members;
+create trigger check_policy_number
+  before insert or update on public.members
+  for each row execute function public.check_policy_number();
+
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
 create policy prices_select on public.prices
-  for select to authenticated using (public.has_role('utente'));
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite')));
 create policy prices_write on public.prices
-  for all to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
 drop policy if exists departures_select on public.departures;
 drop policy if exists departures_write  on public.departures;
+-- Le partenze servono al form Soci e, come luoghi da suggerire, ai post social.
 create policy departures_select on public.departures
-  for select to authenticated using (public.has_role('utente'));
+  for select to authenticated using ((select public.can('soci', 'social')));
 create policy departures_write on public.departures
-  for all to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
 -- Le viste ereditano la RLS delle tabelle sottostanti (security invoker).
 alter view public.households      set (security_invoker = true);
@@ -1365,7 +1440,7 @@ language plpgsql
 security invoker
 as $$
 begin
-  if not public.has_role('superadmin') then
+  if not public.can('gestione') then
     raise exception 'Solo il superadmin può togliere un socio dalla stagione.';
   end if;
 
@@ -1427,19 +1502,21 @@ drop policy if exists season_breakdown_update on public.season_breakdown;
 -- riservato al superadmin, come la pagina Amministrazione che la lancia: senza
 -- il permesso di scrivere lo storico close_season() fallisce prima di
 -- azzerare, anche chiamata dall'API a mano.
+-- Leggere lo storico: chi ha il permesso storico (tesoriere e superadmin),
+-- per le stagioni chiuse nel Riepilogo.
 create policy season_history_select on public.season_history
-  for select to authenticated using (public.has_role('superadmin'));
+  for select to authenticated using ((select public.can('storico')));
 create policy season_history_insert on public.season_history
-  for insert to authenticated with check (public.has_role('superadmin'));
+  for insert to authenticated with check ((select public.can('gestione')));
 create policy season_history_update on public.season_history
-  for update to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
+  for update to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
 create policy season_breakdown_select on public.season_breakdown
-  for select to authenticated using (public.has_role('superadmin'));
+  for select to authenticated using ((select public.can('storico')));
 create policy season_breakdown_insert on public.season_breakdown
-  for insert to authenticated with check (public.has_role('superadmin'));
+  for insert to authenticated with check ((select public.can('gestione')));
 create policy season_breakdown_update on public.season_breakdown
-  for update to authenticated using (public.has_role('superadmin')) with check (public.has_role('superadmin'));
+  for update to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
 alter table public.ledger_entries  enable row level security;
 alter table public.season_accounts enable row level security;
@@ -1452,23 +1529,24 @@ drop policy if exists season_accounts_select on public.season_accounts;
 drop policy if exists season_accounts_insert on public.season_accounts;
 drop policy if exists season_accounts_update on public.season_accounts;
 
--- Il bilancio è degli admin: movimenti liberi (un errore si corregge o si
--- cancella), saldo iniziale scrivibile ma non cancellabile.
+-- Il bilancio è di chi ha il permesso bilancio (tesoriere e superadmin):
+-- movimenti liberi (un errore si corregge o si cancella), saldo iniziale
+-- scrivibile ma non cancellabile.
 create policy ledger_entries_select on public.ledger_entries
-  for select to authenticated using (public.has_role('admin'));
+  for select to authenticated using ((select public.can('bilancio')));
 create policy ledger_entries_insert on public.ledger_entries
-  for insert to authenticated with check (public.has_role('admin'));
+  for insert to authenticated with check ((select public.can('bilancio')));
 create policy ledger_entries_update on public.ledger_entries
-  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
+  for update to authenticated using ((select public.can('bilancio'))) with check ((select public.can('bilancio')));
 create policy ledger_entries_delete on public.ledger_entries
-  for delete to authenticated using (public.has_role('admin'));
+  for delete to authenticated using ((select public.can('bilancio')));
 
 create policy season_accounts_select on public.season_accounts
-  for select to authenticated using (public.has_role('admin'));
+  for select to authenticated using ((select public.can('bilancio')));
 create policy season_accounts_insert on public.season_accounts
-  for insert to authenticated with check (public.has_role('admin'));
+  for insert to authenticated with check ((select public.can('bilancio')));
 create policy season_accounts_update on public.season_accounts
-  for update to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
+  for update to authenticated using ((select public.can('bilancio'))) with check ((select public.can('bilancio')));
 
 -- ---------------------------------------------------------------------------
 -- Saldo di un nucleo familiare
@@ -1481,32 +1559,41 @@ create policy season_accounts_update on public.season_accounts
 -- Chi ha già pagato più del dovuto non viene toccato (`balance > 0`): un
 -- acconto in eccesso è un caso da sistemare a mano, non da azzerare in
 -- silenzio.
+--
+-- Dalla 2.5 incassa anche il tesoriere, che non può modificare i soci: la
+-- funzione gira come proprietario (security definer), controlla da sé il
+-- permesso pagamenti e scrive soltanto l'acconto.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.settle_household(head_id uuid)
 returns table (members_settled bigint, amount numeric)
 language plpgsql
-security invoker
+security definer
+set search_path = ''
 as $$
 declare
   how_many bigint;
   how_much numeric(10, 2);
 begin
-  select count(*), coalesce(sum(balance), 0)
+  if not public.can('pagamenti') then
+    raise exception 'Non hai il permesso di registrare gli incassi.';
+  end if;
+
+  select count(*), coalesce(sum(m.balance), 0)
     into how_many, how_much
-    from public.members
-   where (id = head_id or payer_id = head_id)
-     and balance > 0;
+    from public.members m
+   where (m.id = head_id or m.payer_id = head_id)
+     and m.balance > 0;
 
   if how_many = 0 then
     return query select 0::bigint, 0::numeric;
     return;
   end if;
 
-  update public.members
-     set paid = total
-   where (id = head_id or payer_id = head_id)
-     and balance > 0;
+  update public.members m
+     set paid = m.total
+   where (m.id = head_id or m.payer_id = head_id)
+     and m.balance > 0;
 
   return query select how_many, how_much;
 end;
@@ -1818,14 +1905,24 @@ drop function if exists public.use_trip(uuid, uuid);
 --
 -- `day` è il giorno scelto nel pannello (SABATO, DOMENICA, MARTEDI, JOLLY),
 -- o NULL con "tutti".
+--
+-- Dalla 2.5 girano come proprietario (security definer), come cancel_trip()
+-- e add_pass(): chi segna le gite (permesso gite) legge i soci ma non li
+-- modifica, e senza il permesso di modificarli il FOR UPDATE qui sotto non
+-- troverebbe la riga da bloccare. Il permesso lo controllano da sé.
 create or replace function public.use_trip(member_id uuid, client_id uuid default gen_random_uuid(), day text default null)
 returns table (trips_used int, trips_left int)
 language plpgsql
-security invoker
+security definer
+set search_path = ''
 as $$
 declare
   abbonamento uuid;
 begin
+  if not public.can('gite') then
+    raise exception 'Non hai il permesso di segnare le gite.';
+  end if;
+
   -- FOR UPDATE sulla riga del socio: chi arriva secondo aspetta e rilegge il
   -- residuo aggiornato invece di scalare sullo stesso conteggio. Serializza
   -- anche i ritentativi, che quindi trovano già scritta la pressione di prima.
@@ -1892,12 +1989,17 @@ comment on function public.use_trip is 'Scala una gita da un abbonamento del soc
 create or replace function public.cancel_trip(trip_id uuid)
 returns table (trips_used int, trips_left int)
 language plpgsql
-security invoker
+security definer
+set search_path = ''
 as $$
 declare
   who uuid;
 begin
-  delete from public.trip_uses where id = trip_id returning member_id into who;
+  if not public.can('gite') then
+    raise exception 'Non hai il permesso di annullare le gite.';
+  end if;
+
+  delete from public.trip_uses u where u.id = trip_id returning u.member_id into who;
   if who is null then
     raise exception 'Questa registrazione non esiste più.';
   end if;
@@ -1929,11 +2031,16 @@ create or replace function public.add_pass(member_id uuid, pass_type text, paid 
                                            client_id uuid default gen_random_uuid())
 returns void
 language plpgsql
-security invoker
+security definer
+set search_path = ''
 as $$
 declare
   prezzo numeric(10, 2);
 begin
+  if not public.can('gite') then
+    raise exception 'Non hai il permesso di vendere abbonamenti.';
+  end if;
+
   perform 1 from public.members m
    where m.id = add_pass.member_id and m.enrolled_at is not null
      for update;
@@ -1970,21 +2077,15 @@ drop policy if exists trip_uses_select on public.trip_uses;
 drop policy if exists trip_uses_insert on public.trip_uses;
 drop policy if exists trip_uses_delete on public.trip_uses;
 
--- Si scrive e si corregge solo passando dalle due funzioni, che girano come
--- l'utente collegato. Manca apposta l'update: una gita sbagliata si annulla e
--- si riscrive, non si ritocca.
+-- Si scrive e si corregge solo passando da use_trip() e cancel_trip(), che
+-- controllano da sé il permesso gite: nessuna policy di scrittura. Leggono il
+-- form Soci (gite fatte per abbonamento), il pannello gite e il Riepilogo.
 create policy trip_uses_select on public.trip_uses
-  for select to authenticated using (public.has_role('utente'));
+  for select to authenticated using ((select public.can('soci', 'gite', 'riepilogo')));
 
-create policy trip_uses_insert on public.trip_uses
-  for insert to authenticated with check (public.has_role('utente'));
-
-create policy trip_uses_delete on public.trip_uses
-  for delete to authenticated using (public.has_role('utente'));
-
--- Abbonamenti dei soci: come members, da utente in su. Niente update: un
--- abbonamento sbagliato si toglie e si rimette (e se ha già delle gite non si
--- toglie, vedi trip_uses.pass_id).
+-- Abbonamenti dei soci: li scrive il form Soci (permesso soci), il pannello
+-- gite passa da add_pass(). Niente update: un abbonamento sbagliato si toglie
+-- e si rimette (e se ha già delle gite non si toglie, vedi trip_uses.pass_id).
 alter table public.member_passes enable row level security;
 
 drop policy if exists member_passes_select on public.member_passes;
@@ -1992,11 +2093,11 @@ drop policy if exists member_passes_insert on public.member_passes;
 drop policy if exists member_passes_delete on public.member_passes;
 
 create policy member_passes_select on public.member_passes
-  for select to authenticated using (public.has_role('utente'));
+  for select to authenticated using ((select public.can('soci', 'gite', 'riepilogo')));
 create policy member_passes_insert on public.member_passes
-  for insert to authenticated with check (public.has_role('utente'));
+  for insert to authenticated with check ((select public.can('soci')));
 create policy member_passes_delete on public.member_passes
-  for delete to authenticated using (public.has_role('utente'));
+  for delete to authenticated using ((select public.can('soci')));
 
 -- ---------------------------------------------------------------------------
 -- Presciistica: da abbonamento a voce a sé
@@ -2053,3 +2154,10 @@ update public.trip_uses u set pass_id = (
    limit 1)
  where u.pass_id is null
    and u.season = public.current_season();
+
+-- ---------------------------------------------------------------------------
+-- has_role() della 2.4: la scala dei ruoli non c'è più, ogni policy e
+-- funzione qui sopra usa can(). Si toglie in fondo, dopo che le policy che la
+-- usavano sono state rifatte, altrimenti Postgres rifiuterebbe il drop.
+-- ---------------------------------------------------------------------------
+drop function if exists public.has_role(text);

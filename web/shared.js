@@ -9,8 +9,27 @@ const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = window.SUPABASE_CONFIG
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---------------------------------------------------------------------------
-// Autenticazione
+// Autenticazione e permessi
+//
+// Dalla 2.5 i ruoli non sono più una scala: ognuno ha un elenco di permessi
+// (soci, pagamenti, riepilogo, storico, bilancio, gite, polizze, social,
+// gestione), scritto una volta sola nel database (role_permissions() in
+// supabase/schema.sql) e letto da qui con my_access(). Le pagine chiedono un
+// permesso, non un ruolo.
 // ---------------------------------------------------------------------------
+
+/**
+ * Dove arriva chi entra, in ordine: la prima pagina che il suo ruolo può
+ * aprire. È così che un link solo, la radice del sito, va bene per tutti.
+ * Il sito di ricerca sta in /ricerca/, accanto alle pagine del gestionale.
+ */
+const PAGINE_DI_ARRIVO = [
+  ["soci", "index.html"],
+  ["riepilogo", "riepilogo.html"],
+  ["polizze", "assicurazione.html"],
+  ["social", "social.html"],
+  ["gite", "ricerca/index.html"],
+];
 
 /** Blocca la pagina se non c'è una sessione valida. Da chiamare per prima. */
 async function requireAuth() {
@@ -24,73 +43,87 @@ async function requireAuth() {
 }
 
 async function logout() {
-  ricordaRuolo(null);
+  ricordaAccesso(null);
   await sb.auth.signOut();
   location.replace("login.html");
 }
 
-// ---------------------------------------------------------------------------
-// Ruoli
-//
-// Gerarchia: ospite < kiosk < assicurazione < utente < admin < superadmin. Il
-// ruolo vive nella tabella profiles (vedi supabase/schema.sql), una riga per
-// utente creata alla nascita dell'account. 'ospite' non può fare niente: è
-// dove nasce ogni nuovo account finché un superadmin non lo promuove dal
-// pannello Utenti. 'assicurazione' vede solo la pagina Assicurazione.
-// ---------------------------------------------------------------------------
+let _accessoCache = null;
 
-const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, assicurazione: 2, utente: 3, admin: 4, superadmin: 5 };
-let _profiloCache = null;
-
-/** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
+/**
+ * Chi è collegato: { email, role, real_role, permissions }. `role` è il ruolo
+ * con cui si sta guardando il sito ("vedi come" del superadmin), `real_role`
+ * quello vero. null senza sessione o senza ruolo. Cache in memoria per pagina.
+ */
 async function getProfile() {
-  if (_profiloCache) return _profiloCache;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) { ricordaRuolo(null); return null; }
-  const { data, error } = await sb
-    .from("profiles")
-    .select("role, email")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  if (_accessoCache) return _accessoCache;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { ricordaAccesso(null); return null; }
+  const { data, error } = await sb.rpc("my_access");
   if (error) throw error;
-  _profiloCache = data;
-  ricordaRuolo(data && data.role);
-  return data;
+  _accessoCache = (data && data[0]) || null;
+  ricordaAccesso(_accessoCache);
+  return _accessoCache;
 }
 
 /**
- * Ruolo per la barra della prossima pagina: lo legge lo script nell'head
- * prima del primo disegno (vedi brand.css). null lo dimentica (logout, niente
- * sessione). Sta in localStorage così vale anche in una scheda nuova.
+ * Ruolo e permessi per la barra della prossima pagina: lo script nell'head
+ * li scrive su <html> prima del primo disegno (vedi brand.css), così le voci
+ * non compaiono a scatti. Stanno in localStorage per valere anche in una
+ * scheda nuova. null li dimentica (logout, niente sessione).
  */
-function ricordaRuolo(ruolo) {
+function ricordaAccesso(accesso) {
   try {
-    if (ruolo) localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: ruolo }));
+    if (accesso) localStorage.setItem("sciclub-ruolo", JSON.stringify(
+      { role: accesso.role, permissions: accesso.permissions }));
     else localStorage.removeItem("sciclub-ruolo");
   } catch (e) { /* storage negato: la barra si aggiorna come prima */ }
-  if (ruolo) document.documentElement.dataset.ruolo = ruolo;
-  else delete document.documentElement.dataset.ruolo;
+  const html = document.documentElement;
+  if (accesso) {
+    html.dataset.ruolo = accesso.role;
+    html.dataset.permessi = accesso.permissions.join(" ");
+  } else {
+    delete html.dataset.ruolo;
+    delete html.dataset.permessi;
+  }
 }
 
-/** true se l'utente collegato ha almeno il ruolo minRuolo. */
-async function hasRole(minRuolo) {
-  const profilo = await getProfile();
-  if (!profilo) return false;
-  return LIVELLO_RUOLO[profilo.role] >= LIVELLO_RUOLO[minRuolo];
+/** true se chi è collegato ha il permesso. */
+async function puo(permesso) {
+  const accesso = await getProfile();
+  return !!accesso && accesso.permissions.includes(permesso);
+}
+
+/** La pagina di arrivo di chi è collegato, o null se non può aprire niente. */
+function paginaDiArrivo(accesso) {
+  const voce = accesso && PAGINE_DI_ARRIVO.find(([permesso]) => accesso.permissions.includes(permesso));
+  return voce ? voce[1] : null;
 }
 
 /**
- * Come requireAuth(), ma per le pagine riservate a un ruolo minimo (es.
- * impostazioni, utenti). Senza sessione redirige al login come requireAuth();
- * con sessione ma ruolo insufficiente NON redirige (evita lo sbattimento di
- * una pagina che appare e sparisce): ritorna null e tocca alla pagina
- * mostrare un messaggio al posto del contenuto.
+ * Da chiamare per prima in ogni pagina: senza sessione manda al login, senza
+ * il permesso manda alla pagina di arrivo del proprio ruolo (chi ha un link
+ * vecchio o sbagliato finisce dove può lavorare, invece che davanti a una
+ * pagina vuota). Chi non ha nessun ruolo torna al login, che glielo spiega.
+ * Restituisce la sessione, o null se la pagina se ne sta andando.
  */
-async function requireRole(minRuolo) {
+async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
-  if (!(await hasRole(minRuolo))) return null;
-  return sessione;
+  const accesso = await getProfile();
+  if (accesso && accesso.permissions.includes(permesso)) return sessione;
+  const arrivo = paginaDiArrivo(accesso);
+  location.replace(arrivo || "login.html?senza=1");
+  return null;
+}
+
+/**
+ * Chi può scegliere una tessera riservata (prices.min_role): la stessa regola
+ * di card_allowed() nel database. 'utente' = tutti, 'admin' = admin e
+ * superadmin, 'superadmin' = solo superadmin.
+ */
+function tesseraConsentita(minRuolo, ruolo) {
+  return !minRuolo || minRuolo === "utente" || ruolo === "superadmin" || ruolo === minRuolo;
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +207,10 @@ function setLoading(attivo) {
   document.addEventListener("DOMContentLoaded", () => {
     const elenco = document.querySelector(".barra-voci");
     if (!elenco) return;
-    const voce = elenco.querySelector(`a[href="${attuale}"]`);
+    // Amministrazione, Utenti e Impostazioni si aprono da Gestione: lì resta
+    // accesa la voce Gestione, così si sa da dove si è arrivati.
+    const voceDi = { "stagione.html": "gestione.html", "utenti.html": "gestione.html", "impostazioni.html": "gestione.html" };
+    const voce = elenco.querySelector(`a[href="${voceDi[attuale] || attuale}"]`);
     if (!voce) return;
     voce.setAttribute("aria-current", "page");
 
@@ -186,32 +222,56 @@ function setLoading(attivo) {
 })();
 
 /**
- * Le voci con data-ruolo nascono nascoste nel markup e compaiono solo a chi
- * ha quel ruolo: partendo nascoste non lampeggiano davanti a chi non deve
- * vederle mentre il ruolo si carica. È solo la barra: ogni pagina riservata
- * controlla il ruolo da sé, e il database con le sue policy.
+ * Le voci con data-permesso nascono nascoste nel markup e compaiono solo a
+ * chi ha quel permesso: partendo nascoste non lampeggiano davanti a chi non
+ * deve vederle mentre i permessi si caricano. È solo la barra: ogni pagina
+ * controlla il permesso da sé (requirePermesso), e il database le policy.
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  // Una alla volta: la prima carica il profilo, le altre lo trovano in cache.
-  for (const voce of document.querySelectorAll(".barra-voci [data-ruolo]")) {
-    voce.hidden = !(await hasRole(voce.dataset.ruolo).catch(() => false));
+  const voci = document.querySelectorAll(".barra-voci [data-permesso]");
+  if (!voci.length) return;
+  const accesso = await getProfile().catch(() => null);
+  for (const voce of voci) {
+    voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
   }
+  mostraVediCome(accesso);
 });
 
 /**
- * Il ruolo assicurazione ha una pagina sola. Le altre non gli mostrerebbero
- * comunque niente (il database gli nega i soci), ma una pagina Soci vuota
- * sembra un guasto: lo si porta subito dove può lavorare. Vale anche per il
- * login, che dopo l'accesso manda su index.html.
+ * "Vedi come": mentre il superadmin guarda il sito come un altro ruolo, una
+ * fascia gialla fissa in fondo allo schermo lo dice su ogni pagina, con il
+ * pulsante per tornare sé stesso. Senza, dopo un po' ci si dimenticherebbe
+ * di averlo acceso e si crederebbe il sito guasto.
  */
-(async function soloPaginaAssicurazione() {
-  const pagina = location.pathname.split("/").pop() || "index.html";
-  if (pagina === "assicurazione.html" || pagina === "login.html") return;
-  const { data } = await sb.auth.getSession();
-  if (!data.session) return;
-  const profilo = await getProfile().catch(() => null);
-  if (profilo && profilo.role === "assicurazione") location.replace("assicurazione.html");
-})();
+function mostraVediCome(accesso) {
+  if (!accesso || accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
+  const fascia = document.createElement("div");
+  fascia.className = "fascia-vedi-come";
+  fascia.setAttribute("role", "status");
+  fascia.innerHTML = `Stai vedendo il sito come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+    <button type="button" class="button is-dark">Torna superadmin</button>`;
+  fascia.querySelector("button").addEventListener("click", () => vediCome(null));
+  document.body.append(fascia);
+}
+
+/** Guarda il sito come `ruolo` (null per tornare superadmin) e riparte dalla sua pagina. */
+async function vediCome(ruolo) {
+  const { error } = await sb.rpc("set_view_as", { role: ruolo });
+  if (error) { showToast("Non riesco a cambiare vista: " + messaggioErrore(error), "is-danger"); return; }
+  _accessoCache = null;
+  const accesso = await getProfile();
+  location.href = ruolo ? paginaDiArrivo(accesso) || "index.html" : "gestione.html";
+}
+
+/** Come si chiamano i ruoli a schermo. */
+const NOMI_RUOLI = {
+  superadmin: "Superadmin",
+  admin: "Admin",
+  tesoriere: "Tesoriere",
+  assicurazione: "Assicurazione",
+  gite: "Utente (ricerca e gite)",
+  social: "Social",
+};
 
 /**
  * Avviso sotto un campo codice fiscale, a partire dall'esito di verificaCF()

@@ -6,7 +6,7 @@
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -62,14 +62,14 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html" data-ruolo="utente">Soci</a>
-      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
-      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
-      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -86,6 +86,9 @@
   <p class="mb-4" id="zonaScarica" hidden>
     <button type="button" class="button is-link is-light" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
   </p>
+
+  <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
+  <p class="mb-4" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
 
   <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
   <div class="notification is-warning is-light" id="fasciaStorico" hidden>
@@ -128,13 +131,13 @@
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-12">
+    <div class="column is-12 solo-bilancio" hidden>
       <div class="section-card">
         <div class="section-header bg-grey">Entrate extra</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
       </div>
     </div>
-    <div class="column is-12">
+    <div class="column is-12 solo-bilancio" hidden>
       <div class="section-card">
         <div class="section-header bg-grey">Uscite</div>
         <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
@@ -153,7 +156,14 @@
   const STAGIONE = new URLSearchParams(location.search).get("stagione");
 
   (async function init() {
-    if (!(await requireAuth())) return;
+    if (!(await requirePermesso("riepilogo"))) return;
+    // Entrate e uscite sono del Bilancio: senza quel permesso il database le
+    // darebbe vuote, e due tabelle a zero sembrerebbero una stagione senza spese.
+    const { permissions } = await getProfile();
+    for (const sezione of document.querySelectorAll(".solo-bilancio")) {
+      sezione.hidden = !permissions.includes("bilancio");
+    }
+    if (permissions.includes("storico")) mostraStagioniChiuse();
     if (!STAGIONE) {
       el("zonaScarica").hidden = false;
       el("btnScaricaSoci").addEventListener("click", scaricaSoci);
@@ -163,9 +173,20 @@
     if (!STAGIONE) ascoltaSoci(() => carica({ silenzioso: true }));
   })();
 
+  /** I link alle stagioni chiuse, dalla più recente. */
+  async function mostraStagioniChiuse() {
+    const { data, error } = await sb.from("season_history").select("season").order("season", { ascending: false });
+    if (error || !data.length) return;
+    el("elencoStagioni").innerHTML = data.map(({ season }) => {
+      const anno = Number(String(season).slice(0, 4));
+      return `<a href="riepilogo.html?stagione=${String(season).slice(0, 10)}">${anno}/${String(anno + 1).slice(2)}</a>`;
+    }).join(" · ");
+    el("zonaStagioni").hidden = false;
+  }
+
   /**
    * Tutti i tesserati della stagione in corso, in Excel per l'assicurazione
-   * (colonne in shared.js). Lo può fare chi vede i soci, da utente in su: il
+   * (colonne in shared.js). Lo può fare chi ha il permesso riepilogo: il
    * database lo nega al ruolo assicurazione, che non legge members. "NO" come
    * tessera vale come nessuna tessera, come nel resto del Riepilogo.
    */
@@ -197,7 +218,7 @@
       sb.from("course_counts").select("*"),
       sb.from("preski_counts").select("*"),
       sb.from("prices").select("category, name, price"),
-      // I movimenti li legge solo l'admin: per gli altri la RLS dà un elenco vuoto.
+      // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
       sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
     ]);
     const errore = risposte.find((r) => r.error);
@@ -250,7 +271,7 @@
   /**
    * Gli stessi cinque insiemi per una stagione chiusa, da season_history e
    * season_breakdown, nella forma delle viste live: il disegno resta uno solo.
-   * Stagione inesistente o non leggibile (lo storico è solo del superadmin):
+   * Stagione inesistente o non leggibile (lo storico è di tesoriere e superadmin):
    * errore, mai un ripiego sulla stagione in corso.
    */
   async function datiStorici(giorno) {

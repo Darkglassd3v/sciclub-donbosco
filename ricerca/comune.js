@@ -18,43 +18,12 @@ function pezzi(testoCercato) {
 }
 
 /**
- * I pezzi utilizzabili dal tablet in negozio (ruolo kiosk), o null se chi
- * cerca non ha ancora scritto abbastanza.
- *
- * Lì davanti c'è chiunque passi dal negozio, non un volontario del direttivo:
- * deve poter ritrovare la propria scheda, non sfogliare il club. Perciò
- * servono due pezzi, cioè nome e cognome: uno solo aprirebbe l'elenco di
- * tutti gli omonimi.
+ * Il filtro per un pezzo di ricerca: la corrispondenza è all'inizio della
+ * parola, si scrive "cos" e si trova Cossetta, che è il modo in cui il
+ * direttivo ha sempre cercato.
  */
-function pezziKiosk(parti) {
-  return (parti || []).length >= 2 ? parti : null;
-}
-
-/**
- * Il filtro per un pezzo di ricerca.
- *
- * Da operatore la corrispondenza è all'inizio della parola: si scrive "cos" e
- * si trova Cossetta, che è il modo in cui il direttivo ha sempre cercato.
- *
- * Dal tablet in negozio no: con le prime lettere si sfoglierebbe il club.
- * Lì il pezzo deve essere una parola intera del nome o del cognome — "cos
- * fed" non trova niente, "cossetta federico" sì. Le quattro forme servono ai
- * cognomi composti: "de luca" trova DE LUCA perché "de" è la prima parola e
- * "luca" l'ultima, mentre un cognome corto come RE resta cercabile, cosa che
- * un minimo di lettere impedirebbe.
- */
-function filtroPezzo(pezzo, paroleIntere) {
-  const forme = paroleIntere
-    ? [pezzo, pezzo + " %", "% " + pezzo, "% " + pezzo + " %"]
-    : [pezzo + "%"];
-  // Le virgolette servono solo alle forme con lo spazio dentro, che altrimenti
-  // il filtro non leggerebbe come un valore solo. Senza spazio si scrive come
-  // si è sempre scritto.
-  return ["last_name", "first_name"]
-    .map((colonna) => forme
-      .map((f) => `${colonna}.ilike.${f.includes(" ") ? `"${f}"` : f}`)
-      .join(","))
-    .join(",");
+function filtroPezzo(pezzo) {
+  return `last_name.ilike.${pezzo}%,first_name.ilike.${pezzo}%`;
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
@@ -162,9 +131,10 @@ function el(id) {
 }
 
 /**
- * Mostra il login finché non c'è una sessione, poi il contenuto. Senza
- * sessione non si vede nulla: i soci contengono dati personali e la policy RLS
- * su Supabase rifiuta comunque la lettura anonima.
+ * Senza sessione si va al login del gestionale, che è l'unico ingresso del
+ * sito: dopo l'accesso riporta qui (?next=). Senza sessione non si vede
+ * nulla: i soci contengono dati personali e la policy RLS su Supabase
+ * rifiuta comunque la lettura anonima.
  *
  * `alPronto` viene chiamata quando la sessione c'è.
  */
@@ -172,93 +142,91 @@ async function proteggiPagina(alPronto) {
   window.sb = window.supabase.createClient(
     window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
 
-  const vistaLogin = el("vistaLogin");
-  const contenuto = el("contenuto");
-
-  function mostra(sessione) {
-    vistaLogin.hidden = !!sessione;
-    contenuto.hidden = !sessione;
-    if (sessione) alPronto();
+  const questa = location.pathname.split("/").pop() || "index.html";
+  const { data } = await sb.auth.getSession();
+  if (!data.session) {
+    location.replace("../login.html?next=" + encodeURIComponent("ricerca/" + questa));
+    return;
   }
-
-  el("formLogin").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const errore = el("erroreLogin");
-    errore.hidden = true;
-    const { error } = await sb.auth.signInWithPassword({
-      email: el("email").value.trim(),
-      password: el("password").value,
-    });
-    if (error) {
-      errore.textContent = "Email o password non corretti. Riprova.";
-      errore.hidden = false;
-      return;
-    }
-    mostra(true);
-  });
 
   const btnEsci = el("btnEsci");
   if (btnEsci) {
     btnEsci.addEventListener("click", async () => {
       await sb.auth.signOut();
-      location.reload();
+      location.replace("../login.html");
     });
   }
-
-  const { data } = await sb.auth.getSession();
-  mostra(data.session);
+  el("contenuto").hidden = false;
+  alPronto();
 }
 
 // ---------------------------------------------------------------------------
-// Ruoli
+// Permessi
 //
-// Gerarchia: ospite < kiosk < utente < admin < superadmin, letta dalla tabella
-// profiles (vedi supabase/schema.sql). Stesso pattern di web/shared.js, non
-// condiviso perché i due siti non condividono file. 'ospite' non può fare
-// niente: è dove nasce ogni account finché un superadmin non lo promuove.
+// Gli stessi di web/shared.js, letti dal database con my_access(): qui
+// servono il permesso gite, "Vedi come" del superadmin e il link al
+// gestionale per chi ci lavora anche. Non condiviso perché i due siti non
+// condividono file.
 // ---------------------------------------------------------------------------
 
-const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, utente: 2, admin: 3, superadmin: 4 };
-let _profiloCache = null;
+let _accessoCache = null;
 
-/** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
-async function getProfilo() {
-  if (_profiloCache) return _profiloCache;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) return null;
-  const { data, error } = await sb
-    .from("profiles")
-    .select("role, email")
-    .eq("user_id", user.id)
-    .maybeSingle();
+/** { email, role, real_role, permissions } di chi è collegato, o null. */
+async function getAccesso() {
+  if (_accessoCache) return _accessoCache;
+  const { data, error } = await sb.rpc("my_access");
   if (error) throw error;
-  _profiloCache = data;
-  return data;
-}
-
-/** true se l'utente collegato ha almeno il ruolo minRuolo. */
-async function haRuolo(minRuolo) {
-  const profilo = await getProfilo();
-  if (!profilo) return false;
-  return LIVELLO_RUOLO[profilo.role] >= LIVELLO_RUOLO[minRuolo];
+  _accessoCache = (data && data[0]) || null;
+  return _accessoCache;
 }
 
 /**
- * Da chiamare dentro alPronto() di proteggiPagina() nelle pagine riservate:
- * se il ruolo non basta, nasconde #contenuto e mostra un messaggio al suo
- * posto. Ritorna true/false così la pagina sa se continuare il proprio init.
+ * Da chiamare dentro alPronto(): chi non ha il permesso va alla radice del
+ * sito, che lo porta alla pagina del suo ruolo; chi non ha ruolo al login,
+ * che glielo spiega. Senza linea (sul pullman succede) si resta: la pagina
+ * gite lavora con la coda, e il database controlla comunque ogni richiesta.
  */
-async function richiediRuolo(minRuolo) {
-  if (await haRuolo(minRuolo)) return true;
-  const contenuto = el("contenuto");
-  if (contenuto) {
-    contenuto.hidden = true;
-    contenuto.insertAdjacentHTML(
-      "afterend",
-      '<p id="permessiMancanti" class="aiuto">Non hai i permessi per questa pagina.</p>'
-    );
+async function richiediPermesso(permesso) {
+  let accesso;
+  try {
+    accesso = await getAccesso();
+  } catch (errore) {
+    if (erroreDiRete(errore)) return true;
+    throw errore;
   }
+  if (accesso && accesso.permissions.includes(permesso)) {
+    mostraGestionale(accesso);
+    mostraVediCome(accesso);
+    return true;
+  }
+  location.replace(accesso ? "../index.html" : "../login.html?senza=1");
   return false;
+}
+
+/** Il link al gestionale, per chi ci lavora anche (admin, superadmin). */
+function mostraGestionale(accesso) {
+  const link = el("linkGestionale");
+  if (link) link.hidden = !accesso.permissions.includes("soci");
+}
+
+/** Come si chiamano i ruoli a schermo (gli stessi di NOMI_RUOLI in web/shared.js). */
+const NOMI_RUOLI = {
+  superadmin: "Superadmin", admin: "Admin", tesoriere: "Tesoriere",
+  assicurazione: "Assicurazione", gite: "Utente (ricerca e gite)", social: "Social",
+};
+
+/** Fascia gialla del "Vedi come", come nel gestionale (mostraVediCome in web/shared.js). */
+function mostraVediCome(accesso) {
+  if (accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
+  const fascia = document.createElement("div");
+  fascia.className = "fascia-vedi-come";
+  fascia.innerHTML = `Stai vedendo il sito come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+    <button type="button" class="btn-chiaro">Torna superadmin</button>`;
+  fascia.querySelector("button").addEventListener("click", async () => {
+    const { error } = await sb.rpc("set_view_as", { role: null });
+    if (!error) location.replace("../gestione.html");
+  });
+  document.body.append(fascia);
 }
 
 /**

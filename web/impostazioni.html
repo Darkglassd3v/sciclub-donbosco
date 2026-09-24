@@ -6,7 +6,7 @@
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
      * listino finiva tagliata a destra. */
@@ -32,7 +32,6 @@
      * dopo essersi distratti (vedi sorvegliaRighe). */
     .tabella-costi tr.modificata td { background: var(--giallo-light); }
 
-    #bloccato { display: none; }
   </style>
 </head>
 <body>
@@ -44,14 +43,14 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html" data-ruolo="utente">Soci</a>
-      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
-      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
-      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -60,11 +59,9 @@
 </header>
 
 <div class="container-main">
+  <p class="mb-2"><a href="gestione.html">← Gestione</a></p>
   <h1 class="title is-4 mb-4">Impostazioni</h1>
 
-  <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: solo i superadmin possono modificare listino e partenze.
-  </div>
 
   <div id="contenuto">
     <div class="riquadro">
@@ -77,7 +74,7 @@
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Ruolo min.</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Attiva</th><th></th>
           </tr></thead>
           <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
@@ -137,11 +134,7 @@
   const el = (id) => document.getElementById(id);
 
   (async function init() {
-    if (!(await requireRole("superadmin"))) {
-      el("bloccato").style.display = "block";
-      el("contenuto").style.display = "none";
-      return;
-    }
+    if (!(await requirePermesso("gestione"))) return;
     el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
     el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
     await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte()]);
@@ -202,9 +195,9 @@
     // prices_min_role_only_card nel database).
     const selettoreRuolo = p.category === "TESSERA"
       ? `<select data-min-role>
-           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>utente</option>
-           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin</option>
-           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>superadmin</option>
+           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>tutti</option>
+           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin e superadmin</option>
+           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>solo superadmin</option>
          </select>`
       : "—";
     return `

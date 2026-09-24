@@ -18,10 +18,13 @@
 //
 // SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY le mette Supabase da sé
 // nell'ambiente della funzione: non vanno impostate né committate.
+//
+// Dalla 2.5 crea solo l'account, senza ruolo (cioè senza accesso): il ruolo
+// glielo dà subito dopo la pagina Utenti con restore_account(). Così un ruolo
+// nuovo non richiede di ripubblicare la funzione. Il campo `ruolo` che le
+// pagine mandano ancora (serviva alle versioni fino alla 2.4) viene ignorato.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-
-const RUOLI = ["ospite", "kiosk", "assicurazione", "utente", "admin", "superadmin"];
 
 // La pagina sta su un dominio diverso dal progetto Supabase, quindi il browser
 // manda prima una OPTIONS: senza queste intestazioni la chiamata vera non parte.
@@ -70,16 +73,12 @@ Deno.serve(async (richiesta) => {
     const corpo = await richiesta.json().catch(() => ({}));
     const email = String(corpo.email ?? "").trim().toLowerCase();
     const password = String(corpo.password ?? "");
-    const ruolo = String(corpo.ruolo ?? "utente");
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return risposta({ errore: `Email non valida: ${email}` }, 400);
     }
     if (password.length < 8) {
       return risposta({ errore: "La password deve avere almeno 8 caratteri." }, 400);
-    }
-    if (!RUOLI.includes(ruolo)) {
-      return risposta({ errore: `Ruolo non valido: ${ruolo}` }, 400);
     }
 
     // email_confirm: la mail risulta confermata senza che nessuno debba
@@ -97,18 +96,7 @@ Deno.serve(async (richiesta) => {
       );
     }
 
-    // Il trigger on_auth_user_created ha creato la riga profiles come 'ospite',
-    // che non può fare niente: qui prende il ruolo scelto.
-    const { data: promosse, error: erroreRuolo } = await amministratore
-      .from("profiles").update({ role: ruolo }).eq("user_id", creato.user.id).select();
-    if (erroreRuolo || !promosse?.length) {
-      return risposta({
-        errore: "Account creato, ma il ruolo non è stato applicato: assegnalo dall'elenco.",
-        user_id: creato.user.id,
-      }, 207);
-    }
-
-    return risposta({ user_id: creato.user.id, email, ruolo });
+    return risposta({ user_id: creato.user.id, email });
   } catch (errore) {
     return risposta({ errore: String((errore as Error)?.message ?? errore) }, 500);
   }

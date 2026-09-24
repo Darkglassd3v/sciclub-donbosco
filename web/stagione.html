@@ -6,10 +6,9 @@
   <title>Amministrazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .container-main { max-width: 860px; margin: 28px auto 80px; padding: 0 18px; }
-    #bloccato { display: none; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
     .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
@@ -64,14 +63,14 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html" data-ruolo="utente">Soci</a>
-      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
-      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
-      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -80,11 +79,9 @@
 </header>
 
 <div class="container-main">
+  <p class="mb-2"><a href="gestione.html">← Gestione</a></p>
   <h1 class="title is-4 mb-4">Amministrazione</h1>
 
-  <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: solo i superadmin possono chiudere la stagione.
-  </div>
 
   <div id="contenuto">
   <!-- Resoconto rapido: incasso corsi = iscritti al corso x listino. -->
@@ -183,11 +180,7 @@
   const FRASE = "CHIUDI STAGIONE";
 
   (async function init() {
-    if (!(await requireRole("superadmin"))) {
-      el("bloccato").style.display = "block";
-      el("contenuto").style.display = "none";
-      return;
-    }
+    if (!(await requirePermesso("gestione"))) return;
 
     // Il pulsante si accende solo con la frase esatta: un clic distratto non
     // basta a chiudere una stagione.

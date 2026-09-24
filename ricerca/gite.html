@@ -9,28 +9,12 @@
 </head>
 <body>
 
-<div id="vistaLogin" class="login" hidden>
-  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
-  <h1>Abbonamenti Gite</h1>
-  <form id="formLogin">
-    <div class="campo">
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-    </div>
-    <div class="campo">
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-    </div>
-    <button class="btn-blu" type="submit">Entra</button>
-    <p id="erroreLogin" class="avviso avviso-errore" hidden></p>
-  </form>
-</div>
-
 <div id="contenuto" class="wrap" hidden>
   <header class="testata">
     <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
     <h1>Abbonamenti Gite</h1>
     <div class="spinta">
+      <a class="btn-chiaro" id="linkGestionale" href="../index.html" hidden>Gestionale</a>
       <a class="btn-chiaro" href="index.html">Soci</a>
       <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
     </div>
@@ -707,6 +691,12 @@
   // -------------------------------------------------------------------------
 
   async function avvia() {
+    try {
+      if (!(await richiediPermesso("gite"))) return;
+    } catch (errore) {
+      messaggio(messaggioErrore(errore), "avviso-errore");
+      return;
+    }
     el("q").addEventListener("input", disegna);
     // La ricerca fra i soci senza abbonamento va sul database, quindi non
     // parte ad ogni tasto: 200ms come la ricerca di ricerca/index.html.

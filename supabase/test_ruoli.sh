@@ -6,8 +6,8 @@
 #
 # Serve docker. Il container viene creato e distrutto ad ogni esecuzione.
 #
-# Perché esiste: le policy di profiles si chiamano fra loro (has_role legge
-# profiles, e la policy di profiles chiama has_role). Provare le funzioni come
+# Perché esiste: le policy di profiles si chiamano fra loro (can() legge
+# profiles, e la policy di profiles chiama can()). Provare le funzioni come
 # superuser postgres non basta a scoprirlo, perché il superuser salta la RLS:
 # la prima versione di current_role() passava tutti i controlli fatti così e
 # andava in ricorsione infinita al primo utente vero. Qui si prova sempre
@@ -52,141 +52,287 @@ grant usage, select on all sequences in schema public to authenticated;
 grant execute on all functions in schema public to authenticated;
 SQL
 
+# ---------------------------------------------------------------------------
+# Dalla scala della 2.4 ai ruoli della 2.5: un database con i ruoli vecchi,
+# rilanciato lo schema, deve trovarsi utente → admin e ospite/kiosk senza
+# accesso. Si finge il database di prima togliendo il vincolo sui ruoli.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+insert into auth.users (id, email) values
+  ('a0000000-0000-0000-0000-000000000001', 'vecchio-utente@test'),
+  ('a0000000-0000-0000-0000-000000000002', 'vecchio-ospite@test'),
+  ('a0000000-0000-0000-0000-000000000003', 'vecchio-kiosk@test');
+alter table public.profiles drop constraint profiles_role_valid;
+insert into public.profiles (user_id, email, role) values
+  ('a0000000-0000-0000-0000-000000000001', 'vecchio-utente@test', 'utente'),
+  ('a0000000-0000-0000-0000-000000000002', 'vecchio-ospite@test', 'ospite'),
+  ('a0000000-0000-0000-0000-000000000003', 'vecchio-kiosk@test', 'kiosk');
+SQL
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ <<'SQL'
+do $$ begin
+  assert (select role from public.profiles where email = 'vecchio-utente@test') = 'admin',
+         'il volontario (utente) della 2.4 non è diventato admin';
+  assert (select count(*) from public.profiles where email in ('vecchio-ospite@test', 'vecchio-kiosk@test')) = 0,
+         'ospite e kiosk della 2.4 hanno ancora un ruolo';
+end $$;
+delete from auth.users where email like 'vecchio-%';
+SQL
+
 psql_ <<'SQL'
 -- Dati di prova -------------------------------------------------------------
 insert into public.prices (category, name, price, min_role) values
   ('ABBONAMENTO', 'PROVA 10 VIAGGI SABATO', 200, 'utente'),
   ('TESSERA', 'PROVA TESSERA ORDINARIA', 35, 'utente'),
-  ('TESSERA', 'PROVA TESSERA DIRETTIVO', 0, 'admin')
+  ('TESSERA', 'PROVA TESSERA DIRETTIVO', 0, 'admin'),
+  ('TESSERA', 'PROVA TESSERA PRESIDENTE', 0, 'superadmin')
 on conflict (category, name) do update set min_role = excluded.min_role;
+-- Il trigger legge le gite da "N viaggi" scritto minuscolo, come nel listino
+-- vero: la voce di prova in maiuscolo va completata a mano.
+update public.prices set trips = 10, day = 'SABATO' where name = 'PROVA 10 VIAGGI SABATO';
+insert into public.departures (day, place) values ('SABATO', 'PROVA ASTI');
 
+-- Un account nuovo nasce senza riga profiles, cioè senza accesso: le righe
+-- dei ruoli le scrive il pannello Utenti (restore_account), qui postgres.
 insert into auth.users (id, email) values
-  ('11111111-1111-1111-1111-111111111111', 'utente@test'),
+  ('11111111-1111-1111-1111-111111111111', 'gite@test'),
   ('22222222-2222-2222-2222-222222222222', 'super@test'),
-  ('33333333-3333-3333-3333-333333333333', 'kiosk@test'),
+  ('33333333-3333-3333-3333-333333333333', 'tesoriere@test'),
   ('44444444-4444-4444-4444-444444444444', 'admin@test'),
-  ('55555555-5555-5555-5555-555555555555', 'ospite@test');
+  ('55555555-5555-5555-5555-555555555555', 'senza@test'),
+  ('66666666-6666-6666-6666-666666666666', 'assic@test'),
+  ('88888888-8888-8888-8888-888888888888', 'social@test');
 
--- Il trigger on_auth_user_created ha creato le righe profiles al posto nostro.
 do $$ begin
-  assert (select count(*) from public.profiles) = 5, 'il trigger non ha creato i profiles';
-  assert (select role from public.profiles where email = 'utente@test') = 'ospite',
-         'il ruolo di partenza non è ospite';
+  assert (select count(*) from public.profiles) = 0, 'un account nuovo è nato con un ruolo';
 end $$;
 
-update public.profiles set role = 'superadmin' where email = 'super@test';
-update public.profiles set role = 'kiosk'      where email = 'kiosk@test';
-update public.profiles set role = 'admin'      where email = 'admin@test';
-update public.profiles set role = 'utente'     where email = 'utente@test';
--- ospite@test resta com'è nato: è il caso di chi si registra da solo.
+insert into public.profiles (user_id, email, role) values
+  ('11111111-1111-1111-1111-111111111111', 'gite@test',      'gite'),
+  ('22222222-2222-2222-2222-222222222222', 'super@test',     'superadmin'),
+  ('33333333-3333-3333-3333-333333333333', 'tesoriere@test', 'tesoriere'),
+  ('44444444-4444-4444-4444-444444444444', 'admin@test',     'admin'),
+  ('66666666-6666-6666-6666-666666666666', 'assic@test',     'assicurazione'),
+  ('88888888-8888-8888-8888-888888888888', 'social@test',    'social');
+-- senza@test resta senza riga: è il caso di chi si registra da solo.
 
 insert into public.members (id, last_name, first_name, enrolled_at)
 values ('99999999-9999-9999-9999-999999999999', 'ROSSI', 'MARIO', now());
 
--- Da qui in giù si prova come utente normale, con la RLS accesa -------------
+-- Un tesserato con un abbonamento e una gita, perché ogni tabella della
+-- matrice qui sotto abbia almeno una riga da leggere. La chiusura della
+-- stagione più avanti lo toglie dalla stagione come tutti.
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type)
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA');
+insert into public.member_passes (member_id, pass_type)
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA 10 VIAGGI SABATO');
+insert into public.trip_uses (member_id, pass_id)
+select member_id, id from public.member_passes where member_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+insert into public.ledger_entries (kind, category, quantity, unit_price) values ('ENTRATA', 'PROVA MATRICE', 1, 1);
+-- Una stagione chiusa l'anno scorso: la stagione aperta resta quella del
+-- calendario (current_season() è quella dopo l'ultima chiusa).
+insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
+
+-- Una prova della matrice: `leggi` è riuscita se trova almeno una riga,
+-- `scrivi` se non dà errore e tocca almeno una riga (la RLS che nega una
+-- scrittura non dà errore: la fa su zero righe). Ogni prova viene annullata
+-- alla fine, così l'ordine non conta e i dati restano quelli di sopra.
+create or replace function public.test_prova(chi uuid, tipo text, comando text)
+returns boolean
+language plpgsql
+as $$
+declare
+  n bigint;
+  esito boolean := false;
+begin
+  perform set_config('test.uid', coalesce(chi::text, ''), true);
+  begin
+    if tipo = 'leggi' then
+      execute format('select count(*) from (%s) x', comando) into n;
+    else
+      execute comando;
+      get diagnostics n = row_count;
+    end if;
+    esito := n > 0;
+    raise exception 'ANNULLA';
+  exception when others then
+    if sqlerrm <> 'ANNULLA' then esito := false; end if;
+  end;
+  return esito;
+end;
+$$;
+
 set role authenticated;
 
--- Gerarchia ospite < kiosk < utente < admin < superadmin, letta sotto RLS: se
--- current_role() torna a essere security invoker, qui va in ricorsione.
+-- ---------------------------------------------------------------------------
+-- Matrice ruoli × permessi: chi può fare cosa, provato davvero sotto RLS.
+-- Colonne: superadmin, admin, tesoriere, assicurazione, gite, social, senza
+-- ruolo. È la specifica di role_permissions() in schema.sql: se cambia una,
+-- cambia l'altra.
+-- ---------------------------------------------------------------------------
 do $$
 declare
-  atteso boolean;
+  chi constant uuid[] := array[
+    '22222222-2222-2222-2222-222222222222',  -- superadmin
+    '44444444-4444-4444-4444-444444444444',  -- admin
+    '33333333-3333-3333-3333-333333333333',  -- tesoriere
+    '66666666-6666-6666-6666-666666666666',  -- assicurazione
+    '11111111-1111-1111-1111-111111111111',  -- gite
+    '88888888-8888-8888-8888-888888888888',  -- social
+    '55555555-5555-5555-5555-555555555555']; -- senza ruolo
+  nomi constant text[] := array['superadmin', 'admin', 'tesoriere', 'assicurazione', 'gite', 'social', 'senza ruolo'];
+  m constant text := '''bbbbbbbb-0000-0000-0000-000000000001''';
+  prova record;
+  i int;
+  errori text := '';
 begin
-  perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
-  assert not public.has_role('kiosk'), 'ospite non deve poter fare niente';
+  for prova in select * from (values
+    ('leggi',  'select 1 from public.members',                                   'SSSxSxx'),
+    ('leggi',  'select 1 from public.prices',                                    'SSSxSxx'),
+    ('leggi',  'select 1 from public.departures',                                'SSxxxSx'),
+    ('leggi',  'select 1 from public.member_passes',                             'SSSxSxx'),
+    ('leggi',  'select 1 from public.trip_uses',                                 'SSSxSxx'),
+    ('leggi',  'select 1 from public.ledger_entries',                            'SxSxxxx'),
+    ('leggi',  'select 1 from public.season_history',                            'SxSxxxx'),
+    ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
+    ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
+    ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
+    ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
+    ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
+    ('scrivi', 'update public.members set policy_number = ''POL-M'' where id = ' || m, 'Sxxxxxx'),
+    ('scrivi', 'select public.set_insurance(' || m || ', ''X'', ''POL-M'')',       'SxxSxxx'),
+    ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
+    ('scrivi', 'select public.add_pass(' || m || ', ''PROVA 10 VIAGGI SABATO'', false, gen_random_uuid())', 'SSxxSxx'),
+    ('scrivi', 'select * from public.use_trip(' || m || ', gen_random_uuid(), null)', 'SSxxSxx'),
+    ('scrivi', 'insert into public.member_passes (member_id, pass_type) values (' || m || ', ''PROVA 10 VIAGGI SABATO'')', 'SSxxxxx'),
+    ('scrivi', 'insert into public.trip_uses (member_id) values (' || m || ')',   'xxxxxxx'),
+    ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price) values (''USCITA'', ''PROVA'', 1, 1)', 'SxSxxxx'),
+    ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
+    ('scrivi', 'update public.departures set place = place',                      'Sxxxxxx'),
+    ('scrivi', 'insert into public.season_history (season, members) values (''1991-09-01'', 0)', 'Sxxxxxx'),
+    ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx')
+  ) as t(tipo, comando, atteso) loop
+    for i in 1..7 loop
+      if public.test_prova(chi[i], prova.tipo, prova.comando) <> (substr(prova.atteso, i, 1) = 'S') then
+        errori := errori || format(E'\n  %s %s: %s', nomi[i],
+          case when substr(prova.atteso, i, 1) = 'S' then 'NON può' else 'PUÒ' end, prova.comando);
+      end if;
+    end loop;
+  end loop;
+  if errori <> '' then
+    raise exception 'Matrice dei permessi sbagliata:%', errori;
+  end if;
+end $$;
+
+-- my_access(): quello che le pagine leggono per disegnare barra e contenuto.
+do $$ begin
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
-  assert public.has_role('kiosk') and not public.has_role('utente'), 'kiosk sbagliato';
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
-  assert public.has_role('utente') and not public.has_role('admin'), 'utente sbagliato';
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
-  assert public.has_role('admin') and not public.has_role('superadmin'), 'admin sbagliato';
-  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  assert public.has_role('superadmin'), 'superadmin sbagliato';
-  perform set_config('test.uid', '', false);
-  assert not public.has_role('kiosk'), 'senza profilo deve sempre dire di no';
-end $$;
-
--- profiles: ognuno vede la propria riga, il superadmin le vede tutte.
-do $$ begin
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
-  assert (select count(*) from public.profiles) = 1, 'un utente vede righe profiles non sue';
-  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  assert (select count(*) from public.profiles) = 5, 'il superadmin non vede tutti i profiles';
-end $$;
-
--- Un account appena registrato non deve vedere niente: è tutta la ragione per
--- cui il ruolo di partenza è 'ospite' e non 'utente'. La chiave anon sta in
--- chiaro in config.js, quindi registrarsi da soli lo può fare chiunque.
-do $$ begin
+  assert (select role from public.my_access()) = 'tesoriere', 'my_access: ruolo sbagliato';
+  assert (select permissions from public.my_access()) = array['pagamenti', 'riepilogo', 'storico', 'bilancio'],
+         'my_access: permessi del tesoriere sbagliati';
   perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
-  assert (select count(*) from public.members) = 0, 'un ospite vede i soci';
-  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 0, 'un ospite usa la ricerca kiosk';
-  assert (select count(*) from public.prices) = 0, 'un ospite vede il listino';
-  assert (select count(*) from public.profiles) = 1, 'un ospite vede profili non suoi';
+  assert (select count(*) from public.my_access()) = 0, 'my_access: chi non ha ruolo riceve qualcosa';
+  assert not public.can('soci', 'gite', 'polizze', 'social', 'gestione'), 'senza ruolo deve sempre dire di no';
+  perform set_config('test.uid', '', false);
+  assert not public.can('soci'), 'senza login deve sempre dire di no';
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- "Vedi come": il superadmin guarda il sito come un altro ruolo, e il
+-- database lo tratta davvero da quel ruolo. Tornare sé stessi funziona
+-- sempre; nessun altro può usarlo.
+-- ---------------------------------------------------------------------------
+do $$
+declare quante int;
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  perform public.set_view_as('tesoriere');
+  assert (select role from public.my_access()) = 'tesoriere', 'vedi come: il ruolo non è cambiato';
+  assert (select real_role from public.my_access()) = 'superadmin', 'vedi come: perso il ruolo vero';
+  assert not public.can('soci'), 'vedi come tesoriere: può ancora modificare i soci';
+  assert public.can('bilancio'), 'vedi come tesoriere: non vede il bilancio';
+  assert not public.test_prova('22222222-2222-2222-2222-222222222222', 'scrivi',
+    'insert into public.members (last_name, first_name) values (''PROVA'', ''VEDICOME'')'),
+    'vedi come tesoriere: la RLS lo lascia iscrivere un socio';
+  assert (select count(*) from public.profiles) = 1, 'vedi come tesoriere: vede gli account degli altri';
+
+  -- Anche da un ruolo che non può niente, si torna indietro.
+  perform public.set_view_as('social');
+  assert not public.can('gestione'), 'vedi come social: ha ancora gestione';
+  perform public.set_view_as(null);
+  assert public.can('gestione'), 'tornato superadmin ma senza gestione';
+  assert (select role from public.my_access()) = 'superadmin', 'tornato superadmin ma il ruolo dice altro';
+
+  begin
+    perform public.set_view_as('capo');
+    raise exception 'ASSERZIONE: vedi come un ruolo inesistente';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  begin
+    perform public.set_view_as('tesoriere');
+    raise exception 'ASSERZIONE: un admin ha usato vedi come';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  with x as (update public.profiles set view_as = 'tesoriere', role = 'superadmin'
+              where user_id = auth.uid() returning 1)
+  select count(*) into quante from x;
+  assert quante = 0, 'un admin ha cambiato il proprio ruolo o vedi come';
+  assert (select role from public.my_access()) = 'admin', 'l''admin è diventato qualcos''altro';
+end $$;
+
+-- Chi smette di essere superadmin smette anche di vedere come.
+reset role;
+do $$ begin
+  update public.profiles set view_as = 'gite' where email = 'super@test';
+  update public.profiles set role = 'admin' where email = 'super@test';
+  assert (select view_as from public.profiles where email = 'super@test') is null,
+         'un superadmin retrocesso continua a vedere come un altro ruolo';
+  update public.profiles set role = 'superadmin' where email = 'super@test';
+end $$;
+set role authenticated;
 
 -- Solo il superadmin cambia i ruoli altrui.
 do $$
 declare quante int;
 begin
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
-  with x as (update public.profiles set role = 'superadmin' where email = 'kiosk@test' returning 1)
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  with x as (update public.profiles set role = 'superadmin' where email = 'social@test' returning 1)
   select count(*) into quante from x;
-  assert quante = 0, 'un utente ha potuto cambiare il ruolo di un altro';
+  assert quante = 0, 'un admin ha potuto cambiare il ruolo di un altro';
 
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  with x as (update public.profiles set role = 'kiosk' where email = 'kiosk@test' returning 1)
+  with x as (update public.profiles set role = 'social' where email = 'social@test' returning 1)
   select count(*) into quante from x;
   assert quante = 1, 'il superadmin non ha potuto cambiare un ruolo';
 end $$;
 
--- Il kiosk non vede members, ma trova sé stesso con nome e cognome interi.
--- Le regole della pagina valgono anche chiamando l'API a mano: con una
--- parola sola, con le prime lettere o con i jolly del like non esce niente.
-do $$ begin
-  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
-  assert (select count(*) from public.members) = 0, 'il kiosk vede la tabella members';
-  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 1, 'il kiosk non trova il socio';
-  assert (select count(*) from public.kiosk_search(array['MARIO', 'Rossi'])) = 1, 'la ricerca kiosk distingue le maiuscole';
-  assert (select count(*) from public.kiosk_search(array['rossi'])) = 0, 'il kiosk cerca con una parola sola';
-  assert (select count(*) from public.kiosk_search(array['rossi', 'rossi'])) = 0, 'il kiosk aggira le due parole ripetendone una';
-  assert (select count(*) from public.kiosk_search(array['ros', 'mar'])) = 0, 'il kiosk cerca per prefisso';
-  assert (select count(*) from public.kiosk_search(array['%', '%'])) = 0, 'il kiosk usa i jolly del like';
-  assert (select count(*) from public.kiosk_search(array['r_ssi', 'mario'])) = 0, 'il kiosk usa il jolly _';
-  assert (select count(*) from public.kiosk_search(null)) = 0, 'il kiosk cerca senza parole';
-end $$;
-
--- Il listino lo scrive solo il superadmin.
-do $$
-declare quante int;
-begin
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
-  with x as (update public.prices set price = 999 where name = 'PROVA 10 VIAGGI SABATO' returning 1)
-  select count(*) into quante from x;
-  assert quante = 0, 'un admin ha potuto modificare il listino';
-end $$;
-
 -- Trigger check_card_type_role: il filtro min_role non è solo lato pagina.
+-- 'admin' = admin e superadmin, 'superadmin' = solo superadmin.
 do $$ begin
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
 
   update public.members set card_type = 'PROVA TESSERA ORDINARIA', pass_type = 'PROVA 10 VIAGGI SABATO'
    where id = '99999999-9999-9999-9999-999999999999';
   assert (select card_type from public.members where id = '99999999-9999-9999-9999-999999999999')
-         = 'PROVA TESSERA ORDINARIA', 'un utente non ha potuto assegnare una tessera normale';
+         = 'PROVA TESSERA ORDINARIA', 'un admin non ha potuto assegnare una tessera normale';
 
   begin
-    update public.members set card_type = 'PROVA TESSERA DIRETTIVO'
+    update public.members set card_type = 'PROVA TESSERA PRESIDENTE'
      where id = '99999999-9999-9999-9999-999999999999';
-    raise exception 'ASSERZIONE: un utente ha potuto assegnare una tessera riservata';
+    raise exception 'ASSERZIONE: un admin ha potuto assegnare una tessera del superadmin';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
 
   begin
     insert into public.members (last_name, first_name, card_type)
-    values ('VERDI', 'LUIGI', 'PROVA TESSERA DIRETTIVO');
-    raise exception 'ASSERZIONE: un utente ha potuto iscrivere un socio con una tessera riservata';
+    values ('VERDI', 'LUIGI', 'PROVA TESSERA PRESIDENTE');
+    raise exception 'ASSERZIONE: un admin ha potuto iscrivere un socio con una tessera del superadmin';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
@@ -194,12 +340,15 @@ do $$ begin
   -- Salvare un altro campo non deve inciampare nel controllo.
   update public.members set phone = '333' where id = '99999999-9999-9999-9999-999999999999';
 
-  -- Basta admin: la tessera del direttivo la vede e la assegna il direttivo.
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  -- La tessera del direttivo la assegna l'admin.
   update public.members set card_type = 'PROVA TESSERA DIRETTIVO'
    where id = '99999999-9999-9999-9999-999999999999';
   assert (select card_type from public.members where id = '99999999-9999-9999-9999-999999999999')
          = 'PROVA TESSERA DIRETTIVO', 'un admin non ha potuto assegnare la tessera riservata';
+
+  -- Il numero di polizza lo rimanda indietro uguale il form Soci: passa.
+  update public.members set policy_number = policy_number, phone = '334'
+   where id = '99999999-9999-9999-9999-999999999999';
 end $$;
 
 -- Il livello di visibilità vale solo per le tessere: un abbonamento riservato
@@ -213,70 +362,18 @@ exception when others then
   if sqlerrm like 'ASSERZIONE:%' then raise; end if;
 end $$;
 
--- Amministrazione è solo del superadmin: un admin non scrive lo storico,
--- quindi close_season() gli fallisce prima di azzerare qualunque cosa.
+-- Amministrazione è solo del superadmin: il tesoriere legge lo storico ma
+-- non lo scrive, quindi close_season() gli fallisce prima di azzerare.
 do $$ begin
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
   begin
-    insert into public.season_history (season, members, total, collected, outstanding)
-    values ('2001-09-01', 1, 0, 0, 0);
-    raise exception 'ASSERZIONE: un admin ha potuto scrivere lo storico stagioni';
+    perform public.close_season('CHIUDI STAGIONE');
+    raise exception 'ASSERZIONE: il tesoriere ha chiuso la stagione';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
-  assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
-end $$;
-
--- Bilancio (ledger_entries, season_accounts): solo admin in su. L'admin
--- scrive per primo, così "utente non vede niente" non passa per tabella vuota.
-do $$
-declare quante int;
-begin
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
-  insert into public.ledger_entries (kind, category, quantity, unit_price)
-  values ('USCITA', 'PROVA PULLMAN', 2, 150);
-  assert (select amount from public.ledger_entries where category = 'PROVA PULLMAN') = 300,
-         'un admin non legge il movimento appena inserito';
-  insert into public.season_accounts (season, bank_opening) values ('2001-09-01', 1000);
-  assert (select count(*) from public.season_accounts) = 1, 'un admin non legge il saldo iniziale';
-end $$;
-
-do $$
-declare
-  chi text;
-  quante int;
-begin
-  foreach chi in array array['11111111-1111-1111-1111-111111111111',   -- utente
-                             '55555555-5555-5555-5555-555555555555'] loop -- ospite
-    perform set_config('test.uid', chi, false);
-    assert (select count(*) from public.ledger_entries) = 0, 'un non admin legge i movimenti';
-    assert (select count(*) from public.season_accounts) = 0, 'un non admin legge il saldo iniziale';
-
-    with x as (delete from public.ledger_entries returning 1) select count(*) into quante from x;
-    assert quante = 0, 'un non admin ha cancellato un movimento';
-
-    begin
-      insert into public.ledger_entries (kind, category, quantity, unit_price)
-      values ('ENTRATA', 'PROVA ABUSIVA', 1, 10);
-      raise exception 'ASSERZIONE: un non admin ha inserito un movimento';
-    exception when others then
-      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
-    end;
-
-    begin
-      insert into public.season_accounts (season, bank_opening) values ('2002-09-01', 1);
-      raise exception 'ASSERZIONE: un non admin ha scritto il saldo iniziale';
-    exception when others then
-      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
-    end;
-  end loop;
-
-  -- L'admin cancella il suo movimento: il database torna com'era.
-  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
-  with x as (delete from public.ledger_entries where category = 'PROVA PULLMAN' returning 1)
-  select count(*) into quante from x;
-  assert quante = 1, 'un admin non ha potuto cancellare un movimento';
-  assert (select count(*) from public.ledger_entries) = 0, 'movimenti rimasti dopo la pulizia';
+  assert (select enrolled_at from public.members where id = '99999999-9999-9999-9999-999999999999') is not null,
+         'una chiusura rifiutata ha azzerato i soci';
 end $$;
 
 -- Rimozione dal pannello Utenti: la fa solo il superadmin, e chi resta senza
@@ -286,24 +383,23 @@ do $$
 declare quante int;
 begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
-  with x as (delete from public.profiles where email = 'kiosk@test' returning 1)
+  with x as (delete from public.profiles where email = 'social@test' returning 1)
   select count(*) into quante from x;
   assert quante = 0, 'un admin ha potuto rimuovere un utente';
 
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  with x as (delete from public.profiles where email = 'kiosk@test' returning 1)
+  with x as (delete from public.profiles where email = 'social@test' returning 1)
   select count(*) into quante from x;
   assert quante = 1, 'il superadmin non ha potuto rimuovere un utente';
 
-  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
-  assert not public.has_role('kiosk'), 'un utente rimosso ha ancora un ruolo';
-  assert (select count(*) from public.kiosk_search(array['rossi', 'mario'])) = 0,
-         'un utente rimosso usa ancora la ricerca kiosk';
+  perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);
+  assert not public.can('social'), 'un utente rimosso ha ancora i suoi permessi';
 end $$;
 
 reset role;
--- season_accounts non ha policy di delete: la riga di prova la toglie postgres.
-delete from public.season_accounts where season = '2001-09-01';
+delete from public.ledger_entries where category = 'PROVA MATRICE';
+delete from public.season_history where season = public.season_of(now()) - interval '1 year';
+drop function public.test_prova(uuid, text, text);
 SQL
 
 # Una gita segnata prima della 2.4, quando l'abbonamento era una colonna del
@@ -322,10 +418,10 @@ psql_ < "$QUI/schema.sql" >/dev/null
 
 psql_ <<'SQL'
 do $$ begin
-  assert (select count(*) from public.profiles where email = 'kiosk@test') = 0,
+  assert (select count(*) from public.profiles where email = 'social@test') = 0,
          'schema.sql ha resuscitato un utente rimosso';
-  assert (select role from public.profiles where email = 'ospite@test') = 'ospite',
-         'schema.sql ha promosso ad admin un account già esistente';
+  assert (select count(*) from public.profiles where email = 'senza@test') = 0,
+         'schema.sql ha dato un ruolo a un account che non lo aveva';
 
   -- L'abbonamento scritto nella vecchia colonna è diventato una riga, una sola.
   assert (select count(*) from public.member_passes
@@ -362,6 +458,9 @@ begin
   assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
   assert public.current_season() = '2030-09-01'::timestamptz + interval '1 year',
          'per l''admin la stagione aperta non segue l''ultima chiusura';
+
+  -- Il bilancio è del tesoriere.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
 
   insert into public.ledger_entries (kind, category, quantity, unit_price)
   values ('ENTRATA', 'PROVA SPONSOR', 1, 200);
@@ -400,9 +499,6 @@ SQL
 # socio tolto dalla stagione
 # ---------------------------------------------------------------------------
 psql_ <<'SQL'
-insert into auth.users (id, email) values ('66666666-6666-6666-6666-666666666666', 'assic@test');
-update public.profiles set role = 'assicurazione' where email = 'assic@test';
-
 insert into public.prices (category, name, price) values
   ('ABBONAMENTO', 'Prova 5 viaggi DOMENICA', 100),
   ('ABBONAMENTO', 'Prova 5 viaggi JOLLY', 100)
@@ -419,36 +515,37 @@ insert into public.members (id, last_name, first_name, enrolled_at, card_type, c
 
 set role authenticated;
 
--- Il kiosk era stato rimosso qui sopra: l'account Auth c'è ancora, la riga
--- profiles no. Il superadmin lo vede fra gli account senza accesso e glielo
--- ridà; nessun altro può farlo.
+-- L'account social era stato rimosso qui sopra: l'account Auth c'è ancora,
+-- la riga profiles no. Il superadmin lo vede fra gli account senza accesso e
+-- glielo ridà; nessun altro può farlo.
 do $$ begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- admin
   assert (select count(*) from public.accounts_without_role()) = 0, 'un admin vede gli account rimossi';
   begin
-    perform public.restore_account('33333333-3333-3333-3333-333333333333', 'superadmin');
+    perform public.restore_account('88888888-8888-8888-8888-888888888888', 'superadmin');
     raise exception 'ASSERZIONE: un admin ha ridato l''accesso a un account';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
 
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
-  assert (select count(*) from public.accounts_without_role() where email = 'kiosk@test') = 1,
+  assert (select count(*) from public.accounts_without_role() where email = 'social@test') = 1,
          'il superadmin non vede l''account rimosso';
   begin
-    perform public.restore_account('33333333-3333-3333-3333-333333333333', 'capo');
+    perform public.restore_account('88888888-8888-8888-8888-888888888888', 'capo');
     raise exception 'ASSERZIONE: ridato l''accesso con un ruolo inesistente';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
-  perform public.restore_account('33333333-3333-3333-3333-333333333333', 'kiosk');
-  assert (select count(*) from public.accounts_without_role()) = 0, 'account ancora senza accesso dopo il ripristino';
-  assert (select role from public.profiles where email = 'kiosk@test') = 'kiosk', 'ruolo sbagliato dopo il ripristino';
+  perform public.restore_account('88888888-8888-8888-8888-888888888888', 'social');
+  assert (select count(*) from public.accounts_without_role() where email = 'social@test') = 0,
+         'account ancora senza accesso dopo il ripristino';
+  assert (select role from public.profiles where email = 'social@test') = 'social', 'ruolo sbagliato dopo il ripristino';
   -- Ripetuto su un account che ha già un ruolo: lo cambia, non si rompe.
-  perform public.restore_account('33333333-3333-3333-3333-333333333333', 'kiosk');
+  perform public.restore_account('88888888-8888-8888-8888-888888888888', 'social');
 
-  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
-  assert public.has_role('kiosk'), 'l''account ripristinato non ha il suo ruolo';
+  perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);
+  assert public.can('social'), 'l''account ripristinato non ha il suo ruolo';
 end $$;
 
 -- Eliminare per sempre: solo il superadmin, e solo un account già rimosso.
@@ -495,13 +592,13 @@ end $$;
 reset role;
 do $$ begin
   assert (select count(*) from auth.users where email = 'da-eliminare@test') = 0, 'l''account Auth è rimasto';
-  assert (select count(*) from auth.users where email = 'utente@test') = 1, 'eliminato l''account sbagliato';
+  assert (select count(*) from auth.users where email = 'gite@test') = 1, 'eliminato l''account sbagliato';
 end $$;
 set role authenticated;
 
 -- Numero tessera: il successivo del più alto numerico, e mai due uguali.
 do $$ begin
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert public.next_card_number() = 22, 'numero tessera proposto sbagliato (atteso 22: 21 più uno, A-7 non conta)';
   begin
     update public.members set card_number = '21' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
@@ -515,14 +612,12 @@ do $$
 declare quante int;
 begin
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
-  assert public.has_role('assicurazione'), 'assicurazione non riconosciuta';
-  assert not public.has_role('kiosk'), 'assicurazione usa i permessi del kiosk';
-  assert not public.has_role('utente'), 'assicurazione ha i permessi di un utente';
+  assert public.can('polizze'), 'assicurazione non riconosciuta';
+  assert not public.can('soci', 'gite', 'riepilogo'), 'assicurazione ha i permessi di chi gestisce i soci';
   assert (select count(*) from public.members) = 0, 'assicurazione legge la tabella members';
   assert (select count(*) from public.member_passes) = 0, 'assicurazione legge gli abbonamenti';
   assert (select count(*) from public.prices) = 0, 'assicurazione legge il listino';
   assert (select count(*) from public.trip_uses) = 0, 'assicurazione legge le gite';
-  assert (select count(*) from public.kiosk_search(array['bianchi', 'anna'])) = 0, 'assicurazione usa la ricerca del tablet';
 
   assert (select count(*) from public.insurance_members()) = 2, 'da assicurare: attesi i due tesserati';
   perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', ' bnc nna 80a41 f205x ', 'POL-1');
@@ -572,28 +667,43 @@ begin
 end $$;
 
 do $$ begin
-  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert (select tax_code from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'BNCNNA80A41F205X',
          'il codice fiscale non è stato scritto ripulito';
   assert (select policy_number from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'POL-2',
          'la polizza non è stata scritta';
   assert (select total from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 35,
          'set_insurance ha toccato altro';
-  -- Un utente fa quello che fa l'assicurazione.
-  assert (select count(*) from public.insurance_members()) = 1, 'un utente non vede l''elenco da assicurare';
+  -- Dalla 2.5 le polizze sono solo dell'assicurazione: l'admin legge i soci
+  -- ma non l'elenco da assicurare, e non scrive polizze.
+  assert (select count(*) from public.insurance_members()) = 0, 'un admin vede l''elenco da assicurare';
+  begin
+    perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ADMIN');
+    raise exception 'ASSERZIONE: un admin ha scritto una polizza';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  begin
+    update public.members set policy_number = 'POL-ADMIN' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
+    raise exception 'ASSERZIONE: un admin ha scritto una polizza dal form Soci';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%solo l''assicurazione%', 'errore inatteso: ' || sqlerrm;
+  end;
 end $$;
 
 do $$
 declare chi text;
 begin
-  foreach chi in array array['55555555-5555-5555-5555-555555555555',     -- ospite
-                             '33333333-3333-3333-3333-333333333333'] loop -- kiosk
+  foreach chi in array array['55555555-5555-5555-5555-555555555555',     -- senza ruolo
+                             '11111111-1111-1111-1111-111111111111',     -- gite
+                             '88888888-8888-8888-8888-888888888888'] loop -- social
     perform set_config('test.uid', chi, false);
-    assert (select count(*) from public.insurance_members()) = 0, 'ospite o kiosk vedono i tesserati';
-    assert (select count(*) from public.insurance_search('bianchi')) = 0, 'ospite o kiosk cercano i tesserati';
+    assert (select count(*) from public.insurance_members()) = 0, 'senza permesso polizze vede i tesserati';
+    assert (select count(*) from public.insurance_search('bianchi')) = 0, 'senza permesso polizze cerca i tesserati';
     begin
       perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ABUSIVA');
-      raise exception 'ASSERZIONE: ospite o kiosk hanno scritto una polizza';
+      raise exception 'ASSERZIONE: senza permesso polizze ha scritto una polizza';
     exception when others then
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
@@ -671,6 +781,8 @@ begin
   end;
 
   -- Un abbonamento con gite non si toglie; uno senza sì, e il riassunto segue.
+  -- Toglierli e rimetterli è del form Soci (permesso soci).
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   begin
     delete from public.member_passes where member_id = anna and pass_type = 'Prova 5 viaggi JOLLY';
     raise exception 'ASSERZIONE: tolto un abbonamento con gite già fatte';
@@ -686,12 +798,12 @@ begin
 
   assert (select count from public.pass_counts where name = 'Prova 5 viaggi DOMENICA') = 1, 'Riepilogo: abbonamenti venduti sbagliati';
 
-  -- L'ospite non vede e non vende abbonamenti.
+  -- Chi non ha un ruolo non vede e non vende abbonamenti.
   perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
-  assert (select count(*) from public.member_passes) = 0, 'un ospite vede gli abbonamenti';
+  assert (select count(*) from public.member_passes) = 0, 'senza ruolo vede gli abbonamenti';
   begin
     perform public.add_pass(anna, 'Prova 5 viaggi JOLLY', false, gen_random_uuid());
-    raise exception 'ASSERZIONE: un ospite ha venduto un abbonamento';
+    raise exception 'ASSERZIONE: senza ruolo ha venduto un abbonamento';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
@@ -709,9 +821,11 @@ begin
   perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
   perform public.add_pass(luca, 'Prova 5 viaggi JOLLY', true, gen_random_uuid());
   perform public.use_trip(luca, 'eeeeeeee-0000-0000-0000-000000000001', 'JOLLY');
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   update public.members set payer_id = luca where id = elio;
 
-  foreach chi in array array['11111111-1111-1111-1111-111111111111',     -- utente
+  foreach chi in array array['11111111-1111-1111-1111-111111111111',     -- gite
+                             '33333333-3333-3333-3333-333333333333',     -- tesoriere
                              '44444444-4444-4444-4444-444444444444'] loop -- admin
     perform set_config('test.uid', chi, false);
     begin

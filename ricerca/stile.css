@@ -142,14 +142,6 @@ ul.risultati li { margin-bottom: 12px; }
               font-weight: 600; background: var(--giallo-light); color: var(--giallo-dark); }
 .da-inviare.inviate { background: var(--ok-bg); color: var(--ok); }
 
-/* --- Login -------------------------------------------------------------- */
-.login { max-width: 420px; margin: 8vh auto; background: var(--superficie);
-         padding: 40px 34px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
-.login img { display: block; margin: 0 auto 18px; max-width: 200px; }
-.login h1 { font-size: 1.7rem; font-weight: 600; letter-spacing: -.022em; text-align: center; margin: 0 0 24px; }
-.login .campo { margin-bottom: 14px; }
-.login button { width: 100%; }
-
 [hidden] { display: none !important; }
 
 @media (max-width: 480px) {
@@ -225,3 +217,13 @@ ul.risultati li { margin-bottom: 12px; }
 /* Abbonamento assegnato ma non ancora arrivato al database. */
 .in-invio { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
             background: var(--giallo-light); color: var(--giallo-dark); font-size: .875rem; font-weight: 600; }
+
+/* "Vedi come" del superadmin: la stessa fascia gialla del gestionale
+ * (web/brand.css), fissa in fondo con il pulsante per tornare. */
+.fascia-vedi-come {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px; background: #FCCF02; color: #14202E;
+  font-weight: 600; box-shadow: 0 -4px 12px rgba(0,0,0,.2);
+}
+body:has(.fascia-vedi-come) { padding-bottom: 90px; }

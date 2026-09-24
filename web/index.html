@@ -6,7 +6,7 @@
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role;const t=localStorage.getItem("sciclub-testo");if(t>0)document.documentElement.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
@@ -85,14 +85,14 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html" data-ruolo="utente">Soci</a>
-      <a href="admin.html" data-ruolo="utente">Pagamenti</a>
-      <a href="riepilogo.html" data-ruolo="utente">Riepilogo</a>
-      <a href="assicurazione.html" data-ruolo="assicurazione" hidden>Assicurazione</a>
-      <a href="bilancio.html" data-ruolo="admin" hidden>Bilancio</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -243,7 +243,7 @@
 <script>
   let PREZZI = {};
   let familiariACarico = [];
-  let livelloRuolo = 0; // aggiornato in init(), usato per nascondere le tessere riservate
+  let accesso = null; // chi è collegato (getProfile), per tessere riservate, polizza e Togli
 
   // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
   // con le gite fatte), quelli aggiunti qui e non ancora salvati, e i pass_id
@@ -272,11 +272,13 @@
   };
 
   (async function init() {
-    if (!(await requireAuth())) return;
+    if (!(await requirePermesso("soci"))) return;
     setLoading(true);
     try {
-      const profilo = await getProfile();
-      livelloRuolo = LIVELLO_RUOLO[profilo?.role] ?? 0;
+      accesso = await getProfile();
+      // Il numero di polizza lo scrive solo l'assicurazione (il database
+      // rifiuta gli altri): qui resta leggibile ma non modificabile.
+      el("f_numero_polizza").readOnly = !accesso.permissions.includes("polizze");
 
       PREZZI = await caricaPrezzi();
       Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
@@ -339,11 +341,11 @@
         scelta.append(prezzo);
       }
       // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono a chi
-      // non ha il ruolo minimo richiesto. Restano però nel gruppo, nascoste
+      // non può assegnarle (tesseraConsentita, come card_allowed nel database). Restano però nel gruppo, nascoste
       // e disabilitate: se un socio le ha già selezionaPerNome() le trova
       // comunque e il valore non sparisce al primo salvataggio fatto da chi
       // non ha il permesso di sceglierle.
-      if (categoria === "TESSERA" && LIVELLO_RUOLO[p.min_role] > livelloRuolo) {
+      if (categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) {
         radio.disabled = true;
         scelta.classList.add("riservata");
       }
@@ -638,7 +640,7 @@
       await caricaAbbonamenti(socio.id);
 
       // Il superadmin può togliere dalla stagione chi ci è finito per sbaglio.
-      el("zonaTogli").hidden = !(socio.enrolled_at && livelloRuolo >= LIVELLO_RUOLO.superadmin);
+      el("zonaTogli").hidden = !(socio.enrolled_at && accesso.permissions.includes("gestione"));
       ripristinaTogli();
 
       controllaCF();
