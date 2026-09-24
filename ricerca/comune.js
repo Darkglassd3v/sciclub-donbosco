@@ -152,6 +152,12 @@ async function proteggiPagina(alPronto) {
   const btnEsci = el("btnEsci");
   if (btnEsci) {
     btnEsci.addEventListener("click", async () => {
+      // Come nel gestionale (logout in web/shared.js): uscire chiude anche il
+      // "Vedi come", così al prossimo accesso si rientra sé stessi.
+      const accesso = await getAccesso().catch(() => null);
+      if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+        await sb.rpc("set_view_as", { role: null });
+      }
       await sb.auth.signOut();
       location.replace("../login.html");
     });

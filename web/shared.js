@@ -42,7 +42,17 @@ async function requireAuth() {
   return data.session;
 }
 
+/**
+ * Uscire chiude anche il "Vedi come" del superadmin: la vista sta nel
+ * database e varrebbe anche al prossimo accesso, su qualunque dispositivo,
+ * magari da una pagina senza la fascia per tornare. Si esce e si rientra
+ * sé stessi.
+ */
 async function logout() {
+  const accesso = await getProfile().catch(() => null);
+  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+    await sb.rpc("set_view_as", { role: null });
+  }
   ricordaAccesso(null);
   await sb.auth.signOut();
   location.replace("login.html");
@@ -207,10 +217,11 @@ function setLoading(attivo) {
   document.addEventListener("DOMContentLoaded", () => {
     const elenco = document.querySelector(".barra-voci");
     if (!elenco) return;
-    // Amministrazione, Utenti e Impostazioni si aprono da Gestione: lì resta
-    // accesa la voce Gestione, così si sa da dove si è arrivati.
-    const voceDi = { "stagione.html": "gestione.html", "utenti.html": "gestione.html", "impostazioni.html": "gestione.html" };
-    const voce = elenco.querySelector(`a[href="${voceDi[attuale] || attuale}"]`);
+    // Le quattro schede di Gestione tengono accesa la voce Gestione della
+    // barra (che apre la prima), e la loro scheda nella fila sotto il titolo.
+    const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"]`);
+    if (scheda) scheda.setAttribute("aria-current", "page");
+    const voce = elenco.querySelector(`a[href="${scheda ? "stagione.html" : attuale}"]`);
     if (!voce) return;
     voce.setAttribute("aria-current", "page");
 

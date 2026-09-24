@@ -174,7 +174,7 @@ modifica i soci, l'admin modifica i soci ma non vede il Bilancio.
 
 | Ruolo | Chi è | Arriva su | Può fare |
 |---|---|---|---|
-| `superadmin` | direttivo con delega | Soci | tutto, più la voce rossa **Gestione** (Amministrazione con la chiusura della stagione, Utenti, Impostazioni), **Togli dalla stagione** nella pagina Soci e **Vedi come** |
+| `superadmin` | direttivo con delega | Soci | tutto, più la voce rossa **Gestione** (quattro schede sempre visibili: Amministrazione con la chiusura della stagione, Utenti, Impostazioni, Ruoli e vedi come), **Togli dalla stagione** nella pagina Soci e **Vedi come** |
 | `admin` | chi iscrive e incassa | Soci | iscrivere e modificare i soci, incassare, Riepilogo della **stagione in corso**, pannello gite, tessere riservate (oggi **TESSERA DIRETTIVO**). Non vede Bilancio, stagioni chiuse e Gestione; il numero di polizza lo legge ma non lo cambia |
 | `tesoriere` | chi tiene i conti | Riepilogo | incassare (pagina Pagamenti), Riepilogo anche delle **stagioni chiuse**, **Bilancio**. I soci li legge ma non li modifica |
 | `assicurazione` | chi manda i soci all'assicurazione | Assicurazione | **solo** la pagina Assicurazione: tesserati ancora senza polizza, Excel "da assicurare", codice fiscale e numero di polizza, ricerca (al massimo 20 risultati) per correggere chi è già assicurato. È l'unico, con il superadmin, che scrive le polizze. Non vede soci, quote, abbonamenti né il sito di ricerca |
@@ -192,10 +192,11 @@ Un account creato dal pannello nasce già con il ruolo scelto lì. Il cambio di 
 chiede sempre una conferma esplicita (si sceglie il ruolo, poi si preme **Conferma**) e vale dal
 login successivo di quella persona.
 
-**Vedi come** (pagina Gestione, solo superadmin): si sceglie un ruolo e si guarda il sito come lo
-vede lui. Il database tratta davvero il superadmin da quel ruolo, quindi quello che il ruolo non può
-fare non lo può fare nemmeno lui; una fascia gialla in fondo a ogni pagina lo ricorda, con il
-pulsante **Torna superadmin**. Vale su tutti i dispositivi finché non si torna.
+**Vedi come** (Gestione, scheda "Ruoli e vedi come", solo superadmin): si sceglie un ruolo e si
+guarda il sito come lo vede lui. Il database tratta davvero il superadmin da quel ruolo, quindi
+quello che il ruolo non può fare non lo può fare nemmeno lui; una fascia gialla in fondo a ogni
+pagina lo ricorda, con il pulsante **Torna superadmin**. Anche **Esci** chiude la vista: al
+prossimo accesso si rientra superadmin.
 
 **Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): creare l'account da **Authentication > Users > Add user** spuntando **Auto Confirm User**, poi da **Supabase Dashboard > SQL Editor**:
 

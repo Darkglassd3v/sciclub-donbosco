@@ -332,6 +332,17 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 .barra-voci .voce-rischiosa { color: var(--errore); }
 /* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */
 .barra-voci [hidden] { display: none; }
+/* Schede di Gestione (Amministrazione, Utenti, Impostazioni, Ruoli):
+ * sempre tutte visibili, piena quella aperta. Grandi come le voci della
+ * barra, e senza menu da aprire: si vede subito dove si può andare. */
+.schede-gestione { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;
+                   padding-bottom: 14px; border-bottom: 2px solid var(--filo); }
+.schede-gestione a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px;
+                     border: 2px solid var(--filo); border-radius: 999px; background: #fff;
+                     color: var(--blu); font-weight: 600; font-size: 1.05rem; text-decoration: none; }
+.schede-gestione a:hover { background: var(--blu-light); border-color: var(--blu-light); }
+.schede-gestione a[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
+
 /* Bulma dà display:block alle colonne e inline-flex ai pulsanti, che
    vincerebbero sull'attributo hidden. */
 .column[hidden], .button[hidden] { display: none; }

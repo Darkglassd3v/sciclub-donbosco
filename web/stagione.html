@@ -70,7 +70,7 @@
       <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
       <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
       <a href="social.html" data-permesso="social" hidden>Social</a>
-      <a class="voce-rischiosa" href="gestione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
@@ -79,7 +79,12 @@
 </header>
 
 <div class="container-main">
-  <p class="mb-2"><a href="gestione.html">← Gestione</a></p>
+  <nav class="schede-gestione" aria-label="Gestione">
+    <a href="stagione.html">Amministrazione</a>
+    <a href="utenti.html">Utenti</a>
+    <a href="impostazioni.html">Impostazioni</a>
+    <a href="gestione.html">Ruoli e vedi come</a>
+  </nav>
   <h1 class="title is-4 mb-4">Amministrazione</h1>
 
 

@@ -51,6 +51,9 @@ button { cursor: pointer; font-weight: 600; letter-spacing: -.01em;
 .btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
 .btn-chiaro { color: var(--blu); border-color: var(--filo); }
 .btn-chiaro:hover { background: var(--blu-light); border-color: var(--blu-light); }
+/* Soci e Gite stanno su tutte e due le pagine, come due schede: quella
+ * aperta è piena, così si sa dove si è senza leggere il titolo. */
+.btn-chiaro[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
 .btn-verde { background: var(--ok); border-color: var(--ok); color: #fff; }
 .btn-rosso { background: var(--errore); border-color: var(--errore); color: #fff; }
 
