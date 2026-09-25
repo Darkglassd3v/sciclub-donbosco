@@ -195,6 +195,11 @@
             <input class="input" type="file" id="fFoto" accept="image/*">
             <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
           </div>
+          <div class="field campo-largo" data-per="gita evento">
+            <span class="label">Telefoni in fondo al post (uguali in tutti i post)</span>
+            <p id="fContatti"></p>
+            <button type="button" class="button is-small is-light mt-2" id="btnVaiContatti">Aggiungi o cambia i telefoni</button>
+          </div>
         </div>
 
         <div class="anteprime" id="anteprime"></div>
@@ -653,6 +658,7 @@
     const post = daForm(), dove = el("anteprime");
     dove.innerHTML = "";
     if (post.kind === "gita") disegnaCalGita();
+    riassuntoContatti();
     el("btnTogliFoto").hidden = !foto;
     aggiornaPubblicato();
     const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
@@ -876,6 +882,17 @@
       aggiornaContatti();
     });
     el("btnSalvaContatti").addEventListener("click", salvaContatti);
+    el("btnVaiContatti").addEventListener("click", () => {
+      el("contatti").scrollIntoView({ behavior: "smooth", block: "start" });
+      el("righeContatti").querySelector("input").focus({ preventScroll: true });
+    });
+  }
+
+  /** Nel form del post, i telefoni salvati che il post mostrerà. */
+  function riassuntoContatti() {
+    el("fContatti").innerHTML = SOCIAL.contatti.length
+      ? SOCIAL.contatti.map((c) => `<strong>${esc(c.name)}</strong> ${esc(c.phone)}${c.hours ? ` <small>(${esc(c.hours)})</small>` : ""}`).join(" · ")
+      : '<span class="avviso-contrasto">Nessun telefono: il post esce senza.</span>';
   }
 
   /** Una riga del riquadro; `id` c'è per i contatti già salvati. */

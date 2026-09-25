@@ -35,10 +35,11 @@
   transazione, dopo una prova con rollback sui dati veri. Account: un superadmin e un admin (resta
   admin, senza Bilancio: deciso così); nessun utente/ospite/kiosk da spostare
 - pagine della 2.5 pubblicate lo stesso giorno (deploy da `2.5-SNAPSHOT`, `d95fca7`)
+- 2026-09-25: tabella `social_contacts` applicata dall'SQL Editor (`supabase/applica_social_contacts.sql`)
 
 ## Da fare
-- applicare `schema.sql` in produzione (tabella `social_contacts`) e inserire i contatti veri dalla
-  pagina Social, riquadro "Contatti nei post"
+- inserire i contatti veri dalla pagina Social, riquadro "Contatti nei post" (o dal form del post,
+  "Aggiungi o cambia i telefoni")
 - caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
