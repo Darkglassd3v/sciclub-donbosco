@@ -15,6 +15,9 @@
     /* Si usa da PC: due colonne, elenco a sinistra e lavoro a destra. */
     .container-main { max-width: 1400px; margin: 28px auto 80px; padding: 0 18px; }
     .colonne-social { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+    /* Nelle schede che non sono Post la colonna dell'elenco non c'è. */
+    .colonne-social.una-colonna { grid-template-columns: 1fr; }
+    [data-sezione][hidden] { display: none !important; }
     .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px; margin-bottom: 22px; }
     .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
     .occhiello { color: var(--testo-soft); margin-bottom: 14px; }
@@ -105,17 +108,21 @@
 </header>
 
 <div class="container-main">
-  <nav class="schede-gestione" aria-label="Social" data-voce="social.html">
-    <a href="social.html">Post</a>
-    <a href="social-contatti.html">Contatti</a>
+  <nav class="schede-social" aria-label="Social" data-voce="social.html">
+    <a href="social.html#post" style="--scheda:#084C8D">Post</a>
+    <a href="social.html#calendario" style="--scheda:#147A45">Calendario del mese</a>
+    <a href="social.html#copertina" style="--scheda:#5B2A86">Copertina Facebook</a>
+    <a href="social.html#sponsor" style="--scheda:#8A5300">Sponsor</a>
+    <a href="social.html#giorni" style="--scheda:#B3261E">Giorni e colori delle gite</a>
+    <a href="social-contatti.html" style="--scheda:#0B6E69">Contatti</a>
   </nav>
-  <h1 class="title is-4 mb-4">Social</h1>
+  <h1 class="title is-4 mb-4" id="titoloSezione">Post</h1>
 
   <div class="colonne-social">
     <!-- Colonna sinistra: i post, dal prossimo in avanti. -->
-    <div>
+    <div data-sezione="post">
       <div class="riquadro">
-        <h2>Post</h2>
+        <h2>Da fare</h2>
         <div class="nuovi" id="azioniNuovo">
           <button type="button" class="button is-link" data-nuovo="gita">+ Nuova gita</button>
           <button type="button" class="button is-link" data-nuovo="corso">+ Nuovo corso</button>
@@ -127,9 +134,10 @@
       </div>
     </div>
 
-    <!-- Colonna destra: il post aperto, poi calendario, copertina e sponsor. -->
+    <!-- Colonna destra: il post aperto, o la scheda scelta (calendario,
+         copertina, sponsor, giorni); si vede solo la sezione della scheda. -->
     <div>
-      <div class="riquadro" id="editor" hidden>
+      <div class="riquadro" id="editor" data-sezione="post" hidden>
         <h2 id="titoloEditor">Nuovo post</h2>
         <div class="campi">
           <div class="field">
@@ -223,8 +231,7 @@
         </div>
       </div>
 
-      <div class="riquadro">
-        <h2>Calendario del mese</h2>
+      <div class="riquadro" data-sezione="calendario">
         <p class="occhiello">Si fa da solo con le gite salvate del mese scelto.</p>
         <div class="campi">
           <div class="field"><label class="label" for="calMese">Mese</label><select class="input" id="calMese"></select></div>
@@ -233,8 +240,7 @@
         <div class="anteprime" id="anteprimaCalendario"></div>
       </div>
 
-      <div class="riquadro">
-        <h2>Copertina Facebook</h2>
+      <div class="riquadro" data-sezione="copertina">
         <div class="campi">
           <div class="field"><label class="label" for="copTitolo">Titolo</label><input class="input" id="copTitolo"></div>
           <div class="field campo-largo"><label class="label" for="copSotto">Sotto</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
@@ -242,11 +248,10 @@
         <div class="anteprime" id="anteprimaCopertina"></div>
       </div>
 
-      <div class="riquadro">
-        <h2>Sponsor</h2>
+      <div class="riquadro" data-sezione="sponsor">
         <p class="occhiello">
           Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
-          una campagna nuova: <b>+ Nuova campagna sponsor</b>, in cima a sinistra.
+          una campagna nuova: <b>+ Nuova campagna sponsor</b>, nella scheda Post.
         </p>
         <div class="campi">
           <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
@@ -272,8 +277,7 @@
         </div>
       </div>
 
-      <div class="riquadro" id="giorniGita">
-        <h2>Giorni e colori delle gite</h2>
+      <div class="riquadro" id="giorniGita" data-sezione="giorni">
         <p class="occhiello">
           Il giorno della settimana decide il colore della gita nei post e nel
           calendario del mese. Quando inserisci una gita il calendario ti mostra
@@ -319,11 +323,39 @@
     el("calMese").addEventListener("change", () => { el("calTitolo").value = titoloMese(el("calMese").value); disegnaCalendarioMese(); });
     for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", disegnaCopertinaFb);
     collegaGiorni();
+    window.addEventListener("hashchange", mostraSezione);
+    mostraSezione();
     await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
     // Il calendario del mese può essersi disegnato prima dei colori dei giorni.
     disegnaCalendarioMese();
     disegnaCopertinaFb();
   })();
+
+  // ---------------------------------------------------------------------
+  // Schede: una sezione alla volta, scelta dall'indirizzo (social.html#calendario)
+  // ---------------------------------------------------------------------
+
+  const SEZIONI = { post: "Post", calendario: "Calendario del mese", copertina: "Copertina Facebook",
+                    sponsor: "Sponsor", giorni: "Giorni e colori delle gite" };
+  const sezione = () => (location.hash.slice(1) in SEZIONI ? location.hash.slice(1) : "post");
+
+  function mostraSezione() {
+    const s = sezione();
+    document.querySelectorAll("[data-sezione]").forEach((x) => {
+      // L'editor resta nascosto finché non si apre un post.
+      x.hidden = x.dataset.sezione !== s || (x.id === "editor" && !aperto);
+    });
+    document.querySelector(".colonne-social").classList.toggle("una-colonna", s !== "post");
+    document.querySelectorAll(".schede-social a").forEach((a) =>
+      a.toggleAttribute("aria-current", a.getAttribute("href") === `social.html#${s}`));
+    document.querySelector('.schede-social a[aria-current]').setAttribute("aria-current", "page");
+    el("titoloSezione").textContent = SEZIONI[s];
+    // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
+    // (fit() non vede niente da restringere): si rifanno ora che si vedono.
+    if (s === "calendario") disegnaCalendarioMese();
+    if (s === "copertina") disegnaCopertinaFb();
+    window.scrollTo(0, 0);
+  }
 
   // ---------------------------------------------------------------------
   // Dati
@@ -479,6 +511,7 @@
       return;
     }
     aperto = post;
+    if (sezione() !== "post") history.replaceState(null, "", "#post"), mostraSezione();
     const tipo = post.kind || "gita";
     el("titoloEditor").textContent = post.id ? "Modifica post" : NOMI_NUOVO[tipo] || "Nuovo evento";
     el("fTipo").value = tipo;
@@ -518,7 +551,7 @@
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
-    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, in fondo alla pagina.", "is-warning");
+    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, nella scheda Sponsor.", "is-warning");
   }
 
   /** Il form com'è adesso, nella forma di una riga di social_events. */
@@ -598,7 +631,7 @@
   }
 
   function elimina() {
-    if (!aperto || !aperto.id) { salvato = firma(); el("editor").hidden = true; return; }
+    if (!aperto || !aperto.id) { salvato = firma(); aperto = null; el("editor").hidden = true; disegnaElenco(); return; }
     chiedi(el("azioniPost"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
   }
 
@@ -771,7 +804,7 @@
       <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${celle.join("")}</div>
       <p class="esito ${fuori ? "fuori" : ""}">${esc(esito)}${gia ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(gia)}.</span>` : ""}</p>
       <div class="legenda">${SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")}
-        <a href="#giorniGita">Cambia giorni e colori</a></div>`;
+        <a href="#giorni">Cambia giorni e colori</a></div>`;
   }
 
   function sceltaCalGita(e) {

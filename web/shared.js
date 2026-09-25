@@ -217,10 +217,9 @@ function setLoading(attivo) {
   document.addEventListener("DOMContentLoaded", () => {
     const elenco = document.querySelector(".barra-voci");
     if (!elenco) return;
-    // Le schede sotto la barra (le quattro di Gestione, Post e Contatti di
-    // Social) tengono accesa la voce della barra che apre la prima
+    // Le schede sotto la barra (le quattro di Gestione, quelle di Social) tengono accesa la voce della barra che apre la prima
     // (data-voce, se no Gestione), e la loro scheda nella fila.
-    const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"]`);
+    const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"], .schede-social a[href="${attuale}"]`);
     if (scheda) scheda.setAttribute("aria-current", "page");
     const madre = scheda && (scheda.closest("[data-voce]")?.dataset.voce || "stagione.html");
     const voce = elenco.querySelector(`a[href="${madre || attuale}"]`);

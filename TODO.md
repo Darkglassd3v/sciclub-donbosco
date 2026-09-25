@@ -29,6 +29,9 @@
   post sceglie i suoi con una spunta (`social_events.contacts`, id in ordine). Stanno in fondo a post e
   story e nel testo da incollare; senza contatti la riga non c'è; troppo lunga si rimpicciolisce e poi
   l'anteprima avvisa. Un contatto tolto dalla rubrica esce dai post (trigger)
+- Social a **schede colorate**: Post, Calendario del mese, Copertina Facebook, Sponsor, Giorni e colori
+  delle gite (sezioni di `social.html`, scelte dall'indirizzo: `social.html#calendario`) e Contatti
+  (`social-contatti.html`); ognuna col suo colore, piena quella aperta
 
 ## Produzione (2026-09-24)
 

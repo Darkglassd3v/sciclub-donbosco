@@ -342,6 +342,16 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
                      color: var(--blu); font-weight: 600; font-size: 1.05rem; text-decoration: none; }
 .schede-gestione a:hover { background: var(--blu-light); border-color: var(--blu-light); }
 .schede-gestione a[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
+/* Schede di Social: come quelle di Gestione, ma ognuna col suo colore
+ * (--scheda sul link), così si riconoscono a colpo d'occhio: bordo e scritta
+ * nel colore, piena quella aperta. */
+.schede-social { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px;
+                 padding-bottom: 14px; border-bottom: 2px solid var(--filo); }
+.schede-social a { --scheda: var(--blu); display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px;
+                   border: 2px solid var(--scheda); border-radius: 999px; background: #fff;
+                   color: var(--scheda); font-weight: 700; font-size: 1.05rem; text-decoration: none; }
+.schede-social a:hover { box-shadow: inset 0 0 0 2px var(--scheda); }
+.schede-social a[aria-current="page"] { background: var(--scheda); color: #fff; }
 
 /* Bulma dà display:block alle colonne e inline-flex ai pulsanti, che
    vincerebbero sull'attributo hidden. */
