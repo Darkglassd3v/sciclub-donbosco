@@ -12,8 +12,10 @@
 const SOCIAL = {
   // Relativo alla pagina che disegna.
   logo: "logo_sciclubdonbosco.png",
-  // TODO(social): numeri veri per info e iscrizioni, stanno su ogni post.
-  telefoni: [["Segreteria", "011 000 0000"], ["Marco", "333 000 0000"]],
+  // Contatti per info e iscrizioni, in fondo a ogni post: la tabella
+  // social_contacts, che la pagina carica e passa a impostaContatti().
+  // [{ name: "Marco", phone: "333 000 0000", hours: "dopo le 18" }, ...]
+  contatti: [],
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
 };
 
@@ -222,13 +224,30 @@ function fit(radice = document) {
     while (el.scrollWidth > el.clientWidth && f > 40) el.style.fontSize = (f -= 2) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
   });
+  // I telefoni: il corpo scende fino a 20 px, poi sborda (troppi contatti).
+  radice.querySelectorAll("[data-fittel]").forEach((el) => {
+    let f = parseFloat(el.style.fontSize);
+    while (el.scrollWidth > el.clientWidth && f > 20) el.style.fontSize = (f -= 1) + "px";
+    if (el.scrollWidth > el.clientWidth) sborda = true;
+  });
   return sborda;
 }
 
+/** I contatti della pagina (righe di social_contacts, già in ordine). */
+function impostaContatti(righe) {
+  SOCIAL.contatti = righe.filter((r) => r && r.name && r.phone)
+    .map(({ name, phone, hours }) => ({ name, phone, hours: hours || "" }));
+}
+
+/* Riga dei telefoni in fondo al biglietto; senza contatti, niente. Gli orari
+ * più piccoli e chiari, dopo il numero. data-fittel: fit() la rimpicciolisce
+ * se non ci sta. */
 function phones(col, k = 1) {
+  if (!SOCIAL.contatti.length) return "";
   const ico = `<svg width="${34 * k}" height="${34 * k}" viewBox="0 0 24 24" fill="${col}"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>`;
-  return `<div style="display:flex;align-items:center;gap:${16 * k}px;font-size:${32 * k}px;font-weight:700;color:${col};white-space:nowrap">${ico}
-    ${SOCIAL.telefoni.map(([n, t]) => `<span><span style="font-weight:500;opacity:.85">${escS(n)}</span> ${escS(t)}</span>`).join(`<span style="opacity:.5">·</span>`)}</div>`;
+  return `<div data-fittel style="display:flex;align-items:center;gap:${16 * k}px;font-size:${32 * k}px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden">${ico}
+    ${SOCIAL.contatti.map((c) => `<span><span style="font-weight:500;opacity:.85">${escS(c.name)}</span> ${escS(c.phone)}${c.hours
+      ? ` <span style="font-weight:500;font-size:.8em;opacity:.8">${escS(c.hours)}</span>` : ""}</span>`).join(`<span style="opacity:.5">·</span>`)}</div>`;
 }
 
 /* Foto della meta; senza, un paesaggio disegnato (la C perdona foto mediocri,
@@ -275,7 +294,7 @@ function disegnaPost(s) {
       <div class="abs" style="right:40px;top:36px">${s.date ? badge(s) : tag(C)}</div>
       ${content(s, { x: 56, r: 56, H: cardH, py: st ? 920 : 450, col: "#14202E", accent: C.txt, lab: "#5B6472", k })}
       ${notch(ph, 30)}
-      ${st ? `<div class="abs" style="left:56px;right:56px;top:${H - SAFE.bottom - m - 90}px;border-top:4px dashed #C7D0DA;padding-top:28px">${phones("#14202E", 1.15)}</div>` : ""}`;
+      ${st && SOCIAL.contatti.length ? `<div class="abs" style="left:56px;right:56px;top:${H - SAFE.bottom - m - 90}px;border-top:4px dashed #C7D0DA;padding-top:28px">${phones("#14202E", 1.15)}</div>` : ""}`;
   return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">
     <div class="abs" style="left:${m}px;width:${cw}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden">${body}</div>
     ${st ? "" : `<div class="abs" style="left:${m + 8}px;right:${m}px;bottom:44px">${phones(C.ink)}</div>`}
@@ -450,7 +469,7 @@ function indirizzoUtm(sp, c, mezzo, stagione) {
 
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
 function testoPost(ev, sp, stagione) {
-  const tel = SOCIAL.telefoni.map(([n, t]) => `${n} ${t}`).join(" · ");
+  const tel = SOCIAL.contatti.map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
   const prezzi = ev.show_price === false ? [] : (ev.prices || []).filter((p) => p && p[1]);
   const quote = prezzi.map(([n, v]) => (n ? `${n} ${v}` : v)).join(" · ");
   const righe = [];
@@ -477,12 +496,13 @@ function testoPost(ev, sp, stagione) {
     if (quote) righe.push("", quote);
     for (const [k, v] of ev.facts || []) righe.push(`${k}: ${v}`);
   }
-  righe.push("", `Info e iscrizioni: ${tel}`, "", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${semplice(ev.title)}` : ""}`);
+  if (tel) righe.push("", `Info e iscrizioni: ${tel}`);
+  righe.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${semplice(ev.title)}` : ""}`);
   return righe.join("\n");
 }
 
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
-  module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, inchiostro, modelloPost,
+  module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, inchiostro, modelloPost,
                      contrasto, schiarisci, indirizzoUtm, testoPost, semplice, SOCIAL };
 }

@@ -75,6 +75,9 @@
     .riga-giorno { display: grid; grid-template-columns: 12rem 5rem 1fr; gap: 14px; align-items: center; padding: 6px 0; border-top: 1px solid var(--filo); }
     .riga-giorno input[type="color"] { height: 2.5em; padding: 2px; }
     .riga-giorno input[type="color"]:disabled { visibility: hidden; }
+    /* Contatti nei post: nome, telefono, orari; ↑ per cambiare l'ordine. */
+    .riga-contatto { display: grid; grid-template-columns: 1fr 1fr 1.2fr auto auto; gap: 8px; margin-bottom: 6px; }
+    .riga-contatto:first-child .sali { visibility: hidden; }
   </style>
 </head>
 <body>
@@ -273,6 +276,23 @@
           <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
         </div>
       </div>
+
+      <div class="riquadro" id="contatti">
+        <h2>Contatti nei post</h2>
+        <p class="occhiello">
+          Nome e telefono per info e iscrizioni: stanno in fondo a ogni post e
+          story e nel testo da incollare, in quest'ordine. Gli orari sono
+          facoltativi (es. "dopo le 18"). Ce ne stanno due o tre: se la riga è
+          troppo lunga, l'anteprima del post lo dice. Il testo di un post già scritto non
+          cambia da solo: aprilo e premi "Rifai il testo dai dati".
+        </p>
+        <div id="righeContatti"></div>
+        <button type="button" class="button is-small is-light" id="btnAggiungiContatto">+ Contatto</button>
+        <p class="avviso-contrasto mt-2" id="avvisoContatti" hidden></p>
+        <div class="azioni-post">
+          <button type="button" class="button is-link" id="btnSalvaContatti">Salva contatti</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -306,7 +326,8 @@
     el("calMese").addEventListener("change", () => { el("calTitolo").value = titoloMese(el("calMese").value); disegnaCalendarioMese(); });
     for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", disegnaCopertinaFb);
     collegaGiorni();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita()]);
+    collegaContatti();
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
     // Il calendario del mese può essersi disegnato prima dei colori dei giorni.
     disegnaCalendarioMese();
     disegnaCopertinaFb();
@@ -343,6 +364,14 @@
     if (error) showToast("Giorni delle gite non caricati, uso i colori di sempre: " + messaggioErrore(error), "is-danger");
     else impostaColoriGita(mappaColori(data));
     apriGiorni();
+  }
+  /** I contatti in fondo ai post (social_contacts), nel loro ordine. */
+  async function caricaContatti() {
+    const { data, error } = await sb.from("social_contacts").select("id, name, phone, hours").order("position");
+    if (error) { showToast("Contatti non caricati, i post escono senza telefoni: " + messaggioErrore(error), "is-danger"); return; }
+    impostaContatti(data);
+    apriContatti(data);
+    if (!el("editor").hidden) ridisegna();
   }
   const mappaColori = (righe) => Object.fromEntries(righe.filter((r) => r.color).map((r) => [r.weekday, r.color]));
 
@@ -421,8 +450,8 @@
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
     el("calGita").addEventListener("click", sceltaCalGita);
-    // Uscire con il post o i giorni modificati e non salvati: il browser chiede conferma.
-    window.addEventListener("beforeunload", (e) => { if (modificato() || giorniModificati()) { e.preventDefault(); e.returnValue = ""; } });
+    // Uscire con il post, i giorni o i contatti modificati e non salvati: il browser chiede conferma.
+    window.addEventListener("beforeunload", (e) => { if (modificato() || giorniModificati() || contattiModificati()) { e.preventDefault(); e.returnValue = ""; } });
   }
 
   /**
@@ -819,6 +848,105 @@
       disegnaCalendarioMese();
       if (!el("editor").hidden) ridisegna();
       showToast("Giorni e colori delle gite salvati.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Contatti nei post
+  // ---------------------------------------------------------------------
+
+  let contattiSalvati = "[]";  // i contatti com'erano all'ultimo salvataggio, per "Salva modifiche"
+
+  function collegaContatti() {
+    el("btnAggiungiContatto").addEventListener("click", () => {
+      aggiungiContatto();
+      el("righeContatti").lastElementChild.querySelector("input").focus();
+      aggiornaContatti();
+    });
+    el("righeContatti").addEventListener("input", aggiornaContatti);
+    el("righeContatti").addEventListener("click", (e) => {
+      const b = e.target.closest("button"), riga = b && b.closest(".riga-contatto");
+      if (!riga) return;
+      if (b.classList.contains("sali")) { riga.previousElementSibling.before(riga); b.focus(); }
+      else riga.remove();
+      aggiornaContatti();
+    });
+    el("btnSalvaContatti").addEventListener("click", salvaContatti);
+  }
+
+  /** Una riga del riquadro; `id` c'è per i contatti già salvati. */
+  function aggiungiContatto({ id = "", name = "", phone = "", hours = "" } = {}) {
+    const riga = document.createElement("div");
+    riga.className = "riga-contatto";
+    riga.dataset.id = id;
+    riga.innerHTML = `<input class="input" value="${esc(name)}" placeholder="Nome (es. Segreteria)" aria-label="Nome">
+      <input class="input" type="tel" value="${esc(phone)}" placeholder="Telefono" aria-label="Telefono">
+      <input class="input" value="${esc(hours || "")}" placeholder="Orari (facoltativo)" aria-label="Orari per chiamare">
+      <button type="button" class="button is-light sali" aria-label="Sposta su" title="Sposta su">↑</button>
+      <button type="button" class="button is-light" aria-label="Togli questo contatto" title="Togli">✕</button>`;
+    el("righeContatti").append(riga);
+  }
+
+  function apriContatti(righe) {
+    el("righeContatti").innerHTML = "";
+    righe.forEach(aggiungiContatto);
+    if (!righe.length) aggiungiContatto();
+    contattiSalvati = JSON.stringify(contattiDaForm());
+    aggiornaContatti();
+  }
+
+  /** Le righe compilate almeno in parte, nell'ordine del riquadro. */
+  const contattiDaForm = () => [...el("righeContatti").children].map((r, position) => {
+    const [name, phone, hours] = [...r.querySelectorAll("input")].map((i) => i.value.trim());
+    return { id: r.dataset.id, position, name, phone, hours: hours || null };
+  }).filter((c) => c.name || c.phone || c.hours).map((c, position) => ({ ...c, position }));
+  const contattiModificati = () => JSON.stringify(contattiDaForm()) !== contattiSalvati;
+
+  /** Avviso per le righe a metà o senza contatti, "Salva modifiche". */
+  function aggiornaContatti() {
+    const righe = contattiDaForm(), mezze = righe.filter((c) => !c.name || !c.phone).length;
+    const avviso = mezze ? `${mezze === 1 ? "Un contatto non ha" : `${mezze} contatti non hanno`} nome e telefono: scrivili tutti e due.`
+      : !righe.length ? "Senza contatti i post escono senza telefoni." : "";
+    el("avvisoContatti").hidden = !avviso;
+    el("avvisoContatti").textContent = avviso;
+    const m = contattiModificati();
+    el("btnSalvaContatti").textContent = m ? "Salva modifiche" : "Salva contatti";
+    el("btnSalvaContatti").classList.toggle("salva-modifiche", m);
+  }
+
+  /**
+   * Salva i contatti del riquadro: un upsert per quelli già salvati, un
+   * insert per i nuovi (l'id lo dà il database e torna sulla riga, così se il
+   * salvataggio si ferma a metà riprovare non li duplica), poi via quelli non
+   * più nel riquadro (anche le righe svuotate).
+   */
+  async function salvaContatti() {
+    if (contattiDaForm().some((c) => !c.name || !c.phone)) { showToast("Ogni contatto vuole nome e telefono.", "is-warning"); return; }
+    setLoading(true);
+    try {
+      const righe = contattiDaForm(), vecchi = righe.filter((c) => c.id), nuovi = righe.filter((c) => !c.id);
+      if (vecchi.length) {
+        const { error } = await sb.from("social_contacts").upsert(vecchi);
+        if (error) throw error;
+      }
+      if (nuovi.length) {
+        const { data, error } = await sb.from("social_contacts").insert(nuovi.map(({ id, ...c }) => c)).select("id");
+        if (error) throw error;
+        const senzaId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input")].some((i) => i.value.trim()));
+        data.forEach((d, i) => { nuovi[i].id = senzaId[i].dataset.id = d.id; });
+      }
+      let via = sb.from("social_contacts").delete();
+      via = righe.length ? via.not("id", "in", `(${righe.map((c) => c.id).join(",")})`) : via.not("id", "is", null);
+      const { error } = await via;
+      if (error) throw error;
+      impostaContatti(righe);
+      apriContatti(righe);
+      if (!el("editor").hidden) ridisegna();
+      showToast("Contatti salvati.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {

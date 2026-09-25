@@ -135,6 +135,7 @@ insert into public.ledger_entries (kind, category, quantity, unit_price) values 
 insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
 insert into public.sponsors (id, name, alcohol) values ('cccccccc-5555-0000-0000-000000000001', 'PROVA SPONSOR', true);
 insert into public.social_events (kind, title, sponsor_id) values ('sponsor', 'PROVA CAMPAGNA', 'cccccccc-5555-0000-0000-000000000001');
+insert into public.social_contacts (name, phone) values ('PROVA CONTATTO', '333 000 0000');
 
 -- Una prova della matrice: `leggi` è riuscita se trova almeno una riga,
 -- `scrivi` se non dà errore e tocca almeno una riga (la RLS che nega una
@@ -204,6 +205,8 @@ begin
     ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
     ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
     ('scrivi', 'update public.trip_days set color = ''#147A45'' where weekday = 5', 'SxxxxSx'),
+    ('leggi',  'select 1 from public.social_contacts',                           'SxxxxSx'),
+    ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
@@ -418,6 +421,11 @@ do $$ begin
     raise exception 'ASSERZIONE: colore non esadecimale accettato';
   exception when check_violation then null;
   end;
+  begin
+    insert into public.social_contacts (name, phone) values ('Marco', '  ');
+    raise exception 'ASSERZIONE: contatto senza telefono accettato';
+  exception when check_violation then null;
+  end;
 
   -- Eliminare uno sponsor porta via le sue campagne (anche una già
   -- pubblicata), e solo quelle; chi non ha il permesso social non elimina.
@@ -458,6 +466,8 @@ psql_ -c "update public.prices set trips = 10, day = 'SABATO' where name = 'PROV
 psql_ -c "insert into public.trip_uses (member_id) values ('99999999-9999-9999-9999-999999999999');"
 # Giorni delle gite cambiati dalla pagina: il martedì tolto, il sabato giallo.
 psql_ -c "update public.trip_days set color = case weekday when 2 then null when 6 then '#FCCF02' else color end;"
+# Contatti scritti dalla pagina: lo schema rieseguito non li tocca e non ne aggiunge.
+psql_ -c "delete from public.social_contacts; insert into public.social_contacts (name, phone, hours) values ('Segreteria', '011 123 4567', 'dopo le 18');"
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
@@ -475,6 +485,8 @@ do $$ begin
   assert (select count(*) from public.trip_days) = 7, 'trip_days non ha una riga per giorno';
   assert (select color from public.trip_days where weekday = 2) is null, 'schema.sql ha rimesso il martedì tolto';
   assert (select color from public.trip_days where weekday = 6) = '#FCCF02', 'schema.sql ha rimesso il colore di prima al sabato';
+  assert (select count(*) from public.social_contacts) = 1, 'schema.sql ha cambiato i contatti dei post';
+  assert (select hours from public.social_contacts) = 'dopo le 18', 'schema.sql ha perso gli orari del contatto';
 
   -- L'abbonamento scritto nella vecchia colonna è diventato una riga, una sola.
   assert (select count(*) from public.member_passes

@@ -132,7 +132,7 @@ quote, si aggiornano da Supabase.
 cd web && python3 -m http.server 8000     # gestionale, su /login.html
 cd ricerca && python3 -m http.server 8001 # sito di ricerca
 node ricerca/test-ricerca.js              # controlla la logica della ricerca
-node web/test-social.js                   # controlla testi, prezzo facoltativo e UTM dei post
+node web/test-social.js                   # controlla testi, prezzo facoltativo, contatti e UTM dei post
 node web/test-codicefiscale.js            # controlla il validatore del codice fiscale
 ./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```

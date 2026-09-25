@@ -5,7 +5,7 @@
 //   node web/test-social.js
 
 const assert = require("assert");
-const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, modelloPost,
+const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, SOCIAL } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
@@ -60,7 +60,19 @@ assert.match(testo, /^🚌 Martedì 12 gennaio: gita a La Thuile!/);
 assert.match(testo, /Partenze: ore 6:30 Asti, ore 6:45 Moncalvo/);
 assert.match(testo, /Iscrizioni entro domenica 10 gennaio/);
 assert.match(testo, /#lathuile/);
-assert.ok(testo.includes(SOCIAL.telefoni[0][1]), "mancano i telefoni");
+// Senza contatti il testo non ha la riga dei telefoni (vuota).
+assert.doesNotMatch(testo, /Info e iscrizioni/, "riga dei telefoni senza contatti");
+
+// Contatti dalla pagina: nome, telefono e, se ci sono, gli orari fra parentesi.
+impostaContatti([
+  { name: "Segreteria", phone: "011 123 4567", hours: "lun–ven 18–20" },
+  { name: "Marco", phone: "333 765 4321", hours: null },
+  { name: "", phone: "347 000 0000" },  // riga a metà: non va nel post
+]);
+assert.match(testoPost(gita), /Info e iscrizioni: Segreteria 011 123 4567 \(lun–ven 18–20\) · Marco 333 765 4321\n/);
+assert.doesNotMatch(testoPost(gita), /347/, "contatto senza nome finito nel post");
+assert.strictEqual(SOCIAL.contatti.length, 2);
+impostaContatti([]);
 
 // --- Campagna sponsor -------------------------------------------------------
 

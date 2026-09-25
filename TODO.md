@@ -18,12 +18,16 @@
 - **Social** (`web/social.html`, grafica C): post e story, calendario del mese, copertina FB, prezzo
   facoltativo, testo copiabile, pubblicato; **campagne sponsor** (tabella `sponsors`, formati collab,
   story con sticker link, grazie, copertina; UTM; avvertenza alcolici). Test `node web/test-social.js`
-- `test_ruoli.sh` con la matrice ruoli × permessi (7 ruoli × 30 azioni), vedi come, passaggio 2.4→2.5
+- `test_ruoli.sh` con la matrice ruoli × permessi (7 ruoli × 32 azioni), vedi come, passaggio 2.4→2.5
 - Social, **giorni e colori delle gite** (tabella `trip_days`, una riga per giorno, colore vuoto = non è
   giorno di gita): riquadro in fondo alla pagina Social; il form della gita ha un calendario del mese al
   posto del campo data, con i giorni di gita colorati (gli altri si scelgono lo stesso, con avviso in
   rosso) e un pallino sui giorni che hanno già una gita. I colori valgono per post, story e calendario
   del mese; scritta bianca o blu scuro scelta dal contrasto
+- Social, **contatti nei post** (tabella `social_contacts`: nome, telefono, orari facoltativi, in
+  ordine): riquadro "Contatti nei post" in fondo alla pagina Social, al posto dei numeri scritti nel
+  codice. Stanno in fondo a post e story e nel testo da incollare; senza contatti la riga non c'è; la
+  riga troppo lunga si rimpicciolisce e poi l'anteprima avvisa
 
 ## Produzione (2026-09-24)
 
@@ -33,7 +37,8 @@
 - pagine della 2.5 pubblicate lo stesso giorno (deploy da `2.5-SNAPSHOT`, `d95fca7`)
 
 ## Da fare
-- TODO(social): numeri di telefono veri in `SOCIAL.telefoni` (`web/social-templates.js`)
+- applicare `schema.sql` in produzione (tabella `social_contacts`) e inserire i contatti veri dalla
+  pagina Social, riquadro "Contatti nei post"
 - caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
