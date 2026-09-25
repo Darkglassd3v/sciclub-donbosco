@@ -40,10 +40,10 @@
   admin, senza Bilancio: deciso così); nessun utente/ospite/kiosk da spostare
 - pagine della 2.5 pubblicate lo stesso giorno (deploy da `2.5-SNAPSHOT`, `d95fca7`)
 - 2026-09-25: tabella `social_contacts` applicata dall'SQL Editor
+- 2026-09-25: contatti per post (`supabase/applica_contatti_per_post.sql`) applicati dall'SQL Editor
 
 ## Da fare
-- applicare `supabase/applica_contatti_per_post.sql` dall'SQL Editor (contatti per post), poi
-  inserire i contatti veri in Social > Contatti
+- inserire i contatti veri in Social > Contatti e spuntarli nei post
 - caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
