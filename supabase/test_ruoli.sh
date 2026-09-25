@@ -421,6 +421,14 @@ do $$ begin
     raise exception 'ASSERZIONE: colore non esadecimale accettato';
   exception when check_violation then null;
   end;
+  -- Un contatto tolto dalla rubrica esce dai post che lo avevano, gli altri restano.
+  insert into public.social_contacts (id, name, phone) values
+    ('dddddddd-0000-0000-0000-000000000001', 'VIA', '1'), ('dddddddd-0000-0000-0000-000000000002', 'RESTA', '2');
+  insert into public.social_events (kind, title, contacts) values ('corso', 'PROVA CONTATTI',
+    array['dddddddd-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000002']::uuid[]);
+  delete from public.social_contacts where id = 'dddddddd-0000-0000-0000-000000000001';
+  assert (select contacts from public.social_events where title = 'PROVA CONTATTI')
+         = array['dddddddd-0000-0000-0000-000000000002']::uuid[], 'il contatto tolto è rimasto sul post';
   begin
     insert into public.social_contacts (name, phone) values ('Marco', '  ');
     raise exception 'ASSERZIONE: contatto senza telefono accettato';

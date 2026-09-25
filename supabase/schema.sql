@@ -2280,13 +2280,14 @@ on conflict (weekday) do nothing;
 
 comment on table public.trip_days is 'Giorni della settimana delle gite e il loro colore nei post social (colore vuoto = non è un giorno di gita).';
 
--- Contatti per info e iscrizioni: nome e telefono, e se serve quando
--- chiamare ("dopo le 18"). Stanno in fondo a ogni post e story e nel testo da
--- incollare, nell'ordine di position. Si cambiano dalla pagina, riquadro
--- "Contatti nei post". Nessuna riga di partenza: rilanciare lo schema non deve
--- rimettere un contatto tolto, e i numeri finti non devono finire in un post.
--- Come i colori, non si salvano sul post: cambiarli cambia anche i post non
--- ancora pubblicati.
+-- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
+-- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;
+-- ogni post sceglie i suoi (social_events.contacts), perché una gita e un
+-- corso possono avere referenti diversi. is_default: già spuntato nei post
+-- nuovi. Nessuna riga di partenza: rilanciare lo schema non deve rimettere un
+-- contatto tolto, e i numeri finti non devono finire in un post. Il post tiene
+-- l'id, non una copia: correggere un numero corregge anche i post non ancora
+-- pubblicati.
 create table if not exists public.social_contacts (
   id       uuid primary key default gen_random_uuid(),
   position smallint not null default 0,
@@ -2294,12 +2295,30 @@ create table if not exists public.social_contacts (
   phone    text not null,
   hours    text
 );
+alter table public.social_contacts add column if not exists is_default boolean not null default false;
 
 alter table public.social_contacts drop constraint if exists social_contacts_filled;
 alter table public.social_contacts add constraint social_contacts_filled
   check (btrim(name) <> '' and btrim(phone) <> '');
 
-comment on table public.social_contacts is 'Contatti per info e iscrizioni nei post social: nome, telefono e orari facoltativi.';
+comment on table public.social_contacts is 'Rubrica dei contatti per info e iscrizioni nei post social: nome, telefono e orari facoltativi.';
+
+-- I contatti del post, nell'ordine in cui compaiono.
+alter table public.social_events add column if not exists contacts uuid[] not null default '{}';
+comment on column public.social_events.contacts is 'Contatti (social_contacts.id) in fondo al post, in ordine.';
+
+-- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
+create or replace function public.social_contacts_remove_from_posts()
+returns trigger language plpgsql set search_path = public as $$
+begin
+  update public.social_events set contacts = array_remove(contacts, old.id) where old.id = any (contacts);
+  return old;
+end $$;
+
+drop trigger if exists social_contacts_remove_from_posts on public.social_contacts;
+create trigger social_contacts_remove_from_posts
+  after delete on public.social_contacts
+  for each row execute function public.social_contacts_remove_from_posts();
 
 alter table public.sponsors      enable row level security;
 alter table public.social_events enable row level security;

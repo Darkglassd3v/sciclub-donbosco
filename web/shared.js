@@ -217,11 +217,13 @@ function setLoading(attivo) {
   document.addEventListener("DOMContentLoaded", () => {
     const elenco = document.querySelector(".barra-voci");
     if (!elenco) return;
-    // Le quattro schede di Gestione tengono accesa la voce Gestione della
-    // barra (che apre la prima), e la loro scheda nella fila sotto il titolo.
+    // Le schede sotto la barra (le quattro di Gestione, Post e Contatti di
+    // Social) tengono accesa la voce della barra che apre la prima
+    // (data-voce, se no Gestione), e la loro scheda nella fila.
     const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"]`);
     if (scheda) scheda.setAttribute("aria-current", "page");
-    const voce = elenco.querySelector(`a[href="${scheda ? "stagione.html" : attuale}"]`);
+    const madre = scheda && (scheda.closest("[data-voce]")?.dataset.voce || "stagione.html");
+    const voce = elenco.querySelector(`a[href="${madre || attuale}"]`);
     if (!voce) return;
     voce.setAttribute("aria-current", "page");
 

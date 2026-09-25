@@ -24,10 +24,11 @@
   posto del campo data, con i giorni di gita colorati (gli altri si scelgono lo stesso, con avviso in
   rosso) e un pallino sui giorni che hanno già una gita. I colori valgono per post, story e calendario
   del mese; scritta bianca o blu scuro scelta dal contrasto
-- Social, **contatti nei post** (tabella `social_contacts`: nome, telefono, orari facoltativi, in
-  ordine): riquadro "Contatti nei post" in fondo alla pagina Social, al posto dei numeri scritti nel
-  codice. Stanno in fondo a post e story e nel testo da incollare; senza contatti la riga non c'è; la
-  riga troppo lunga si rimpicciolisce e poi l'anteprima avvisa
+- Social, **contatti per post**: rubrica nella scheda Social > Contatti (`web/social-contatti.html`,
+  tabella `social_contacts`: nome, telefono, orari facoltativi, ordine, "proposto" nei post nuovi); ogni
+  post sceglie i suoi con una spunta (`social_events.contacts`, id in ordine). Stanno in fondo a post e
+  story e nel testo da incollare; senza contatti la riga non c'è; troppo lunga si rimpicciolisce e poi
+  l'anteprima avvisa. Un contatto tolto dalla rubrica esce dai post (trigger)
 
 ## Produzione (2026-09-24)
 
@@ -35,11 +36,11 @@
   transazione, dopo una prova con rollback sui dati veri. Account: un superadmin e un admin (resta
   admin, senza Bilancio: deciso così); nessun utente/ospite/kiosk da spostare
 - pagine della 2.5 pubblicate lo stesso giorno (deploy da `2.5-SNAPSHOT`, `d95fca7`)
-- 2026-09-25: tabella `social_contacts` applicata dall'SQL Editor (`supabase/applica_social_contacts.sql`)
+- 2026-09-25: tabella `social_contacts` applicata dall'SQL Editor
 
 ## Da fare
-- inserire i contatti veri dalla pagina Social, riquadro "Contatti nei post" (o dal form del post,
-  "Aggiungi o cambia i telefoni")
+- applicare `supabase/applica_contatti_per_post.sql` dall'SQL Editor (contatti per post), poi
+  inserire i contatti veri in Social > Contatti
 - caricare lo sponsor 958 Santero dalla pagina Social (loghi in `social/santero/`) e la sua campagna
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso

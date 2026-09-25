@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contatti social — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+    .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
+    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px; margin-bottom: 22px; }
+    .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
+    .occhiello { color: var(--testo-soft); margin-bottom: 14px; }
+    .avviso { color: var(--errore); font-weight: 600; }
+    .salva-modifiche { background: var(--giallo) !important; color: #14202E !important; }
+    .azioni { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    /* Una riga per contatto: nome, telefono, orari, proposto, ↑, ✕. */
+    .intestazione, .riga-contatto { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr) 8rem 2.75rem 2.75rem; gap: 8px; align-items: center; }
+    .intestazione { font-weight: 600; color: var(--testo-soft); margin-bottom: 6px; }
+    .riga-contatto { margin-bottom: 6px; }
+    .riga-contatto:first-child .sali { visibility: hidden; }
+    .spunta { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 2.5em; }
+    .spunta input { width: 1.3em; height: 1.3em; }
+    @media (max-width: 700px) {
+      .intestazione { display: none; }
+      .riga-contatto { grid-template-columns: 1fr auto auto; padding: 10px 0; border-top: 1px solid var(--filo); }
+      .riga-contatto input.input { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <nav class="schede-gestione" aria-label="Social" data-voce="social.html">
+    <a href="social.html">Post</a>
+    <a href="social-contatti.html">Contatti</a>
+  </nav>
+  <h1 class="title is-4 mb-4">Contatti</h1>
+
+  <div class="riquadro">
+    <h2>Rubrica per info e iscrizioni</h2>
+    <p class="occhiello">
+      Qui scrivi una volta nome e telefono; poi ogni post sceglie i suoi, con
+      una spunta nel form del post. Gli orari sono facoltativi (es. "dopo le
+      18"). "Proposto" = già spuntato nei post nuovi. Correggere un numero lo
+      corregge anche nei post non ancora pubblicati (il testo da incollare già
+      scritto no: nel post premi "Rifai il testo dai dati").
+    </p>
+    <div class="intestazione" aria-hidden="true"><span>Nome</span><span>Telefono</span><span>Orari</span><span>Proposto</span></div>
+    <div id="righeContatti"></div>
+    <button type="button" class="button is-small is-light" id="btnAggiungi">+ Contatto</button>
+    <p class="avviso mt-2" id="avviso" hidden></p>
+    <div class="azioni" id="azioni">
+      <button type="button" class="button is-link" id="btnSalva">Salva contatti</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+
+  let salvati = "[]";  // la rubrica com'era all'ultimo salvataggio, per "Salva modifiche"
+  let inUso = {};      // id → quanti post non pubblicati lo mostrano
+
+  (async function init() {
+    if (!(await requirePermesso("social"))) return;
+    el("btnAggiungi").addEventListener("click", () => {
+      aggiungi();
+      el("righeContatti").lastElementChild.querySelector("input").focus();
+      aggiorna();
+    });
+    el("righeContatti").addEventListener("input", aggiorna);
+    el("righeContatti").addEventListener("click", (e) => {
+      const b = e.target.closest("button"), riga = b && b.closest(".riga-contatto");
+      if (!riga) return;
+      if (b.classList.contains("sali")) { riga.previousElementSibling.before(riga); b.focus(); }
+      else riga.remove();
+      aggiorna();
+    });
+    el("btnSalva").addEventListener("click", salva);
+    window.addEventListener("beforeunload", (e) => { if (modificati()) { e.preventDefault(); e.returnValue = ""; } });
+    await carica();
+  })();
+
+  async function carica() {
+    const [rubrica, post] = await Promise.all([
+      sb.from("social_contacts").select("id, name, phone, hours, is_default").order("position"),
+      sb.from("social_events").select("contacts").is("published_at", null),
+    ]);
+    if (rubrica.error) { showToast("Errore: " + messaggioErrore(rubrica.error), "is-danger"); return; }
+    inUso = {};
+    for (const p of post.data || []) for (const id of p.contacts || []) inUso[id] = (inUso[id] || 0) + 1;
+    apri(rubrica.data);
+  }
+
+  /** Una riga; `id` c'è per i contatti già salvati. */
+  function aggiungi({ id = "", name = "", phone = "", hours = "", is_default = false } = {}) {
+    const riga = document.createElement("div");
+    riga.className = "riga-contatto";
+    riga.dataset.id = id;
+    riga.innerHTML = `<input class="input" value="${esc(name)}" placeholder="Nome (es. Segreteria)" aria-label="Nome">
+      <input class="input" type="tel" value="${esc(phone)}" placeholder="Telefono" aria-label="Telefono">
+      <input class="input" value="${esc(hours || "")}" placeholder="Orari (facoltativo)" aria-label="Orari per chiamare">
+      <label class="spunta"><input type="checkbox" ${is_default ? "checked" : ""}> <span>Proposto</span></label>
+      <button type="button" class="button is-light sali" aria-label="Sposta su" title="Sposta su">↑</button>
+      <button type="button" class="button is-light" aria-label="Togli questo contatto" title="Togli">✕</button>`;
+    el("righeContatti").append(riga);
+  }
+
+  function apri(righe) {
+    el("righeContatti").innerHTML = "";
+    righe.forEach(aggiungi);
+    if (!righe.length) aggiungi({ is_default: true });
+    salvati = JSON.stringify(daForm());
+    aggiorna();
+  }
+
+  /** Le righe compilate almeno in parte, nell'ordine della pagina. */
+  const daForm = () => [...el("righeContatti").children].map((r) => {
+    const [name, phone, hours] = [...r.querySelectorAll("input.input")].map((i) => i.value.trim());
+    return { id: r.dataset.id, name, phone, hours: hours || null, is_default: r.querySelector("input[type=checkbox]").checked };
+  }).filter((c) => c.name || c.phone || c.hours).map((c, position) => ({ ...c, position }));
+  const modificati = () => JSON.stringify(daForm()) !== salvati;
+
+  /** Avviso per le righe a metà, "Salva modifiche". */
+  function aggiorna() {
+    const mezze = daForm().filter((c) => !c.name || !c.phone).length;
+    el("avviso").hidden = !mezze;
+    el("avviso").textContent = `${mezze === 1 ? "Un contatto non ha" : `${mezze} contatti non hanno`} nome e telefono: scrivili tutti e due.`;
+    const m = modificati();
+    el("btnSalva").textContent = m ? "Salva modifiche" : "Salva contatti";
+    el("btnSalva").classList.toggle("salva-modifiche", m);
+  }
+
+  /** Prima di salvare: se un contatto tolto sta su post non pubblicati, lo si chiede. */
+  function salva() {
+    const righe = daForm();
+    if (righe.some((c) => !c.name || !c.phone)) { showToast("Ogni contatto vuole nome e telefono.", "is-warning"); return; }
+    const restano = new Set(righe.map((c) => c.id));
+    const tolti = JSON.parse(salvati).filter((c) => c.id && !restano.has(c.id) && inUso[c.id]);
+    if (!tolti.length) { scrivi(righe); return; }
+    const quanti = tolti.reduce((n, c) => n + inUso[c.id], 0);
+    chiedi(el("azioni"), `${tolti.map((c) => c.name).join(", ")} ${tolti.length === 1 ? "è" : "sono"} su ${quanti === 1 ? "un post" : `${quanti} post`} non ancora pubblicat${quanti === 1 ? "o" : "i"}: toglierl${tolti.length === 1 ? "o" : "i"} anche da lì?`,
+      "Sì, togli", () => scrivi(righe));
+  }
+
+  /** Domanda scritta sulla pagina, al posto dei pulsanti (come in Social). */
+  function chiedi(dove, domanda, si, alSi) {
+    const pulsanti = [...dove.children];
+    pulsanti.forEach((b) => { b.hidden = true; });
+    const riga = document.createElement("div");
+    riga.style.cssText = "display:flex;flex-wrap:wrap;gap:10px;align-items:center";
+    riga.innerHTML = `<span class="avviso" style="flex-basis:100%">${esc(domanda)}</span>
+      <button type="button" class="button is-danger">${esc(si)}</button>
+      <button type="button" class="button is-light">Annulla</button>`;
+    const chiudi = () => { riga.remove(); pulsanti.forEach((b) => { b.hidden = false; }); };
+    const [bSi, bNo] = riga.querySelectorAll("button");
+    bSi.addEventListener("click", () => { chiudi(); alSi(); });
+    bNo.addEventListener("click", chiudi);
+    dove.append(riga);
+    bNo.focus();
+  }
+
+  /**
+   * Un upsert per i contatti già salvati, un insert per i nuovi (l'id lo dà
+   * il database e torna sulla riga, così se il salvataggio si ferma a metà
+   * riprovare non li duplica), poi via quelli non più in pagina. I post che li
+   * avevano li ignorano (l'id non si trova più).
+   */
+  async function scrivi(righe) {
+    setLoading(true);
+    try {
+      const vecchi = righe.filter((c) => c.id), nuovi = righe.filter((c) => !c.id);
+      if (vecchi.length) {
+        const { error } = await sb.from("social_contacts").upsert(vecchi);
+        if (error) throw error;
+      }
+      if (nuovi.length) {
+        const { data, error } = await sb.from("social_contacts").insert(nuovi.map(({ id, ...c }) => c)).select("id");
+        if (error) throw error;
+        const senzaId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input.input")].some((i) => i.value.trim()));
+        data.forEach((d, i) => { nuovi[i].id = senzaId[i].dataset.id = d.id; });
+      }
+      let via = sb.from("social_contacts").delete();
+      via = righe.length ? via.not("id", "in", `(${righe.map((c) => c.id).join(",")})`) : via.not("id", "is", null);
+      const { error } = await via;
+      if (error) throw error;
+      apri(righe);
+      showToast("Contatti salvati.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>

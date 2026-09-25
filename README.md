@@ -36,6 +36,7 @@ misure stanno in `web/brand.css`, che nasce da
 | `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
 | `web/gestione.html` | solo superadmin, scheda "Ruoli e vedi come" di Gestione (con Amministrazione, Utenti e Impostazioni): chi fa cosa, e "Vedi come" per guardare il sito con gli occhi di un altro ruolo |
 | `web/social.html` | post per Instagram e Facebook (grafica "Skipass"), calendario del mese, copertina, campagne degli sponsor: anteprima, PNG e testo da incollare |
+| `web/social-contatti.html` | rubrica dei contatti per info e iscrizioni (scheda Contatti di Social): ogni post sceglie i suoi |
 | `ricerca/index.html` | sito a parte: si cerca un socio, con i pulsanti per chiamarlo o scrivergli su WhatsApp |
 | `ricerca/gite.html` | abbonamenti a viaggi: chi ne ha uno, quante gite ha ancora, e si scalano da qui; ai tesserati senza abbonamento se ne assegna uno, pagato o da pagare, anche senza linea |
 

@@ -5,7 +5,7 @@
 //   node web/test-social.js
 
 const assert = require("assert");
-const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, modelloPost,
+const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, SOCIAL } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
@@ -63,15 +63,21 @@ assert.match(testo, /#lathuile/);
 // Senza contatti il testo non ha la riga dei telefoni (vuota).
 assert.doesNotMatch(testo, /Info e iscrizioni/, "riga dei telefoni senza contatti");
 
-// Contatti dalla pagina: nome, telefono e, se ci sono, gli orari fra parentesi.
+// Ogni post ha i suoi contatti, scelti dalla rubrica: nome, telefono e, se
+// ci sono, gli orari fra parentesi, nell'ordine del post.
 impostaContatti([
-  { name: "Segreteria", phone: "011 123 4567", hours: "lun–ven 18–20" },
-  { name: "Marco", phone: "333 765 4321", hours: null },
-  { name: "", phone: "347 000 0000" },  // riga a metà: non va nel post
+  { id: "s", name: "Segreteria", phone: "011 123 4567", hours: "lun–ven 18–20", is_default: true },
+  { id: "m", name: "Marco", phone: "333 765 4321", hours: null },
+  { id: "x", name: "", phone: "347 000 0000" },  // riga a metà: non va nei post
 ]);
-assert.match(testoPost(gita), /Info e iscrizioni: Segreteria 011 123 4567 \(lun–ven 18–20\) · Marco 333 765 4321\n/);
-assert.doesNotMatch(testoPost(gita), /347/, "contatto senza nome finito nel post");
 assert.strictEqual(SOCIAL.contatti.length, 2);
+assert.doesNotMatch(testoPost(gita), /Info e iscrizioni/, "contatti della rubrica su un post che non li ha scelti");
+assert.match(testoPost({ ...gita, contacts: ["m", "s"] }),
+  /Info e iscrizioni: Marco 333 765 4321 · Segreteria 011 123 4567 \(lun–ven 18–20\)\n/);
+assert.match(testoPost({ ...gita, contacts: ["m"] }), /Info e iscrizioni: Marco 333 765 4321\n/);
+// Un contatto tolto dalla rubrica sparisce dal post, e uno a metà non c'entra.
+assert.deepStrictEqual(contattiDi({ contacts: ["tolto", "x", "s"] }).map((c) => c.name), ["Segreteria"]);
+assert.deepStrictEqual(modelloPost({ ...gita, contacts: ["s"] }, "post").contatti.map((c) => c.phone), ["011 123 4567"]);
 impostaContatti([]);
 
 // --- Campagna sponsor -------------------------------------------------------
