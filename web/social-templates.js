@@ -156,11 +156,14 @@ function badge(s, k = 1) {
     const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
     return `${100 + r * Math.sin(a)},${100 - r * Math.cos(a)}`;
   }).join(" ");
-  const corso = s.corso ? `<div style="position:relative;z-index:2;width:${d}px;height:${d}px;margin-right:${-8 * k}px;align-self:center;transform:rotate(-12deg)">
+  // Margini verticali di -d/2: la coccarda non occupa altezza, così il
+  // riquadro della data resta alto uguale con e senza corso, e lei gli sta
+  // centrata sopra.
+  const corso = s.corso ? `<div style="position:relative;z-index:2;width:${d}px;height:${d}px;margin:${-d / 2}px ${-8 * k}px ${-d / 2}px 0;align-self:center;transform:rotate(-12deg)">
       <svg class="abs" style="inset:0" width="${d}" height="${d}" viewBox="-6 -6 212 212"><polygon points="${pts}" fill="${CAT.corso.c}" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></svg>
       <div class="abs" style="inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:${4 * k}px">
         ${skier(62 * k)}<div style="font-size:${36 * k}px;font-weight:800;line-height:1">Corso</div></div></div>` : "";
-  return `<div style="display:flex;align-items:stretch">${corso}
+  return `<div style="display:flex;align-items:flex-start">${corso}
     <div style="${box};position:relative;background:${C.c};color:${C.ink};min-width:${190 * k}px">
     <div style="font-size:${34 * k}px;font-weight:700">${escS(day)}</div>
     <div style="font-size:${100 * k}px;font-weight:800;line-height:.95;letter-spacing:-.03em;padding-bottom:${10 * k}px">${escS(big)}</div></div></div>`;
