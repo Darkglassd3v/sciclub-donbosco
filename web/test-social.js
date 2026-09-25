@@ -1,12 +1,13 @@
 // Controllo dei pezzi dei post social che possono sbagliare in silenzio
 // (web/social-templates.js): colore del giorno, prezzo facoltativo, testo del
-// post, indirizzo con UTM, contrasto dei colori di uno sponsor.
+// post, indirizzo con UTM, contrasto dei colori di uno sponsor, cosa manca a
+// un post per essere pronto.
 //
 //   node web/test-social.js
 
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
-        contrasto, schiarisci, indirizzoUtm, testoPost, SOCIAL } = require("./social-templates.js");
+        contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, SOCIAL } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -103,6 +104,18 @@ assert.match(testoSponsor, /@santero958/);
 assert.ok(testoSponsor.includes(SOCIAL.avvertenzaAlcol), "sponsor alcolico senza avvertenza");
 assert.ok(!testoPost(campagna, { ...santero, alcohol: false }, "2026/27").includes(SOCIAL.avvertenzaAlcol),
   "avvertenza su uno sponsor non alcolico");
+
+// --- Pronto o da completare (elenco e testata del post) ---------------------
+
+assert.deepStrictEqual(mancanti(gita), [], "gita completa segnata da completare");
+assert.deepStrictEqual(mancanti({ ...gita, deadline: null }), ["la scadenza delle iscrizioni"]);
+assert.deepStrictEqual(mancanti({ kind: "gita", title: " ", stops: [["", ""]], prices: [[null, ""]] }),
+  ["la meta", "il giorno", "le partenze", "la quota", "la scadenza delle iscrizioni"]);
+assert.deepStrictEqual(mancanti({ ...senzaPrezzo, prices: [] }), [], "quota chiesta anche se nascosta");
+assert.deepStrictEqual(mancanti({ kind: "cena", title: "Cena sociale" }), ["la data"]);
+assert.deepStrictEqual(mancanti({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
+assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo" }), ["lo sponsor"]);
+assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo", sponsor_id: "s1" }), []);
 
 // --- Colori -----------------------------------------------------------------
 

@@ -12,24 +12,86 @@
   <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=swap">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    /* Si usa da PC: due colonne, elenco a sinistra e lavoro a destra. */
+    /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
+     * post i campi accanto all'anteprima. */
     .container-main { max-width: 1400px; margin: 28px auto 80px; padding: 0 18px; }
-    .colonne-social { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
-    /* Nelle schede che non sono Post la colonna dell'elenco non c'è. */
-    .colonne-social.una-colonna { grid-template-columns: 1fr; }
-    [data-sezione][hidden] { display: none !important; }
+    .colonne-social { display: grid; grid-template-columns: 18rem minmax(0, 1fr); gap: 24px; align-items: start; }
+    @media (max-width: 900px) { .colonne-social { grid-template-columns: minmax(0, 1fr); } }
+    [data-sezione][hidden], [data-modulo][hidden] { display: none !important; }
     .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px; margin-bottom: 22px; }
     .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
     .occhiello { color: var(--testo-soft); margin-bottom: 14px; }
 
+    /* Elenco: un solo "Nuovo post" che apre i tipi, Da fare / Pubblicati,
+     * i post divisi per mese. */
+    .nuovo-post > summary { list-style: none; width: 100%; box-sizing: border-box; }
+    .nuovo-post > summary::-webkit-details-marker { display: none; }
+    .menu-nuovo { display: grid; gap: 8px; margin-top: 10px; }
+    .menu-nuovo .button { justify-content: flex-start; }
+    .vista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 14px 0 4px;
+      border: 2px solid var(--filo); border-radius: 999px; }
+    .vista button { min-height: 42px; border: 0; border-radius: 999px; background: none; color: var(--blu);
+      font: inherit; font-weight: 700; cursor: pointer; }
+    .vista button[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .elenco-post { list-style: none; margin: 0; padding: 0; }
-    .elenco-post li button { width: 100%; display: flex; gap: 12px; align-items: center; text-align: left;
-      background: none; border: 0; border-top: 1px solid var(--filo); padding: 12px 6px; cursor: pointer; font: inherit; color: inherit; }
-    .elenco-post li button:hover, .elenco-post li button[aria-current="true"] { background: var(--blu-light); }
-    .elenco-post .data { font-size: 1.4rem; font-weight: 800; min-width: 3.4em; letter-spacing: -.02em; }
-    .elenco-post .quale { flex: 1; }
-    .elenco-post .quale small { display: block; color: var(--testo-soft); }
-    .elenco-post .pubblicato { color: var(--ok); font-weight: 600; white-space: nowrap; }
+    .elenco-post .mese { margin: 14px 0 4px; font-size: .9375rem; font-weight: 700; color: var(--testo-soft); }
+    .elenco-post li button { width: 100%; display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; align-items: center;
+      text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px; cursor: pointer; font: inherit; color: inherit; }
+    .elenco-post li button:hover { background: var(--blu-light); }
+    .elenco-post li button[aria-current="true"] { background: var(--blu-light); box-shadow: inset 0 0 0 2px var(--blu); }
+    /* Il giorno nel colore della gita, come nei post e nel calendario. */
+    .elenco-post .giorno { display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 3.4rem; height: 3.4rem; border-radius: 12px; background: var(--riga-alt); line-height: 1.1; font-weight: 800; }
+    .giorno .sett { font-size: .8rem; font-weight: 700; }
+    .giorno .gm { font-size: 1.05rem; letter-spacing: -.02em; }
+    .elenco-post .quale { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-weight: 600; }
+    .elenco-post .quale small { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-weight: 500; color: var(--testo-soft); }
+    .stato { display: inline-flex; align-items: center; min-height: 1.6rem; padding: 0 .6em; border-radius: 999px;
+      font-size: .875rem; font-weight: 700; white-space: nowrap; }
+    .stato.pronto { background: var(--blu-light); color: var(--blu-dark); }
+    .stato.manca { background: var(--giallo-light); color: var(--giallo-dark); }
+    .stato.uscito { background: var(--ok-bg); color: var(--ok); }
+
+    /* Il post aperto: testata con Salva sempre in vista, i campi, e di lato
+     * l'anteprima con quello che serve per pubblicare. */
+    .vuoto { text-align: center; padding: 64px 24px; color: var(--testo-soft); font-size: 1.15rem; }
+    #editor { container-type: inline-size; }
+    .testa-post { position: sticky; top: var(--barra-h); z-index: 5; display: flex; align-items: center; gap: 16px;
+      margin: -24px -24px 20px; padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--filo);
+      border-radius: var(--raggio-card) var(--raggio-card) 0 0; }
+    .testa-post .titoli { flex: 1; min-width: 0; }
+    .testa-post .occhiello-post { color: var(--testo-soft); font-weight: 600; font-size: .9375rem; }
+    .testa-post h2 { margin: 0; font-size: 1.75rem; }
+    .testa-post .manca-cosa { color: var(--giallo-dark); font-weight: 600; font-size: .9375rem; }
+    .griglia-post { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: 28px; align-items: start; }
+    .parte { margin-bottom: 26px; }
+    .parte h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 10px; }
+    .elimina { padding-top: 18px; border-top: 1px solid var(--filo); }
+    .lato { position: sticky; top: calc(var(--barra-h) + var(--testa, 90px) + 12px); max-height: calc(100vh - var(--barra-h) - var(--testa, 90px) - 24px);
+      overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 14px; background: var(--sfondo); }
+    .lato h3 { font-size: 1.15rem; font-weight: 600; }
+    .lato hr { margin: 0; height: 1px; background: var(--filo); }
+    .lato .button { width: 100%; }
+    .lato .azioni-post { margin-top: 0; flex-wrap: nowrap; }
+    .lato .azioni-post .button { width: auto; flex: 1; }
+    .lato .anteprime { margin-top: 0; }
+    /* L'avviso delle anteprime lo dà la riga sotto, per tutti i formati. */
+    .lato .sborda { display: none; }
+    .formati { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; align-self: flex-start;
+      border: 2px solid var(--filo); border-radius: 999px; background: #fff; }
+    .formati button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--blu);
+      font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer; }
+    .formati button[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .scarica { display: grid; gap: 8px; }
+    /* Le anteprime non scelte restano disegnate, fuori dallo schermo: fit()
+     * le deve misurare e il pulsante le deve poter scaricare. */
+    .anteprima.fuori { position: absolute; left: -10000px; top: 0; }
+    /* Con il testo grande (A+) o lo schermo stretto le due colonne non ci
+     * stanno: l'anteprima va sotto i campi. */
+    @container (max-width: 50rem) {
+      .griglia-post { grid-template-columns: minmax(0, 1fr); }
+      .lato { position: static; max-height: none; overflow: visible; }
+    }
 
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
@@ -49,12 +111,9 @@
     .anteprima .sborda { color: var(--errore); font-weight: 600; margin-top: 6px; }
 
     .azioni-post { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-    #testoPost { min-height: 12em; font-family: inherit; }
+    #testoPost { min-height: 9em; font-family: inherit; }
     .avviso-contrasto { color: var(--errore); font-weight: 600; }
     .salva-modifiche { background: var(--giallo) !important; color: #14202E !important; }
-    /* Un pulsante grande per tipo di post, uno sotto l'altro. */
-    .nuovi { display: grid; gap: 10px; margin-bottom: 14px; }
-    .nuovi .button { justify-content: flex-start; height: auto; padding: 12px 18px; font-weight: 600; }
     /* Domanda di conferma scritta sulla pagina (chiedi()), al posto dei pulsanti. */
     .domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
@@ -81,6 +140,25 @@
     /* Contatti del post: una spunta per ogni contatto della rubrica. */
     .scelta-contatti { display: flex; flex-direction: column; gap: 2px; }
     .scelta-contatti small { font-weight: 500; color: var(--testo-soft); }
+
+    /* Grafiche: calendario del mese e copertina, una accanto all'altra. */
+    .due-colonne { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 24px; align-items: start; }
+    @media (max-width: 1100px) { .due-colonne { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Impostazioni: sponsor, contatti e giorni in breve, ognuno nel colore
+     * della sua scheda di prima; Modifica apre il modulo. */
+    .tre-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 24px; align-items: start; }
+    .riassunto { display: flex; flex-direction: column; gap: 12px; }
+    .riassunto h2 { color: var(--colore); margin-bottom: 0; }
+    .riassunto .occhiello { margin-bottom: 0; }
+    .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
+    .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
+    .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .righe-riassunto small { color: var(--testo-soft); }
+    .logo-sponsor { flex: none; width: 4.5rem; height: 2.8rem; border: 1px solid var(--filo); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; }
+    .logo-sponsor img { max-width: 80%; max-height: 70%; }
+    .indietro { display: inline-block; font-weight: 600; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -108,188 +186,267 @@
 </header>
 
 <div class="container-main">
+  <!-- Tre schede: Post (il lavoro di ogni settimana), Grafiche, e
+       Impostazioni, in fondo e grigia perché si tocca poche volte a stagione. -->
   <nav class="schede-social" aria-label="Social" data-voce="social.html">
-    <a href="social.html#post" style="--scheda:#084C8D">Post</a>
-    <a href="social.html#calendario" style="--scheda:#147A45">Calendario del mese</a>
-    <a href="social.html#copertina" style="--scheda:#5B2A86">Copertina Facebook</a>
-    <a href="social.html#sponsor" style="--scheda:#8A5300">Sponsor</a>
-    <a href="social.html#giorni" style="--scheda:#B3261E">Giorni e colori delle gite</a>
-    <a href="social-contatti.html" style="--scheda:#0B6E69">Contatti</a>
+    <a href="social.html#post" style="--scheda:#084C8D">Post<span class="conta" id="contaDaFare"></span></a>
+    <a href="social.html#grafiche" style="--scheda:#147A45">Grafiche</a>
+    <a class="a-destra" href="social.html#impostazioni" style="--scheda:#4A5361"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Impostazioni</a>
   </nav>
   <h1 class="title is-4 mb-4" id="titoloSezione">Post</h1>
 
-  <div class="colonne-social">
-    <!-- Colonna sinistra: i post, dal prossimo in avanti. -->
-    <div data-sezione="post">
-      <div class="riquadro">
-        <h2>Da fare</h2>
-        <div class="nuovi" id="azioniNuovo">
-          <button type="button" class="button is-link" data-nuovo="gita">+ Nuova gita</button>
-          <button type="button" class="button is-link" data-nuovo="corso">+ Nuovo corso</button>
-          <button type="button" class="button is-link" data-nuovo="sponsor">+ Nuova campagna sponsor</button>
-          <button type="button" class="button is-link is-light" data-nuovo="cena">+ Altro evento (cena, gara, servizi)</button>
+  <!-- Post: a sinistra i post, dal prossimo in avanti; a destra quello aperto. -->
+  <div class="colonne-social" data-sezione="post">
+    <div class="riquadro">
+      <div id="azioniNuovo">
+        <details class="nuovo-post" id="menuNuovo">
+          <summary class="button is-link">+ Nuovo post</summary>
+          <div class="menu-nuovo">
+            <button type="button" class="button is-light" data-nuovo="gita">Gita</button>
+            <button type="button" class="button is-light" data-nuovo="corso">Corso</button>
+            <button type="button" class="button is-light" data-nuovo="cena">Cena o festa</button>
+            <button type="button" class="button is-light" data-nuovo="gara">Gara</button>
+            <button type="button" class="button is-light" data-nuovo="servizi">Servizi</button>
+            <button type="button" class="button is-light" data-nuovo="sponsor">Campagna sponsor</button>
+          </div>
+        </details>
+      </div>
+      <div class="vista" role="group" aria-label="Quali post">
+        <button type="button" data-vista="dafare" aria-pressed="true">Da fare</button>
+        <button type="button" data-vista="pubblicati" aria-pressed="false">Pubblicati</button>
+      </div>
+      <ul class="elenco-post" id="elencoPost"></ul>
+    </div>
+
+    <div>
+      <div class="riquadro vuoto" id="nessunPost">Scegli un post dall'elenco, oppure premi «+ Nuovo post».</div>
+
+      <div class="riquadro" id="editor" hidden>
+        <div class="testa-post" id="testaPost">
+          <div class="titoli">
+            <p class="occhiello-post" id="occhielloPost"></p>
+            <h2 id="titoloEditor">Nuovo post</h2>
+            <p class="manca-cosa" id="mancaCosa" hidden></p>
+          </div>
+          <div id="statoPost"></div>
+          <button type="button" class="button is-link" id="btnSalva">Salva</button>
         </div>
-        <label class="spunta"><input type="checkbox" id="anchePubblicati"> Mostra anche quelli già pubblicati</label>
-        <ul class="elenco-post" id="elencoPost"></ul>
+
+        <div class="griglia-post">
+          <div>
+            <section class="parte" aria-labelledby="pQuando">
+              <h3 id="pQuando">Quando</h3>
+              <div class="campi">
+                <div class="field" data-per="evento sponsor">
+                  <label class="label" for="fData">Data</label>
+                  <input class="input" type="date" id="fData">
+                </div>
+                <div class="field campo-largo" data-per="gita">
+                  <span class="label" id="lCalGita">Giorno della gita</span>
+                  <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
+                </div>
+                <div class="field" data-per="gita">
+                  <label class="label" for="fScadenza">Iscrizioni entro</label>
+                  <input class="input" type="date" id="fScadenza">
+                </div>
+                <div class="field" data-per="gita">
+                  <label class="spunta"><input type="checkbox" id="fCorso"> Nello stesso giorno c'è il corso</label>
+                </div>
+              </div>
+            </section>
+
+            <section class="parte" aria-labelledby="pCosa">
+              <h3 id="pCosa">Cosa</h3>
+              <div class="campi">
+                <!-- Il tipo si sceglie con "+ Nuovo post"; resta qui solo per gli
+                     eventi, che si possono spostare fra corso, cena, gara e servizi. -->
+                <div class="field" data-per="evento">
+                  <label class="label" for="fTipo">Tipo di evento</label>
+                  <select class="input" id="fTipo">
+                    <option value="gita" hidden>Gita</option>
+                    <option value="corso">Corso</option>
+                    <option value="cena">Cena o festa</option>
+                    <option value="gara">Gara</option>
+                    <option value="servizi">Servizi</option>
+                    <option value="sponsor" hidden>Campagna sponsor</option>
+                  </select>
+                </div>
+                <div class="field" data-per="sponsor">
+                  <label class="label" for="fSponsor">Sponsor</label>
+                  <select class="input" id="fSponsor"></select>
+                </div>
+                <div class="field campo-largo">
+                  <label class="label" for="fTitolo" id="lTitolo">Meta</label>
+                  <textarea class="textarea" id="fTitolo" rows="1"></textarea>
+                </div>
+                <div class="field campo-largo" data-per="evento sponsor">
+                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotitolo</label>
+                  <input class="input" id="fSottotitolo">
+                </div>
+                <div class="field campo-largo" data-per="sponsor">
+                  <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
+                  <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
+                </div>
+                <div class="field" data-per="sponsor">
+                  <label class="label" for="fCta">Testo del pulsante</label>
+                  <input class="input" id="fCta" placeholder="Es. Scopri le bollicine">
+                </div>
+                <div class="field campo-largo" data-per="gita">
+                  <label class="label">Partenze (ora e luogo)</label>
+                  <div class="righe-editor" id="fFermate"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fFermate">+ Partenza</button>
+                </div>
+                <div class="field campo-largo" data-per="gita evento">
+                  <label class="label">Prezzi</label>
+                  <div class="righe-editor" id="fPrezzi"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fPrezzi" data-per="evento">+ Prezzo</button>
+                  <label class="spunta"><input type="checkbox" id="fMostraPrezzo" checked> Mostra il prezzo nel post</label>
+                </div>
+                <div class="field campo-largo" data-per="evento">
+                  <label class="label">Informazioni (es. Età · 5–12 anni)</label>
+                  <div class="righe-editor" id="fInfo"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fInfo">+ Informazione</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="parte" aria-labelledby="pFondo" data-per="gita evento">
+              <h3 id="pFondo">Contatti e foto</h3>
+              <div class="campi">
+                <div class="field campo-largo">
+                  <span class="label" id="lContatti">Contatti in fondo al post</span>
+                  <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
+                  <a class="button is-small is-light mt-2" href="social-contatti.html">Aggiungi o cambia i contatti</a>
+                </div>
+                <div class="field">
+                  <label class="label" for="fFoto">Foto (facoltativa)</label>
+                  <input class="input" type="file" id="fFoto" accept="image/*">
+                  <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
+                </div>
+              </div>
+            </section>
+
+            <div class="elimina" id="azioniElimina">
+              <button type="button" class="button is-small is-danger is-outlined" id="btnElimina">Elimina questo post</button>
+            </div>
+          </div>
+
+          <aside class="lato" aria-label="Anteprima e pubblicazione">
+            <h3>Come verrà</h3>
+            <div class="formati" id="formati" role="group" aria-label="Quale immagine" hidden></div>
+            <div class="anteprime" id="anteprime"></div>
+            <p class="occhiello mb-0" id="senzaAnteprima" hidden></p>
+            <p class="avviso-contrasto" id="sbordaTutti" hidden></p>
+            <div class="scarica" id="scarica"></div>
+            <hr>
+            <label class="label mb-0" for="testoPost">Testo da incollare sotto al post</label>
+            <textarea class="textarea" id="testoPost"></textarea>
+            <div class="azioni-post">
+              <button type="button" class="button is-light" id="btnCopia">Copia il testo</button>
+              <button type="button" class="button is-light" id="btnRigenera">Rifai dai dati</button>
+            </div>
+            <p id="linkUtm" hidden></p>
+            <hr>
+            <button type="button" class="button is-success" id="btnPubblicato">Segna come pubblicato</button>
+            <p class="help mt-0">Quando è uscito su Instagram e Facebook.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grafiche: le immagini che non sono di un post solo. -->
+  <div class="due-colonne" data-sezione="grafiche" hidden>
+    <div class="riquadro">
+      <h2>Calendario del mese</h2>
+      <p class="occhiello">Si fa da solo con le gite salvate del mese scelto.</p>
+      <div class="campi">
+        <div class="field"><label class="label" for="calMese">Mese</label><select class="input" id="calMese"></select></div>
+        <div class="field"><label class="label" for="calTitolo">Titolo</label><input class="input" id="calTitolo"></div>
+      </div>
+      <div class="anteprime" id="anteprimaCalendario"></div>
+    </div>
+
+    <div class="riquadro">
+      <h2>Copertina Facebook</h2>
+      <p class="occhiello">Una volta a stagione.</p>
+      <div class="campi">
+        <div class="field"><label class="label" for="copTitolo">Titolo</label><input class="input" id="copTitolo"></div>
+        <div class="field campo-largo"><label class="label" for="copSotto">Sotto</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
+      </div>
+      <div class="anteprime" id="anteprimaCopertina"></div>
+    </div>
+  </div>
+
+  <!-- Impostazioni: in breve, poi il modulo scelto (#sponsor, #giorni). -->
+  <div data-sezione="impostazioni" hidden>
+    <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
+    <div class="tre-colonne" id="riassunti">
+      <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
+        <h2 id="rSponsor">Sponsor</h2>
+        <p class="occhiello">Marchio e colori per le campagne.</p>
+        <ul class="righe-riassunto" id="riassuntoSponsor"></ul>
+        <a class="button is-light" href="#sponsor" data-sponsor="">+ Aggiungi uno sponsor</a>
+      </section>
+      <section class="riquadro riassunto" style="--colore:#0B6E69" aria-labelledby="rContatti">
+        <h2 id="rContatti">Contatti</h2>
+        <p class="occhiello">Nome e telefono in fondo ai post.</p>
+        <ul class="righe-riassunto" id="riassuntoContatti"></ul>
+        <a class="button is-light" href="social-contatti.html">Modifica la rubrica</a>
+      </section>
+      <section class="riquadro riassunto" style="--colore:#B3261E" aria-labelledby="rGiorni">
+        <h2 id="rGiorni">Giorni e colori delle gite</h2>
+        <p class="occhiello">Il giorno decide il colore della gita nei post e nel calendario.</p>
+        <div class="legenda mt-0" id="riassuntoGiorni"></div>
+        <p class="help mt-0">Una gita in un altro giorno prende il blu del club.</p>
+        <a class="button is-light" href="#giorni">Cambia giorni e colori</a>
+      </section>
+    </div>
+
+    <div class="riquadro" data-modulo="sponsor" hidden>
+      <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
+      <h2>Sponsor</h2>
+      <p class="occhiello">
+        Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
+        una campagna nuova: <b>+ Nuovo post</b> › <b>Campagna sponsor</b>, nella scheda Post.
+      </p>
+      <div class="campi">
+        <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
+      </div>
+      <div class="campi mt-3">
+        <div class="field"><label class="label" for="sNome">Nome</label><input class="input" id="sNome"></div>
+        <div class="field"><label class="label" for="sLivello">Livello</label>
+          <select class="input" id="sLivello"><option>Main sponsor</option><option>Sponsor</option><option>Partner</option></select></div>
+        <div class="field"><label class="label" for="sUrl">Sito</label><input class="input" id="sUrl" placeholder="www.esempio.it"></div>
+        <div class="field"><label class="label" for="sHandle">Profilo Instagram</label><input class="input" id="sHandle" placeholder="@profilo"></div>
+        <div class="field"><label class="label" for="sLogo">Logo (per fondi chiari)</label><input class="input" type="file" id="sLogo" accept="image/*"></div>
+        <div class="field"><label class="label" for="sLogoScuro">Logo per fondi scuri (facoltativo)</label><input class="input" type="file" id="sLogoScuro" accept="image/*"></div>
+        <div class="field"><label class="label" for="sScuro">Colore scuro</label><input class="input" type="color" id="sScuro" value="#14202E"></div>
+        <div class="field"><label class="label" for="sChiaro">Colore chiaro</label><input class="input" type="color" id="sChiaro" value="#FFFFFF"></div>
+        <div class="field"><label class="label" for="sAccento">Colore d'accento</label><input class="input" type="color" id="sAccento" value="#FCCF02"></div>
+        <div class="field"><label class="spunta"><input type="checkbox" id="sAlcol"> Vende alcolici (avvertenza di legge su ogni formato)</label></div>
+      </div>
+      <p class="avviso-contrasto mt-2" id="avvisoContrasto" hidden></p>
+      <div class="anteprime" id="anteprimaLoghi"></div>
+      <div class="azioni-post" id="azioniSponsor">
+        <button type="button" class="button is-link" id="btnSalvaSponsor">Salva sponsor</button>
+        <button type="button" class="button is-danger is-light" id="btnEliminaSponsor" hidden>Elimina sponsor</button>
       </div>
     </div>
 
-    <!-- Colonna destra: il post aperto, o la scheda scelta (calendario,
-         copertina, sponsor, giorni); si vede solo la sezione della scheda. -->
-    <div>
-      <div class="riquadro" id="editor" data-sezione="post" hidden>
-        <h2 id="titoloEditor">Nuovo post</h2>
-        <div class="campi">
-          <div class="field">
-            <label class="label" for="fTipo">Tipo</label>
-            <select class="input" id="fTipo">
-              <option value="gita">Gita</option>
-              <option value="corso">Corso</option>
-              <option value="cena">Cena o festa</option>
-              <option value="gara">Gara</option>
-              <option value="servizi">Servizi</option>
-              <option value="sponsor">Campagna sponsor</option>
-            </select>
-          </div>
-          <div class="field" data-per="evento sponsor">
-            <label class="label" for="fData">Data</label>
-            <input class="input" type="date" id="fData">
-          </div>
-          <div class="field campo-largo" data-per="gita">
-            <span class="label" id="lCalGita">Giorno della gita</span>
-            <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
-          </div>
-          <div class="field" data-per="sponsor">
-            <label class="label" for="fSponsor">Sponsor</label>
-            <select class="input" id="fSponsor"></select>
-          </div>
-          <div class="field campo-largo">
-            <label class="label" for="fTitolo" id="lTitolo">Meta</label>
-            <textarea class="textarea" id="fTitolo" rows="1"></textarea>
-          </div>
-          <div class="field campo-largo" data-per="evento sponsor">
-            <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotitolo</label>
-            <input class="input" id="fSottotitolo">
-          </div>
-          <div class="field campo-largo" data-per="sponsor">
-            <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
-            <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
-          </div>
-          <div class="field" data-per="sponsor">
-            <label class="label" for="fCta">Testo del pulsante</label>
-            <input class="input" id="fCta" placeholder="Es. Scopri le bollicine">
-          </div>
-          <div class="field campo-largo" data-per="gita">
-            <label class="label">Partenze (ora e luogo)</label>
-            <div class="righe-editor" id="fFermate"></div>
-            <button type="button" class="button is-small is-light" data-aggiungi="fFermate">+ Partenza</button>
-          </div>
-          <div class="field campo-largo" data-per="gita evento">
-            <label class="label">Prezzi</label>
-            <div class="righe-editor" id="fPrezzi"></div>
-            <button type="button" class="button is-small is-light" data-aggiungi="fPrezzi" data-per="evento">+ Prezzo</button>
-            <label class="spunta"><input type="checkbox" id="fMostraPrezzo" checked> Mostra il prezzo nel post</label>
-          </div>
-          <div class="field campo-largo" data-per="evento">
-            <label class="label">Informazioni (es. Età · 5–12 anni)</label>
-            <div class="righe-editor" id="fInfo"></div>
-            <button type="button" class="button is-small is-light" data-aggiungi="fInfo">+ Informazione</button>
-          </div>
-          <div class="field" data-per="gita">
-            <label class="label" for="fScadenza">Iscrizioni entro</label>
-            <input class="input" type="date" id="fScadenza">
-          </div>
-          <div class="field" data-per="gita">
-            <label class="spunta"><input type="checkbox" id="fCorso"> Nello stesso giorno c'è il corso</label>
-          </div>
-          <div class="field" data-per="gita evento">
-            <label class="label" for="fFoto">Foto (facoltativa)</label>
-            <input class="input" type="file" id="fFoto" accept="image/*">
-            <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
-          </div>
-          <div class="field campo-largo" data-per="gita evento">
-            <span class="label" id="lContatti">Contatti in fondo al post</span>
-            <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
-            <a class="button is-small is-light mt-2" href="social-contatti.html">Aggiungi o cambia i contatti</a>
-          </div>
-        </div>
-
-        <div class="anteprime" id="anteprime"></div>
-
-        <div class="field mt-5">
-          <label class="label" for="testoPost">Testo da incollare sotto al post</label>
-          <textarea class="textarea" id="testoPost"></textarea>
-        </div>
-        <p id="linkUtm" class="mb-3" hidden></p>
-
-        <div class="azioni-post" id="azioniPost">
-          <button type="button" class="button is-link" id="btnSalva">Salva</button>
-          <button type="button" class="button is-light" id="btnRigenera">Rifai il testo dai dati</button>
-          <button type="button" class="button is-light" id="btnCopia">Copia il testo</button>
-          <button type="button" class="button is-success is-light" id="btnPubblicato">Segna come pubblicato</button>
-          <button type="button" class="button is-danger is-light" id="btnElimina">Elimina</button>
-        </div>
+    <div class="riquadro" id="giorniGita" data-modulo="giorni" hidden>
+      <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
+      <h2>Giorni e colori delle gite</h2>
+      <p class="occhiello">
+        Il giorno della settimana decide il colore della gita nei post e nel
+        calendario del mese. Quando inserisci una gita il calendario ti mostra
+        questi giorni colorati; un altro giorno si può scegliere lo stesso.
+      </p>
+      <div id="righeGiorni"></div>
+      <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
+      <div class="azioni-post">
+        <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
       </div>
-
-      <div class="riquadro" data-sezione="calendario">
-        <p class="occhiello">Si fa da solo con le gite salvate del mese scelto.</p>
-        <div class="campi">
-          <div class="field"><label class="label" for="calMese">Mese</label><select class="input" id="calMese"></select></div>
-          <div class="field"><label class="label" for="calTitolo">Titolo</label><input class="input" id="calTitolo"></div>
-        </div>
-        <div class="anteprime" id="anteprimaCalendario"></div>
-      </div>
-
-      <div class="riquadro" data-sezione="copertina">
-        <div class="campi">
-          <div class="field"><label class="label" for="copTitolo">Titolo</label><input class="input" id="copTitolo"></div>
-          <div class="field campo-largo"><label class="label" for="copSotto">Sotto</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
-        </div>
-        <div class="anteprime" id="anteprimaCopertina"></div>
-      </div>
-
-      <div class="riquadro" data-sezione="sponsor">
-        <p class="occhiello">
-          Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
-          una campagna nuova: <b>+ Nuova campagna sponsor</b>, nella scheda Post.
-        </p>
-        <div class="campi">
-          <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
-        </div>
-        <div class="campi mt-3">
-          <div class="field"><label class="label" for="sNome">Nome</label><input class="input" id="sNome"></div>
-          <div class="field"><label class="label" for="sLivello">Livello</label>
-            <select class="input" id="sLivello"><option>Main sponsor</option><option>Sponsor</option><option>Partner</option></select></div>
-          <div class="field"><label class="label" for="sUrl">Sito</label><input class="input" id="sUrl" placeholder="www.esempio.it"></div>
-          <div class="field"><label class="label" for="sHandle">Profilo Instagram</label><input class="input" id="sHandle" placeholder="@profilo"></div>
-          <div class="field"><label class="label" for="sLogo">Logo (per fondi chiari)</label><input class="input" type="file" id="sLogo" accept="image/*"></div>
-          <div class="field"><label class="label" for="sLogoScuro">Logo per fondi scuri (facoltativo)</label><input class="input" type="file" id="sLogoScuro" accept="image/*"></div>
-          <div class="field"><label class="label" for="sScuro">Colore scuro</label><input class="input" type="color" id="sScuro" value="#14202E"></div>
-          <div class="field"><label class="label" for="sChiaro">Colore chiaro</label><input class="input" type="color" id="sChiaro" value="#FFFFFF"></div>
-          <div class="field"><label class="label" for="sAccento">Colore d'accento</label><input class="input" type="color" id="sAccento" value="#FCCF02"></div>
-          <div class="field"><label class="spunta"><input type="checkbox" id="sAlcol"> Vende alcolici (avvertenza di legge su ogni formato)</label></div>
-        </div>
-        <p class="avviso-contrasto mt-2" id="avvisoContrasto" hidden></p>
-        <div class="anteprime" id="anteprimaLoghi"></div>
-        <div class="azioni-post" id="azioniSponsor">
-          <button type="button" class="button is-link" id="btnSalvaSponsor">Salva sponsor</button>
-          <button type="button" class="button is-danger is-light" id="btnEliminaSponsor" hidden>Elimina sponsor</button>
-        </div>
-      </div>
-
-      <div class="riquadro" id="giorniGita" data-sezione="giorni">
-        <p class="occhiello">
-          Il giorno della settimana decide il colore della gita nei post e nel
-          calendario del mese. Quando inserisci una gita il calendario ti mostra
-          questi giorni colorati; un altro giorno si può scegliere lo stesso.
-        </p>
-        <div id="righeGiorni"></div>
-        <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
-        <div class="azioni-post">
-          <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -326,35 +483,67 @@
     window.addEventListener("hashchange", mostraSezione);
     mostraSezione();
     await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
-    // Il calendario del mese può essersi disegnato prima dei colori dei giorni.
+    // Elenco e calendario del mese possono essersi disegnati prima degli
+    // sponsor e dei colori dei giorni.
+    disegnaElenco();
     disegnaCalendarioMese();
     disegnaCopertinaFb();
+    disegnaRiassunti();
   })();
 
   // ---------------------------------------------------------------------
-  // Schede: una sezione alla volta, scelta dall'indirizzo (social.html#calendario)
+  // Schede: Post, Grafiche e Impostazioni, scelte dall'indirizzo
+  // (social.html#grafiche). #sponsor e #giorni aprono un modulo delle
+  // Impostazioni; #calendario e #copertina, schede di prima, portano a
+  // Grafiche: un segnalibro vecchio arriva ancora al posto giusto.
   // ---------------------------------------------------------------------
 
-  const SEZIONI = { post: "Post", calendario: "Calendario del mese", copertina: "Copertina Facebook",
-                    sponsor: "Sponsor", giorni: "Giorni e colori delle gite" };
-  const sezione = () => (location.hash.slice(1) in SEZIONI ? location.hash.slice(1) : "post");
+  const SEZIONI = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
+  const MODULI = { sponsor: "impostazioni", giorni: "impostazioni", calendario: "grafiche", copertina: "grafiche" };
+
+  /** [sezione, modulo]: il modulo ("sponsor", "giorni") c'è solo dentro Impostazioni. */
+  function dove() {
+    const h = location.hash.slice(1);
+    if (h in SEZIONI) return [h, null];
+    if (h in MODULI) return [MODULI[h], MODULI[h] === "impostazioni" ? h : null];
+    return ["post", null];
+  }
 
   function mostraSezione() {
-    const s = sezione();
-    document.querySelectorAll("[data-sezione]").forEach((x) => {
-      // L'editor resta nascosto finché non si apre un post.
-      x.hidden = x.dataset.sezione !== s || (x.id === "editor" && !aperto);
-    });
-    document.querySelector(".colonne-social").classList.toggle("una-colonna", s !== "post");
+    const [s, modulo] = dove();
+    document.querySelectorAll("[data-sezione]").forEach((x) => { x.hidden = x.dataset.sezione !== s; });
+    document.querySelectorAll("[data-modulo]").forEach((x) => { x.hidden = x.dataset.modulo !== modulo; });
+    el("riassunti").hidden = !!modulo;
     document.querySelectorAll(".schede-social a").forEach((a) =>
       a.toggleAttribute("aria-current", a.getAttribute("href") === `social.html#${s}`));
     document.querySelector('.schede-social a[aria-current]').setAttribute("aria-current", "page");
     el("titoloSezione").textContent = SEZIONI[s];
     // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
     // (fit() non vede niente da restringere): si rifanno ora che si vedono.
-    if (s === "calendario") disegnaCalendarioMese();
-    if (s === "copertina") disegnaCopertinaFb();
+    if (s === "post" && !el("editor").hidden) ridisegna();
+    if (s === "grafiche") { disegnaCalendarioMese(); disegnaCopertinaFb(); }
+    if (s === "impostazioni") disegnaRiassunti();
     window.scrollTo(0, 0);
+  }
+
+  /**
+   * Impostazioni in breve: sponsor, contatti e giorni come sono adesso, ognuno
+   * col pulsante che apre il suo modulo. La rubrica dei contatti ha ancora la
+   * sua pagina (social-contatti.html), con le stesse schede.
+   */
+  function disegnaRiassunti() {
+    el("riassuntoSponsor").innerHTML = sponsors.length ? sponsors.map((s) => {
+      const n = posts.filter((p) => p.sponsor_id === s.id).length;
+      return `<li><span class="logo-sponsor">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ""}</span>
+        <span class="chi"><b>${esc(s.name)}</b><small>${esc(s.level || "Sponsor")} · ${n === 1 ? "1 campagna" : `${n} campagne`}</small></span>
+        <a class="button is-small is-light" href="#sponsor" data-sponsor="${s.id}">Modifica</a></li>`;
+    }).join("") : '<li class="occhiello mb-0">Nessuno sponsor.</li>';
+    el("riassuntoContatti").innerHTML = SOCIAL.contatti.length ? SOCIAL.contatti.map((c) =>
+      `<li><span class="chi"><b>${esc(c.name)}</b><small>${esc(c.phone)}${c.hours ? ` · ${esc(c.hours)}` : ""}</small></span>
+        ${c.is_default ? '<span class="stato pronto">Proposto</span>' : ""}</li>`).join("")
+      : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
+    el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
+      || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
   }
 
   // ---------------------------------------------------------------------
@@ -414,20 +603,47 @@
   // ---------------------------------------------------------------------
 
   const NOMI_TIPO = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
+  let vista = "dafare";  // l'elenco mostra i post da fare o quelli già pubblicati
+
+  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (mancanti()). */
+  function stato(p) {
+    if (p.published_at) return `<span class="stato uscito">✓ Pubblicato ${new Date(p.published_at).toLocaleDateString("it-IT")}</span>`;
+    return mancanti(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
+  }
 
   function disegnaElenco() {
-    const oggi = new Date().toISOString().slice(0, 10);
-    const tutti = el("anchePubblicati").checked;
-    // I prossimi prima, in ordine di data; senza data (corsi, servizi) in fondo.
-    const visibili = posts.filter((p) => tutti || !p.published_at);
-    el("elencoPost").innerHTML = visibili.length ? visibili.map((p) => `
-      <li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
-        <span class="data" style="color:${p.event_date && p.event_date < oggi ? "var(--testo-soft)" : "var(--blu)"}">${p.event_date ? dataCorta(p.event_date) : "—"}</span>
-        <span class="quale">${esc(String(p.title).split("\n")[0] || "(senza titolo)")}<small>${esc(NOMI_TIPO[p.kind])}${p.kind === "sponsor" ? " · " + esc((sponsors.find((s) => s.id === p.sponsor_id) || {}).name || "") : ""}</small></span>
-        ${p.published_at ? `<span class="pubblicato">✓ ${new Date(p.published_at).toLocaleDateString("it-IT")}</span>` : ""}
-      </button></li>`).join("") : '<li class="occhiello pt-3">Nessun post da fare.</li>';
+    const daFare = posts.filter((p) => !p.published_at);
+    el("contaDaFare").textContent = daFare.length ? `${daFare.length} da fare` : "";
+    document.querySelectorAll("[data-vista]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.vista === vista));
+    // posts arriva in ordine di data; i pubblicati si leggono dal più recente.
+    const visibili = vista === "dafare" ? daFare : posts.filter((p) => p.published_at).reverse();
+    const mesi = new Map();
+    for (const p of visibili) {
+      const m = p.event_date ? p.event_date.slice(0, 7) : "";
+      if (!mesi.has(m)) mesi.set(m, []);
+      mesi.get(m).push(p);
+    }
+    // Quelli senza data (corsi, servizi) sempre in fondo.
+    const gruppi = [...mesi].sort(([a], [b]) => (!a) - (!b));
+    el("elencoPost").innerHTML = visibili.length ? gruppi.map(([m, righe]) => `
+      <li class="mese">${m ? `${maiuscola(MESI[Number(m.slice(5)) - 1])} ${m.slice(0, 4)}` : "Senza data"}</li>
+      ${righe.map(rigaElenco).join("")}`).join("")
+      : `<li class="occhiello pt-3">${vista === "dafare" ? "Nessun post da fare." : "Nessun post pubblicato."}</li>`;
     el("elencoPost").querySelectorAll("button[data-id]").forEach((b) =>
       b.addEventListener("click", () => apri(posts.find((p) => p.id === b.dataset.id))));
+  }
+
+  /** Una riga: il giorno (nel colore della gita), il titolo, il tipo e lo stato. */
+  function rigaElenco(p) {
+    const d = giornoDi(p.event_date);
+    const C = p.kind === "gita" && d ? categoria(categoriaGita(p.event_date)) : null;
+    const sponsor = p.kind === "sponsor" ? " · " + esc((sponsors.find((s) => s.id === p.sponsor_id) || {}).name || "") : "";
+    return `<li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
+      <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
+        ? `<span class="sett">${maiuscola(GIORNI[d.getDay()].slice(0, 3))}</span><span class="gm">${dataCorta(p.event_date)}</span>` : "—"}</span>
+      <span class="quale">${esc(String(p.title).split("\n")[0] || "(senza titolo)")}
+        <small>${esc(NOMI_TIPO[p.kind])}${sponsor} ${stato(p)}</small></span>
+    </button></li>`;
   }
 
   // ---------------------------------------------------------------------
@@ -454,8 +670,9 @@
 
   function collegaForm() {
     document.querySelectorAll("[data-nuovo]").forEach((b) =>
-      b.addEventListener("click", () => apri({ kind: b.dataset.nuovo })));
-    el("anchePubblicati").addEventListener("change", disegnaElenco);
+      b.addEventListener("click", () => { el("menuNuovo").open = false; apri({ kind: b.dataset.nuovo }); }));
+    document.querySelectorAll("[data-vista]").forEach((b) =>
+      b.addEventListener("click", () => { vista = b.dataset.vista; disegnaElenco(); }));
     el("fTipo").addEventListener("change", () => { mostraCampi(); cambiato(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { aggiungiRiga(b.dataset.aggiungi); cambiato(); }));
@@ -474,6 +691,9 @@
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
     el("calGita").addEventListener("click", sceltaCalGita);
+    // La colonna dell'anteprima si ferma sotto la testata del post, che è
+    // alta quanto vuole il testo (A+, "Manca: ...").
+    new ResizeObserver(() => el("editor").style.setProperty("--testa", el("testaPost").offsetHeight + "px")).observe(el("testaPost"));
     // Uscire con il post o i giorni modificati e non salvati: il browser chiede conferma.
     window.addEventListener("beforeunload", (e) => { if (modificato() || giorniModificati()) { e.preventDefault(); e.returnValue = ""; } });
   }
@@ -502,7 +722,14 @@
     bNo.focus();
   }
 
-  const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", sponsor: "Nuova campagna sponsor" };
+  const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
+                       servizi: "Nuovo post dei servizi", sponsor: "Nuova campagna sponsor" };
+
+  /** Il post aperto al posto del riquadro "scegli un post", o viceversa. */
+  function mostraEditor(si) {
+    el("editor").hidden = !si;
+    el("nessunPost").hidden = si;
+  }
 
   function apri(post) {
     if (modificato()) {
@@ -511,9 +738,8 @@
       return;
     }
     aperto = post;
-    if (sezione() !== "post") history.replaceState(null, "", "#post"), mostraSezione();
+    if (dove()[0] !== "post") history.replaceState(null, "", "#post"), mostraSezione();
     const tipo = post.kind || "gita";
-    el("titoloEditor").textContent = post.id ? "Modifica post" : NOMI_NUOVO[tipo] || "Nuovo evento";
     el("fTipo").value = tipo;
     el("fData").value = post.event_date || "";
     el("fTitolo").value = post.title || "";
@@ -533,12 +759,14 @@
     if (!post.id) aggiungiRiga("fFermate");
     // Un post nuovo parte dai contatti proposti nella rubrica.
     disegnaSceltaContatti(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
-    el("editor").hidden = false;
+    formato = 0;
+    mostraEditor(true);
     mostraCampi();
     ridisegna();
     el("testoPost").value = post.caption || testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
     salvato = firma();
     segnaModifiche();
+    aggiornaTesta();
     disegnaElenco();
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -551,7 +779,18 @@
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
-    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, nella scheda Sponsor.", "is-warning");
+    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, in Impostazioni.", "is-warning");
+  }
+
+  /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
+  function aggiornaTesta() {
+    const p = { ...daForm(), published_at: aperto && aperto.published_at }, quando = dataLunga(p.event_date);
+    el("occhielloPost").textContent = `${NOMI_TIPO[p.kind]}${quando ? ` · ${quando}` : ""}`;
+    el("titoloEditor").textContent = p.title.split("\n")[0] || NOMI_NUOVO[p.kind] || "Nuovo post";
+    el("statoPost").innerHTML = stato(p);
+    const manca = p.published_at ? [] : mancanti(p);
+    el("mancaCosa").hidden = !manca.length;
+    el("mancaCosa").textContent = `Manca: ${manca.join(", ")}.`;
   }
 
   /** Il form com'è adesso, nella forma di una riga di social_events. */
@@ -589,6 +828,7 @@
   function cambiato() {
     ridisegna();
     segnaModifiche();
+    aggiornaTesta();
   }
 
   async function salva() {
@@ -605,6 +845,7 @@
       aperto = data;
       salvato = firma();
       segnaModifiche();
+      aggiornaTesta();
       await caricaPost();
       showToast("Post salvato.");
     } catch (error) {
@@ -621,25 +862,28 @@
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     aperto = data;
     aggiornaPubblicato();
+    aggiornaTesta();
     await caricaPost();
     showToast(quando ? "Segnato come pubblicato." : "Tolto il segno di pubblicato.");
   }
   function aggiornaPubblicato() {
-    el("btnPubblicato").textContent = aperto && aperto.published_at
+    const uscito = !!(aperto && aperto.published_at);
+    el("btnPubblicato").textContent = uscito
       ? `Pubblicato il ${new Date(aperto.published_at).toLocaleDateString("it-IT")} · togli il segno`
       : "Segna come pubblicato";
+    el("btnPubblicato").classList.toggle("is-light", uscito);
   }
 
   function elimina() {
-    if (!aperto || !aperto.id) { salvato = firma(); aperto = null; el("editor").hidden = true; disegnaElenco(); return; }
-    chiedi(el("azioniPost"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
+    if (!aperto || !aperto.id) { salvato = firma(); aperto = null; mostraEditor(false); disegnaElenco(); return; }
+    chiedi(el("azioniElimina"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
   }
 
   async function eliminaDavvero() {
     const { error } = await sb.from("social_events").delete().eq("id", aperto.id);
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     aperto = null;
-    el("editor").hidden = true;
+    mostraEditor(false);
     await caricaPost();
     showToast("Post eliminato.");
   }
@@ -659,50 +903,95 @@
   // ---------------------------------------------------------------------
 
   /**
-   * Mette un canvas nel riquadro `dove`, rimpicciolito a `larghezza` px, con
-   * il pulsante per scaricarlo. Dopo i font, fit() adatta i titoli lunghi e
-   * dice se qualcosa sborda ancora: lo si scrive sotto, prima dell'export.
+   * Mette un canvas nel riquadro `dove`, rimpicciolito a `larghezza` px, di
+   * solito con il pulsante per scaricarlo. Dopo i font, fit() adatta i titoli
+   * lunghi e dice se qualcosa sborda ancora: lo si scrive sotto, prima
+   * dell'export. `fuori`: disegnato ma fuori dallo schermo (vedi .fuori).
+   * Restituisce la figura e la promessa di sapere se sborda.
    */
-  function anteprima(dove, { html, w, h, nome, file }, larghezza) {
+  function anteprima(dove, { html, w, h, nome, file }, larghezza, { fuori = false, pulsante = true } = {}) {
     const k = larghezza / w;
     const figura = document.createElement("figure");
-    figura.className = "anteprima";
+    figura.className = "anteprima" + (fuori ? " fuori" : "");
     figura.innerHTML = `<figcaption>${esc(nome)} · ${w}×${h}</figcaption>
       <div class="cornice" style="width:${w * k}px;height:${h * k}px"><div class="scala" style="transform:scale(${k})">${html}</div></div>
       <p class="sborda" hidden>Un testo è troppo lungo: accorcialo.</p>
-      <button type="button" class="button is-small is-link mt-2">Scarica PNG</button>`;
+      ${pulsante ? '<button type="button" class="button is-small is-link mt-2">Scarica PNG</button>' : ""}`;
     dove.append(figura);
     const canvas = figura.querySelector(".cv");
-    document.fonts.ready.then(() => { figura.querySelector(".sborda").hidden = !fit(figura); });
-    figura.querySelector("button").addEventListener("click", () => scaricaPng(canvas, file));
+    const sborda = document.fonts.ready.then(() => {
+      const s = fit(figura);
+      figura.querySelector(".sborda").hidden = !s;
+      return s;
+    });
+    if (pulsante) figura.querySelector("button").addEventListener("click", () => scaricaPng(canvas, file));
+    return { figura, sborda };
   }
 
+  let formato = 0;        // quale anteprima del post aperto si vede (Post, Story, ...)
+  let giroAnteprime = 0;  // l'ultimo ridisegno: gli avvisi di uno più vecchio non contano
+
+  /**
+   * Anteprime del post aperto, una per formato: si vede quella scelta con i
+   * pulsanti sopra, le altre restano disegnate fuori dallo schermo. L'avviso
+   * "un testo è troppo lungo" le dice tutte, anche quelle che non si vedono.
+   */
   function ridisegna() {
-    const post = daForm(), dove = el("anteprime");
-    dove.innerHTML = "";
+    const post = daForm(), dove = el("anteprime"), giro = ++giroAnteprime;
+    for (const id of ["anteprime", "formati", "scarica"]) el(id).innerHTML = "";
+    el("sbordaTutti").hidden = true;
     if (post.kind === "gita") disegnaCalGita();
     el("btnTogliFoto").hidden = !foto;
     aggiornaPubblicato();
-    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
+    el("linkUtm").hidden = !sp || !sp.url;
+    if (sp && sp.url) {
+      const link = indirizzoUtm(sp, post, "story", STAGIONE);
+      el("linkUtm").innerHTML = `Link per lo sticker della story: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>
+        <button type="button" class="button is-small is-light mt-2" id="btnCopiaLink">Copia link</button>`;
+      el("btnCopiaLink").addEventListener("click", () => navigator.clipboard.writeText(link).then(() => showToast("Link copiato.")));
+    }
+    const lista = formatiPost(post);
+    el("formati").hidden = lista.length < 2;
+    el("senzaAnteprima").hidden = lista.length > 0;
+    el("senzaAnteprima").textContent = { gita: "Scrivi la meta e scegli il giorno: qui compare l'immagine.",
+      sponsor: "Scegli lo sponsor: qui compaiono le immagini." }[post.kind] || "Scrivi il titolo: qui compare l'immagine.";
+    if (!lista.length) return;
+    formato = Math.min(formato, lista.length - 1);
+    const disegnati = lista.map((f, i) =>
+      anteprima(dove, f, Math.round(Math.min(352, 440 * f.w / f.h)), { fuori: i !== formato, pulsante: false }));
+    el("formati").innerHTML = lista.map((f, i) => `<button type="button" aria-pressed="${i === formato}" title="${esc(f.nome)}">${esc(f.breve)}</button>`).join("");
+    el("formati").querySelectorAll("button").forEach((b, i) => b.addEventListener("click", () => {
+      formato = i;
+      disegnati.forEach(({ figura }, j) => figura.classList.toggle("fuori", j !== i));
+      el("formati").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", j === i));
+    }));
+    // Un pulsante per immagine: scaricarle tutte con uno solo fa chiedere al
+    // browser il permesso per i download multipli, e quella domanda spaventa.
+    el("scarica").innerHTML = lista.map((f) => `<button type="button" class="button is-link">${esc(f.scarica)}</button>`).join("");
+    el("scarica").querySelectorAll("button").forEach((b, i) =>
+      b.addEventListener("click", () => scaricaPng(disegnati[i].figura.querySelector(".cv"), lista[i].file)));
+    Promise.all(disegnati.map((d) => d.sborda)).then((esiti) => {
+      if (giro !== giroAnteprime) return;
+      const lunghi = lista.filter((f, i) => esiti[i]).map((f) => f.breve);
+      el("sbordaTutti").hidden = !lunghi.length;
+      el("sbordaTutti").textContent = `Un testo è troppo lungo (${lunghi.join(", ")}): accorcialo.`;
+    });
+  }
+
+  /** Le immagini del post: [{ html, w, h, nome, breve, scarica, file }]; nessuna finché mancano i dati minimi. */
+  function formatiPost(post) {
     if (post.kind === "sponsor") {
       const sp = sponsorDi(post);
-      el("linkUtm").hidden = !sp || !sp.url;
-      if (!sp) return;
-      if (sp.url) {
-        const link = indirizzoUtm(sp, post, "story", STAGIONE);
-        el("linkUtm").innerHTML = `Link per lo sticker della story: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>
-          <button type="button" class="button is-small is-light ml-2" id="btnCopiaLink">Copia link</button>`;
-        el("btnCopiaLink").addEventListener("click", () => navigator.clipboard.writeText(link).then(() => showToast("Link copiato.")));
-      }
-      for (const [chiave, f] of Object.entries(formatiCampagna(post, sp, STAGIONE))) {
-        anteprima(dove, { ...f, file: `${semplice(sp.name)}-${chiave}.png` }, f.w > 1000 ? 300 : 360);
-      }
-      return;
+      return sp ? Object.entries(formatiCampagna(post, sp, STAGIONE)).map(([chiave, f]) =>
+        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${semplice(sp.name)}-${chiave}.png` })) : [];
     }
-    el("linkUtm").hidden = true;
-    if (!post.title || (post.kind === "gita" && !post.event_date)) return;
-    anteprima(dove, { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", file: nomeFile("post") }, 360);
-    anteprima(dove, { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", file: nomeFile("story") }, 230);
+    if (!post.title || (post.kind === "gita" && !post.event_date)) return [];
+    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    return [
+      { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
+      { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
+    ];
   }
 
   // html-to-image si carica al primo export, come SheetJS per l'Excel.
@@ -874,6 +1163,7 @@
       giorniSalvati = JSON.stringify(righe);
       aggiornaGiorni();
       disegnaCalendarioMese();
+      disegnaElenco();
       if (!el("editor").hidden) ridisegna();
       showToast("Giorni e colori delle gite salvati.");
     } catch (error) {
@@ -888,15 +1178,15 @@
   // ---------------------------------------------------------------------
 
   /**
-   * Una spunta per ogni contatto della rubrica (Social > Contatti), nel suo
-   * ordine: il post mostra quelli spuntati. Un id del post che la rubrica non
-   * ha più si perde al prossimo salvataggio.
+   * Una spunta per ogni contatto della rubrica (Impostazioni > Contatti), nel
+   * suo ordine: il post mostra quelli spuntati. Un id del post che la rubrica
+   * non ha più si perde al prossimo salvataggio.
    */
   function disegnaSceltaContatti(scelti) {
     el("fContatti").innerHTML = SOCIAL.contatti.length
       ? SOCIAL.contatti.map((c) => `<label class="spunta"><input type="checkbox" value="${esc(c.id)}" ${scelti.includes(c.id) ? "checked" : ""}>
           <span>${esc(c.name)} ${esc(c.phone)}${c.hours ? ` <small>${esc(c.hours)}</small>` : ""}</span></label>`).join("")
-      : '<span class="avviso-contrasto">La rubrica è vuota: aggiungi i contatti nella scheda Contatti.</span>';
+      : '<span class="avviso-contrasto">La rubrica è vuota: aggiungi i contatti in Impostazioni.</span>';
   }
 
   // ---------------------------------------------------------------------
@@ -941,6 +1231,13 @@
 
   function collegaSponsor() {
     el("sScegli").addEventListener("change", () => apriSponsor(el("sScegli").value));
+    // "Modifica" e "+ Aggiungi" nel riassunto: il modulo si apre con quello sponsor.
+    el("riassunti").addEventListener("click", (e) => {
+      const a = e.target.closest("[data-sponsor]");
+      if (!a) return;
+      el("sScegli").value = a.dataset.sponsor;
+      apriSponsor(a.dataset.sponsor);
+    });
     for (const [id, campo] of [["sLogo", "logo"], ["sLogoScuro", "logo_dark"]]) {
       el(id).addEventListener("change", async () => {
         const file = el(id).files[0];
@@ -995,7 +1292,7 @@
       // Il post aperto era una delle sue campagne: non esiste più.
       if (aperto && campagne.some((c) => c.id === aperto.id)) {
         aperto = null;
-        el("editor").hidden = true;
+        mostraEditor(false);
       }
       el("sScegli").value = "";
       await Promise.all([caricaPost(), caricaSponsor()]);

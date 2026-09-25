@@ -44,7 +44,7 @@
       <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
       <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
       <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
-      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a href="social.html" data-permesso="social" aria-current="page" hidden>Social</a>
       <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
@@ -54,14 +54,14 @@
 </header>
 
 <div class="container-main">
+  <!-- Le schede di Social: questa pagina è un modulo di Impostazioni, per
+       questo la scheda accesa è quella (e la voce Social della barra, sopra). -->
   <nav class="schede-social" aria-label="Social" data-voce="social.html">
     <a href="social.html#post" style="--scheda:#084C8D">Post</a>
-    <a href="social.html#calendario" style="--scheda:#147A45">Calendario del mese</a>
-    <a href="social.html#copertina" style="--scheda:#5B2A86">Copertina Facebook</a>
-    <a href="social.html#sponsor" style="--scheda:#8A5300">Sponsor</a>
-    <a href="social.html#giorni" style="--scheda:#B3261E">Giorni e colori delle gite</a>
-    <a href="social-contatti.html" style="--scheda:#0B6E69">Contatti</a>
+    <a href="social.html#grafiche" style="--scheda:#147A45">Grafiche</a>
+    <a class="a-destra" href="social.html#impostazioni" style="--scheda:#4A5361" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Impostazioni</a>
   </nav>
+  <a href="social.html#impostazioni" style="display:inline-block;font-weight:600;margin-bottom:12px">← Tutte le impostazioni</a>
   <h1 class="title is-4 mb-4">Contatti</h1>
 
   <div class="riquadro">
@@ -71,7 +71,7 @@
       una spunta nel form del post. Gli orari sono facoltativi (es. "dopo le
       18"). "Proposto" = già spuntato nei post nuovi. Correggere un numero lo
       corregge anche nei post non ancora pubblicati (il testo da incollare già
-      scritto no: nel post premi "Rifai il testo dai dati").
+      scritto no: nel post premi "Rifai dai dati").
     </p>
     <div class="intestazione" aria-hidden="true"><span>Nome</span><span>Telefono</span><span>Orari</span><span>Proposto</span></div>
     <div id="righeContatti"></div>

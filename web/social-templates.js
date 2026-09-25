@@ -182,7 +182,9 @@ function facts(list, color, lab, size = 30) {
  * riga dei prezzi, che sta sempre a o.py: il titolo cresce verso l'alto, i
  * dettagli verso il basso. Così il prezzo resta nello stesso punto con prezzo
  * singolo, «da … a …» o adulti/ragazzi. Senza prezzo (show_price spento) i
- * dettagli salgono subito sotto il titolo. o = { x, r, H, py, col, accent, lab, k } */
+ * dettagli salgono subito sotto il titolo. o = { x, r, H, py, col, accent, lab, k,
+ * limite }: `limite` è dove i dettagli devono finire (i telefoni della story,
+ * il fondo del biglietto), e fit() lo controlla. */
 function content(s, o) {
   const k = o.k, gita = s.kind === "gita", size = 104 * k;
   const prices = s.prices || [], labels = prices.some((p) => p[0]);
@@ -203,7 +205,7 @@ function content(s, o) {
   const sotto = prices.length ? py + size * .95 + (labels ? 52 : 0) * k + 30 * k : py + 30 * k;
   return `<div class="abs" style="left:${o.x}px;right:${o.r}px;bottom:${o.H - py + 14 * k}px">${top}</div>
     ${prices.length ? `<div class="abs" data-fitrow style="left:${o.x}px;right:${o.r}px;top:${o.py}px;display:flex;gap:${64 * k}px">${row}</div>` : ""}
-    <div class="abs" style="left:${o.x}px;right:${o.r}px;top:${sotto}px">${below}</div>`;
+    <div class="abs" data-fitsotto="${o.limite}" style="left:${o.x}px;right:${o.r}px;top:${sotto}px">${below}</div>`;
 }
 
 /* Riduce il corpo dei titoli [data-fit] finché stanno su una riga, e quello
@@ -234,7 +236,37 @@ function fit(radice = document) {
     while (el.scrollWidth > el.clientWidth && f > 20) el.style.fontSize = (f -= 1) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
   });
+  // Partenze e scadenza scendono dal prezzo verso il basso senza un fondo: con
+  // tante partenze, o luoghi lunghi che vanno a capo, finivano sopra i
+  // telefoni della story, o fuori dal biglietto, e nessuno lo diceva.
+  // ponytail: solo l'avviso, niente rimpicciolimento; se capita spesso, ridurre il corpo come sopra.
+  radice.querySelectorAll("[data-fitsotto]").forEach((el) => {
+    if (el.offsetTop + el.scrollHeight > Number(el.dataset.fitsotto)) sborda = true;
+  });
   return sborda;
+}
+
+/**
+ * Cosa manca a un post per essere pronto da pubblicare, a parole ("la
+ * quota"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
+ * testata del post aperto, così dicono la stessa cosa. Salvare si può lo
+ * stesso: salva() blocca solo meta, giorno della gita e sponsor.
+ */
+function mancanti(ev) {
+  const manca = [];
+  if (!String(ev.title || "").trim()) manca.push(ev.kind === "gita" ? "la meta" : "il titolo");
+  if (ev.kind === "gita") {
+    if (!ev.event_date) manca.push("il giorno");
+    if (!(ev.stops || []).some(([t, l]) => t || l)) manca.push("le partenze");
+    if (ev.show_price !== false && !(ev.prices || []).some((p) => p && p[1])) manca.push("la quota");
+    if (!ev.deadline) manca.push("la scadenza delle iscrizioni");
+  } else if (ev.kind === "cena" || ev.kind === "gara") {
+    // Corsi e servizi possono non avere un giorno; una cena o una gara no.
+    if (!ev.event_date) manca.push("la data");
+  } else if (ev.kind === "sponsor" && !ev.sponsor_id) {
+    manca.push("lo sponsor");
+  }
+  return manca;
 }
 
 /** La rubrica della pagina (righe di social_contacts, già in ordine). */
@@ -297,13 +329,15 @@ function disegnaPost(s) {
   // fuori dalle fasce di Instagram.
   const m = 60, cw = W - m * 2, k = st ? 1.5 : 1, ph = st ? 640 : 260;
   const cardH = H - m * 2 - (st ? 0 : 60);
+  const telStory = H - SAFE.bottom - m - 90;  // dove partono i telefoni della story, dentro il biglietto
   const body = `${photo(cw, ph, s.photo)}
       <div class="abs" style="left:0;top:0;background:#fff;padding:18px 26px;border-bottom-right-radius:28px">
         <img class="logo" src="${SOCIAL.logo}" style="height:100px"></div>
       <div class="abs" style="right:40px;top:36px">${s.date ? badge(s) : tag(C)}</div>
-      ${content(s, { x: 56, r: 56, H: cardH, py: st ? 920 : 450, col: "#14202E", accent: C.txt, lab: "#5B6472", k })}
+      ${content(s, { x: 56, r: 56, H: cardH, py: st ? 920 : 450, col: "#14202E", accent: C.txt, lab: "#5B6472", k,
+        limite: st ? (s.contatti.length ? telStory - 16 : H - SAFE.bottom - m) : cardH - 30 })}
       ${notch(ph, 30)}
-      ${st && s.contatti.length ? `<div class="abs" style="left:56px;right:56px;top:${H - SAFE.bottom - m - 90}px;border-top:4px dashed #C7D0DA;padding-top:28px">${phones(s.contatti, "#14202E", 1.15)}</div>` : ""}`;
+      ${st && s.contatti.length ? `<div class="abs" style="left:56px;right:56px;top:${telStory}px;border-top:4px dashed #C7D0DA;padding-top:28px">${phones(s.contatti, "#14202E", 1.15)}</div>` : ""}`;
   return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">
     <div class="abs" style="left:${m}px;width:${cw}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden">${body}</div>
     ${st ? "" : `<div class="abs" style="left:${m + 8}px;right:${m}px;bottom:44px">${phones(s.contatti, C.ink)}</div>`}
@@ -409,7 +443,8 @@ function righeTitolo(testo, accento) {
 /** Etichetta in alto: "MAIN SPONSOR · STAGIONE 2026/27". */
 const occhiello = (M, stagione) => `${escS(M.livello.toUpperCase())} · STAGIONE ${escS(stagione)}`;
 
-/** I formati di una campagna: { chiave: { w, h, nome, html } }. `c` = post di tipo sponsor. */
+/** I formati di una campagna: { chiave: { w, h, nome, breve, html } }. `c` = post di tipo sponsor.
+ *  `breve` è il nome sul pulsante che sceglie l'anteprima nella pagina. */
 function formatiCampagna(c, sp, stagione) {
   const M = marchio(sp);
   const firma = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
@@ -419,7 +454,7 @@ function formatiCampagna(c, sp, stagione) {
   const cta = c.cta ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:${M.accento};color:${M.scuro};border-radius:999px;font-weight:800;padding:.45em 1.1em;font-size:40px">${escS(c.cta)} ${rombo(M.scuro, .45)}</span>` : "";
   return {
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
-    collab: { w: 1080, h: 1350, nome: "Post collab 4:5", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
+    collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${occhiello(M, stagione)}</div>
       <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${righeTitolo(c.title)}</div>
       <div class="abs" style="left:80px;top:500px;right:120px;font-size:40px;font-weight:600;line-height:1.25">${escS(c.subtitle || "")}</div>
@@ -429,7 +464,7 @@ function formatiCampagna(c, sp, stagione) {
         ${firma(1)}${avvertenza(M, 22, "max-width:300px;text-align:right")}</div></div>` },
 
     /* Story: spazio libero per lo sticker link verso l'indirizzo con UTM. */
-    story: { w: 1080, h: 1920, nome: "Story con spazio per lo sticker link", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
+    story: { w: 1080, h: 1920, nome: "Story con spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:0;right:0;top:320px;display:flex;justify-content:center">${logoSuScuro(M, 200)}</div>
       <div class="abs t-dest" style="left:0;right:0;top:700px;text-align:center;font-size:130px">${righeTitolo(c.story_title || c.title, M.accento)}</div>
       <div class="abs" style="left:120px;right:120px;top:1010px;text-align:center;font-size:42px;font-weight:600;line-height:1.3">${escS(sp.name)} è ${escS(M.livello.toLowerCase())}<br>dello Sci Club Don Bosco ${escS(stagione)}</div>
@@ -438,7 +473,7 @@ function formatiCampagna(c, sp, stagione) {
       ${avvertenza(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom + 20}px;text-align:center;color:${M.chiaro}`)}</div>` },
 
     /* Post 1:1 chiaro, pagina del carosello "Grazie a chi ci sostiene". */
-    grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello «Grazie a chi ci sostiene»", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.chiaro};color:${M.scuro}">
+    grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello «Grazie a chi ci sostiene»", breve: "Grazie", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.chiaro};color:${M.scuro}">
       <div class="abs" style="left:80px;top:70px;padding:14px 22px;border-radius:28px;background:#fff"><img src="${SOCIAL.logo}" style="height:110px;display:block"></div>
       <div class="abs" style="right:80px;top:120px;font-size:30px;font-weight:700;letter-spacing:.12em;color:#084C8D">STAGIONE ${escS(stagione)}</div>
       <div class="abs t-dest" style="left:80px;top:280px;font-size:112px">Grazie a chi<br>ci sostiene.</div>
@@ -448,7 +483,7 @@ function formatiCampagna(c, sp, stagione) {
         ${avvertenza(M, 22, "text-align:right")}</div></div>` },
 
     /* Copertina FB: su mobile la foto profilo copre il basso a sinistra, lì non va testo. */
-    cover: { w: 820, h: 312, nome: "Copertina Facebook", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
+    cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
       ${crinale(M, 820, 150)}
       <div class="abs t-dest" style="left:44px;top:48px;font-size:58px">Stagione ${escS(stagione)}</div>
       <div class="abs" style="left:44px;top:120px;font-size:22px;font-weight:600">Gite, corsi e gare sociali · Iscrizioni aperte</div>
@@ -513,5 +548,5 @@ function testoPost(ev, sp, stagione) {
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
-                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, SOCIAL };
+                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, SOCIAL };
 }
