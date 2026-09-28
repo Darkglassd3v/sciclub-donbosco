@@ -1,4 +1,4 @@
-# Ripresa lavori — aggiornato il 2026-09-25 (2.5-SNAPSHOT)
+# Ripresa lavori — aggiornato il 2026-09-28 (2.5-SNAPSHOT)
 
 ## Fatto nella 2.5-SNAPSHOT (schema applicato in produzione il 2026-09-24)
 
@@ -38,6 +38,22 @@
   anteprima fissa di lato con Post/Story, download, testo e Pubblicato; con A+ l'anteprima va sotto.
   `fit()` avvisa anche se partenze e scadenza finiscono sopra i telefoni della story. Vecchi indirizzi
   (`#calendario`, `#sponsor`, ...) portano alla scheda nuova. Solo pagine, schema invariato
+- **Ritocchi del giro dell'app** (2026-09-28, solo pagine, schema invariato; provati nel browser con un
+  client finto, mockup di Soci saltato su richiesta):
+  - Soci: ricerca sempre in cima; fascia fissa sotto la barra "Nuovo socio" (gialla) / "Stai
+    modificando: Cognome Nome · tessera N" (blu) con l'indice delle sezioni e "Nuovo socio"; nome sul
+    pulsante Salva. Fotografia del modulo (`firma()`): "Nuovo socio", aprire un altro socio e uscire
+    dalla pagina chiedono se ci sono modifiche. **Doppioni**: lasciando cognome, nome, data o codice
+    fiscale di un socio nuovo, e di nuovo al salvataggio, si cerca in tutto l'archivio lo stesso codice
+    fiscale o lo stesso cognome e nome (con la stessa data, o senza data in archivio): "Apri questa
+    scheda" o "No, è un'altra persona", senza risposta non si salva. "Chi paga: da sé / un familiare"
+    al posto del campo spento; "un familiare" senza nome scelto non si salva più come "da sé"
+  - Pagamenti: "Cerca una famiglia" (per il nome di chiunque del nucleo), "1 nucleo", "1 familiare"
+  - Bilancio: Entrata / Uscita due pulsanti grandi verde e rosso, nessuno scelto all'inizio
+  - Social: rubrica Contatti dentro Impostazioni (`social.html#contatti`), `social-contatti.html` è un
+    rimando; i riquadri di Impostazioni non restano più sopra il modulo aperto
+  - Tutte: `chiedi()` in `shared.js`; link e pulsanti `is-link is-outlined` nel blu del club; pulsanti
+    `is-small` a pillola
 
 ## Produzione (2026-09-24)
 
@@ -54,44 +70,15 @@
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
 
-## Giro dell'app (2026-09-25): cosa cambiare
+## Dopo il giro dell'app: cosa resta
 
-Visto pagina per pagina, anche nel browser con un client finto. L'unica pagina critica è Soci; le
-altre sono chiare e vanno solo ritoccate. Mockup di Soci ancora da fare (come quelli di Social: un
-canvas con com'è oggi e le proposte).
-
-- **Soci (`web/index.html`), critica** — è la pagina di ogni giorno e quella dove un errore
-  sovrascrive un socio:
-  - non si capisce se si sta modificando o creando: caricato un socio, la parte alta resta identica
-    al socio nuovo (titolo "Gestione Soci", stessi due pulsanti), cambia solo la scritta del pulsante
-    in fondo. Serve una fascia in cima: "Stai modificando: Cognome Nome · tessera N" oppure
-    "Nuovo socio", e il nome anche sul pulsante Salva
-  - "Nuovo socio" è rosso e svuota il modulo senza chiedere; uscendo dalla pagina con modifiche non
-    salvate nessun avviso. Domanda scritta nella pagina (come `chiedi()` di Social) e `beforeunload`
-  - **nessun controllo dei doppioni**: un socio della stagione scorsa reinserito come nuovo diventa
-    una seconda anagrafica (5.778 in archivio; `members.tax_code` ha solo un indice, non è unico, e
-    il codice fiscale non è obbligatorio). Salvando un socio nuovo cercare lo stesso codice fiscale,
-    o stesso cognome + nome + data di nascita, e proporre di aprire quello
-  - la ricerca è nascosta dietro "Modifica socio": metterla sempre in cima, prima del modulo
-  - modulo lungo circa 2.600 px: indice delle sezioni (Anagrafica, Iscrizione, Amministrazione,
-    Pagamento) che resta in vista. "Pagamento familiare" è un campo spento con "Aggiungi pagante"
-    verde a destra: meglio una scelta "Chi paga: da sé / un familiare (cerca)"
-- **Pagamenti (`web/admin.html`)**: manca un campo per cercare una famiglia, con centinaia di nuclei
-  si scorre a mano; "1 nuclei" → "1 nucleo"
-- **Bilancio (`web/bilancio.html`)**: Entrata / Uscita è una tendina; un'uscita segnata come entrata
-  sbaglia il saldo di due volte l'importo. Due pulsanti grandi, colorati, al posto della tendina
-- **Social**: confermare con chi pubblica la regola di "Da completare" (gita: meta, giorno, partenze,
-  quota se mostrata, scadenza; cena e gara: data; campagna: sponsor; corso e servizi: solo il
-  titolo). La rubrica Contatti è ancora una pagina a sé: portarla dentro Impostazioni vuol dire
-  rinominare funzioni e id in comune con `social.html` (`apri`, `salva`, `chiedi`, `btnSalva`, ...)
-  e unire i due `beforeunload`. Story troppo lunga: c'è solo l'avviso, il testo non si rimpicciolisce
-- **Aspetto, tutte le pagine**: i pulsanti `is-small` hanno gli angoli quadrati (la regola di Bulma
-  `.button.is-small`, border-radius 2px, vince sulla pillola di `brand.css`); i link semplici hanno
-  il viola di Bulma (#485fc7) e non il blu del club: una regola `a { color: var(--blu) }` in
-  `brand.css` li sistema tutti
-- **A posto, niente da riscrivere**: Gite (`ricerca/gite.html`), Amministrazione e chiusura
-  stagione (conferma con la frase e l'elenco di cosa si azzera), Riepilogo, Impostazioni, Utenti,
-  Assicurazione, Ruoli e vedi come
+- Social: confermare con chi pubblica la regola di "Da completare" (gita: meta, giorno, partenze,
+  quota se mostrata, scadenza; cena e gara: data; campagna: sponsor; corso e servizi: solo il titolo).
+  Story troppo lunga: c'è solo l'avviso, il testo non si rimpicciolisce
+- Doppioni in Soci, limiti noti: due operatori che salvano la stessa persona nello stesso momento
+  passano entrambi; "D'ANGELO" non trova "DANGELO". I doppioni già in archivio (5.778 schede) restano:
+  manca uno strumento per unire due schede della stessa persona (chi lo fa, con quali regole)
+- Provare sul sito vero Soci con i dati reali (ricerca doppioni su tutto l'archivio, A+ al massimo)
 
 ---
 
