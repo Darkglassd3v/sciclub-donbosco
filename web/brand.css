@@ -68,6 +68,11 @@ body {
 .title.is-4 { font-size: 2rem; line-height: 1.15; }
 @media screen and (max-width: 768px) { .title.is-4 { font-size: 1.6rem; } }
 
+/* I link nel testo erano del viola di Bulma (#485fc7): il blu del club ha
+ * più contrasto (8.7:1 sul bianco) ed è lo stesso dei pulsanti. */
+a { color: var(--blu); }
+a:hover { color: var(--blu-dark); }
+
 strong, label, .label { color: var(--testo); }
 .label { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
 .help, .filtro-attivo { font-size: .9375rem; color: var(--testo-soft); }
@@ -132,6 +137,14 @@ textarea:focus-visible,
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 .button.is-small { min-height: 42px; font-size: .9375rem; }
+/* Bulma dà ai pulsanti piccoli un raggio di 2px con una regola più specifica
+ * di .button: senza questa restavano gli unici quadrati della pagina. */
+.button.is-small:not(.is-rounded) { border-radius: var(--pillola); }
+
+/* Domanda di conferma scritta sulla pagina (chiedi() in shared.js), al posto
+ * dei pulsanti che l'hanno aperta. */
+.domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
 
 .button.is-link, .button.is-primary, .button.is-info {
   background: var(--blu); border-color: var(--blu); color: #fff;
@@ -158,6 +171,11 @@ textarea:focus-visible,
   background: var(--superficie); border: 1px solid var(--errore); color: var(--errore);
 }
 .button.is-danger.is-outlined:hover { background: var(--errore); color: #fff; }
+/* Senza questa il contorno restava del viola di Bulma, come i link. */
+.button.is-link.is-outlined {
+  background: var(--superficie); border: 1px solid var(--blu); color: var(--blu);
+}
+.button.is-link.is-outlined:hover { background: var(--blu); color: #fff; }
 
 /* --- Titoli di sezione --------------------------------------------------
  * Le sezioni erano separate da barre blu piene. Ora la separazione è affidata

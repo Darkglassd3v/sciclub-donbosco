@@ -413,6 +413,30 @@ async function tutteLeRighe(crea) {
 /** Testo scritto dagli utenti, pronto per innerHTML. */
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+/**
+ * Domanda scritta sulla pagina al posto di confirm(). Un browser che ha
+ * bloccato le finestre di conferma della pagina fa rispondere a confirm()
+ * "no" da solo, senza mostrare niente: il pulsante sembrava non fare nulla.
+ * `dove` è il riquadro dei pulsanti: finché la domanda è aperta sono
+ * nascosti, poi tornano com'erano. Stile in brand.css (.domanda-inline).
+ */
+function chiedi(dove, domanda, si, alSi) {
+  dove.querySelector(".domanda-inline")?.remove();
+  const pulsanti = [...dove.children], nascosti = pulsanti.map((b) => b.hidden);
+  pulsanti.forEach((b) => { b.hidden = true; });
+  const riga = document.createElement("div");
+  riga.className = "domanda-inline";
+  riga.innerHTML = `<span class="domanda">${esc(domanda)}</span>
+    <button type="button" class="button is-danger">${esc(si)}</button>
+    <button type="button" class="button is-light">Annulla</button>`;
+  const chiudi = () => { riga.remove(); pulsanti.forEach((b, i) => { b.hidden = nascosti[i]; }); };
+  const [bSi, bNo] = riga.querySelectorAll("button");
+  bSi.addEventListener("click", () => { chiudi(); alSi(); });
+  bNo.addEventListener("click", chiudi);
+  dove.append(riga);
+  bNo.focus();
+}
+
 // ---------------------------------------------------------------------------
 // Importi
 // ---------------------------------------------------------------------------

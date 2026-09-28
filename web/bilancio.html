@@ -26,8 +26,24 @@
 
     /* Il form dei movimenti sta su una riga sola da tablet in su, come una riga del quaderno. */
     .riga-movimento { display: grid; gap: 12px; align-items: end;
-                      grid-template-columns: 150px 130px minmax(150px, 1.2fr) minmax(150px, 1.5fr) 90px 120px auto; }
+                      grid-template-columns: 150px minmax(150px, 1.2fr) minmax(150px, 1.5fr) 90px 120px auto; }
     .riga-movimento .field { margin: 0; }
+
+    /* Entrata o uscita: due pulsanti grandi al posto della tendina. Un'uscita
+     * segnata come entrata sbaglia il saldo di due volte l'importo, e la
+     * tendina restava su "Entrata" senza che nessuno la guardasse. Nessuno
+     * dei due parte scelto: si decide ogni volta la prima volta, poi resta. */
+    .tipo-movimento { grid-column: 1 / -1; border: 0; padding: 0; margin: 0; min-width: 0; }
+    .tipo-movimento .scelte-tipo { display: flex; flex-wrap: wrap; gap: 12px; }
+    .riga-movimento .tipo-movimento label { display: inline-flex; align-items: center; gap: 12px; min-height: 56px; min-width: 12rem;
+                            padding: 10px 22px; border: 2px solid currentColor; border-radius: var(--raggio);
+                            background: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+    .tipo-movimento input { width: 24px; height: 24px; margin: 0; accent-color: currentColor; }
+    .tipo-movimento .tipo-entrata { color: var(--ok); }
+    .tipo-movimento .tipo-uscita { color: var(--errore); }
+    .tipo-movimento .tipo-entrata:has(input:checked) { background: var(--ok); color: #fff; }
+    .tipo-movimento .tipo-uscita:has(input:checked) { background: var(--errore); color: #fff; }
+    .tipo-movimento label:has(input:checked) input { accent-color: #fff; }
     .riga-movimento label { font-size: .875rem; }
     .importo-anteprima { color: var(--testo-soft); margin-top: 10px; }
 
@@ -103,18 +119,16 @@
     <h2>Movimenti</h2>
     <form id="formMovimento">
       <div class="riga-movimento">
+        <fieldset class="tipo-movimento">
+          <legend class="label">Tipo di movimento</legend>
+          <div class="scelte-tipo">
+            <label class="tipo-entrata"><input type="radio" name="mTipo" value="ENTRATA" required>+ Entrata</label>
+            <label class="tipo-uscita"><input type="radio" name="mTipo" value="USCITA">− Uscita</label>
+          </div>
+        </fieldset>
         <div class="field">
           <label class="label" for="mData">Data</label>
           <input class="input" id="mData" type="date" required>
-        </div>
-        <div class="field">
-          <label class="label" for="mTipo">Tipo</label>
-          <div class="select is-fullwidth">
-            <select id="mTipo">
-              <option value="ENTRATA">Entrata</option>
-              <option value="USCITA">Uscita</option>
-            </select>
-          </div>
         </div>
         <div class="field">
           <label class="label" for="mVoce">Voce</label>
@@ -293,7 +307,7 @@
     el("btnAggiungi").disabled = true;
     const ok = await scrivi(() => sb.from("ledger_entries").insert({
       entry_date: el("mData").value,
-      kind: el("mTipo").value,
+      kind: document.querySelector("input[name=mTipo]:checked").value,
       category: el("mVoce").value.trim(),
       description: el("mDescrizione").value.trim() || null,
       quantity: num(el("mQuantita").value),

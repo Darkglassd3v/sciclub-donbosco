@@ -18,7 +18,7 @@
     .val-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
     .val-amount { font-size: 2.1rem; font-weight: 700; letter-spacing: -.022em; display: block; line-height: 1; margin-top: 4px; }
 
-    #searchZone { display: none; background: var(--giallo-light); padding: 18px; border-radius: var(--raggio-card); margin-bottom: 24px; border: 1px solid var(--giallo); }
+    #searchZone { background: var(--giallo-light); padding: 18px; border-radius: var(--raggio-card); margin-bottom: 24px; border: 1px solid var(--giallo); }
     .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--filo); }
     .result-item:hover { background: var(--blu-light); }
     /* I tag di Bulma sono a 12px: codice fiscale e tessera servono a
@@ -59,19 +59,42 @@
     .togli-stagione .domanda { display: block; font-weight: 700; margin-bottom: 8px; }
     .label { margin-bottom: .3rem; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
-    .payer-section-disabled { opacity: .45; pointer-events: none; }
+
+    /* Fascia di chi c'è nel modulo: resta sotto la barra mentre si scorre,
+     * con l'indice delle sezioni. Gialla per un socio nuovo, blu per uno che
+     * esiste già: prima cambiava solo la scritta del pulsante in fondo. */
+    .fascia-socio { position: sticky; top: var(--barra-h); z-index: 50; display: flex; flex-wrap: wrap; align-items: center;
+                    gap: 6px 20px; padding: 10px 16px; margin-bottom: 20px; border: 2px solid var(--giallo);
+                    border-radius: var(--raggio); background: var(--giallo-light); }
+    .fascia-socio.modifica { border-color: var(--blu); background: var(--blu-light); }
+    .fascia-stato { flex: 1 1 18rem; font-size: 1.2rem; line-height: 1.3; }
+    .indice-sezioni { display: flex; flex-wrap: wrap; gap: 0 16px; }
+    .indice-sezioni a { display: inline-flex; align-items: center; min-height: var(--aria); font-weight: 600; text-decoration: underline; }
+    #azioniSocio { flex: none; }
+    .fascia-socio .domanda-inline { max-width: 34rem; }
+    .section-title { scroll-margin-top: calc(var(--barra-h) + 9rem); }
+
+    /* Possibili doppioni: stesso codice fiscale, o stesso cognome e nome. */
+    .avviso-doppioni { margin: 4px 0 24px; padding: 16px 18px; border: 2px solid var(--errore); border-radius: var(--raggio); background: var(--errore-bg); }
+    .avviso-doppioni .titolo { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
+    .avviso-doppioni ul { list-style: none; margin: 0 0 10px; padding: 0; }
+    .avviso-doppioni li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 0; border-top: 1px solid var(--filo); }
+    .avviso-doppioni li span { flex: 1 1 20rem; }
 
     @media screen and (max-width: 768px) {
       .container-main { padding: 24px 18px; margin: 16px auto 220px; }
+      .indice-sezioni { display: none; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
-      .total-box .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
+      /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
+       * selettore lungo il pulsante restava stretto, su tre righe. */
+      .total-box .columns.is-mobile > .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
     }
 
     /* Schermo basso (zoom al 150-200%, telefono in orizzontale): la barra
      * incollata coprirebbe metà di quel che si vede. Scende in fondo al
      * modulo, dove si arriva comunque per salvare. */
     @media screen and (max-height: 560px) {
-      .total-box { position: static; }
+      .total-box, .fascia-socio { position: static; }
       .container-main { margin-bottom: 28px; }
     }
   </style>
@@ -103,12 +126,24 @@
 <div class="container-main">
   <h1 class="title is-4 mb-4">Gestione Soci</h1>
 
-  <div class="columns is-mobile mb-5">
-    <div class="column is-6">
-      <button onclick="mostraRicerca()" class="button is-link is-fullwidth">Modifica socio</button>
-    </div>
-    <div class="column is-6">
-      <button onclick="resetForm()" class="button is-danger is-outlined is-fullwidth">Nuovo socio</button>
+  <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
+       prima stava nascosta dietro il pulsante "Modifica socio". -->
+  <div id="searchZone">
+    <label class="label" for="searchInput">Cerca un socio da aprire</label>
+    <input id="searchInput" class="input" type="search" placeholder="Cognome, nome o codice fiscale" autocomplete="off">
+    <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
+  </div>
+
+  <div class="fascia-socio" id="fasciaSocio">
+    <p class="fascia-stato" id="statoSocio" role="status"></p>
+    <nav class="indice-sezioni" aria-label="Sezioni del modulo">
+      <a href="#sez-anagrafica">Anagrafica</a>
+      <a href="#sez-iscrizione">Iscrizione</a>
+      <a href="#sez-amministrazione">Amministrazione</a>
+      <a href="#sez-pagamento">Pagamento</a>
+    </nav>
+    <div id="azioniSocio">
+      <button type="button" class="button is-link is-outlined" onclick="nuovoSocio()">Nuovo socio</button>
     </div>
   </div>
 
@@ -117,15 +152,10 @@
     automaticamente in base alle voci selezionate.
   </p>
 
-  <div id="searchZone">
-    <input id="searchInput" class="input" type="text" placeholder="Cerca cognome, nome o codice fiscale..." autocomplete="off">
-    <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
-  </div>
-
   <form id="memberForm">
     <input type="hidden" id="f_id">
 
-    <div class="section-title">Anagrafica</div>
+    <div class="section-title" id="sez-anagrafica">Anagrafica</div>
     <div class="columns is-multiline mt-1">
       <div class="column is-4"><label class="label" for="f_cognome">Cognome*</label><input class="input" id="f_cognome" required></div>
       <div class="column is-4"><label class="label" for="f_nome">Nome*</label><input class="input" id="f_nome" required></div>
@@ -144,7 +174,9 @@
       <div class="column is-12"><label class="label" for="f_email">Email</label><input class="input" type="email" id="f_email"></div>
     </div>
 
-    <div class="section-title">Iscrizione</div>
+    <div id="avvisoDoppioni" class="avviso-doppioni" role="status" hidden></div>
+
+    <div class="section-title" id="sez-iscrizione">Iscrizione</div>
     <div class="mt-4">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
@@ -172,7 +204,7 @@
       </div>
     </div>
 
-    <div class="section-title">Amministrazione</div>
+    <div class="section-title" id="sez-amministrazione">Amministrazione</div>
     <div class="columns mt-1">
       <div class="column is-4"><label class="label" for="f_numero_polizza">Numero polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
       <div class="column is-4">
@@ -182,21 +214,27 @@
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
     </div>
 
-    <div class="section-title">
-      Pagamento familiare
-      <button type="button" id="btnAbilitaPagante" class="button is-success is-small is-pulled-right" onclick="abilitaSezionePagante()" style="margin-top:-2px">Aggiungi pagante</button>
-    </div>
+    <div class="section-title" id="sez-pagamento">Pagamento</div>
+    <!-- Una scelta al posto del campo spento con "Aggiungi pagante" di lato:
+         il familiare si cerca solo dopo aver detto che paga lui. -->
+    <fieldset class="scelte">
+      <legend class="label">Chi paga la quota</legend>
+      <div class="scelte-opzioni">
+        <label class="scelta"><input type="radio" name="chiPaga" value="" checked><span>Paga da sé</span></label>
+        <label class="scelta"><input type="radio" name="chiPaga" value="familiare" id="pagaFamiliare"><span>La paga un familiare</span></label>
+      </div>
+    </fieldset>
 
-    <div id="payerSection" class="payer-section-disabled">
+    <div id="payerSection" hidden>
       <div class="columns mt-1">
         <div class="column is-8">
           <label class="label" for="f_payerDisplay">Pagato da</label>
           <div class="field has-addons mb-0">
             <div class="control is-expanded">
-              <input class="input" id="f_payerDisplay" placeholder="Cerca capofamiglia per cognome..." autocomplete="off" disabled>
+              <input class="input" id="f_payerDisplay" placeholder="Cerca capofamiglia per cognome..." autocomplete="off">
             </div>
             <div class="control">
-              <button type="button" class="button is-light" onclick="rimuoviPagante()" title="Rimuovi pagante" disabled>✕</button>
+              <button type="button" class="button is-light" onclick="rimuoviPagante()" title="Rimuovi pagante" aria-label="Rimuovi pagante">✕</button>
             </div>
           </div>
           <input type="hidden" id="f_payer_id">
@@ -258,6 +296,19 @@
   // propone un altro da sé. Uno scritto a mano invece non si tocca.
   let numeroProposto = null;
 
+  // Il socio caricato nel modulo (null = socio nuovo): lo dice la fascia in
+  // cima e il pulsante Salva.
+  let socioAperto = null;
+
+  // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
+  // firma(): se è cambiato, "Nuovo socio", un altro socio o uscire dalla
+  // pagina chiedono prima di buttare via quello che si è scritto.
+  let salvato = "";
+
+  // Possibili doppioni che l'operatore ha detto essere un'altra persona: non
+  // si ripropongono finché il modulo resta questo.
+  let doppioniScartati = new Set();
+
   const el = (id) => document.getElementById(id);
   const sceltaDi = (id) => el(id).querySelector("input:checked");
 
@@ -273,6 +324,7 @@
 
   (async function init() {
     if (!(await requirePermesso("soci"))) return;
+    aggiornaFascia();
     setLoading(true);
     try {
       accesso = await getProfile();
@@ -295,13 +347,22 @@
       el("f_payerDisplay").addEventListener("input", cercaPagante);
       // "change" e non "input": il controllo parte quando si lascia il campo,
       // non a ogni lettera, che a metà codice sarebbe sempre "sbagliato".
-      ["f_codice_fiscale", "f_cognome", "f_nome", "f_data_nascita"].forEach((id) =>
-        el(id).addEventListener("change", controllaCF));
+      ["f_codice_fiscale", "f_cognome", "f_nome", "f_data_nascita"].forEach((id) => {
+        el(id).addEventListener("change", controllaCF);
+        el(id).addEventListener("change", controllaDoppioni);
+      });
+      document.querySelectorAll("input[name=chiPaga]").forEach((r) => r.addEventListener("change", () => {
+        if (!r.value) { disabilitaSezionePagante(); return; }
+        abilitaSezionePagante();
+        el("f_payerDisplay").focus();
+      }));
+      window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
       el("f_numero_tessera").addEventListener("input", () => (el("notaTessera").hidden = true));
       el("btnTogli").addEventListener("click", chiediTogli);
 
       ricalcola();
       await proponiNumeroTessera();
+      salvato = firma();
     } catch (error) {
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -543,10 +604,46 @@
   // Ricerca soci
   // -------------------------------------------------------------------------
 
-  function mostraRicerca() {
-    el("searchZone").style.display = "block";
-    el("searchInput").focus();
+  // -------------------------------------------------------------------------
+  // Chi c'è nel modulo
+  // -------------------------------------------------------------------------
+
+  /** Fascia in cima e pulsante Salva: socio nuovo o quale socio si modifica. */
+  function aggiornaFascia() {
+    const s = socioAperto;
+    el("fasciaSocio").classList.toggle("modifica", Boolean(s));
+    el("statoSocio").innerHTML = s
+      ? `Stai modificando: <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>`
+        + (s.card_number ? ` · tessera ${esc(s.card_number)}` : "")
+      : "<strong>Nuovo socio</strong>: salvando si crea una scheda nuova";
+    el("btnSalva").textContent = s ? `Salva ${s.last_name} ${s.first_name}` : "Salva il socio nuovo";
   }
+
+  /**
+   * Lo stato del modulo in una stringa, per sapere se è cambiato. Il numero
+   * tessera proposto dalla pagina non conta: arriva dal database un attimo
+   * dopo l'apertura e non l'ha scritto nessuno.
+   */
+  function firma() {
+    const campi = [...el("memberForm").elements].map((c) =>
+      c.type === "radio" || c.type === "checkbox" ? c.checked
+        : c.id === "f_numero_tessera" && c.value === numeroProposto ? "" : c.value);
+    return JSON.stringify([campi, abbonamentiNuovi.length, [...abbonamentiDaTogliere]]);
+  }
+
+  const modificato = () => firma() !== salvato;
+
+  /** Domanda sulla fascia prima di lasciare un modulo con modifiche non salvate. */
+  function lasciaModifiche(poi) {
+    if (!modificato()) { poi(); return; }
+    const domanda = socioAperto
+      ? `Le modifiche a ${socioAperto.last_name} ${socioAperto.first_name} non sono salvate. Lasciarle?`
+      : "Quello che hai scritto per il socio nuovo non è salvato. Lasciarlo?";
+    chiedi(el("azioniSocio"), domanda, "Sì, lascia le modifiche", poi);
+  }
+
+  const nuovoSocio = () => lasciaModifiche(resetForm);
+  const apriSocio = (id) => lasciaModifiche(() => caricaSocio(id));
 
   /**
    * La ricerca avviene sul database, non su una copia locale di tutti i soci:
@@ -569,7 +666,7 @@
       : '<p class="help">Nessun risultato.</p>';
 
     box.querySelectorAll(".result-item").forEach((riga) => {
-      riga.addEventListener("click", () => caricaSocio(riga.dataset.id));
+      riga.addEventListener("click", () => apriSocio(riga.dataset.id));
     });
   }
 
@@ -587,6 +684,85 @@
     const { data, error } = await richiesta.order("last_name").order("first_name");
     if (error) { showToast(messaggioErrore(error), "is-danger"); return []; }
     return data;
+  }
+
+  // -------------------------------------------------------------------------
+  // Doppioni
+  //
+  // Un socio della stagione scorsa reinserito come nuovo diventava una
+  // seconda scheda: il codice fiscale non è obbligatorio né unico, e
+  // nell'archivio ci sono già doppioni, quindi niente vincolo nel database.
+  // La pagina cerca in tutto l'archivio lo stesso codice fiscale, o lo stesso
+  // cognome e nome (con la stessa data di nascita, se scritta), e propone di
+  // aprire quella scheda: si rinnova quella, non se ne crea un'altra.
+  // ponytail: due operatori che salvano la stessa persona nello stesso
+  // momento passano entrambi; e "D'ANGELO" non trova "DANGELO".
+  // -------------------------------------------------------------------------
+
+  const CAMPI_DOPPIONE = "id, last_name, first_name, birth_date, tax_code, city, card_number";
+  // Cognome e nome confrontati con ilike senza jolly: % e _ valgono come lettere.
+  const esatto = (t) => t.trim().replace(/\s+/g, " ").replace(/[\\%_]/g, "\\$&");
+
+  async function cercaDoppioni() {
+    if (el("f_id").value) return [];
+    const cf = el("f_codice_fiscale").value.trim().toUpperCase();
+    const cognome = esatto(el("f_cognome").value), nome = esatto(el("f_nome").value);
+    const nascita = el("f_data_nascita").value;
+
+    const richieste = [];
+    if (/^[A-Z0-9]{16}$/.test(cf)) {
+      richieste.push(sb.from("members").select(CAMPI_DOPPIONE).ilike("tax_code", cf).limit(5));
+    }
+    if (cognome && nome) {
+      let r = sb.from("members").select(CAMPI_DOPPIONE).ilike("last_name", cognome).ilike("first_name", nome);
+      // Le schede d'archivio senza data restano: potrebbe essere la stessa persona.
+      if (nascita) r = r.or(`birth_date.eq.${nascita},birth_date.is.null`);
+      richieste.push(r.order("birth_date").limit(5));
+    }
+
+    const trovati = new Map();
+    for (const { data, error } of await Promise.all(richieste)) {
+      if (error) throw error;
+      data.forEach((s) => trovati.set(s.id, s));
+    }
+    return [...trovati.values()].filter((s) => !doppioniScartati.has(s.id));
+  }
+
+  /** Lasciando cognome, nome, data o codice fiscale: l'avviso compare subito. */
+  function controllaDoppioni() {
+    // Durante la scrittura un errore di rete non vale un messaggio: il
+    // controllo si ripete comunque premendo Salva.
+    cercaDoppioni().then(mostraDoppioni, () => {});
+  }
+
+  function mostraDoppioni(trovati) {
+    const box = el("avvisoDoppioni");
+    // Una risposta arrivata dopo aver aperto un socio non vale più.
+    if (el("f_id").value || !trovati.length) { box.hidden = true; return; }
+    box.innerHTML = `
+      <p class="titolo">${trovati.length === 1 ? "Questa persona forse è già in archivio" : "Queste persone forse sono già in archivio"}</p>
+      <ul>${trovati.map((s) => `
+        <li><span><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>`
+          + (s.birth_date ? ` · nascita ${dataIt(s.birth_date)}` : "")
+          + (s.tax_code ? ` · ${esc(s.tax_code)}` : "")
+          + (s.city ? ` · ${esc(s.city)}` : "")
+          + (s.card_number ? ` · tessera ${esc(s.card_number)} di quest'anno` : "")
+          + `</span><button type="button" class="button is-link" data-id="${s.id}">Apri questa scheda</button></li>`).join("")}
+      </ul>
+      <p class="help mb-3">Si apre la scheda com'è salvata: quello che hai scritto qui non resta.</p>
+      <button type="button" class="button is-light" id="btnAltraPersona">No, è un'altra persona</button>`;
+    // Scegliere la scheda è già la risposta: niente seconda domanda.
+    box.querySelectorAll("button[data-id]").forEach((b) => b.addEventListener("click", () => caricaSocio(b.dataset.id)));
+    el("btnAltraPersona").addEventListener("click", () => {
+      trovati.forEach((s) => doppioniScartati.add(s.id));
+      box.hidden = true;
+    });
+    box.hidden = false;
+  }
+
+  function nascondiDoppioni() {
+    doppioniScartati = new Set();
+    el("avvisoDoppioni").hidden = true;
   }
 
   // -------------------------------------------------------------------------
@@ -648,11 +824,13 @@
       el("notaTessera").hidden = true;
       await proponiNumeroTessera();
 
-      el("btnSalva").textContent = "SALVA LE MODIFICHE";
-      el("searchZone").style.display = "none";
+      socioAperto = socio;
+      aggiornaFascia();
+      nascondiDoppioni();
       el("searchInput").value = "";
       el("searchResults").innerHTML = "";
       ricalcola();
+      salvato = firma();
       window.scrollTo(0, 0);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -683,22 +861,20 @@
   // Capofamiglia
   // -------------------------------------------------------------------------
 
+  /** "La paga un familiare": compare la ricerca del capofamiglia. */
   function abilitaSezionePagante() {
-    el("payerSection").classList.remove("payer-section-disabled");
-    el("f_payerDisplay").disabled = false;
-    el("payerSection").querySelectorAll("button").forEach((b) => (b.disabled = false));
-    el("btnAbilitaPagante").style.display = "none";
+    el("pagaFamiliare").checked = true;
+    el("payerSection").hidden = false;
   }
 
+  /** "Paga da sé": nessun pagante. */
   function disabilitaSezionePagante() {
-    el("payerSection").classList.add("payer-section-disabled");
-    el("f_payerDisplay").disabled = true;
+    document.querySelector("input[name=chiPaga][value='']").checked = true;
+    el("payerSection").hidden = true;
     el("f_payerDisplay").value = "";
     el("f_payer_id").value = "";
-    el("payerSection").querySelectorAll("button").forEach((b) => (b.disabled = true));
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
-    el("btnAbilitaPagante").style.display = "inline-block";
   }
 
   async function cercaPagante() {
@@ -786,7 +962,7 @@
       </div>`;
 
     el("familyList").querySelectorAll("button[data-id]").forEach((b) => {
-      b.addEventListener("click", () => caricaSocio(b.dataset.id));
+      b.addEventListener("click", () => apriSocio(b.dataset.id));
     });
 
     panel.style.display = "block";
@@ -809,6 +985,13 @@
   async function salva() {
     const form = el("memberForm");
     if (!form.checkValidity()) { form.reportValidity(); return; }
+    // Senza questo controllo "La paga un familiare" senza nome si salvava
+    // come "paga da sé", senza dire niente.
+    if (el("pagaFamiliare").checked && !el("f_payer_id").value) {
+      showToast("Scegli dall'elenco il familiare che paga, oppure segna «Paga da sé».", "is-danger");
+      el("f_payerDisplay").focus();
+      return;
+    }
 
     const bottone = el("btnSalva");
     bottone.disabled = true;
@@ -853,6 +1036,16 @@
       // hanno bisogno del suo id, e se il socio non passa (es. numero tessera
       // già preso) non resta niente di scritto a metà.
       let id = el("f_id").value;
+      if (!id) {
+        const doppioni = await cercaDoppioni();
+        if (doppioni.length) {
+          mostraDoppioni(doppioni);
+          el("avvisoDoppioni").scrollIntoView({ block: "center" });
+          showToast("Questa persona sembra già in archivio: apri la sua scheda, "
+            + "oppure premi «No, è un'altra persona» e salva di nuovo.", "is-danger");
+          return;
+        }
+      }
       if (id) {
         const { error } = await sb.from("members").update(socio).eq("id", id);
         if (error) throw error;
@@ -863,6 +1056,8 @@
         // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
         // Salva, va aggiornato, non inserito una seconda volta.
         el("f_id").value = id;
+        socioAperto = socio;
+        aggiornaFascia();
       }
 
       // Ripetibile: la stessa client_id non diventa due righe, quindi un
@@ -898,10 +1093,11 @@
     el("f_id").value = "";
     familiariACarico = [];
     el("familyPanel").style.display = "none";
-    el("searchZone").style.display = "none";
     el("searchInput").value = "";
     el("searchResults").innerHTML = "";
-    el("btnSalva").textContent = "SALVA SOCIO";
+    socioAperto = null;
+    aggiornaFascia();
+    nascondiDoppioni();
     disabilitaSezionePagante();
     abbonamentiSalvati = [];
     abbonamentiNuovi = [];
@@ -913,6 +1109,7 @@
     numeroProposto = null;
     el("notaTessera").hidden = true;
     ricalcola();
+    salvato = firma();
     window.scrollTo(0, 0);
     proponiNumeroTessera();
   }

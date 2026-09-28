@@ -99,6 +99,11 @@
     <a href="index.html">Soci</a>.
   </p>
 
+  <div class="field mb-5">
+    <label class="label" for="cercaNucleo">Cerca una famiglia</label>
+    <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
+  </div>
+
   <div id="displayArea"></div>
 </div>
 
@@ -108,9 +113,14 @@
 <script>
   const el = (id) => document.getElementById(id);
 
+  // L'ultimo elenco caricato (nuclei, capofamiglia, familiari): la ricerca
+  // lo filtra senza tornare al database.
+  let ultimi = [[], {}, []];
+
   (async function init() {
     if (!(await requirePermesso("pagamenti"))) return;
     el("soloInsoluti").addEventListener("change", caricaDati);
+    el("cercaNucleo").addEventListener("input", render);
     await caricaDati();
 
     // Aggiornamento in tempo reale: se un altro operatore incassa da un altro
@@ -147,8 +157,8 @@
         familiari = data;
       }
 
-      const capofamiglia = await caricaCapofamiglia(idPaganti);
-      render(nuclei, capofamiglia, familiari);
+      ultimi = [nuclei, await caricaCapofamiglia(idPaganti), familiari];
+      render();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -169,15 +179,29 @@
     return new Date(anno, 8, 1).toISOString();
   }
 
-  function render(nuclei, capofamiglia, familiari) {
-    const totale = nuclei.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
+  const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
+
+  function render() {
+    const [tutti, capofamiglia, familiari] = ultimi;
+    const totale = tutti.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
     el("totalInsoluti").textContent = fmt(totale);
-    el("conteggioNuclei").textContent = `${nuclei.length} nuclei · ${familiari.length} familiari a carico`;
+
+    // Con centinaia di nuclei si scorreva a mano: una famiglia si trova per
+    // il nome di chiunque ne faccia parte, in qualsiasi ordine.
+    const termini = el("cercaNucleo").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const nuclei = termini.length
+      ? tutti.filter((n) => [n, ...familiari.filter((f) => f.payer_id === n.head_id)].some((p) => {
+          const nome = `${p.last_name} ${p.first_name}`.toLowerCase();
+          return termini.every((t) => nome.includes(t));
+        }))
+      : tutti;
+    el("conteggioNuclei").textContent = (termini.length ? `${nuclei.length} di ` : "")
+      + `${quanti(tutti.length, "nucleo", "nuclei")} · ${quanti(familiari.length, "familiare a carico", "familiari a carico")}`;
 
     const contenitore = el("displayArea");
     if (!nuclei.length) {
-      contenitore.innerHTML =
-        '<div class="notification is-light has-text-centered">Nessun nucleo da mostrare.</div>';
+      contenitore.innerHTML = `<div class="notification is-light has-text-centered">${
+        termini.length ? "Nessuna famiglia con questo nome." : "Nessun nucleo da mostrare."}</div>`;
       return;
     }
 
