@@ -141,6 +141,16 @@ textarea:focus-visible,
  * di .button: senza questa restavano gli unici quadrati della pagina. */
 .button.is-small:not(.is-rounded) { border-radius: var(--pillola); }
 
+/* Finestra di conferma sopra la pagina (<dialog class="finestra"> aperto con
+ * showModal()): per i gesti che non si annullano o che stanno in una riga di
+ * tabella, dove una domanda scritta allargherebbe la cella. Non è confirm(),
+ * che il browser può bloccare senza dire niente. */
+dialog.finestra { border: 0; border-radius: var(--raggio-card); padding: 30px; color: var(--testo);
+                  width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+dialog.finestra::backdrop { background: rgba(0, 0, 0, .45); }
+dialog.finestra h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
+@media screen and (max-width: 768px) { dialog.finestra { padding: 22px 18px; } }
+
 /* Domanda di conferma scritta sulla pagina (chiedi() in shared.js), al posto
  * dei pulsanti che l'hanno aperta. */
 .domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }

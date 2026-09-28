@@ -40,13 +40,8 @@
                      border-radius: 6px; font-size: 1rem; }
 
 
-    #dlgChiudi { border: 0; border-radius: var(--raggio-card); padding: 30px;
-                 width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
-    #dlgChiudi::backdrop { background: rgba(0,0,0,.45); }
-    #dlgChiudi h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
 
     @media screen and (max-width: 768px) {
-      #dlgChiudi { padding: 22px 18px; }
       .riquadro { padding: 22px 18px; }
     }
     .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
@@ -135,7 +130,7 @@
 
 <!-- Conferma della chiusura: la spiegazione sta qui, davanti a chi sta per
      farlo, e non più sparsa nella pagina. -->
-<dialog id="dlgChiudi" aria-labelledby="dlgTitolo">
+<dialog id="dlgChiudi" class="finestra" aria-labelledby="dlgTitolo">
   <h2 id="dlgTitolo">Chiudere la stagione?</h2>
   <p class="mb-4">
     I dati della stagione vengono prima archiviati e restano consultabili fra

@@ -20,6 +20,9 @@
                           font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
     .tabella-utenti td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-utenti .vuota { color: var(--testo-soft); }
+    /* Un'email lunga va a capo dove serve: tenuta su una riga allargava la
+       tabella oltre il riquadro e i pulsanti finivano fuori dallo schermo. */
+    .tabella-utenti td:first-child { overflow-wrap: anywhere; }
     .tabella-utenti select { min-width: 150px; }
     .tabella-utenti .azioni { text-align: right; white-space: nowrap; }
     .tabella-utenti .azioni button { margin-left: 6px; }
@@ -38,7 +41,7 @@
        flex basta a mandare a capo tutto il resto. Qui la larghezza se la
        prende dal contenuto. */
     .riga-nuovo select { flex: 0 0 auto; width: auto; min-width: 150px; }
-    .domanda { color: var(--errore); font-weight: 600; margin-right: 4px; }
+    #dlgConferma .chi { font-size: 1.25rem; font-weight: 700; overflow-wrap: anywhere; margin-bottom: 8px; }
 
   </style>
 </head>
@@ -108,6 +111,22 @@
   </div>
 </div>
 
+<!-- Conferma di Rimuovi ed Elimina per sempre. Scritta nella riga della
+     tabella allargava la cella e mandava i pulsanti fuori dallo schermo.
+     method="dialog": il pulsante premuto chiude la finestra e ne lascia il
+     value in returnValue; Esc è come Annulla. -->
+<dialog id="dlgConferma" class="finestra" aria-labelledby="dlgTitolo">
+  <form method="dialog">
+    <h2 id="dlgTitolo"></h2>
+    <p class="chi" id="dlgChi"></p>
+    <p class="mb-4" id="dlgTesto"></p>
+    <div class="buttons">
+      <button class="button" value="" id="dlgAnnulla">Annulla</button>
+      <button class="button is-danger" value="si" id="dlgSi"></button>
+    </div>
+  </form>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shared.js"></script>
@@ -172,10 +191,8 @@
     // e tocca a chi guarda dire di sì. Un ruolo cambiato per sbaglio con lo
     // scroll del dito non deve arrivare al database.
     //
-    // Il pulsante si ricerca ogni volta perché la cella viene riscritta: mentre
-    // è in corso la domanda "revocare l'accesso?" non c'è, e il menu invece si
-    // può ancora muovere. Ci pensa collegaAzioni() a rimetterlo nello stato
-    // giusto quando torna.
+    // Il pulsante si ricerca ogni volta perché la cella viene riscritta (dopo
+    // un errore di Rimuovi): ci pensa collegaAzioni() a riagganciarlo.
     select.addEventListener("change", () => {
       const conferma = riga.querySelector("[data-conferma]");
       if (conferma) conferma.disabled = select.value === riga.dataset.ruoloSalvato;
@@ -226,25 +243,39 @@
     const select = riga.querySelector("[data-ruolo]");
     const riattiva = riga.querySelector("[data-riattiva]");
     const elimina = riga.querySelector("[data-elimina]");
-    if (!riattiva) return;   // è aperta la domanda "eliminare?"
     riattiva.disabled = !select.value;
     riattiva.onclick = () => riattivaAccount(riga, select.value);
     elimina.onclick = () => chiediEliminazione(riga);
   }
 
-  /** Eliminare non si annulla: la domanda è scritta sulla riga, con l'email. */
-  function chiediEliminazione(riga) {
-    const email = riga.querySelector("td").firstChild.textContent.trim();
-    const azioni = riga.querySelector(".azioni");
-    azioni.innerHTML = `
-      <span class="domanda">Eliminare per sempre ${esc(email)}? Non si torna indietro.</span>
-      <button type="button" class="button is-small is-danger" data-si>Sì, elimina</button>
-      <button type="button" class="button is-small is-light" data-no>Annulla</button>`;
-    azioni.querySelector("[data-si]").addEventListener("click", () => eliminaAccount(riga, email));
-    azioni.querySelector("[data-no]").addEventListener("click", () => {
-      azioni.innerHTML = azioniSenzaAccessoHtml();
-      collegaAzioniSenzaAccesso(riga);
+  /**
+   * Domanda nella finestra di conferma (#dlgConferma): true se si preme il
+   * pulsante rosso. Il fuoco parte da Annulla, così un Invio distratto non
+   * toglie niente a nessuno.
+   */
+  function chiediInFinestra({ titolo, chi, testo, si }) {
+    const finestra = el("dlgConferma");
+    el("dlgTitolo").textContent = titolo;
+    el("dlgChi").textContent = chi;
+    el("dlgTesto").textContent = testo;
+    el("dlgSi").textContent = si;
+    finestra.returnValue = "";
+    finestra.showModal();
+    el("dlgAnnulla").focus();
+    return new Promise((ok) => finestra.addEventListener("close", () => ok(finestra.returnValue === "si"), { once: true }));
+  }
+
+  const emailDi = (riga) => riga.querySelector("td").firstChild.textContent.trim();
+
+  /** Eliminare non si annulla: l'email si legge per intero, in grande. */
+  async function chiediEliminazione(riga) {
+    const email = emailDi(riga);
+    const si = await chiediInFinestra({
+      titolo: "Eliminare per sempre questo account?", chi: email,
+      testo: "L'account sparisce e l'indirizzo email torna libero. Non si torna indietro.",
+      si: "Sì, elimina per sempre",
     });
+    if (si) eliminaAccount(riga, email);
   }
 
   async function eliminaAccount(riga, email) {
@@ -427,18 +458,14 @@
   }
 
   /** Togliere l'accesso a qualcuno non è un gesto da un clic solo. */
-  function chiediRimozione(riga) {
-    const azioni = riga.querySelector(".azioni");
-    azioni.innerHTML = `
-      <span class="domanda">Revocare l'accesso?</span>
-      <button type="button" class="button is-small is-danger" data-si>Sì, rimuovi</button>
-      <button type="button" class="button is-small is-light" data-no>Annulla</button>`;
-
-    azioni.querySelector("[data-si]").addEventListener("click", () => rimuovi(riga));
-    azioni.querySelector("[data-no]").addEventListener("click", () => {
-      azioni.innerHTML = azioniHtml();
-      collegaAzioni(riga);
+  async function chiediRimozione(riga) {
+    const si = await chiediInFinestra({
+      titolo: "Revocare l'accesso?", chi: emailDi(riga),
+      testo: "Non potrà più entrare nel gestionale. L'account resta in fondo all'elenco, "
+        + "senza accesso: da lì si può riattivare con un ruolo.",
+      si: "Sì, revoca l'accesso",
     });
+    if (si) rimuovi(riga);
   }
 
   async function rimuovi(riga) {
