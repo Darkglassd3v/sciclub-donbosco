@@ -44,7 +44,8 @@ const gita = {
   stops: [["6:30", "Asti"], ["6:45", "Moncalvo"]], deadline: "2027-01-10", course: false,
 };
 assert.deepStrictEqual(modelloPost(gita, "post").prices, [[null, "€ 52"]]);
-assert.strictEqual(modelloPost(gita, "post").deadline, "entro domenica 10");
+// La scadenza come la vuole chi pubblica: "giovedì 8/12", uguale nell'immagine e nel testo.
+assert.strictEqual(modelloPost(gita, "post").deadline, "entro domenica 10/1");
 assert.match(testoPost(gita), /Quota soci: € 52/);
 
 const senzaPrezzo = { ...gita, show_price: false };
@@ -59,7 +60,7 @@ assert.deepStrictEqual(modelloPost({ ...gita, prices: [["Adulti", ""]] }, "post"
 const testo = testoPost(gita);
 assert.match(testo, /^🚌 Martedì 12 gennaio: gita a La Thuile!/);
 assert.match(testo, /Partenze: ore 6:30 Asti, ore 6:45 Moncalvo/);
-assert.match(testo, /Iscrizioni entro domenica 10 gennaio/);
+assert.match(testo, /Iscrizioni entro domenica 10\/1\n/);
 assert.match(testo, /#lathuile/);
 // Senza contatti il testo non ha la riga dei telefoni (vuota).
 assert.doesNotMatch(testo, /Info e iscrizioni/, "riga dei telefoni senza contatti");

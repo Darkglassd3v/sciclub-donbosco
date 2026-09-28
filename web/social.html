@@ -122,7 +122,7 @@
     .anteprima .sborda { color: var(--errore); font-weight: 600; margin-top: 6px; }
 
     .azioni-post { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-    #testoPost { min-height: 9em; font-family: inherit; }
+    #testoPost { min-height: 9em; max-height: none; font-family: inherit; }
     .avviso-contrasto { color: var(--errore); font-weight: 600; }
     .salva-modifiche { background: var(--giallo) !important; color: #14202E !important; }
 
@@ -334,6 +334,22 @@
               </div>
             </section>
 
+            <!-- Il testo sta qui, largo, dopo i dati da cui nasce: nella colonna
+                 dell'anteprima finiva sotto le immagini, fuori dallo schermo. -->
+            <section class="parte" aria-labelledby="pTesto">
+              <h3 id="pTesto">Testo da incollare sotto al post</h3>
+              <p class="occhiello mb-2">Si scrive da solo mentre compili i dati. Puoi correggerlo: da lì resta com'è.</p>
+              <textarea class="textarea" id="testoPost" aria-labelledby="pTesto"></textarea>
+              <p class="avviso-contrasto mt-2 mb-0" id="testoAMano" hidden>
+                Questo testo non segue più i dati (è stato cambiato a mano, o i dati sono cambiati dopo):
+                «Rifai dai dati» lo riscrive.
+              </p>
+              <div class="azioni-post">
+                <button type="button" class="button is-link" id="btnCopia">Copia il testo</button>
+                <button type="button" class="button is-light" id="btnRigenera" hidden>Rifai dai dati</button>
+              </div>
+            </section>
+
             <div class="elimina" id="azioniElimina">
               <button type="button" class="button is-small is-danger is-outlined" id="btnElimina">Elimina questo post</button>
             </div>
@@ -346,13 +362,6 @@
             <p class="occhiello mb-0" id="senzaAnteprima" hidden></p>
             <p class="avviso-contrasto" id="sbordaTutti" hidden></p>
             <div class="scarica" id="scarica"></div>
-            <hr>
-            <label class="label mb-0" for="testoPost">Testo da incollare sotto al post</label>
-            <textarea class="textarea" id="testoPost"></textarea>
-            <div class="azioni-post">
-              <button type="button" class="button is-light" id="btnCopia">Copia il testo</button>
-              <button type="button" class="button is-light" id="btnRigenera">Rifai dai dati</button>
-            </div>
             <p id="linkUtm" hidden></p>
             <hr>
             <button type="button" class="button is-success" id="btnPubblicato">Segna come pubblicato</button>
@@ -489,6 +498,7 @@
   let sponsors = [];     // righe di sponsors
   let aperto = null;     // il post nel form (riga salvata, o {} se nuovo)
   let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
+  let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
   let foto = null;       // la foto del post aperto (data URL ridotto)
 
   /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
@@ -823,7 +833,11 @@
     el("fTipo").addEventListener("change", () => { mostraCampi(); cambiato(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { aggiungiRiga(b.dataset.aggiungi); cambiato(); }));
-    el("editor").addEventListener("input", (e) => { if (e.target.id !== "testoPost") cambiato(); else segnaModifiche(); });
+    el("editor").addEventListener("input", (e) => {
+      if (e.target.id !== "testoPost") { cambiato(); return; }
+      segnaTestoAMano();
+      segnaModifiche();
+    });
     el("fFoto").addEventListener("change", async () => {
       const file = el("fFoto").files[0];
       if (!file) return;
@@ -833,7 +847,7 @@
     });
     el("btnTogliFoto").addEventListener("click", () => { foto = null; cambiato(); });
     el("btnSalva").addEventListener("click", salva);
-    el("btnRigenera").addEventListener("click", () => { el("testoPost").value = testoPost(daForm(), sponsorDi(daForm()), STAGIONE); segnaModifiche(); });
+    el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
     el("btnCopia").addEventListener("click", copiaTesto);
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
@@ -888,7 +902,9 @@
     mostraEditor(true);
     mostraCampi();
     ridisegna();
-    el("testoPost").value = post.caption || testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
+    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
+    el("testoPost").value = post.caption || testoAuto;
+    segnaTestoAMano();
     salvato = firma();
     segnaModifiche();
     aggiornaTesta();
@@ -950,8 +966,31 @@
     el("btnSalva").textContent = m ? "Salva modifiche" : "Salva";
     el("btnSalva").classList.toggle("salva-modifiche", m);
   }
+  /**
+   * Il testo sotto al post si riscrive da solo a ogni cambio dei dati, finché
+   * è quello scritto dalla pagina. Corretto a mano resta com'è, e la pagina lo
+   * dice: "Rifai dai dati" (forza) lo riporta al testo automatico.
+   */
+  function aggiornaTestoPost(forza) {
+    const aMano = el("testoPost").value !== testoAuto;
+    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
+    if (forza || !aMano) el("testoPost").value = testoAuto;
+    segnaTestoAMano();
+  }
+
+  function segnaTestoAMano() {
+    const ta = el("testoPost"), aMano = ta.value !== testoAuto;
+    el("testoAMano").hidden = !aMano;
+    el("btnRigenera").hidden = !aMano;
+    // Alto quanto il testo: tutto in vista, senza scorrere dentro il riquadro.
+    // (field-sizing: content qui resta all'altezza minima di Bulma.)
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + ta.offsetHeight - ta.clientHeight + "px";
+  }
+
   function cambiato() {
     ridisegna();
+    aggiornaTestoPost();
     segnaModifiche();
     aggiornaTesta();
   }

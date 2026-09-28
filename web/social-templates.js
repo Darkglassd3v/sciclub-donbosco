@@ -70,6 +70,12 @@ function dataLunga(iso) {
   return d ? `${maiuscola(GIORNI[d.getDay()])} ${d.getDate()} ${MESI[d.getMonth()]}` : null;
 }
 
+/** "entro giovedì 8/12": la scadenza delle iscrizioni, uguale nell'immagine e nel testo. */
+function entro(iso) {
+  const d = giornoDi(iso);
+  return d ? `entro ${GIORNI[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}` : "";
+}
+
 /** "13/01" */
 function dataCorta(iso) {
   const d = giornoDi(iso);
@@ -126,11 +132,9 @@ function modelloPost(ev, fmt) {
     prices: ev.show_price === false ? [] : prezzi, contatti: contattiDi(ev),
   };
   if (ev.kind === "gita") {
-    const d = giornoDi(ev.deadline);
     return {
       ...base, kind: "gita", dest: ev.title, date: dataLunga(ev.event_date),
-      stops: ev.stops || [], corso: !!ev.course,
-      deadline: d ? `entro ${GIORNI[d.getDay()]} ${d.getDate()}` : "",
+      stops: ev.stops || [], corso: !!ev.course, deadline: entro(ev.deadline),
     };
   }
   return {
@@ -532,8 +536,7 @@ function testoPost(ev, sp, stagione) {
     if (ev.course) righe.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) righe.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) righe.push(`Quota soci: ${quote}`);
-    const d = giornoDi(ev.deadline);
-    if (d) righe.push(`Iscrizioni entro ${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`);
+    if (ev.deadline) righe.push(`Iscrizioni ${entro(ev.deadline)}`);
   } else {
     righe.push(`${ev.title}${ev.event_date ? ` · ${dataLunga(ev.event_date)}` : ""}`);
     if (ev.subtitle) righe.push(ev.subtitle);
