@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Stampe — Sci Club Don Bosco</title>
+  <title>Fogli dei soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
@@ -19,28 +19,10 @@
     .giorni-stampa [data-giorno="WEEKEND"] { background: var(--blu); color: #fff; box-shadow: inset 0 -8px 0 var(--giallo); }
     .giorni-stampa [data-giorno="MARTEDI"] { background: var(--errore); color: #fff; }
 
-    .foglio { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 26px; margin-bottom: 24px; }
-    .foglio h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: 2px; }
-    .foglio .sotto { color: var(--testo-soft); margin-bottom: 14px; }
-    .foglio table { width: 100%; border-collapse: collapse; }
-    .foglio th { text-align: left; padding: 8px; border-bottom: 2px solid var(--testo); font-size: .9375rem; }
-    .foglio td { padding: 9px 8px; border-bottom: 1px solid var(--filo); }
-    .foglio td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .foglio .vuota { color: var(--testo-soft); }
-
-    /* Sulla carta: niente barra né pulsanti, un gruppo (una partenza) per
-     * pagina, così ogni pullman ha il suo foglio. */
-    @media print {
-      @page { margin: 14mm; }
-      body { background: #fff; }
-      .barra, .no-stampa, .fascia-vedi-come, #statusToast { display: none !important; }
-      .container-main { margin: 0; padding: 0; max-width: none; }
-      .foglio { box-shadow: none; padding: 0; border-radius: 0; margin: 0; break-after: page; }
-      .foglio:last-child { break-after: auto; }
-      .foglio h2 { font-size: 18pt; }
-      .foglio th, .foglio td { font-size: 11pt; padding: 5px 6px; }
-      .foglio tr { break-inside: avoid; }
-    }
+    .esito { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px 26px; }
+    .esito h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+    .esito ul { margin: 0; padding-left: 1.2em; }
+    .esito li { padding: 4px 0; }
   </style>
 </head>
 <body>
@@ -69,20 +51,19 @@
 </header>
 
 <div class="container-main">
-  <div class="no-stampa">
-    <h1 class="title is-4 mb-4">Fogli da stampare</h1>
-    <p class="mb-4">
-      Ogni pulsante prepara i fogli con i soci della stagione e apre la stampa.
-      Sabato e domenica: foglio dei corsisti, foglio degli abbonamenti e foglio jolly,
-      una pagina per partenza. Martedì: abbonamenti del martedì e jolly.
-    </p>
-    <div class="giorni-stampa">
-      <button type="button" class="button" data-giorno="WEEKEND">Stampa fogli sabato e domenica</button>
-      <button type="button" class="button" data-giorno="MARTEDI">Stampa fogli martedì</button>
-    </div>
+  <h1 class="title is-4 mb-4">Fogli dei soci</h1>
+  <p class="mb-4">
+    Ogni pulsante scarica i fogli Excel con i soci della stagione: uno per i corsisti, uno per
+    gli abbonamenti e uno per i jolly, solo quelli con qualcuno dentro. In ogni file c'è un foglio
+    per partenza, in ordine alfabetico. La prima volta il browser può chiedere il permesso di
+    scaricare più file: rispondi di sì.
+  </p>
+  <div class="giorni-stampa">
+    <button type="button" class="button" data-giorno="WEEKEND">Scarica fogli sabato e domenica</button>
+    <button type="button" class="button" data-giorno="MARTEDI">Scarica fogli martedì</button>
   </div>
 
-  <div id="fogli"></div>
+  <div id="esito" class="esito" hidden></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -98,7 +79,7 @@
   (async function init() {
     if (!(await requirePermesso("gite"))) return;
     document.querySelectorAll(".giorni-stampa [data-giorno]").forEach((b) =>
-      b.addEventListener("click", () => stampa(b.dataset.giorno, b)));
+      b.addEventListener("click", () => scarica(b.dataset.giorno, b)));
   })();
 
   /** Soci della stagione e abbonamenti letti al momento: si stampa quello che c'è ora. */
@@ -114,13 +95,21 @@
     return { soci, abbonamenti };
   }
 
-  async function stampa(giorno, bottone) {
+  async function scarica(chiave, bottone) {
     bottone.disabled = true;
     setLoading(true);
     try {
       const { soci, abbonamenti } = await leggiDati();
-      disegna(giorno, fogliDelGiorno(giorno, soci, abbonamenti));
-      window.print();
+      // Solo i fogli con qualcuno: il martedì, per esempio, niente corsi.
+      const fogli = fogliDelGiorno(chiave, soci, abbonamenti).filter((f) => f.gruppi.length);
+      const nomeGiorno = GIORNI_STAMPA[chiave].nome.toLowerCase();
+      if (!fogli.length) {
+        mostraEsito(`Nessun socio della stagione per ${nomeGiorno}: nessun file scaricato.`, []);
+        return;
+      }
+      await caricaXlsx();
+      const scaricati = fogli.map((f) => excelFoglio(chiave, f));
+      mostraEsito(`Scaricati i fogli di ${nomeGiorno}:`, scaricati);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -130,37 +119,36 @@
   }
 
   /**
-   * Una pagina per ogni partenza di ogni foglio. Un foglio senza nessuno ha
-   * la sua pagina con "Nessuno": chi la prende in mano sa che non manca.
+   * Un file per foglio (Corsisti, Abbonamenti, Jolly) e, dentro, un foglio di
+   * lavoro per partenza: ogni pullman ha il suo. In cima a ogni foglio il
+   * titolo, poi le colonne. Restituisce la riga per l'elenco dei file.
    */
-  function disegna(giorno, fogli) {
-    const nomeGiorno = GIORNI_STAMPA[giorno].nome;
-    const oggi = new Date().toLocaleDateString("it-IT");
-    const pagina = (foglio, gruppo) => {
-      const soci = gruppo ? gruppo.soci : [];
-      const sotto = [foglio.nota, gruppo?.titolo, `${soci.length} ${soci.length === 1 ? "persona" : "persone"}`,
-                     `stampato il ${oggi}`].filter(Boolean).map(esc).join(" · ");
-      return `
-        <section class="foglio">
-          <h2>${esc(nomeGiorno)} · ${esc(foglio.titolo)}</h2>
-          <p class="sotto">${sotto}</p>
-          ${soci.length ? `<table>
-            <thead><tr><th>N. tessera</th><th>Cognome</th><th>Nome</th><th>Luogo di nascita</th><th>Telefono</th></tr></thead>
-            <tbody>${soci.map((s) => `
-              <tr>
-                <td class="num">${esc(s.card_number) || "—"}</td>
-                <td><strong>${esc(s.last_name)}</strong></td>
-                <td>${esc(s.first_name)}</td>
-                <td>${esc(s.birth_place) || "—"}</td>
-                <td class="num">${esc(s.phone) || "—"}</td>
-              </tr>`).join("")}
-            </tbody>
-          </table>` : `<p class="vuota">Nessuno.</p>`}
-        </section>`;
-    };
-    el("fogli").innerHTML = fogli
-      .flatMap((f) => (f.gruppi.length ? f.gruppi.map((g) => pagina(f, g)) : [pagina(f, null)]))
-      .join("");
+  function excelFoglio(chiave, foglio) {
+    const nomeGiorno = GIORNI_STAMPA[chiave].nome;
+    const oggi = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
+    const libro = XLSX.utils.book_new();
+    let quanti = 0;
+    for (const g of foglio.gruppi) {
+      quanti += g.soci.length;
+      const titolo = [nomeGiorno, foglio.titolo, foglio.nota, g.titolo].filter(Boolean).join(" · ");
+      const righe = [
+        [titolo],
+        ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Telefono"],
+        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", s.phone || ""]),
+      ];
+      const lavoro = XLSX.utils.aoa_to_sheet(righe);
+      lavoro["!cols"] = [10, 22, 18, 22, 18].map((wch) => ({ wch }));
+      XLSX.utils.book_append_sheet(libro, lavoro, nomeFoglioExcel(g.titolo || foglio.titolo));
+    }
+    const file = `${foglio.titolo} ${nomeGiorno.toLowerCase()} ${oggi}.xlsx`;
+    XLSX.writeFile(libro, file);
+    const partenze = foglio.gruppi.length > 1 ? `, ${foglio.gruppi.length} partenze` : "";
+    return `${file}: ${quanti} ${quanti === 1 ? "socio" : "soci"}${partenze}`;
+  }
+
+  function mostraEsito(testo, file) {
+    el("esito").innerHTML = `<h2>${esc(testo)}</h2>${file.length ? `<ul>${file.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
+    el("esito").hidden = false;
   }
 </script>
 </body>

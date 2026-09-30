@@ -87,11 +87,12 @@
 2. [x] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
-3. [x] feat(stampe): pagina `web/stampe.html` (permesso `gite`), voce "Stampe" nella barra e nelle
-       pagine di ricerca. Due pulsanti (Sabato e domenica, Martedì); fogli corsisti (sab+dom),
-       abbonamenti 5 gite e jolly (sempre), una pagina per partenza senza distinguere il giorno, "Senza partenza" in fondo, "Nessuno" se il foglio è vuoto. Colonne: N. tessera /
-       Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` in `web/stampe.js`, test
-       `node web/test-stampe.js`.
+3. [x] feat(stampe): pagina `web/stampe.html` "Fogli dei soci" (permesso `gite`), voce "Stampe" nella
+       barra e nelle pagine di ricerca. Due pulsanti (Sabato e domenica, Martedì) che SCARICANO file
+       Excel separati: Corsisti (sab+dom), Abbonamenti 5 gite e Jolly, solo quelli con qualcuno
+       (il martedì niente corsi). In ogni file un foglio per partenza, in ordine alfabetico.
+       Colonne: N. tessera / Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` e
+       `nomeFoglioExcel()` in `web/stampe.js`, test `node web/test-stampe.js`.
 4. [x] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
        tutte le schede (non solo chi non ha abbonamento), stesso giro di "Assegna": add_pass,
        coda offline, client_id.

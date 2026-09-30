@@ -1,5 +1,5 @@
-// Fogli da stampare per le gite (web/stampe.html). Solo funzioni pure, senza
-// pagina: le prova `node web/test-stampe.js`.
+// Fogli Excel dei soci per le gite (web/stampe.html). Solo funzioni pure,
+// senza pagina: le prova `node web/test-stampe.js`.
 
 /**
  * I pulsanti della pagina. Sabato e domenica stampano insieme, divisi per
@@ -22,6 +22,15 @@ const COLONNA_PARTENZA = { SABATO: "saturday_departure", DOMENICA: "sunday_depar
  */
 function nomePartenza(testo) {
   return String(testo || "").trim().replace(/\s+/g, " ").toUpperCase();
+}
+
+/**
+ * Nome del foglio di lavoro Excel: "Partenza da NIZZA M." → "NIZZA M.". Excel
+ * rifiuta [ ] : * ? / \ e più di 31 caratteri, e il file non si aprirebbe.
+ */
+function nomeFoglioExcel(titolo) {
+  const nome = String(titolo || "").replace(/^Partenza da /, "").replace(/[[\]:*?/\\]/g, " ").trim().slice(0, 31);
+  return nome || "Foglio1";
 }
 
 const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");

@@ -9,8 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 const sorgente = fs.readFileSync(path.join(__dirname, "stampe.js"), "utf8");
-const { fogliDelGiorno, nomePartenza } =
-  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza }; })()`);
+const { fogliDelGiorno, nomePartenza, nomeFoglioExcel } =
+  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza, nomeFoglioExcel }; })()`);
 
 const socio = (id, last_name, extra = {}) => ({ id, last_name, first_name: "A", ...extra });
 const soci = [
@@ -73,5 +73,15 @@ assert.deepStrictEqual(fogliDelGiorno("SABATO", soci, abbonamenti), []);
 assert.strictEqual(fogliDelGiorno("WEEKEND", soci, abbonamenti)[2].nota, "valido per tutti i giorni");
 
 assert.strictEqual(nomePartenza("  nizza   m. "), "NIZZA M.");
+
+// Nomi dei fogli di lavoro Excel: senza "Partenza da", senza caratteri vietati, 31 al massimo.
+assert.strictEqual(nomeFoglioExcel("Partenza da NIZZA M."), "NIZZA M.");
+assert.strictEqual(nomeFoglioExcel("Senza partenza"), "Senza partenza");
+assert.strictEqual(nomeFoglioExcel("Partenza da ASTI/CENTRO"), "ASTI CENTRO");
+assert.strictEqual(nomeFoglioExcel("Partenza da " + "X".repeat(40)).length, 31);
+assert.strictEqual(nomeFoglioExcel(""), "Foglio1");
+
+// Il martedì non ha corsi: niente foglio dei corsisti, mai.
+assert.ok(!fogliDelGiorno("MARTEDI", soci, abbonamenti).some((f) => f.titolo === "Corsisti"));
 
 console.log("test stampe: tutto a posto");
