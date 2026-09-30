@@ -954,7 +954,11 @@
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
       contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
-      caption: el("testoPost").value,
+      // Vuoto = testo automatico, rifatto dai dati a ogni apertura. Si salva
+      // solo quello scritto a mano: confrontare il testo salvato con quello
+      // dei dati non basta, perché cambia anche da solo (formato della data,
+      // numero in rubrica) e sembrava corretto a mano.
+      caption: el("testoPost").value === testoAuto ? null : el("testoPost").value,
     };
   }
   const sponsorDi = (post) => sponsors.find((s) => s.id === post.sponsor_id) || null;
