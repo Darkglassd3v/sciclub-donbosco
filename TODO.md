@@ -37,9 +37,8 @@
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.
-- Stampe: tre pulsanti colorati, Sabato / Domenica / Martedì. Ogni giorno stampa più fogli:
-  corsisti di quel giorno (sabato e domenica), abbonamenti 5 gite di quel giorno e SEMPRE il foglio
-  jolly. Ogni foglio diviso per partenza del giorno (una pagina per partenza), in ordine alfabetico.
+- Stampe: fogli corsisti, abbonamenti 5 gite e SEMPRE jolly, divisi per partenza, in ordine
+  alfabetico (vedi sotto: sabato e domenica insieme).
 - Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel
   form Soci), indipendentemente dal tipo di corso.
 - Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form
@@ -53,6 +52,13 @@
   Abbinamento: cognome + nome + data di nascita; senza data valida, cognome + nome solo se nel
   database c'è una sola persona con quel nome. Omonimi e non trovati: solo nel file di warning,
   nessun socio nuovo.
+- Stampe: un pulsante "sabato e domenica" (partenze non distinte per giorno: chi ha due partenze
+  diverse compare in tutti e due i gruppi) più il martedì; jolly sempre.
+- Assicurazione: senza codice fiscale non si assicura: il socio non entra nel foglio e non risulta
+  assicurato; la pagina lo elenca a parte in rosso. "Segna come inviata" con il permesso polizze;
+  si annulla solo l'ultima lista di ogni tipo. La colonna policy_number si toglie (backup prima).
+- Modifica di totale e pagato (rimborsi) da Pagamenti, tesoriere e admin, con il motivo obbligatorio;
+  storico scritto dal database. Nel form Soci casella "Totale scritto a mano".
 - Lavoro in autonomia (30/09 sera): un commit per funzione, schema in produzione con backup, push.
 
 
@@ -72,9 +78,8 @@
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
 3. [x] feat(stampe): pagina `web/stampe.html` (permesso `gite`), voce "Stampe" nella barra e nelle
-       pagine di ricerca. Tre pulsanti (Sabato, Domenica, Martedì); per ogni giorno i fogli
-       corsisti (sab/dom), abbonamenti 5 gite di quel giorno e jolly (sempre), una pagina per
-       partenza, "Senza partenza" in fondo, "Nessuno" se il foglio è vuoto. Colonne: N. tessera /
+       pagine di ricerca. Due pulsanti (Sabato e domenica, Martedì); fogli corsisti (sab+dom),
+       abbonamenti 5 gite e jolly (sempre), una pagina per partenza senza distinguere il giorno, "Senza partenza" in fondo, "Nessuno" se il foglio è vuoto. Colonne: N. tessera /
        Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` in `web/stampe.js`, test
        `node web/test-stampe.js`.
 4. [ ] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
