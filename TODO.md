@@ -88,11 +88,12 @@
 5. [ ] feat(soci): nel form Soci casella "già pagato" sulla riga dell'abbonamento aggiunto: somma
        il prezzo all'acconto sotto gli occhi dell'operatore (togliendo la spunta lo toglie);
        salvataggio invariato.
-6. [ ] feat(cf): script in sola lettura `supabase/scripts/` che legge i fogli di `dati26`
-       (zipfile, openpyxl non c'è), ripulisce cognomi e date (numeri Excel e testo "15\08\49"),
-       abbina per cognome+nome+data di nascita e produce il report trovati/diversi/dubbi/non trovati.
-       Poi, DOPO OK: backup + UPDATE su tutte le righe della persona (anche vecchie).
-       Nota: 4640 righe su 5778 hanno il CF vuoto.
+6. [x] feat(cf): `supabase/scripts/cf_dati26.py` (sola lettura) + correzione in produzione il 30/09:
+       555 righe nei fogli, 540 codici; 70 righe del database aggiornate (7 riempite, 63 cambiate),
+       447 già giuste. Backup e rapporto in `supabase/migration/cf-2026-09-30/` (fuori da git):
+       **da leggere `warning-cf.md`**: 73 codici dei fogli che non passano il controllo (22 lasciati
+       come nel database perché lì erano giusti: errori di battitura nei fogli), 13 persone non
+       trovate, 9 con data di nascita diversa (non toccate).
 7. [ ] feat(assicurazione): schema + pagina.
        - `prices.insurance` (BASE/PLUS/SPORT/null) sulle tessere, riempita con l'abbinamento
          deciso sopra. Oggi `insurance_members()` esclude solo la tessera "NO": le tessere
