@@ -50,6 +50,10 @@
     .abbonamenti li.nuovo { border-style: dashed; background: #fff; }
     .abbonamenti li.vuoto { border: 2px dashed var(--filo); background: #fff; }
     .abbonamenti .gite { font-weight: 700; }
+    .abbonamenti .gia-pagato { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco);
+                               margin-left: auto; font-weight: 600; cursor: pointer; }
+    .abbonamenti .gia-pagato input { width: 24px; height: 24px; margin: 0; accent-color: var(--ok); }
+    .abbonamenti .gia-pagato + .button { margin-left: 0; }
     .abbonamenti .button, .scelta.aggiungi .button { margin-left: auto; flex: none; }
     /* Nome su una riga, prezzo e pulsante sotto: tutti e tre sulla stessa
      * riga, a testo grande il pulsante usciva dal riquadro. */
@@ -522,16 +526,25 @@
       const li = document.createElement("li");
       li.className = "nuovo";
       li.innerHTML = `<span>${esc(a.pass_type)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
+      // Pagato sul pullman: la spunta somma il prezzo all'acconto qui sotto,
+      // dove l'operatore lo vede e lo può correggere. Si salva con il resto.
+      const pagato = document.createElement("label");
+      pagato.className = "gia-pagato";
+      pagato.innerHTML = `<input type="checkbox"> già pagato`;
+      const casella = pagato.querySelector("input");
+      casella.checked = Boolean(a.pagato);
+      casella.addEventListener("change", () => segnaPagato(a, casella.checked));
       const b = document.createElement("button");
       b.type = "button";
       b.className = "button is-danger is-outlined";
       b.textContent = "Togli";
       b.addEventListener("click", () => {
+        segnaPagato(a, false);
         abbonamentiNuovi = abbonamentiNuovi.filter((x) => x !== a);
         disegnaAbbonamenti();
         ricalcola();
       });
-      li.append(b);
+      li.append(pagato, b);
       righe.push(li);
     });
 
@@ -542,6 +555,19 @@
       righe.push(li);
     }
     el("elencoAbbonamenti").replaceChildren(...righe);
+  }
+
+  /**
+   * "Già pagato" sulla riga di un abbonamento nuovo: aggiunge il suo prezzo
+   * all'acconto, o lo toglie se la spunta si toglie. L'acconto resta un campo
+   * normale: si vede cosa è cambiato, e si può ancora correggere a mano.
+   */
+  function segnaPagato(abbonamento, pagato) {
+    if (Boolean(abbonamento.pagato) === pagato) return;
+    abbonamento.pagato = pagato;
+    const acconto = num(el("f_acconto").value) + (pagato ? 1 : -1) * num(abbonamento.price);
+    el("f_acconto").value = Math.round(acconto * 100) / 100;
+    ricalcola();
   }
 
   async function caricaAbbonamenti(idSocio) {

@@ -85,7 +85,7 @@
 4. [x] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
        tutte le schede (non solo chi non ha abbonamento), stesso giro di "Assegna": add_pass,
        coda offline, client_id.
-5. [ ] feat(soci): nel form Soci casella "già pagato" sulla riga dell'abbonamento aggiunto: somma
+5. [x] feat(soci): nel form Soci casella "già pagato" sulla riga dell'abbonamento aggiunto: somma
        il prezzo all'acconto sotto gli occhi dell'operatore (togliendo la spunta lo toglie);
        salvataggio invariato.
 6. [x] feat(cf): `supabase/scripts/cf_dati26.py` (sola lettura) + correzione in produzione il 30/09:
