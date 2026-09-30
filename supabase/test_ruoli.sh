@@ -217,6 +217,7 @@ begin
     ('scrivi', 'select public.set_tax_code(' || m || ', ''X'')',                   'SxxSxxx'),
     ('scrivi', 'select public.insurance_send(''BASE'', 99, array[' || m || ']::uuid[])', 'SxxSxxx'),
     ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
+    ('scrivi', 'select public.set_amounts(' || m || ', 10, 5, ''prova'')',          'SSSxxxx'),
     ('scrivi', 'select public.add_pass(' || m || ', ''PROVA 10 VIAGGI SABATO'', false, gen_random_uuid())', 'SSxxSxx'),
     ('scrivi', 'select * from public.use_trip(' || m || ', gen_random_uuid(), null)', 'SSxxSxx'),
     ('scrivi', 'insert into public.member_passes (member_id, pass_type) values (' || m || ', ''PROVA 10 VIAGGI SABATO'')', 'SSxxxxx'),
@@ -836,6 +837,79 @@ begin
   end loop;
 end $$;
 
+-- Importi: rimborso e totale a mano da Pagamenti, con lo storico.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, total, paid)
+values ('aaaaaaaa-0000-0000-0000-000000000009', 'ROSSI', 'RIMBORSO', now(), 'PROVA TESSERA ORDINARIA', 245, 245);
+set role authenticated;
+
+do $$
+declare
+  rita constant uuid := 'aaaaaaaa-0000-0000-0000-000000000009';
+  chi text;
+begin
+  -- Il tesoriere rimborsa: fatte 2 lezioni del corso su 8.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  perform public.set_amounts(rita, 245, 100, 'Rimborso corso: fatte 2 lezioni');
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- l'admin legge
+  assert (select paid from public.members where id = rita) = 100, 'rimborso non scritto';
+  assert not (select total_manual from public.members where id = rita), 'il totale non è cambiato ma risulta a mano';
+
+  -- Lo sconto sul totale: da qui il totale è a mano.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  perform public.set_amounts(rita, 200, 100, 'Sconto fratelli');
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  assert (select total_manual from public.members where id = rita), 'totale cambiato ma non segnato a mano';
+
+  -- Senza motivo, o con cifre negative, no.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  begin
+    perform public.set_amounts(rita, 200, 100, '  ');
+    raise exception 'ASSERZIONE: importi cambiati senza motivo';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%motivo%', 'errore inatteso: ' || sqlerrm;
+  end;
+  begin
+    perform public.set_amounts(rita, 200, -5, 'prova');
+    raise exception 'ASSERZIONE: pagato negativo accettato';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  -- Una modifica dal form Soci finisce nello storico anche lei, senza motivo.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  update public.members set paid = 120 where id = rita;
+
+  -- Lo storico: dal più recente, con motivo e chi l'ha fatto.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  assert (select count(*) from public.amount_history(rita)) = 3, 'storico: attese tre modifiche';
+  assert (select reason from public.amount_history(rita) limit 1) is null, 'storico: la modifica dal form ha un motivo';
+  assert (select string_agg(coalesce(reason, '-') || ' ' || old_paid || '>' || new_paid || ' ' || changed_by, ' | ')
+            from public.amount_history(rita))
+         = '- 100.00>120.00 admin@test | Sconto fratelli 100.00>100.00 tesoriere@test | '
+           || 'Rimborso corso: fatte 2 lezioni 245.00>100.00 tesoriere@test',
+         'storico sbagliato: ' || (select string_agg(coalesce(reason, '-') || ' ' || old_paid || '>' || new_paid || ' ' || changed_by, ' | ')
+            from public.amount_history(rita));
+
+  -- Chi non ha i pagamenti non cambia gli importi e non legge lo storico.
+  foreach chi in array array['66666666-6666-6666-6666-666666666666',     -- assicurazione
+                             '11111111-1111-1111-1111-111111111111',     -- gite
+                             '88888888-8888-8888-8888-888888888888',     -- social
+                             '55555555-5555-5555-5555-555555555555'] loop -- senza ruolo
+    perform set_config('test.uid', chi, false);
+    assert (select count(*) from public.amount_history(rita)) = 0, 'senza pagamenti legge lo storico';
+    assert (select count(*) from public.member_amount_changes) = 0, 'lo storico si legge senza la funzione';
+    begin
+      perform public.set_amounts(rita, 0, 0, 'abuso');
+      raise exception 'ASSERZIONE: senza pagamenti ha cambiato gli importi';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
+  end loop;
+end $$;
+
 -- La ricerca dell'assicurazione si ferma a 20 risultati.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
@@ -1034,6 +1108,8 @@ begin
          'chiusura: giorno del corso non azzerato';
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
+  assert not (select total_manual from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000009'),
+         'chiusura: totale a mano non azzerato';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
   assert (select count(*) from public.member_passes) > 0, 'chiusura: gli abbonamenti venduti sono stati cancellati';
 end $$;

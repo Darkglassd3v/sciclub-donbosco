@@ -108,10 +108,14 @@
        `supabase/migration/backup-2026-09-30/`: nessuna polizza era scritta). Tolti colonna
        `members.policy_number`, trigger `check_policy_number`, campo nel form Soci, colonna
        nell'Excel del Riepilogo; households non usa più `select *` (bloccava la rimozione).
-9. [ ] feat(pagamenti): `members.total_manual` (il form non ricalcola più il totale scritto a
-       mano, e lo mostra come "fatto a mano"); tabella storico modifiche di totale e pagato, scritta
-       da un trigger (chi, quando, vecchio → nuovo, nota); RPC per tesoriere e admin per cambiare
-       totale e pagato (il rimborso riduce il pagato). Storico visibile in Pagamenti (admin.html).
+9. [x] feat(pagamenti): totale a mano, rimborsi e storico (schema in produzione il 30/09).
+       `members.total_manual` + casella "Totale scritto a mano" nel form Soci (non si ricalcola dal
+       listino; un abbonamento aggiunto o tolto lo sposta del suo prezzo). `set_amounts()` per
+       tesoriere e admin (permesso pagamenti) con motivo obbligatorio, dalla pagina Pagamenti
+       ("Modifica importi"; rimborso = pagato più basso; un totale cambiato diventa "a mano").
+       Storico `member_amount_changes` scritto dal trigger `log_amount_change` per ogni cambio di
+       totale o pagato, con il motivo (incasso e abbonamenti dal telefono lo scrivono da soli);
+       "Storico" in Pagamenti via `amount_history()`.
 
 Per ogni punto: test node, schema applicato due volte in docker (nomi container unici),
 pagina provata nel browser con client finto (anche con A+ al massimo), poi commit.

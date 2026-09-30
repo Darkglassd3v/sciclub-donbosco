@@ -62,6 +62,8 @@
     .scelta.aggiungi .prezzo { margin-left: 0; }
     .togli-stagione .domanda { display: block; font-weight: 700; margin-bottom: 8px; }
     .label { margin-bottom: .3rem; }
+    .totale-mano { display: flex; align-items: center; gap: 8px; min-height: 1.5rem; margin-bottom: .3rem; font-weight: 600; }
+    .totale-mano input { width: 20px; height: 20px; margin: 0; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
 
     /* Fascia di chi c'è nel modulo: resta sotto la barra mentre si scorre,
@@ -225,6 +227,13 @@
         <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
       </div>
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
+      <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
+           listino a ogni salvataggio, e lo sconto si perdeva. -->
+      <div class="column is-4">
+        <label class="checkbox totale-mano" for="f_totale_a_mano"><input type="checkbox" id="f_totale_a_mano"> Totale scritto a mano (€)</label>
+        <input class="input" type="number" step="0.01" min="0" id="f_totale_manuale" disabled aria-label="Totale scritto a mano, in euro">
+        <p id="notaTotaleMano" class="help" hidden>Non si ricalcola dal listino. Un abbonamento aggiunto o tolto qui lo cambia del suo prezzo.</p>
+      </div>
     </div>
 
     <div class="section-title" id="sez-pagamento">Pagamento</div>
@@ -354,6 +363,8 @@
       Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
       el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
       el("f_acconto").addEventListener("input", ricalcola);
+      el("f_totale_a_mano").addEventListener("change", () => { aggiornaTotaleMano({ daListino: true }); ricalcola(); });
+      el("f_totale_manuale").addEventListener("input", ricalcola);
       el("searchInput").addEventListener("input", cercaSoci);
       el("f_payerDisplay").addEventListener("input", cercaPagante);
       // "change" e non "input": il controllo parte quando si lascia il campo,
@@ -483,6 +494,7 @@
     // interrompe e si ripreme Salva, il database riconosce la stessa riga e
     // non vende l'abbonamento due volte.
     abbonamentiNuovi.push({ client_id: crypto.randomUUID(), pass_type: voce.name, price: voce.price, trips: voce.trips });
+    spostaTotaleMano(num(voce.price));
     disegnaAbbonamenti();
     ricalcola();
   }
@@ -510,6 +522,7 @@
         b.addEventListener("click", () => {
           if (togliere) abbonamentiDaTogliere.delete(a.pass_id);
           else abbonamentiDaTogliere.add(a.pass_id);
+          spostaTotaleMano((togliere ? 1 : -1) * num(a.price));
           disegnaAbbonamenti();
           ricalcola();
         });
@@ -536,6 +549,7 @@
       b.textContent = "Togli";
       b.addEventListener("click", () => {
         segnaPagato(a, false);
+        spostaTotaleMano(-num(a.price));
         abbonamentiNuovi = abbonamentiNuovi.filter((x) => x !== a);
         disegnaAbbonamenti();
         ricalcola();
@@ -634,9 +648,38 @@
   // Totali
   // -------------------------------------------------------------------------
 
-  function totaleIndividuale() {
+  /** Il totale come lo dà il listino: voci scelte più abbonamenti. */
+  function totaleDaListino() {
     const voci = Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
     return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0);
+  }
+
+  const totaleAMano = () => el("f_totale_a_mano").checked;
+
+  /** Il totale che si salva: quello scritto a mano, se c'è la spunta. */
+  function totaleIndividuale() {
+    return totaleAMano() ? num(el("f_totale_manuale").value) : totaleDaListino();
+  }
+
+  /**
+   * Spunta del totale a mano: accesa parte dal totale del listino, che si
+   * corregge; spenta torna al listino. Il campo resta visibile ma spento,
+   * così si vede che c'è.
+   */
+  function aggiornaTotaleMano({ daListino = false } = {}) {
+    const aMano = totaleAMano();
+    const campo = el("f_totale_manuale");
+    if (aMano && daListino) campo.value = Math.round(totaleDaListino() * 100) / 100;
+    if (!aMano) campo.value = "";
+    campo.disabled = !aMano;
+    el("notaTotaleMano").hidden = !aMano;
+  }
+
+  /** Abbonamento aggiunto o tolto con il totale a mano: il prezzo si somma o si toglie lì. */
+  function spostaTotaleMano(importo) {
+    if (!totaleAMano()) return;
+    const campo = el("f_totale_manuale");
+    campo.value = Math.round((num(campo.value) + importo) * 100) / 100;
   }
 
   function ricalcola() {
@@ -848,6 +891,9 @@
         selezionaPerNome(idSelect, socio[CAMPI_SELECT_DB[idSelect]]));
       el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === socio.course_day));
       aggiornaGiornoCorso();
+      el("f_totale_a_mano").checked = Boolean(socio.total_manual);
+      aggiornaTotaleMano();
+      if (socio.total_manual) el("f_totale_manuale").value = num(socio.total);
       spuntaPartenze("check_sabato", socio.saturday_departure);
       spuntaPartenze("check_domenica", socio.sunday_departure);
 
@@ -1076,6 +1122,7 @@
       sunday_departure: partenzeSelezionate("check_domenica"),
       card_number: numeroTessera(),
       total: totaleIndividuale(),
+      total_manual: totaleAMano(),
       paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
     };
@@ -1140,6 +1187,7 @@
   function resetForm() {
     el("memberForm").reset();
     aggiornaGiornoCorso();
+    aggiornaTotaleMano();
     el("f_id").value = "";
     familiariACarico = [];
     el("familyPanel").style.display = "none";

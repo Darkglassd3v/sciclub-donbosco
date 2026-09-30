@@ -42,6 +42,20 @@
     .barra-saldo .domanda { font-weight: 600; color: var(--blu-dark); }
     .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
 
+    /* Modifica degli importi e storico: si aprono sotto la riga del socio. */
+    .azioni-socio { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .azioni-socio .button { font-size: .9375rem; }
+    .a-mano { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
+              background: var(--giallo-light); color: var(--giallo-dark); font-size: .9375rem; font-weight: 600; }
+    .riga-aperta td { background: var(--riga-alt); }
+    .modifica-importi { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 12px 16px; align-items: end; }
+    .modifica-importi .motivo { grid-column: 1 / -1; }
+    .modifica-importi .azioni { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+    .storico { list-style: none; margin: 0; padding: 0; }
+    .storico li { padding: 8px 0; border-top: 1px solid var(--filo); }
+    .storico li:first-child { border-top: 0; }
+    .storico .quando { font-weight: 600; margin-right: 8px; }
+
     @media screen and (max-width: 768px) {
       .summary-value { font-size: 2.1rem; }
       .custom-table th, .custom-table td { padding-left: 18px; padding-right: 18px; }
@@ -97,7 +111,9 @@
 
   <p class="suggerimento mb-4">
     Quote e numero di tessera si modificano dalla pagina
-    <a href="index.html">Soci</a>.
+    <a href="index.html">Soci</a>. Un rimborso o uno sconto si scrive qui, con
+    <b>Modifica importi</b> sulla riga del socio: resta nello <b>Storico</b>.
+    Per chi ha già pagato tutto togli la spunta «Solo chi deve pagare».
   </p>
 
   <div class="field mb-5">
@@ -135,6 +151,9 @@
    * ogni chiamata.
    */
   async function caricaDati({ silenzioso = false } = {}) {
+    // Un altro operatore ha salvato mentre qui si scrive una modifica: il
+    // ridisegno la cancellerebbe. Si aggiorna al prossimo giro.
+    if (silenzioso && document.querySelector(".riga-aperta")) return;
     if (!silenzioso) setLoading(true);
     try {
       let query = sb
@@ -236,9 +255,18 @@
     contenitore.querySelectorAll("button[data-chiedi]").forEach((bottone) => {
       bottone.addEventListener("click", () => chiediConferma(bottone.dataset.chiedi));
     });
+    contenitore.querySelectorAll("button[data-modifica]").forEach((bottone) => {
+      bottone.addEventListener("click", () => apriModifica(bottone.dataset.modifica));
+    });
+    contenitore.querySelectorAll("button[data-storico]").forEach((bottone) => {
+      bottone.addEventListener("click", () => apriStorico(bottone.dataset.storico));
+    });
   }
 
-  /** Riga in sola lettura: in questa pagina non si modifica niente del socio. */
+  /**
+   * Riga del socio. Del socio qui si cambiano solo gli importi (Modifica
+   * importi, con il motivo): il resto si fa dalla pagina Soci.
+   */
   function rigaSocio(socio, eFamiliare) {
     const saldo = parseFloat(socio.balance || 0);
     const dettagli = [socio.card_type, socio.family_discount,
@@ -246,10 +274,15 @@
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `
-      <tr class="${eFamiliare ? "row-dependent" : ""}">
+      <tr class="${eFamiliare ? "row-dependent" : ""}" data-socio="${socio.id}">
         <td>
-          <b>${socio.last_name} ${socio.first_name}</b>${eFamiliare ? '<span class="a-carico">a carico</span>' : ""}
-          <div class="dettagli-socio">${dettagli.map((d) => `<span>${d}</span>`).join("")}</div>
+          <b>${esc(socio.last_name)} ${esc(socio.first_name)}</b>${eFamiliare ? '<span class="a-carico">a carico</span>' : ""}${
+            socio.total_manual ? '<span class="a-mano">totale a mano</span>' : ""}
+          <div class="dettagli-socio">${dettagli.map((d) => `<span>${esc(d)}</span>`).join("")}</div>
+          <div class="azioni-socio">
+            <button type="button" class="button is-light" data-modifica="${socio.id}">Modifica importi</button>
+            <button type="button" class="button is-light" data-storico="${socio.id}">Storico</button>
+          </div>
         </td>
         <td class="num">${fmt(socio.total)}</td>
         <td class="num">${fmt(socio.paid)}</td>
@@ -273,6 +306,103 @@
           <button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${fmt(saldo)}</button>
         </span>
       </div>`;
+  }
+
+  // -------------------------------------------------------------------------
+  // Modifica degli importi (rimborsi, sconti) e storico
+  // -------------------------------------------------------------------------
+
+  function socioDa(id) {
+    const [, capofamiglia, familiari] = ultimi;
+    return capofamiglia[id] || familiari.find((f) => f.id === id);
+  }
+
+  /** Apre sotto la riga del socio un riquadro: uno solo alla volta. */
+  function apriSotto(id, html) {
+    document.querySelectorAll(".riga-aperta").forEach((r) => r.remove());
+    const riga = document.querySelector(`tr[data-socio="${id}"]`);
+    if (!riga) return null;
+    const sotto = document.createElement("tr");
+    sotto.className = "riga-aperta";
+    sotto.innerHTML = `<td colspan="4">${html}</td>`;
+    riga.after(sotto);
+    return sotto;
+  }
+
+  function apriModifica(id) {
+    const socio = socioDa(id);
+    if (!socio) return;
+    const sotto = apriSotto(id, `
+      <div class="modifica-importi">
+        <div><label class="label" for="quota_${id}">Quota (€)</label>
+          <input class="input" type="number" step="0.01" min="0" id="quota_${id}" value="${num(socio.total)}"></div>
+        <div><label class="label" for="versato_${id}">Già versato (€)</label>
+          <input class="input" type="number" step="0.01" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
+        <div class="motivo"><label class="label" for="motivo_${id}">Motivo*</label>
+          <input class="input" id="motivo_${id}" maxlength="200" autocomplete="off"
+                 placeholder="Es. rimborso corso: fatte 2 lezioni su 8"></div>
+        <div class="azioni">
+          <button type="button" class="button is-success" data-salva>Salva ${esc(socio.last_name)} ${esc(socio.first_name)}</button>
+          <button type="button" class="button is-light" data-chiudi>Annulla</button>
+        </div>
+      </div>`);
+    sotto.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
+    sotto.querySelector("[data-salva]").addEventListener("click", () => salvaImporti(socio, sotto));
+    el("motivo_" + id).focus();
+  }
+
+  async function salvaImporti(socio, sotto) {
+    const quota = el("quota_" + socio.id).value;
+    const versato = el("versato_" + socio.id).value;
+    const motivo = el("motivo_" + socio.id).value.trim();
+    if (quota === "" || versato === "" || num(quota) < 0 || num(versato) < 0) {
+      showToast("Quota e già versato: scrivi una cifra, zero o più.", "is-danger");
+      return;
+    }
+    if (!motivo) {
+      showToast("Scrivi il motivo: resta nello storico del socio.", "is-danger");
+      el("motivo_" + socio.id).focus();
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("set_amounts", {
+        member_id: socio.id, total: num(quota), paid: num(versato), reason: motivo,
+      });
+      if (error) throw error;
+      sotto.remove();
+      showToast(`${socio.last_name} ${socio.first_name}: importi salvati.`);
+      await caricaDati({ silenzioso: true });
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function apriStorico(id) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("amount_history", { member_id: id });
+      if (error) throw error;
+      const quando = (t) => new Date(t).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
+      const cambio = (etichetta, prima, dopo) =>
+        num(prima) === num(dopo) ? "" : `${etichetta} ${fmt(prima)} → ${fmt(dopo)} · `;
+      const sotto = apriSotto(id, data.length
+        ? `<ul class="storico">${data.map((c) => `
+            <li><span class="quando">${quando(c.changed_at)}</span>
+              ${cambio("Quota", c.old_total, c.new_total)}${cambio("Versato", c.old_paid, c.new_paid)}
+              ${esc(c.reason || "Modifica della scheda socio")}${c.changed_by ? ` · ${esc(c.changed_by)}` : ""}</li>`).join("")}
+          </ul>
+          <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`
+        : `<p>Nessuna modifica degli importi registrata.</p>
+          <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`);
+      sotto?.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function chiediConferma(idPagante) {

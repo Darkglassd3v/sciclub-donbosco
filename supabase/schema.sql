@@ -1581,6 +1581,7 @@ begin
     sunday_departure   = null,
     total              = 0,
     paid               = 0,
+    total_manual       = false,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null
@@ -1651,6 +1652,7 @@ begin
     sunday_departure   = null,
     total              = 0,
     paid               = 0,
+    total_manual       = false,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null
@@ -1764,16 +1766,160 @@ begin
     return;
   end if;
 
+  -- Il motivo lo legge log_amount_change() per lo storico degli importi.
+  perform set_config('sciclub.motivo', 'Incasso dalla pagina Pagamenti', true);
   update public.members m
      set paid = m.total
    where (m.id = head_id or m.payer_id = head_id)
      and m.balance > 0;
+  perform set_config('sciclub.motivo', '', true);
 
   return query select how_many, how_much;
 end;
 $$;
 
 comment on function public.settle_household is 'Porta a zero il saldo del capofamiglia e dei suoi familiari a carico. Restituisce quante righe e quanto è stato incassato.';
+
+-- ---------------------------------------------------------------------------
+-- Importi scritti a mano, rimborsi e storico
+--
+-- Il form Soci ricalcola il totale dal listino a ogni salvataggio. Uno sconto
+-- fatto a mano si perdeva al salvataggio dopo: con total_manual il form lo
+-- lascia com'è, e il socio risulta "con il totale fatto a mano".
+--
+-- Tesoriere e admin (permesso pagamenti) cambiano totale e pagato dalla
+-- pagina Pagamenti con set_amounts(), sempre con il motivo: un rimborso
+-- (fa due lezioni del corso e smette) abbassa il pagato. Il tesoriere non
+-- modifica i soci, quindi la funzione è security definer e tocca solo quei
+-- due campi.
+--
+-- Ogni cambio di totale o pagato, da qualunque pagina, finisce in
+-- member_amount_changes: lo scrive un trigger, non le pagine, così non se ne
+-- perde nessuno. Il motivo arriva da chi fa la modifica (set_config
+-- 'sciclub.motivo' nella stessa transazione); senza, è una modifica della
+-- scheda dal form Soci.
+-- ---------------------------------------------------------------------------
+
+alter table public.members add column if not exists total_manual boolean not null default false;
+comment on column public.members.total_manual is 'Totale scritto a mano (sconti): il form Soci non lo ricalcola dal listino.';
+
+create table if not exists public.member_amount_changes (
+  id          uuid primary key default gen_random_uuid(),
+  member_id   uuid not null references public.members (id) on delete cascade,
+  -- clock_timestamp e non now(): due modifiche nella stessa transazione
+  -- (incasso di un nucleo) restano in ordine.
+  changed_at  timestamptz not null default clock_timestamp(),
+  changed_by  uuid default auth.uid(),
+  old_total   numeric(10, 2),
+  new_total   numeric(10, 2),
+  old_paid    numeric(10, 2),
+  new_paid    numeric(10, 2),
+  reason      text
+);
+
+create index if not exists member_amount_changes_member_idx
+  on public.member_amount_changes (member_id, changed_at desc);
+alter table public.member_amount_changes alter column changed_at set default clock_timestamp();
+
+comment on table public.member_amount_changes is 'Storico dei cambi di totale e pagato dei soci, scritto dal trigger log_amount_change.';
+
+-- Nessuna policy: si legge con amount_history(), si scrive solo dal trigger.
+alter table public.member_amount_changes enable row level security;
+
+create or replace function public.log_amount_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  -- La chiusura della stagione e "Togli dalla stagione" azzerano gli importi
+  -- di tutti: non sono modifiche di un socio, e riempirebbero lo storico.
+  if new.enrolled_at is null then
+    return new;
+  end if;
+  if new.total is distinct from old.total or new.paid is distinct from old.paid then
+    insert into public.member_amount_changes (member_id, old_total, new_total, old_paid, new_paid, reason)
+    values (new.id, old.total, new.total, old.paid, new.paid,
+            nullif(current_setting('sciclub.motivo', true), ''));
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists log_amount_change on public.members;
+create trigger log_amount_change
+  after update of total, paid on public.members
+  for each row execute function public.log_amount_change();
+
+-- Cambia totale e pagato di un iscritto della stagione, con il motivo.
+-- Un totale cambiato qui resta: il socio passa a "totale a mano".
+create or replace function public.set_amounts(member_id uuid, total numeric, paid numeric, reason text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.can('pagamenti') then
+    raise exception 'Non hai il permesso di modificare gli importi.';
+  end if;
+  if nullif(trim(set_amounts.reason), '') is null then
+    raise exception 'Scrivi il motivo della modifica (es. rimborso corso: fatte 2 lezioni).';
+  end if;
+  if set_amounts.total is null or set_amounts.paid is null
+     or set_amounts.total < 0 or set_amounts.paid < 0 then
+    raise exception 'Quota e già versato devono essere cifre, zero o più.';
+  end if;
+
+  perform set_config('sciclub.motivo', trim(set_amounts.reason), true);
+  update public.members m set
+    total        = set_amounts.total,
+    paid         = set_amounts.paid,
+    total_manual = m.total_manual or set_amounts.total is distinct from m.total
+   where m.id = set_amounts.member_id
+     and m.enrolled_at is not null;
+  -- Il motivo vale per questa modifica sola, non per le altre della transazione.
+  perform set_config('sciclub.motivo', '', true);
+
+  if not found then
+    raise exception 'Socio non trovato fra gli iscritti della stagione: ricarica la pagina.';
+  end if;
+end;
+$$;
+
+comment on function public.set_amounts is 'Cambia totale e pagato di un iscritto (rimborsi, correzioni), con il motivo. Permesso pagamenti.';
+
+-- Lo storico degli importi di un socio, dal più recente, con chi l'ha fatto.
+create or replace function public.amount_history(member_id uuid)
+returns table (changed_at timestamptz, old_total numeric, new_total numeric,
+               old_paid numeric, new_paid numeric, reason text, changed_by text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select c.changed_at, c.old_total, c.new_total, c.old_paid, c.new_paid, c.reason, p.email
+    from public.member_amount_changes c
+    left join public.profiles p on p.user_id = c.changed_by
+   where public.can('soci', 'pagamenti')
+     and c.member_id = amount_history.member_id
+   order by c.changed_at desc, c.id;
+$$;
+
+comment on function public.amount_history is 'Storico dei cambi di totale e pagato di un socio. Permesso soci o pagamenti.';
+
+do $$
+declare f text;
+begin
+  foreach f in array array['public.set_amounts(uuid, numeric, numeric, text)', 'public.amount_history(uuid)'] loop
+    execute format('revoke all on function %s from public', f);
+    if exists (select 1 from pg_roles where rolname = 'anon') then
+      execute format('revoke all on function %s from anon', f);
+    end if;
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Abbonamenti a viaggi
@@ -2236,10 +2382,13 @@ begin
   insert into public.member_passes (member_id, pass_type, client_id)
   values (add_pass.member_id, add_pass.pass_type, add_pass.client_id);
 
+  perform set_config('sciclub.motivo', format('Abbonamento «%s» dal pannello gite%s',
+    add_pass.pass_type, case when add_pass.paid then ', pagato' else '' end), true);
   update public.members m set
     total = m.total + prezzo,
     paid  = m.paid + case when add_pass.paid then prezzo else 0 end
    where m.id = add_pass.member_id;
+  perform set_config('sciclub.motivo', '', true);
 end;
 $$;
 
