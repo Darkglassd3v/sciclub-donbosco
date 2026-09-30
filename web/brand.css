@@ -117,7 +117,7 @@ textarea:focus-visible,
 .checkbox { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tocco); }
 .checkbox input[type="checkbox"] { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
 
-/* Campi amministrativi (polizza, tessera): il direttivo usa già il giallo
+/* Campi amministrativi (numero tessera): il direttivo usa già il giallo
  * come "da compilare a mano", si conserva. */
 .campo-admin { background: var(--giallo-light); }
 

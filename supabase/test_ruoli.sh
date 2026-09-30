@@ -214,7 +214,6 @@ begin
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
-    ('scrivi', 'update public.members set policy_number = ''POL-M'' where id = ' || m, 'Sxxxxxx'),
     ('scrivi', 'select public.set_tax_code(' || m || ', ''X'')',                   'SxxSxxx'),
     ('scrivi', 'select public.insurance_send(''BASE'', 99, array[' || m || ']::uuid[])', 'SxxSxxx'),
     ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
@@ -361,9 +360,6 @@ do $$ begin
   assert (select card_type from public.members where id = '99999999-9999-9999-9999-999999999999')
          = 'PROVA TESSERA DIRETTIVO', 'un admin non ha potuto assegnare la tessera riservata';
 
-  -- Il numero di polizza lo rimanda indietro uguale il form Soci: passa.
-  update public.members set policy_number = policy_number, phone = '334'
-   where id = '99999999-9999-9999-9999-999999999999';
 end $$;
 
 -- Il livello di visibilità vale solo per le tessere: un abbonamento riservato

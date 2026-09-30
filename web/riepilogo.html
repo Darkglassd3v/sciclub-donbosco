@@ -197,7 +197,7 @@
       const soci = await tutteLeRighe(() => sb
         .from("members")
         .select("last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-          + "address, city, province, postal_code, card_type, card_number, policy_number")
+          + "address, city, province, postal_code, card_type, card_number")
         .not("enrolled_at", "is", null)
         .not("card_type", "is", null)
         .neq("card_type", "NO")

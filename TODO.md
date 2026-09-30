@@ -104,10 +104,10 @@
        per i soci del file, senza codice fiscale in rosso e fuori dalla lista, liste mandate con
        Riscarica e Annulla invio. Nuove tessere: il tipo si scrive a mano in `prices.insurance`
        (il pannello Impostazioni non lo mostra ancora).
-8. [ ] refactor(assicurazione): via il numero di polizza: campo nella pagina, `f_numero_polizza`
-       nel form Soci, Excel del Riepilogo, trigger `check_policy_number`, vista households,
-       close_season (lì va azzerato `insured_on`), `set_insurance` (solo CF). La colonna
-       `policy_number` si toglie dallo schema per ultima.
+8. [x] refactor(assicurazione): via il numero di polizza (produzione 30/09, backup in
+       `supabase/migration/backup-2026-09-30/`: nessuna polizza era scritta). Tolti colonna
+       `members.policy_number`, trigger `check_policy_number`, campo nel form Soci, colonna
+       nell'Excel del Riepilogo; households non usa più `select *` (bloccava la rimozione).
 9. [ ] feat(pagamenti): `members.total_manual` (il form non ricalcola più il totale scritto a
        mano, e lo mostra come "fatto a mano"); tabella storico modifiche di totale e pagato, scritta
        da un trigger (chi, quando, vecchio → nuovo, nota); RPC per tesoriere e admin per cambiare

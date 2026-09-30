@@ -320,11 +320,11 @@ function mostraAvvisoCF(box, campo, esito, dopo) {
 }
 
 // ---------------------------------------------------------------------------
-// Excel per l'assicurazione
+// Excel dei tesserati della stagione (Riepilogo)
 //
-// Lo usano due pagine: Assicurazione (i tesserati ancora da assicurare) e
-// Riepilogo (tutti i tesserati della stagione, che il ruolo assicurazione non
-// può scaricare). Stesse colonne per tutti e due i file.
+// L'elenco completo, per chi ha il permesso riepilogo: il ruolo assicurazione
+// non lo può scaricare. Le liste per l'assicurazione, con il loro tracciato,
+// le fa la pagina Assicurazione (excelLista()).
 // ---------------------------------------------------------------------------
 
 /** "2026-01-31" → "31/01/2026". */
@@ -334,12 +334,8 @@ function dataIt(iso) {
   return `${g}/${m}/${a}`;
 }
 
-// TODO(assicurazione): tracciato del file da concordare con l'assicurazione.
-// Quando arrivano le specifiche si cambiano solo queste righe: intestazione
-// della colonna e come si ricava dal socio. Mandare solo le colonne che
-// l'assicurazione chiede: sono dati personali che escono dal club. Un campo
-// nuovo va aggiunto anche dove si leggono i soci: insurance_members() in
-// supabase/schema.sql e scaricaSoci() in riepilogo.html.
+// Intestazione della colonna e come si ricava dal socio. Un campo nuovo va
+// aggiunto anche a scaricaSoci() in riepilogo.html, che legge i soci.
 const COLONNE_ASSICURAZIONE = [
   ["Cognome", (s) => s.last_name],
   ["Nome", (s) => s.first_name],
@@ -353,7 +349,6 @@ const COLONNE_ASSICURAZIONE = [
   ["CAP", (s) => s.postal_code],
   ["Tessera", (s) => s.card_type],
   ["Numero tessera", (s) => s.card_number],
-  ["Numero polizza", (s) => s.policy_number],
 ];
 
 // SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due

@@ -220,7 +220,6 @@
 
     <div class="section-title" id="sez-amministrazione">Amministrazione</div>
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label" for="f_numero_polizza">Numero polizza</label><input class="input campo-admin" id="f_numero_polizza"></div>
       <div class="column is-4">
         <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
         <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
@@ -268,7 +267,7 @@
     <div id="zonaTogli" class="togli-stagione" hidden>
       <div class="section-title">Iscrizione sbagliata</div>
       <p class="suggerimento">
-        Toglie questa persona dalla stagione: tessera, numero, polizza, abbonamenti,
+        Toglie questa persona dalla stagione: tessera, numero, assicurazione, abbonamenti,
         corsi, partenze e quote tornano vuoti. L'anagrafica resta.
       </p>
       <div id="azioniTogli">
@@ -295,7 +294,7 @@
 <script>
   let PREZZI = {};
   let familiariACarico = [];
-  let accesso = null; // chi è collegato (getProfile), per tessere riservate, polizza e Togli
+  let accesso = null; // chi è collegato (getProfile), per tessere riservate e Togli
 
   // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
   // con le gite fatte), quelli aggiunti qui e non ancora salvati, e i pass_id
@@ -342,9 +341,6 @@
     setLoading(true);
     try {
       accesso = await getProfile();
-      // Il numero di polizza lo scrive solo l'assicurazione (il database
-      // rifiuta gli altri): qui resta leggibile ma non modificabile.
-      el("f_numero_polizza").readOnly = !accesso.permissions.includes("polizze");
 
       PREZZI = await caricaPrezzi();
       Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
@@ -826,7 +822,7 @@
     cognome: "last_name", nome: "first_name", luogo_nascita: "birth_place",
     provincia_nascita: "birth_province", codice_fiscale: "tax_code", data_nascita: "birth_date",
     indirizzo: "address", citta: "city", provincia: "province", cap: "postal_code",
-    telefono: "phone", email: "email", numero_polizza: "policy_number",
+    telefono: "phone", email: "email",
     numero_tessera: "card_number", acconto: "paid",
   };
 
@@ -1078,7 +1074,6 @@
       course_day: sceltaDi("f_giorno_corso")?.value || null,
       saturday_departure: partenzeSelezionate("check_sabato"),
       sunday_departure: partenzeSelezionate("check_domenica"),
-      policy_number: el("f_numero_polizza").value.trim() || null,
       card_number: numeroTessera(),
       total: totaleIndividuale(),
       paid: parseFloat(el("f_acconto").value) || 0,

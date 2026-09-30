@@ -80,7 +80,6 @@ create table if not exists public.members (
   -- fonte di verità per i collegamenti è payer_id.
   legacy_payer_id   text,
 
-  policy_number     text,
   last_name         text not null,
   first_name        text not null,
   birth_place       text,
@@ -235,16 +234,21 @@ comment on function public.current_season is 'Inizio della stagione corrente (1 
 -- l'aggregazione JS lato server della 1.x sia la colonna 27 del foglio.
 -- ---------------------------------------------------------------------------
 
-create or replace view public.households as
+-- Fino alla 2.5 la vista aveva anche il numero di polizza: `create or replace`
+-- non toglie colonne, quindi si ricrea.
+drop view if exists public.households;
+create view public.households as
 with heads as (
-  select * from public.members where payer_id is null
+  -- Le colonne una per una: con `select *` la vista dipenderebbe da ogni
+  -- colonna di members, e nessuna si potrebbe più togliere.
+  select id, last_name, first_name, tax_code, card_number, enrolled_at, total, paid, balance
+    from public.members where payer_id is null
 )
 select
   h.id                                        as head_id,
   h.last_name,
   h.first_name,
   h.tax_code,
-  h.policy_number,
   h.card_number,
   h.enrolled_at,
   h.total                                     as head_total,
@@ -256,7 +260,7 @@ select
   h.balance + coalesce(sum(d.balance), 0)     as household_balance
 from heads h
 left join public.members d on d.payer_id = h.id
-group by h.id, h.last_name, h.first_name, h.tax_code, h.policy_number,
+group by h.id, h.last_name, h.first_name, h.tax_code,
          h.card_number, h.enrolled_at, h.total, h.paid, h.balance;
 
 comment on view public.households is 'Aggregazione per nucleo familiare. Sostituisce getAdminData() e la colonna TOTALE FAMILIARI A CARICO.';
@@ -361,7 +365,7 @@ group by trim(place);
 --                   della stagione in corso, pannello gite, tessere riservate.
 --   tesoriere     — pagamenti, Riepilogo con le stagioni chiuse, Bilancio.
 --                   I soci li legge ma non li modifica.
---   assicurazione — solo codice fiscale e polizze dei tesserati, dalle
+--   assicurazione — solo codice fiscale e liste dei tesserati, dalle
 --                   funzioni insurance_*: non ha accesso alla tabella members.
 --   gite          — a schermo "Utente": ricerca soci e pannello gite dal
 --                   telefono (segna le gite, vende un abbonamento).
@@ -374,7 +378,7 @@ group by trim(place);
 --   storico    stagioni chiuse (season_history, season_breakdown)
 --   bilancio   movimenti e saldo banca
 --   gite       ricerca soci e pannello gite (use_trip, cancel_trip, add_pass)
---   polizze    codice fiscale e numero di polizza (solo loro li cambiano)
+--   polizze    liste dell'assicurazione e codice fiscale dei tesserati
 --   social     post, campagne e sponsor
 --   gestione   Amministrazione (chiusura stagione), Utenti, Impostazioni,
 --              togliere un socio dalla stagione
@@ -1125,33 +1129,11 @@ create trigger check_card_type_role
   before insert or update on public.members
   for each row execute function public.check_card_type_role();
 
--- Il numero di polizza lo scrive solo chi ha il permesso polizze
--- (assicurazione e superadmin): è il loro lavoro, e un numero cambiato per
--- sbaglio dal form Soci farebbe risultare assicurato chi non lo è. Il form
--- Soci lo rimanda indietro uguale a ogni salvataggio, e uguale passa.
---
--- Vale per le scritture fatte dalle pagine (ruolo authenticated). Le
--- funzioni security definer (set_insurance) girano come proprietario e
--- controllano il permesso da sé; un caricamento dall'SQL Editor gira come
--- postgres e non ha un utente collegato.
-create or replace function public.check_policy_number()
-returns trigger
-language plpgsql
-as $$
-begin
-  if current_user = 'authenticated'
-     and new.policy_number is distinct from (case when tg_op = 'UPDATE' then old.policy_number end)
-     and not public.can('polizze') then
-    raise exception 'Il numero di polizza lo scrive solo l''assicurazione.';
-  end if;
-  return new;
-end;
-$$;
-
+-- Fino alla 2.5 il numero di polizza lo scriveva solo l'assicurazione
+-- (trigger check_policy_number). Il numero non c'è più: chi è assicurato
+-- lo dice la lista (members.insurance_list_id, vedi "Assicurazione").
 drop trigger if exists check_policy_number on public.members;
-create trigger check_policy_number
-  before insert or update on public.members
-  for each row execute function public.check_policy_number();
+drop function if exists public.check_policy_number();
 
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
@@ -1223,7 +1205,7 @@ end $$;
 -- tramite la tabella temporanea da_chiudere), scrive season_history e
 -- season_breakdown e infine azzera, tutto nella stessa transazione.
 --
--- Cosa viene azzerato: polizza, tessera, tipologia tessera, agevolazione
+-- Cosa viene azzerato: assicurazione, tessera, tipologia tessera, agevolazione
 -- famiglia, abbonamento, corso, partenze, totale, acconto, capofamiglia
 -- (payer_id), note e data di iscrizione.
 -- Cosa resta: nome, cognome, nascita, codice fiscale, residenza, telefono,
@@ -1420,7 +1402,7 @@ select
   coalesce(sum(balance), 0)   as outstanding
 from public.members
 where enrolled_at is not null
-   or policy_number is not null or card_number is not null
+   or insurance_list_id is not null or card_number is not null
    or card_type is not null or family_discount is not null
    or pass_type is not null or course_type is not null or preski_type is not null
    or saturday_departure is not null or sunday_departure is not null
@@ -1428,6 +1410,10 @@ where enrolled_at is not null
 having count(*) > 0;
 
 alter view public.open_season set (security_invoker = true);
+
+-- Il numero di polizza non si usa più dalla 2.5 (vedi "Assicurazione"). Si
+-- toglie qui, dopo households e open_season, le viste che lo leggevano.
+alter table public.members drop column if exists policy_number;
 
 comment on view public.open_season is 'La stagione in corso: righe di soci che portano ancora dati di stagione. Dopo una chiusura è vuota finché non si iscrive qualcuno.';
 
@@ -1465,7 +1451,7 @@ begin
   create temporary table da_chiudere on commit drop as
   select id from public.members
    where enrolled_at is not null
-      or policy_number is not null or card_number is not null
+      or insurance_list_id is not null or card_number is not null
       or card_type is not null or family_discount is not null
       or pass_type is not null or course_type is not null or preski_type is not null
       or saturday_departure is not null or sunday_departure is not null
@@ -1583,7 +1569,6 @@ begin
   -- che rifiuta gli UPDATE senza (estensione safeupdate): un "azzera tutto"
   -- scritto per sbaglio non deve poter partire.
   update public.members set
-    policy_number      = null,
     card_number        = null,
     card_type          = null,
     family_discount    = null,
@@ -1654,7 +1639,6 @@ begin
      and mp.season = public.current_season();
 
   update public.members m set
-    policy_number      = null,
     card_number        = null,
     card_type          = null,
     family_discount    = null,

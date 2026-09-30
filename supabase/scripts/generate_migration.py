@@ -221,7 +221,6 @@ def riga_socio(record, columns_count=None):
         f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
         sql_str(record["legacy_id"]),
         sql_str(record["legacy_payer_id"]),
-        sql_str(record["numero_polizza"]),
         sql_str(record["cognome"]),
         sql_str(record["nome"]),
         sql_str(record["luogo_nascita"]),
@@ -294,7 +293,7 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
 
     # ----------------------------------------------------------- soci
     columns = (
-        "created_at, enrolled_at, legacy_id, legacy_payer_id, policy_number, last_name, first_name, birth_place, "
+        "created_at, enrolled_at, legacy_id, legacy_payer_id, last_name, first_name, birth_place, "
         "birth_province, tax_code, birth_date, address, city, province, "
         "postal_code, phone, email, card_type, family_discount, pass_type, "
         "sunday_departure, saturday_departure, course_type, total, paid, card_number"
