@@ -38,7 +38,7 @@
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.
 - Stampe: fogli corsisti, abbonamenti 5 gite e SEMPRE jolly, divisi per partenza, in ordine
-  alfabetico (vedi sotto: sabato e domenica insieme).
+  alfabetico: un pulsante per sabato, domenica e martedì, ognuno con fino a tre file Excel.
 - Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel
   form Soci), indipendentemente dal tipo di corso.
 - Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form
@@ -88,9 +88,9 @@
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
 3. [x] feat(stampe): pagina `web/stampe.html` "Fogli dei soci" (permesso `gite`), voce "Stampe" nella
-       barra e nelle pagine di ricerca. Due pulsanti (Sabato e domenica, Martedì) che SCARICANO file
-       Excel separati: Corsisti (sab+dom), Abbonamenti 5 gite e Jolly, solo quelli con qualcuno
-       (il martedì niente corsi). In ogni file un foglio per partenza, in ordine alfabetico.
+       barra e nelle pagine di ricerca. Tre pulsanti (Sabato, Domenica, Martedì) che SCARICANO fino a
+       tre file Excel: Corsisti (sab/dom), Abbonamenti 5 gite di quel giorno e Jolly, solo quelli con
+       qualcuno (il martedì niente corsi). In ogni file un foglio per partenza, in ordine alfabetico.
        Colonne: N. tessera / Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` e
        `nomeFoglioExcel()` in `web/stampe.js`, test `node web/test-stampe.js`.
 4. [x] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su

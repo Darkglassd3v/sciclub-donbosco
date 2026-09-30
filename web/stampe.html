@@ -15,9 +15,9 @@
     .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; margin-bottom: 28px; }
     .giorni-stampa .button { height: auto; min-height: 72px; white-space: normal; font-size: 1.25rem; font-weight: 700;
                              border-radius: var(--raggio); border: 0; }
-    /* Sabato e domenica: blu con il bordo giallo, i due colori dei due giorni. */
-    .giorni-stampa [data-giorno="WEEKEND"] { background: var(--blu); color: #fff; box-shadow: inset 0 -8px 0 var(--giallo); }
-    .giorni-stampa [data-giorno="MARTEDI"] { background: var(--errore); color: #fff; }
+    .giorni-stampa [data-giorno="SABATO"]   { background: var(--blu);    color: #fff; }
+    .giorni-stampa [data-giorno="DOMENICA"] { background: var(--giallo); color: var(--giallo-dark); }
+    .giorni-stampa [data-giorno="MARTEDI"]  { background: var(--errore); color: #fff; }
 
     .esito { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px 26px; }
     .esito h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
@@ -53,13 +53,14 @@
 <div class="container-main">
   <h1 class="title is-4 mb-4">Fogli dei soci</h1>
   <p class="mb-4">
-    Ogni pulsante scarica i fogli Excel con i soci della stagione: uno per i corsisti, uno per
-    gli abbonamenti e uno per i jolly, solo quelli con qualcuno dentro. In ogni file c'è un foglio
-    per partenza, in ordine alfabetico. La prima volta il browser può chiedere il permesso di
+    Un pulsante per giorno: scarica fino a tre fogli Excel con i soci della stagione, uno per i
+    corsisti (sabato e domenica), uno per gli abbonamenti di quel giorno e uno per i jolly, solo
+    quelli con qualcuno dentro. In ogni file c'è un foglio per partenza, in ordine alfabetico. La prima volta il browser può chiedere il permesso di
     scaricare più file: rispondi di sì.
   </p>
   <div class="giorni-stampa">
-    <button type="button" class="button" data-giorno="WEEKEND">Scarica fogli sabato e domenica</button>
+    <button type="button" class="button" data-giorno="SABATO">Scarica fogli sabato</button>
+    <button type="button" class="button" data-giorno="DOMENICA">Scarica fogli domenica</button>
     <button type="button" class="button" data-giorno="MARTEDI">Scarica fogli martedì</button>
   </div>
 

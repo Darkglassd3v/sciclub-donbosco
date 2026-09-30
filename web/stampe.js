@@ -2,14 +2,14 @@
 // senza pagina: le prova `node web/test-stampe.js`.
 
 /**
- * I pulsanti della pagina. Sabato e domenica stampano insieme, divisi per
- * partenza senza distinguere il giorno; hanno anche i corsi. Il martedì non ha
- * né partenze né corsi. Tutti e due stampano il foglio jolly, che vale per
- * tutti i giorni.
+ * I pulsanti della pagina, uno per giorno. Sabato e domenica hanno le
+ * partenze e i corsi; il martedì né l'una né l'altra cosa. Ogni giorno ha
+ * anche il foglio jolly, che vale per tutti i giorni: al massimo tre fogli.
  */
 const GIORNI_STAMPA = {
-  WEEKEND: { nome: "Sabato e domenica", giorni: ["SABATO", "DOMENICA"], corsi: true, partenze: true },
-  MARTEDI: { nome: "Martedì", giorni: ["MARTEDI"] },
+  SABATO:   { nome: "Sabato",   giorni: ["SABATO"],   corsi: true, partenze: true },
+  DOMENICA: { nome: "Domenica", giorni: ["DOMENICA"], corsi: true, partenze: true },
+  MARTEDI:  { nome: "Martedì",  giorni: ["MARTEDI"] },
 };
 
 /** La colonna del socio con la partenza di quel giorno. */
@@ -38,10 +38,8 @@ const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.la
 /**
  * Soci in gruppi per partenza, "Senza partenza" in fondo: chi non l'ha deve
  * esserci lo stesso. `righe` sono coppie [socio, giorni]: la partenza è quella
- * di quei giorni, e chi ne ha due diverse (sabato da Asti, domenica da Nizza)
- * compare in tutti e due i gruppi, perché è su tutti e due i pullman. Senza
- * partenze (martedì), un gruppo solo senza titolo. Dentro ogni gruppo, per
- * cognome e nome, una riga per persona.
+ * di quei giorni. Senza partenze (martedì), un gruppo solo senza titolo.
+ * Dentro ogni gruppo, per cognome e nome, una riga per persona.
  */
 function gruppiPerPartenza(righe, conPartenze) {
   if (!righe.length) return [];
@@ -64,9 +62,9 @@ function gruppiPerPartenza(righe, conPartenze) {
 }
 
 /**
- * I fogli di un pulsante, in ordine di stampa: [{ titolo, nota, gruppi }].
- *   - Corsisti: chi fa il corso in uno di quei giorni (sabato e domenica);
- *   - Abbonamenti 5 gite: chi ha un abbonamento di quei giorni;
+ * I fogli di un pulsante, in ordine: [{ titolo, nota, gruppi }].
+ *   - Corsisti: chi fa il corso quel giorno (sabato e domenica);
+ *   - Abbonamenti 5 gite: chi ha un abbonamento di quel giorno;
  *   - Jolly: chi ha il jolly, sempre.
  * `soci` sono i soci della stagione (members), `abbonamenti` le righe di
  * pass_status (member_id, day). Un foglio senza nessuno resta, con i gruppi

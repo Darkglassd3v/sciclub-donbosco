@@ -38,25 +38,25 @@ const abbonamenti = [
 
 const riassunto = (fogli) => fogli.map((f) => [f.titolo, f.gruppi.map((g) => [g.titolo, g.soci.map((s) => s.id)])]);
 
-// Sabato e domenica insieme: corsisti, abbonamenti, jolly. Per partenza senza
-// distinguere il giorno, "Senza partenza" in fondo, per cognome dentro il
-// gruppo, una riga sola con due abbonamenti. Chi ha abbonamento e corso è su
-// tutti e due i fogli; il jolly con due partenze diverse in tutti e due i gruppi.
-assert.deepStrictEqual(riassunto(fogliDelGiorno("WEEKEND", soci, abbonamenti)), [
-  ["Corsisti", [["Partenza da ASTI", ["dom"]], ["Partenza da FELIZZANO", ["corso"]]]],
+// Sabato: corsisti del sabato, abbonamenti del sabato, jolly. Per partenza,
+// "Senza partenza" in fondo, per cognome dentro il gruppo, una riga sola con
+// due abbonamenti. Chi ha abbonamento e corso è su tutti e due i fogli.
+assert.deepStrictEqual(riassunto(fogliDelGiorno("SABATO", soci, abbonamenti)), [
+  ["Corsisti", [["Partenza da FELIZZANO", ["corso"]]]],
   ["Abbonamenti 5 gite", [
     ["Partenza da ASTI", ["alfa", "zeta"]],
     ["Partenza da FELIZZANO", ["corso", "felix"]],
-    ["Senza partenza", ["fuori", "nessa"]],                             // fuori: domenica senza partenza
+    ["Senza partenza", ["nessa"]],
   ]],
-  ["Jolly", [["Partenza da ASTI", ["jolly"]], ["Partenza da NIZZA M.", ["jolly"]]]],
+  ["Jolly", [["Partenza da ASTI", ["jolly"]]]],
 ]);
 
-// Abbonamenti di sabato e di domenica con la stessa partenza: una riga sola.
-assert.deepStrictEqual(riassunto(fogliDelGiorno("WEEKEND",
-  [socio("due", "DUE", { saturday_departure: "ASTI", sunday_departure: "asti" })],
-  [{ member_id: "due", day: "SABATO" }, { member_id: "due", day: "DOMENICA" }]))[1],
-  ["Abbonamenti 5 gite", [["Partenza da ASTI", ["due"]]]]);
+// Domenica: le partenze della domenica, jolly compreso.
+assert.deepStrictEqual(riassunto(fogliDelGiorno("DOMENICA", soci, abbonamenti)), [
+  ["Corsisti", [["Partenza da ASTI", ["dom"]]]],
+  ["Abbonamenti 5 gite", [["Senza partenza", ["fuori"]]]],               // fuori: domenica senza partenza
+  ["Jolly", [["Partenza da NIZZA M.", ["jolly"]]]],
+]);
 
 // Martedì: niente corsi e niente partenze, jolly sempre.
 assert.deepStrictEqual(riassunto(fogliDelGiorno("MARTEDI", soci, abbonamenti)), [
@@ -69,8 +69,8 @@ assert.deepStrictEqual(riassunto(fogliDelGiorno("MARTEDI", soci, [])), [
   ["Abbonamenti 5 gite", []],
   ["Jolly", []],
 ]);
-assert.deepStrictEqual(fogliDelGiorno("SABATO", soci, abbonamenti), []);
-assert.strictEqual(fogliDelGiorno("WEEKEND", soci, abbonamenti)[2].nota, "valido per tutti i giorni");
+assert.deepStrictEqual(fogliDelGiorno("LUNEDI", soci, abbonamenti), []);
+assert.strictEqual(fogliDelGiorno("SABATO", soci, abbonamenti)[2].nota, "valido per tutti i giorni");
 
 assert.strictEqual(nomePartenza("  nizza   m. "), "NIZZA M.");
 
