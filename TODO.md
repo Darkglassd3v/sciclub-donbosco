@@ -71,7 +71,7 @@
 2. [x] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
-3. [ ] feat(stampe): pagina nuova `web/stampe.html`, permesso `gite` (admin, superadmin e il ruolo
+3. [x] feat(stampe): pagina nuova `web/stampe.html`, permesso `gite` (admin, superadmin e il ruolo
        gite leggono members e member_passes). Voce "Stampe" nella barra delle 10 pagine, dopo "Gite".
        - Quattro pulsanti con i colori dei giorni e il giorno scritto grande (anche in testa al
          foglio): Sabato, Domenica, Martedì, Jolly.

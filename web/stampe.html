@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stampe — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+    .container-main { max-width: 1100px; margin: 28px auto 80px; padding: 0 18px; }
+
+    /* Un pulsante grande per giorno, con il colore delle gite (come il pannello
+     * gite) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
+    .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .giorni-stampa .button { height: auto; min-height: 72px; white-space: normal; font-size: 1.25rem; font-weight: 700;
+                             border-radius: var(--raggio); border: 0; }
+    .giorni-stampa [data-giorno="SABATO"]   { background: var(--blu);    color: #fff; }
+    .giorni-stampa [data-giorno="DOMENICA"] { background: var(--giallo); color: var(--giallo-dark); }
+    .giorni-stampa [data-giorno="MARTEDI"]  { background: var(--errore); color: #fff; }
+    .giorni-stampa [data-giorno="JOLLY"]    { background: var(--ok);     color: #fff; }
+
+    .foglio { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 26px; margin-bottom: 24px; }
+    .foglio h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: 2px; }
+    .foglio .sotto { color: var(--testo-soft); margin-bottom: 14px; }
+    .foglio table { width: 100%; border-collapse: collapse; }
+    .foglio th { text-align: left; padding: 8px; border-bottom: 2px solid var(--testo); font-size: .9375rem; }
+    .foglio td { padding: 9px 8px; border-bottom: 1px solid var(--filo); }
+    .foglio td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .foglio .vuota { color: var(--testo-soft); }
+
+    /* Sulla carta: niente barra né pulsanti, un gruppo (una partenza) per
+     * pagina, così ogni pullman ha il suo foglio. */
+    @media print {
+      @page { margin: 14mm; }
+      body { background: #fff; }
+      .barra, .no-stampa, .fascia-vedi-come, #statusToast { display: none !important; }
+      .container-main { margin: 0; padding: 0; max-width: none; }
+      .foglio { box-shadow: none; padding: 0; border-radius: 0; margin: 0; break-after: page; }
+      .foglio:last-child { break-after: auto; }
+      .foglio h2 { font-size: 18pt; }
+      .foglio th, .foglio td { font-size: 11pt; padding: 5px 6px; }
+      .foglio tr { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <div class="no-stampa">
+    <h1 class="title is-4 mb-4">Fogli da stampare</h1>
+    <p class="mb-4">
+      Un pulsante per giorno: prepara i fogli con i soci della stagione e apre la stampa.
+      Sabato e domenica hanno un foglio per partenza, con abbonati e corsisti di quel giorno.
+      Il jolly ha il suo foglio, valido per tutti i giorni.
+    </p>
+    <div class="giorni-stampa">
+      <button type="button" class="button" data-giorno="SABATO">Stampa fogli sabato</button>
+      <button type="button" class="button" data-giorno="DOMENICA">Stampa fogli domenica</button>
+      <button type="button" class="button" data-giorno="MARTEDI">Stampa fogli martedì</button>
+      <button type="button" class="button" data-giorno="JOLLY">Stampa fogli jolly</button>
+    </div>
+  </div>
+
+  <div id="fogli"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="stampe.js"></script>
+<script>
+  // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
+  // abbonamenti della stagione: è quello che serve sul pullman.
+
+  const el = (id) => document.getElementById(id);
+
+  (async function init() {
+    if (!(await requirePermesso("gite"))) return;
+    document.querySelectorAll(".giorni-stampa [data-giorno]").forEach((b) =>
+      b.addEventListener("click", () => stampa(b.dataset.giorno, b)));
+  })();
+
+  /** Soci della stagione e abbonamenti letti al momento: si stampa quello che c'è ora. */
+  async function leggiDati() {
+    const [soci, abbonamenti] = await Promise.all([
+      tutteLeRighe(() => sb.from("members")
+        .select("id, card_number, last_name, first_name, birth_place, phone, "
+          + "saturday_departure, sunday_departure, course_type, course_day")
+        .not("enrolled_at", "is", null)
+        .order("id")),
+      tutteLeRighe(() => sb.from("pass_status").select("member_id, day").order("pass_id")),
+    ]);
+    return { soci, abbonamenti };
+  }
+
+  async function stampa(giorno, bottone) {
+    bottone.disabled = true;
+    setLoading(true);
+    try {
+      const { soci, abbonamenti } = await leggiDati();
+      const gruppi = gruppiDelFoglio(giorno, soci, abbonamenti);
+      disegna(giorno, gruppi);
+      if (!gruppi.length) {
+        showToast(`Nessun socio per il foglio ${FOGLI[giorno].nome.toLowerCase()}.`);
+        return;
+      }
+      window.print();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+      setLoading(false);
+    }
+  }
+
+  function disegna(giorno, gruppi) {
+    const foglio = FOGLI[giorno];
+    const oggi = new Date().toLocaleDateString("it-IT");
+    if (!gruppi.length) {
+      el("fogli").innerHTML = `<div class="foglio"><h2>${esc(foglio.nome)}</h2>
+        <p class="vuota">Nessun socio della stagione per questo giorno.</p></div>`;
+      return;
+    }
+    // Il tipo (abbonamento o corso) serve solo dove ci sono i corsi.
+    const conTipo = Boolean(foglio.corsi);
+    el("fogli").innerHTML = gruppi.map((g) => `
+      <section class="foglio">
+        <h2>${esc(foglio.nome)}${foglio.partenza ? ` · ${esc(g.titolo)}` : ""}</h2>
+        <p class="sotto">${foglio.nota ? `${esc(foglio.nota)} · ` : ""}${g.righe.length} ${g.righe.length === 1 ? "persona" : "persone"} · stampato il ${oggi}</p>
+        <table>
+          <thead><tr><th>N. tessera</th><th>Cognome</th><th>Nome</th><th>Luogo di nascita</th><th>Telefono</th>${conTipo ? "<th>Tipo</th>" : ""}</tr></thead>
+          <tbody>${g.righe.map((r) => `
+            <tr>
+              <td class="num">${esc(r.socio.card_number) || "—"}</td>
+              <td><strong>${esc(r.socio.last_name)}</strong></td>
+              <td>${esc(r.socio.first_name)}</td>
+              <td>${esc(r.socio.birth_place) || "—"}</td>
+              <td class="num">${esc(r.socio.phone) || "—"}</td>
+              ${conTipo ? `<td>${tipoRiga(r)}</td>` : ""}
+            </tr>`).join("")}
+          </tbody>
+        </table>
+      </section>`).join("");
+  }
+</script>
+</body>
+</html>
