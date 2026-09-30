@@ -68,7 +68,7 @@
 
 ### Da fare, un commit per punto (niente push e niente schema in produzione senza ok)
 1. [x] chore: `todo.md` unito qui e tolto (su Windows/Mac i due nomi erano lo stesso file).
-2. [ ] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
+2. [x] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
 3. [ ] feat(stampe): pagina nuova `web/stampe.html`, permesso `gite` (admin, superadmin e il ruolo

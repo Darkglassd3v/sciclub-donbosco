@@ -949,6 +949,20 @@ begin
   end;
 end $$;
 
+-- Il giorno del corso: solo sabato o domenica. La chiusura qui sotto lo azzera.
+do $$
+begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin
+  update public.members set course_type = 'CORSO SCI ADULTI', course_day = 'SABATO'
+   where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+  assert found, 'giorno del corso: l''admin non riesce a scriverlo';
+  begin
+    update public.members set course_day = 'LUNEDI' where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+    raise exception 'ASSERZIONE: giorno del corso fuori elenco accettato';
+  exception when check_violation then null;
+  end;
+end $$;
+
 -- La chiusura conta gli abbonamenti venduti e li toglie dalla stagione nuova.
 do $$
 declare chiusa timestamptz;
@@ -963,6 +977,8 @@ begin
          'chiusura: abbonamenti jolly contati male';
   assert (select pass_type from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: riassunto abbonamento non azzerato';
+  assert (select course_day from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
+         'chiusura: giorno del corso non azzerato';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
   assert (select count(*) from public.member_passes) > 0, 'chiusura: gli abbonamenti venduti sono stati cancellati';
 end $$;

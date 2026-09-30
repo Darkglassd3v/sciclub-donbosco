@@ -191,6 +191,15 @@
       </fieldset>
       <fieldset class="scelte" id="f_presciistica"><legend class="label">Presciistica</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_tipologia_corso"><legend class="label">Corso sci o snowboard</legend><div class="scelte-opzioni"></div></fieldset>
+      <!-- Il corso non ha un giorno suo: lo stesso corso si fa di sabato o di
+           domenica, e lo sceglie il socio. Compare solo con un corso scelto. -->
+      <fieldset class="scelte" id="f_giorno_corso" hidden>
+        <legend class="label">Giorno del corso*</legend>
+        <div class="scelte-opzioni">
+          <label class="scelta"><input type="radio" name="f_giorno_corso" value="SABATO"><span>Corso di sabato</span></label>
+          <label class="scelta"><input type="radio" name="f_giorno_corso" value="DOMENICA"><span>Corso di domenica</span></label>
+        </div>
+      </fieldset>
     </div>
 
     <div class="columns mt-1">
@@ -342,6 +351,7 @@
       riempiPartenze("check_domenica", partenze.DOMENICA);
 
       Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
+      el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
       el("f_acconto").addEventListener("input", ricalcola);
       el("searchInput").addEventListener("input", cercaSoci);
       el("f_payerDisplay").addEventListener("input", cercaPagante);
@@ -412,6 +422,20 @@
       }
       return scelta;
     }));
+  }
+
+  /**
+   * Il giorno del corso si vede, ed è obbligatorio, solo con un corso scelto.
+   * Senza corso si svuota: un giorno rimasto lì da prima non deve far finire
+   * il socio nei fogli dei corsisti.
+   */
+  function aggiornaGiornoCorso() {
+    const conCorso = Boolean(nomeSelezionato("f_tipologia_corso"));
+    el("f_giorno_corso").hidden = !conCorso;
+    el("f_giorno_corso").querySelectorAll("input").forEach((r) => {
+      r.required = conCorso;
+      if (!conCorso) r.checked = false;
+    });
   }
 
   function riempiPartenze(contenitore, luoghi) {
@@ -799,6 +823,8 @@
 
       Object.keys(SELECT_CATEGORIE).forEach((idSelect) =>
         selezionaPerNome(idSelect, socio[CAMPI_SELECT_DB[idSelect]]));
+      el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === socio.course_day));
+      aggiornaGiornoCorso();
       spuntaPartenze("check_sabato", socio.saturday_departure);
       spuntaPartenze("check_domenica", socio.sunday_departure);
 
@@ -1022,6 +1048,7 @@
       // (member_passes), vedi sotto.
       preski_type: nomeSelezionato("f_presciistica"),
       course_type: nomeSelezionato("f_tipologia_corso"),
+      course_day: sceltaDi("f_giorno_corso")?.value || null,
       saturday_departure: partenzeSelezionate("check_sabato"),
       sunday_departure: partenzeSelezionate("check_domenica"),
       policy_number: el("f_numero_polizza").value.trim() || null,
@@ -1090,6 +1117,7 @@
 
   function resetForm() {
     el("memberForm").reset();
+    aggiornaGiornoCorso();
     el("f_id").value = "";
     familiariACarico = [];
     el("familyPanel").style.display = "none";

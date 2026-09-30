@@ -103,8 +103,10 @@ create table if not exists public.members (
   sunday_departure  text,
   saturday_departure text,
   course_type       text,
+  -- Lo stesso corso si fa di sabato o di domenica: lo sceglie il socio.
+  course_day        text,
 
-  total             numeric(10, 2) not null default 0,
+  total            numeric(10, 2) not null default 0,
   paid              numeric(10, 2) not null default 0,
   balance           numeric(10, 2) generated always as (total - paid) stored,
 
@@ -131,6 +133,10 @@ alter table public.members add column if not exists legacy_payer_id text;
 alter table public.members add column if not exists card_number     text;
 alter table public.members add column if not exists notes           text;
 alter table public.members add column if not exists preski_type     text;
+alter table public.members add column if not exists course_day      text;
+alter table public.members drop constraint if exists members_course_day_valid;
+alter table public.members add constraint members_course_day_valid
+  check (course_day in ('SABATO', 'DOMENICA'));
 
 comment on column public.members.balance is 'Colonna generata: sempre total - paid. Non scrivibile.';
 comment on column public.members.payer_id is 'Capofamiglia che paga per questo socio. NULL = socio indipendente.';
@@ -1404,6 +1410,7 @@ begin
     pass_type          = null,
     preski_type        = null,
     course_type        = null,
+    course_day         = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -1473,6 +1480,7 @@ begin
     pass_type          = null,
     preski_type        = null,
     course_type        = null,
+    course_day         = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
