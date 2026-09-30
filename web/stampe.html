@@ -18,7 +18,6 @@
     .giorni-stampa [data-giorno="SABATO"]   { background: var(--blu);    color: #fff; }
     .giorni-stampa [data-giorno="DOMENICA"] { background: var(--giallo); color: var(--giallo-dark); }
     .giorni-stampa [data-giorno="MARTEDI"]  { background: var(--errore); color: #fff; }
-    .giorni-stampa [data-giorno="JOLLY"]    { background: var(--ok);     color: #fff; }
 
     .foglio { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 26px; margin-bottom: 24px; }
     .foglio h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: 2px; }
@@ -74,14 +73,13 @@
     <h1 class="title is-4 mb-4">Fogli da stampare</h1>
     <p class="mb-4">
       Un pulsante per giorno: prepara i fogli con i soci della stagione e apre la stampa.
-      Sabato e domenica hanno un foglio per partenza, con abbonati e corsisti di quel giorno.
-      Il jolly ha il suo foglio, valido per tutti i giorni.
+      Sabato e domenica: foglio dei corsisti, foglio degli abbonamenti di quel giorno e
+      foglio jolly. Martedì: abbonamenti del martedì e jolly. Una pagina per partenza.
     </p>
     <div class="giorni-stampa">
       <button type="button" class="button" data-giorno="SABATO">Stampa fogli sabato</button>
       <button type="button" class="button" data-giorno="DOMENICA">Stampa fogli domenica</button>
       <button type="button" class="button" data-giorno="MARTEDI">Stampa fogli martedì</button>
-      <button type="button" class="button" data-giorno="JOLLY">Stampa fogli jolly</button>
     </div>
   </div>
 
@@ -122,12 +120,7 @@
     setLoading(true);
     try {
       const { soci, abbonamenti } = await leggiDati();
-      const gruppi = gruppiDelFoglio(giorno, soci, abbonamenti);
-      disegna(giorno, gruppi);
-      if (!gruppi.length) {
-        showToast(`Nessun socio per il foglio ${FOGLI[giorno].nome.toLowerCase()}.`);
-        return;
-      }
+      disegna(giorno, fogliDelGiorno(giorno, soci, abbonamenti));
       window.print();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -137,34 +130,38 @@
     }
   }
 
-  function disegna(giorno, gruppi) {
-    const foglio = FOGLI[giorno];
+  /**
+   * Una pagina per ogni partenza di ogni foglio. Un foglio senza nessuno ha
+   * la sua pagina con "Nessuno": chi la prende in mano sa che non manca.
+   */
+  function disegna(giorno, fogli) {
+    const nomeGiorno = GIORNI_STAMPA[giorno].nome;
     const oggi = new Date().toLocaleDateString("it-IT");
-    if (!gruppi.length) {
-      el("fogli").innerHTML = `<div class="foglio"><h2>${esc(foglio.nome)}</h2>
-        <p class="vuota">Nessun socio della stagione per questo giorno.</p></div>`;
-      return;
-    }
-    // Il tipo (abbonamento o corso) serve solo dove ci sono i corsi.
-    const conTipo = Boolean(foglio.corsi);
-    el("fogli").innerHTML = gruppi.map((g) => `
-      <section class="foglio">
-        <h2>${esc(foglio.nome)}${foglio.partenza ? ` · ${esc(g.titolo)}` : ""}</h2>
-        <p class="sotto">${foglio.nota ? `${esc(foglio.nota)} · ` : ""}${g.righe.length} ${g.righe.length === 1 ? "persona" : "persone"} · stampato il ${oggi}</p>
-        <table>
-          <thead><tr><th>N. tessera</th><th>Cognome</th><th>Nome</th><th>Luogo di nascita</th><th>Telefono</th>${conTipo ? "<th>Tipo</th>" : ""}</tr></thead>
-          <tbody>${g.righe.map((r) => `
-            <tr>
-              <td class="num">${esc(r.socio.card_number) || "—"}</td>
-              <td><strong>${esc(r.socio.last_name)}</strong></td>
-              <td>${esc(r.socio.first_name)}</td>
-              <td>${esc(r.socio.birth_place) || "—"}</td>
-              <td class="num">${esc(r.socio.phone) || "—"}</td>
-              ${conTipo ? `<td>${tipoRiga(r)}</td>` : ""}
-            </tr>`).join("")}
-          </tbody>
-        </table>
-      </section>`).join("");
+    const pagina = (foglio, gruppo) => {
+      const soci = gruppo ? gruppo.soci : [];
+      const sotto = [foglio.nota, gruppo?.titolo, `${soci.length} ${soci.length === 1 ? "persona" : "persone"}`,
+                     `stampato il ${oggi}`].filter(Boolean).map(esc).join(" · ");
+      return `
+        <section class="foglio">
+          <h2>${esc(nomeGiorno)} · ${esc(foglio.titolo)}</h2>
+          <p class="sotto">${sotto}</p>
+          ${soci.length ? `<table>
+            <thead><tr><th>N. tessera</th><th>Cognome</th><th>Nome</th><th>Luogo di nascita</th><th>Telefono</th></tr></thead>
+            <tbody>${soci.map((s) => `
+              <tr>
+                <td class="num">${esc(s.card_number) || "—"}</td>
+                <td><strong>${esc(s.last_name)}</strong></td>
+                <td>${esc(s.first_name)}</td>
+                <td>${esc(s.birth_place) || "—"}</td>
+                <td class="num">${esc(s.phone) || "—"}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>` : `<p class="vuota">Nessuno.</p>`}
+        </section>`;
+    };
+    el("fogli").innerHTML = fogli
+      .flatMap((f) => (f.gruppi.length ? f.gruppi.map((g) => pagina(f, g)) : [pagina(f, null)]))
+      .join("");
   }
 </script>
 </body>

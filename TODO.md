@@ -37,9 +37,9 @@
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.
-- Stampe: quattro pulsanti colorati, Sabato / Domenica / Martedì / Jolly. Sabato e domenica con
-  abbonati e corsisti di quel giorno, raggruppati per partenza, dentro in ordine alfabetico. Il
-  jolly sempre in un foglio a parte, valido per tutti i giorni.
+- Stampe: tre pulsanti colorati, Sabato / Domenica / Martedì. Ogni giorno stampa più fogli:
+  corsisti di quel giorno (sabato e domenica), abbonamenti 5 gite di quel giorno e SEMPRE il foglio
+  jolly. Ogni foglio diviso per partenza del giorno (una pagina per partenza), in ordine alfabetico.
 - Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel
   form Soci), indipendentemente dal tipo di corso.
 - Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form
@@ -71,17 +71,12 @@
 2. [x] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
        corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
-3. [x] feat(stampe): pagina nuova `web/stampe.html`, permesso `gite` (admin, superadmin e il ruolo
-       gite leggono members e member_passes). Voce "Stampe" nella barra delle 10 pagine, dopo "Gite".
-       - Quattro pulsanti con i colori dei giorni e il giorno scritto grande (anche in testa al
-         foglio): Sabato, Domenica, Martedì, Jolly.
-       - Sabato e domenica: abbonati di quel giorno + corsisti di quel giorno (etichetta "Corso"),
-         una riga per persona; gruppi per partenza (ripulita da spazi/maiuscole), dentro in ordine
-         alfabetico, "Senza partenza" in fondo; salto pagina per gruppo.
-       - Martedì: abbonati del martedì. Jolly: foglio a parte, valido per tutti i giorni.
-       - Colonne: N. tessera / Cognome / Nome / Luogo di nascita / Telefono. `@media print`.
-       - Funzione pura per le righe del foglio con test node (più abbonamenti, abbonamento + corso,
-         solo corso, senza partenza, jolly, doppioni).
+3. [x] feat(stampe): pagina `web/stampe.html` (permesso `gite`), voce "Stampe" nella barra e nelle
+       pagine di ricerca. Tre pulsanti (Sabato, Domenica, Martedì); per ogni giorno i fogli
+       corsisti (sab/dom), abbonamenti 5 gite di quel giorno e jolly (sempre), una pagina per
+       partenza, "Senza partenza" in fondo, "Nessuno" se il foglio è vuoto. Colonne: N. tessera /
+       Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` in `web/stampe.js`, test
+       `node web/test-stampe.js`.
 4. [ ] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
        tutte le schede (non solo chi non ha abbonamento), stesso giro di "Assegna": add_pass,
        coda offline, client_id.
