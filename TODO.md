@@ -72,7 +72,17 @@
       Attenzione: le righe migrate hanno created_at = 2000-01-01, "aggiunto oggi" si legge da
       enrolled_at / updated_at.
 
-### Da fare, un commit per punto (niente push e niente schema in produzione senza ok)
+### Da controllare al ritorno
+- [ ] leggere `supabase/migration/cf-2026-09-30/warning-cf.md`: 13 persone dei fogli non trovate,
+      9 con data di nascita diversa, 73 codici dei fogli che non passano il controllo.
+- [ ] provare sul sito vero: Stampe (sabato e domenica, martedì), Assicurazione con un account
+      `assicurazione` (scarica, segna come inviata, annulla), Pagamenti (Modifica importi, Storico),
+      totale a mano nel form Soci, "Nuovo abbonamento" dal telefono.
+- [ ] tessere nuove nel listino: il tipo di assicurazione (`prices.insurance`) per ora si scrive
+      solo dal database; se servono spesso, aggiungerlo al pannello Impostazioni.
+- [ ] docker: resta un container di prova che non si riesce a fermare (`sudo systemctl restart docker`).
+
+### Fatto, un commit per punto (schema in produzione e push già fatti)
 1. [x] chore: `todo.md` unito qui e tolto (su Windows/Mac i due nomi erano lo stesso file).
 2. [x] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
        scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
