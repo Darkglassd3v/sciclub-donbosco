@@ -94,21 +94,16 @@
        **da leggere `warning-cf.md`**: 73 codici dei fogli che non passano il controllo (22 lasciati
        come nel database perché lì erano giusti: errori di battitura nei fogli), 13 persone non
        trovate, 9 con data di nascita diversa (non toccate).
-7. [ ] feat(assicurazione): schema + pagina.
-       - `prices.insurance` (BASE/PLUS/SPORT/null) sulle tessere, riempita con l'abbinamento
-         deciso sopra. Oggi `insurance_members()` esclude solo la tessera "NO": le tessere
-         "NO ASSICURAZIONE" finirebbero nell'Excel.
-       - tabella `insurance_lists` (season, kind, number, sent_on, created_by),
-         unique(season, kind, number); `members.insured_on` + `members.insurance_list_id`.
-       - Pagina: tre riquadri Base / Plus / Sport. Ciascuno con i soci da assicurare, "Ultima
-         inviata: n. X del gg/mm", numero proposto = ultima+1 ma modificabile, decorrenza = oggi.
-         Scarica Excel (anteprima, come i fogli di dati26: Nr., Decorrenza, Polizza (= nome del
-         tipo), Cognome, Nome, Data di nascita, Codice Fiscale, Sci Club "DON BOSCO", Nr. lista;
-         nome del file "N Lista Neve Base.xlsx").
-         "Segna come inviata" (chiedi()) → RPC che crea la lista col numero scelto e segna solo i
-         soci di quell'anteprima. Contatori indipendenti (es. Base 8, Plus 5, Sport 3).
-         Annulla l'ultima lista inviata; riscarica una lista già inviata.
-       - Correzione del CF resta (ricerca).
+7. [x] feat(assicurazione): schema + pagina (schema in produzione il 30/09). `prices.insurance` sulle
+       tessere (riempito dal nome: direttivo e Global Sport → SPORT, Neve Plus → PLUS, Neve Base e
+       scontata → BASE, NO ASSICURAZIONE → nessuna); tabella `insurance_lists` (numero unico per
+       tipo e stagione) e `members.insurance_list_id`; funzioni `insurance_members`, `insurance_send`,
+       `insurance_undo` (solo l'ultima del tipo), `insurance_sent_lists`, `insurance_list_members`,
+       `set_tax_code` (al posto di `set_insurance`). Pagina: tre riquadri, numero proposto modificabile,
+       Excel come dati26 ("8 Lista Neve Base.xlsx"), "Segna come inviata" solo dopo lo scarico e solo
+       per i soci del file, senza codice fiscale in rosso e fuori dalla lista, liste mandate con
+       Riscarica e Annulla invio. Nuove tessere: il tipo si scrive a mano in `prices.insurance`
+       (il pannello Impostazioni non lo mostra ancora).
 8. [ ] refactor(assicurazione): via il numero di polizza: campo nella pagina, `f_numero_polizza`
        nel form Soci, Excel del Riepilogo, trigger `check_policy_number`, vista households,
        close_season (lì va azzerato `insured_on`), `set_insurance` (solo CF). La colonna

@@ -730,17 +730,71 @@ drop view if exists public.members_kiosk_search;
 -- ---------------------------------------------------------------------------
 -- Assicurazione
 --
--- Ogni tesserato va assicurato. Chi se ne occupa manda all'assicurazione
--- l'elenco dei tesserati nuovi, riceve indietro i numeri di polizza e li
--- riporta qui; chi ha la polizza esce dall'elenco da mandare. close_season()
--- azzera le polizze, quindi a ogni stagione si riparte da tutti.
+-- Ogni tesserato va assicurato. L'assicurazione ha tre coperture (Neve Base,
+-- Neve Plus, Global Sport, in ordine di copertura e di prezzo) e riceve dal
+-- club tre elenchi separati, numerati per tipo e per stagione: "8 Lista Neve
+-- Base", "5 Lista Neve Plus", "3 Lista Global Sport". Il tipo lo decide la
+-- tessera (prices.insurance). Chi prepara gli elenchi scarica l'Excel dei
+-- nuovi, lo manda e preme "Segna come inviata": è quello, e non lo scarico, a
+-- rendere assicurati i soci della lista (members.insurance_list_id). Senza
+-- codice fiscale non si assicura: il socio resta fuori finché non lo si
+-- scrive. close_season() svuota insurance_list_id: ogni stagione riparte.
 --
--- Il ruolo 'assicurazione' non ha policy su members: le sue sole porte sono
--- queste funzioni, che danno i campi che servono e
--- scrivono solo codice fiscale e polizza. Con una policy di update, invece,
--- potrebbe cambiare anche quote e acconti chiamando l'API a mano: la RLS
--- sceglie le righe, non le colonne.
+-- Il ruolo 'assicurazione' non ha policy su members né su insurance_lists:
+-- le sue sole porte sono queste funzioni, che danno i campi che servono e
+-- scrivono solo il codice fiscale e le liste. Con una policy di update,
+-- invece, potrebbe cambiare anche quote e acconti chiamando l'API a mano: la
+-- RLS sceglie le righe, non le colonne.
 -- ---------------------------------------------------------------------------
+
+-- Il tipo di assicurazione di ogni tessera; vuoto = la tessera non assicura
+-- (SOLO TESSERA, SCONTATA - NO ASSICURAZIONE). La scontata dei nati prima del
+-- 1947 ha la Base, il direttivo la Global Sport, la più completa.
+alter table public.prices add column if not exists insurance text;
+alter table public.prices drop constraint if exists prices_insurance_valid;
+alter table public.prices add constraint prices_insurance_valid
+  check (insurance is null or (insurance in ('BASE', 'PLUS', 'SPORT') and category = 'TESSERA'));
+
+comment on column public.prices.insurance is 'Tessere: assicurazione che dà (BASE, PLUS, SPORT); vuoto = nessuna.';
+
+-- Le tessere del listino hanno il tipo nel nome. Solo quelle ancora senza
+-- tipo: uno scritto a mano non si tocca.
+update public.prices set insurance = case
+    when name = 'TESSERA DIRETTIVO'        then 'SPORT'
+    when upper(name) like '%GLOBAL SPORT%' then 'SPORT'
+    when upper(name) like '%NEVE PLUS%'    then 'PLUS'
+    when upper(name) like '%NEVE BASE%'    then 'BASE'
+  end
+ where category = 'TESSERA' and insurance is null
+   and upper(name) not like '%NO ASSICURAZIONE%'
+   and (name = 'TESSERA DIRETTIVO'
+        or upper(name) like any (array['%GLOBAL SPORT%', '%NEVE PLUS%', '%NEVE BASE%']));
+
+-- Una lista mandata all'assicurazione. Il numero lo propone la pagina
+-- (l'ultimo del tipo più uno) ma si può cambiare: i tre tipi vanno avanti
+-- ognuno per conto suo (Base alla 8 mentre la Plus è alla 5). Due liste dello
+-- stesso tipo e della stessa stagione non hanno mai lo stesso numero.
+create table if not exists public.insurance_lists (
+  id         uuid primary key default gen_random_uuid(),
+  season     timestamptz not null default public.current_season(),
+  kind       text not null check (kind in ('BASE', 'PLUS', 'SPORT')),
+  number     int not null check (number > 0),
+  starts_on  date not null default current_date,
+  sent_at    timestamptz not null default now(),
+  sent_by    uuid default auth.uid(),
+  unique (season, kind, number)
+);
+
+comment on table public.insurance_lists is 'Liste mandate all''assicurazione: tipo, numero progressivo per tipo e stagione, decorrenza.';
+
+-- Nessuna policy: si legge e si scrive solo dalle funzioni qui sotto.
+alter table public.insurance_lists enable row level security;
+
+alter table public.members add column if not exists insurance_list_id uuid
+  references public.insurance_lists (id) on delete set null;
+create index if not exists members_insurance_list_idx on public.members (insurance_list_id);
+
+comment on column public.members.insurance_list_id is 'Lista con cui il socio è stato assicurato in questa stagione; vuoto = da assicurare.';
 
 -- Fino al primo rilascio della 2.4 insurance_members(only_pending) dava, con
 -- false, tutti i tesserati della stagione: l'assicurazione poteva scaricare
@@ -748,18 +802,17 @@ drop view if exists public.members_kiosk_search;
 -- Riepilogo (permesso riepilogo, che legge members con la sua RLS); qui restano
 -- chi è da assicurare e una ricerca con pochi risultati per le correzioni.
 drop function if exists public.insurance_members(boolean);
--- Le colonne restituite cambieranno con il tracciato che chiede
--- l'assicurazione (TODO in web/shared.js): `create or replace` non può
--- cambiare le colonne di una funzione, quindi prima la si toglie.
+-- `create or replace` non può cambiare le colonne di una funzione: prima la
+-- si toglie.
 drop function if exists public.insurance_members();
 
--- I tesserati della stagione aperta ancora senza polizza. "NO" come tessera
--- vale come nessuna tessera, come nel Riepilogo.
+-- I tesserati della stagione aperta ancora da assicurare, con il tipo della
+-- loro tessera. Ci sono anche quelli senza codice fiscale: la pagina li
+-- mostra, perché lo si scriva, ma in una lista non entrano.
 create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
-               address text, city text, province text, postal_code text,
-               card_type text, card_number text, policy_number text)
+               card_type text, card_number text, insurance text)
 language sql
 stable
 security definer
@@ -767,30 +820,30 @@ set search_path = ''
 as $$
   select m.id, m.last_name, m.first_name, m.birth_date,
          m.birth_place, m.birth_province, m.tax_code,
-         m.address, m.city, m.province, m.postal_code,
-         m.card_type, m.card_number, m.policy_number
+         m.card_type, m.card_number, p.insurance
     from public.members m
+    join public.prices p
+      on p.category = 'TESSERA' and p.name = m.card_type and p.insurance is not null
    where public.can('polizze')
      and m.enrolled_at is not null
-     and m.card_type is not null and upper(m.card_type) <> 'NO'
-     and nullif(trim(m.policy_number), '') is null
+     and m.insurance_list_id is null
    -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
    -- l'altra (la pagina legge a blocchi di 1000, vedi tutteLeRighe()).
-   order by m.last_name, m.first_name, m.id;
+   order by p.insurance, m.last_name, m.first_name, m.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora senza polizza, per l''assicurazione.';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione della tessera.';
 
--- Per correggere una polizza o un codice fiscale già salvati: cerca fra i
--- tesserati della stagione, anche quelli già assicurati. Ogni parola (almeno
--- due lettere) deve comparire in cognome, nome, codice fiscale, polizza o
--- numero tessera. Al massimo 20 risultati e nessun indirizzo: serve a
--- ritrovare una persona, non a scaricare l'elenco dei soci.
+-- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
+-- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)
+-- deve comparire in cognome, nome, codice fiscale o numero tessera. Al
+-- massimo 20 risultati e nessun indirizzo: serve a ritrovare una persona, non
+-- a scaricare l'elenco dei soci.
 drop function if exists public.insurance_search(text);
 create or replace function public.insurance_search(testo text)
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
-               card_number text, policy_number text)
+               card_number text, insurance text, list_number int)
 language sql
 stable
 security definer
@@ -804,26 +857,28 @@ as $$
   )
   select m.id, m.last_name, m.first_name, m.birth_date,
          m.birth_place, m.birth_province, m.tax_code,
-         m.card_number, m.policy_number
+         m.card_number, l.kind, l.number
     from public.members m
+    left join public.insurance_lists l on l.id = m.insurance_list_id
    where public.can('polizze')
      and (select count(*) from parole) > 0
      and m.enrolled_at is not null
      and m.card_type is not null and upper(m.card_type) <> 'NO'
      and not exists (
        select 1 from parole
-        where upper(concat_ws(' ', m.last_name, m.first_name, m.tax_code, m.policy_number, m.card_number))
+        where upper(concat_ws(' ', m.last_name, m.first_name, m.tax_code, m.card_number))
               not like '%' || parole.p || '%')
    order by m.last_name, m.first_name
    limit 20;
 $$;
 
-comment on function public.insurance_search is 'Ricerca fra i tesserati della stagione per correggere polizza o codice fiscale: al massimo 20 risultati, senza indirizzi.';
+comment on function public.insurance_search is 'Ricerca fra i tesserati della stagione per correggere il codice fiscale: al massimo 20 risultati, senza indirizzi.';
 
--- Scrive codice fiscale e polizza di un tesserato della stagione, e nient'altro.
--- Il codice fiscale si corregge qui perché è qui che lo si controlla prima di
--- spedirlo; la polizza vuota resta vuota (il socio resta da assicurare).
-create or replace function public.set_insurance(member_id uuid, tax_code text, policy_number text)
+-- Scrive il codice fiscale di un tesserato della stagione, e nient'altro. Si
+-- corregge qui perché è qui che lo si controlla prima di spedirlo.
+-- Fino alla 2.5 set_insurance() scriveva anche il numero di polizza.
+drop function if exists public.set_insurance(uuid, text, text);
+create or replace function public.set_tax_code(member_id uuid, tax_code text)
 returns void
 language plpgsql
 security definer
@@ -835,9 +890,8 @@ begin
   end if;
 
   update public.members m set
-    tax_code      = nullif(upper(regexp_replace(set_insurance.tax_code, '\s', '', 'g')), ''),
-    policy_number = nullif(trim(set_insurance.policy_number), '')
-   where m.id = set_insurance.member_id
+    tax_code = nullif(upper(regexp_replace(set_tax_code.tax_code, '\s', '', 'g')), '')
+   where m.id = set_tax_code.member_id
      and m.enrolled_at is not null;
 
   if not found then
@@ -846,21 +900,147 @@ begin
 end;
 $$;
 
-comment on function public.set_insurance is 'Scrive codice fiscale e numero di polizza di un iscritto della stagione. Solo con il permesso polizze.';
+comment on function public.set_tax_code is 'Scrive il codice fiscale di un iscritto della stagione. Solo con il permesso polizze.';
 
-revoke all on function public.insurance_members() from public;
-revoke all on function public.insurance_search(text) from public;
-revoke all on function public.set_insurance(uuid, text, text) from public;
-do $$ begin
-  if exists (select 1 from pg_roles where rolname = 'anon') then
-    revoke all on function public.insurance_members() from anon;
-    revoke all on function public.insurance_search(text) from anon;
-    revoke all on function public.set_insurance(uuid, text, text) from anon;
+-- Le liste mandate nella stagione aperta, con quanti soci ha ciascuna: la
+-- pagina ne ricava l'ultima di ogni tipo e il numero da proporre.
+create or replace function public.insurance_sent_lists()
+returns table (id uuid, kind text, number int, starts_on date, sent_at timestamptz, members bigint)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select l.id, l.kind, l.number, l.starts_on, l.sent_at, count(m.id)
+    from public.insurance_lists l
+    left join public.members m on m.insurance_list_id = l.id
+   where public.can('polizze')
+     and l.season = public.current_season()
+   group by l.id, l.kind, l.number, l.starts_on, l.sent_at
+   order by l.kind, l.number desc;
+$$;
+
+comment on function public.insurance_sent_lists is 'Liste mandate all''assicurazione nella stagione aperta, con il numero di soci.';
+
+-- "Segna come inviata": crea la lista con il numero scelto e ci mette i soci
+-- dell'Excel appena scaricato (member_ids), non tutti quelli da assicurare
+-- adesso: chi si è iscritto nel frattempo non era nel file e resta per la
+-- prossima. Solo chi è ancora da assicurare, ha quel tipo di tessera e ha il
+-- codice fiscale. Restituisce quanti soci sono entrati.
+create or replace function public.insurance_send(kind text, list_number int, member_ids uuid[])
+returns int
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  lista uuid;
+  quanti int;
+begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di mandare le liste dell''assicurazione.';
   end if;
+  if insurance_send.kind is null or insurance_send.kind not in ('BASE', 'PLUS', 'SPORT') then
+    raise exception 'Tipo di assicurazione sconosciuto.';
+  end if;
+  if insurance_send.list_number is null or insurance_send.list_number < 1 then
+    raise exception 'Il numero della lista deve essere 1 o più.';
+  end if;
+  if exists (select 1 from public.insurance_lists l
+              where l.season = public.current_season()
+                and l.kind = insurance_send.kind
+                and l.number = insurance_send.list_number) then
+    raise exception 'La lista numero % di questo tipo è già stata mandata: scegli un altro numero.', insurance_send.list_number;
+  end if;
+
+  insert into public.insurance_lists (kind, number)
+  values (insurance_send.kind, insurance_send.list_number)
+  returning id into lista;
+
+  update public.members m set insurance_list_id = lista
+   where m.id = any (insurance_send.member_ids)
+     and m.enrolled_at is not null
+     and m.insurance_list_id is null
+     and nullif(trim(m.tax_code), '') is not null
+     and exists (select 1 from public.prices p
+                  where p.category = 'TESSERA' and p.name = m.card_type
+                    and p.insurance = insurance_send.kind);
+  get diagnostics quanti = row_count;
+
+  -- Una lista vuota non si manda: l'eccezione annulla anche la riga appena
+  -- scritta, e il numero resta libero.
+  if quanti = 0 then
+    raise exception 'Nessun socio da assicurare in questa lista: ricarica la pagina.';
+  end if;
+  return quanti;
+end;
+$$;
+
+comment on function public.insurance_send is 'Segna come inviata una lista: numero scelto, decorrenza oggi, soci del file scaricato.';
+
+-- Annulla l'invio di una lista (file mai partito, numero sbagliato): i suoi
+-- soci tornano da assicurare. Solo l'ultima di ogni tipo, perché la
+-- numerazione che l'assicurazione ha già ricevuto non abbia buchi a metà.
+create or replace function public.insurance_undo(list_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  l public.insurance_lists;
+begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di annullare le liste dell''assicurazione.';
+  end if;
+  select * into l from public.insurance_lists x where x.id = insurance_undo.list_id;
+  if not found or l.season <> public.current_season() then
+    raise exception 'Lista non trovata fra quelle di questa stagione: ricarica la pagina.';
+  end if;
+  if exists (select 1 from public.insurance_lists x
+              where x.season = l.season and x.kind = l.kind and x.number > l.number) then
+    raise exception 'Si annulla solo l''ultima lista mandata di ogni tipo.';
+  end if;
+  -- insurance_list_id va a null da sé (on delete set null).
+  delete from public.insurance_lists x where x.id = l.id;
+end;
+$$;
+
+comment on function public.insurance_undo is 'Annulla l''ultima lista mandata di un tipo: i suoi soci tornano da assicurare.';
+
+-- I soci di una lista già mandata, per riscaricarne l'Excel uguale.
+create or replace function public.insurance_list_members(list_id uuid)
+returns table (last_name text, first_name text, birth_date date, tax_code text,
+               kind text, number int, starts_on date)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.last_name, m.first_name, m.birth_date, m.tax_code, l.kind, l.number, l.starts_on
+    from public.insurance_lists l
+    join public.members m on m.insurance_list_id = l.id
+   where public.can('polizze')
+     and l.id = insurance_list_members.list_id
+   order by m.last_name, m.first_name, m.id;
+$$;
+
+comment on function public.insurance_list_members is 'I soci di una lista già mandata all''assicurazione, per riscaricarla.';
+
+do $$
+declare f text;
+begin
+  foreach f in array array[
+    'public.insurance_members()', 'public.insurance_search(text)', 'public.set_tax_code(uuid, text)',
+    'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[])',
+    'public.insurance_undo(uuid)', 'public.insurance_list_members(uuid)'] loop
+    execute format('revoke all on function %s from public', f);
+    if exists (select 1 from pg_roles where rolname = 'anon') then
+      execute format('revoke all on function %s from anon', f);
+    end if;
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
 end $$;
-grant execute on function public.insurance_members() to authenticated;
-grant execute on function public.insurance_search(text) to authenticated;
-grant execute on function public.set_insurance(uuid, text, text) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Row Level Security
@@ -1411,6 +1591,7 @@ begin
     preski_type        = null,
     course_type        = null,
     course_day         = null,
+    insurance_list_id  = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -1481,6 +1662,7 @@ begin
     preski_type        = null,
     course_type        = null,
     course_day         = null,
+    insurance_list_id  = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,

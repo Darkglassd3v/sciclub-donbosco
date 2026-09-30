@@ -14,34 +14,42 @@
     .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 4px; }
     .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
-    .scarica { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
-    .scarica .button { white-space: normal; height: auto; min-height: var(--tocco); }
+    /* Numero della lista e decorrenza, poi i due pulsanti: nell'ordine in cui
+     * si fanno le cose. */
+    .invio { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 14px; }
+    .invio .numero { width: 8rem; font-size: 1.3rem; font-weight: 700; }
+    .invio .decorrenza { font-size: 1.1rem; padding-bottom: 10px; }
+    .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .azioni-lista .button { white-space: normal; height: auto; min-height: var(--tocco); }
+    .ultima { font-size: 1.05rem; margin-bottom: 14px; }
+    .passo { font-weight: 600; color: var(--ok); margin-bottom: 14px; }
 
-    /* Una riga per socio: chi è a sinistra, i due campi da scrivere a destra.
-     * Sotto i 900px le celle vanno una sotto l'altra, così i campi restano
-     * larghi abbastanza da leggere un codice fiscale intero. */
+    /* Una riga per socio: chi è a sinistra, il codice fiscale a destra.
+     * Sotto i 900px le celle vanno una sotto l'altra, così il campo resta
+     * largo abbastanza da leggere un codice fiscale intero. */
     .tabella-assic { width: 100%; border-collapse: collapse; }
     .tabella-assic th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
                         font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
     .tabella-assic td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: top; }
     .tabella-assic .chi strong { display: block; font-size: 1.1rem; }
     .tabella-assic .chi { min-width: 10rem; }
-    /* I campi si prendono la larghezza della loro colonna: con una larghezza
-     * minima fissa, a testo grande il pulsante Salva finiva fuori dalla tabella. */
     .tabella-assic .input { min-width: 0; }
-    .tabella-assic td.campo-cf { width: 38%; }
-    .tabella-assic td.campo-polizza { width: 22%; }
+    .tabella-assic td.campo-cf { width: 45%; }
     .tabella-assic .cf { letter-spacing: .04em; text-transform: uppercase; }
-    .tabella-assic .vuota { color: var(--testo-soft); }
+    .tabella-assic .vuota, .riquadro h2 .vuota { color: var(--testo-soft); font-weight: 400; }
     .tabella-assic tr.salvata td { background: var(--ok-bg); }
+    .tabella-assic .azioni-lista { margin-bottom: 0; }
+    /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
+    .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
+    .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
+    .tabella-assic .stato { display: block; color: var(--testo-soft); margin-top: 4px; }
     @media screen and (max-width: 900px) {
       .tabella-assic thead { display: none; }
-      .tabella-assic tr, .tabella-assic td { display: block; width: 100%; }
+      .tabella-assic tr, .tabella-assic td { display: block; width: 100% !important; }
       .tabella-assic td { border-top: 0; padding: 6px 0; }
       .tabella-assic tr { border-top: 1px solid var(--filo); padding: 10px 0; }
       .tabella-assic td[data-etichetta]::before { content: attr(data-etichetta); display: block; font-weight: 600; color: var(--testo-soft); }
     }
-
   </style>
 </head>
 <body>
@@ -71,41 +79,41 @@
 
 <div class="container-main">
   <h1 class="title is-4 mb-4">Assicurazione</h1>
+  <p class="mb-5">
+    Una lista per ogni tipo di assicurazione. Scarica l'Excel e mandalo all'assicurazione;
+    poi premi <b>Segna come inviata</b>: solo allora quei soci risultano assicurati e non
+    tornano nella lista della volta dopo. Senza codice fiscale un socio non si può assicurare:
+    resta in rosso finché non lo scrivi.
+  </p>
 
+  <div id="tipi"></div>
 
-  <div id="contenuto">
-    <div class="riquadro">
-      <h2>Da assicurare <span id="quanti"></span></h2>
-      <p class="occhiello">
-        I tesserati della stagione che non hanno ancora il numero di polizza.
-        Scarica l'elenco e mandalo all'assicurazione. Quando tornano i numeri,
-        scrivili qui e premi <b>Salva</b>: il socio esce dall'elenco.
-      </p>
-      <div class="scarica">
-        <button type="button" class="button is-link" id="btnScaricaDa">Scarica l'elenco da assicurare (Excel)</button>
-      </div>
-      <div class="tabella-scorrevole">
-        <table class="tabella-assic">
-          <thead><tr><th>Socio</th><th>Data di nascita</th><th>Codice fiscale</th><th>Numero polizza</th><th></th></tr></thead>
-          <tbody id="elencoDa"><tr><td colspan="5" class="vuota">Caricamento…</td></tr></tbody>
-        </table>
-      </div>
+  <div class="riquadro">
+    <h2>Liste mandate in questa stagione</h2>
+    <p class="occhiello">
+      Si possono riscaricare uguali. Se una lista non è partita, annullala: i suoi soci
+      tornano da assicurare. Si annulla solo l'ultima di ogni tipo.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <thead><tr><th>Lista</th><th>Decorrenza</th><th>Soci</th><th></th></tr></thead>
+        <tbody id="elencoListe"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
     </div>
+  </div>
 
-    <div class="riquadro">
-      <h2>Cerca e correggi</h2>
-      <p class="occhiello">
-        Per correggere un numero di polizza o un codice fiscale già salvati:
-        cerca fra i tesserati della stagione, anche quelli già assicurati.
-        Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
-      </p>
-      <input class="input mb-4" id="cerca" type="search" autocomplete="off"
-             placeholder="Cognome, nome, codice fiscale o numero di polizza…">
-      <div class="tabella-scorrevole">
-        <table class="tabella-assic">
-          <tbody id="elencoCerca"></tbody>
-        </table>
-      </div>
+  <div class="riquadro">
+    <h2>Cerca e correggi</h2>
+    <p class="occhiello">
+      Per correggere un codice fiscale già salvato: cerca fra i tesserati della stagione,
+      anche quelli già assicurati. Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
+    </p>
+    <input class="input mb-4" id="cerca" type="search" autocomplete="off"
+           placeholder="Cognome, nome, codice fiscale o numero tessera…">
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <tbody id="elencoCerca"></tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -115,59 +123,186 @@
 <script src="shared.js"></script>
 <script src="codicefiscale.js"></script>
 <script>
-  // Tutto passa da tre funzioni del database (schema.sql, "Assicurazione"):
-  // insurance_members() dà chi è da assicurare, insurance_search() ritrova
-  // una persona per correggerla, set_insurance() scrive. Chi ha il ruolo
+  // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
+  // insurance_members() dà chi è da assicurare, insurance_sent_lists() le
+  // liste già mandate, insurance_send() e insurance_undo() le segnano e le
+  // annullano, set_tax_code() corregge il codice fiscale. Chi ha il ruolo
   // assicurazione non ha altro accesso ai soci: niente quote, telefoni,
-  // abbonamenti né l'elenco completo dei tesserati, che si scarica dal
-  // Riepilogo.
+  // abbonamenti né l'elenco completo dei tesserati.
 
   const el = (id) => document.getElementById(id);
 
-  let daAssicurare = [];   // tesserati senza polizza
+  // I tre tipi, con il nome e la colonna dei fogli che l'assicurazione usa
+  // (vedi dati26/): "1 Lista Neve Base.xlsx", colonna "Polizza"; la Global
+  // Sport ha "Tipo" al posto di "Polizza".
+  const TIPI = [
+    { kind: "BASE",  nome: "Neve Base",    colonna: "Polizza" },
+    { kind: "PLUS",  nome: "Neve Plus",    colonna: "Polizza" },
+    { kind: "SPORT", nome: "Global Sport", colonna: "Tipo" },
+  ];
+  const tipo = (kind) => TIPI.find((t) => t.kind === kind);
+
+  let daAssicurare = [];   // tesserati ancora da assicurare, di tutti e tre i tipi
+  let liste = [];          // liste mandate in questa stagione
+
+  // L'ultimo Excel scaricato per tipo: { numero, soci }. "Segna come inviata"
+  // segna esattamente quei soci con quel numero, cioè quello che è partito.
+  const scaricato = {};
+
+  const oggiIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
 
   (async function init() {
     if (!(await requirePermesso("polizze"))) return;
-    el("btnScaricaDa").addEventListener("click", scaricaDaAssicurare);
     el("cerca").addEventListener("input", () => {
       // Una richiesta quando si smette di scrivere, non una per lettera.
       clearTimeout(cerca.timer);
       cerca.timer = setTimeout(cerca, 300);
     });
-    await caricaDaAssicurare();
+    await carica();
   })();
 
-  // -------------------------------------------------------------------------
-  // Da assicurare
-  // -------------------------------------------------------------------------
-
-  async function caricaDaAssicurare() {
+  async function carica() {
     setLoading(true);
     try {
-      daAssicurare = await tutteLeRighe(() => sb.rpc("insurance_members"));
-      disegnaDaAssicurare();
+      const [soci, inviate] = await Promise.all([
+        tutteLeRighe(() => sb.rpc("insurance_members")),
+        sb.rpc("insurance_sent_lists").then(({ data, error }) => { if (error) throw error; return data; }),
+      ]);
+      daAssicurare = soci;
+      liste = inviate;
+      disegnaTipi();
+      disegnaListe();
     } catch (error) {
-      el("elencoDa").innerHTML = '<tr><td colspan="5" class="vuota">Elenco non disponibile.</td></tr>';
+      el("tipi").innerHTML = '<div class="riquadro">Elenco non disponibile.</div>';
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  function disegnaDaAssicurare() {
-    el("quanti").textContent = `(${daAssicurare.length})`;
-    const corpo = el("elencoDa");
-    if (!daAssicurare.length) {
-      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
-      return;
-    }
-    corpo.replaceChildren(...daAssicurare.map(riga));
+  // -------------------------------------------------------------------------
+  // Un riquadro per tipo
+  // -------------------------------------------------------------------------
+
+  const conCF = (s) => Boolean((s.tax_code || "").trim());
+
+  function ultimaLista(kind) {
+    return liste.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
   }
 
-  async function scaricaDaAssicurare() {
+  function disegnaTipi() {
+    el("tipi").replaceChildren(...TIPI.map(riquadroTipo));
+  }
+
+  function riquadroTipo(t) {
+    const soci = daAssicurare.filter((s) => s.insurance === t.kind);
+    const pronti = soci.filter(conCF);
+    const ultima = ultimaLista(t.kind);
+    const proposto = ultima ? ultima.number + 1 : 1;
+    // Un file già scaricato resta buono anche se la pagina si ridisegna (un
+    // codice fiscale salvato in un altro riquadro): si ripropone il suo numero.
+    const file = scaricato[t.kind];
+
+    const box = document.createElement("div");
+    box.className = "riquadro";
+    box.innerHTML = `
+      <h2>${esc(t.nome)} <span class="vuota">· da assicurare ${pronti.length}${
+        soci.length > pronti.length ? `, senza codice fiscale ${soci.length - pronti.length}` : ""}</span></h2>
+      <p class="ultima">${ultima
+        ? `Ultima lista mandata: <b>n. ${ultima.number}</b> del ${esc(dataIt(ultima.starts_on))}, ${ultima.members} ${ultima.members === 1 ? "socio" : "soci"}.`
+        : "Nessuna lista mandata in questa stagione."}</p>
+      <div class="invio">
+        <div>
+          <label class="label" for="numero_${t.kind}">Numero della lista</label>
+          <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}" value="${file ? file.numero : proposto}">
+        </div>
+        <p class="decorrenza">Decorrenza: da oggi, <b>${esc(dataIt(oggiIso()))}</b></p>
+      </div>
+      <div class="azioni-lista">
+        <button type="button" class="button is-link" data-scarica ${pronti.length ? "" : "disabled"}>
+          Scarica l'Excel (${pronti.length} ${pronti.length === 1 ? "socio" : "soci"})</button>
+        <button type="button" class="button is-success" data-segna ${file ? "" : "disabled"}>Segna come inviata</button>
+      </div>
+      <p class="passo" data-passo ${file ? "" : "hidden"}>${file ? testoPasso(file) : ""}</p>
+      <div class="tabella-scorrevole">
+        <table class="tabella-assic">
+          <thead><tr><th>Socio</th><th>Data di nascita</th><th>Codice fiscale</th><th></th></tr></thead>
+          <tbody data-elenco></tbody>
+        </table>
+      </div>`;
+
+    const numero = box.querySelector(".numero");
+    const segna = box.querySelector("[data-segna]");
+    const passo = box.querySelector("[data-passo]");
+    // Numero cambiato dopo lo scarico: il file ha il numero vecchio, va riscaricato.
+    numero.addEventListener("input", () => {
+      delete scaricato[t.kind];
+      segna.disabled = true;
+      passo.hidden = true;
+    });
+    box.querySelector("[data-scarica]").addEventListener("click", () => scarica(t, numero, segna, passo));
+    segna.addEventListener("click", () => chiediInvio(t, box));
+
+    const corpo = box.querySelector("[data-elenco]");
+    if (!soci.length) {
+      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
+    } else {
+      corpo.replaceChildren(...soci.map((s) => riga(s)));
+    }
+    return box;
+  }
+
+  const testoPasso = (file) =>
+    `Scaricata la lista n. ${file.numero} (${file.soci.length} ${file.soci.length === 1 ? "socio" : "soci"}). `
+    + "Mandala all'assicurazione, poi premi «Segna come inviata».";
+
+  function numeroScelto(input) {
+    const n = Number(input.value);
+    return Number.isInteger(n) && n >= 1 ? n : null;
+  }
+
+  async function scarica(t, input, segna, passo) {
+    const numero = numeroScelto(input);
+    if (!numero) { showToast("Scrivi il numero della lista: 1 o più.", "is-danger"); input.focus(); return; }
+    if (liste.some((l) => l.kind === t.kind && l.number === numero)) {
+      showToast(`La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`, "is-danger");
+      input.focus();
+      return;
+    }
+    const soci = daAssicurare.filter((s) => s.insurance === t.kind && conCF(s));
     setLoading(true);
     try {
-      await scaricaExcel(daAssicurare, "da-assicurare");
+      await excelLista(t, numero, oggiIso(), soci);
+      scaricato[t.kind] = { numero, soci };
+      segna.disabled = false;
+      passo.textContent = testoPasso(scaricato[t.kind]);
+      passo.hidden = false;
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function chiediInvio(t, box) {
+    const file = scaricato[t.kind];
+    if (!file) return;
+    const quanti = file.soci.length;
+    chiedi(box.querySelector(".azioni-lista"),
+      `La lista ${t.nome} n. ${file.numero} è stata mandata? ${quanti === 1 ? "1 socio risulterà assicurato" : `${quanti} soci risulteranno assicurati`}, con decorrenza ${dataIt(oggiIso())}.`,
+      "Sì, è stata mandata", () => invia(t, file));
+  }
+
+  async function invia(t, file) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("insurance_send", {
+        kind: t.kind, list_number: file.numero, member_ids: file.soci.map((s) => s.id),
+      });
+      if (error) throw error;
+      delete scaricato[t.kind];
+      showToast(`Lista ${t.nome} n. ${file.numero} segnata: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
+      await carica();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -176,83 +311,147 @@
   }
 
   // -------------------------------------------------------------------------
-  // Righe
+  // Excel come i fogli dell'assicurazione (dati26/)
+  // -------------------------------------------------------------------------
+
+  /** "1980-01-31" → data di Excel (a mezzanotte, ora locale, come la legge SheetJS). */
+  function dataExcel(iso) {
+    if (!iso) return "";
+    const [a, m, g] = String(iso).slice(0, 10).split("-").map(Number);
+    return new Date(a, m - 1, g);
+  }
+
+  async function excelLista(t, numero, decorrenza, soci) {
+    await caricaXlsx();
+    const righe = [
+      ["Nr.", "Decorrenza", t.colonna, "Cognome", "Nome", "Data di nascita", "Codice Fiscale", "Sci Club", "Nr. lista"],
+      ...soci.map((s, i) => [i + 1, dataExcel(decorrenza), t.nome, s.last_name, s.first_name,
+        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", numero]),
+    ];
+    const foglio = XLSX.utils.aoa_to_sheet(righe, { dateNF: "dd/mm/yyyy" });
+    foglio["!cols"] = [6, 12, 14, 18, 16, 14, 20, 12, 9].map((wch) => ({ wch }));
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, foglio, "Foglio1");
+    XLSX.writeFile(libro, `${numero} Lista ${t.nome}.xlsx`);
+  }
+
+  // -------------------------------------------------------------------------
+  // Liste mandate
+  // -------------------------------------------------------------------------
+
+  function disegnaListe() {
+    const corpo = el("elencoListe");
+    if (!liste.length) {
+      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista mandata in questa stagione.</td></tr>';
+      return;
+    }
+    corpo.replaceChildren(...liste.map((l) => {
+      const tr = document.createElement("tr");
+      const ultima = ultimaLista(l.kind)?.id === l.id;
+      tr.innerHTML = `
+        <td class="chi"><strong>${esc(tipo(l.kind).nome)} n. ${l.number}</strong></td>
+        <td data-etichetta="Decorrenza">${esc(dataIt(l.starts_on))}</td>
+        <td data-etichetta="Soci">${l.members}</td>
+        <td><div class="azioni-lista">
+          <button type="button" class="button is-link is-light" data-riscarica>Riscarica</button>
+          ${ultima ? '<button type="button" class="button is-danger is-outlined" data-annulla>Annulla invio</button>' : ""}
+        </div></td>`;
+      tr.querySelector("[data-riscarica]").addEventListener("click", () => riscarica(l));
+      tr.querySelector("[data-annulla]")?.addEventListener("click", () => chiedi(tr.querySelector(".azioni-lista"),
+        `Annullare la lista ${tipo(l.kind).nome} n. ${l.number}? I suoi ${l.members} soci tornano da assicurare.`,
+        "Sì, annulla", () => annulla(l)));
+      return tr;
+    }));
+  }
+
+  async function riscarica(l) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("insurance_list_members", { list_id: l.id });
+      if (error) throw error;
+      await excelLista(tipo(l.kind), l.number, l.starts_on, data);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function annulla(l) {
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("insurance_undo", { list_id: l.id });
+      if (error) throw error;
+      showToast(`Lista ${tipo(l.kind).nome} n. ${l.number} annullata: i suoi soci sono di nuovo da assicurare.`);
+      await carica();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Righe con il codice fiscale da scrivere o correggere
   // -------------------------------------------------------------------------
 
   /**
-   * Una riga con i due campi scrivibili. Il codice fiscale si controlla
-   * subito (codicefiscale.js): chi prepara l'elenco vede cosa non torna prima
-   * di mandarlo, non quando l'assicurazione lo rimanda indietro.
+   * Il codice fiscale si controlla subito (codicefiscale.js): chi prepara la
+   * lista vede cosa non torna prima di mandarla, non quando l'assicurazione
+   * la rimanda indietro. `stato` (ricerca) dice se è già assicurato.
    */
-  function riga(s) {
+  function riga(s, stato) {
     const tr = document.createElement("tr");
     tr.dataset.id = s.id;
+    tr.classList.toggle("senza-cf", !stato && !conCF(s));
     tr.innerHTML = `
       <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
-        ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}</td>
+        ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
+        ${stato ? `<span class="stato">${esc(stato)}</span>` : ""}
+        ${!stato && !conCF(s) ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
       <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
         ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
       <td class="campo-cf" data-etichetta="Codice fiscale">
         <input class="input cf" maxlength="16" autocomplete="off" aria-label="Codice fiscale di ${esc(s.last_name)} ${esc(s.first_name)}">
         <div class="avviso-cf" role="status" hidden></div>
       </td>
-      <td class="campo-polizza" data-etichetta="Numero polizza">
-        <input class="input polizza" autocomplete="off" aria-label="Numero polizza di ${esc(s.last_name)} ${esc(s.first_name)}">
-      </td>
       <td><button type="button" class="button is-link salva-riga">Salva</button></td>`;
 
     const cf = tr.querySelector(".cf");
-    const polizza = tr.querySelector(".polizza");
     const avviso = tr.querySelector(".avviso-cf");
     cf.value = s.tax_code || "";
-    polizza.value = s.policy_number || "";
-
     const controlla = () => mostraAvvisoCF(avviso, cf,
       verificaCF(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date }));
     cf.addEventListener("change", controlla);
     controlla();
 
     tr.querySelector(".salva-riga").addEventListener("click", () => salva(s, tr));
-    // Invio in uno dei due campi salva la riga: chi ricopia una lista di
-    // polizze va avanti con la tastiera, senza cercare il pulsante col mouse.
-    [cf, polizza].forEach((campo) => campo.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); salva(s, tr); }
-    }));
+    // Invio nel campo salva la riga: chi ricopia una lista va avanti con la
+    // tastiera, senza cercare il pulsante col mouse.
+    cf.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salva(s, tr); } });
     return tr;
   }
-
-  // -------------------------------------------------------------------------
-  // Salvataggio
-  // -------------------------------------------------------------------------
 
   async function salva(s, tr) {
     const bottone = tr.querySelector(".salva-riga");
     const codice = tr.querySelector(".cf").value;
-    const numero = tr.querySelector(".polizza").value;
     bottone.disabled = true;
     setLoading(true);
     try {
-      const { error } = await sb.rpc("set_insurance", { member_id: s.id, tax_code: codice, policy_number: numero });
+      const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codice });
       if (error) throw error;
-
-      // Come l'ha scritto il database (maiuscolo, senza spazi).
-      s.tax_code = normalizzaCF(codice) || null;
-      s.policy_number = numero.trim() || null;
-      tr.querySelector(".cf").value = s.tax_code || "";
-      tr.querySelector(".polizza").value = s.policy_number || "";
-
-      const eraDaAssicurare = daAssicurare.some((d) => d.id === s.id);
-      if (s.policy_number && eraDaAssicurare) {
-        daAssicurare = daAssicurare.filter((d) => d.id !== s.id);
-        disegnaDaAssicurare();
-      } else if (!s.policy_number && !eraDaAssicurare) {
-        // Polizza cancellata dalla ricerca: il socio torna da assicurare, e
-        // l'elenco si rilegge per avere anche i campi che la ricerca non dà.
-        await caricaDaAssicurare();
+      showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
+      // fuori dalla prossima lista, quindi si ridisegnano i riquadri.
+      const daElenco = daAssicurare.find((d) => d.id === s.id);
+      if (daElenco) {
+        daElenco.tax_code = normalizzaCF(codice) || null;
+        disegnaTipi();
       } else {
+        s.tax_code = normalizzaCF(codice) || null;
+        tr.querySelector(".cf").value = s.tax_code || "";
         tr.classList.add("salvata");
       }
-      showToast(`${s.last_name} ${s.first_name}: salvato.`);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -281,10 +480,12 @@
         corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione trovato.</td></tr>';
         return;
       }
-      corpo.replaceChildren(...data.map(riga));
+      corpo.replaceChildren(...data.map((s) => riga(s, s.list_number
+        ? `Assicurato: ${tipo(s.insurance).nome} n. ${s.list_number}`
+        : "Non ancora assicurato")));
       if (data.length === 20) {
         const altri = document.createElement("tr");
-        altri.innerHTML = '<td colspan="5" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';
+        altri.innerHTML = '<td colspan="4" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';
         corpo.append(altri);
       }
     } catch (error) {

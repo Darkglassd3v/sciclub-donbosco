@@ -90,6 +90,9 @@ on conflict (category, name) do update set min_role = excluded.min_role;
 -- Il trigger legge le gite da "N viaggi" scritto minuscolo, come nel listino
 -- vero: la voce di prova in maiuscolo va completata a mano.
 update public.prices set trips = 10, day = 'SABATO' where name = 'PROVA 10 VIAGGI SABATO';
+-- Le tessere di prova non hanno il tipo di assicurazione nel nome: si scrive a mano.
+update public.prices set insurance = 'BASE'  where name = 'PROVA TESSERA ORDINARIA';
+update public.prices set insurance = 'SPORT' where name = 'PROVA TESSERA DIRETTIVO';
 insert into public.departures (day, place) values ('SABATO', 'PROVA ASTI');
 
 -- Un account nuovo nasce senza riga profiles, cioè senza accesso: le righe
@@ -123,8 +126,8 @@ values ('99999999-9999-9999-9999-999999999999', 'ROSSI', 'MARIO', now());
 -- matrice qui sotto abbia almeno una riga da leggere. La chiusura della
 -- stagione più avanti lo toglie dalla stagione come tutti.
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
-insert into public.members (id, last_name, first_name, enrolled_at, card_type)
-values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA');
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code)
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA', 'PRVMTR80A01F205X');
 insert into public.member_passes (member_id, pass_type)
 values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA 10 VIAGGI SABATO');
 insert into public.trip_uses (member_id, pass_id)
@@ -212,7 +215,8 @@ begin
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
     ('scrivi', 'update public.members set policy_number = ''POL-M'' where id = ' || m, 'Sxxxxxx'),
-    ('scrivi', 'select public.set_insurance(' || m || ', ''X'', ''POL-M'')',       'SxxSxxx'),
+    ('scrivi', 'select public.set_tax_code(' || m || ', ''X'')',                   'SxxSxxx'),
+    ('scrivi', 'select public.insurance_send(''BASE'', 99, array[' || m || ']::uuid[])', 'SxxSxxx'),
     ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
     ('scrivi', 'select public.add_pass(' || m || ', ''PROVA 10 VIAGGI SABATO'', false, gen_random_uuid())', 'SSxxSxx'),
     ('scrivi', 'select * from public.use_trip(' || m || ', gen_random_uuid(), null)', 'SSxxSxx'),
@@ -682,7 +686,11 @@ end $$;
 
 -- Assicurazione: vede e scrive solo quello che le serve.
 do $$
-declare quante int;
+declare
+  quante int;
+  anna  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
+  luca  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000002';
+  prima uuid;
 begin
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert public.can('polizze'), 'assicurazione non riconosciuta';
@@ -693,11 +701,61 @@ begin
   assert (select count(*) from public.trip_uses) = 0, 'assicurazione legge le gite';
 
   assert (select count(*) from public.insurance_members()) = 2, 'da assicurare: attesi i due tesserati';
-  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', ' bnc nna 80a41 f205x ', 'POL-1');
-  assert (select count(*) from public.insurance_members()) = 1, 'con la polizza il socio resta da assicurare';
+  assert (select insurance from public.insurance_members() where id = anna) = 'BASE', 'tipo di assicurazione sbagliato';
+  perform public.set_tax_code(anna, ' bnc nna 80a41 f205x ');
+
+  -- Luca non ha il codice fiscale: non si assicura, e una lista vuota non si manda.
+  begin
+    perform public.insurance_send('BASE', 1, array[luca]);
+    raise exception 'ASSERZIONE: mandata una lista senza codici fiscali';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%Nessun socio%', 'errore inatteso: ' || sqlerrm;
+  end;
+  assert (select count(*) from public.insurance_sent_lists()) = 0, 'la lista vuota è rimasta';
+
+  assert public.insurance_send('BASE', 1, array[anna, luca]) = 1, 'nella lista doveva entrare solo Anna';
+  assert (select count(*) from public.insurance_members()) = 1, 'Anna è ancora da assicurare';
+
+  -- Lo stesso numero due volte no.
+  perform public.set_tax_code(luca, 'VRDLCU90A01F205Z');
+  begin
+    perform public.insurance_send('BASE', 1, array[luca]);
+    raise exception 'ASSERZIONE: due liste Base con lo stesso numero';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%già stata mandata%', 'errore inatteso: ' || sqlerrm;
+  end;
+  -- La tessera di Luca dà la Base: in una lista Sport non entra.
+  begin
+    perform public.insurance_send('SPORT', 1, array[luca]);
+    raise exception 'ASSERZIONE: tessera Base in una lista Sport';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  -- Il numero si sceglie: la 3 dopo la 1.
+  assert public.insurance_send('BASE', 3, array[luca]) = 1, 'Luca non è entrato nella lista 3';
+  assert (select count(*) from public.insurance_members()) = 0, 'restano soci da assicurare';
+  assert (select string_agg(number || ':' || members, ',' order by number) from public.insurance_sent_lists()) = '1:1,3:1',
+         'liste mandate sbagliate';
+  select id into prima from public.insurance_sent_lists() where number = 1;
+  assert (select last_name from public.insurance_list_members(prima)) = 'BIANCHI', 'la lista 1 non si riscarica';
+
+  -- Si annulla solo l'ultima lista del tipo: la 1 no, la 3 sì, e Luca torna da assicurare.
+  begin
+    perform public.insurance_undo(prima);
+    raise exception 'ASSERZIONE: annullata una lista che non è l''ultima';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%ultima%', 'errore inatteso: ' || sqlerrm;
+  end;
+  perform public.insurance_undo((select id from public.insurance_sent_lists() where number = 3));
+  assert (select count(*) from public.insurance_members()) = 1, 'annullando la lista Luca non è tornato da assicurare';
+  assert public.insurance_send('BASE', 2, array[luca]) = 1, 'la lista 2 non si manda';
+
   -- Il socio assicurato si ritrova con la ricerca, che però non dà l'elenco intero.
   assert (select count(*) from public.insurance_search('bianchi')) = 1, 'la ricerca non trova un assicurato';
-  assert (select count(*) from public.insurance_search('POL-1')) = 1, 'la ricerca per polizza non trova niente';
+  assert (select list_number from public.insurance_search('bianchi')) = 1, 'la ricerca non dice la lista';
   assert (select count(*) from public.insurance_search('anna bianchi')) = 1, 'la ricerca a due parole non trova niente';
   assert (select count(*) from public.insurance_search('')) = 0, 'la ricerca vuota restituisce soci';
   assert (select count(*) from public.insurance_search('%')) = 0, 'la ricerca usa i jolly del like';
@@ -709,30 +767,23 @@ begin
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
 
-  -- Correzione di una polizza sbagliata: il socio già assicurato si ritrova
-  -- fra tutti i tesserati e si riscrive.
-  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000001', 'BNCNNA80A41F205X', 'POL-2');
-  assert (select policy_number from public.insurance_search('bianchi')) = 'POL-2', 'polizza non corretta';
-
-  -- Solo codice fiscale: resta da assicurare.
-  perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'VRDLCU90A01F205Z', '  ');
-  assert (select count(*) from public.insurance_members()) = 1, 'una polizza vuota ha tolto il socio dall''elenco';
-
-  -- La RLS lo tiene fuori da members: niente quote cambiate a mano.
+  -- La RLS lo tiene fuori da members e da insurance_lists: niente quote
+  -- cambiate a mano, e le liste solo dalle funzioni.
   with x as (update public.members set total = 0 returning 1) select count(*) into quante from x;
   assert quante = 0, 'assicurazione ha cambiato le quote';
+  assert (select count(*) from public.insurance_lists) = 0, 'assicurazione legge le liste senza le funzioni';
 
   -- Chi non è iscritto alla stagione non si tocca.
   begin
-    perform public.set_insurance('99999999-9999-9999-9999-999999999999', 'X', 'POL-FUORI');
-    raise exception 'ASSERZIONE: polizza scritta a un socio non iscritto';
+    perform public.set_tax_code('99999999-9999-9999-9999-999999999999', 'X');
+    raise exception 'ASSERZIONE: codice fiscale scritto a un socio non iscritto';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
 
   -- E non toglie nessuno dalla stagione.
   begin
-    perform public.remove_from_season('aaaaaaaa-0000-0000-0000-000000000001');
+    perform public.remove_from_season(anna);
     raise exception 'ASSERZIONE: assicurazione ha tolto un socio dalla stagione';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
@@ -743,25 +794,24 @@ do $$ begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert (select tax_code from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'BNCNNA80A41F205X',
          'il codice fiscale non è stato scritto ripulito';
-  assert (select policy_number from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 'POL-2',
-         'la polizza non è stata scritta';
+  assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is not null,
+         'Anna non risulta assicurata';
   assert (select total from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') = 35,
-         'set_insurance ha toccato altro';
-  -- Dalla 2.5 le polizze sono solo dell'assicurazione: l'admin legge i soci
-  -- ma non l'elenco da assicurare, e non scrive polizze.
+         'le funzioni dell''assicurazione hanno toccato altro';
+  -- L'assicurazione è solo dell'assicurazione: l'admin legge i soci ma non
+  -- l'elenco da assicurare, e non manda liste.
   assert (select count(*) from public.insurance_members()) = 0, 'un admin vede l''elenco da assicurare';
   begin
-    perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ADMIN');
-    raise exception 'ASSERZIONE: un admin ha scritto una polizza';
+    perform public.set_tax_code('aaaaaaaa-0000-0000-0000-000000000002', 'X');
+    raise exception 'ASSERZIONE: un admin ha scritto dall''assicurazione';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
   end;
   begin
-    update public.members set policy_number = 'POL-ADMIN' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
-    raise exception 'ASSERZIONE: un admin ha scritto una polizza dal form Soci';
+    perform public.insurance_send('BASE', 9, array['aaaaaaaa-0000-0000-0000-000000000002'::uuid]);
+    raise exception 'ASSERZIONE: un admin ha mandato una lista';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
-    assert sqlerrm like '%solo l''assicurazione%', 'errore inatteso: ' || sqlerrm;
   end;
 end $$;
 
@@ -774,9 +824,16 @@ begin
     perform set_config('test.uid', chi, false);
     assert (select count(*) from public.insurance_members()) = 0, 'senza permesso polizze vede i tesserati';
     assert (select count(*) from public.insurance_search('bianchi')) = 0, 'senza permesso polizze cerca i tesserati';
+    assert (select count(*) from public.insurance_sent_lists()) = 0, 'senza permesso polizze vede le liste';
     begin
-      perform public.set_insurance('aaaaaaaa-0000-0000-0000-000000000002', 'X', 'POL-ABUSIVA');
-      raise exception 'ASSERZIONE: senza permesso polizze ha scritto una polizza';
+      perform public.set_tax_code('aaaaaaaa-0000-0000-0000-000000000002', 'X');
+      raise exception 'ASSERZIONE: senza permesso polizze ha scritto un codice fiscale';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
+    begin
+      perform public.insurance_undo((select id from public.insurance_lists limit 1));
+      raise exception 'ASSERZIONE: senza permesso polizze ha annullato una lista';
     exception when others then
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
@@ -979,6 +1036,8 @@ begin
          'chiusura: riassunto abbonamento non azzerato';
   assert (select course_day from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: giorno del corso non azzerato';
+  assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
+         'chiusura: assicurazione non azzerata';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
   assert (select count(*) from public.member_passes) > 0, 'chiusura: gli abbonamenti venduti sono stati cancellati';
 end $$;
