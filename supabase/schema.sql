@@ -926,12 +926,17 @@ $$;
 
 comment on function public.insurance_sent_lists is 'Liste mandate all''assicurazione nella stagione aperta, con il numero di soci.';
 
--- "Segna come inviata": crea la lista con il numero scelto e ci mette i soci
+-- "Segna come inviata": crea la lista con il numero e la decorrenza scelti
+-- (la pagina propone l'ultimo numero più uno e oggi) e ci mette i soci
 -- dell'Excel appena scaricato (member_ids), non tutti quelli da assicurare
 -- adesso: chi si è iscritto nel frattempo non era nel file e resta per la
 -- prossima. Solo chi è ancora da assicurare, ha quel tipo di tessera e ha il
 -- codice fiscale. Restituisce quanti soci sono entrati.
-create or replace function public.insurance_send(kind text, list_number int, member_ids uuid[])
+-- Fino al 30/09 la decorrenza era sempre oggi, senza parametro: con due
+-- versioni in piedi la chiamata sarebbe ambigua.
+drop function if exists public.insurance_send(text, int, uuid[]);
+create or replace function public.insurance_send(kind text, list_number int, member_ids uuid[],
+                                                 starts_on date default current_date)
 returns int
 language plpgsql
 security definer
@@ -950,6 +955,9 @@ begin
   if insurance_send.list_number is null or insurance_send.list_number < 1 then
     raise exception 'Il numero della lista deve essere 1 o più.';
   end if;
+  if insurance_send.starts_on is null then
+    raise exception 'Scrivi la data di decorrenza della lista.';
+  end if;
   if exists (select 1 from public.insurance_lists l
               where l.season = public.current_season()
                 and l.kind = insurance_send.kind
@@ -957,8 +965,8 @@ begin
     raise exception 'La lista numero % di questo tipo è già stata mandata: scegli un altro numero.', insurance_send.list_number;
   end if;
 
-  insert into public.insurance_lists (kind, number)
-  values (insurance_send.kind, insurance_send.list_number)
+  insert into public.insurance_lists (kind, number, starts_on)
+  values (insurance_send.kind, insurance_send.list_number, insurance_send.starts_on)
   returning id into lista;
 
   update public.members m set insurance_list_id = lista
@@ -980,7 +988,7 @@ begin
 end;
 $$;
 
-comment on function public.insurance_send is 'Segna come inviata una lista: numero scelto, decorrenza oggi, soci del file scaricato.';
+comment on function public.insurance_send is 'Segna come inviata una lista: numero e decorrenza scelti, soci del file scaricato.';
 
 -- Annulla l'invio di una lista (file mai partito, numero sbagliato): i suoi
 -- soci tornano da assicurare. Solo l'ultima di ogni tipo, perché la
@@ -1036,7 +1044,7 @@ declare f text;
 begin
   foreach f in array array[
     'public.insurance_members()', 'public.insurance_search(text)', 'public.set_tax_code(uuid, text)',
-    'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[])',
+    'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[], date)',
     'public.insurance_undo(uuid)', 'public.insurance_list_members(uuid)'] loop
     execute format('revoke all on function %s from public', f);
     if exists (select 1 from pg_roles where rolname = 'anon') then

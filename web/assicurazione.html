@@ -14,15 +14,33 @@
     .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 4px; }
     .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
-    /* Numero della lista e decorrenza, poi i due pulsanti: nell'ordine in cui
-     * si fanno le cose. */
-    .invio { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 14px; }
-    .invio .numero { width: 8rem; font-size: 1.3rem; font-weight: 700; }
-    .invio .decorrenza { font-size: 1.1rem; padding-bottom: 10px; }
-    .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    /* Riepilogo in alto: una scheda per tipo, con quanti sono da assicurare e
+     * quello che serve per mandare la lista, nell'ordine in cui si fa. */
+    .riepilogo-tipi { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .scheda-tipo { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px;
+                   border-top: 8px solid var(--colore-tipo); display: flex; flex-direction: column; gap: 10px; }
+    .scheda-tipo h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; }
+    .scheda-tipo .conta { font-size: 1.1rem; }
+    .scheda-tipo .conta b { font-size: 1.6rem; }
+    .scheda-tipo .senza { color: var(--errore); font-weight: 600; }
+    .scheda-tipo .ultima { color: var(--testo-soft); }
+    .scheda-tipo .campi { display: flex; flex-wrap: wrap; gap: 10px 14px; }
+    .scheda-tipo .campi > div { flex: 1 1 8rem; }
+    .scheda-tipo .numero { font-size: 1.2rem; font-weight: 700; }
+    .scheda-tipo .button { white-space: normal; height: auto; min-height: var(--tocco); width: 100%; }
+    .passo { font-weight: 600; color: var(--ok); }
+    [data-kind="BASE"]  { --colore-tipo: var(--blu); }
+    [data-kind="PLUS"]  { --colore-tipo: var(--giallo); }
+    [data-kind="SPORT"] { --colore-tipo: var(--ok); }
+
+    /* Il tipo nella lista: il nome scritto, con il colore della sua scheda. */
+    .tipo { display: inline-block; padding: 3px 12px; border-radius: var(--pillola); font-weight: 600; white-space: nowrap; }
+    .tipo[data-kind="BASE"]  { background: var(--blu-light);    color: var(--blu-dark); }
+    .tipo[data-kind="PLUS"]  { background: var(--giallo-light); color: var(--giallo-dark); }
+    .tipo[data-kind="SPORT"] { background: var(--ok-bg);        color: var(--ok); }
+
+    .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; }
     .azioni-lista .button { white-space: normal; height: auto; min-height: var(--tocco); }
-    .ultima { font-size: 1.05rem; margin-bottom: 14px; }
-    .passo { font-weight: 600; color: var(--ok); margin-bottom: 14px; }
 
     /* Una riga per socio: chi è a sinistra, il codice fiscale a destra.
      * Sotto i 900px le celle vanno una sotto l'altra, così il campo resta
@@ -34,11 +52,11 @@
     .tabella-assic .chi strong { display: block; font-size: 1.1rem; }
     .tabella-assic .chi { min-width: 10rem; }
     .tabella-assic .input { min-width: 0; }
-    .tabella-assic td.campo-cf { width: 45%; }
+    .tabella-assic td.campo-cf { width: 38%; }
     .tabella-assic .cf { letter-spacing: .04em; text-transform: uppercase; }
     .tabella-assic .vuota, .riquadro h2 .vuota { color: var(--testo-soft); font-weight: 400; }
     .tabella-assic tr.salvata td { background: var(--ok-bg); }
-    .tabella-assic .azioni-lista { margin-bottom: 0; }
+    .tabella-assic tr.gruppo td { background: var(--riga-alt); font-weight: 700; font-size: 1.1rem; }
     /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
     .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
     .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
@@ -48,6 +66,7 @@
       .tabella-assic tr, .tabella-assic td { display: block; width: 100% !important; }
       .tabella-assic td { border-top: 0; padding: 6px 0; }
       .tabella-assic tr { border-top: 1px solid var(--filo); padding: 10px 0; }
+      .tabella-assic tr.gruppo td { padding: 10px 8px; }
       .tabella-assic td[data-etichetta]::before { content: attr(data-etichetta); display: block; font-weight: 600; color: var(--testo-soft); }
     }
   </style>
@@ -82,11 +101,24 @@
   <p class="mb-5">
     Una lista per ogni tipo di assicurazione. Scarica l'Excel e mandalo all'assicurazione;
     poi premi <b>Segna come inviata</b>: solo allora quei soci risultano assicurati e non
-    tornano nella lista della volta dopo. Senza codice fiscale un socio non si può assicurare:
-    resta in rosso finché non lo scrivi.
+    tornano nella lista della volta dopo. Numero e decorrenza sono proposti, e si possono cambiare.
   </p>
 
-  <div id="tipi"></div>
+  <div id="tipi" class="riepilogo-tipi"></div>
+
+  <div class="riquadro">
+    <h2>Da assicurare <span class="vuota" id="quanti"></span></h2>
+    <p class="occhiello">
+      Tutti i tesserati ancora da assicurare, per tipo di assicurazione e in ordine alfabetico.
+      Senza codice fiscale un socio non si può assicurare: la riga è rossa finché non lo scrivi e premi Salva.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <thead><tr><th>Socio</th><th>Assicurazione</th><th>Data di nascita</th><th>Codice fiscale</th><th></th></tr></thead>
+        <tbody id="elencoDa"><tr><td colspan="5" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
 
   <div class="riquadro">
     <h2>Liste mandate in questa stagione</h2>
@@ -145,8 +177,9 @@
   let daAssicurare = [];   // tesserati ancora da assicurare, di tutti e tre i tipi
   let liste = [];          // liste mandate in questa stagione
 
-  // L'ultimo Excel scaricato per tipo: { numero, soci }. "Segna come inviata"
-  // segna esattamente quei soci con quel numero, cioè quello che è partito.
+  // L'ultimo Excel scaricato per tipo: { numero, decorrenza, soci }. "Segna
+  // come inviata" segna esattamente quei soci, con quel numero e quella
+  // decorrenza: quello che è partito.
   const scaricato = {};
 
   const oggiIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
@@ -170,8 +203,7 @@
       ]);
       daAssicurare = soci;
       liste = inviate;
-      disegnaTipi();
-      disegnaListe();
+      disegna();
     } catch (error) {
       el("tipi").innerHTML = '<div class="riquadro">Elenco non disponibile.</div>';
       showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
@@ -180,90 +212,92 @@
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Un riquadro per tipo
-  // -------------------------------------------------------------------------
+  function disegna() {
+    el("tipi").replaceChildren(...TIPI.map(schedaTipo));
+    disegnaDaAssicurare();
+    disegnaListe();
+  }
 
   const conCF = (s) => Boolean((s.tax_code || "").trim());
+  const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
 
   function ultimaLista(kind) {
     return liste.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
   }
 
-  function disegnaTipi() {
-    el("tipi").replaceChildren(...TIPI.map(riquadroTipo));
-  }
+  // -------------------------------------------------------------------------
+  // Riepilogo in alto: una scheda per tipo
+  // -------------------------------------------------------------------------
 
-  function riquadroTipo(t) {
+  function schedaTipo(t) {
     const soci = daAssicurare.filter((s) => s.insurance === t.kind);
     const pronti = soci.filter(conCF);
     const ultima = ultimaLista(t.kind);
-    const proposto = ultima ? ultima.number + 1 : 1;
     // Un file già scaricato resta buono anche se la pagina si ridisegna (un
-    // codice fiscale salvato in un altro riquadro): si ripropone il suo numero.
+    // codice fiscale salvato nella lista): si ripropongono i suoi valori.
     const file = scaricato[t.kind];
+    const numero = file ? file.numero : (ultima ? ultima.number + 1 : 1);
+    const decorrenza = file ? file.decorrenza : oggiIso();
 
     const box = document.createElement("div");
-    box.className = "riquadro";
+    box.className = "scheda-tipo";
+    box.dataset.kind = t.kind;
     box.innerHTML = `
-      <h2>${esc(t.nome)} <span class="vuota">· da assicurare ${pronti.length}${
-        soci.length > pronti.length ? `, senza codice fiscale ${soci.length - pronti.length}` : ""}</span></h2>
+      <h2>${esc(t.nome)}</h2>
+      <p class="conta"><b>${pronti.length}</b> da assicurare${
+        soci.length > pronti.length ? ` · <span class="senza">${soci.length - pronti.length} senza codice fiscale</span>` : ""}</p>
       <p class="ultima">${ultima
-        ? `Ultima lista mandata: <b>n. ${ultima.number}</b> del ${esc(dataIt(ultima.starts_on))}, ${ultima.members} ${ultima.members === 1 ? "socio" : "soci"}.`
+        ? `Ultima lista: <b>n. ${ultima.number}</b>, decorrenza ${esc(dataIt(ultima.starts_on))}, ${quanti(ultima.members, "socio", "soci")}.`
         : "Nessuna lista mandata in questa stagione."}</p>
-      <div class="invio">
+      <div class="campi">
         <div>
           <label class="label" for="numero_${t.kind}">Numero della lista</label>
-          <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}" value="${file ? file.numero : proposto}">
+          <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}" value="${numero}">
         </div>
-        <p class="decorrenza">Decorrenza: da oggi, <b>${esc(dataIt(oggiIso()))}</b></p>
+        <div>
+          <label class="label" for="decorrenza_${t.kind}">Decorrenza</label>
+          <input class="input decorrenza" type="date" id="decorrenza_${t.kind}" value="${decorrenza}">
+        </div>
       </div>
+      <button type="button" class="button is-link" data-scarica ${pronti.length ? "" : "disabled"}>
+        Scarica l'Excel (${quanti(pronti.length, "socio", "soci")})</button>
       <div class="azioni-lista">
-        <button type="button" class="button is-link" data-scarica ${pronti.length ? "" : "disabled"}>
-          Scarica l'Excel (${pronti.length} ${pronti.length === 1 ? "socio" : "soci"})</button>
         <button type="button" class="button is-success" data-segna ${file ? "" : "disabled"}>Segna come inviata</button>
       </div>
-      <p class="passo" data-passo ${file ? "" : "hidden"}>${file ? testoPasso(file) : ""}</p>
-      <div class="tabella-scorrevole">
-        <table class="tabella-assic">
-          <thead><tr><th>Socio</th><th>Data di nascita</th><th>Codice fiscale</th><th></th></tr></thead>
-          <tbody data-elenco></tbody>
-        </table>
-      </div>`;
+      <p class="passo" data-passo ${file ? "" : "hidden"}>${file ? testoPasso(file) : ""}</p>`;
 
-    const numero = box.querySelector(".numero");
     const segna = box.querySelector("[data-segna]");
     const passo = box.querySelector("[data-passo]");
-    // Numero cambiato dopo lo scarico: il file ha il numero vecchio, va riscaricato.
-    numero.addEventListener("input", () => {
+    // Numero o decorrenza cambiati dopo lo scarico: il file ha quelli vecchi,
+    // va riscaricato prima di segnarlo.
+    box.querySelectorAll(".numero, .decorrenza").forEach((campo) => campo.addEventListener("input", () => {
       delete scaricato[t.kind];
       segna.disabled = true;
       passo.hidden = true;
-    });
-    box.querySelector("[data-scarica]").addEventListener("click", () => scarica(t, numero, segna, passo));
+    }));
+    box.querySelector("[data-scarica]").addEventListener("click", () => scarica(t, box));
     segna.addEventListener("click", () => chiediInvio(t, box));
-
-    const corpo = box.querySelector("[data-elenco]");
-    if (!soci.length) {
-      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
-    } else {
-      corpo.replaceChildren(...soci.map((s) => riga(s)));
-    }
     return box;
   }
 
   const testoPasso = (file) =>
-    `Scaricata la lista n. ${file.numero} (${file.soci.length} ${file.soci.length === 1 ? "socio" : "soci"}). `
+    `Scaricata la lista n. ${file.numero} (${quanti(file.soci.length, "socio", "soci")}, decorrenza ${dataIt(file.decorrenza)}). `
     + "Mandala all'assicurazione, poi premi «Segna come inviata».";
 
-  function numeroScelto(input) {
-    const n = Number(input.value);
-    return Number.isInteger(n) && n >= 1 ? n : null;
-  }
-
-  async function scarica(t, input, segna, passo) {
-    const numero = numeroScelto(input);
-    if (!numero) { showToast("Scrivi il numero della lista: 1 o più.", "is-danger"); input.focus(); return; }
+  async function scarica(t, box) {
+    const input = box.querySelector(".numero");
+    const numero = Number(input.value);
+    const decorrenza = box.querySelector(".decorrenza").value;
+    if (!Number.isInteger(numero) || numero < 1) {
+      showToast("Scrivi il numero della lista: 1 o più.", "is-danger");
+      input.focus();
+      return;
+    }
+    if (!decorrenza) {
+      showToast("Scrivi la data di decorrenza.", "is-danger");
+      box.querySelector(".decorrenza").focus();
+      return;
+    }
     if (liste.some((l) => l.kind === t.kind && l.number === numero)) {
       showToast(`La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`, "is-danger");
       input.focus();
@@ -272,9 +306,10 @@
     const soci = daAssicurare.filter((s) => s.insurance === t.kind && conCF(s));
     setLoading(true);
     try {
-      await excelLista(t, numero, oggiIso(), soci);
-      scaricato[t.kind] = { numero, soci };
-      segna.disabled = false;
+      await excelLista(t, numero, decorrenza, soci);
+      scaricato[t.kind] = { numero, decorrenza, soci };
+      box.querySelector("[data-segna]").disabled = false;
+      const passo = box.querySelector("[data-passo]");
       passo.textContent = testoPasso(scaricato[t.kind]);
       passo.hidden = false;
     } catch (error) {
@@ -287,9 +322,9 @@
   function chiediInvio(t, box) {
     const file = scaricato[t.kind];
     if (!file) return;
-    const quanti = file.soci.length;
+    const n = file.soci.length;
     chiedi(box.querySelector(".azioni-lista"),
-      `La lista ${t.nome} n. ${file.numero} è stata mandata? ${quanti === 1 ? "1 socio risulterà assicurato" : `${quanti} soci risulteranno assicurati`}, con decorrenza ${dataIt(oggiIso())}.`,
+      `La lista ${t.nome} n. ${file.numero} è stata mandata? ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`}, con decorrenza ${dataIt(file.decorrenza)}.`,
       "Sì, è stata mandata", () => invia(t, file));
   }
 
@@ -297,7 +332,7 @@
     setLoading(true);
     try {
       const { data, error } = await sb.rpc("insurance_send", {
-        kind: t.kind, list_number: file.numero, member_ids: file.soci.map((s) => s.id),
+        kind: t.kind, list_number: file.numero, member_ids: file.soci.map((s) => s.id), starts_on: file.decorrenza,
       });
       if (error) throw error;
       delete scaricato[t.kind];
@@ -333,6 +368,28 @@
     const libro = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(libro, foglio, "Foglio1");
     XLSX.writeFile(libro, `${numero} Lista ${t.nome}.xlsx`);
+  }
+
+  // -------------------------------------------------------------------------
+  // Lista unica dei da assicurare, per tipo e in ordine alfabetico
+  // -------------------------------------------------------------------------
+
+  function disegnaDaAssicurare() {
+    el("quanti").textContent = `(${daAssicurare.length})`;
+    const corpo = el("elencoDa");
+    if (!daAssicurare.length) {
+      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
+      return;
+    }
+    const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
+    corpo.replaceChildren(...TIPI.flatMap((t) => {
+      const soci = daAssicurare.filter((s) => s.insurance === t.kind).sort(perNome);
+      if (!soci.length) return [];
+      const titolo = document.createElement("tr");
+      titolo.className = "gruppo";
+      titolo.innerHTML = `<td colspan="5">${esc(t.nome)} · ${quanti(soci.length, "socio", "soci")}</td>`;
+      return [titolo, ...soci.map((s) => riga(s, { conTipo: true }))];
+    }));
   }
 
   // -------------------------------------------------------------------------
@@ -398,17 +455,20 @@
   /**
    * Il codice fiscale si controlla subito (codicefiscale.js): chi prepara la
    * lista vede cosa non torna prima di mandarla, non quando l'assicurazione
-   * la rimanda indietro. `stato` (ricerca) dice se è già assicurato.
+   * la rimanda indietro. Nella lista dei da assicurare c'è la colonna del
+   * tipo (conTipo); nella ricerca, `stato` dice se è già assicurato.
    */
-  function riga(s, stato) {
+  function riga(s, { conTipo = false, stato = "" } = {}) {
     const tr = document.createElement("tr");
     tr.dataset.id = s.id;
-    tr.classList.toggle("senza-cf", !stato && !conCF(s));
+    const daAssicurareSenzaCF = conTipo && !conCF(s);
+    tr.classList.toggle("senza-cf", daAssicurareSenzaCF);
     tr.innerHTML = `
       <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
         ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
         ${stato ? `<span class="stato">${esc(stato)}</span>` : ""}
-        ${!stato && !conCF(s) ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
+        ${daAssicurareSenzaCF ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
+      ${conTipo ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(tipo(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
       <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
         ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
       <td class="campo-cf" data-etichetta="Codice fiscale">
@@ -442,11 +502,12 @@
       if (error) throw error;
       showToast(`${s.last_name} ${s.first_name}: salvato.`);
       // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
-      // fuori dalla prossima lista, quindi si ridisegnano i riquadri.
+      // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
       const daElenco = daAssicurare.find((d) => d.id === s.id);
       if (daElenco) {
         daElenco.tax_code = normalizzaCF(codice) || null;
-        disegnaTipi();
+        el("tipi").replaceChildren(...TIPI.map(schedaTipo));
+        disegnaDaAssicurare();
       } else {
         s.tax_code = normalizzaCF(codice) || null;
         tr.querySelector(".cf").value = s.tax_code || "";
@@ -480,9 +541,9 @@
         corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione trovato.</td></tr>';
         return;
       }
-      corpo.replaceChildren(...data.map((s) => riga(s, s.list_number
+      corpo.replaceChildren(...data.map((s) => riga(s, { stato: s.list_number
         ? `Assicurato: ${tipo(s.insurance).nome} n. ${s.list_number}`
-        : "Non ancora assicurato")));
+        : "Non ancora assicurato" })));
       if (data.length === 20) {
         const altri = document.createElement("tr");
         altri.innerHTML = '<td colspan="4" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';

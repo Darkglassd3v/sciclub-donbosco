@@ -748,7 +748,12 @@ begin
   end;
   perform public.insurance_undo((select id from public.insurance_sent_lists() where number = 3));
   assert (select count(*) from public.insurance_members()) = 1, 'annullando la lista Luca non è tornato da assicurare';
-  assert public.insurance_send('BASE', 2, array[luca]) = 1, 'la lista 2 non si manda';
+  -- La decorrenza si sceglie; senza, è oggi.
+  assert public.insurance_send('BASE', 2, array[luca], date '2026-11-02') = 1, 'la lista 2 non si manda';
+  assert (select starts_on from public.insurance_sent_lists() where number = 2) = date '2026-11-02',
+         'decorrenza scelta non salvata';
+  assert (select starts_on from public.insurance_sent_lists() where number = 1) = current_date,
+         'senza decorrenza la lista non parte da oggi';
 
   -- Il socio assicurato si ritrova con la ricerca, che però non dà l'elenco intero.
   assert (select count(*) from public.insurance_search('bianchi')) = 1, 'la ricerca non trova un assicurato';

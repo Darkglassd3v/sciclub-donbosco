@@ -110,7 +110,8 @@
        scontata → BASE, NO ASSICURAZIONE → nessuna); tabella `insurance_lists` (numero unico per
        tipo e stagione) e `members.insurance_list_id`; funzioni `insurance_members`, `insurance_send`,
        `insurance_undo` (solo l'ultima del tipo), `insurance_sent_lists`, `insurance_list_members`,
-       `set_tax_code` (al posto di `set_insurance`). Pagina: tre riquadri, numero proposto modificabile,
+       `set_tax_code` (al posto di `set_insurance`). Pagina: riepilogo in alto con una scheda per tipo (numero e decorrenza proposti e modificabili),
+       lista unica dei da assicurare per tipo e in ordine alfabetico con la colonna Assicurazione,
        Excel come dati26 ("8 Lista Neve Base.xlsx"), "Segna come inviata" solo dopo lo scarico e solo
        per i soci del file, senza codice fiscale in rosso e fuori dalla lista, liste mandate con
        Riscarica e Annulla invio. Nuove tessere: il tipo si scrive a mano in `prices.insurance`
