@@ -156,10 +156,18 @@
    */
   function conAttesa(a) {
     const quante = inAttesa(a.member_id);
-    if (!quante) return a;
+    // Abbonamenti comprati sul pullman e non ancora arrivati: le loro gite si
+    // possono già segnare, altrimenti chi ha appena ricomprato resterebbe
+    // ESAURITO finché non torna la linea. Le schede «in invio» li contano già.
+    const nuovi = a.inInvio ? [] : coda.filter((v) => v.tipo === "abbonamento" && v.socio === a.member_id);
+    if (!quante && !nuovi.length) return a;
+    const piu = nuovi.reduce((somma, v) => somma + (v.trips || 0), 0);
     return Object.assign({}, a, {
+      trips_total: a.trips_total + piu,
       trips_used: a.trips_used + quante,
-      trips_left: Math.max(0, a.trips_left - quante),
+      trips_left: Math.max(0, a.trips_left + piu - quante),
+      days: [...new Set([...(a.days || [a.day]), ...nuovi.map((v) => v.day)])],
+      passes: (a.passes || 1) + nuovi.length,
     });
   }
 
@@ -262,7 +270,7 @@
     const conJolly = el("conJolly").checked;
 
     return abbonamenti.filter((a) => {
-      const giorni = a.days || [a.day];
+      const giorni = conAttesa(a).days || [a.day];
       if (giornoScelto && giornoScelto !== "JOLLY") {
         const suoGiorno = giorni.includes(giornoScelto) || (conJolly && giorni.includes("JOLLY"));
         if (!suoGiorno) return false;
@@ -305,6 +313,7 @@
             ＋ Segna una gita
           </button>
           <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usati})</button>
+          <button class="btn-chiaro" data-nuovo="${a.member_id}">＋ Nuovo abbonamento</button>
         </div>
 
         <div id="zona_${a.member_id}"></div>
@@ -334,7 +343,8 @@
       b.addEventListener("click", () => segna(b.dataset.segna, b)));
     lista().querySelectorAll("[data-registro]").forEach((b) =>
       b.addEventListener("click", () => apriRegistro(b.dataset.registro)));
-
+    lista().querySelectorAll("[data-nuovo]").forEach((b) =>
+      b.addEventListener("click", () => apriNuovoAbbonamento(b.dataset.nuovo)));
   }
 
   // -------------------------------------------------------------------------
@@ -366,10 +376,9 @@
     coda.push({ id: nuovoId(), socio: socioId, giorno: giornoScelto || null });
     salvaCoda();
 
-    const rimaste = inAttesa(socioId);
     disegna();
     const a = abbonamenti.find((x) => x.member_id === socioId);
-    const residuo = a ? Math.max(0, a.trips_left - rimaste) : null;
+    const residuo = a ? conAttesa(a).trips_left : null;
     confermaNellaScheda(socioId, residuo === 0
       ? "Gita segnata. Era l'ultima: abbonamento esaurito."
       : `Gita segnata. Ne restano ${residuo === null ? "—" : residuo}.`);
@@ -671,14 +680,7 @@
     if (!voce) return;
 
     bottone.disabled = true;
-    coda.push({
-      id: nuovoId(), tipo: "abbonamento", socio: socioId,
-      chi: `${socio.last_name} ${socio.first_name}`,
-      cognome: socio.last_name, nome_socio: socio.first_name,
-      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
-      trips: Number(voce.trips || 0), day: voce.day,
-    });
-    salvaCoda();
+    accodaAbbonamento(socio, voce, pagato);
 
     // Passa subito all'elenco principale, «in invio»: le gite gli si segnano
     // anche senza linea e partono dopo l'abbonamento.
@@ -688,6 +690,69 @@
     disegna();
     messaggio(`Abbonamento «${voce.name}» a ${socio.last_name} ${socio.first_name}: in invio.`, "avviso-ok");
     svuotaCoda();
+  }
+
+  /** Mette in coda la vendita di un abbonamento: la manda add_pass, anche più tardi. */
+  function accodaAbbonamento(socio, voce, pagato) {
+    coda.push({
+      id: nuovoId(), tipo: "abbonamento", socio: socio.id,
+      chi: `${socio.last_name} ${socio.first_name}`,
+      cognome: socio.last_name, nome_socio: socio.first_name,
+      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
+      trips: Number(voce.trips || 0), day: voce.day,
+    });
+    salvaCoda();
+  }
+
+  // -------------------------------------------------------------------------
+  // Un altro abbonamento a chi ne ha già uno
+  //
+  // Chi finisce le cinque gite ne ricompra un altro sul pullman e lo paga lì,
+  // o lo pagherà: stessa scelta di «Assegna», dentro la sua scheda. Va in coda
+  // come le gite, quindi funziona anche senza linea, e le sue gite si possono
+  // segnare subito (vedi conAttesa).
+  // -------------------------------------------------------------------------
+
+  function apriNuovoAbbonamento(socioId) {
+    const zona = el("zona_" + socioId);
+    const a = abbonamenti.find((x) => x.member_id === socioId);
+    if (!zona || !a) return;
+    if (!opzioniAbbonamento.length) {
+      zona.innerHTML = `<p class="avviso avviso-errore">Il listino non si è caricato: serve la linea almeno una volta. Ricarica la pagina quando c'è campo.</p>`;
+      return;
+    }
+    // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
+    const opzioni = opzioniAbbonamento
+      .map((v) => `<label class="scelta">
+          <input type="radio" name="nuovo_${socioId}" value="${esc(v.name)}">
+          <span>${esc(v.name)}</span><span class="prezzo">${esc(v.price)} €</span>
+        </label>`)
+      .join("");
+    zona.innerHTML = `
+      <div style="margin-top:12px">
+        <fieldset class="scelte" aria-label="Nuovo abbonamento">${opzioni}</fieldset>
+      </div>
+      <div class="azioni-pannello" style="margin-top:10px">
+        <button class="btn-verde" data-vendi="1">Aggiungi · pagato</button>
+        <button class="btn-rosso" data-vendi="0">Aggiungi · da pagare</button>
+        <button class="btn-chiaro" data-chiudi-nuovo>Chiudi</button>
+      </div>
+      <div data-esito-nuovo></div>`;
+    zona.querySelector("[data-chiudi-nuovo]").addEventListener("click", () => { zona.innerHTML = ""; });
+    zona.querySelectorAll("[data-vendi]").forEach((b) => b.addEventListener("click", () => {
+      const scelta = zona.querySelector(`input[name="nuovo_${socioId}"]:checked`);
+      const voce = scelta && opzioniAbbonamento.find((v) => v.name === scelta.value);
+      if (!voce) {
+        zona.querySelector("[data-esito-nuovo]").innerHTML =
+          `<p class="avviso avviso-errore">Scegli prima l'abbonamento.</p>`;
+        return;
+      }
+      accodaAbbonamento({ id: socioId, last_name: a.last_name, first_name: a.first_name }, voce, b.dataset.vendi === "1");
+      disegna();
+      confermaNellaScheda(socioId, `Abbonamento «${voce.name}» ${b.dataset.vendi === "1" ? "pagato" : "da pagare"}: in invio. `
+        + "Le sue gite si possono già segnare.");
+      svuotaCoda();
+    }));
   }
 
   // -------------------------------------------------------------------------

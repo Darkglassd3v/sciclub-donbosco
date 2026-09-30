@@ -82,7 +82,7 @@
        abbonamenti 5 gite e jolly (sempre), una pagina per partenza senza distinguere il giorno, "Senza partenza" in fondo, "Nessuno" se il foglio è vuoto. Colonne: N. tessera /
        Cognome / Nome / Luogo di nascita / Telefono. `fogliDelGiorno()` in `web/stampe.js`, test
        `node web/test-stampe.js`.
-4. [ ] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
+4. [x] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
        tutte le schede (non solo chi non ha abbonamento), stesso giro di "Assegna": add_pass,
        coda offline, client_id.
 5. [ ] feat(soci): nel form Soci casella "già pagato" sulla riga dell'abbonamento aggiunto: somma
