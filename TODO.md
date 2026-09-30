@@ -1,3 +1,126 @@
+# Ripresa lavori — aggiornato il 2026-09-30 (2.5-SNAPSHOT)
+
+## Richieste del 2026-09-30 (testo originale)
+
+> da stampare : per ordine alfabetico / per numero di tessera 
+> per abbonamento sabato
+> per abbonamento domenica
+> per abbonamento martedì 
+> per abbonametno jolly
+> l'ordinamento deve essere raggriuppato per partenza ( asti / felizzano) e poi per ogni partenza ordnati alfabeticamente
+>
+> i campi da vedere in ordine sono : NUM TESSRA / COGNOME /NOME / LUOOGO NASCITA / TELEFONO 
+>
+> I fogli che l'assicuratore deve inviare sono quello in dati 26. Devono esserci tre liste separate per tipo di assicurazione
+> la tessera nati prima del 47 hanno la stessa assicurazione di quelli base quinid sono da stampare
+>
+> nella pagina assicuratore non non sere il campo polizza e nemmeno nel database.
+>
+>
+> nella pagina assicuratore l'excel dovrà poter scaricare tre fogli excel per i tipi di asscurazione ( sono 3 base / plus / sport).
+> la struttura deve essere quella nei fogli delle liste, quando viene scaricato il foglio excel le persone che sono state scaricate devono risultare come asssicurate, in maniera da progredire settimanalmente
+> la struttura del file ha la data decorrere da, deve essere inserito il campo data quando viene scaricato il file con la data odierna ( metti una label che ti dirà da quando partirà)
+>
+> nei fogli dei dati c'è una lista di persone / codice fiscale. questi sono corretti e devi controllare su supabase l'atttuale db e corregere i codici fiscali
+>
+> ultima richiesta : un socio si registra, paga il corso, fa solo due volte il corso decide di non fare più il corso, si può predisporre di segnare il rimborso di quanto ha pagato mettendo i lcampo da qualche parte? es pagamenti predisporre la possibilità di cambiare il totale dovuto e il totale pagato  e la lista di quando è stato modificato
+>
+> si può anche 
+> sul salvataggio del socio il totale può essere editato quando vengono fatti gli sconti, segnalo da qualche parte che il conto è stato fatto a mano la modifica del totale
+
+## Decisioni (30/09/2026, giro con il dev-team)
+
+- Assicurazioni, in ordine di copertura: Base 35 €, Neve Plus 50 €, Global Sport 65 €.
+- Tessera → assicurazione: ORDINARIA NEVE BASE e SCONTATA NEVE BASE (nati prima del 1947) → Base;
+  ORDINARIA NEVE PLUS → Plus; ORDINARIA GLOBAL SPORT e DIRETTIVO → Sport;
+  SOLO TESSERA / SCONTATA NO ASSICURAZIONE → in nessuna lista.
+- Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
+  lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
+  L'invio si può annullare e una lista inviata si può riscaricare uguale.
+- Stampe: quattro pulsanti colorati, Sabato / Domenica / Martedì / Jolly. Sabato e domenica con
+  abbonati e corsisti di quel giorno, raggruppati per partenza, dentro in ordine alfabetico. Il
+  jolly sempre in un foglio a parte, valido per tutti i giorni.
+- Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel
+  form Soci), indipendentemente dal tipo di corso.
+- Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form
+  Soci la casella "già pagato" sulla riga aggiunta somma il prezzo all'acconto.
+- Rimborso: riduce il pagato del socio. Lo possono fare tesoriere e admin, con lo storico delle modifiche.
+- Totale scritto a mano: segnato come manuale, il form non lo ricalcola più.
+- Codici fiscali dai fogli di dati26: si correggono su tutte le righe della persona, anche quelle
+  vecchie. Prima un controllo che non scrive niente, poi il backup, poi la correzione.
+  Se il CF dei fogli è diverso da quello del database vince quello dei fogli; i CF dei fogli si
+  scrivono tutti anche se il controllo segnala qualcosa, e i dubbi vanno in un file di warning.
+  Abbinamento: cognome + nome + data di nascita; senza data valida, cognome + nome solo se nel
+  database c'è una sola persona con quel nome. Omonimi e non trovati: solo nel file di warning,
+  nessun socio nuovo.
+- Lavoro in autonomia (30/09 sera): un commit per funzione, schema in produzione con backup, push.
+
+
+## Stato del lavoro (30/09/2026, sera)
+
+### Fatto
+- [x] Soci non direttivo iscritti oggi (COSSETTA Francesca, COSSETTA Gabriele, BALLATORE Mauro)
+      rimessi in archivio come fa la chiusura stagione: anagrafica e CF restano, via tessera,
+      abbonamenti, totale e pagato. Backup CSV in `supabase/migration/backup-2026-09-30/`
+      (gitignored). Iscritti ora: 10, tutti direttivo.
+      Attenzione: le righe migrate hanno created_at = 2000-01-01, "aggiunto oggi" si legge da
+      enrolled_at / updated_at.
+
+### Da fare, un commit per punto (niente push e niente schema in produzione senza ok)
+1. [x] chore: `todo.md` unito qui e tolto (su Windows/Mac i due nomi erano lo stesso file).
+2. [ ] feat(corsi): giorno del corso sul socio. `members.course_day` (SABATO/DOMENICA, check),
+       scelta "Corso sabato / Corso domenica" nel form Soci accanto al corso (obbligatoria se c'è un
+       corso), azzerato da close_season. Un corso può essere di sabato o di domenica, a scelta del socio.
+3. [ ] feat(stampe): pagina nuova `web/stampe.html`, permesso `gite` (admin, superadmin e il ruolo
+       gite leggono members e member_passes). Voce "Stampe" nella barra delle 10 pagine, dopo "Gite".
+       - Quattro pulsanti con i colori dei giorni e il giorno scritto grande (anche in testa al
+         foglio): Sabato, Domenica, Martedì, Jolly.
+       - Sabato e domenica: abbonati di quel giorno + corsisti di quel giorno (etichetta "Corso"),
+         una riga per persona; gruppi per partenza (ripulita da spazi/maiuscole), dentro in ordine
+         alfabetico, "Senza partenza" in fondo; salto pagina per gruppo.
+       - Martedì: abbonati del martedì. Jolly: foglio a parte, valido per tutti i giorni.
+       - Colonne: N. tessera / Cognome / Nome / Luogo di nascita / Telefono. `@media print`.
+       - Funzione pura per le righe del foglio con test node (più abbonamenti, abbonamento + corso,
+         solo corso, senza partenza, jolly, doppioni).
+4. [ ] feat(gite): nel pannello gite del telefono "Nuovo abbonamento · pagato / da pagare" su
+       tutte le schede (non solo chi non ha abbonamento), stesso giro di "Assegna": add_pass,
+       coda offline, client_id.
+5. [ ] feat(soci): nel form Soci casella "già pagato" sulla riga dell'abbonamento aggiunto: somma
+       il prezzo all'acconto sotto gli occhi dell'operatore (togliendo la spunta lo toglie);
+       salvataggio invariato.
+6. [ ] feat(cf): script in sola lettura `supabase/scripts/` che legge i fogli di `dati26`
+       (zipfile, openpyxl non c'è), ripulisce cognomi e date (numeri Excel e testo "15\08\49"),
+       abbina per cognome+nome+data di nascita e produce il report trovati/diversi/dubbi/non trovati.
+       Poi, DOPO OK: backup + UPDATE su tutte le righe della persona (anche vecchie).
+       Nota: 4640 righe su 5778 hanno il CF vuoto.
+7. [ ] feat(assicurazione): schema + pagina.
+       - `prices.insurance` (BASE/PLUS/SPORT/null) sulle tessere, riempita con l'abbinamento
+         deciso sopra. Oggi `insurance_members()` esclude solo la tessera "NO": le tessere
+         "NO ASSICURAZIONE" finirebbero nell'Excel.
+       - tabella `insurance_lists` (season, kind, number, sent_on, created_by),
+         unique(season, kind, number); `members.insured_on` + `members.insurance_list_id`.
+       - Pagina: tre riquadri Base / Plus / Sport. Ciascuno con i soci da assicurare, "Ultima
+         inviata: n. X del gg/mm", numero proposto = ultima+1 ma modificabile, decorrenza = oggi.
+         Scarica Excel (anteprima, come i fogli di dati26: Nr., Decorrenza, Polizza (= nome del
+         tipo), Cognome, Nome, Data di nascita, Codice Fiscale, Sci Club "DON BOSCO", Nr. lista;
+         nome del file "N Lista Neve Base.xlsx").
+         "Segna come inviata" (chiedi()) → RPC che crea la lista col numero scelto e segna solo i
+         soci di quell'anteprima. Contatori indipendenti (es. Base 8, Plus 5, Sport 3).
+         Annulla l'ultima lista inviata; riscarica una lista già inviata.
+       - Correzione del CF resta (ricerca).
+8. [ ] refactor(assicurazione): via il numero di polizza: campo nella pagina, `f_numero_polizza`
+       nel form Soci, Excel del Riepilogo, trigger `check_policy_number`, vista households,
+       close_season (lì va azzerato `insured_on`), `set_insurance` (solo CF). La colonna
+       `policy_number` si toglie dallo schema per ultima.
+9. [ ] feat(pagamenti): `members.total_manual` (il form non ricalcola più il totale scritto a
+       mano, e lo mostra come "fatto a mano"); tabella storico modifiche di totale e pagato, scritta
+       da un trigger (chi, quando, vecchio → nuovo, nota); RPC per tesoriere e admin per cambiare
+       totale e pagato (il rimborso riduce il pagato). Storico visibile in Pagamenti (admin.html).
+
+Per ogni punto: test node, schema applicato due volte in docker (nomi container unici),
+pagina provata nel browser con client finto (anche con A+ al massimo), poi commit.
+Alla fine: chiedere l'ok per schema in produzione + push.
+
 # Ripresa lavori — aggiornato il 2026-09-28 (2.5-SNAPSHOT)
 
 ## Fatto nella 2.5-SNAPSHOT (schema applicato in produzione il 2026-09-24)
