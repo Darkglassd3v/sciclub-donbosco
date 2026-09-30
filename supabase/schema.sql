@@ -990,6 +990,36 @@ $$;
 
 comment on function public.insurance_send is 'Segna come inviata una lista: numero e decorrenza scelti, soci del file scaricato.';
 
+-- Le liste dei tre tipi insieme, con la stessa decorrenza: la pagina scarica
+-- e segna tutto in un colpo. Tutto o niente: se una lista non passa (numero
+-- già usato, nessun socio) non se ne segna nessuna, e si riprova intera.
+-- kinds e list_numbers vanno in coppia: la lista di kinds[i] ha il numero
+-- list_numbers[i]. member_ids sono i soci dei file scaricati, di tutti i tipi.
+create or replace function public.insurance_send_all(kinds text[], list_numbers int[], member_ids uuid[],
+                                                     starts_on date default current_date)
+returns int
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  totale int := 0;
+  i int;
+begin
+  if coalesce(array_length(insurance_send_all.kinds, 1), 0) = 0
+     or array_length(insurance_send_all.kinds, 1) <> coalesce(array_length(insurance_send_all.list_numbers, 1), 0) then
+    raise exception 'Nessuna lista da mandare.';
+  end if;
+  for i in 1 .. array_length(insurance_send_all.kinds, 1) loop
+    totale := totale + public.insurance_send(insurance_send_all.kinds[i], insurance_send_all.list_numbers[i],
+                                             insurance_send_all.member_ids, insurance_send_all.starts_on);
+  end loop;
+  return totale;
+end;
+$$;
+
+comment on function public.insurance_send_all is 'Segna come inviate più liste insieme (una per tipo), con la stessa decorrenza. Tutto o niente.';
+
 -- Annulla l'invio di una lista (file mai partito, numero sbagliato): i suoi
 -- soci tornano da assicurare. Solo l'ultima di ogni tipo, perché la
 -- numerazione che l'assicurazione ha già ricevuto non abbia buchi a metà.
@@ -1045,6 +1075,7 @@ begin
   foreach f in array array[
     'public.insurance_members()', 'public.insurance_search(text)', 'public.set_tax_code(uuid, text)',
     'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[], date)',
+    'public.insurance_send_all(text[], int[], uuid[], date)',
     'public.insurance_undo(uuid)', 'public.insurance_list_members(uuid)'] loop
     execute format('revoke all on function %s from public', f);
     if exists (select 1 from pg_roles where rolname = 'anon') then

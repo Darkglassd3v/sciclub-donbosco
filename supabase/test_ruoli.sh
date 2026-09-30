@@ -755,6 +755,15 @@ begin
   assert (select starts_on from public.insurance_sent_lists() where number = 1) = current_date,
          'senza decorrenza la lista non parte da oggi';
 
+  -- Più liste insieme, tutto o niente: con la Base n. 2 già usata non passa neanche la Sport.
+  begin
+    perform public.insurance_send_all(array['BASE', 'SPORT'], array[2, 1], array[luca]);
+    raise exception 'ASSERZIONE: liste mandate con un numero già usato';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  assert (select count(*) from public.insurance_sent_lists()) = 2, 'una lista è rimasta segnata a metà';
+
   -- Il socio assicurato si ritrova con la ricerca, che però non dà l'elenco intero.
   assert (select count(*) from public.insurance_search('bianchi')) = 1, 'la ricerca non trova un assicurato';
   assert (select list_number from public.insurance_search('bianchi')) = 1, 'la ricerca non dice la lista';
@@ -825,6 +834,12 @@ begin
                              '88888888-8888-8888-8888-888888888888'] loop -- social
     perform set_config('test.uid', chi, false);
     assert (select count(*) from public.insurance_members()) = 0, 'senza permesso polizze vede i tesserati';
+    begin
+      perform public.insurance_send_all(array['BASE'], array[50], array['aaaaaaaa-0000-0000-0000-000000000002'::uuid]);
+      raise exception 'ASSERZIONE: senza permesso polizze ha mandato le liste';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    end;
     assert (select count(*) from public.insurance_search('bianchi')) = 0, 'senza permesso polizze cerca i tesserati';
     assert (select count(*) from public.insurance_sent_lists()) = 0, 'senza permesso polizze vede le liste';
     begin
@@ -913,6 +928,23 @@ begin
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
   end loop;
+end $$;
+
+-- Due tipi insieme, stessa decorrenza: una lista Base e una Sport in un colpo.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code) values
+  ('aaaaaaaa-0000-0000-0000-000000000010', 'GIALLI', 'BASE',  now(), 'PROVA TESSERA ORDINARIA', 'GLLBSA80A01F205X'),
+  ('aaaaaaaa-0000-0000-0000-000000000011', 'GIALLI', 'SPORT', now(), 'PROVA TESSERA DIRETTIVO', 'GLLSPR80A01F205X');
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert public.insurance_send_all(array['BASE', 'SPORT'], array[10, 1],
+           array['aaaaaaaa-0000-0000-0000-000000000010', 'aaaaaaaa-0000-0000-0000-000000000011']::uuid[],
+           date '2026-12-01') = 2, 'due tipi insieme: attesi due soci assicurati';
+  assert (select string_agg(kind || number || '@' || starts_on, ',' order by kind)
+            from public.insurance_sent_lists() where (kind, number) in (('BASE', 10), ('SPORT', 1)))
+         = 'BASE10@2026-12-01,SPORT1@2026-12-01', 'liste insieme sbagliate';
 end $$;
 
 -- La ricerca dell'assicurazione si ferma a 20 risultati.
