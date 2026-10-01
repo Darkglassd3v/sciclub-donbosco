@@ -356,6 +356,10 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
   border-color: var(--blu);
   color: #fff;
 }
+/* "Cerca socio" (la ricerca dal telefono, ricerca/index.html) serve a chi ha
+ * solo le gite: chi ha la pagina Soci cerca da lì, e con una voce in più la
+ * barra dell'admin non ci starebbe. */
+html[data-permessi~="soci"] .barra-voci .voce-cerca { display: none !important; }
 /* La voce da superadmin (Gestione) si distingue anche da qui. */
 .barra-voci .voce-rischiosa { color: var(--errore); }
 /* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */

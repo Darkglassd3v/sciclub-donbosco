@@ -5,21 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ricerca Socio — Sci Club Don Bosco</title>
   <link rel="icon" href="logo_sciclubdonbosco.png">
+  <link rel="stylesheet" href="../brand.css">
   <link rel="stylesheet" href="stile.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
 <body>
 
+<!-- La stessa barra del gestionale (web/brand.css), con i percorsi da qui:
+     passando da una pagina all'altra non cambia niente lassù. -->
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="../index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="../index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="../admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="../riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="index.html" data-permesso="gite" hidden aria-current="page">Cerca socio</a>
+      <a href="gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="../stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="../assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="../bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="../social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="../stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" id="btnEsci">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
 <div id="contenuto" class="wrap" hidden>
   <header class="testata">
-    <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
     <h1>Ricerca Socio</h1>
-    <div class="spinta">
-      <a class="btn-chiaro" id="linkGestionale" href="../index.html" hidden>Gestionale</a>
-      <a class="btn-chiaro" href="index.html" aria-current="page">Soci</a>
-      <a class="btn-chiaro" href="gite.html">Gite</a>
-      <a class="btn-chiaro" href="../stampe.html">Stampe</a>
-      <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
-    </div>
   </header>
 
   <div class="cerca">

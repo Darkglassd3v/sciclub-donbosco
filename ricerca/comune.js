@@ -201,7 +201,7 @@ async function richiediPermesso(permesso) {
     throw errore;
   }
   if (accesso && accesso.permissions.includes(permesso)) {
-    mostraGestionale(accesso);
+    disegnaBarra(accesso);
     mostraVediCome(accesso);
     return true;
   }
@@ -209,10 +209,32 @@ async function richiediPermesso(permesso) {
   return false;
 }
 
-/** Il link al gestionale, per chi ci lavora anche (admin, superadmin). */
-function mostraGestionale(accesso) {
-  const link = el("linkGestionale");
-  if (link) link.hidden = !accesso.permissions.includes("soci");
+/**
+ * La barra in cima è quella del gestionale (web/brand.css): le voci si
+ * vedono secondo i permessi, e ruolo e permessi si ricordano per la prossima
+ * pagina come fa ricordaAccesso() in web/shared.js. Lo script nell'head li
+ * rimette prima del primo disegno, così la barra non cambia passando da una
+ * pagina all'altra.
+ */
+function disegnaBarra(accesso) {
+  const html = document.documentElement;
+  html.dataset.ruolo = accesso.role;
+  html.dataset.permessi = accesso.permissions.join(" ");
+  try {
+    localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: accesso.role, permissions: accesso.permissions }));
+  } catch (errore) { /* storage negato: la barra si aggiorna lo stesso qui sotto */ }
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
+    voce.hidden = !accesso.permissions.includes(voce.dataset.permesso);
+  });
+}
+
+/** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */
+function cambiaTesto() {
+  const html = document.documentElement;
+  const livello = (Number(html.dataset.testo || 0) + 1) % 3;
+  if (livello) html.dataset.testo = livello;
+  else delete html.dataset.testo;
+  try { localStorage.setItem("sciclub-testo", livello); } catch (errore) {}
 }
 
 /** Come si chiamano i ruoli a schermo (gli stessi di NOMI_RUOLI in web/shared.js). */

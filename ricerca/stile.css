@@ -194,13 +194,13 @@ ul.risultati li { margin-bottom: 12px; }
 .conto .fatte  { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo-soft); }
 .conto .libere { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo); }
 .conto .libere.esaurito { color: var(--errore); }
-.barra { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
+.progresso-gite { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
          overflow: hidden; margin-top: 14px; }
-.barra span { display: block; height: 100%; background: var(--blu); }
-.barra.giorno-sabato   span { background: var(--blu); }
-.barra.giorno-domenica span { background: var(--giallo); }
-.barra.giorno-martedi  span { background: var(--errore); }
-.barra.giorno-jolly    span { background: var(--ok); }
+.progresso-gite span { display: block; height: 100%; background: var(--blu); }
+.progresso-gite.giorno-sabato   span { background: var(--blu); }
+.progresso-gite.giorno-domenica span { background: var(--giallo); }
+.progresso-gite.giorno-martedi  span { background: var(--errore); }
+.progresso-gite.giorno-jolly    span { background: var(--ok); }
 
 /* --- Gite: azioni della scheda ------------------------------------------ */
 .azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }
