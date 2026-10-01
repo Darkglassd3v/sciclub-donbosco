@@ -1,4 +1,12 @@
-# Ripresa lavori — aggiornato il 2026-09-30 (2.5-SNAPSHOT)
+# Ripresa lavori — aggiornato il 2026-10-01 (2.6-SNAPSHOT)
+
+## 2.6-SNAPSHOT (aperta il 01/10/2026 dalla 2.5)
+
+1. [x] feat(ruoli) 1b87030: matrice dei permessi in Gestione > Ruoli (tabella `role_grants`,
+       registro `role_grant_changes`), superadmin sempre tutto, Gestione non assegnabile.
+       Schema in produzione il 01/10 (backup `supabase/migration/backup-2026-10-01/`).
+       Deciso: niente separazione fra "elenco" e "dati personali" per ora.
+
 
 ## Richieste del 2026-09-30 (testo originale)
 
