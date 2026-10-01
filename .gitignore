@@ -26,6 +26,8 @@ supabase/migration_seed.sql
 !.env.example
 .github_token
 .postgre_connect
+# Frase che cifra i backup del database (vedi .github/workflows/backup-db.yml)
+.backup_passphrase
 *_token
 *.pem
 *.key

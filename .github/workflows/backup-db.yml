@@ -1,0 +1,74 @@
+name: Backup del database
+
+# Martedì, giovedì e sabato esporta tutto il database Supabase (piano Free:
+# Supabase non fa backup da solo), lo cifra e lo tiene 90 giorni fra gli
+# artifact: circa 40 copie da poco più di 1 MB.
+#
+# Il repository è pubblico e gli artifact li può scaricare chiunque: per questo
+# il file è cifrato (gpg, AES-256) con una frase che sta nei secret e in
+# supabase/.backup_passphrase sul PC del club. I secret di GitHub non si
+# possono rileggere: senza una copia della frase i backup non si aprono più.
+#
+# Secret (Settings > Secrets and variables > Actions):
+#   SUPABASE_DB_URL     stringa di connessione del pooler, porta 5432 (i runner
+#                       non hanno IPv6: la connessione diretta non si raggiunge)
+#   BACKUP_PASSPHRASE   la frase per cifrare
+#
+# GitHub fa partire gli orari solo dal branch predefinito (dev), e in un
+# repository pubblico li sospende dopo 60 giorni senza commit: d'estate
+# controllare in Actions che il workflow sia ancora attivo.
+#
+# Aprire un backup (serve pg_restore 17, come il server):
+#   gpg --batch --pinentry-mode loopback --passphrase-file supabase/.backup_passphrase \
+#       -o backup.dump -d backup-AAAA-MM-GG.dump.gpg
+#   pg_restore --list backup.dump
+# Provato il 01/10/2026: ripristinato in un Postgres 17 vuoto (con i ruoli di
+# Supabase creati prima) con pg_restore --no-owner --no-privileges, conteggi
+# uguali alla produzione; l'unico errore è l'estensione supabase_vault, che
+# esiste solo su Supabase e qui non si usa.
+# Ripristinare i dati di una tabella su un database con lo schema già messo
+# (supabase/schema.sql):
+#   pg_restore --data-only --no-owner -t members -d "$DB" backup.dump
+
+on:
+  schedule:
+    - cron: "0 3 * * 2,4,6"   # 3:00 UTC, le 4 o le 5 in Italia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Esporta, controlla e cifra
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          FRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DB" ] || [ -z "$FRASE" ]; then
+            echo "::error::Mancano i secret SUPABASE_DB_URL o BACKUP_PASSPHRASE"; exit 1
+          fi
+          nome="backup-$(date -u +%F)"
+          # pg_dump deve essere della stessa versione del server (17): quello
+          # del runner è più vecchio e si rifiuta.
+          docker run --rm -e DB postgres:17 pg_dump "$DB" -Fc --no-owner --no-privileges > "$nome.dump"
+          # Un dump vuoto o senza i soci non è un backup: meglio fallire e vederlo.
+          docker run --rm -i postgres:17 pg_restore --list < "$nome.dump" > elenco.txt
+          grep -q "TABLE DATA public members " elenco.txt
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
+              --symmetric --cipher-algo AES256 -o "$nome.dump.gpg" "$nome.dump" 3<<<"$FRASE"
+          rm "$nome.dump"
+          ls -l "$nome.dump.gpg"
+          echo "NOME=$nome" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NOME }}
+          path: ${{ env.NOME }}.dump.gpg
+          retention-days: 90
+          compression-level: 0   # già compresso e cifrato
+          if-no-files-found: error
