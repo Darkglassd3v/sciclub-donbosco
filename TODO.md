@@ -141,8 +141,9 @@
 13. [x] feat(backup) d725867 (01/10): `.github/workflows/backup-db.yml`, mar/gio/sab 3:00 UTC,
        dump cifrato (gpg, frase in `supabase/.backup_passphrase`) tenuto 90 giorni. Ripristino
        provato in docker: conteggi uguali alla produzione.
-       DA FARE (utente): secret SUPABASE_DB_URL e BACKUP_PASSPHRASE; copia della frase fuori dal
-       PC; workflow su `dev` (gli orari partono solo dal branch predefinito).
+       Secret impostati, frase copiata fuori dal PC, workflow anche su `dev` (22b1392: gli orari
+       partono solo dal branch predefinito). Prima run a mano 01/10 riuscita, artifact decifrato.
+       D'estate controllare che GitHub non sospenda l'orario (60 giorni senza commit).
 
 Per ogni punto: test node, schema applicato due volte in docker (nomi container unici),
 pagina provata nel browser con client finto (anche con A+ al massimo), poi commit.
