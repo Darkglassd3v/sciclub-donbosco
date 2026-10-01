@@ -130,6 +130,19 @@
        Storico `member_amount_changes` scritto dal trigger `log_amount_change` per ogni cambio di
        totale o pagato, con il motivo (incasso e abbonamenti dal telefono lo scrivono da soli);
        "Storico" in Pagamenti via `amount_history()`.
+10. [x] feat(stile) dd56508: pulsanti ed etichette dei giorni uguali ovunque (`data-giorno`).
+11. [x] feat(stile) e3a3b8a (01/10): filtri dei giorni in Gite pieni come i pulsanti di Stampe,
+       quello scelto con anello e spunta.
+12. [x] feat(stile) c5fcce8 (01/10): impianto unico delle pagine (linee guida sez. 6, mockup
+       «Impianto delle pagine»): larghezza della barra (1180, 1280 superadmin), titolo + frase,
+       `.cifre` e `.riquadro` in brand.css. Soci a riquadri, Pagamenti con Cerca e filtra,
+       Riepilogo con riquadro Excel/stagioni chiuse, Social con anteprima a 320px accanto ai campi.
+       Deploy verificato. Da guardare dal vivo: Social con un post vero a 1180px.
+13. [x] feat(backup) d725867 (01/10): `.github/workflows/backup-db.yml`, mar/gio/sab 3:00 UTC,
+       dump cifrato (gpg, frase in `supabase/.backup_passphrase`) tenuto 90 giorni. Ripristino
+       provato in docker: conteggi uguali alla produzione.
+       DA FARE (utente): secret SUPABASE_DB_URL e BACKUP_PASSPHRASE; copia della frase fuori dal
+       PC; workflow su `dev` (gli orari partono solo dal branch predefinito).
 
 Per ogni punto: test node, schema applicato due volte in docker (nomi container unici),
 pagina provata nel browser con client finto (anche con A+ al massimo), poi commit.
