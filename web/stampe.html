@@ -10,14 +10,9 @@
   <style>
     .container-main { max-width: 1100px; margin: 28px auto 80px; padding: 0 18px; }
 
-    /* Un pulsante grande per giorno, con il colore delle gite (come il pannello
-     * gite) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
+    /* Un pulsante per giorno, con il colore delle gite (.giorno-azione in
+     * brand.css) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
     .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; margin-bottom: 28px; }
-    .giorni-stampa .button { height: auto; min-height: 72px; white-space: normal; font-size: 1.25rem; font-weight: 700;
-                             border-radius: var(--raggio); border: 0; }
-    .giorni-stampa [data-giorno="SABATO"]   { background: var(--blu);    color: #fff; }
-    .giorni-stampa [data-giorno="DOMENICA"] { background: var(--giallo); color: var(--giallo-dark); }
-    .giorni-stampa [data-giorno="MARTEDI"]  { background: var(--errore); color: #fff; }
 
     .esito { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px 26px; }
     .esito h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
@@ -60,9 +55,9 @@
     scaricare più file: rispondi di sì.
   </p>
   <div class="giorni-stampa">
-    <button type="button" class="button" data-giorno="SABATO">Scarica fogli sabato</button>
-    <button type="button" class="button" data-giorno="DOMENICA">Scarica fogli domenica</button>
-    <button type="button" class="button" data-giorno="MARTEDI">Scarica fogli martedì</button>
+    <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
+    <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
+    <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
   </div>
 
   <div id="esito" class="esito" hidden></div>

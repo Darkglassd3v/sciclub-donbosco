@@ -103,14 +103,6 @@ ul.risultati li { margin-bottom: 12px; }
 .et-ok { background: var(--ok-bg); color: var(--ok); }
 .et-finito { background: var(--errore-bg); color: var(--errore); }
 
-/* Codice colore degli abbonamenti: sabato blu, domenica giallo, martedì rosso,
- * jolly verde. Il nome del giorno resta scritto: il colore accelera la
- * lettura, non la sostituisce. */
-.giorno-sabato   { background: var(--blu-light);    color: var(--blu-dark); }
-.giorno-domenica { background: var(--giallo-light); color: var(--giallo-dark); }
-.giorno-martedi  { background: var(--errore-bg);    color: var(--errore); }
-.giorno-jolly    { background: var(--ok-bg);        color: var(--ok); }
-
 /* Etichetta sopra e valore sotto: una email lunga non ha modo di finire
  * addosso alla colonna accanto. */
 .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 20px; margin: 12px 0 0; }
@@ -157,32 +149,8 @@ ul.risultati li { margin-bottom: 12px; }
  * Cinque pulsanti che restano pulsanti anche sul telefono: vanno a capo, non
  * si stringono fino a diventare intoccabili. */
 .giorni { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-.giorni button { flex: 1 1 130px; }
-.giorni button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.giorni button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex: none; background: currentColor; }
-.giorni button[data-giorno=""]::before { display: none; }
-.giorni button[data-giorno="SABATO"]::before   { background: var(--blu); }
-.giorni button[data-giorno="DOMENICA"]::before { background: var(--giallo); }
-.giorni button[data-giorno="MARTEDI"]::before  { background: var(--errore); }
-.giorni button[data-giorno="JOLLY"]::before    { background: var(--ok); }
-.giorni button[aria-pressed="true"] {
-  background: var(--testo); border-color: var(--testo); color: #fff;
-}
-/* Da premuto il tab prende il colore pieno del giorno, non solo il pallino:
- * deve essere ovvio a colpo d'occhio per cosa si sta filtrando. */
-.giorni button[aria-pressed="true"][data-giorno="SABATO"] {
-  background: var(--blu); border-color: var(--blu); color: #fff;
-}
-.giorni button[aria-pressed="true"][data-giorno="DOMENICA"] {
-  background: var(--giallo); border-color: var(--giallo); color: var(--giallo-dark);
-}
-.giorni button[aria-pressed="true"][data-giorno="MARTEDI"] {
-  background: var(--errore); border-color: var(--errore); color: #fff;
-}
-.giorni button[aria-pressed="true"][data-giorno="JOLLY"] {
-  background: var(--ok); border-color: var(--ok); color: #fff;
-}
-.giorni button[aria-pressed="true"]::before { background: currentColor; }
+.giorni .giorno-filtro { flex: 1 1 130px; }
+/* Colori e forma dei filtri: .giorno-filtro in web/brand.css. */
 .opzione-jolly { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-weight: 600; }
 .opzione-jolly input { width: 24px; height: 24px; min-height: 0; margin: 0; }
 
@@ -196,11 +164,8 @@ ul.risultati li { margin-bottom: 12px; }
 .conto .libere.esaurito { color: var(--errore); }
 .progresso-gite { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
          overflow: hidden; margin-top: 14px; }
-.progresso-gite span { display: block; height: 100%; background: var(--blu); }
-.progresso-gite.giorno-sabato   span { background: var(--blu); }
-.progresso-gite.giorno-domenica span { background: var(--giallo); }
-.progresso-gite.giorno-martedi  span { background: var(--errore); }
-.progresso-gite.giorno-jolly    span { background: var(--ok); }
+/* Il colore del giorno arriva da data-giorno (web/brand.css, "Giorni delle gite"). */
+.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu)); }
 
 /* --- Gite: azioni della scheda ------------------------------------------ */
 .azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }

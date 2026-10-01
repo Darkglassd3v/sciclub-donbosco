@@ -37,6 +37,9 @@
     .scelta input { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
     .scelta .prezzo { margin-left: auto; font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
     .scelta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
+    /* Una scelta legata a un giorno (corso di sabato o di domenica) prende il suo colore. */
+    .scelta[data-giorno]:has(input:checked) { border-color: var(--giorno); background: var(--giorno-chiaro); }
+    .scelta[data-giorno] input { accent-color: var(--giorno); }
     /* Tessera riservata a un ruolo più alto: compare solo se il socio ce l'ha già. */
     .scelta.riservata:not(:has(input:checked)) { display: none; }
 
@@ -204,8 +207,8 @@
       <fieldset class="scelte" id="f_giorno_corso" hidden>
         <legend class="label">Giorno del corso*</legend>
         <div class="scelte-opzioni">
-          <label class="scelta"><input type="radio" name="f_giorno_corso" value="SABATO"><span>Corso di sabato</span></label>
-          <label class="scelta"><input type="radio" name="f_giorno_corso" value="DOMENICA"><span>Corso di domenica</span></label>
+          <label class="scelta" data-giorno="SABATO"><input type="radio" name="f_giorno_corso" value="SABATO"><span>Corso di sabato</span></label>
+          <label class="scelta" data-giorno="DOMENICA"><input type="radio" name="f_giorno_corso" value="DOMENICA"><span>Corso di domenica</span></label>
         </div>
       </fieldset>
     </div>
@@ -474,7 +477,7 @@
     el("listinoAbbonamenti").replaceChildren(...voci.map((p) => {
       const riga = document.createElement("div");
       riga.className = "scelta aggiungi";
-      riga.innerHTML = `<span class="nome">${esc(p.name)}</span><span class="prezzo">${fmt(p.price)}</span>`;
+      riga.innerHTML = `<span class="nome">${esc(p.name)} ${etichettaGiorno(p.day)}</span><span class="prezzo">${fmt(p.price)}</span>`;
       const aggiungi = document.createElement("button");
       aggiungi.type = "button";
       aggiungi.className = "button is-link is-outlined";
@@ -494,7 +497,7 @@
     // client_id nasce qui e resta con la riga: se il salvataggio si
     // interrompe e si ripreme Salva, il database riconosce la stessa riga e
     // non vende l'abbonamento due volte.
-    abbonamentiNuovi.push({ client_id: crypto.randomUUID(), pass_type: voce.name, price: voce.price, trips: voce.trips });
+    abbonamentiNuovi.push({ client_id: crypto.randomUUID(), pass_type: voce.name, price: voce.price, trips: voce.trips, day: voce.day });
     spostaTotaleMano(num(voce.price));
     disegnaAbbonamenti();
     ricalcola();
@@ -512,7 +515,7 @@
         : a.trips_left > 0
           ? `fatte ${a.trips_used} su ${a.trips_total} · restano ${a.trips_left}`
           : `fatte ${a.trips_used} su ${a.trips_total} · ESAURITO`;
-      li.innerHTML = `<span>${esc(a.pass_type)}</span><span class="gite">${stato}</span>`;
+      li.innerHTML = `<span>${esc(a.pass_type)} ${etichettaGiorno(a.day)}</span><span class="gite">${stato}</span>`;
       // Un abbonamento con gite già fatte non si toglie: sono gite vere, e il
       // database lo rifiuterebbe comunque.
       if (a.trips_used === 0) {
@@ -535,7 +538,7 @@
     abbonamentiNuovi.forEach((a) => {
       const li = document.createElement("li");
       li.className = "nuovo";
-      li.innerHTML = `<span>${esc(a.pass_type)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
+      li.innerHTML = `<span>${esc(a.pass_type)} ${etichettaGiorno(a.day)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
       // Pagato sul pullman: la spunta somma il prezzo all'acconto qui sotto,
       // dove l'operatore lo vede e lo può correggere. Si salva con il resto.
       const pagato = document.createElement("label");

@@ -77,7 +77,7 @@ assert.strictEqual(giornoAbbonamento(null), null);
 
 // Il colore non è mai l'unica informazione: il nome del giorno resta scritto.
 assert.ok(etichettaGiorno("SABATO").includes("Sabato"), "manca il nome del giorno");
-assert.ok(etichettaGiorno("SABATO").includes("giorno-sabato"), "manca la classe del colore");
+assert.ok(etichettaGiorno("SABATO").includes('data-giorno="SABATO"'), "manca il giorno per il colore");
 assert.strictEqual(etichettaGiorno(null), "");
 
 // --- Telefono --------------------------------------------------------------

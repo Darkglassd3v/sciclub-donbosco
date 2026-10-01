@@ -51,11 +51,12 @@ function evidenzia(parola, parti) {
 // colore.
 // ---------------------------------------------------------------------------
 
+// I colori stanno in web/brand.css ("Giorni delle gite"): basta data-giorno.
 const GIORNI = {
-  SABATO:   { nome: "Sabato",   classe: "giorno-sabato" },
-  DOMENICA: { nome: "Domenica", classe: "giorno-domenica" },
-  MARTEDI:  { nome: "Martedì",  classe: "giorno-martedi" },
-  JOLLY:    { nome: "Jolly",    classe: "giorno-jolly" },
+  SABATO:   { nome: "Sabato" },
+  DOMENICA: { nome: "Domenica" },
+  MARTEDI:  { nome: "Martedì" },
+  JOLLY:    { nome: "Jolly" },
 };
 
 /** Il giorno di un abbonamento, ricavato dal nome dell'opzione di listino. */
@@ -73,7 +74,7 @@ function giornoAbbonamento(tipoAbbonamento) {
 function etichettaGiorno(giorno) {
   const g = GIORNI[giorno];
   if (!g) return "";
-  return `<span class="etichetta ${g.classe}">${g.nome}</span>`;
+  return `<span class="giorno-etichetta" data-giorno="${giorno}">${g.nome}</span>`;
 }
 
 // ---------------------------------------------------------------------------

@@ -48,11 +48,11 @@
            placeholder="Cognome o nome">
 
     <div class="giorni" id="giorni">
-      <button type="button" data-giorno="" aria-pressed="true">Tutti</button>
-      <button type="button" data-giorno="SABATO" aria-pressed="false">Sabato</button>
-      <button type="button" data-giorno="DOMENICA" aria-pressed="false">Domenica</button>
-      <button type="button" data-giorno="MARTEDI" aria-pressed="false">Martedì</button>
-      <button type="button" data-giorno="JOLLY" aria-pressed="false">Jolly</button>
+      <button type="button" class="giorno-filtro" data-giorno="" aria-pressed="true">Tutti</button>
+      <button type="button" class="giorno-filtro" data-giorno="SABATO" aria-pressed="false">Sabato</button>
+      <button type="button" class="giorno-filtro" data-giorno="DOMENICA" aria-pressed="false">Domenica</button>
+      <button type="button" class="giorno-filtro" data-giorno="MARTEDI" aria-pressed="false">Martedì</button>
+      <button type="button" class="giorno-filtro" data-giorno="JOLLY" aria-pressed="false">Jolly</button>
     </div>
 
     <label class="opzione-jolly" id="rigaJolly" hidden>
@@ -326,7 +326,7 @@
             ${finito ? "ESAURITO" : "LIBERE " + a.trips_left}
           </span>
         </div>
-        <div class="progresso-gite ${(GIORNI[a.day] || {}).classe || ""}"><span style="width:${percento}%"></span></div>
+        <div class="progresso-gite" data-giorno="${esc(a.day || "")}"><span style="width:${percento}%"></span></div>
 
         <div class="azioni-pannello" style="margin-top:14px">
           <button class="btn-verde grande" data-segna="${a.member_id}" ${finito ? "disabled" : ""}>
@@ -651,7 +651,7 @@
     const opzioni = opzioniAbbonamento
       .map((v) => `<label class="scelta">
           <input type="radio" name="abb_${s.id}" value="${esc(v.name)}">
-          <span>${esc(v.name)}</span><span class="prezzo">${esc(v.price)} €</span>
+          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
         </label>`)
       .join("");
 
@@ -745,7 +745,7 @@
     const opzioni = opzioniAbbonamento
       .map((v) => `<label class="scelta">
           <input type="radio" name="nuovo_${socioId}" value="${esc(v.name)}">
-          <span>${esc(v.name)}</span><span class="prezzo">${esc(v.price)} €</span>
+          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
         </label>`)
       .join("");
     zona.innerHTML = `

@@ -405,6 +405,16 @@ async function tutteLeRighe(crea) {
   }
 }
 
+/**
+ * L'etichetta colorata di un giorno di gita (SABATO, DOMENICA, MARTEDI, JOLLY),
+ * o stringa vuota. Colori in brand.css, "Giorni delle gite"; è la stessa di
+ * etichettaGiorno() in ricerca/comune.js.
+ */
+const NOMI_GIORNI = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
+function etichettaGiorno(giorno) {
+  return NOMI_GIORNI[giorno] ? `<span class="giorno-etichetta" data-giorno="${giorno}">${NOMI_GIORNI[giorno]}</span>` : "";
+}
+
 /** Testo scritto dagli utenti, pronto per innerHTML. */
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -476,7 +486,7 @@ function totaliNucleo(capofamiglia, familiari = []) {
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price, min_role, trips")
+    .select("category, name, price, min_role, trips, day")
     .eq("active", true)
     .order("category")
     .order("price")

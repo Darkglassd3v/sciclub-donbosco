@@ -219,7 +219,7 @@
       sb.from("pass_counts").select("*"),
       sb.from("course_counts").select("*"),
       sb.from("preski_counts").select("*"),
-      sb.from("prices").select("category, name, price"),
+      sb.from("prices").select("category, name, price, day"),
       // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
       sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
     ]);
@@ -231,7 +231,7 @@
     const conPrezzo = (righe, categoria) => righe.map((r) => {
       const voce = listino.find((p) => p.category === categoria && p.name === r.name);
       const prezzo = voce ? Number(voce.price) : null;
-      return { name: r.name, count: r.count, price: prezzo, total: prezzo != null ? prezzo * Number(r.count) : null };
+      return { name: r.name, day: voce?.day, count: r.count, price: prezzo, total: prezzo != null ? prezzo * Number(r.count) : null };
     });
     return {
       kpi, tessere,
@@ -374,7 +374,7 @@
     tbody.innerHTML =
       ordinate.map((r) => `
         <tr>
-          <td>${esc(r.name)}</td>
+          <td>${esc(r.name)} ${etichettaGiorno(r.day)}</td>
           <td><span class="badge badge-blue">${r.count}</span></td>
           <td>${r.price ? fmt(r.price) : "—"}</td>
           <td>${r.total ? fmt(r.total) : "—"}</td>
