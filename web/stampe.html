@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fogli dei soci — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+
+    /* Un pulsante per giorno, con il colore delle gite (.giorno-azione in
+     * brand.css) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
+    .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; }
+
+    .esito ul { margin: 0; padding-left: 1.2em; }
+    .esito li { padding: 4px 0; }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <h1 class="title is-4">Fogli dei soci</h1>
+  <p class="occhiello">Un pulsante per giorno: scarica i fogli Excel di corsisti, abbonamenti e jolly, un foglio per partenza.</p>
+
+  <div class="riquadro">
+    <h2>Scarica i fogli</h2>
+    <p class="occhiello">
+      Fino a tre file per giorno, solo quelli con qualcuno dentro: i corsisti (sabato e domenica),
+      gli abbonamenti di quel giorno e i jolly. In ogni file c'è un foglio per partenza, in ordine
+      alfabetico. La prima volta il browser può chiedere il permesso di scaricare più file: rispondi di sì.
+    </p>
+    <div class="giorni-stampa">
+      <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
+      <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
+      <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
+    </div>
+  </div>
+
+  <div id="esito" class="riquadro esito" hidden></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="stampe.js"></script>
+<script>
+  // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
+  // abbonamenti della stagione: è quello che serve sul pullman.
+
+  const el = (id) => document.getElementById(id);
+
+  (async function init() {
+    if (!(await requirePermesso("gite"))) return;
+    document.querySelectorAll(".giorni-stampa [data-giorno]").forEach((b) =>
+      b.addEventListener("click", () => scarica(b.dataset.giorno, b)));
+  })();
+
+  /** Soci della stagione e abbonamenti letti al momento: si stampa quello che c'è ora. */
+  async function leggiDati() {
+    const [soci, abbonamenti] = await Promise.all([
+      tutteLeRighe(() => sb.from("members")
+        .select("id, card_number, last_name, first_name, birth_place, phone, "
+          + "saturday_departure, sunday_departure, course_type, course_day")
+        .not("enrolled_at", "is", null)
+        .order("id")),
+      tutteLeRighe(() => sb.from("pass_status").select("member_id, day").order("pass_id")),
+    ]);
+    return { soci, abbonamenti };
+  }
+
+  async function scarica(chiave, bottone) {
+    bottone.disabled = true;
+    setLoading(true);
+    try {
+      const { soci, abbonamenti } = await leggiDati();
+      // Solo i fogli con qualcuno: il martedì, per esempio, niente corsi.
+      const fogli = fogliDelGiorno(chiave, soci, abbonamenti).filter((f) => f.gruppi.length);
+      const nomeGiorno = GIORNI_STAMPA[chiave].nome.toLowerCase();
+      if (!fogli.length) {
+        mostraEsito(`Nessun socio della stagione per ${nomeGiorno}: nessun file scaricato.`, []);
+        return;
+      }
+      await caricaXlsx();
+      const scaricati = fogli.map((f) => excelFoglio(chiave, f));
+      mostraEsito(`Scaricati i fogli di ${nomeGiorno}:`, scaricati);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+      setLoading(false);
+    }
+  }
+
+  /**
+   * Un file per foglio (Corsisti, Abbonamenti, Jolly) e, dentro, un foglio di
+   * lavoro per partenza: ogni pullman ha il suo. In cima a ogni foglio il
+   * titolo, poi le colonne. Restituisce la riga per l'elenco dei file.
+   */
+  function excelFoglio(chiave, foglio) {
+    const nomeGiorno = GIORNI_STAMPA[chiave].nome;
+    const oggi = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
+    const libro = XLSX.utils.book_new();
+    let quanti = 0;
+    for (const g of foglio.gruppi) {
+      quanti += g.soci.length;
+      const titolo = [nomeGiorno, foglio.titolo, foglio.nota, g.titolo].filter(Boolean).join(" · ");
+      const righe = [
+        [titolo],
+        ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Telefono"],
+        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", s.phone || ""]),
+      ];
+      const lavoro = XLSX.utils.aoa_to_sheet(righe);
+      lavoro["!cols"] = [10, 22, 18, 22, 18].map((wch) => ({ wch }));
+      XLSX.utils.book_append_sheet(libro, lavoro, nomeFoglioExcel(g.titolo || foglio.titolo));
+    }
+    const file = `${foglio.titolo} ${nomeGiorno.toLowerCase()} ${oggi}.xlsx`;
+    XLSX.writeFile(libro, file);
+    const partenze = foglio.gruppi.length > 1 ? `, ${foglio.gruppi.length} partenze` : "";
+    return `${file}: ${quanti} ${quanti === 1 ? "socio" : "soci"}${partenze}`;
+  }
+
+  function mostraEsito(testo, file) {
+    el("esito").innerHTML = `<h2>${esc(testo)}</h2>${file.length ? `<ul>${file.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` : ""}`;
+    el("esito").hidden = false;
+  }
+</script>
+</body>
+</html>

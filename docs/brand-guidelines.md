@@ -59,11 +59,11 @@ testo bianco: su giallo si scrive solo blu scuro.
 |------|-----|-----|-------|
 | Background | #F5F5F7 | rgb(245,245,247) | sfondo pagina |
 | Surface | #FFFFFF | rgb(255,255,255) | schede, tabelle, form |
-| Riga alternata | #FAFAFB | rgb(250,250,251) | righe pari delle tabelle |
+| Riga alternata | #EEF2F6 | rgb(238,242,246) | righe pari delle tabelle |
 | Text Primary | #14202E | rgb(20,32,46) | testo e titoli |
-| Text Secondary | #5B6472 | rgb(91,100,114) | etichette, testo secondario |
-| Border | #C7D0DA | rgb(199,208,218) | bordi dei campi |
-| Filo | #E4E6EB | rgb(228,230,235) | divisori e contorni delle schede |
+| Text Secondary | #4A5361 | rgb(74,83,97) | etichette, testo secondario |
+| Border | #7B8794 | rgb(123,135,148) | bordi dei campi |
+| Filo | #D5DAE1 | rgb(213,218,225) | divisori e contorni delle schede |
 
 ### Semantic Colors
 
@@ -90,6 +90,18 @@ lettura, non la sostituisce.
 Gli elementi pieni (barre di avanzamento, pallini dei filtri) non portano testo:
 lì il colore vivo si può usare senza vincoli di contrasto.
 
+In pagina il codice colore è un componente solo, in `web/brand.css`
+("Giorni delle gite"), in tre forme; basta `data-giorno="SABATO"` (DOMENICA,
+MARTEDI, JOLLY) sull'elemento:
+
+| Forma | Classe | Aspetto | Dove |
+|-------|--------|---------|------|
+| Etichetta | `.giorno-etichetta` | nome su fondo chiaro, bordino del colore | schede gite, ricerca soci, abbonamenti nel form Soci e nel Riepilogo |
+| Filtro | `.giorno-filtro` | pieno del colore come l'azione; quello scelto (`aria-pressed="true"`) ha un anello scuro e la spunta ✓; senza giorno è "Tutti", blu notte | giorni del pannello gite |
+| Azione | `.giorno-azione` | pulsante pieno del colore, testo bianco (domenica #6B5200) | Fogli dei soci |
+
+La barretta delle gite fatte prende lo stesso colore da `data-giorno`.
+
 ### Accessibility
 
 Rapporti di contrasto verificati su sfondo bianco:
@@ -98,11 +110,13 @@ Rapporti di contrasto verificati su sfondo bianco:
 |--------|----------|---------|
 | #14202E su #FFFFFF | 15.4:1 | AAA |
 | #084C8D su #FFFFFF | 8.7:1 | AAA |
-| #5B6472 su #FFFFFF | 5.9:1 | AA |
+| #4A5361 su #FFFFFF | 7.8:1 | AAA |
 | #147A45 su #FFFFFF | 5.5:1 | AA |
 | #B3261E su #FFFFFF | 6.6:1 | AA |
 | #084C8D su #FCCF02 | 5.7:1 | AA |
-| #FCCF02 su #FFFFFF | 1.5:1 | **mai per testo** |
+| #FCCF02 su #FFFFFF | 1.5:1 | **mai per testo né da solo come anello di focus** |
+| #7B8794 su #FFFFFF (bordo campi) | 3.7:1 | contorni: minimo 3:1 |
+| #06396A su #FFFFFF (anello di focus) | 11.7:1 | AAA |
 
 Regole non negoziabili:
 
@@ -144,6 +158,8 @@ Base 17px invece dei consueti 16: un punto in più si legge, non si nota.
 
 Mai `text-transform: uppercase`: si legge più lentamente e non aggiunge
 informazione. I titoli si distinguono per corpo e peso, non per maiuscolo.
+Unica eccezione le voci della barra di navigazione (18px, 600, tracking
+`.03em`): sono poche parole sempre uguali, e in maiuscolo si trovano prima.
 I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ---
@@ -227,7 +243,7 @@ Le misure servono a chi ha la vista lunga e il mouse impreciso.
 | Type | Background | Text | Altezza min | Border Radius |
 |------|------------|------|-------------|---------------|
 | Primary | #084C8D | #FFFFFF | 48px | pillola |
-| Secondary | #FFFFFF (bordo 1px #E4E6EB) | #084C8D | 48px | pillola |
+| Secondary | #FFFFFF (bordo 1px #D5DAE1) | #084C8D | 48px | pillola |
 | Evidenza | #FCCF02 | #084C8D | 48px | pillola |
 | Pericolo | #FFFFFF (bordo 1px #B3261E) | #B3261E | 48px | pillola |
 
@@ -237,7 +253,7 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Campi
 
-- Altezza minima 48px, testo 17px, bordo 2px #C7D0DA (i campi sono l'unico
+- Altezza minima 48px, testo 17px, bordo 2px #7B8794 (i campi sono l'unico
   elemento con contorno marcato: devono vedersi).
 - I campi amministrativi (polizza, tessera) restano su #FFF6D0: è un codice
   colore che il direttivo usa già.
@@ -245,14 +261,51 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Tabelle
 
-- Righe alte almeno 52px, padding 14px, riga alternata #F7F9FB.
-- Intestazioni in #5B6472 a 15px, in tondo minuscolo: mai in maiuscolo.
-- Divisori a filo sottile (#E4E6EB), non bordi marcati.
+- Righe alte almeno 52px, padding 14px, riga alternata #EEF2F6.
+- Intestazioni in #4A5361 a 16px, in tondo minuscolo: mai in maiuscolo.
+- Divisori a filo sottile (#D5DAE1), non bordi marcati.
 - Su mobile la tabella scorre in orizzontale dentro il suo contenitore.
 
 ---
 
-## 6. Sincronizzazione
+## 6. Impianto delle pagine
+
+Ogni pagina ha la stessa struttura, nello stesso punto, con le stesse misure:
+chi passa da una pagina all'altra trova barra, schede e titolo dove li ha
+lasciati, e cambia solo il contenuto. Mockup: «Impianto delle pagine»
+(proposta del 01/10/2026).
+
+```
+barra (68px, ferma)
+└─ .container-main    larga come la barra: max 1180px (1280 per il superadmin), margini 18px (16 sul telefono)
+   ├─ .schede-gestione / .schede-social   solo nelle sezioni con più pagine
+   ├─ h1.title.is-4
+   ├─ p.occhiello     una frase: a cosa serve la pagina
+   ├─ .cifre > .kpi   facoltative: caselle con un numero, in fila
+   └─ .riquadro × n   tutto il resto, uno sotto l'altro
+```
+
+| Regola | Misure |
+|--------|--------|
+| **Una larghezza sola** | `.container-main` max 1180px (= barra; 1280 per il superadmin, che ha la barra più larga), allineata al logo. Nessuna pagina ha una larghezza sua. Le pagine Gite e Cerca socio usano `.wrap` con le stesse misure. |
+| **Testata fissa** | 24px sotto la barra; schede, 16px; titolo 32px (26 sul telefono); occhiello in #4A5361, 8px sotto il titolo, 24px prima del contenuto. |
+| **Schede** | Un solo componente `.schede` per Gestione e Social: pillole da 48px, bordo #D5DAE1, la scheda aperta blu piena (`aria-current="page"`). |
+| **Riquadri** | Un solo `.riquadro`: bianco, raggio 18px, ombra `--ombra`, padding 28px (20 sul telefono), 24px fra uno e l'altro, sempre largo quanto la pagina. Dentro: `h2` (22px, 600), frase facoltativa `.occhiello`, contenuto, `.azioni`. |
+| **Cifre** | L'unica cosa affiancata: `.cifre` > `.kpi` (`.kpi-label` piccola + `.kpi-value` 32px; `.rosso` da incassare, `.verde` incassato), 4 per riga sul computer, 2 sul telefono, sopra i riquadri. |
+| **Pulsanti** | In `.azioni` (figlio diretto del riquadro) in fondo, a sinistra; prima l'azione principale (blu, o giallo per incassare). Chi cancella o chiude va a destra (`.a-destra`), contornato di rosso. |
+| **Comandi della pagina** | Cerca, filtri e «scarica tutto» valgono per tutta la pagina: stanno nel primo riquadro, sotto le cifre (Pagamenti: Cerca e filtra; Riepilogo: Excel e stagioni chiuse). |
+| **Tabelle** | Dentro il riquadro, in un contenitore che scorre di lato (`.tabella-scorrevole`); intestazione grigia, righe alternate, numeri a destra. |
+| **Niente stili di pagina** | Riquadri, cifre, schede, tabelle e pulsanti vivono in `web/brand.css`. Lo `<style>` di una pagina non ridefinisce queste classi: aggiunge solo quello che ha solo lei. |
+
+Quello che non si fa più:
+- contenuto appoggiato sul fondo grigio fuori da un riquadro (form Soci di prima);
+- riquadri affiancati di larghezze diverse (fuorché le cifre);
+- un `max-width` diverso per pagina (erano sette, da 820 a 1400px);
+- fasce colorate o titoli di riquadro con uno stile proprio.
+
+---
+
+## 7. Sincronizzazione
 
 `docs/brand-guidelines.md` è la fonte. Da qui:
 

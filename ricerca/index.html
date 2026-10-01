@@ -5,36 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ricerca Socio — Sci Club Don Bosco</title>
   <link rel="icon" href="logo_sciclubdonbosco.png">
+  <link rel="stylesheet" href="../brand.css">
   <link rel="stylesheet" href="stile.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
 <body>
 
-<div id="vistaLogin" class="login" hidden>
-  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
-  <h1>Ricerca Socio</h1>
-  <form id="formLogin">
-    <div class="campo">
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-    </div>
-    <div class="campo">
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-    </div>
-    <button class="btn-blu" type="submit">Entra</button>
-    <p id="erroreLogin" class="avviso avviso-errore" hidden></p>
-  </form>
-</div>
+<!-- La stessa barra del gestionale (web/brand.css), con i percorsi da qui:
+     passando da una pagina all'altra non cambia niente lassù. -->
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="../index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="../index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="../admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="../riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="index.html" data-permesso="gite" hidden aria-current="page">Cerca socio</a>
+      <a href="gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="../stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="../assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="../bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="../social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="../stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" id="btnEsci">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
 
 <div id="contenuto" class="wrap" hidden>
   <header class="testata">
-    <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
     <h1>Ricerca Socio</h1>
-    <div class="spinta">
-      <a class="btn-chiaro" id="linkGite" href="gite.html">Gite</a>
-      <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
-    </div>
   </header>
+  <p class="occhiello">Cerca un socio e guarda tessera, abbonamenti e telefono.</p>
 
   <div class="cerca">
     <label for="q">Cerca per cognome o nome</label>
@@ -65,35 +72,6 @@
   const CAMPI = "id, last_name, first_name, phone, email, card_type, card_number, pass_type";
   const MAX = 40;
 
-  // -------------------------------------------------------------------------
-  // Tablet in negozio (ruolo kiosk)
-  //
-  // Stessa pagina, ma chi la usa è chiunque passi dal negozio, non un
-  // volontario del direttivo. Tre differenze, tutte per lo stesso motivo: chi
-  // è lì deve poter ritrovare la propria scheda, non sfogliare il club.
-  //   1. i dati arrivano dalla vista members_kiosk_search, che il numero di
-  //      tessera non ce l'ha proprio (la RLS gli chiude members del tutto,
-  //      quindi non è una scelta della pagina: è il database);
-  //   2. serve nome E cognome, scritti per intero o quasi — con le prime
-  //      lettere uscirebbe l'elenco di tutti quelli che iniziano così;
-  //   3. pochi risultati: due omonimi ci stanno, mezza rubrica no.
-  //
-  // Per tutti gli altri ruoli la pagina resta quella di prima, numero di
-  // tessera compreso: a chi incassa serve, ed è lo stesso dato che ha già
-  // sotto gli occhi nel gestionale.
-  // -------------------------------------------------------------------------
-
-  const CAMPI_KIOSK = "id, last_name, first_name, phone, email, card_type, pass_type";
-  const MAX_KIOSK = 3;
-
-  let daKiosk = false;
-
-  /** I pezzi con cui cercare, o null se il kiosk non ne ha scritti abbastanza. */
-  function partiRicerca(testoCercato) {
-    const parti = pezzi(testoCercato);
-    return daKiosk ? pezziKiosk(parti) : parti;
-  }
-
   const lista = () => el("risultati");
   const conteggio = () => el("conteggio");
   const avviso = () => el("avviso");
@@ -109,19 +87,17 @@
   // -------------------------------------------------------------------------
 
   async function cerca(testoCercato) {
-    const parti = partiRicerca(testoCercato);
-    if (!parti || !parti.length) return null;
+    const parti = pezzi(testoCercato);
+    if (!parti.length) return null;
 
-    let query = sb
-      .from(daKiosk ? "members_kiosk_search" : "members")
-      .select(daKiosk ? CAMPI_KIOSK : CAMPI);
+    let query = sb.from("members").select(CAMPI);
     // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
     for (const p of parti) {
-      query = query.or(filtroPezzo(p, daKiosk));
+      query = query.or(filtroPezzo(p));
     }
     const { data, error } = await query
       .order("last_name").order("first_name")
-      .limit(daKiosk ? MAX_KIOSK : MAX);
+      .limit(MAX);
     if (error) throw error;
     return data;
   }
@@ -175,26 +151,11 @@
   let attesa, ultima = 0;
 
   async function avvia() {
-    // richiediRuolo('kiosk') è il livello più basso: chiude la pagina solo a
-    // chi non ha una riga profiles. Serve comunque a sapere CHI sta cercando,
-    // che è quello che decide vista e ricerca qui sotto.
     try {
-      if (!(await richiediRuolo("kiosk"))) return;
-      const profilo = await getProfilo();
-      daKiosk = !!profilo && profilo.role === "kiosk";
+      if (!(await richiediPermesso("gite"))) return;
     } catch (errore) {
-      // Il ruolo non si è potuto leggere: meglio non cercare affatto che
-      // cercare come se fosse un operatore pieno.
       messaggio(messaggioErrore(errore), "avviso-errore");
       return;
-    }
-
-    if (daKiosk) {
-      el("suggerimento").textContent =
-        "Scrivi il tuo nome e il tuo cognome per intero.";
-      // Il pannello gite legge trip_passes, che al kiosk la RLS chiude: il
-      // link porterebbe solo a una pagina vuota.
-      el("linkGite").hidden = true;
     }
 
     el("q").focus();
@@ -202,13 +163,6 @@
       const testoCercato = e.target.value;
       clearTimeout(attesa);
       if (pezzi(testoCercato).length === 0) { svuota(); return; }
-
-      if (!partiRicerca(testoCercato)) {
-        lista().innerHTML = "";
-        conteggio().hidden = true;
-        messaggio("Servono nome e cognome, scritti per intero.", "avviso-vuoto");
-        return;
-      }
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;
@@ -222,14 +176,11 @@
             messaggio("Nessun socio trovato con «" + testoCercato.trim() + "».", "avviso-vuoto");
             return;
           }
-          // Il consiglio di scrivere qualche lettera in più vale per chi cerca
-          // a prefisso: dal kiosk si scrive già il nome intero, e i risultati
-          // sono comunque pochi.
-          conteggio().textContent = !daKiosk && soci.length >= MAX
+          conteggio().textContent = soci.length >= MAX
             ? `Primi ${MAX} risultati: scrivi qualche lettera in più.`
             : `Trovati: ${soci.length}`;
           conteggio().hidden = false;
-          const parti = partiRicerca(testoCercato) || [];
+          const parti = pezzi(testoCercato);
           lista().innerHTML = soci.map((s) => `<li>${schedaHtml(s, parti)}</li>`).join("");
         } catch (errore) {
           if (mio !== ultima) return;

@@ -9,10 +9,10 @@
 :root {
   --blu: #084C8D; --blu-dark: #06396A; --blu-light: #E7EFF7;
   --giallo: #FCCF02; --giallo-dark: #6B5200; --giallo-light: #FFF6D0;
-  --sfondo: #F5F5F7; --superficie: #fff; --riga-alt: #FAFAFB;
-  --testo: #14202E; --testo-soft: #5B6472;
-  --bordo: #C7D0DA;   /* solo per i campi: devono vedersi */
-  --filo: #E4E6EB;    /* divisori e contorni delle schede */
+  --sfondo: #F5F5F7; --superficie: #fff; --riga-alt: #EEF2F6;
+  --testo: #14202E; --testo-soft: #4A5361;
+  --bordo: #7B8794;   /* solo per i campi: 3.7:1, il minimo per vederne il contorno è 3:1 */
+  --filo: #D5DAE1;    /* divisori e contorni delle schede */
   --ok: #147A45; --ok-bg: #E4F3EA; --errore: #B3261E; --errore-bg: #FBE9E7;
   --raggio: 12px; --raggio-card: 18px; --pillola: 980px;
   --ombra: 0 1px 2px rgba(20,32,46,.04), 0 8px 28px rgba(20,32,46,.06);
@@ -27,12 +27,14 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
-.wrap { max-width: 820px; margin: 0 auto; padding: 22px 16px 80px; }
+/* Stesse misure di .container-main in brand.css (Impianto delle pagine):
+ * passando da Soci a Gite la testata non si sposta. */
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px 18px 80px; }
 
 /* --- Testata ------------------------------------------------------------ */
-header.testata { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+header.testata { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
 header.testata img { height: 52px; width: auto; }
-header.testata h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -.022em; margin: 0; }
+header.testata h1 { font-size: 2rem; line-height: 1.15; font-weight: 600; letter-spacing: -.022em; margin: 0; }
 header.testata .spinta { margin-left: auto; display: flex; gap: 8px; }
 
 /* --- Comandi ------------------------------------------------------------
@@ -51,6 +53,9 @@ button { cursor: pointer; font-weight: 600; letter-spacing: -.01em;
 .btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
 .btn-chiaro { color: var(--blu); border-color: var(--filo); }
 .btn-chiaro:hover { background: var(--blu-light); border-color: var(--blu-light); }
+/* Soci e Gite stanno su tutte e due le pagine, come due schede: quella
+ * aperta è piena, così si sa dove si è senza leggere il titolo. */
+.btn-chiaro[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
 .btn-verde { background: var(--ok); border-color: var(--ok); color: #fff; }
 .btn-rosso { background: var(--errore); border-color: var(--errore); color: #fff; }
 
@@ -68,7 +73,9 @@ a.btn-chiaro { display: inline-flex; align-items: center; justify-content: cente
                min-height: var(--tocco); padding: 0 20px; border: 1px solid var(--filo);
                border-radius: var(--pillola); text-decoration: none; font-weight: 600; }
 button[disabled] { opacity: .45; cursor: not-allowed; }
-:focus-visible { outline: 3px solid var(--giallo); outline-offset: 2px; }
+/* Anello blu scuro con il giallo in mezzo: il giallo da solo sul bianco sta a
+ * 1.5:1 e chi vede poco non trova dove si è arrivati. */
+:focus-visible { outline: 3px solid var(--blu-dark); outline-offset: 2px; box-shadow: 0 0 0 5px var(--giallo); }
 
 label { display: block; font-weight: 600; margin-bottom: 6px; }
 input, select { width: 100%; padding: 10px 14px; }
@@ -76,7 +83,7 @@ input:focus, select:focus { border-color: var(--blu); }
 input::placeholder { color: var(--testo-soft); opacity: 1; }
 
 /* --- Ricerca ------------------------------------------------------------ */
-.cerca { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px; }
+.cerca { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 28px; margin-bottom: 24px; }
 .cerca input[type="search"] { font-size: 1.25rem; min-height: 58px; }
 .aiuto { margin: 10px 2px 0; color: var(--testo-soft); font-size: .9375rem; }
 /* Riga discreta che spiega come si usa la pagina, senza competere col resto. */
@@ -88,7 +95,7 @@ ul.risultati { list-style: none; margin: 0; padding: 0; }
 ul.risultati li { margin-bottom: 12px; }
 
 .scheda { background: var(--superficie); border: none;
-          border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px; }
+          border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 28px; }
 .scheda .nomi { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; color: var(--testo);
                 display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .scheda mark { background: var(--giallo); color: var(--blu-dark); padding: 0 2px; }
@@ -97,14 +104,6 @@ ul.risultati li { margin-bottom: 12px; }
              font-size: .9375rem; font-weight: 600; background: var(--blu-light); color: var(--blu-dark); }
 .et-ok { background: var(--ok-bg); color: var(--ok); }
 .et-finito { background: var(--errore-bg); color: var(--errore); }
-
-/* Codice colore degli abbonamenti: sabato blu, domenica giallo, martedì rosso,
- * jolly verde. Il nome del giorno resta scritto: il colore accelera la
- * lettura, non la sostituisce. */
-.giorno-sabato   { background: var(--blu-light);    color: var(--blu-dark); }
-.giorno-domenica { background: var(--giallo-light); color: var(--giallo-dark); }
-.giorno-martedi  { background: var(--errore-bg);    color: var(--errore); }
-.giorno-jolly    { background: var(--ok-bg);        color: var(--ok); }
 
 /* Etichetta sopra e valore sotto: una email lunga non ha modo di finire
  * addosso alla colonna accanto. */
@@ -140,18 +139,14 @@ ul.risultati li { margin-bottom: 12px; }
               font-weight: 600; background: var(--giallo-light); color: var(--giallo-dark); }
 .da-inviare.inviate { background: var(--ok-bg); color: var(--ok); }
 
-/* --- Login -------------------------------------------------------------- */
-.login { max-width: 420px; margin: 8vh auto; background: var(--superficie);
-         padding: 40px 34px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
-.login img { display: block; margin: 0 auto 18px; max-width: 200px; }
-.login h1 { font-size: 1.7rem; font-weight: 600; letter-spacing: -.022em; text-align: center; margin: 0 0 24px; }
-.login .campo { margin-bottom: 14px; }
-.login button { width: 100%; }
-
 [hidden] { display: none !important; }
 
+@media (max-width: 768px) {
+  .wrap { padding: 20px 16px 80px; }
+  header.testata h1 { font-size: 1.6rem; }
+  .cerca, .scheda { padding: 20px; }
+}
 @media (max-width: 480px) {
-  header.testata h1 { font-size: 1.2rem; }
   header.testata .spinta { width: 100%; margin-left: 0; }
   header.testata .spinta button, header.testata .spinta a { flex: 1 1 0; }
 }
@@ -160,32 +155,8 @@ ul.risultati li { margin-bottom: 12px; }
  * Cinque pulsanti che restano pulsanti anche sul telefono: vanno a capo, non
  * si stringono fino a diventare intoccabili. */
 .giorni { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-.giorni button { flex: 1 1 130px; }
-.giorni button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.giorni button::before { content: ""; width: 10px; height: 10px; border-radius: 50%; flex: none; background: currentColor; }
-.giorni button[data-giorno=""]::before { display: none; }
-.giorni button[data-giorno="SABATO"]::before   { background: var(--blu); }
-.giorni button[data-giorno="DOMENICA"]::before { background: var(--giallo); }
-.giorni button[data-giorno="MARTEDI"]::before  { background: var(--errore); }
-.giorni button[data-giorno="JOLLY"]::before    { background: var(--ok); }
-.giorni button[aria-pressed="true"] {
-  background: var(--testo); border-color: var(--testo); color: #fff;
-}
-/* Da premuto il tab prende il colore pieno del giorno, non solo il pallino:
- * deve essere ovvio a colpo d'occhio per cosa si sta filtrando. */
-.giorni button[aria-pressed="true"][data-giorno="SABATO"] {
-  background: var(--blu); border-color: var(--blu); color: #fff;
-}
-.giorni button[aria-pressed="true"][data-giorno="DOMENICA"] {
-  background: var(--giallo); border-color: var(--giallo); color: var(--giallo-dark);
-}
-.giorni button[aria-pressed="true"][data-giorno="MARTEDI"] {
-  background: var(--errore); border-color: var(--errore); color: #fff;
-}
-.giorni button[aria-pressed="true"][data-giorno="JOLLY"] {
-  background: var(--ok); border-color: var(--ok); color: #fff;
-}
-.giorni button[aria-pressed="true"]::before { background: currentColor; }
+.giorni .giorno-filtro { flex: 1 1 130px; }
+/* Colori e forma dei filtri: .giorno-filtro in web/brand.css. */
 .opzione-jolly { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-weight: 600; }
 .opzione-jolly input { width: 24px; height: 24px; min-height: 0; margin: 0; }
 
@@ -197,13 +168,10 @@ ul.risultati li { margin-bottom: 12px; }
 .conto .fatte  { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo-soft); }
 .conto .libere { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo); }
 .conto .libere.esaurito { color: var(--errore); }
-.barra { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
+.progresso-gite { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
          overflow: hidden; margin-top: 14px; }
-.barra span { display: block; height: 100%; background: var(--blu); }
-.barra.giorno-sabato   span { background: var(--blu); }
-.barra.giorno-domenica span { background: var(--giallo); }
-.barra.giorno-martedi  span { background: var(--errore); }
-.barra.giorno-jolly    span { background: var(--ok); }
+/* Il colore del giorno arriva da data-giorno (web/brand.css, "Giorni delle gite"). */
+.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu)); }
 
 /* --- Gite: azioni della scheda ------------------------------------------ */
 .azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -223,3 +191,13 @@ ul.risultati li { margin-bottom: 12px; }
 /* Abbonamento assegnato ma non ancora arrivato al database. */
 .in-invio { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
             background: var(--giallo-light); color: var(--giallo-dark); font-size: .875rem; font-weight: 600; }
+
+/* "Vedi come" del superadmin: la stessa fascia gialla del gestionale
+ * (web/brand.css), fissa in fondo con il pulsante per tornare. */
+.fascia-vedi-come {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 16px; background: #FCCF02; color: #14202E;
+  font-weight: 600; box-shadow: 0 -4px 12px rgba(0,0,0,.2);
+}
+body:has(.fascia-vedi-come) { padding-bottom: 90px; }

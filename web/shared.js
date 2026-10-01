@@ -9,8 +9,27 @@ const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = window.SUPABASE_CONFIG
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---------------------------------------------------------------------------
-// Autenticazione
+// Autenticazione e permessi
+//
+// Dalla 2.5 i ruoli non sono più una scala: ognuno ha un elenco di permessi
+// (soci, pagamenti, riepilogo, storico, bilancio, gite, polizze, social,
+// gestione), scritto una volta sola nel database (role_permissions() in
+// supabase/schema.sql) e letto da qui con my_access(). Le pagine chiedono un
+// permesso, non un ruolo.
 // ---------------------------------------------------------------------------
+
+/**
+ * Dove arriva chi entra, in ordine: la prima pagina che il suo ruolo può
+ * aprire. È così che un link solo, la radice del sito, va bene per tutti.
+ * Il sito di ricerca sta in /ricerca/, accanto alle pagine del gestionale.
+ */
+const PAGINE_DI_ARRIVO = [
+  ["soci", "index.html"],
+  ["riepilogo", "riepilogo.html"],
+  ["polizze", "assicurazione.html"],
+  ["social", "social.html"],
+  ["gite", "ricerca/index.html"],
+];
 
 /** Blocca la pagina se non c'è una sessione valida. Da chiamare per prima. */
 async function requireAuth() {
@@ -23,73 +42,98 @@ async function requireAuth() {
   return data.session;
 }
 
+/**
+ * Uscire chiude anche il "Vedi come" del superadmin: la vista sta nel
+ * database e varrebbe anche al prossimo accesso, su qualunque dispositivo,
+ * magari da una pagina senza la fascia per tornare. Si esce e si rientra
+ * sé stessi.
+ */
 async function logout() {
-  ricordaRuolo(null);
+  const accesso = await getProfile().catch(() => null);
+  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+    await sb.rpc("set_view_as", { role: null });
+  }
+  ricordaAccesso(null);
   await sb.auth.signOut();
   location.replace("login.html");
 }
 
-// ---------------------------------------------------------------------------
-// Ruoli
-//
-// Gerarchia: ospite < kiosk < utente < admin < superadmin. Il ruolo vive nella
-// tabella profiles (vedi supabase/schema.sql), una riga per utente creata alla
-// nascita dell'account. 'ospite' non può fare niente: è dove nasce ogni nuovo
-// account finché un superadmin non lo promuove dal pannello Utenti.
-// ---------------------------------------------------------------------------
+let _accessoCache = null;
 
-const LIVELLO_RUOLO = { ospite: 0, kiosk: 1, utente: 2, admin: 3, superadmin: 4 };
-let _profiloCache = null;
-
-/** Profilo (email + ruolo) dell'utente collegato. Cache in memoria per pagina. */
+/**
+ * Chi è collegato: { email, role, real_role, permissions }. `role` è il ruolo
+ * con cui si sta guardando il sito ("vedi come" del superadmin), `real_role`
+ * quello vero. null senza sessione o senza ruolo. Cache in memoria per pagina.
+ */
 async function getProfile() {
-  if (_profiloCache) return _profiloCache;
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user) { ricordaRuolo(null); return null; }
-  const { data, error } = await sb
-    .from("profiles")
-    .select("role, email")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  if (_accessoCache) return _accessoCache;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { ricordaAccesso(null); return null; }
+  const { data, error } = await sb.rpc("my_access");
   if (error) throw error;
-  _profiloCache = data;
-  ricordaRuolo(data && data.role);
-  return data;
+  _accessoCache = (data && data[0]) || null;
+  ricordaAccesso(_accessoCache);
+  return _accessoCache;
 }
 
 /**
- * Ruolo per la barra della prossima pagina: lo legge lo script nell'head
- * prima del primo disegno (vedi brand.css). null lo dimentica (logout, niente
- * sessione). Sta in localStorage così vale anche in una scheda nuova.
+ * Ruolo e permessi per la barra della prossima pagina: lo script nell'head
+ * li scrive su <html> prima del primo disegno (vedi brand.css), così le voci
+ * non compaiono a scatti. Stanno in localStorage per valere anche in una
+ * scheda nuova. null li dimentica (logout, niente sessione).
  */
-function ricordaRuolo(ruolo) {
+function ricordaAccesso(accesso) {
   try {
-    if (ruolo) localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: ruolo }));
+    if (accesso) localStorage.setItem("sciclub-ruolo", JSON.stringify(
+      { role: accesso.role, permissions: accesso.permissions }));
     else localStorage.removeItem("sciclub-ruolo");
   } catch (e) { /* storage negato: la barra si aggiorna come prima */ }
-  if (ruolo) document.documentElement.dataset.ruolo = ruolo;
-  else delete document.documentElement.dataset.ruolo;
+  const html = document.documentElement;
+  if (accesso) {
+    html.dataset.ruolo = accesso.role;
+    html.dataset.permessi = accesso.permissions.join(" ");
+  } else {
+    delete html.dataset.ruolo;
+    delete html.dataset.permessi;
+  }
 }
 
-/** true se l'utente collegato ha almeno il ruolo minRuolo. */
-async function hasRole(minRuolo) {
-  const profilo = await getProfile();
-  if (!profilo) return false;
-  return LIVELLO_RUOLO[profilo.role] >= LIVELLO_RUOLO[minRuolo];
+/** true se chi è collegato ha il permesso. */
+async function puo(permesso) {
+  const accesso = await getProfile();
+  return !!accesso && accesso.permissions.includes(permesso);
+}
+
+/** La pagina di arrivo di chi è collegato, o null se non può aprire niente. */
+function paginaDiArrivo(accesso) {
+  const voce = accesso && PAGINE_DI_ARRIVO.find(([permesso]) => accesso.permissions.includes(permesso));
+  return voce ? voce[1] : null;
 }
 
 /**
- * Come requireAuth(), ma per le pagine riservate a un ruolo minimo (es.
- * impostazioni, utenti). Senza sessione redirige al login come requireAuth();
- * con sessione ma ruolo insufficiente NON redirige (evita lo sbattimento di
- * una pagina che appare e sparisce): ritorna null e tocca alla pagina
- * mostrare un messaggio al posto del contenuto.
+ * Da chiamare per prima in ogni pagina: senza sessione manda al login, senza
+ * il permesso manda alla pagina di arrivo del proprio ruolo (chi ha un link
+ * vecchio o sbagliato finisce dove può lavorare, invece che davanti a una
+ * pagina vuota). Chi non ha nessun ruolo torna al login, che glielo spiega.
+ * Restituisce la sessione, o null se la pagina se ne sta andando.
  */
-async function requireRole(minRuolo) {
+async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
-  if (!(await hasRole(minRuolo))) return null;
-  return sessione;
+  const accesso = await getProfile();
+  if (accesso && accesso.permissions.includes(permesso)) return sessione;
+  const arrivo = paginaDiArrivo(accesso);
+  location.replace(arrivo || "login.html?senza=1");
+  return null;
+}
+
+/**
+ * Chi può scegliere una tessera riservata (prices.min_role): la stessa regola
+ * di card_allowed() nel database. 'utente' = tutti, 'admin' = admin e
+ * superadmin, 'superadmin' = solo superadmin.
+ */
+function tesseraConsentita(minRuolo, ruolo) {
+  return !minRuolo || minRuolo === "utente" || ruolo === "superadmin" || ruolo === minRuolo;
 }
 
 // ---------------------------------------------------------------------------
@@ -102,6 +146,10 @@ async function requireRole(minRuolo) {
  *
  * Sta sotto la barra e non sopra: comparendo in cima copriva i pulsanti di
  * navigazione proprio mentre si stava cercando di premerli.
+ *
+ * Un errore resta finché non lo si chiude: dopo quattro secondi spariva prima
+ * che chi legge piano arrivasse in fondo, e il socio restava non salvato
+ * senza che nessuno se ne accorgesse. Le conferme se ne vanno da sole.
  */
 function showToast(messaggio, tipo = "is-success") {
   let toast = document.getElementById("statusToast");
@@ -110,16 +158,41 @@ function showToast(messaggio, tipo = "is-success") {
     toast.id = "statusToast";
     document.body.appendChild(toast);
   }
+  const errore = tipo === "is-danger";
   toast.textContent = messaggio;
   toast.className = `notification ${tipo}`;
+  toast.setAttribute("role", errore ? "alert" : "status");
   toast.style.cssText =
     "display:block;position:fixed;top:calc(var(--barra-h, 68px) + 12px);left:50%;" +
     "transform:translateX(-50%);z-index:90;max-width:min(92vw,520px);text-align:center;" +
     "box-shadow:0 4px 12px rgba(0,0,0,.2);";
   clearTimeout(showToast._timer);
+  if (errore) {
+    const chiudi = document.createElement("button");
+    chiudi.type = "button";
+    chiudi.className = "button is-light is-fullwidth mt-3";
+    chiudi.textContent = "Chiudi";
+    chiudi.addEventListener("click", () => (toast.style.display = "none"));
+    toast.appendChild(chiudi);
+    return;
+  }
   showToast._timer = setTimeout(() => {
     toast.style.display = "none";
-  }, 4000);
+  }, 8000);
+}
+
+/**
+ * Pulsante A+ della barra: tre grandezze del testo (17, 19, 21px), poi si
+ * torna alla normale. La scelta resta in questo browser; lo script nell'head
+ * di ogni pagina la rimette prima del primo disegno, così il testo non
+ * salta da piccolo a grande a ogni cambio di pagina.
+ */
+function cambiaTesto() {
+  const html = document.documentElement;
+  const livello = (Number(html.dataset.testo || 0) + 1) % 3;
+  if (livello) html.dataset.testo = livello;
+  else delete html.dataset.testo;
+  try { localStorage.setItem("sciclub-testo", livello); } catch (e) {}
 }
 
 /**
@@ -144,7 +217,12 @@ function setLoading(attivo) {
   document.addEventListener("DOMContentLoaded", () => {
     const elenco = document.querySelector(".barra-voci");
     if (!elenco) return;
-    const voce = elenco.querySelector(`a[href="${attuale}"]`);
+    // Le schede sotto la barra (le quattro di Gestione, quelle di Social) tengono accesa la voce della barra che apre la prima
+    // (data-voce, se no Gestione), e la loro scheda nella fila.
+    const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"], .schede-social a[href="${attuale}"]`);
+    if (scheda) scheda.setAttribute("aria-current", "page");
+    const madre = scheda && (scheda.closest("[data-voce]")?.dataset.voce || "stagione.html");
+    const voce = elenco.querySelector(`a[href="${madre || attuale}"]`);
     if (!voce) return;
     voce.setAttribute("aria-current", "page");
 
@@ -156,17 +234,213 @@ function setLoading(attivo) {
 })();
 
 /**
- * Le voci con data-ruolo nascono nascoste nel markup e compaiono solo a chi
- * ha quel ruolo: partendo nascoste non lampeggiano davanti a chi non deve
- * vederle mentre il ruolo si carica. È solo la barra: ogni pagina riservata
- * controlla il ruolo da sé, e il database con le sue policy.
+ * Le voci con data-permesso nascono nascoste nel markup e compaiono solo a
+ * chi ha quel permesso: partendo nascoste non lampeggiano davanti a chi non
+ * deve vederle mentre i permessi si caricano. È solo la barra: ogni pagina
+ * controlla il permesso da sé (requirePermesso), e il database le policy.
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  // Una alla volta: la prima carica il profilo, le altre lo trovano in cache.
-  for (const voce of document.querySelectorAll(".barra-voci [data-ruolo]")) {
-    voce.hidden = !(await hasRole(voce.dataset.ruolo).catch(() => false));
+  const voci = document.querySelectorAll(".barra-voci [data-permesso]");
+  if (!voci.length) return;
+  const accesso = await getProfile().catch(() => null);
+  for (const voce of voci) {
+    voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
   }
+  mostraVediCome(accesso);
 });
+
+/**
+ * "Vedi come": mentre il superadmin guarda il sito come un altro ruolo, una
+ * fascia gialla fissa in fondo allo schermo lo dice su ogni pagina, con il
+ * pulsante per tornare sé stesso. Senza, dopo un po' ci si dimenticherebbe
+ * di averlo acceso e si crederebbe il sito guasto.
+ */
+function mostraVediCome(accesso) {
+  if (!accesso || accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
+  const fascia = document.createElement("div");
+  fascia.className = "fascia-vedi-come";
+  fascia.setAttribute("role", "status");
+  fascia.innerHTML = `Stai vedendo il sito come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+    <button type="button" class="button is-dark">Torna superadmin</button>`;
+  fascia.querySelector("button").addEventListener("click", () => vediCome(null));
+  document.body.append(fascia);
+}
+
+/** Guarda il sito come `ruolo` (null per tornare superadmin) e riparte dalla sua pagina. */
+async function vediCome(ruolo) {
+  const { error } = await sb.rpc("set_view_as", { role: ruolo });
+  if (error) { showToast("Non riesco a cambiare vista: " + messaggioErrore(error), "is-danger"); return; }
+  _accessoCache = null;
+  const accesso = await getProfile();
+  location.href = ruolo ? paginaDiArrivo(accesso) || "index.html" : "gestione.html";
+}
+
+/** Come si chiamano i ruoli a schermo. */
+const NOMI_RUOLI = {
+  superadmin: "Superadmin",
+  admin: "Admin",
+  tesoriere: "Tesoriere",
+  assicurazione: "Assicurazione",
+  gite: "Utente (ricerca e gite)",
+  social: "Social",
+};
+
+/**
+ * Avviso sotto un campo codice fiscale, a partire dall'esito di verificaCF()
+ * (codicefiscale.js): cosa non torna e, se c'è, il pulsante per mettere nel
+ * campo il codice proposto. Non blocca niente: chi ha il documento davanti
+ * decide. `dopo` viene chiamata quando il codice proposto finisce nel campo.
+ */
+function mostraAvvisoCF(box, campo, esito, dopo) {
+  if (!esito || esito.ok) {
+    box.hidden = true;
+    box.replaceChildren();
+    return;
+  }
+  const righe = esito.problemi.map((p) => {
+    const riga = document.createElement("p");
+    riga.textContent = p;
+    return riga;
+  });
+  box.replaceChildren(...righe);
+  if (esito.suggerito) {
+    const usa = document.createElement("button");
+    usa.type = "button";
+    usa.className = "button is-link is-small";
+    usa.innerHTML = `Usa il codice proposto: <code>${esc(esito.suggerito)}</code>`;
+    usa.addEventListener("click", () => {
+      campo.value = esito.suggerito;
+      box.hidden = true;
+      box.replaceChildren();
+      if (dopo) dopo();
+    });
+    box.append(usa);
+  }
+  box.hidden = false;
+}
+
+// ---------------------------------------------------------------------------
+// Excel dei tesserati della stagione (Riepilogo)
+//
+// L'elenco completo, per chi ha il permesso riepilogo: il ruolo assicurazione
+// non lo può scaricare. Le liste per l'assicurazione, con il loro tracciato,
+// le fa la pagina Assicurazione (excelLista()).
+// ---------------------------------------------------------------------------
+
+/** "2026-01-31" → "31/01/2026". */
+function dataIt(iso) {
+  if (!iso) return "";
+  const [a, m, g] = String(iso).slice(0, 10).split("-");
+  return `${g}/${m}/${a}`;
+}
+
+// Intestazione della colonna e come si ricava dal socio. Un campo nuovo va
+// aggiunto anche a scaricaSoci() in riepilogo.html, che legge i soci.
+const COLONNE_ASSICURAZIONE = [
+  ["Cognome", (s) => s.last_name],
+  ["Nome", (s) => s.first_name],
+  ["Data di nascita", (s) => dataIt(s.birth_date)],
+  ["Luogo di nascita", (s) => s.birth_place],
+  ["Provincia di nascita", (s) => s.birth_province],
+  ["Codice fiscale", (s) => s.tax_code],
+  ["Indirizzo", (s) => s.address],
+  ["Città", (s) => s.city],
+  ["Provincia", (s) => s.province],
+  ["CAP", (s) => s.postal_code],
+  ["Tessera", (s) => s.card_type],
+  ["Numero tessera", (s) => s.card_number],
+];
+
+// SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
+// volte a stagione. È la versione pubblicata su npm, usata solo per
+// SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
+// un giorno si leggerà il file restituito dall'assicurazione, passare alla
+// versione di cdn.sheetjs.com.
+let _xlsxInArrivo = null;
+function caricaXlsx() {
+  if (window.XLSX) return Promise.resolve();
+  _xlsxInArrivo ??= new Promise((ok, ko) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    script.onload = ok;
+    script.onerror = () => {
+      _xlsxInArrivo = null;
+      script.remove();
+      ko(new Error("non riesco a scaricare il modulo per l'Excel: controlla la connessione e riprova."));
+    };
+    document.head.append(script);
+  });
+  return _xlsxInArrivo;
+}
+
+/** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
+async function scaricaExcel(righe, nome) {
+  if (!righe.length) { showToast("Non c'è nessun socio da scaricare."); return; }
+  await caricaXlsx();
+  const foglio = XLSX.utils.aoa_to_sheet([
+    COLONNE_ASSICURAZIONE.map(([titolo]) => titolo),
+    ...righe.map((s) => COLONNE_ASSICURAZIONE.map(([, valore]) => valore(s) ?? "")),
+  ]);
+  foglio["!cols"] = COLONNE_ASSICURAZIONE.map(([titolo]) => ({ wch: Math.max(14, titolo.length + 2) }));
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, foglio, "Soci");
+  XLSX.writeFile(libro, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast(righe.length === 1 ? "Scaricato 1 socio." : `Scaricati ${righe.length} soci.`);
+}
+
+/**
+ * Tutte le righe di una lettura, a pagine di 1000: Supabase non ne dà di più
+ * per chiamata, e un elenco tagliato in silenzio (la stagione 2025 aveva 677
+ * soci, non lontano) arriverebbe all'assicurazione senza che nessuno se ne
+ * accorga. `crea` rifà la stessa richiesta, che deve avere un ordine stabile.
+ */
+async function tutteLeRighe(crea) {
+  const PAGINA = 1000;
+  const righe = [];
+  for (let da = 0; ; da += PAGINA) {
+    const { data, error } = await crea().range(da, da + PAGINA - 1);
+    if (error) throw error;
+    righe.push(...data);
+    if (data.length < PAGINA) return righe;
+  }
+}
+
+/**
+ * L'etichetta colorata di un giorno di gita (SABATO, DOMENICA, MARTEDI, JOLLY),
+ * o stringa vuota. Colori in brand.css, "Giorni delle gite"; è la stessa di
+ * etichettaGiorno() in ricerca/comune.js.
+ */
+const NOMI_GIORNI = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
+function etichettaGiorno(giorno) {
+  return NOMI_GIORNI[giorno] ? `<span class="giorno-etichetta" data-giorno="${giorno}">${NOMI_GIORNI[giorno]}</span>` : "";
+}
+
+/** Testo scritto dagli utenti, pronto per innerHTML. */
+const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/**
+ * Domanda scritta sulla pagina al posto di confirm(). Un browser che ha
+ * bloccato le finestre di conferma della pagina fa rispondere a confirm()
+ * "no" da solo, senza mostrare niente: il pulsante sembrava non fare nulla.
+ * `dove` è il riquadro dei pulsanti: finché la domanda è aperta sono
+ * nascosti, poi tornano com'erano. Stile in brand.css (.domanda-inline).
+ */
+function chiedi(dove, domanda, si, alSi) {
+  dove.querySelector(".domanda-inline")?.remove();
+  const pulsanti = [...dove.children], nascosti = pulsanti.map((b) => b.hidden);
+  pulsanti.forEach((b) => { b.hidden = true; });
+  const riga = document.createElement("div");
+  riga.className = "domanda-inline";
+  riga.innerHTML = `<span class="domanda">${esc(domanda)}</span>
+    <button type="button" class="button is-danger">${esc(si)}</button>
+    <button type="button" class="button is-light">Annulla</button>`;
+  const chiudi = () => { riga.remove(); pulsanti.forEach((b, i) => { b.hidden = nascosti[i]; }); };
+  const [bSi, bNo] = riga.querySelectorAll("button");
+  bSi.addEventListener("click", () => { chiudi(); alSi(); });
+  bNo.addEventListener("click", chiudi);
+  dove.append(riga);
+  bNo.focus();
+}
 
 // ---------------------------------------------------------------------------
 // Importi
@@ -180,6 +454,9 @@ const num = (v) => parseFloat(v) || 0;
  */
 function fmt(v) {
   return "€ " + num(v).toLocaleString("it-IT", {
+    // In italiano il punto delle migliaia manca sotto i 10.000 (5000,00 ma
+    // 11.000,00): "always" lo mette sempre, così gli importi si confrontano.
+    useGrouping: "always",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -209,13 +486,14 @@ function totaliNucleo(capofamiglia, familiari = []) {
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price, min_role")
+    .select("category, name, price, min_role, trips, day")
     .eq("active", true)
     .order("category")
+    .order("price")
     .order("name");
   if (error) throw error;
 
-  const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], CORSO: [] };
+  const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], PRESCIISTICA: [], CORSO: [] };
   data.forEach((p) => {
     if (perCategoria[p.category]) perCategoria[p.category].push(p);
   });

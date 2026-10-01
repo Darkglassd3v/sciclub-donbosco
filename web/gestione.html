@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ruoli e vedi come — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+
+    .riga-vedi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .riga-vedi select { width: auto; min-width: 260px; }
+
+    .tabella-ruoli { width: 100%; border-collapse: collapse; }
+    .tabella-ruoli th { text-align: left; padding: 10px 8px; color: var(--testo-soft); font-weight: 600; border-bottom: 1px solid var(--filo); }
+    .tabella-ruoli td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: top; }
+    .tabella-ruoli td:first-child { font-weight: 600; white-space: nowrap; }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <nav class="schede-gestione" aria-label="Gestione">
+    <a href="stagione.html">Amministrazione</a>
+    <a href="utenti.html">Utenti</a>
+    <a href="impostazioni.html">Impostazioni</a>
+    <a href="gestione.html">Ruoli e vedi come</a>
+  </nav>
+  <h1 class="title is-4">Ruoli e vedi come</h1>
+  <p class="occhiello">Cosa può fare ogni ruolo, e il sito visto con gli occhi di un altro ruolo.</p>
+
+  <div class="riquadro">
+    <h2>Vedi come</h2>
+    <p class="occhiello">
+      Guarda il sito come lo vede un altro ruolo, per controllare che ognuno
+      trovi quello che gli serve. Il database ti tratta davvero da quel ruolo:
+      quello che lui non può fare, non lo puoi fare nemmeno tu finché non torni.
+      Una fascia gialla in fondo allo schermo ti ricorda che sei in questa vista,
+      con il pulsante per tornare superadmin.
+    </p>
+    <div class="riga-vedi">
+      <select class="input" id="vediRuolo"></select>
+      <button type="button" class="button is-link" id="btnVedi">Vedi il sito così</button>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Chi fa cosa</h2>
+    <table class="tabella-ruoli">
+      <thead><tr><th>Ruolo</th><th>Può</th></tr></thead>
+      <tbody>
+        <tr><td>Superadmin</td><td>Tutto, più Gestione e "Vedi come".</td></tr>
+        <tr><td>Admin</td><td>Iscrivere e modificare i soci, incassare, vedere il Riepilogo della stagione in corso, segnare le gite. Non vede Bilancio, stagioni chiuse, Assicurazione e Gestione.</td></tr>
+        <tr><td>Tesoriere</td><td>Incassare, vedere il Riepilogo anche delle stagioni chiuse, tenere il Bilancio. I soci li legge ma non li modifica.</td></tr>
+        <tr><td>Assicurazione</td><td>Solo la pagina Assicurazione: liste Neve Base, Neve Plus e Global Sport da mandare, codice fiscale dei tesserati.</td></tr>
+        <tr><td>Utente (ricerca e gite)</td><td>Dal telefono: cercare un socio, segnare le gite, vendere un abbonamento.</td></tr>
+        <tr><td>Social</td><td>Solo la pagina Social: post e campagne degli sponsor.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+
+  (async function init() {
+    if (!(await requirePermesso("gestione"))) return;
+    el("vediRuolo").innerHTML = ["admin", "tesoriere", "assicurazione", "gite", "social"]
+      .map((r) => `<option value="${r}">${esc(NOMI_RUOLI[r])}</option>`).join("");
+    el("btnVedi").addEventListener("click", () => vediCome(el("vediRuolo").value));
+  })();
+</script>
+</body>
+</html>

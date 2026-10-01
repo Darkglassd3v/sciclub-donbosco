@@ -6,28 +6,13 @@
   <title>Amministrazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 860px; margin: 28px auto 80px; padding: 0 18px; }
-    #bloccato { display: none; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    /* Questa pagina deve sembrare diversa dalle altre appena si apre: chi ci
-     * finisce per sbaglio se ne accorge prima di toccare qualcosa. */
-    .fascia-pericolo {
-      background: var(--errore); color: #fff; padding: 22px 26px;
-      border-radius: var(--raggio-card); margin-bottom: 28px; font-size: 1.05rem;
-    }
-    .fascia-pericolo strong { color: #fff; display: block; font-size: 1.35rem;
-                              letter-spacing: -.022em; margin-bottom: 6px; }
-
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
-                padding: 30px; margin-bottom: 22px; }
     .riquadro.pericolo { border: 2px solid var(--errore); }
-    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 6px; }
     .riquadro h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.022em;
                    margin: 26px 0 4px; }
-    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
     .due-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
     .elenco { margin: 0; padding-left: 22px; list-style: disc; }
@@ -48,23 +33,6 @@
     .conferma label { font-weight: 600; display: block; margin-bottom: 10px; }
     .conferma code { background: #fff; border: 1px solid var(--filo); padding: 3px 10px;
                      border-radius: 6px; font-size: 1rem; }
-
-    /* Il dettaglio per tipologia si apre sotto la riga della stagione chiusa:
-     * stessa lettura del Riepilogo, ma di un anno archiviato. */
-    .riga-dettaglio td { background: var(--riga-alt); padding: 20px 12px; }
-    .dettaglio-stagione { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-    .dettaglio-blocco h4 { font-size: .9375rem; font-weight: 600; margin-bottom: 8px; color: var(--testo-soft); }
-    .dettaglio-blocco table { width: 100%; border-collapse: collapse; font-size: .9375rem; }
-    .dettaglio-blocco th { text-align: left; padding: 4px 6px; color: var(--testo-soft); font-weight: 600; }
-    .dettaglio-blocco td { padding: 6px 6px; border-top: 1px solid var(--filo); }
-    .dettaglio-vuoto { color: var(--testo-soft); }
-
-    @media screen and (max-width: 768px) {
-      .riquadro { padding: 22px 18px; }
-    }
-    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
   </style>
 </head>
 <body>
@@ -76,12 +44,17 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -89,25 +62,22 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Amministrazione</h1>
-
-  <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: solo i superadmin possono chiudere la stagione.
-  </div>
+  <nav class="schede-gestione" aria-label="Gestione">
+    <a href="stagione.html">Amministrazione</a>
+    <a href="utenti.html">Utenti</a>
+    <a href="impostazioni.html">Impostazioni</a>
+    <a href="gestione.html">Ruoli e vedi come</a>
+  </nav>
+  <h1 class="title is-4">Amministrazione</h1>
+  <p class="occhiello">Chiusura della stagione e conti degli anni passati.</p>
 
   <div id="contenuto">
   <!-- Resoconto rapido: incasso corsi = iscritti al corso x listino. -->
-  <div class="columns is-mobile is-multiline mb-5">
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso corsi</div><div class="kpi-value" id="kCorsi">—</div></div></div>
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div></div>
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div></div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Incasso corsi</div><div class="kpi-value" id="kCorsi">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div>
+    <div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div>
   </div>
-  <div class="fascia-pericolo">
-    <strong>Chiusura della stagione</strong>
-    Tesseramenti, pagamenti, partenze e nuclei familiari di tutti i soci
-    vengono azzerati in un'unica operazione.
-  </div>
-
   <div class="riquadro">
     <h2>Stagione in corso</h2>
     <div class="tabella-scorrevole">
@@ -137,64 +107,58 @@
     </div>
   </div>
 
-  <div class="riquadro">
-    <h2>Effetti della chiusura</h2>
-    <p class="mb-4">
-      I dati rimossi vengono prima archiviati in <code>season_history</code> e
-      <code>season_breakdown</code> e restano consultabili nella tabella delle
-      stagioni chiuse, con il dettaglio per tipologia.
-    </p>
-    <div class="due-colonne">
-      <div>
-        <p class="resta mb-2">Resta invariato</p>
-        <ul class="elenco">
-          <li>Cognome e nome</li>
-          <li>Data e luogo di nascita</li>
-          <li>Codice fiscale</li>
-          <li>Indirizzo, città, CAP</li>
-          <li>Telefono ed email</li>
-        </ul>
-      </div>
-      <div>
-        <p class="via mb-2">Viene azzerato</p>
-        <ul class="elenco">
-          <li>Numero di polizza</li>
-          <li>Numero e tipologia di tessera</li>
-          <li>Agevolazione famiglia</li>
-          <li>Abbonamento e corso</li>
-          <li>Partenze del sabato e della domenica</li>
-          <li>Quota, acconto e saldo</li>
-          <li>Capofamiglia che paga (nuclei familiari)</li>
-          <li>Note</li>
-          <li>Data di iscrizione</li>
-          <li>Contatori delle gite (ripartono da zero)</li>
-        </ul>
-      </div>
-    </div>
-    <p class="mt-4">
-      Le gite registrate restano legate alla stagione in cui sono state fatte:
-      a ripartire da zero sono solo i contatori della stagione nuova.
-    </p>
-    <p class="mt-4">
-      Dopo la chiusura i soci restano in anagrafica senza risultare iscritti ad
-      alcuna stagione: rientrano nei conteggi quando vengono risalvati dalla
-      pagina <a href="index.html">Soci</a>. Listino prezzi e partenze non
-      vengono modificati.
-    </p>
-  </div>
-
   <div class="riquadro pericolo">
-    <h2>Chiusura</h2>
-    <div class="conferma">
-      <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
-      <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
-      <button class="button is-danger mt-4" id="btnChiudi" disabled>Chiudi la stagione e azzera i dati</button>
-    </div>
-
+    <h2>Chiusura della stagione</h2>
+    <p class="mb-4">Archivia la stagione in corso e azzera tesseramenti e pagamenti: le anagrafiche restano.</p>
+    <button type="button" class="button is-danger" id="btnApri">Chiudi stagione…</button>
     <div id="esito" class="mt-4"></div>
   </div>
   </div>
 </div>
+
+<!-- Conferma della chiusura: la spiegazione sta qui, davanti a chi sta per
+     farlo, e non più sparsa nella pagina. -->
+<dialog id="dlgChiudi" class="finestra" aria-labelledby="dlgTitolo">
+  <h2 id="dlgTitolo">Chiudere la stagione?</h2>
+  <p class="mb-4">
+    I dati della stagione vengono prima archiviati e restano consultabili fra
+    le stagioni chiuse (pulsante Riepilogo). Le gite registrate e i movimenti
+    del bilancio restano legati alla loro stagione.
+  </p>
+  <div class="due-colonne">
+    <div>
+      <p class="resta mb-2">Resta invariato</p>
+      <ul class="elenco">
+        <li>Cognome, nome, nascita, codice fiscale</li>
+        <li>Indirizzo, telefono ed email</li>
+        <li>Listino prezzi e partenze</li>
+      </ul>
+    </div>
+    <div>
+      <p class="via mb-2">Viene azzerato</p>
+      <ul class="elenco">
+        <li>Assicurazione, tessera, agevolazione famiglia</li>
+        <li>Abbonamento, corso e partenze</li>
+        <li>Quota, acconto e saldo, capofamiglia che paga</li>
+        <li>Note e data di iscrizione</li>
+        <li>Contatori delle gite</li>
+      </ul>
+    </div>
+  </div>
+  <p class="mt-4">
+    I soci restano in anagrafica senza stagione: rientrano nei conteggi quando
+    vengono risalvati dalla pagina Soci.
+  </p>
+  <p class="mt-4">Saldo banca finale previsto: <b id="saldoFinale">…</b></p>
+  <div class="conferma">
+    <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
+    <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
+    <div class="buttons mt-4">
+      <button type="button" class="button" id="btnAnnulla">Annulla</button>
+      <button type="button" class="button is-danger" id="btnChiudi" disabled>Chiudi la stagione</button>
+    </div>
+  </div>
+</dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -204,11 +168,7 @@
   const FRASE = "CHIUDI STAGIONE";
 
   (async function init() {
-    if (!(await requireRole("superadmin"))) {
-      el("bloccato").style.display = "block";
-      el("contenuto").style.display = "none";
-      return;
-    }
+    if (!(await requirePermesso("gestione"))) return;
 
     // Il pulsante si accende solo con la frase esatta: un clic distratto non
     // basta a chiudere una stagione.
@@ -216,6 +176,8 @@
       el("btnChiudi").disabled = e.target.value.trim().toUpperCase() !== FRASE;
     });
     el("btnChiudi").addEventListener("click", chiudi);
+    el("btnApri").addEventListener("click", apriConferma);
+    el("btnAnnulla").addEventListener("click", () => el("dlgChiudi").close());
 
     await Promise.all([caricaSituazione(), caricaResoconto()]);
   })();
@@ -234,7 +196,6 @@
   }
 
   /** Un id HTML valido a partire da una stagione ISO: via tutto ciò che non è lettera o cifra. */
-  const idStagione = (iso) => "s" + iso.replace(/[^a-zA-Z0-9]/g, "");
 
   function righeStagioni(stagioni) {
     return stagioni.map((st) => `
@@ -254,7 +215,6 @@
    */
   function righeChiuse(stagioni) {
     return stagioni.map((st) => {
-      const id = idStagione(st.season);
       return `
         <tr>
           <td class="anno">${annoStagione(st.season)}</td>
@@ -262,9 +222,8 @@
           <td class="num">${fmt(st.total)}</td>
           <td class="num">${fmt(st.collected)}</td>
           <td class="num" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
-          <td><button type="button" class="button is-small is-light" data-dettaglio="${st.season}" data-id="${id}">Dettaglio</button></td>
-        </tr>
-        <tr id="dettaglio_${id}" class="riga-dettaglio" style="display:none"><td colspan="6"></td></tr>`;
+          <td><a class="button is-small is-light" href="riepilogo.html?stagione=${String(st.season).slice(0, 10)}">Riepilogo</a></td>
+        </tr>`;
     }).join("");
   }
 
@@ -291,9 +250,6 @@
         ? righeChiuse(chiuse.data)
         : vuota("Non è mai stata chiusa una stagione.", 6);
 
-      el("tabellaChiuse").querySelectorAll("[data-dettaglio]").forEach((bottone) => {
-        bottone.addEventListener("click", () => toggleDettaglio(bottone.dataset.dettaglio, bottone.dataset.id));
-      });
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -301,71 +257,18 @@
     }
   }
 
-  // ---------------------------------------------------------------------
-  // Dettaglio per tipologia di una stagione chiusa
-  // ---------------------------------------------------------------------
-
-  const ETICHETTE_CATEGORIA = { CARD: "Tessere", PASS: "Abbonamenti", COURSE: "Corsi", DEPARTURE: "Partenze" };
-
-  function blocchettoDettaglio(titolo, voci, conTotale) {
-    if (!voci.length) return "";
-    return `
-      <div class="dettaglio-blocco">
-        <h4>${titolo}</h4>
-        <table>
-          <thead><tr><th>Tipo</th><th>N.</th>${conTotale ? "<th>Totale</th>" : ""}</tr></thead>
-          <tbody>
-            ${voci.map((v) => `
-              <tr>
-                <td>${v.label}${v.day ? " (" + v.day.charAt(0) + v.day.slice(1).toLowerCase() + ")" : ""}</td>
-                <td>${v.count}</td>
-                ${conTotale ? `<td>${v.total ? fmt(v.total) : "—"}</td>` : ""}
-              </tr>`).join("")}
-          </tbody>
-        </table>
-      </div>`;
-  }
-
-  function dettaglioHtml(righe) {
-    if (!righe.length) return '<p class="dettaglio-vuoto">Nessun dato per questa stagione.</p>';
-
-    const gruppo = (categoria) => righe
-      .filter((r) => r.category === categoria)
-      .sort((a, b) => b.count - a.count);
-
-    return `
-      <div class="dettaglio-stagione">
-        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.CARD, gruppo("CARD"), true)}
-        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.PASS, gruppo("PASS"), false)}
-        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.COURSE, gruppo("COURSE"), false)}
-        ${blocchettoDettaglio(ETICHETTE_CATEGORIA.DEPARTURE, gruppo("DEPARTURE"), false)}
-      </div>`;
-  }
-
-  async function toggleDettaglio(stagioneIso, id) {
-    const riga = el("dettaglio_" + id);
-    if (!riga) return;
-    const cella = riga.querySelector("td");
-
-    if (riga.style.display !== "none") {
-      riga.style.display = "none";
-      cella.innerHTML = "";
-      return;
-    }
-
-    cella.innerHTML = "Caricamento…";
-    riga.style.display = "table-row";
-
-    try {
-      const { data, error } = await sb.from("season_breakdown").select("*").eq("season", stagioneIso);
-      if (error) throw error;
-      cella.innerHTML = dettaglioHtml(data);
-    } catch (error) {
-      cella.innerHTML = `<p class="dettaglio-vuoto">${messaggioErrore(error)}</p>`;
-    }
+  /** Apre la conferma e legge il saldo banca a cui si chiuderà la stagione. */
+  async function apriConferma() {
+    el("frase").value = "";
+    el("btnChiudi").disabled = true;
+    el("saldoFinale").textContent = "…";
+    el("dlgChiudi").showModal();
+    const { data, error } = await sb.from("season_balance").select("bank_current").maybeSingle();
+    el("saldoFinale").textContent = error || !data ? "n.d." : fmt(data.bank_current);
   }
 
   async function chiudi() {
+    el("dlgChiudi").close();
     setLoading(true);
     el("btnChiudi").disabled = true;
     try {

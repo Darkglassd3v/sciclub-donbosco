@@ -26,11 +26,11 @@
   /* Neutri */
   --sfondo:     #F5F5F7;
   --superficie: #FFFFFF;
-  --riga-alt:   #FAFAFB;
+  --riga-alt:   #EEF2F6;   /* la riga pari si deve distinguere, non solo esserci */
   --testo:      #14202E;
-  --testo-soft: #5B6472;
-  --bordo:      #C7D0DA;   /* solo per i campi: devono vedersi */
-  --filo:       #E4E6EB;   /* divisori e contorni delle schede */
+  --testo-soft: #4A5361;   /* 7.8:1: è il testo delle etichette, va letto */
+  --bordo:      #7B8794;   /* solo per i campi: 3.7:1, il minimo per vederne il contorno è 3:1 */
+  --filo:       #D5DAE1;   /* divisori e contorni delle schede */
 
   /* Stati */
   --ok:      #147A45;
@@ -46,7 +46,11 @@
   --aria: 44px;   /* distanza fra una sezione e la successiva */
 }
 
-html { font-size: 17px; }
+html { font-size: 17px; background: var(--sfondo); }  /* Bulma lo fa bianco: sotto una pagina corta si vedeva una fascia bianca */
+/* Pulsante A+ della barra (cambiaTesto() in shared.js): le misure delle
+ * pagine sono in rem, quindi crescono insieme testo, campi e tabelle. */
+html[data-testo="1"] { font-size: 19px; }
+html[data-testo="2"] { font-size: 21px; }
 
 body {
   background: var(--sfondo);
@@ -64,13 +68,20 @@ body {
 .title.is-4 { font-size: 2rem; line-height: 1.15; }
 @media screen and (max-width: 768px) { .title.is-4 { font-size: 1.6rem; } }
 
+/* I link nel testo erano del viola di Bulma (#485fc7): il blu del club ha
+ * più contrasto (8.7:1 sul bianco) ed è lo stesso dei pulsanti. */
+a { color: var(--blu); }
+a:hover { color: var(--blu-dark); }
+
 strong, label, .label { color: var(--testo); }
 .label { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
 .help, .filtro-attivo { font-size: .9375rem; color: var(--testo-soft); }
 
 /* --- Focus -------------------------------------------------------------
  * Bulma toglie l'outline e lascia solo un'ombra tenue: su schermi vecchi o
- * poco contrastati non si vede dove si è arrivati col TAB. */
+ * poco contrastati non si vede dove si è arrivati col TAB. L'anello è blu
+ * scuro (11.7:1 sul bianco) con il giallo del marchio in mezzo: il giallo da
+ * solo sul bianco sta a 1.5:1 e chi vede poco non lo trova. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -79,9 +90,9 @@ textarea:focus-visible,
 .button:focus-visible,
 .input:focus-visible,
 .select select:focus-visible {
-  outline: 3px solid var(--giallo);
+  outline: 3px solid var(--blu-dark);
   outline-offset: 2px;
-  box-shadow: none;
+  box-shadow: 0 0 0 5px var(--giallo);
 }
 
 /* --- Campi --------------------------------------------------------------
@@ -101,7 +112,12 @@ textarea:focus-visible,
 .select:not(.is-multiple) { height: auto; }
 .select:not(.is-multiple):not(.is-loading)::after { border-color: var(--blu); }
 
-/* Campi amministrativi (polizza, tessera): il direttivo usa già il giallo
+/* Caselle di spunta: quelle del browser sono di 13px, troppo piccole da
+ * vedere e da centrare. Tutta l'etichetta resta cliccabile. */
+.checkbox { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tocco); }
+.checkbox input[type="checkbox"] { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
+
+/* Campi amministrativi (numero tessera): il direttivo usa già il giallo
  * come "da compilare a mano", si conserva. */
 .campo-admin { background: var(--giallo-light); }
 
@@ -121,6 +137,24 @@ textarea:focus-visible,
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
 .button.is-small { min-height: 42px; font-size: .9375rem; }
+/* Bulma dà ai pulsanti piccoli un raggio di 2px con una regola più specifica
+ * di .button: senza questa restavano gli unici quadrati della pagina. */
+.button.is-small:not(.is-rounded) { border-radius: var(--pillola); }
+
+/* Finestra di conferma sopra la pagina (<dialog class="finestra"> aperto con
+ * showModal()): per i gesti che non si annullano o che stanno in una riga di
+ * tabella, dove una domanda scritta allargherebbe la cella. Non è confirm(),
+ * che il browser può bloccare senza dire niente. */
+dialog.finestra { border: 0; border-radius: var(--raggio-card); padding: 30px; color: var(--testo);
+                  width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
+dialog.finestra::backdrop { background: rgba(0, 0, 0, .45); }
+dialog.finestra h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
+@media screen and (max-width: 768px) { dialog.finestra { padding: 22px 18px; } }
+
+/* Domanda di conferma scritta sulla pagina (chiedi() in shared.js), al posto
+ * dei pulsanti che l'hanno aperta. */
+.domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
 
 .button.is-link, .button.is-primary, .button.is-info {
   background: var(--blu); border-color: var(--blu); color: #fff;
@@ -147,11 +181,16 @@ textarea:focus-visible,
   background: var(--superficie); border: 1px solid var(--errore); color: var(--errore);
 }
 .button.is-danger.is-outlined:hover { background: var(--errore); color: #fff; }
+/* Senza questa il contorno restava del viola di Bulma, come i link. */
+.button.is-link.is-outlined {
+  background: var(--superficie); border: 1px solid var(--blu); color: var(--blu);
+}
+.button.is-link.is-outlined:hover { background: var(--blu); color: #fff; }
 
-/* --- Titoli di sezione --------------------------------------------------
- * Le sezioni erano separate da barre blu piene. Ora la separazione è affidata
- * allo spazio, con una linea sottile a chiudere il blocco. */
-.section-title, .family-title {
+/* --- Familiari a carico ------------------------------------------------
+ * Titolo dentro il riquadro Pagamento dei Soci: le sezioni del modulo ora
+ * sono riquadri (vedi Impianto delle pagine in fondo). */
+.family-title {
   background: none;
   color: var(--testo);
   font-size: 1.35rem;
@@ -166,6 +205,10 @@ textarea:focus-visible,
 .family-title { color: var(--ok); }
 
 .notification { font-size: 1rem; border-radius: var(--raggio); }
+/* Il rosso e il verde di Bulma col testo bianco stanno a 3.6:1 e 2.1:1: un
+ * errore che non si riesce a leggere è peggio di nessun avviso. */
+.notification.is-danger:not(.is-light)  { background: var(--errore); color: #fff; }
+.notification.is-success:not(.is-light) { background: var(--ok); color: #fff; }
 
 /* --- Tabelle ------------------------------------------------------------
  * Divisori sottili al posto dei bordi marcati; intestazioni in tondo minuscolo
@@ -226,6 +269,9 @@ body { margin: 0; }
   position: sticky;
   top: 0;
   z-index: 100;
+  /* La barra resta in px anche col testo ingrandito: più grande non ci
+   * starebbe su una riga, e deve restare sempre uguale e al suo posto. */
+  font-size: 17px;
   background: var(--superficie);
   border-bottom: 1px solid var(--filo);
 }
@@ -267,17 +313,40 @@ body { margin: 0; }
   align-items: center;
   white-space: nowrap;
   flex: 0 0 auto;
-  height: 40px;
-  padding: 0 14px;
+  height: var(--tocco);
+  padding: 0 16px;
   border: 1px solid var(--filo);
   border-radius: 999px;
   background: var(--superficie);
   color: var(--blu);
   font: inherit;
-  font-size: .9375rem;
+  font-size: 18px;
+  font-weight: 600;
+  /* Unica eccezione al tondo minuscolo: le voci della barra sono poche e
+   * sempre le stesse, in maiuscolo si trovano a colpo d'occhio. Il tracking
+   * largo evita che le lettere si impastino. */
+  text-transform: uppercase;
+  letter-spacing: .03em;
   text-decoration: none;
   cursor: pointer;
 }
+/* Il superadmin ha otto voci più A+ ed Esci: in maiuscolo non ci stanno
+ * accanto al nome del club, ed "Esci" finirebbe fuori schermo. Resta il logo,
+ * il nome si toglie, la barra si allarga a 1280px invece dei 1180px delle
+ * pagine, e le voci si stringono un poco (17px invece di 18). Dalla 2.5
+ * Amministrazione, Utenti e Impostazioni stanno dentro Gestione: al loro
+ * posto sono entrate Gite e Social.
+ * Un limite e non "nessun limite": sugli schermi larghi la barra resta
+ * centrata, invece di mandare il logo tutto a sinistra e le voci a destra. */
+html[data-ruolo="superadmin"] .barra-marchio span { display: none; }
+html[data-ruolo="superadmin"] .barra-dentro { max-width: 1280px; }
+html[data-ruolo="superadmin"] .barra-voci a,
+html[data-ruolo="superadmin"] .barra-voci button { padding: 0 10px; font-size: 17px; }
+
+/* A+ diventa A− all'ultima grandezza: premendolo si torna al testo normale. */
+.barra-voci .voce-testo { font-weight: 700; letter-spacing: 0; }
+.barra-voci .voce-testo::before { content: "A+"; }
+html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 .barra-voci a:hover, .barra-voci button:hover {
   background: var(--blu-light);
   border-color: var(--blu-light);
@@ -287,11 +356,46 @@ body { margin: 0; }
   border-color: var(--blu);
   color: #fff;
 }
-/* Le voci da superadmin (Amministrazione, Utenti, Impostazioni) si
-   distinguono anche da qui. */
+/* "Cerca socio" (la ricerca dal telefono, ricerca/index.html) serve a chi ha
+ * solo le gite: chi ha la pagina Soci cerca da lì, e con una voce in più la
+ * barra dell'admin non ci starebbe. */
+html[data-permessi~="soci"] .barra-voci .voce-cerca { display: none !important; }
+/* La voce da superadmin (Gestione) si distingue anche da qui. */
 .barra-voci .voce-rischiosa { color: var(--errore); }
 /* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */
 .barra-voci [hidden] { display: none; }
+/* Schede di Gestione (Amministrazione, Utenti, Impostazioni, Ruoli):
+ * sempre tutte visibili, piena quella aperta. Grandi come le voci della
+ * barra, e senza menu da aprire: si vede subito dove si può andare. */
+.schede-gestione { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;
+                   padding-bottom: 14px; border-bottom: 2px solid var(--filo); }
+.schede-gestione a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px;
+                     border: 2px solid var(--filo); border-radius: 999px; background: #fff;
+                     color: var(--blu); font-weight: 600; font-size: 1.05rem; text-decoration: none; }
+.schede-gestione a:hover { background: var(--blu-light); border-color: var(--blu-light); }
+.schede-gestione a[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
+/* Schede di Social: come quelle di Gestione, ma ognuna col suo colore
+ * (--scheda sul link), così si riconoscono a colpo d'occhio: bordo e scritta
+ * nel colore, piena quella aperta. */
+.schede-social { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px;
+                 padding-bottom: 14px; border-bottom: 2px solid var(--filo); }
+.schede-social a { --scheda: var(--blu); display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px;
+                   border: 2px solid var(--scheda); border-radius: 999px; background: #fff;
+                   color: var(--scheda); font-weight: 700; font-size: 1.05rem; text-decoration: none; }
+.schede-social a:hover { box-shadow: inset 0 0 0 2px var(--scheda); }
+.schede-social a[aria-current="page"] { background: var(--scheda); color: #fff; }
+/* Impostazioni in fondo alla fila: si usa poco. Il numero dei post da fare
+ * sulla scheda Post, nel suo colore (bianco su quella aperta). */
+.schede-social .a-destra { margin-left: auto; }
+.schede-social svg { width: 1.15em; height: 1.15em; margin-right: .45em; flex: none; }
+.schede-social .conta { display: inline-flex; align-items: center; min-height: 1.6rem; margin-left: .55em; padding: 0 .6em;
+                        border-radius: 999px; background: var(--scheda); color: #fff; font-size: .9rem; }
+.schede-social .conta:empty { display: none; }
+.schede-social a[aria-current="page"] .conta { background: #fff; color: var(--scheda); }
+
+/* Bulma dà display:block alle colonne e inline-flex ai pulsanti, che
+   vincerebbero sull'attributo hidden. */
+.column[hidden], .button[hidden] { display: none; }
 .barra-voci .voce-rischiosa[aria-current="page"] {
   background: var(--errore);
   border-color: var(--errore);
@@ -328,18 +432,144 @@ body { margin: 0; }
   .barra-dentro { padding: 0 12px; gap: 10px; }
   .barra-marchio img { height: 32px; }
   .barra-marchio span { display: none; }
-  .barra-voci a, .barra-voci button { height: 38px; padding: 0 12px; font-size: .875rem; }
+  .barra-voci a, .barra-voci button { height: 44px; padding: 0 14px; font-size: 17px; }
+}
+
+/* Schermo basso (portatile con lo zoom al 150-200%, telefono in orizzontale):
+ * una barra incollata in alto ruberebbe una fetta di quel poco che si vede.
+ * Resta in cima alla pagina e scorre via con il resto. */
+@media screen and (max-height: 560px) {
+  .barra { position: static; }
 }
 
 /* --- Barra ferma fra una pagina e l'altra --------------------------------
- * Il ruolo dell'ultima visita è scritto su <html> da uno script nell'head,
- * prima del primo disegno: le voci riservate nascono già visibili invece di
- * comparire quando arriva la risposta del database. shared.js poi verifica il
- * ruolo e corregge l'attributo se è cambiato. Decide solo cosa mostrare:
- * ogni pagina riservata controlla il ruolo da sé, e il database le policy. */
-html[data-ruolo="superadmin"] .barra-voci [data-ruolo="superadmin"][hidden] { display: inline-flex; }
+ * Ruolo e permessi dell'ultima visita sono scritti su <html> da uno script
+ * nell'head, prima del primo disegno: le voci permesse nascono già visibili
+ * invece di comparire quando arriva la risposta del database. shared.js poi
+ * rilegge i permessi e corregge. Decide solo cosa mostrare: ogni pagina
+ * controlla il permesso da sé, e il database le policy.
+ * `~=` cerca una parola in un elenco separato da spazi: "soci riepilogo …". */
+html[data-permessi~="soci"]      .barra-voci [data-permesso="soci"][hidden],
+html[data-permessi~="pagamenti"] .barra-voci [data-permesso="pagamenti"][hidden],
+html[data-permessi~="riepilogo"] .barra-voci [data-permesso="riepilogo"][hidden],
+html[data-permessi~="gite"]      .barra-voci [data-permesso="gite"][hidden],
+html[data-permessi~="polizze"]   .barra-voci [data-permesso="polizze"][hidden],
+html[data-permessi~="bilancio"]  .barra-voci [data-permesso="bilancio"][hidden],
+html[data-permessi~="social"]    .barra-voci [data-permesso="social"][hidden],
+html[data-permessi~="gestione"]  .barra-voci [data-permesso="gestione"][hidden] { display: inline-flex; }
+
+/* "Vedi come" del superadmin (mostraVediCome in shared.js): fascia gialla
+ * fissa in fondo, sempre visibile, con il pulsante per tornare sé stessi. */
+.fascia-vedi-come {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;
+  padding: 12px 16px; background: var(--giallo, #FCCF02); color: #14202E;
+  font-size: 1.1rem; font-weight: 600; box-shadow: 0 -4px 12px rgba(0,0,0,.2);
+}
+body:has(.fascia-vedi-come) { padding-bottom: 80px; }
+
+/* --- Giorni delle gite ---------------------------------------------------
+ * Un colore per giorno, uguale in tutte le pagine (docs/brand-guidelines.md,
+ * "Codice colore degli abbonamenti"): sabato blu, domenica giallo, martedì
+ * rosso, jolly verde. Tre forme, tutte con il nome del giorno scritto, perché
+ * il colore aiuta ma non sostituisce:
+ *   .giorno-etichetta  il nome su fondo chiaro (accanto a un abbonamento);
+ *   .giorno-filtro     pulsante pieno come l'azione; quello scelto
+ *                      (aria-pressed="true") ha anello scuro e spunta;
+ *                      senza giorno è "Tutti";
+ *   .giorno-azione     pulsante pieno del colore del giorno.
+ * Basta data-giorno="SABATO" (DOMENICA, MARTEDI, JOLLY) sull'elemento: le
+ * variabili qui sotto le leggono tutte e tre, e la barretta delle gite. */
+[data-giorno="SABATO"]   { --giorno: var(--blu);    --giorno-su: #fff;               --giorno-chiaro: var(--blu-light);    --giorno-scuro: var(--blu-dark); }
+[data-giorno="DOMENICA"] { --giorno: var(--giallo); --giorno-su: var(--giallo-dark); --giorno-chiaro: var(--giallo-light); --giorno-scuro: var(--giallo-dark); }
+[data-giorno="MARTEDI"]  { --giorno: var(--errore); --giorno-su: #fff;               --giorno-chiaro: var(--errore-bg);    --giorno-scuro: var(--errore); }
+[data-giorno="JOLLY"]    { --giorno: var(--ok);     --giorno-su: #fff;               --giorno-chiaro: var(--ok-bg);        --giorno-scuro: var(--ok); }
+
+.giorno-etichetta { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: var(--pillola);
+                    background: var(--giorno-chiaro, var(--riga-alt)); color: var(--giorno-scuro, var(--testo));
+                    /* Il bordino la stacca anche da un fondo del suo stesso colore (riga dell'abbonamento). */
+                    border: 1px solid color-mix(in srgb, var(--giorno, var(--filo)) 45%, transparent);
+                    font-size: .9375rem; font-weight: 600; line-height: 1.4; white-space: nowrap; vertical-align: middle; }
+
+/* I filtri hanno la stessa faccia dei pulsanti (pieni del colore del giorno):
+ * quello scelto si riconosce dall'anello scuro e dalla spunta. Senza giorno
+ * (Tutti) il pulsante è blu notte. */
+.giorno-filtro { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco);
+                 padding: 0 18px; border: 0; border-radius: var(--pillola); background: var(--giorno, var(--testo));
+                 color: var(--giorno-su, #fff); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
+.giorno-filtro:hover { filter: brightness(.92); }
+.giorno-filtro[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--superficie), 0 0 0 6px var(--testo); }
+.giorno-filtro[aria-pressed="true"]::before { content: "\2713"; font-weight: 800; }
+
+.giorno-azione { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 8px 26px;
+                 border: 0; border-radius: var(--pillola); background: var(--giorno); color: var(--giorno-su);
+                 font: inherit; font-size: 1.1rem; font-weight: 700; line-height: 1.3; text-align: center; cursor: pointer; }
+.giorno-azione:hover { filter: brightness(.92); }
+.giorno-azione:disabled { opacity: .55; cursor: progress; }
+
+/* Avviso sotto un campo codice fiscale (vedi mostraAvvisoCF in shared.js):
+ * giallo e non rosso, perché è un dubbio da controllare sul documento e non
+ * un errore che impedisce di salvare. */
+.avviso-cf {
+  margin-top: 6px; padding: 10px 12px;
+  background: var(--giallo-light); border: 1px solid var(--giallo-dark); border-radius: var(--raggio);
+  color: var(--testo); font-size: 1rem; line-height: 1.4;
+}
+.avviso-cf p { margin: 0 0 4px; }
+/* inline-block e non il flex di Bulma: testo e codice vanno a capo come una
+ * frase, non una parola sotto l'altra. */
+.avviso-cf .button { display: inline-block; margin-top: 6px; white-space: normal; height: auto;
+                     min-height: var(--tocco); text-align: left; line-height: 1.4; }
+.avviso-cf code { background: none; color: inherit; font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; }
 
 /* Cambio pagina: la barra resta dov'è, sfuma solo il contenuto sotto.
  * Dove il browser non lo supporta si ricarica come prima. */
 @view-transition { navigation: auto; }
 .barra { view-transition-name: barra; }
+
+/* --- Impianto delle pagine ------------------------------------------------
+ * docs/brand-guidelines.md, sezione 6. Ogni pagina ha la stessa larghezza (la
+ * barra), la stessa testata (schede, titolo, una frase) e il contenuto in
+ * riquadri uguali: passando da una pagina all'altra non si sposta niente.
+ * Le pagine non ridefiniscono queste classi con misure loro. */
+.container-main { max-width: 1180px; margin: 0 auto; padding: 24px 18px 80px; }
+/* Il superadmin ha la barra più larga (più voci): il contenuto la segue, col bordo sotto il logo. */
+html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wrap { max-width: 1280px; }
+
+/* Schede delle sezioni (Gestione, Social): subito sotto la barra, 16px sopra il titolo. */
+.schede-gestione, .schede-social { margin-bottom: 16px; }
+
+/* La frase sotto il titolo: a cosa serve la pagina. */
+.title.is-4 + .occhiello { margin-top: -.5rem; }
+.occhiello { color: var(--testo-soft); max-width: 70ch; margin-bottom: 24px; }
+
+.riquadro { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra);
+            padding: 28px; margin-bottom: 24px; }
+/* Il reset di Bulma dà display:block a <section>, che vincerebbe su hidden. */
+.riquadro[hidden] { display: none; }
+.riquadro > h2, .riquadro > header > h2 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 14px; }
+.riquadro .occhiello { margin-bottom: 18px; }
+.riquadro > h2 + .occhiello { margin-top: -10px; }
+
+/* Le cifre: caselle con un numero, in fila sopra i riquadri. */
+.cifre { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px 24px; height: 100%; }
+.kpi-label { font-size: .9375rem; color: var(--testo-soft); }
+.kpi-value { font-size: 2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1.15; margin-top: 4px;
+             font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* Da incassare in rosso, incassato in verde: i colori di Bulma non si leggevano sul bianco. */
+.kpi-value.rosso { color: var(--errore); }
+.kpi-value.verde { color: var(--ok); }
+
+/* Pulsanti in fondo al riquadro: prima l'azione principale, chi cancella a destra. */
+/* Solo figli diretti: .azioni è anche il nome di celle di tabella (Bilancio, Utenti). */
+.riquadro > .azioni { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 22px; }
+.riquadro > .azioni .a-destra { margin-left: auto; }
+
+@media screen and (max-width: 768px) {
+  .container-main { padding: 20px 16px 80px; }
+  .riquadro { padding: 20px; }
+  .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { padding: 18px; }
+  .kpi-value { font-size: 1.6rem; }
+}

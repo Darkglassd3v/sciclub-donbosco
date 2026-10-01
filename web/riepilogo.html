@@ -6,35 +6,31 @@
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
-
-    .section-card { background: #fff; border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra); height: 100%; }
-
-    /* Il colore era una fascia piena in testa a ogni riquadro: quattro bande
-     * accese una sopra l'altra. Adesso è un punto, e il titolo si legge nero. */
-    .section-header { color: var(--testo); padding: 20px 22px 12px; font-weight: 600;
-                      font-size: 1.2rem; letter-spacing: -.022em;
-                      display: flex; align-items: center; gap: 10px; }
-    .section-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
-    /* Stesso codice colore degli abbonamenti: sabato blu, domenica giallo. */
-    .bg-blue::before   { background: var(--blu); }
-    .bg-yellow::before { background: var(--giallo); }
-    .bg-green::before  { background: var(--ok); }
-    .bg-grey::before   { background: var(--testo-soft); }
-
-    .section-body { padding: 0 22px 20px; }
-    .rtable { width: 100%; border-collapse: collapse; }
-    .rtable th { text-align: left; padding: 10px 6px; }
-    .rtable td { padding: 14px 6px; }
-    .total-row td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
-    .badge { display: inline-block; padding: 4px 12px; border-radius: var(--pillola); font-weight: 600; font-size: .9375rem; }
+    /* Il riquadro dei comandi sparisce se chi guarda non può né scaricare né aprire lo storico. */
+    #zonaComandi:not(:has(#zonaScarica:not([hidden]), #zonaStagioni:not([hidden]))) { display: none; }
+    /* Su telefono la tabella scorre di lato (.tabella-scorrevole) invece di schiacciare le voci. */
+    .rtable { width: 100%; min-width: 35rem; border-collapse: collapse; }
+    .rtable th { text-align: left; padding: 10px 8px; font-size: 1rem; }
+    /* Le voci si leggono da lontano: 21px, importi in grassetto. Per starci
+     * ogni sezione occupa tutta la larghezza invece di metà. */
+    .rtable td { padding: 16px 8px; font-size: 1.25rem; vertical-align: middle; }
+    .rtable td:nth-child(n+3) { font-weight: 600; }
+    /* Stesse colonne in ogni sezione: numeri a destra, importi su una riga. */
+    .rtable { table-layout: fixed; }
+    .rtable th:nth-child(n+2), .rtable td:nth-child(n+2) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .rtable th:nth-child(2) { width: 5.3rem; }
+    .rtable th:nth-child(3) { width: 8.8rem; }
+    .rtable th:nth-child(4) { width: 11.8rem; }
+    /* La somma della sezione (tutti gli abbonamenti insieme) è il numero che
+     * si cerca: blu e più grande. I totali delle singole voci restano neri
+     * come i prezzi, così la somma non si confonde con loro. */
+    .total-row td:nth-child(4) { color: var(--blu); font-size: 1.6rem; font-weight: 700; }
+    .total-row td { font-weight: 700; border-top: 2px solid var(--testo-soft); }
+    .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
   </style>
@@ -48,12 +44,17 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -61,46 +62,60 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Riepilogo Stagione</h1>
+  <h1 class="title is-4" id="titolo">Riepilogo Stagione</h1>
+  <p class="occhiello">Quanti soci, quanto è stato incassato e cosa è stato venduto.</p>
 
-  <div class="columns is-multiline mb-2">
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value has-text-success" id="kInc">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
+  <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
+  <div class="notification is-warning is-light" id="fasciaStorico" hidden>
+    <b id="fasciaTesto"></b>
+    <span id="fasciaCorsi"></span>
+    <span id="fasciaBanca"></span>
+    <a href="riepilogo.html">Torna alla stagione in corso</a>
   </div>
 
-  <div class="columns is-multiline">
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-blue">Gite del sabato</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteSab"></tbody></table></div>
-      </div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div>
+    <div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value verde" id="kInc">—</div></div>
+    <div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value rosso" id="kDa">—</div></div>
+  </div>
+
+  <div class="riquadro" id="zonaComandi">
+    <h2>Elenchi e stagioni chiuse</h2>
+    <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
+    <p class="occhiello" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
+    <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
+         pagina Assicurazione: chi ha quel ruolo non deve poterlo scaricare.
+         Solo per la stagione in corso. -->
+    <div class="azioni" id="zonaScarica" hidden>
+      <button type="button" class="button is-link is-outlined" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
     </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-yellow">Gite della domenica</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Località</th><th>Iscritti</th></tr></thead><tbody id="tGiteDom"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-green">Corsi</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Corso</th><th>Iscritti</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-4">
-      <div class="section-card">
-        <div class="section-header bg-grey">Abbonamenti</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>Iscritti</th></tr></thead><tbody id="tAbb"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-8">
-      <div class="section-card">
-        <div class="section-header bg-blue">Tessere</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Tipo</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
-      </div>
-    </div>
+  </div>
+
+  <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. -->
+  <div class="riquadro">
+    <h2>Tessere</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Abbonamenti gite</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Corsi</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Presciistica</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
+  </div>
+  <div class="riquadro solo-bilancio" hidden>
+    <h2>Entrate extra</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
+  </div>
+  <div class="riquadro solo-bilancio" hidden>
+    <h2>Uscite</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
   </div>
 </div>
 
@@ -110,11 +125,181 @@
 <script>
   const el = (id) => document.getElementById(id);
 
+  // Stagione chiusa da mostrare (1° settembre, AAAA-MM-GG); null = quella in corso.
+  const STAGIONE = new URLSearchParams(location.search).get("stagione");
+
   (async function init() {
-    if (!(await requireAuth())) return;
+    if (!(await requirePermesso("riepilogo"))) return;
+    // Entrate e uscite sono del Bilancio: senza quel permesso il database le
+    // darebbe vuote, e due tabelle a zero sembrerebbero una stagione senza spese.
+    const { permissions } = await getProfile();
+    for (const sezione of document.querySelectorAll(".solo-bilancio")) {
+      sezione.hidden = !permissions.includes("bilancio");
+    }
+    if (permissions.includes("storico")) mostraStagioniChiuse();
+    if (!STAGIONE) {
+      el("zonaScarica").hidden = false;
+      el("btnScaricaSoci").addEventListener("click", scaricaSoci);
+    }
     await carica();
-    ascoltaSoci(() => carica({ silenzioso: true }));
+    // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
+    if (!STAGIONE) ascoltaSoci(() => carica({ silenzioso: true }));
   })();
+
+  /** I link alle stagioni chiuse, dalla più recente. */
+  async function mostraStagioniChiuse() {
+    const { data, error } = await sb.from("season_history").select("season").order("season", { ascending: false });
+    if (error || !data.length) return;
+    el("elencoStagioni").innerHTML = data.map(({ season }) => {
+      const anno = Number(String(season).slice(0, 4));
+      return `<a href="riepilogo.html?stagione=${String(season).slice(0, 10)}">${anno}/${String(anno + 1).slice(2)}</a>`;
+    }).join(" · ");
+    el("zonaStagioni").hidden = false;
+  }
+
+  /**
+   * Tutti i tesserati della stagione in corso, in Excel per l'assicurazione
+   * (colonne in shared.js). Lo può fare chi ha il permesso riepilogo: il
+   * database lo nega al ruolo assicurazione, che non legge members. "NO" come
+   * tessera vale come nessuna tessera, come nel resto del Riepilogo.
+   */
+  async function scaricaSoci() {
+    setLoading(true);
+    try {
+      const soci = await tutteLeRighe(() => sb
+        .from("members")
+        .select("last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
+          + "address, city, province, postal_code, card_type, card_number")
+        .not("enrolled_at", "is", null)
+        .not("card_type", "is", null)
+        .neq("card_type", "NO")
+        .order("last_name").order("first_name").order("id"));
+      await scaricaExcel(soci, "soci-stagione");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** I cinque insiemi di dati della stagione in corso, dalle viste live. */
+  async function datiCorrenti() {
+    const risposte = await Promise.all([
+      sb.from("season_totals").select("*").single(),
+      sb.from("card_counts").select("*"),
+      sb.from("pass_counts").select("*"),
+      sb.from("course_counts").select("*"),
+      sb.from("preski_counts").select("*"),
+      sb.from("prices").select("category, name, price, day"),
+      // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
+      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
+    ]);
+    const errore = risposte.find((r) => r.error);
+    if (errore) throw errore.error;
+    const [kpi, tessere, abbonamenti, corsi, presciistica, listino, movimenti] = risposte.map((r) => r.data);
+
+    // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
+    const conPrezzo = (righe, categoria) => righe.map((r) => {
+      const voce = listino.find((p) => p.category === categoria && p.name === r.name);
+      const prezzo = voce ? Number(voce.price) : null;
+      return { name: r.name, day: voce?.day, count: r.count, price: prezzo, total: prezzo != null ? prezzo * Number(r.count) : null };
+    });
+    return {
+      kpi, tessere,
+      abbonamenti: conPrezzo(abbonamenti, "ABBONAMENTO"),
+      corsi: conPrezzo(corsi, "CORSO"),
+      presciistica: conPrezzo(presciistica, "PRESCIISTICA"),
+      ...perVoce(movimenti),
+    };
+  }
+
+  /** Inizio della stagione in corso (1° settembre), come nel pannello Pagamenti. */
+  function inizioStagione() {
+    const oggi = new Date();
+    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
+    return new Date(anno, 8, 1).toISOString();
+  }
+
+  /**
+   * Movimenti raggruppati per voce, separati in entrate e uscite. Il prezzo si
+   * mostra solo se è lo stesso per tutti i movimenti della voce.
+   */
+  function perVoce(movimenti) {
+    const gruppi = (tipo) => {
+      const voci = {};
+      for (const m of movimenti.filter((x) => x.kind === tipo)) {
+        const v = voci[m.category] || (voci[m.category] = { name: m.category, count: 0, total: 0, prezzi: new Set() });
+        v.count += Number(m.quantity);
+        v.total += Number(m.amount);
+        v.prezzi.add(Number(m.unit_price));
+      }
+      return Object.values(voci).map((v) => ({
+        name: v.name, count: v.count, total: v.total,
+        price: v.prezzi.size === 1 ? [...v.prezzi][0] : null,
+      }));
+    };
+    return { entrate: gruppi("ENTRATA"), uscite: gruppi("USCITA") };
+  }
+
+  /**
+   * Gli stessi cinque insiemi per una stagione chiusa, da season_history e
+   * season_breakdown, nella forma delle viste live: il disegno resta uno solo.
+   * Stagione inesistente o non leggibile (lo storico è di tesoriere e superadmin):
+   * errore, mai un ripiego sulla stagione in corso.
+   */
+  async function datiStorici(giorno) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(giorno)) throw new Error("Stagione non valida.");
+    const season = `${giorno}T00:00:00+00:00`;
+    const [storia, righe, movimenti] = await Promise.all([
+      sb.from("season_history").select("*").eq("season", season).maybeSingle(),
+      sb.from("season_breakdown").select("*").eq("season", season),
+      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").eq("season", season),
+    ]);
+    if (storia.error) throw storia.error;
+    if (righe.error) throw righe.error;
+    if (movimenti.error) throw movimenti.error;
+    if (!storia.data) throw new Error("Stagione non trovata, o non disponibile per il tuo ruolo.");
+
+    const di = (categoria) => righe.data.filter((r) => r.category === categoria);
+    const incasso = di("COURSE_INCOME")[0];
+    return {
+      kpi: {
+        total_members: storia.data.members, total_due: storia.data.total,
+        total_collected: storia.data.collected, outstanding: storia.data.outstanding,
+      },
+      // Il prezzo non è archiviato: si ricava solo dove c'è il totale.
+      tessere: di("CARD").map(conTotaleArchiviato),
+      abbonamenti: di("PASS").map(conTotaleArchiviato),
+      corsi: di("COURSE").map(conTotaleArchiviato),
+      // Le stagioni chiuse prima della 2.3 hanno la presciistica fra gli abbonamenti.
+      presciistica: di("PRESKI").map(conTotaleArchiviato),
+      ...perVoce(movimenti.data),
+      incassoCorsi: incasso ? incasso.total : null,
+      bancaInizio: storia.data.bank_opening, bancaFine: storia.data.bank_closing,
+    };
+  }
+
+  /** Riga archiviata: il prezzo si ricava dal totale, se è stato salvato. */
+  function conTotaleArchiviato(r) {
+    return {
+      name: r.label, count: r.count, total: r.total,
+      price: r.total != null && r.count ? r.total / r.count : null,
+    };
+  }
+
+  function mostraFasciaStorico(dati) {
+    const anno = Number(STAGIONE.slice(0, 4));
+    const nome = `${anno}/${String(anno + 1).slice(2)}`;
+    el("titolo").textContent = `Riepilogo Stagione ${nome}`;
+    el("fasciaTesto").textContent = `Stagione ${nome} chiusa, sola lettura.`;
+    el("fasciaCorsi").textContent = dati.incassoCorsi != null ? ` Incasso corsi: ${fmt(dati.incassoCorsi)}.` : "";
+    // Stagioni chiuse prima del bilancio: i saldi banca non esistono.
+    el("fasciaBanca").textContent = dati.bancaInizio != null && dati.bancaFine != null
+      ? ` Banca: ${fmt(dati.bancaInizio)} → ${fmt(dati.bancaFine)}.`
+      : " Banca: n.d.";
+    el("lDa").textContent = "Rimasto da incassare";
+    el("fasciaStorico").hidden = false;
+  }
 
   /**
    * Tutte le aggregazioni arrivano da viste SQL: nella 1.x erano cicli JS su
@@ -123,31 +308,21 @@
   async function carica({ silenzioso = false } = {}) {
     if (!silenzioso) setLoading(true);
     try {
-      const [kpi, tessere, abbonamenti, corsi, partenze] = await Promise.all([
-        sb.from("season_totals").select("*").single(),
-        sb.from("card_counts").select("*"),
-        sb.from("pass_counts").select("*"),
-        sb.from("course_counts").select("*"),
-        sb.from("departure_counts").select("*"),
-      ]);
+      const dati = STAGIONE ? await datiStorici(STAGIONE) : await datiCorrenti();
+      const { kpi, tessere, abbonamenti, corsi } = dati;
+      if (STAGIONE) mostraFasciaStorico(dati);
 
-      const errore = [kpi, tessere, abbonamenti, corsi, partenze].find((r) => r.error);
-      if (errore) throw errore.error;
+      el("kSoci").textContent = kpi.total_members;
+      el("kTeor").textContent = fmt(kpi.total_due);
+      el("kInc").textContent = fmt(kpi.total_collected);
+      el("kDa").textContent = fmt(kpi.outstanding);
 
-      el("kSoci").textContent = kpi.data.total_members;
-      el("kTeor").textContent = fmt(kpi.data.total_due);
-      el("kInc").textContent = fmt(kpi.data.total_collected);
-      el("kDa").textContent = fmt(kpi.data.outstanding);
-
-      const perGiorno = (giorno) => partenze.data
-        .filter((r) => r.day === giorno)
-        .map((r) => [r.place, Number(r.count)]);
-
-      riempiConteggi("tGiteSab", perGiorno("SABATO"));
-      riempiConteggi("tGiteDom", perGiorno("DOMENICA"));
-      riempiConteggi("tCorsi", corsi.data.map((r) => [r.name, Number(r.count)]));
-      riempiConteggi("tAbb", abbonamenti.data.map((r) => [r.name, Number(r.count)]));
-      riempiTessere(tessere.data);
+      riempiVoci("tTess", tessere);
+      riempiVoci("tAbb", abbonamenti);
+      riempiVoci("tCorsi", corsi);
+      riempiVoci("tPresc", dati.presciistica);
+      riempiVoci("tEntrate", dati.entrate);
+      riempiVoci("tUscite", dati.uscite);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -155,37 +330,27 @@
     }
   }
 
-  function riempiConteggi(id, voci) {
+  /** Tabella di una voce di bilancio: numero, prezzo e totale, "—" dove manca. */
+  function riempiVoci(id, righe) {
     const tbody = el(id);
-    if (!voci.length) {
-      tbody.innerHTML = '<tr><td colspan="2" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
-      return;
-    }
-    const ordinate = voci.sort((a, b) => b[1] - a[1]);
-    const totale = ordinate.reduce((s, [, v]) => s + v, 0);
-    tbody.innerHTML =
-      ordinate.map(([nome, n]) => `<tr><td>${nome}</td><td><span class="badge badge-blue">${n}</span></td></tr>`).join("") +
-      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totale}</span></td></tr>`;
-  }
-
-  function riempiTessere(righe) {
-    const tbody = el("tTess");
     if (!righe.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="has-text-grey-light has-text-centered py-3">—</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="has-text-centered py-3" style="color:var(--testo-soft)">—</td></tr>';
       return;
     }
     const ordinate = righe.sort((a, b) => Number(b.count) - Number(a.count));
     const totN = ordinate.reduce((s, r) => s + Number(r.count), 0);
     const totEuro = ordinate.reduce((s, r) => s + Number(r.total || 0), 0);
+    // Stagioni archiviate senza importi per tessera: "—", non € 0,00.
+    const conImporti = ordinate.some((r) => r.total != null);
     tbody.innerHTML =
       ordinate.map((r) => `
         <tr>
-          <td>${r.name}</td>
+          <td>${esc(r.name)} ${etichettaGiorno(r.day)}</td>
           <td><span class="badge badge-blue">${r.count}</span></td>
           <td>${r.price ? fmt(r.price) : "—"}</td>
           <td>${r.total ? fmt(r.total) : "—"}</td>
         </tr>`).join("") +
-      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${fmt(totEuro)}</td></tr>`;
+      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${conImporti ? fmt(totEuro) : "—"}</td></tr>`;
   }
 </script>
 </body>

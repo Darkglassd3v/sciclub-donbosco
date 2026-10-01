@@ -177,7 +177,13 @@ def read_prezzi(worksheet):
         prezzo = worksheet.cell(row=row_index, column=3).value
         if not categoria or not nome:
             continue
-        out.append((str(categoria).strip().upper(), str(nome).strip(), prezzo))
+        categoria = str(categoria).strip().upper()
+        nome = str(nome).strip()
+        # Nel foglio la presciistica sta fra gli abbonamenti; nel database ha
+        # una categoria sua, così non esclude l'abbonamento alle gite.
+        if categoria == "ABBONAMENTO" and "PRESCIISTIC" in nome.upper():
+            categoria = "PRESCIISTICA"
+        out.append((categoria, nome, prezzo))
     return out
 
 
@@ -215,7 +221,6 @@ def riga_socio(record, columns_count=None):
         f"TIMESTAMPTZ '{DATA_ARCHIVIO}'",
         sql_str(record["legacy_id"]),
         sql_str(record["legacy_payer_id"]),
-        sql_str(record["numero_polizza"]),
         sql_str(record["cognome"]),
         sql_str(record["nome"]),
         sql_str(record["luogo_nascita"]),
@@ -288,7 +293,7 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
 
     # ----------------------------------------------------------- soci
     columns = (
-        "created_at, enrolled_at, legacy_id, legacy_payer_id, policy_number, last_name, first_name, birth_place, "
+        "created_at, enrolled_at, legacy_id, legacy_payer_id, last_name, first_name, birth_place, "
         "birth_province, tax_code, birth_date, address, city, province, "
         "postal_code, phone, email, card_type, family_discount, pass_type, "
         "sunday_departure, saturday_departure, course_type, total, paid, card_number"

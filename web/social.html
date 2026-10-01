@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Social — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
+       metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=swap">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+    /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
+     * post i campi accanto all'anteprima. */
+    .colonne-social { display: grid; grid-template-columns: 18rem minmax(0, 1fr); gap: 24px; align-items: start; }
+    @media (max-width: 900px) { .colonne-social { grid-template-columns: minmax(0, 1fr); } }
+    [data-sezione][hidden], [data-modulo][hidden], #riassunti[hidden] { display: none !important; }
+
+    /* Elenco: un solo "Nuovo post" che apre i tipi, Da fare / Pubblicati,
+     * i post divisi per mese. */
+    .nuovo-post > summary { list-style: none; width: 100%; box-sizing: border-box; }
+    .nuovo-post > summary::-webkit-details-marker { display: none; }
+    .menu-nuovo { display: grid; gap: 8px; margin-top: 10px; }
+    .menu-nuovo .button { justify-content: flex-start; }
+    .vista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 14px 0 4px;
+      border: 2px solid var(--filo); border-radius: 999px; }
+    .vista button { min-height: 42px; border: 0; border-radius: 999px; background: none; color: var(--blu);
+      font: inherit; font-weight: 700; cursor: pointer; }
+    .vista button[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .elenco-post { list-style: none; margin: 0; padding: 0; }
+    .elenco-post .mese { margin: 14px 0 4px; font-size: .9375rem; font-weight: 700; color: var(--testo-soft); }
+    .elenco-post li button { width: 100%; display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; align-items: center;
+      text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px; cursor: pointer; font: inherit; color: inherit; }
+    .elenco-post li button:hover { background: var(--blu-light); }
+    .elenco-post li button[aria-current="true"] { background: var(--blu-light); box-shadow: inset 0 0 0 2px var(--blu); }
+    /* Il giorno nel colore della gita, come nei post e nel calendario. */
+    .elenco-post .giorno { display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 3.4rem; height: 3.4rem; border-radius: 12px; background: var(--riga-alt); line-height: 1.1; font-weight: 800; }
+    .giorno .sett { font-size: .8rem; font-weight: 700; }
+    .giorno .gm { font-size: 1.05rem; letter-spacing: -.02em; }
+    .elenco-post .quale { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-weight: 600; }
+    .elenco-post .quale small { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-weight: 500; color: var(--testo-soft); }
+    .stato { display: inline-flex; align-items: center; min-height: 1.6rem; padding: 0 .6em; border-radius: 999px;
+      font-size: .875rem; font-weight: 700; white-space: nowrap; }
+    .stato.pronto { background: var(--blu-light); color: var(--blu-dark); }
+    .stato.manca { background: var(--giallo-light); color: var(--giallo-dark); }
+    .stato.uscito { background: var(--ok-bg); color: var(--ok); }
+
+    /* Il post aperto: testata con Salva sempre in vista, i campi, e di lato
+     * l'anteprima con quello che serve per pubblicare. */
+    .vuoto { text-align: center; padding: 64px 24px; color: var(--testo-soft); font-size: 1.15rem; }
+    #editor { container-type: inline-size; }
+    .testa-post { position: sticky; top: var(--barra-h); z-index: 5; display: flex; align-items: center; gap: 16px;
+      margin: -24px -24px 20px; padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--filo);
+      border-radius: var(--raggio-card) var(--raggio-card) 0 0; }
+    .testa-post .titoli { flex: 1; min-width: 0; }
+    .testa-post .occhiello-post { color: var(--testo-soft); font-weight: 600; font-size: .9375rem; }
+    .testa-post h2 { margin: 0; font-size: 1.75rem; }
+    .testa-post .manca-cosa { color: var(--giallo-dark); font-weight: 600; font-size: .9375rem; }
+    .griglia-post { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 24px; align-items: start; }
+    .parte { margin-bottom: 26px; }
+    .parte h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 10px; }
+    .elimina { padding-top: 18px; border-top: 1px solid var(--filo); }
+    .lato { position: sticky; top: calc(var(--barra-h) + var(--testa, 90px) + 12px); max-height: calc(100vh - var(--barra-h) - var(--testa, 90px) - 24px);
+      overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 18px; border-radius: 14px; background: var(--sfondo); }
+    .lato h3 { font-size: 1.15rem; font-weight: 600; }
+    .lato hr { margin: 0; height: 1px; background: var(--filo); }
+    .lato .button { width: 100%; }
+    .lato .azioni-post { margin-top: 0; flex-wrap: nowrap; }
+    .lato .azioni-post .button { width: auto; flex: 1; }
+    .lato .anteprime { margin-top: 0; }
+    /* L'avviso delle anteprime lo dà la riga sotto, per tutti i formati. */
+    .lato .sborda { display: none; }
+    .formati { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; align-self: flex-start;
+      border: 2px solid var(--filo); border-radius: 999px; background: #fff; }
+    .formati button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--blu);
+      font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer; }
+    .formati button[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .scarica { display: grid; gap: 8px; }
+    /* Le anteprime non scelte restano disegnate, fuori dallo schermo: fit()
+     * le deve misurare e il pulsante le deve poter scaricare. */
+    .anteprima.fuori { position: absolute; left: -10000px; top: 0; }
+    /* Con il testo grande (A+) o lo schermo stretto le due colonne non ci
+     * stanno: l'anteprima va sotto i campi. 44rem: a 1180px (la larghezza
+     * di tutte le pagine) i campi restano accanto all'anteprima. */
+    @container (max-width: 44rem) {
+      .griglia-post { grid-template-columns: minmax(0, 1fr); }
+      .lato { position: static; max-height: none; overflow: visible; }
+    }
+
+    .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
+    .campi .campo-largo { grid-column: 1 / -1; }
+    .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
+    .righe-editor .riga input:first-child { max-width: 11rem; }
+    /* La gita ha una quota sola: l'etichetta non serve. */
+    .righe-editor.una-quota .riga input:first-child { display: none; }
+    .spunta { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 2.5em; }
+    .spunta input { width: 1.3em; height: 1.3em; }
+    /* Rubrica dei contatti: una riga per contatto con nome, telefono, orari,
+     * proposto, ↑, ✕. */
+    .intestazione-rubrica, .riga-contatto { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr) 8rem 2.75rem 2.75rem; gap: 8px; align-items: center; }
+    .intestazione-rubrica { font-weight: 600; color: var(--testo-soft); margin-bottom: 6px; }
+    .riga-contatto { margin-bottom: 6px; }
+    .riga-contatto:first-child .sali { visibility: hidden; }
+    @media (max-width: 700px) {
+      .intestazione-rubrica { display: none; }
+      .riga-contatto { grid-template-columns: 1fr auto auto; padding: 10px 0; border-top: 1px solid var(--filo); }
+      .riga-contatto input.input { grid-column: 1 / -1; }
+    }
+
+    /* Anteprime: il canvas è a misura reale, il riquadro lo rimpicciolisce.
+     * L'export legge il canvas, non il riquadro: esce a 1080 px. */
+    .anteprime { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; margin-top: 18px; }
+    .anteprima figcaption { font-weight: 600; margin-bottom: 6px; }
+    .anteprima .cornice { overflow: hidden; border-radius: 10px; box-shadow: 0 8px 28px rgba(20,32,46,.14); }
+    .anteprima .scala { transform-origin: 0 0; }
+    .anteprima .sborda { color: var(--errore); font-weight: 600; margin-top: 6px; }
+
+    .azioni-post { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    #testoPost { min-height: 9em; max-height: none; font-family: inherit; }
+    .avviso-contrasto { color: var(--errore); font-weight: 600; }
+    .salva-modifiche { background: var(--giallo) !important; color: #14202E !important; }
+
+    /* Calendario della gita: i giorni di gita nel loro colore, gli altri
+     * bianchi ma sceglibili; il pallino = c'è già un'altra gita. */
+    .cal-gita { max-width: 30rem; }
+    .cal-gita .testa { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 1.2rem; font-weight: 700; }
+    .cal-gita .griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .cal-gita .nome-giorno { text-align: center; font-weight: 600; color: var(--testo-soft); }
+    .cal-gita .griglia button { position: relative; aspect-ratio: 1; border: 1px solid var(--filo); border-radius: 8px;
+      background: #fff; color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+    .cal-gita .griglia button.di-gita { border-color: transparent; font-weight: 800; }
+    .cal-gita .griglia button[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #14202E; z-index: 1; }
+    .cal-gita .occupato { position: absolute; bottom: 4px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: currentColor; }
+    .cal-gita .esito { margin-top: 12px; font-weight: 600; }
+    .cal-gita .esito.fuori { color: var(--errore); }
+    .legenda { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+    .legenda .campione { font-size: .95rem; }
+    .campione { display: inline-block; border-radius: 999px; padding: 3px 14px; font-weight: 700; }
+    .riga-giorno { display: grid; grid-template-columns: 12rem 5rem 1fr; gap: 14px; align-items: center; padding: 6px 0; border-top: 1px solid var(--filo); }
+    .riga-giorno input[type="color"] { height: 2.5em; padding: 2px; }
+    .riga-giorno input[type="color"]:disabled { visibility: hidden; }
+    /* Contatti del post: una spunta per ogni contatto della rubrica. */
+    .scelta-contatti { display: flex; flex-direction: column; gap: 2px; }
+    .scelta-contatti small { font-weight: 500; color: var(--testo-soft); }
+
+    /* Grafiche: calendario del mese e copertina, una accanto all'altra. */
+    .due-colonne { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 24px; align-items: start; }
+    @media (max-width: 1100px) { .due-colonne { grid-template-columns: minmax(0, 1fr); } }
+
+    /* Impostazioni: sponsor, contatti e giorni in breve, ognuno nel colore
+     * della sua scheda di prima; Modifica apre il modulo. */
+    .tre-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 24px; align-items: start; }
+    .riassunto { display: flex; flex-direction: column; gap: 12px; }
+    .riassunto h2 { color: var(--colore); margin-bottom: 0; }
+    .riassunto .occhiello { margin-bottom: 0; }
+    .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
+    .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
+    .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .righe-riassunto small { color: var(--testo-soft); }
+    .logo-sponsor { flex: none; width: 4.5rem; height: 2.8rem; border: 1px solid var(--filo); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; }
+    .logo-sponsor img { max-width: 80%; max-height: 70%; }
+    .indietro { display: inline-block; font-weight: 600; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <!-- Tre schede: Post (il lavoro di ogni settimana), Grafiche, e
+       Impostazioni, in fondo e grigia perché si tocca poche volte a stagione. -->
+  <nav class="schede-social" aria-label="Social" data-voce="social.html">
+    <a href="social.html#post" style="--scheda:#084C8D">Post<span class="conta" id="contaDaFare"></span></a>
+    <a href="social.html#grafiche" style="--scheda:#147A45">Grafiche</a>
+    <a class="a-destra" href="social.html#impostazioni" style="--scheda:#4A5361"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Impostazioni</a>
+  </nav>
+  <h1 class="title is-4" id="titoloSezione">Post</h1>
+  <p class="occhiello" id="fraseSezione"></p>
+
+  <!-- Post: a sinistra i post, dal prossimo in avanti; a destra quello aperto. -->
+  <div class="colonne-social" data-sezione="post">
+    <div class="riquadro">
+      <div id="azioniNuovo">
+        <details class="nuovo-post" id="menuNuovo">
+          <summary class="button is-link">+ Nuovo post</summary>
+          <div class="menu-nuovo">
+            <button type="button" class="button is-light" data-nuovo="gita">Gita</button>
+            <button type="button" class="button is-light" data-nuovo="corso">Corso</button>
+            <button type="button" class="button is-light" data-nuovo="cena">Cena o festa</button>
+            <button type="button" class="button is-light" data-nuovo="gara">Gara</button>
+            <button type="button" class="button is-light" data-nuovo="servizi">Servizi</button>
+            <button type="button" class="button is-light" data-nuovo="sponsor">Campagna sponsor</button>
+          </div>
+        </details>
+      </div>
+      <div class="vista" role="group" aria-label="Quali post">
+        <button type="button" data-vista="dafare" aria-pressed="true">Da fare</button>
+        <button type="button" data-vista="pubblicati" aria-pressed="false">Pubblicati</button>
+      </div>
+      <ul class="elenco-post" id="elencoPost"></ul>
+    </div>
+
+    <div>
+      <div class="riquadro vuoto" id="nessunPost">Scegli un post dall'elenco, oppure premi «+ Nuovo post».</div>
+
+      <div class="riquadro" id="editor" hidden>
+        <div class="testa-post" id="testaPost">
+          <div class="titoli">
+            <p class="occhiello-post" id="occhielloPost"></p>
+            <h2 id="titoloEditor">Nuovo post</h2>
+            <p class="manca-cosa" id="mancaCosa" hidden></p>
+          </div>
+          <div id="statoPost"></div>
+          <button type="button" class="button is-link" id="btnSalva">Salva</button>
+        </div>
+
+        <div class="griglia-post">
+          <div>
+            <section class="parte" aria-labelledby="pQuando">
+              <h3 id="pQuando">Quando</h3>
+              <div class="campi">
+                <div class="field" data-per="evento sponsor">
+                  <label class="label" for="fData">Data</label>
+                  <input class="input" type="date" id="fData">
+                </div>
+                <div class="field campo-largo" data-per="gita">
+                  <span class="label" id="lCalGita">Giorno della gita</span>
+                  <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
+                </div>
+                <div class="field" data-per="gita">
+                  <label class="label" for="fScadenza">Iscrizioni entro</label>
+                  <input class="input" type="date" id="fScadenza">
+                </div>
+                <div class="field" data-per="gita">
+                  <label class="spunta"><input type="checkbox" id="fCorso"> Nello stesso giorno c'è il corso</label>
+                </div>
+              </div>
+            </section>
+
+            <section class="parte" aria-labelledby="pCosa">
+              <h3 id="pCosa">Cosa</h3>
+              <div class="campi">
+                <!-- Il tipo si sceglie con "+ Nuovo post"; resta qui solo per gli
+                     eventi, che si possono spostare fra corso, cena, gara e servizi. -->
+                <div class="field" data-per="evento">
+                  <label class="label" for="fTipo">Tipo di evento</label>
+                  <select class="input" id="fTipo">
+                    <option value="gita" hidden>Gita</option>
+                    <option value="corso">Corso</option>
+                    <option value="cena">Cena o festa</option>
+                    <option value="gara">Gara</option>
+                    <option value="servizi">Servizi</option>
+                    <option value="sponsor" hidden>Campagna sponsor</option>
+                  </select>
+                </div>
+                <div class="field" data-per="sponsor">
+                  <label class="label" for="fSponsor">Sponsor</label>
+                  <select class="input" id="fSponsor"></select>
+                </div>
+                <div class="field campo-largo">
+                  <label class="label" for="fTitolo" id="lTitolo">Meta</label>
+                  <textarea class="textarea" id="fTitolo" rows="1"></textarea>
+                </div>
+                <div class="field campo-largo" data-per="evento sponsor">
+                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotitolo</label>
+                  <input class="input" id="fSottotitolo">
+                </div>
+                <div class="field campo-largo" data-per="sponsor">
+                  <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
+                  <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
+                </div>
+                <div class="field" data-per="sponsor">
+                  <label class="label" for="fCta">Testo del pulsante</label>
+                  <input class="input" id="fCta" placeholder="Es. Scopri le bollicine">
+                </div>
+                <div class="field campo-largo" data-per="gita">
+                  <label class="label">Partenze (ora e luogo)</label>
+                  <div class="righe-editor" id="fFermate"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fFermate">+ Partenza</button>
+                </div>
+                <div class="field campo-largo" data-per="gita evento">
+                  <label class="label">Prezzi</label>
+                  <div class="righe-editor" id="fPrezzi"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fPrezzi" data-per="evento">+ Prezzo</button>
+                  <label class="spunta"><input type="checkbox" id="fMostraPrezzo" checked> Mostra il prezzo nel post</label>
+                </div>
+                <div class="field campo-largo" data-per="evento">
+                  <label class="label">Informazioni (es. Età · 5–12 anni)</label>
+                  <div class="righe-editor" id="fInfo"></div>
+                  <button type="button" class="button is-small is-light" data-aggiungi="fInfo">+ Informazione</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="parte" aria-labelledby="pFondo" data-per="gita evento">
+              <h3 id="pFondo">Contatti e foto</h3>
+              <div class="campi">
+                <div class="field campo-largo">
+                  <span class="label" id="lContatti">Contatti in fondo al post</span>
+                  <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
+                  <a class="button is-small is-light mt-2" href="#contatti">Aggiungi o cambia i contatti</a>
+                </div>
+                <div class="field">
+                  <label class="label" for="fFoto">Foto (facoltativa)</label>
+                  <input class="input" type="file" id="fFoto" accept="image/*">
+                  <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- Il testo sta qui, largo, dopo i dati da cui nasce: nella colonna
+                 dell'anteprima finiva sotto le immagini, fuori dallo schermo. -->
+            <section class="parte" aria-labelledby="pTesto">
+              <h3 id="pTesto">Testo da incollare sotto al post</h3>
+              <p class="occhiello mb-2">Si scrive da solo mentre compili i dati. Puoi correggerlo: da lì resta com'è.</p>
+              <textarea class="textarea" id="testoPost" aria-labelledby="pTesto"></textarea>
+              <p class="avviso-contrasto mt-2 mb-0" id="testoAMano" hidden>
+                Questo testo non segue più i dati (è stato cambiato a mano, o i dati sono cambiati dopo):
+                «Rifai dai dati» lo riscrive.
+              </p>
+              <div class="azioni-post">
+                <button type="button" class="button is-link" id="btnCopia">Copia il testo</button>
+                <button type="button" class="button is-light" id="btnRigenera" hidden>Rifai dai dati</button>
+              </div>
+            </section>
+
+            <div class="elimina" id="azioniElimina">
+              <button type="button" class="button is-small is-danger is-outlined" id="btnElimina">Elimina questo post</button>
+            </div>
+          </div>
+
+          <aside class="lato" aria-label="Anteprima e pubblicazione">
+            <h3>Come verrà</h3>
+            <div class="formati" id="formati" role="group" aria-label="Quale immagine" hidden></div>
+            <div class="anteprime" id="anteprime"></div>
+            <p class="occhiello mb-0" id="senzaAnteprima" hidden></p>
+            <p class="avviso-contrasto" id="sbordaTutti" hidden></p>
+            <div class="scarica" id="scarica"></div>
+            <p id="linkUtm" hidden></p>
+            <hr>
+            <button type="button" class="button is-success" id="btnPubblicato">Segna come pubblicato</button>
+            <p class="help mt-0">Quando è uscito su Instagram e Facebook.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grafiche: le immagini che non sono di un post solo. -->
+  <div class="due-colonne" data-sezione="grafiche" hidden>
+    <div class="riquadro">
+      <h2>Calendario del mese</h2>
+      <p class="occhiello">Si fa da solo con le gite salvate del mese scelto.</p>
+      <div class="campi">
+        <div class="field"><label class="label" for="calMese">Mese</label><select class="input" id="calMese"></select></div>
+        <div class="field"><label class="label" for="calTitolo">Titolo</label><input class="input" id="calTitolo"></div>
+      </div>
+      <div class="anteprime" id="anteprimaCalendario"></div>
+    </div>
+
+    <div class="riquadro">
+      <h2>Copertina Facebook</h2>
+      <p class="occhiello">Una volta a stagione.</p>
+      <div class="campi">
+        <div class="field"><label class="label" for="copTitolo">Titolo</label><input class="input" id="copTitolo"></div>
+        <div class="field campo-largo"><label class="label" for="copSotto">Sotto</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
+      </div>
+      <div class="anteprime" id="anteprimaCopertina"></div>
+    </div>
+  </div>
+
+  <!-- Impostazioni: in breve, poi il modulo scelto (#sponsor, #giorni). -->
+  <div data-sezione="impostazioni" hidden>
+    <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
+    <div class="tre-colonne" id="riassunti">
+      <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
+        <h2 id="rSponsor">Sponsor</h2>
+        <p class="occhiello">Marchio e colori per le campagne.</p>
+        <ul class="righe-riassunto" id="riassuntoSponsor"></ul>
+        <a class="button is-light" href="#sponsor" data-sponsor="">+ Aggiungi uno sponsor</a>
+      </section>
+      <section class="riquadro riassunto" style="--colore:#0B6E69" aria-labelledby="rContatti">
+        <h2 id="rContatti">Contatti</h2>
+        <p class="occhiello">Nome e telefono in fondo ai post.</p>
+        <ul class="righe-riassunto" id="riassuntoContatti"></ul>
+        <a class="button is-light" href="#contatti">Modifica la rubrica</a>
+      </section>
+      <section class="riquadro riassunto" style="--colore:#B3261E" aria-labelledby="rGiorni">
+        <h2 id="rGiorni">Giorni e colori delle gite</h2>
+        <p class="occhiello">Il giorno decide il colore della gita nei post e nel calendario.</p>
+        <div class="legenda mt-0" id="riassuntoGiorni"></div>
+        <p class="help mt-0">Una gita in un altro giorno prende il blu del club.</p>
+        <a class="button is-light" href="#giorni">Cambia giorni e colori</a>
+      </section>
+    </div>
+
+    <div class="riquadro" data-modulo="sponsor" hidden>
+      <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
+      <h2>Sponsor</h2>
+      <p class="occhiello">
+        Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
+        una campagna nuova: <b>+ Nuovo post</b> › <b>Campagna sponsor</b>, nella scheda Post.
+      </p>
+      <div class="campi">
+        <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
+      </div>
+      <div class="campi mt-3">
+        <div class="field"><label class="label" for="sNome">Nome</label><input class="input" id="sNome"></div>
+        <div class="field"><label class="label" for="sLivello">Livello</label>
+          <select class="input" id="sLivello"><option>Main sponsor</option><option>Sponsor</option><option>Partner</option></select></div>
+        <div class="field"><label class="label" for="sUrl">Sito</label><input class="input" id="sUrl" placeholder="www.esempio.it"></div>
+        <div class="field"><label class="label" for="sHandle">Profilo Instagram</label><input class="input" id="sHandle" placeholder="@profilo"></div>
+        <div class="field"><label class="label" for="sLogo">Logo (per fondi chiari)</label><input class="input" type="file" id="sLogo" accept="image/*"></div>
+        <div class="field"><label class="label" for="sLogoScuro">Logo per fondi scuri (facoltativo)</label><input class="input" type="file" id="sLogoScuro" accept="image/*"></div>
+        <div class="field"><label class="label" for="sScuro">Colore scuro</label><input class="input" type="color" id="sScuro" value="#14202E"></div>
+        <div class="field"><label class="label" for="sChiaro">Colore chiaro</label><input class="input" type="color" id="sChiaro" value="#FFFFFF"></div>
+        <div class="field"><label class="label" for="sAccento">Colore d'accento</label><input class="input" type="color" id="sAccento" value="#FCCF02"></div>
+        <div class="field"><label class="spunta"><input type="checkbox" id="sAlcol"> Vende alcolici (avvertenza di legge su ogni formato)</label></div>
+      </div>
+      <p class="avviso-contrasto mt-2" id="avvisoContrasto" hidden></p>
+      <div class="anteprime" id="anteprimaLoghi"></div>
+      <div class="azioni-post" id="azioniSponsor">
+        <button type="button" class="button is-link" id="btnSalvaSponsor">Salva sponsor</button>
+        <button type="button" class="button is-danger is-light" id="btnEliminaSponsor" hidden>Elimina sponsor</button>
+      </div>
+    </div>
+
+    <div class="riquadro" data-modulo="contatti" hidden>
+      <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
+      <h2>Contatti per info e iscrizioni</h2>
+      <p class="occhiello">
+        Qui scrivi una volta nome e telefono; poi ogni post sceglie i suoi, con
+        una spunta nel form del post. Gli orari sono facoltativi (es. "dopo le
+        18"). "Proposto" = già spuntato nei post nuovi. Correggere un numero lo
+        corregge anche nei post non ancora pubblicati (il testo da incollare già
+        scritto no: nel post premi "Rifai dai dati").
+      </p>
+      <div class="intestazione-rubrica" aria-hidden="true"><span>Nome</span><span>Telefono</span><span>Orari</span><span>Proposto</span></div>
+      <div id="righeContatti"></div>
+      <button type="button" class="button is-small is-light" id="btnAggiungiContatto">+ Contatto</button>
+      <p class="avviso-contrasto mt-2" id="avvisoRubrica" hidden></p>
+      <div class="azioni-post" id="azioniRubrica">
+        <button type="button" class="button is-link" id="btnSalvaRubrica">Salva contatti</button>
+      </div>
+    </div>
+
+    <div class="riquadro" id="giorniGita" data-modulo="giorni" hidden>
+      <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
+      <h2>Giorni e colori delle gite</h2>
+      <p class="occhiello">
+        Il giorno della settimana decide il colore della gita nei post e nel
+        calendario del mese. Quando inserisci una gita il calendario ti mostra
+        questi giorni colorati; un altro giorno si può scegliere lo stesso.
+      </p>
+      <div id="righeGiorni"></div>
+      <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
+      <div class="azioni-post">
+        <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="social-templates.js"></script>
+<script>
+  const el = (id) => document.getElementById(id);
+
+  let posts = [];        // righe di social_events
+  let sponsors = [];     // righe di sponsors
+  let aperto = null;     // il post nel form (riga salvata, o {} se nuovo)
+  let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
+  let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
+  let foto = null;       // la foto del post aperto (data URL ridotto)
+
+  /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
+  function stagioneDi(data = new Date()) {
+    const anno = data.getMonth() >= 8 ? data.getFullYear() : data.getFullYear() - 1;
+    return `${anno}/${String(anno + 1).slice(2)}`;
+  }
+  const STAGIONE = stagioneDi();
+
+  (async function init() {
+    if (!(await requirePermesso("social"))) return;
+    el("copTitolo").value = `Stagione ${STAGIONE}`;
+    collegaForm();
+    collegaSponsor();
+    el("calTitolo").addEventListener("input", disegnaCalendarioMese);
+    el("calMese").addEventListener("change", () => { el("calTitolo").value = titoloMese(el("calMese").value); disegnaCalendarioMese(); });
+    for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", disegnaCopertinaFb);
+    collegaGiorni();
+    collegaRubrica();
+    window.addEventListener("hashchange", mostraSezione);
+    mostraSezione();
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
+    // Elenco e calendario del mese possono essersi disegnati prima degli
+    // sponsor e dei colori dei giorni.
+    disegnaElenco();
+    disegnaCalendarioMese();
+    disegnaCopertinaFb();
+    disegnaRiassunti();
+  })();
+
+  // ---------------------------------------------------------------------
+  // Schede: Post, Grafiche e Impostazioni, scelte dall'indirizzo
+  // (social.html#grafiche). #sponsor e #giorni aprono un modulo delle
+  // Impostazioni; #calendario e #copertina, schede di prima, portano a
+  // Grafiche: un segnalibro vecchio arriva ancora al posto giusto.
+  // ---------------------------------------------------------------------
+
+  const SEZIONI = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
+  const FRASI = {
+    post: "I post da preparare e quelli pubblicati: si compilano i dati e il post si disegna da solo.",
+    grafiche: "Calendario delle gite e copertina, pronti da scaricare.",
+    impostazioni: "Sponsor, contatti e giorni delle gite che i post usano.",
+  };
+  const MODULI = { sponsor: "impostazioni", contatti: "impostazioni", giorni: "impostazioni", calendario: "grafiche", copertina: "grafiche" };
+
+  /** [sezione, modulo]: il modulo ("sponsor", "contatti", "giorni") c'è solo dentro Impostazioni. */
+  function dove() {
+    const h = location.hash.slice(1);
+    if (h in SEZIONI) return [h, null];
+    if (h in MODULI) return [MODULI[h], MODULI[h] === "impostazioni" ? h : null];
+    return ["post", null];
+  }
+
+  function mostraSezione() {
+    const [s, modulo] = dove();
+    document.querySelectorAll("[data-sezione]").forEach((x) => { x.hidden = x.dataset.sezione !== s; });
+    document.querySelectorAll("[data-modulo]").forEach((x) => { x.hidden = x.dataset.modulo !== modulo; });
+    el("riassunti").hidden = !!modulo;
+    document.querySelectorAll(".schede-social a").forEach((a) =>
+      a.toggleAttribute("aria-current", a.getAttribute("href") === `social.html#${s}`));
+    document.querySelector('.schede-social a[aria-current]').setAttribute("aria-current", "page");
+    el("titoloSezione").textContent = SEZIONI[s];
+    el("fraseSezione").textContent = FRASI[s];
+    // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
+    // (fit() non vede niente da restringere): si rifanno ora che si vedono.
+    if (s === "post" && !el("editor").hidden) ridisegna();
+    if (s === "grafiche") { disegnaCalendarioMese(); disegnaCopertinaFb(); }
+    if (s === "impostazioni") disegnaRiassunti();
+    window.scrollTo(0, 0);
+  }
+
+  /**
+   * Impostazioni in breve: sponsor, contatti e giorni come sono adesso, ognuno
+   * col pulsante che apre il suo modulo.
+   */
+  function disegnaRiassunti() {
+    el("riassuntoSponsor").innerHTML = sponsors.length ? sponsors.map((s) => {
+      const n = posts.filter((p) => p.sponsor_id === s.id).length;
+      return `<li><span class="logo-sponsor">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ""}</span>
+        <span class="chi"><b>${esc(s.name)}</b><small>${esc(s.level || "Sponsor")} · ${n === 1 ? "1 campagna" : `${n} campagne`}</small></span>
+        <a class="button is-small is-light" href="#sponsor" data-sponsor="${s.id}">Modifica</a></li>`;
+    }).join("") : '<li class="occhiello mb-0">Nessuno sponsor.</li>';
+    el("riassuntoContatti").innerHTML = SOCIAL.contatti.length ? SOCIAL.contatti.map((c) =>
+      `<li><span class="chi"><b>${esc(c.name)}</b><small>${esc(c.phone)}${c.hours ? ` · ${esc(c.hours)}` : ""}</small></span>
+        ${c.is_default ? '<span class="stato pronto">Proposto</span>' : ""}</li>`).join("")
+      : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
+    el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
+      || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
+  }
+
+  // ---------------------------------------------------------------------
+  // Dati
+  // ---------------------------------------------------------------------
+
+  async function caricaPost() {
+    const { data, error } = await sb.from("social_events").select("*")
+      .order("event_date", { ascending: true, nullsFirst: false }).order("created_at");
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    posts = data;
+    disegnaElenco();
+    riempiMesi();
+  }
+
+  async function caricaSponsor() {
+    const { data, error } = await sb.from("sponsors").select("*").order("name");
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    sponsors = data;
+    const scelto = el("fSponsor").value;
+    el("fSponsor").innerHTML = sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+    if (scelto) el("fSponsor").value = scelto;
+    el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
+      + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+    apriSponsor(el("sScegli").value);
+  }
+
+  /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
+  async function caricaGiorniGita() {
+    const { data, error } = await sb.from("trip_days").select("weekday, color");
+    if (error) showToast("Giorni delle gite non caricati, uso i colori di sempre: " + messaggioErrore(error), "is-danger");
+    else impostaColoriGita(mappaColori(data));
+    apriGiorni();
+  }
+  /** La rubrica dei contatti (social_contacts), da cui ogni post sceglie i suoi. */
+  async function caricaContatti() {
+    const { data, error } = await sb.from("social_contacts").select("id, name, phone, hours, is_default").order("position");
+    if (error) { showToast("Contatti non caricati, i post escono senza telefoni: " + messaggioErrore(error), "is-danger"); return; }
+    impostaContatti(data);
+    if (!rubricaModificata()) apriRubrica(data);
+    // Il post aperto prima che la rubrica arrivasse: rifatto con i suoi contatti.
+    if (aperto && !modificato()) { salvato = ""; apri(aperto); }
+  }
+
+  // ---------------------------------------------------------------------
+  // Rubrica dei contatti (Impostazioni > Contatti)
+  //
+  // Era una pagina a sé (social-contatti.html, ora rimanda qui): i nomi
+  // hanno "rubrica" o "contatto" per non urtare quelli del post (apri,
+  // salva, btnSalva, ...).
+  // ---------------------------------------------------------------------
+
+  let rubricaSalvata = "[]";  // la rubrica com'era all'ultimo salvataggio, per "Salva modifiche"
+
+  function collegaRubrica() {
+    el("btnAggiungiContatto").addEventListener("click", () => {
+      aggiungiContatto();
+      el("righeContatti").lastElementChild.querySelector("input").focus();
+      aggiornaRubrica();
+    });
+    el("righeContatti").addEventListener("input", aggiornaRubrica);
+    el("righeContatti").addEventListener("click", (e) => {
+      const b = e.target.closest("button"), riga = b && b.closest(".riga-contatto");
+      if (!riga) return;
+      if (b.classList.contains("sali")) { riga.previousElementSibling.before(riga); b.focus(); }
+      else riga.remove();
+      aggiornaRubrica();
+    });
+    el("btnSalvaRubrica").addEventListener("click", salvaRubrica);
+  }
+
+  /** Una riga; `id` c'è per i contatti già salvati. */
+  function aggiungiContatto({ id = "", name = "", phone = "", hours = "", is_default = false } = {}) {
+    const riga = document.createElement("div");
+    riga.className = "riga-contatto";
+    riga.dataset.id = id;
+    riga.innerHTML = `<input class="input" value="${esc(name)}" placeholder="Nome (es. Segreteria)" aria-label="Nome">
+      <input class="input" type="tel" value="${esc(phone)}" placeholder="Telefono" aria-label="Telefono">
+      <input class="input" value="${esc(hours || "")}" placeholder="Orari (facoltativo)" aria-label="Orari per chiamare">
+      <label class="spunta"><input type="checkbox" ${is_default ? "checked" : ""}> <span>Proposto</span></label>
+      <button type="button" class="button is-light sali" aria-label="Sposta su" title="Sposta su">↑</button>
+      <button type="button" class="button is-light" aria-label="Togli questo contatto" title="Togli">✕</button>`;
+    el("righeContatti").append(riga);
+  }
+
+  function apriRubrica(righe) {
+    el("righeContatti").innerHTML = "";
+    righe.forEach(aggiungiContatto);
+    if (!righe.length) aggiungiContatto({ is_default: true });
+    rubricaSalvata = JSON.stringify(rubricaDaForm());
+    aggiornaRubrica();
+  }
+
+  /** Le righe compilate almeno in parte, nell'ordine della pagina. */
+  const rubricaDaForm = () => [...el("righeContatti").children].map((r) => {
+    const [name, phone, hours] = [...r.querySelectorAll("input.input")].map((i) => i.value.trim());
+    return { id: r.dataset.id, name, phone, hours: hours || null, is_default: r.querySelector("input[type=checkbox]").checked };
+  }).filter((c) => c.name || c.phone || c.hours).map((c, position) => ({ ...c, position }));
+  const rubricaModificata = () => JSON.stringify(rubricaDaForm()) !== rubricaSalvata;
+
+  /** Avviso per le righe a metà, "Salva modifiche". */
+  function aggiornaRubrica() {
+    const mezze = rubricaDaForm().filter((c) => !c.name || !c.phone).length;
+    el("avvisoRubrica").hidden = !mezze;
+    el("avvisoRubrica").textContent = `${mezze === 1 ? "Un contatto non ha" : `${mezze} contatti non hanno`} nome e telefono: scrivili tutti e due.`;
+    const m = rubricaModificata();
+    el("btnSalvaRubrica").textContent = m ? "Salva modifiche" : "Salva contatti";
+    el("btnSalvaRubrica").classList.toggle("salva-modifiche", m);
+  }
+
+  /** Prima di salvare: se un contatto tolto sta su post non pubblicati, lo si chiede. */
+  function salvaRubrica() {
+    const righe = rubricaDaForm();
+    if (righe.some((c) => !c.name || !c.phone)) { showToast("Ogni contatto vuole nome e telefono.", "is-warning"); return; }
+    const inUso = {};  // id → quanti post non pubblicati lo mostrano
+    for (const p of posts) if (!p.published_at) for (const id of p.contacts || []) inUso[id] = (inUso[id] || 0) + 1;
+    const restano = new Set(righe.map((c) => c.id));
+    const tolti = JSON.parse(rubricaSalvata).filter((c) => c.id && !restano.has(c.id) && inUso[c.id]);
+    if (!tolti.length) { scriviRubrica(righe); return; }
+    const quanti = tolti.reduce((n, c) => n + inUso[c.id], 0);
+    chiedi(el("azioniRubrica"), `${tolti.map((c) => c.name).join(", ")} ${tolti.length === 1 ? "è" : "sono"} su ${quanti === 1 ? "un post" : `${quanti} post`} non ancora pubblicat${quanti === 1 ? "o" : "i"}: toglierl${tolti.length === 1 ? "o" : "i"} anche da lì?`,
+      "Sì, togli", () => scriviRubrica(righe));
+  }
+
+  /**
+   * Un upsert per i contatti già salvati, un insert per i nuovi (l'id lo dà
+   * il database e torna sulla riga, così se il salvataggio si ferma a metà
+   * riprovare non li duplica), poi via quelli non più in pagina. I post che li
+   * avevano li ignorano (l'id non si trova più).
+   */
+  async function scriviRubrica(righe) {
+    setLoading(true);
+    try {
+      const vecchi = righe.filter((c) => c.id), nuovi = righe.filter((c) => !c.id);
+      if (vecchi.length) {
+        const { error } = await sb.from("social_contacts").upsert(vecchi);
+        if (error) throw error;
+      }
+      if (nuovi.length) {
+        const { data, error } = await sb.from("social_contacts").insert(nuovi.map(({ id, ...c }) => c)).select("id");
+        if (error) throw error;
+        const senzaId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input.input")].some((i) => i.value.trim()));
+        data.forEach((d, i) => { nuovi[i].id = senzaId[i].dataset.id = d.id; });
+      }
+      let via = sb.from("social_contacts").delete();
+      via = righe.length ? via.not("id", "in", `(${righe.map((c) => c.id).join(",")})`) : via.not("id", "is", null);
+      const { error } = await via;
+      if (error) throw error;
+      apriRubrica(righe);
+      showToast("Contatti salvati.");
+      // Il riassunto, le spunte del post e i telefoni nelle immagini prendono
+      // la rubrica nuova. Non caricaContatti(): riaprirebbe il post e
+      // porterebbe via da qui.
+      impostaContatti(righe);
+      disegnaRiassunti();
+      if (aperto) disegnaSceltaContatti([...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value));
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+  const mappaColori = (righe) => Object.fromEntries(righe.filter((r) => r.color).map((r) => [r.weekday, r.color]));
+
+  /** I luoghi di partenza del gestionale, come suggerimenti nel form. */
+  async function caricaLuoghi() {
+    const { data } = await sb.from("departures").select("place").eq("active", true);
+    const luoghi = [...new Set((data || []).map((d) => d.place))].sort();
+    const lista = document.createElement("datalist");
+    lista.id = "luoghi";
+    lista.innerHTML = luoghi.map((l) => `<option value="${esc(l)}">`).join("");
+    document.body.append(lista);
+  }
+
+  // ---------------------------------------------------------------------
+  // Elenco
+  // ---------------------------------------------------------------------
+
+  const NOMI_TIPO = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
+  let vista = "dafare";  // l'elenco mostra i post da fare o quelli già pubblicati
+
+  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (mancanti()). */
+  function stato(p) {
+    if (p.published_at) return `<span class="stato uscito">✓ Pubblicato ${new Date(p.published_at).toLocaleDateString("it-IT")}</span>`;
+    return mancanti(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
+  }
+
+  function disegnaElenco() {
+    const daFare = posts.filter((p) => !p.published_at);
+    el("contaDaFare").textContent = daFare.length ? `${daFare.length} da fare` : "";
+    document.querySelectorAll("[data-vista]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.vista === vista));
+    // posts arriva in ordine di data; i pubblicati si leggono dal più recente.
+    const visibili = vista === "dafare" ? daFare : posts.filter((p) => p.published_at).reverse();
+    const mesi = new Map();
+    for (const p of visibili) {
+      const m = p.event_date ? p.event_date.slice(0, 7) : "";
+      if (!mesi.has(m)) mesi.set(m, []);
+      mesi.get(m).push(p);
+    }
+    // Quelli senza data (corsi, servizi) sempre in fondo.
+    const gruppi = [...mesi].sort(([a], [b]) => (!a) - (!b));
+    el("elencoPost").innerHTML = visibili.length ? gruppi.map(([m, righe]) => `
+      <li class="mese">${m ? `${maiuscola(MESI[Number(m.slice(5)) - 1])} ${m.slice(0, 4)}` : "Senza data"}</li>
+      ${righe.map(rigaElenco).join("")}`).join("")
+      : `<li class="occhiello pt-3">${vista === "dafare" ? "Nessun post da fare." : "Nessun post pubblicato."}</li>`;
+    el("elencoPost").querySelectorAll("button[data-id]").forEach((b) =>
+      b.addEventListener("click", () => apri(posts.find((p) => p.id === b.dataset.id))));
+  }
+
+  /** Una riga: il giorno (nel colore della gita), il titolo, il tipo e lo stato. */
+  function rigaElenco(p) {
+    const d = giornoDi(p.event_date);
+    const C = p.kind === "gita" && d ? categoria(categoriaGita(p.event_date)) : null;
+    const sponsor = p.kind === "sponsor" ? " · " + esc((sponsors.find((s) => s.id === p.sponsor_id) || {}).name || "") : "";
+    return `<li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
+      <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
+        ? `<span class="sett">${maiuscola(GIORNI[d.getDay()].slice(0, 3))}</span><span class="gm">${dataCorta(p.event_date)}</span>` : "—"}</span>
+      <span class="quale">${esc(String(p.title).split("\n")[0] || "(senza titolo)")}
+        <small>${esc(NOMI_TIPO[p.kind])}${sponsor} ${stato(p)}</small></span>
+    </button></li>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Form del post
+  // ---------------------------------------------------------------------
+
+  const gruppo = (tipo) => (tipo === "gita" || tipo === "sponsor" ? tipo : "evento");
+
+  /** Righe modificabili (partenze, prezzi, informazioni): [[a, b], ...]. */
+  const SEGNAPOSTI = { fFermate: ["6:30", "Luogo"], fPrezzi: ["Etichetta", "€ 25"], fInfo: ["Voce", "Valore"] };
+  function aggiungiRiga(id, [a, b] = ["", ""]) {
+    const riga = document.createElement("div");
+    riga.className = "riga";
+    riga.innerHTML = `<input class="input" value="${esc(a ?? "")}" placeholder="${SEGNAPOSTI[id][0]}">
+      <input class="input" value="${esc(b ?? "")}" placeholder="${SEGNAPOSTI[id][1]}" ${id === "fFermate" ? 'list="luoghi"' : ""}>
+      <button type="button" class="button is-light" aria-label="Togli questa riga">✕</button>`;
+    riga.querySelector("button").addEventListener("click", () => { riga.remove(); cambiato(); });
+    el(id).append(riga);
+  }
+  function righeDi(id) {
+    return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input")].map((i) => i.value.trim()))
+      .filter(([a, b]) => a || b);
+  }
+
+  function collegaForm() {
+    document.querySelectorAll("[data-nuovo]").forEach((b) =>
+      b.addEventListener("click", () => { el("menuNuovo").open = false; apri({ kind: b.dataset.nuovo }); }));
+    document.querySelectorAll("[data-vista]").forEach((b) =>
+      b.addEventListener("click", () => { vista = b.dataset.vista; disegnaElenco(); }));
+    el("fTipo").addEventListener("change", () => { mostraCampi(); cambiato(); });
+    document.querySelectorAll("[data-aggiungi]").forEach((b) =>
+      b.addEventListener("click", () => { aggiungiRiga(b.dataset.aggiungi); cambiato(); }));
+    el("editor").addEventListener("input", (e) => {
+      if (e.target.id !== "testoPost") { cambiato(); return; }
+      segnaTestoAMano();
+      segnaModifiche();
+    });
+    el("fFoto").addEventListener("change", async () => {
+      const file = el("fFoto").files[0];
+      if (!file) return;
+      foto = await riduciImmagine(file, 1080, "image/jpeg");
+      el("fFoto").value = "";
+      cambiato();
+    });
+    el("btnTogliFoto").addEventListener("click", () => { foto = null; cambiato(); });
+    el("btnSalva").addEventListener("click", salva);
+    el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
+    el("btnCopia").addEventListener("click", copiaTesto);
+    el("btnPubblicato").addEventListener("click", segnaPubblicato);
+    el("btnElimina").addEventListener("click", elimina);
+    el("calGita").addEventListener("click", sceltaCalGita);
+    // La colonna dell'anteprima si ferma sotto la testata del post, che è
+    // alta quanto vuole il testo (A+, "Manca: ...").
+    new ResizeObserver(() => el("editor").style.setProperty("--testa", el("testaPost").offsetHeight + "px")).observe(el("testaPost"));
+    // Uscire con il post o i giorni modificati e non salvati: il browser chiede conferma.
+    window.addEventListener("beforeunload", (e) => {
+      if (modificato() || giorniModificati() || rubricaModificata()) { e.preventDefault(); e.returnValue = ""; }
+    });
+  }
+
+  const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
+                       servizi: "Nuovo post dei servizi", sponsor: "Nuova campagna sponsor" };
+
+  /** Il post aperto al posto del riquadro "scegli un post", o viceversa. */
+  function mostraEditor(si) {
+    el("editor").hidden = !si;
+    el("nessunPost").hidden = si;
+  }
+
+  function apri(post) {
+    if (modificato()) {
+      chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
+        "Sì, lascia le modifiche", () => { salvato = firma(); apri(post); });
+      return;
+    }
+    aperto = post;
+    if (dove()[0] !== "post") history.replaceState(null, "", "#post"), mostraSezione();
+    const tipo = post.kind || "gita";
+    el("fTipo").value = tipo;
+    el("fData").value = post.event_date || "";
+    el("fTitolo").value = post.title || "";
+    el("fSottotitolo").value = post.subtitle || "";
+    el("fTitoloStory").value = post.story_title || "";
+    el("fCta").value = post.cta || "";
+    if (post.sponsor_id) el("fSponsor").value = post.sponsor_id;
+    el("fScadenza").value = post.deadline || "";
+    el("fCorso").checked = !!post.course;
+    el("fMostraPrezzo").checked = post.show_price !== false;
+    foto = post.photo || null;
+    meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
+    for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
+    (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
+    (post.prices || []).forEach((r) => aggiungiRiga("fPrezzi", r));
+    (post.facts || []).forEach((r) => aggiungiRiga("fInfo", r));
+    if (!post.id) aggiungiRiga("fFermate");
+    // Un post nuovo parte dai contatti proposti nella rubrica.
+    disegnaSceltaContatti(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
+    formato = 0;
+    mostraEditor(true);
+    mostraCampi();
+    ridisegna();
+    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
+    el("testoPost").value = post.caption || testoAuto;
+    segnaTestoAMano();
+    salvato = firma();
+    segnaModifiche();
+    aggiornaTesta();
+    disegnaElenco();
+    el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function mostraCampi() {
+    const g = gruppo(el("fTipo").value);
+    document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
+    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotitolo";
+    // La gita ha un prezzo solo (la quota soci): niente etichette in più.
+    el("fPrezzi").classList.toggle("una-quota", g === "gita");
+    if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
+    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, in Impostazioni.", "is-warning");
+  }
+
+  /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
+  function aggiornaTesta() {
+    const p = { ...daForm(), published_at: aperto && aperto.published_at }, quando = dataLunga(p.event_date);
+    el("occhielloPost").textContent = `${NOMI_TIPO[p.kind]}${quando ? ` · ${quando}` : ""}`;
+    el("titoloEditor").textContent = p.title.split("\n")[0] || NOMI_NUOVO[p.kind] || "Nuovo post";
+    el("statoPost").innerHTML = stato(p);
+    const manca = p.published_at ? [] : mancanti(p);
+    el("mancaCosa").hidden = !manca.length;
+    el("mancaCosa").textContent = `Manca: ${manca.join(", ")}.`;
+  }
+
+  /** Il form com'è adesso, nella forma di una riga di social_events. */
+  function daForm() {
+    const tipo = el("fTipo").value, g = gruppo(tipo);
+    const prezzi = righeDi("fPrezzi").map(([a, b]) => (g === "gita" ? [null, b || a] : [a || null, b]));
+    return {
+      kind: tipo,
+      event_date: el("fData").value || null,
+      title: el("fTitolo").value.trim(),
+      subtitle: g !== "gita" ? el("fSottotitolo").value.trim() || null : null,
+      prices: g === "sponsor" ? [] : prezzi,
+      show_price: el("fMostraPrezzo").checked,
+      stops: g === "gita" ? righeDi("fFermate") : [],
+      facts: g === "evento" ? righeDi("fInfo") : [],
+      deadline: g === "gita" ? el("fScadenza").value || null : null,
+      course: g === "gita" && el("fCorso").checked,
+      photo: g === "sponsor" ? null : foto,
+      sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
+      story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
+      cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
+      contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
+      // Vuoto = testo automatico, rifatto dai dati a ogni apertura. Si salva
+      // solo quello scritto a mano: confrontare il testo salvato con quello
+      // dei dati non basta, perché cambia anche da solo (formato della data,
+      // numero in rubrica) e sembrava corretto a mano.
+      caption: el("testoPost").value === testoAuto ? null : el("testoPost").value,
+    };
+  }
+  const sponsorDi = (post) => sponsors.find((s) => s.id === post.sponsor_id) || null;
+
+  const firma = () => JSON.stringify(daForm());
+  const modificato = () => !el("editor").hidden && firma() !== salvato;
+  function segnaModifiche() {
+    const m = modificato();
+    el("btnSalva").textContent = m ? "Salva modifiche" : "Salva";
+    el("btnSalva").classList.toggle("salva-modifiche", m);
+  }
+  /**
+   * Il testo sotto al post si riscrive da solo a ogni cambio dei dati, finché
+   * è quello scritto dalla pagina. Corretto a mano resta com'è, e la pagina lo
+   * dice: "Rifai dai dati" (forza) lo riporta al testo automatico.
+   */
+  function aggiornaTestoPost(forza) {
+    const aMano = el("testoPost").value !== testoAuto;
+    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
+    if (forza || !aMano) el("testoPost").value = testoAuto;
+    segnaTestoAMano();
+  }
+
+  function segnaTestoAMano() {
+    const ta = el("testoPost"), aMano = ta.value !== testoAuto;
+    el("testoAMano").hidden = !aMano;
+    el("btnRigenera").hidden = !aMano;
+    // Alto quanto il testo: tutto in vista, senza scorrere dentro il riquadro.
+    // (field-sizing: content qui resta all'altezza minima di Bulma.)
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + ta.offsetHeight - ta.clientHeight + "px";
+  }
+
+  function cambiato() {
+    ridisegna();
+    aggiornaTestoPost();
+    segnaModifiche();
+    aggiornaTesta();
+  }
+
+  async function salva() {
+    const riga = daForm();
+    if (!riga.title) { showToast("Scrivi la meta o il titolo.", "is-warning"); return; }
+    if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli il giorno della gita nel calendario: decide anche il colore.", "is-warning"); return; }
+    if (riga.kind === "sponsor" && !riga.sponsor_id) { showToast("Scegli lo sponsor.", "is-warning"); return; }
+    setLoading(true);
+    try {
+      const { data, error } = aperto && aperto.id
+        ? await sb.from("social_events").update(riga).eq("id", aperto.id).select().single()
+        : await sb.from("social_events").insert(riga).select().single();
+      if (error) throw error;
+      aperto = data;
+      salvato = firma();
+      segnaModifiche();
+      aggiornaTesta();
+      await caricaPost();
+      showToast("Post salvato.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function segnaPubblicato() {
+    if (!aperto || !aperto.id) { showToast("Prima salva il post.", "is-warning"); return; }
+    const quando = aperto.published_at ? null : new Date().toISOString();
+    const { data, error } = await sb.from("social_events").update({ published_at: quando }).eq("id", aperto.id).select().single();
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    aperto = data;
+    aggiornaPubblicato();
+    aggiornaTesta();
+    await caricaPost();
+    showToast(quando ? "Segnato come pubblicato." : "Tolto il segno di pubblicato.");
+  }
+  function aggiornaPubblicato() {
+    const uscito = !!(aperto && aperto.published_at);
+    el("btnPubblicato").textContent = uscito
+      ? `Pubblicato il ${new Date(aperto.published_at).toLocaleDateString("it-IT")} · togli il segno`
+      : "Segna come pubblicato";
+    el("btnPubblicato").classList.toggle("is-light", uscito);
+  }
+
+  function elimina() {
+    if (!aperto || !aperto.id) { salvato = firma(); aperto = null; mostraEditor(false); disegnaElenco(); return; }
+    chiedi(el("azioniElimina"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
+  }
+
+  async function eliminaDavvero() {
+    const { error } = await sb.from("social_events").delete().eq("id", aperto.id);
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    aperto = null;
+    mostraEditor(false);
+    await caricaPost();
+    showToast("Post eliminato.");
+  }
+
+  async function copiaTesto() {
+    try {
+      await navigator.clipboard.writeText(el("testoPost").value);
+      showToast("Testo copiato: incollalo su Instagram o Facebook.");
+    } catch (e) {
+      el("testoPost").select();
+      showToast("Non riesco a copiare da solo: il testo è selezionato, premi Ctrl+C.", "is-warning");
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Anteprime ed export
+  // ---------------------------------------------------------------------
+
+  /**
+   * Mette un canvas nel riquadro `dove`, rimpicciolito a `larghezza` px, di
+   * solito con il pulsante per scaricarlo. Dopo i font, fit() adatta i titoli
+   * lunghi e dice se qualcosa sborda ancora: lo si scrive sotto, prima
+   * dell'export. `fuori`: disegnato ma fuori dallo schermo (vedi .fuori).
+   * Restituisce la figura e la promessa di sapere se sborda.
+   */
+  function anteprima(dove, { html, w, h, nome, file }, larghezza, { fuori = false, pulsante = true } = {}) {
+    const k = larghezza / w;
+    const figura = document.createElement("figure");
+    figura.className = "anteprima" + (fuori ? " fuori" : "");
+    figura.innerHTML = `<figcaption>${esc(nome)} · ${w}×${h}</figcaption>
+      <div class="cornice" style="width:${w * k}px;height:${h * k}px"><div class="scala" style="transform:scale(${k})">${html}</div></div>
+      <p class="sborda" hidden>Un testo è troppo lungo: accorcialo.</p>
+      ${pulsante ? '<button type="button" class="button is-small is-link mt-2">Scarica PNG</button>' : ""}`;
+    dove.append(figura);
+    const canvas = figura.querySelector(".cv");
+    const sborda = document.fonts.ready.then(() => {
+      const s = fit(figura);
+      figura.querySelector(".sborda").hidden = !s;
+      return s;
+    });
+    if (pulsante) figura.querySelector("button").addEventListener("click", () => scaricaPng(canvas, file));
+    return { figura, sborda };
+  }
+
+  let formato = 0;        // quale anteprima del post aperto si vede (Post, Story, ...)
+  let giroAnteprime = 0;  // l'ultimo ridisegno: gli avvisi di uno più vecchio non contano
+
+  /**
+   * Anteprime del post aperto, una per formato: si vede quella scelta con i
+   * pulsanti sopra, le altre restano disegnate fuori dallo schermo. L'avviso
+   * "un testo è troppo lungo" le dice tutte, anche quelle che non si vedono.
+   */
+  function ridisegna() {
+    const post = daForm(), dove = el("anteprime"), giro = ++giroAnteprime;
+    for (const id of ["anteprime", "formati", "scarica"]) el(id).innerHTML = "";
+    el("sbordaTutti").hidden = true;
+    if (post.kind === "gita") disegnaCalGita();
+    el("btnTogliFoto").hidden = !foto;
+    aggiornaPubblicato();
+    const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
+    el("linkUtm").hidden = !sp || !sp.url;
+    if (sp && sp.url) {
+      const link = indirizzoUtm(sp, post, "story", STAGIONE);
+      el("linkUtm").innerHTML = `Link per lo sticker della story: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>
+        <button type="button" class="button is-small is-light mt-2" id="btnCopiaLink">Copia link</button>`;
+      el("btnCopiaLink").addEventListener("click", () => navigator.clipboard.writeText(link).then(() => showToast("Link copiato.")));
+    }
+    const lista = formatiPost(post);
+    el("formati").hidden = lista.length < 2;
+    el("senzaAnteprima").hidden = lista.length > 0;
+    el("senzaAnteprima").textContent = { gita: "Scrivi la meta e scegli il giorno: qui compare l'immagine.",
+      sponsor: "Scegli lo sponsor: qui compaiono le immagini." }[post.kind] || "Scrivi il titolo: qui compare l'immagine.";
+    if (!lista.length) return;
+    formato = Math.min(formato, lista.length - 1);
+    const disegnati = lista.map((f, i) =>
+      // 320px: ci sta nella colonna di 22rem accanto ai campi, barra di scorrimento compresa.
+      anteprima(dove, f, Math.round(Math.min(320, 400 * f.w / f.h)), { fuori: i !== formato, pulsante: false }));
+    el("formati").innerHTML = lista.map((f, i) => `<button type="button" aria-pressed="${i === formato}" title="${esc(f.nome)}">${esc(f.breve)}</button>`).join("");
+    el("formati").querySelectorAll("button").forEach((b, i) => b.addEventListener("click", () => {
+      formato = i;
+      disegnati.forEach(({ figura }, j) => figura.classList.toggle("fuori", j !== i));
+      el("formati").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", j === i));
+    }));
+    // Un pulsante per immagine: scaricarle tutte con uno solo fa chiedere al
+    // browser il permesso per i download multipli, e quella domanda spaventa.
+    el("scarica").innerHTML = lista.map((f) => `<button type="button" class="button is-link">${esc(f.scarica)}</button>`).join("");
+    el("scarica").querySelectorAll("button").forEach((b, i) =>
+      b.addEventListener("click", () => scaricaPng(disegnati[i].figura.querySelector(".cv"), lista[i].file)));
+    Promise.all(disegnati.map((d) => d.sborda)).then((esiti) => {
+      if (giro !== giroAnteprime) return;
+      const lunghi = lista.filter((f, i) => esiti[i]).map((f) => f.breve);
+      el("sbordaTutti").hidden = !lunghi.length;
+      el("sbordaTutti").textContent = `Un testo è troppo lungo (${lunghi.join(", ")}): accorcialo.`;
+    });
+  }
+
+  /** Le immagini del post: [{ html, w, h, nome, breve, scarica, file }]; nessuna finché mancano i dati minimi. */
+  function formatiPost(post) {
+    if (post.kind === "sponsor") {
+      const sp = sponsorDi(post);
+      return sp ? Object.entries(formatiCampagna(post, sp, STAGIONE)).map(([chiave, f]) =>
+        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${semplice(sp.name)}-${chiave}.png` })) : [];
+    }
+    if (!post.title || (post.kind === "gita" && !post.event_date)) return [];
+    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    return [
+      { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
+      { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
+    ];
+  }
+
+  // html-to-image si carica al primo export, come SheetJS per l'Excel.
+  let _pngInArrivo = null;
+  function caricaHtmlToImage() {
+    if (window.htmlToImage) return Promise.resolve();
+    _pngInArrivo ??= new Promise((ok, ko) => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
+      script.onload = ok;
+      script.onerror = () => { _pngInArrivo = null; script.remove(); ko(new Error("non riesco a scaricare il modulo per le immagini: controlla la connessione.")); };
+      document.head.append(script);
+    });
+    return _pngInArrivo;
+  }
+
+  async function scaricaPng(canvas, nome) {
+    setLoading(true);
+    try {
+      await caricaHtmlToImage();
+      await document.fonts.ready;
+      const png = await htmlToImage.toPng(canvas, { pixelRatio: 1, cacheBust: true });
+      const a = document.createElement("a");
+      a.href = png;
+      a.download = nome;
+      a.click();
+    } catch (error) {
+      showToast("Errore nel PNG: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Foto o logo scelti dal disco, ridotti: nel database va un'immagine leggera. */
+  function riduciImmagine(file, massimo, tipo) {
+    return new Promise((ok, ko) => {
+      const lettore = new FileReader();
+      lettore.onerror = () => ko(lettore.error);
+      lettore.onload = () => {
+        // Un SVG resta com'è: è già leggero e si ingrandisce senza sgranare.
+        if (file.type === "image/svg+xml") { ok(lettore.result); return; }
+        const img = new Image();
+        img.onerror = () => ko(new Error("immagine non leggibile"));
+        img.onload = () => {
+          const k = Math.min(1, massimo / Math.max(img.width, img.height));
+          const c = document.createElement("canvas");
+          c.width = Math.round(img.width * k);
+          c.height = Math.round(img.height * k);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          ok(c.toDataURL(tipo, .85));
+        };
+        img.src = lettore.result;
+      };
+      lettore.readAsDataURL(file);
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Giorno della gita e giorni di gita
+  // ---------------------------------------------------------------------
+
+  const SETTIMANA = [1, 2, 3, 4, 5, 6, 0];  // da lunedì, come i calendari italiani
+  let meseGita = "";                        // "2027-01": il mese mostrato nel calendario della gita
+
+  /** "Martedì" nel suo colore (quello salvato, o `c` dal form non ancora salvato). */
+  const campione = (g, c = COLORI_GITA[g]) =>
+    `<span class="campione" style="background:${c};color:${inchiostro(c)}">${maiuscola(GIORNI[g])}</span>`;
+
+  /**
+   * Il calendario della gita, al posto del campo data libero: un mese alla
+   * volta, i giorni di gita nel loro colore, gli altri bianchi ma sceglibili
+   * lo stesso (una gita spostata per la neve). Il pallino segna i giorni con
+   * già un'altra gita salvata. Scrive in fData, da cui il form legge la data.
+   */
+  function disegnaCalGita() {
+    const scelta = el("fData").value, [a, m] = meseGita.split("-").map(Number);
+    const vuote = (new Date(a, m - 1, 1).getDay() + 6) % 7, giorni = new Date(a, m, 0).getDate();
+    const altre = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (aperto && aperto.id))
+      .map((p) => [p.event_date, String(p.title).split("\n")[0]]));
+    const celle = Array(vuote).fill("<span></span>");
+    for (let n = 1; n <= giorni; n++) {
+      const iso = `${meseGita}-${String(n).padStart(2, "0")}`, cat = categoriaGita(iso), gia = altre.get(iso);
+      const C = categoria(cat), diGita = cat !== "gita";
+      const nome = `${dataLunga(iso)}${diGita ? ", giorno di gita" : ""}${gia ? `, c'è già la gita ${gia}` : ""}`;
+      celle.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === scelta}" aria-label="${esc(nome)}"
+        ${gia ? `title="C'è già: ${esc(gia)}"` : ""} ${diGita ? `class="di-gita" style="background:${C.c};color:${C.ink}"` : ""}>${n}${gia ? '<span class="occupato"></span>' : ""}</button>`);
+    }
+    // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
+    const fuori = scelta && categoriaGita(scelta) === "gita", gia = altre.get(scelta);
+    const esito = !scelta ? "Scegli il giorno: quelli colorati sono i giorni di gita."
+      : fuori ? `${dataLunga(scelta)} non è un giorno di gita: il post avrà il blu del club.`
+      : `✓ ${dataLunga(scelta)}`;
+    el("calGita").innerHTML = `
+      <div class="testa">
+        <button type="button" class="button is-light" data-mese="-1" aria-label="Mese prima">‹</button>
+        <span aria-live="polite">${maiuscola(MESI[m - 1])} ${a}</span>
+        <button type="button" class="button is-light" data-mese="1" aria-label="Mese dopo">›</button>
+      </div>
+      <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${celle.join("")}</div>
+      <p class="esito ${fuori ? "fuori" : ""}">${esc(esito)}${gia ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(gia)}.</span>` : ""}</p>
+      <div class="legenda">${SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")}
+        <a href="#giorni">Cambia giorni e colori</a></div>`;
+  }
+
+  function sceltaCalGita(e) {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.mese) {
+      const [a, m] = meseGita.split("-").map(Number), d = new Date(a, m - 1 + Number(b.dataset.mese), 1);
+      meseGita = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      disegnaCalGita();
+    } else {
+      el("fData").value = b.dataset.giorno;
+      cambiato();
+    }
+    // Il calendario è rifatto da capo: il fuoco torna sul pulsante premuto.
+    el("calGita").querySelector(b.dataset.mese ? `[data-mese="${b.dataset.mese}"]` : `[data-giorno="${b.dataset.giorno}"]`).focus();
+  }
+
+  let giorniSalvati = "";  // i giorni com'erano all'ultimo salvataggio, per "Salva modifiche"
+
+  function collegaGiorni() {
+    el("righeGiorni").innerHTML = SETTIMANA.map((g) => `<div class="riga-giorno">
+        <label class="spunta"><input type="checkbox" id="gg${g}"> ${maiuscola(GIORNI[g])}</label>
+        <input class="input" type="color" id="gc${g}" aria-label="Colore delle gite: ${GIORNI[g]}">
+        <span id="gp${g}"></span></div>`).join("");
+    el("righeGiorni").addEventListener("input", (e) => {
+      // Un giorno appena spuntato parte dal blu del club.
+      if (e.target.type === "checkbox" && e.target.checked && !COLORI_GITA[e.target.id.slice(2)]) el(`gc${e.target.id.slice(2)}`).value = "#084C8D";
+      aggiornaGiorni();
+    });
+    el("btnSalvaGiorni").addEventListener("click", salvaGiorni);
+  }
+
+  function apriGiorni() {
+    for (const g of SETTIMANA) {
+      el(`gg${g}`).checked = !!COLORI_GITA[g];
+      el(`gc${g}`).value = COLORI_GITA[g] || "#084C8D";
+    }
+    giorniSalvati = JSON.stringify(giorniDaForm());
+    aggiornaGiorni();
+  }
+
+  const giorniDaForm = () => SETTIMANA.map((g) => ({ weekday: g, color: el(`gg${g}`).checked ? el(`gc${g}`).value.toUpperCase() : null }));
+  const giorniModificati = () => JSON.stringify(giorniDaForm()) !== giorniSalvati;
+
+  /** Campioni accanto ai colori, avviso se la scritta non si legge, "Salva modifiche". */
+  function aggiornaGiorni() {
+    const deboli = [];
+    for (const { weekday: g, color } of giorniDaForm()) {
+      el(`gc${g}`).disabled = !color;
+      el(`gp${g}`).innerHTML = color ? campione(g, color) : "";
+      if (color && contrasto(color, inchiostro(color)) < 4.5) deboli.push(GIORNI[g]);
+    }
+    el("avvisoGiorni").hidden = !deboli.length;
+    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${deboli.join(", ")} la scritta si legge poco. Prova un colore più scuro o più chiaro.`;
+    const m = giorniModificati();
+    el("btnSalvaGiorni").textContent = m ? "Salva modifiche" : "Salva giorni e colori";
+    el("btnSalvaGiorni").classList.toggle("salva-modifiche", m);
+  }
+
+  async function salvaGiorni() {
+    const righe = giorniDaForm();
+    setLoading(true);
+    try {
+      const { error } = await sb.from("trip_days").upsert(righe);
+      if (error) throw error;
+      impostaColoriGita(mappaColori(righe));
+      giorniSalvati = JSON.stringify(righe);
+      aggiornaGiorni();
+      disegnaCalendarioMese();
+      disegnaElenco();
+      if (!el("editor").hidden) ridisegna();
+      showToast("Giorni e colori delle gite salvati.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Contatti del post
+  // ---------------------------------------------------------------------
+
+  /**
+   * Una spunta per ogni contatto della rubrica (Impostazioni > Contatti), nel
+   * suo ordine: il post mostra quelli spuntati. Un id del post che la rubrica
+   * non ha più si perde al prossimo salvataggio.
+   */
+  function disegnaSceltaContatti(scelti) {
+    el("fContatti").innerHTML = SOCIAL.contatti.length
+      ? SOCIAL.contatti.map((c) => `<label class="spunta"><input type="checkbox" value="${esc(c.id)}" ${scelti.includes(c.id) ? "checked" : ""}>
+          <span>${esc(c.name)} ${esc(c.phone)}${c.hours ? ` <small>${esc(c.hours)}</small>` : ""}</span></label>`).join("")
+      : '<span class="avviso-contrasto">La rubrica è vuota: aggiungi i contatti in Impostazioni.</span>';
+  }
+
+  // ---------------------------------------------------------------------
+  // Calendario del mese e copertina
+  // ---------------------------------------------------------------------
+
+  const titoloMese = (mese) => (mese ? `${maiuscola(MESI[Number(mese.slice(5, 7)) - 1])} sulla neve` : "");
+
+  function riempiMesi() {
+    const mesi = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
+    const prima = el("calMese").value;
+    el("calMese").innerHTML = mesi.length
+      ? mesi.map((m) => `<option value="${m}">${maiuscola(MESI[Number(m.slice(5, 7)) - 1])} ${m.slice(0, 4)}</option>`).join("")
+      : '<option value="">Nessuna gita salvata</option>';
+    const oggi = new Date().toISOString().slice(0, 7);
+    el("calMese").value = mesi.includes(prima) ? prima : mesi.find((m) => m >= oggi) || mesi[0] || "";
+    if (!mesi.includes(prima)) el("calTitolo").value = titoloMese(el("calMese").value);
+    disegnaCalendarioMese();
+  }
+
+  function disegnaCalendarioMese() {
+    const dove = el("anteprimaCalendario"), mese = el("calMese").value;
+    dove.innerHTML = "";
+    if (!mese) return;
+    const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
+      .sort((a, b) => a.event_date.localeCompare(b.event_date))
+      .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w: 1080, h: 1080, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+  }
+
+  function disegnaCopertinaFb() {
+    const dove = el("anteprimaCopertina");
+    dove.innerHTML = "";
+    anteprima(dove, { html: disegnaCopertina(el("copTitolo").value, el("copSotto").value), w: 820, h: 312, nome: "Copertina", file: "copertina-facebook.png" }, 620);
+  }
+
+  // ---------------------------------------------------------------------
+  // Sponsor
+  // ---------------------------------------------------------------------
+
+  let loghiNuovi = {};  // loghi scelti e non ancora salvati: { logo, logo_dark }
+
+  function collegaSponsor() {
+    el("sScegli").addEventListener("change", () => apriSponsor(el("sScegli").value));
+    // "Modifica" e "+ Aggiungi" nel riassunto: il modulo si apre con quello sponsor.
+    el("riassunti").addEventListener("click", (e) => {
+      const a = e.target.closest("[data-sponsor]");
+      if (!a) return;
+      el("sScegli").value = a.dataset.sponsor;
+      apriSponsor(a.dataset.sponsor);
+    });
+    for (const [id, campo] of [["sLogo", "logo"], ["sLogoScuro", "logo_dark"]]) {
+      el(id).addEventListener("change", async () => {
+        const file = el(id).files[0];
+        if (!file) return;
+        loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
+        el(id).value = "";
+        anteprimaSponsor();
+      });
+    }
+    for (const id of ["sScuro", "sChiaro", "sAccento", "sNome", "sLivello"]) el(id).addEventListener("input", anteprimaSponsor);
+    el("btnSalvaSponsor").addEventListener("click", salvaSponsor);
+    el("btnEliminaSponsor").addEventListener("click", chiediEliminaSponsor);
+  }
+
+  function apriSponsor(id) {
+    const sp = sponsors.find((s) => s.id === id) || {};
+    loghiNuovi = {};
+    el("sNome").value = sp.name || "";
+    el("sLivello").value = sp.level || "Main sponsor";
+    el("sUrl").value = sp.url || "";
+    el("sHandle").value = sp.handle ? `@${sp.handle.replace(/^@/, "")}` : "";
+    el("sScuro").value = sp.color_dark || "#14202E";
+    el("sChiaro").value = sp.color_light || "#FFFFFF";
+    el("sAccento").value = sp.color_accent || "#FCCF02";
+    el("sAlcol").checked = !!sp.alcohol;
+    el("btnEliminaSponsor").hidden = !sp.id;
+    anteprimaSponsor();
+  }
+
+  /**
+   * Eliminare uno sponsor elimina anche le sue campagne (on delete cascade
+   * nel database, nella stessa istruzione): la domanda dice quante sono e
+   * quante sono già uscite, così non si cancella senza saperlo.
+   */
+  function chiediEliminaSponsor() {
+    const sp = sponsors.find((s) => s.id === el("sScegli").value);
+    if (!sp) return;
+    const campagne = posts.filter((p) => p.sponsor_id === sp.id);
+    const uscite = campagne.filter((p) => p.published_at).length;
+    const quante = campagne.length === 1 ? "la sua campagna" : `le sue ${campagne.length} campagne`;
+    const domanda = campagne.length
+      ? `Eliminare ${sp.name} e ${quante}${uscite ? ` (${uscite} già pubblicat${uscite === 1 ? "a" : "e"})` : ""}? Non si torna indietro.`
+      : `Eliminare ${sp.name}? Non si torna indietro.`;
+    chiedi(el("azioniSponsor"), domanda, "Sì, elimina", () => eliminaSponsor(sp, campagne));
+  }
+
+  async function eliminaSponsor(sp, campagne) {
+    setLoading(true);
+    try {
+      const { error } = await sb.from("sponsors").delete().eq("id", sp.id);
+      if (error) throw error;
+      // Il post aperto era una delle sue campagne: non esiste più.
+      if (aperto && campagne.some((c) => c.id === aperto.id)) {
+        aperto = null;
+        mostraEditor(false);
+      }
+      el("sScegli").value = "";
+      await Promise.all([caricaPost(), caricaSponsor()]);
+      showToast(`${sp.name} eliminato${campagne.length ? ", con le sue campagne" : ""}.`);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function sponsorDaForm() {
+    const sp = sponsors.find((s) => s.id === el("sScegli").value) || {};
+    return {
+      name: el("sNome").value.trim(),
+      level: el("sLivello").value,
+      url: el("sUrl").value.trim() || null,
+      handle: el("sHandle").value.trim().replace(/^@/, "") || null,
+      logo: loghiNuovi.logo ?? sp.logo ?? null,
+      logo_dark: loghiNuovi.logo_dark ?? sp.logo_dark ?? null,
+      color_dark: el("sScuro").value.toUpperCase(),
+      color_light: el("sChiaro").value.toUpperCase(),
+      color_accent: el("sAccento").value.toUpperCase(),
+      alcohol: el("sAlcol").checked,
+    };
+  }
+
+  /** Loghi sui due fondi e contrasto dei colori: si vede subito se il marchio regge. */
+  function anteprimaSponsor() {
+    const sp = sponsorDaForm(), M = marchio(sp);
+    el("anteprimaLoghi").innerHTML = `
+      <div style="background:${sp.color_light};padding:18px 26px;border-radius:12px">${logoSuChiaro(M, 70)}</div>
+      <div style="background:${sp.color_dark};padding:18px 26px;border-radius:12px">${logoSuScuro(M, 70)}</div>`;
+    const problemi = [];
+    if (contrasto(sp.color_light, sp.color_dark) < 4.5) problemi.push("il testo chiaro sul fondo scuro si legge poco");
+    if (contrasto(sp.color_accent, sp.color_dark) < 3) problemi.push("l'accento sul fondo scuro si vede poco");
+    el("avvisoContrasto").hidden = !problemi.length;
+    el("avvisoContrasto").textContent = problemi.length ? `Attenzione: ${problemi.join("; ")}. Prova colori più distanti.` : "";
+  }
+
+  async function salvaSponsor() {
+    const riga = sponsorDaForm(), id = el("sScegli").value;
+    if (!riga.name) { showToast("Scrivi il nome dello sponsor.", "is-warning"); return; }
+    setLoading(true);
+    try {
+      const { data, error } = id
+        ? await sb.from("sponsors").update(riga).eq("id", id).select().single()
+        : await sb.from("sponsors").insert(riga).select().single();
+      if (error) throw error;
+      await caricaSponsor();
+      el("sScegli").value = data.id;
+      apriSponsor(data.id);
+      if (!el("editor").hidden) ridisegna();
+      showToast("Sponsor salvato.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+</script>
+</body>
+</html>

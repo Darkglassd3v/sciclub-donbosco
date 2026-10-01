@@ -6,14 +6,12 @@
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
+    /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
+     * listino finiva tagliata a destra. */
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; margin-bottom: 24px; }
-    .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 4px; }
-    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
     .tabella-costi { width: 100%; border-collapse: collapse; }
     .tabella-costi th { text-align: left; padding: 8px 6px; color: var(--testo-soft);
@@ -21,11 +19,15 @@
     .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-costi input, .tabella-costi select { font-size: .9375rem; }
     .tabella-costi input[type="text"] { min-width: 180px; }
-    .tabella-costi input[type="number"] { width: 100px; }
+    /* "Salva modifiche" va a capo invece di uscire dalla tabella a testo grande. */
+    .tabella-costi .button { white-space: normal; height: auto; min-height: 2.25em; }
+    .tabella-costi input[type="number"] { width: 6rem; }
     .tabella-costi .vuota { color: var(--testo-soft); }
     .tabella-costi .riga-nuova td { background: var(--riga-alt); }
+    /* Riga cambiata e non ancora salvata: si vede anche tornando alla pagina
+     * dopo essersi distratti (vedi sorvegliaRighe). */
+    .tabella-costi tr.modificata td { background: var(--giallo-light); }
 
-    #bloccato { display: none; }
   </style>
 </head>
 <body>
@@ -37,12 +39,17 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -50,24 +57,27 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Impostazioni</h1>
-
-  <div id="bloccato" class="notification is-warning">
-    Non hai i permessi per questa pagina: solo i superadmin possono modificare listino e partenze.
-  </div>
+  <nav class="schede-gestione" aria-label="Gestione">
+    <a href="stagione.html">Amministrazione</a>
+    <a href="utenti.html">Utenti</a>
+    <a href="impostazioni.html">Impostazioni</a>
+    <a href="gestione.html">Ruoli e vedi come</a>
+  </nav>
+  <h1 class="title is-4">Impostazioni</h1>
+  <p class="occhiello">Listino prezzi e partenze del pullman: si cambiano poche volte a stagione.</p>
 
   <div id="contenuto">
     <div class="riquadro">
       <h2>Listino prezzi</h2>
       <p class="occhiello">
-        Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi/presciistica) e corsi.
+        Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi), corsi e presciistica.
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
         Nessuna voce si cancella davvero: si disattiva.
       </p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Ruolo min.</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Attiva</th><th></th>
           </tr></thead>
           <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
@@ -77,6 +87,7 @@
                 <option value="FAMIGLIA">FAMIGLIA</option>
                 <option value="ABBONAMENTO">ABBONAMENTO</option>
                 <option value="CORSO">CORSO</option>
+                <option value="PRESCIISTICA">PRESCIISTICA</option>
               </select>
             </td>
             <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
@@ -126,15 +137,57 @@
   const el = (id) => document.getElementById(id);
 
   (async function init() {
-    if (!(await requireRole("superadmin"))) {
-      el("bloccato").style.display = "block";
-      el("contenuto").style.display = "none";
-      return;
-    }
+    if (!(await requirePermesso("gestione"))) return;
     el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
     el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
     await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte()]);
   })();
+
+  // ---------------------------------------------------------------------
+  // Modifiche non salvate
+  //
+  // Ogni riga si salva col suo pulsante. Prima il pulsante era sempre
+  // uguale: cambiata una voce e passati ad altro, non si capiva più se era
+  // stata salvata. Ora una riga diversa da come è nel database ha il fondo
+  // giallo e il pulsante "Salva modifiche"; salvata, torna com'era. Se si
+  // rimettono a mano i valori di prima, la riga si spegne da sola.
+  // ---------------------------------------------------------------------
+
+  function valoriRiga(riga) {
+    return JSON.stringify([...riga.querySelectorAll("input, select")]
+      .map((c) => (c.type === "checkbox" ? c.checked : c.value)));
+  }
+
+  function aggiornaStatoRiga(riga) {
+    const modificata = valoriRiga(riga) !== riga.dataset.salvato;
+    riga.classList.toggle("modificata", modificata);
+    const bottone = riga.querySelector("[data-salva]");
+    bottone.classList.toggle("is-warning", modificata);
+    bottone.textContent = modificata ? "Salva modifiche" : "Salva";
+  }
+
+  /** Dopo aver disegnato una tabella: fotografa i valori salvati di ogni riga. */
+  function sorvegliaRighe(tabella) {
+    tabella.querySelectorAll("tr[data-id]").forEach((riga) => {
+      riga.dataset.salvato = valoriRiga(riga);
+      riga.addEventListener("input", () => aggiornaStatoRiga(riga));
+      riga.addEventListener("change", () => aggiornaStatoRiga(riga));
+    });
+  }
+
+  /** Salvataggio riuscito: quello che c'è a schermo è ora quello salvato. */
+  function segnaSalvata(riga) {
+    riga.dataset.salvato = valoriRiga(riga);
+    aggiornaStatoRiga(riga);
+  }
+
+  // Lasciare la pagina con righe non salvate: il browser chiede conferma.
+  window.addEventListener("beforeunload", (evento) => {
+    if (document.querySelector("tr.modificata")) {
+      evento.preventDefault();
+      evento.returnValue = "";
+    }
+  });
 
   // ---------------------------------------------------------------------
   // Listino prezzi
@@ -145,9 +198,9 @@
     // prices_min_role_only_card nel database).
     const selettoreRuolo = p.category === "TESSERA"
       ? `<select data-min-role>
-           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>utente</option>
-           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin</option>
-           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>superadmin</option>
+           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>tutti</option>
+           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin e superadmin</option>
+           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>solo superadmin</option>
          </select>`
       : "—";
     return `
@@ -178,6 +231,7 @@
       el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
       });
+      sorvegliaRighe(el("tabellaPrezzi"));
     } catch (error) {
       showToast("Errore di caricamento listino: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -200,6 +254,7 @@
     try {
       const { error } = await sb.from("prices").update(patch).eq("id", id);
       if (error) throw error;
+      segnaSalvata(riga);
       showToast("Voce aggiornata.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -266,6 +321,7 @@
       el("tabellaPartenze").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPartenza(bottone.closest("tr")));
       });
+      sorvegliaRighe(el("tabellaPartenze"));
     } catch (error) {
       showToast("Errore di caricamento partenze: " + messaggioErrore(error), "is-danger");
     }
@@ -282,6 +338,7 @@
     try {
       const { error } = await sb.from("departures").update(patch).eq("id", id);
       if (error) throw error;
+      segnaSalvata(riga);
       showToast("Partenza aggiornata.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assicurazione — Sci Club Don Bosco</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="brand.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <style>
+
+
+    /* Liste da mandare: i tre numeri progressivi, la decorrenza e i due
+     * pulsanti, nell'ordine in cui si fanno le cose. */
+    .progressivi { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 12px 16px; margin-bottom: 16px; }
+    .progressivo { border-left: 6px solid var(--colore-tipo); padding-left: 12px; }
+    .progressivo .numero { font-size: 1.2rem; font-weight: 700; max-width: 9rem; }
+    .progressivo .conta { margin-top: 4px; color: var(--testo-soft); }
+    .progressivo .senza { color: var(--errore); font-weight: 600; }
+    #decorrenza { max-width: 14rem; }
+    #invio .azioni-lista { margin: 16px 0 8px; }
+    .passo { font-weight: 600; color: var(--ok); }
+    [data-kind="BASE"]  { --colore-tipo: var(--blu); }
+    [data-kind="PLUS"]  { --colore-tipo: var(--giallo); }
+    [data-kind="SPORT"] { --colore-tipo: var(--ok); }
+
+    /* Il tipo nella lista: il nome scritto, con il colore della sua scheda. */
+    .tipo { display: inline-block; padding: 3px 12px; border-radius: var(--pillola); font-weight: 600; white-space: nowrap; }
+    .tipo[data-kind="BASE"]  { background: var(--blu-light);    color: var(--blu-dark); }
+    .tipo[data-kind="PLUS"]  { background: var(--giallo-light); color: var(--giallo-dark); }
+    .tipo[data-kind="SPORT"] { background: var(--ok-bg);        color: var(--ok); }
+
+    .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; }
+    .azioni-lista .button { white-space: normal; height: auto; min-height: var(--tocco); }
+
+    /* Una riga per socio: chi è a sinistra, il codice fiscale a destra.
+     * Sotto i 900px le celle vanno una sotto l'altra, così il campo resta
+     * largo abbastanza da leggere un codice fiscale intero. */
+    .tabella-assic { width: 100%; border-collapse: collapse; }
+    .tabella-assic th { text-align: left; padding: 10px 8px; color: var(--testo-soft);
+                        font-weight: 600; font-size: .9375rem; border-bottom: 1px solid var(--filo); }
+    .tabella-assic td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: top; }
+    .tabella-assic .chi strong { display: block; font-size: 1.1rem; }
+    .tabella-assic .chi { min-width: 10rem; }
+    .tabella-assic .input { min-width: 0; }
+    .tabella-assic td.campo-cf { width: 38%; }
+    .tabella-assic .cf { letter-spacing: .04em; text-transform: uppercase; }
+    .tabella-assic .vuota, .riquadro h2 .vuota { color: var(--testo-soft); font-weight: 400; }
+    .tabella-assic tr.salvata td { background: var(--ok-bg); }
+    .tabella-assic tr.gruppo td { background: var(--riga-alt); font-weight: 700; font-size: 1.1rem; }
+    /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
+    .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
+    .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
+    .tabella-assic .stato { display: block; color: var(--testo-soft); margin-top: 4px; }
+    @media screen and (max-width: 900px) {
+      .tabella-assic thead { display: none; }
+      .tabella-assic tr, .tabella-assic td { display: block; width: 100% !important; }
+      .tabella-assic td { border-top: 0; padding: 6px 0; }
+      .tabella-assic tr { border-top: 1px solid var(--filo); padding: 10px 0; }
+      .tabella-assic tr.gruppo td { padding: 10px 8px; }
+      .tabella-assic td[data-etichetta]::before { content: attr(data-etichetta); display: block; font-weight: 600; color: var(--testo-soft); }
+    }
+  </style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" onclick="logout()">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
+
+<div class="container-main">
+  <h1 class="title is-4">Assicurazione</h1>
+  <p class="occhiello">
+    Una lista per ogni tipo di assicurazione. Scarica gli Excel e mandali all'assicurazione;
+    poi premi <b>Segna come assicurati</b>: solo allora quei soci risultano assicurati e non
+    tornano nelle liste della volta dopo. Numeri e decorrenza sono proposti, e si possono cambiare.
+  </p>
+
+  <div class="riquadro" id="invio">
+    <h2>Liste da mandare</h2>
+    <p class="occhiello">Il numero di ogni lista è quello dopo l'ultima mandata dello stesso tipo.</p>
+    <div class="progressivi" id="tipi"></div>
+    <label class="label" for="decorrenza">Decorrenza, uguale per tutte le liste</label>
+    <input class="input" type="date" id="decorrenza">
+    <div class="azioni-lista" id="azioniInvio">
+      <button type="button" class="button is-link" id="btnScarica">Scarica gli Excel</button>
+      <button type="button" class="button is-success" id="btnSegna" disabled>Segna come assicurati</button>
+    </div>
+    <p class="passo" id="passo" hidden></p>
+  </div>
+
+  <div class="riquadro">
+    <h2>Da assicurare <span class="vuota" id="quanti"></span></h2>
+    <p class="occhiello">
+      Tutti i tesserati ancora da assicurare, per tipo di assicurazione e in ordine alfabetico.
+      Senza codice fiscale un socio non si può assicurare: la riga è rossa finché non lo scrivi e premi Salva.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <thead><tr><th>Socio</th><th>Assicurazione</th><th>Data di nascita</th><th>Codice fiscale</th><th></th></tr></thead>
+        <tbody id="elencoDa"><tr><td colspan="5" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Liste mandate in questa stagione</h2>
+    <p class="occhiello">
+      Si possono riscaricare uguali. Se una lista non è partita, annullala: i suoi soci
+      tornano da assicurare. Si annulla solo l'ultima di ogni tipo.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <thead><tr><th>Lista</th><th>Decorrenza</th><th>Soci</th><th></th></tr></thead>
+        <tbody id="elencoListe"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Cerca e correggi</h2>
+    <p class="occhiello">
+      Per correggere un codice fiscale già salvato: cerca fra i tesserati della stagione,
+      anche quelli già assicurati. Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
+    </p>
+    <input class="input mb-4" id="cerca" type="search" autocomplete="off"
+           placeholder="Cognome, nome, codice fiscale o numero tessera…">
+    <div class="tabella-scorrevole">
+      <table class="tabella-assic">
+        <tbody id="elencoCerca"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="shared.js"></script>
+<script src="codicefiscale.js"></script>
+<script>
+  // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
+  // insurance_members() dà chi è da assicurare, insurance_sent_lists() le
+  // liste già mandate, insurance_send_all() le segna tutte insieme e
+  // insurance_undo() annulla l'ultima di un tipo, set_tax_code() corregge il codice fiscale. Chi ha il ruolo
+  // assicurazione non ha altro accesso ai soci: niente quote, telefoni,
+  // abbonamenti né l'elenco completo dei tesserati.
+
+  const el = (id) => document.getElementById(id);
+
+  // I tre tipi, con il nome e la colonna dei fogli che l'assicurazione usa
+  // (vedi dati26/): "1 Lista Neve Base.xlsx", colonna "Polizza"; la Global
+  // Sport ha "Tipo" al posto di "Polizza".
+  const TIPI = [
+    { kind: "BASE",  nome: "Neve Base",    colonna: "Polizza" },
+    { kind: "PLUS",  nome: "Neve Plus",    colonna: "Polizza" },
+    { kind: "SPORT", nome: "Global Sport", colonna: "Tipo" },
+  ];
+  const tipo = (kind) => TIPI.find((t) => t.kind === kind);
+
+  let daAssicurare = [];   // tesserati ancora da assicurare, di tutti e tre i tipi
+  let listeMandate = [];   // liste mandate in questa stagione
+
+  // Gli ultimi Excel scaricati: { decorrenza, liste: [{ t, numero, soci }] }.
+  // "Segna come assicurati" segna esattamente quei soci, con quei numeri e
+  // quella decorrenza: quello che è partito.
+  let scaricato = null;
+
+  const oggiIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
+
+  (async function init() {
+    if (!(await requirePermesso("polizze"))) return;
+    el("decorrenza").value = oggiIso();
+    el("decorrenza").addEventListener("input", annullaScarico);
+    el("btnScarica").addEventListener("click", scaricaTutte);
+    el("btnSegna").addEventListener("click", chiediInvio);
+    el("cerca").addEventListener("input", () => {
+      // Una richiesta quando si smette di scrivere, non una per lettera.
+      clearTimeout(cerca.timer);
+      cerca.timer = setTimeout(cerca, 300);
+    });
+    await carica();
+  })();
+
+  async function carica() {
+    setLoading(true);
+    try {
+      const [soci, inviate] = await Promise.all([
+        tutteLeRighe(() => sb.rpc("insurance_members")),
+        sb.rpc("insurance_sent_lists").then(({ data, error }) => { if (error) throw error; return data; }),
+      ]);
+      daAssicurare = soci;
+      listeMandate = inviate;
+      disegna();
+    } catch (error) {
+      el("tipi").innerHTML = '<div class="riquadro">Elenco non disponibile.</div>';
+      showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function disegna() {
+    disegnaProgressivi();
+    disegnaDaAssicurare();
+    disegnaListe();
+  }
+
+  const conCF = (s) => Boolean((s.tax_code || "").trim());
+  const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
+
+  function ultimaLista(kind) {
+    return listeMandate.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
+  }
+
+  // -------------------------------------------------------------------------
+  // Liste da mandare: i tre progressivi, una decorrenza, tutto insieme
+  // -------------------------------------------------------------------------
+
+  const pronti = (t) => daAssicurare.filter((s) => s.insurance === t.kind && conCF(s));
+
+  function disegnaProgressivi() {
+    el("tipi").replaceChildren(...TIPI.map((t) => {
+      const soci = daAssicurare.filter((s) => s.insurance === t.kind);
+      const n = pronti(t).length;
+      const ultima = ultimaLista(t.kind);
+      // Dopo lo scarico si tengono i numeri del file, anche se la pagina si
+      // ridisegna (un codice fiscale salvato nella lista).
+      const nelFile = scaricato?.liste.find((l) => l.t.kind === t.kind);
+      const div = document.createElement("div");
+      div.className = "progressivo";
+      div.dataset.kind = t.kind;
+      div.innerHTML = `
+        <label class="label" for="numero_${t.kind}">${esc(t.nome)} n.</label>
+        <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}"
+               value="${nelFile ? nelFile.numero : (ultima ? ultima.number + 1 : 1)}" ${n ? "" : "disabled"}>
+        <p class="conta">${n ? quanti(n, "da assicurare", "da assicurare") : "nessuno da assicurare"}${
+          soci.length > n ? ` · <span class="senza">${soci.length - n} senza codice fiscale</span>` : ""}</p>`;
+      div.querySelector(".numero").addEventListener("input", annullaScarico);
+      return div;
+    }));
+    const liste = TIPI.filter((t) => pronti(t).length);
+    const soci = liste.reduce((somma, t) => somma + pronti(t).length, 0);
+    el("btnScarica").disabled = !liste.length;
+    el("btnScarica").textContent = liste.length
+      ? `Scarica gli Excel (${quanti(liste.length, "lista", "liste")}, ${quanti(soci, "socio", "soci")})`
+      : "Nessuno da assicurare";
+  }
+
+  /** Numeri o decorrenza cambiati dopo lo scarico: i file hanno quelli vecchi, vanno riscaricati. */
+  function annullaScarico() {
+    scaricato = null;
+    el("btnSegna").disabled = true;
+    el("passo").hidden = true;
+  }
+
+  async function scaricaTutte() {
+    const decorrenza = el("decorrenza").value;
+    if (!decorrenza) { showToast("Scrivi la data di decorrenza.", "is-danger"); el("decorrenza").focus(); return; }
+    const liste = [];
+    for (const t of TIPI.filter((x) => pronti(x).length)) {
+      const input = el("numero_" + t.kind);
+      const numero = Number(input.value);
+      if (!Number.isInteger(numero) || numero < 1) {
+        showToast(`Scrivi il numero della lista ${t.nome}: 1 o più.`, "is-danger");
+        input.focus();
+        return;
+      }
+      if (listeMandate.some((l) => l.kind === t.kind && l.number === numero)) {
+        showToast(`La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`, "is-danger");
+        input.focus();
+        return;
+      }
+      liste.push({ t, numero, soci: pronti(t) });
+    }
+    setLoading(true);
+    try {
+      for (const l of liste) await excelLista(l.t, l.numero, decorrenza, l.soci);
+      scaricato = { decorrenza, liste };
+      el("btnSegna").disabled = false;
+      el("passo").textContent = `Scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
+        + "Mandale all'assicurazione, poi premi «Segna come assicurati».";
+      el("passo").hidden = false;
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const descriviListe = (liste) =>
+    liste.map((l) => `${l.t.nome} n. ${l.numero} (${quanti(l.soci.length, "socio", "soci")})`).join(", ");
+
+  function chiediInvio() {
+    if (!scaricato) return;
+    const n = scaricato.liste.reduce((somma, l) => somma + l.soci.length, 0);
+    chiedi(el("azioniInvio"),
+      `Le liste sono state mandate? ${descriviListe(scaricato.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`}, con decorrenza ${dataIt(scaricato.decorrenza)}.`,
+      "Sì, sono state mandate", invia);
+  }
+
+  async function invia() {
+    const file = scaricato;
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("insurance_send_all", {
+        kinds: file.liste.map((l) => l.t.kind),
+        list_numbers: file.liste.map((l) => l.numero),
+        member_ids: file.liste.flatMap((l) => l.soci.map((s) => s.id)),
+        starts_on: file.decorrenza,
+      });
+      if (error) throw error;
+      annullaScarico();
+      showToast(`Liste segnate: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
+      await carica();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Excel come i fogli dell'assicurazione (dati26/)
+  // -------------------------------------------------------------------------
+
+  /** "1980-01-31" → data di Excel (a mezzanotte, ora locale, come la legge SheetJS). */
+  function dataExcel(iso) {
+    if (!iso) return "";
+    const [a, m, g] = String(iso).slice(0, 10).split("-").map(Number);
+    return new Date(a, m - 1, g);
+  }
+
+  async function excelLista(t, numero, decorrenza, soci) {
+    await caricaXlsx();
+    const righe = [
+      ["Nr.", "Decorrenza", t.colonna, "Cognome", "Nome", "Data di nascita", "Codice Fiscale", "Sci Club", "Nr. lista"],
+      ...soci.map((s, i) => [i + 1, dataExcel(decorrenza), t.nome, s.last_name, s.first_name,
+        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", numero]),
+    ];
+    const foglio = XLSX.utils.aoa_to_sheet(righe, { dateNF: "dd/mm/yyyy" });
+    foglio["!cols"] = [6, 12, 14, 18, 16, 14, 20, 12, 9].map((wch) => ({ wch }));
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, foglio, "Foglio1");
+    XLSX.writeFile(libro, `${numero} Lista ${t.nome}.xlsx`);
+  }
+
+  // -------------------------------------------------------------------------
+  // Lista unica dei da assicurare, per tipo e in ordine alfabetico
+  // -------------------------------------------------------------------------
+
+  function disegnaDaAssicurare() {
+    el("quanti").textContent = `(${daAssicurare.length})`;
+    const corpo = el("elencoDa");
+    if (!daAssicurare.length) {
+      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
+      return;
+    }
+    const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
+    corpo.replaceChildren(...TIPI.flatMap((t) => {
+      const soci = daAssicurare.filter((s) => s.insurance === t.kind).sort(perNome);
+      if (!soci.length) return [];
+      const titolo = document.createElement("tr");
+      titolo.className = "gruppo";
+      titolo.innerHTML = `<td colspan="5">${esc(t.nome)} · ${quanti(soci.length, "socio", "soci")}</td>`;
+      return [titolo, ...soci.map((s) => riga(s, { conTipo: true }))];
+    }));
+  }
+
+  // -------------------------------------------------------------------------
+  // Liste mandate
+  // -------------------------------------------------------------------------
+
+  function disegnaListe() {
+    const corpo = el("elencoListe");
+    if (!listeMandate.length) {
+      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista mandata in questa stagione.</td></tr>';
+      return;
+    }
+    corpo.replaceChildren(...listeMandate.map((l) => {
+      const tr = document.createElement("tr");
+      const ultima = ultimaLista(l.kind)?.id === l.id;
+      tr.innerHTML = `
+        <td class="chi"><strong>${esc(tipo(l.kind).nome)} n. ${l.number}</strong></td>
+        <td data-etichetta="Decorrenza">${esc(dataIt(l.starts_on))}</td>
+        <td data-etichetta="Soci">${l.members}</td>
+        <td><div class="azioni-lista">
+          <button type="button" class="button is-link is-light" data-riscarica>Riscarica</button>
+          ${ultima ? '<button type="button" class="button is-danger is-outlined" data-annulla>Annulla invio</button>' : ""}
+        </div></td>`;
+      tr.querySelector("[data-riscarica]").addEventListener("click", () => riscarica(l));
+      tr.querySelector("[data-annulla]")?.addEventListener("click", () => chiedi(tr.querySelector(".azioni-lista"),
+        `Annullare la lista ${tipo(l.kind).nome} n. ${l.number}? I suoi ${l.members} soci tornano da assicurare.`,
+        "Sì, annulla", () => annulla(l)));
+      return tr;
+    }));
+  }
+
+  async function riscarica(l) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("insurance_list_members", { list_id: l.id });
+      if (error) throw error;
+      await excelLista(tipo(l.kind), l.number, l.starts_on, data);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function annulla(l) {
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("insurance_undo", { list_id: l.id });
+      if (error) throw error;
+      showToast(`Lista ${tipo(l.kind).nome} n. ${l.number} annullata: i suoi soci sono di nuovo da assicurare.`);
+      await carica();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Righe con il codice fiscale da scrivere o correggere
+  // -------------------------------------------------------------------------
+
+  /**
+   * Il codice fiscale si controlla subito (codicefiscale.js): chi prepara la
+   * lista vede cosa non torna prima di mandarla, non quando l'assicurazione
+   * la rimanda indietro. Nella lista dei da assicurare c'è la colonna del
+   * tipo (conTipo); nella ricerca, `stato` dice se è già assicurato.
+   */
+  function riga(s, { conTipo = false, stato = "" } = {}) {
+    const tr = document.createElement("tr");
+    tr.dataset.id = s.id;
+    const daAssicurareSenzaCF = conTipo && !conCF(s);
+    tr.classList.toggle("senza-cf", daAssicurareSenzaCF);
+    tr.innerHTML = `
+      <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
+        ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
+        ${stato ? `<span class="stato">${esc(stato)}</span>` : ""}
+        ${daAssicurareSenzaCF ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
+      ${conTipo ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(tipo(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
+      <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
+        ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
+      <td class="campo-cf" data-etichetta="Codice fiscale">
+        <input class="input cf" maxlength="16" autocomplete="off" aria-label="Codice fiscale di ${esc(s.last_name)} ${esc(s.first_name)}">
+        <div class="avviso-cf" role="status" hidden></div>
+      </td>
+      <td><button type="button" class="button is-link salva-riga">Salva</button></td>`;
+
+    const cf = tr.querySelector(".cf");
+    const avviso = tr.querySelector(".avviso-cf");
+    cf.value = s.tax_code || "";
+    const controlla = () => mostraAvvisoCF(avviso, cf,
+      verificaCF(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date }));
+    cf.addEventListener("change", controlla);
+    controlla();
+
+    tr.querySelector(".salva-riga").addEventListener("click", () => salva(s, tr));
+    // Invio nel campo salva la riga: chi ricopia una lista va avanti con la
+    // tastiera, senza cercare il pulsante col mouse.
+    cf.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salva(s, tr); } });
+    return tr;
+  }
+
+  async function salva(s, tr) {
+    const bottone = tr.querySelector(".salva-riga");
+    const codice = tr.querySelector(".cf").value;
+    bottone.disabled = true;
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codice });
+      if (error) throw error;
+      showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
+      // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
+      const daElenco = daAssicurare.find((d) => d.id === s.id);
+      if (daElenco) {
+        daElenco.tax_code = normalizzaCF(codice) || null;
+        disegnaProgressivi();
+        disegnaDaAssicurare();
+      } else {
+        s.tax_code = normalizzaCF(codice) || null;
+        tr.querySelector(".cf").value = s.tax_code || "";
+        tr.classList.add("salvata");
+      }
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+      setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Cerca e correggi
+  // -------------------------------------------------------------------------
+
+  let ultimaRicerca = 0;
+
+  async function cerca() {
+    const testo = el("cerca").value.trim();
+    const corpo = el("elencoCerca");
+    if (testo.replace(/\s/g, "").length < 2) { corpo.replaceChildren(); return; }
+
+    const mia = ++ultimaRicerca;
+    try {
+      const { data, error } = await sb.rpc("insurance_search", { testo });
+      if (error) throw error;
+      if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
+      if (!data.length) {
+        corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione trovato.</td></tr>';
+        return;
+      }
+      corpo.replaceChildren(...data.map((s) => riga(s, { stato: s.list_number
+        ? `Assicurato: ${tipo(s.insurance).nome} n. ${s.list_number}`
+        : "Non ancora assicurato" })));
+      if (data.length === 20) {
+        const altri = document.createElement("tr");
+        altri.innerHTML = '<td colspan="4" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';
+        corpo.append(altri);
+      }
+    } catch (error) {
+      if (mia === ultimaRicerca) showToast("Errore nella ricerca: " + messaggioErrore(error), "is-danger");
+    }
+  }
+</script>
+</body>
+</html>

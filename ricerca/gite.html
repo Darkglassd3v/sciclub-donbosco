@@ -5,36 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Abbonamenti Gite — Sci Club Don Bosco</title>
   <link rel="icon" href="logo_sciclubdonbosco.png">
+  <link rel="stylesheet" href="../brand.css">
   <link rel="stylesheet" href="stile.css">
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
 <body>
 
-<div id="vistaLogin" class="login" hidden>
-  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
-  <h1>Abbonamenti Gite</h1>
-  <form id="formLogin">
-    <div class="campo">
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username" required>
-    </div>
-    <div class="campo">
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" required>
-    </div>
-    <button class="btn-blu" type="submit">Entra</button>
-    <p id="erroreLogin" class="avviso avviso-errore" hidden></p>
-  </form>
-</div>
+<!-- La stessa barra del gestionale (web/brand.css), con i percorsi da qui:
+     passando da una pagina all'altra non cambia niente lassù. -->
+<header class="barra">
+  <div class="barra-dentro">
+    <a class="barra-marchio" href="../index.html">
+      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <span>Sci Club Don Bosco</span>
+    </a>
+    <nav class="barra-voci">
+      <a href="../index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="../admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="../riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="gite.html" data-permesso="gite" hidden aria-current="page">Gite</a>
+      <a href="../stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="../assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="../bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="../social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="../stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" id="btnEsci">Esci</button>
+    </nav>
+  </div>
+  <div class="barra-avanzamento" id="avanzamento"></div>
+</header>
 
 <div id="contenuto" class="wrap" hidden>
   <header class="testata">
-    <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
     <h1>Abbonamenti Gite</h1>
-    <div class="spinta">
-      <a class="btn-chiaro" href="index.html">Soci</a>
-      <button class="btn-chiaro" id="btnEsci" type="button">Esci</button>
-    </div>
   </header>
+  <p class="occhiello">Segna le gite fatte da chi ha l'abbonamento. Funziona anche senza linea.</p>
 
   <div class="cerca">
     <label for="q">Cerca per cognome o nome</label>
@@ -42,11 +49,11 @@
            placeholder="Cognome o nome">
 
     <div class="giorni" id="giorni">
-      <button type="button" data-giorno="" aria-pressed="true">Tutti</button>
-      <button type="button" data-giorno="SABATO" aria-pressed="false">Sabato</button>
-      <button type="button" data-giorno="DOMENICA" aria-pressed="false">Domenica</button>
-      <button type="button" data-giorno="MARTEDI" aria-pressed="false">Martedì</button>
-      <button type="button" data-giorno="JOLLY" aria-pressed="false">Jolly</button>
+      <button type="button" class="giorno-filtro" data-giorno="" aria-pressed="true">Tutti</button>
+      <button type="button" class="giorno-filtro" data-giorno="SABATO" aria-pressed="false">Sabato</button>
+      <button type="button" class="giorno-filtro" data-giorno="DOMENICA" aria-pressed="false">Domenica</button>
+      <button type="button" class="giorno-filtro" data-giorno="MARTEDI" aria-pressed="false">Martedì</button>
+      <button type="button" class="giorno-filtro" data-giorno="JOLLY" aria-pressed="false">Jolly</button>
     </div>
 
     <label class="opzione-jolly" id="rigaJolly" hidden>
@@ -170,10 +177,18 @@
    */
   function conAttesa(a) {
     const quante = inAttesa(a.member_id);
-    if (!quante) return a;
+    // Abbonamenti comprati sul pullman e non ancora arrivati: le loro gite si
+    // possono già segnare, altrimenti chi ha appena ricomprato resterebbe
+    // ESAURITO finché non torna la linea. Le schede «in invio» li contano già.
+    const nuovi = a.inInvio ? [] : coda.filter((v) => v.tipo === "abbonamento" && v.socio === a.member_id);
+    if (!quante && !nuovi.length) return a;
+    const piu = nuovi.reduce((somma, v) => somma + (v.trips || 0), 0);
     return Object.assign({}, a, {
+      trips_total: a.trips_total + piu,
       trips_used: a.trips_used + quante,
-      trips_left: Math.max(0, a.trips_left - quante),
+      trips_left: Math.max(0, a.trips_left + piu - quante),
+      days: [...new Set([...(a.days || [a.day]), ...nuovi.map((v) => v.day)])],
+      passes: (a.passes || 1) + nuovi.length,
     });
   }
 
@@ -266,16 +281,21 @@
    * Il Jolly vale qualsiasi giorno: quando si cerca "chi ha l'abbonamento del
    * sabato" chi ha un Jolly può salire lo stesso, quindi di norma compare.
    * Si può togliere, ma non è il caso normale.
+   *
+   * Dalla 2.4 un socio può avere più abbonamenti (days li elenca tutti):
+   * compare sotto ognuno dei suoi giorni. Le voci ancora in coda e le pagine
+   * servite da un database vecchio hanno solo day.
    */
   function filtrati() {
     const parti = pezzi(el("q").value);
     const conJolly = el("conJolly").checked;
 
     return abbonamenti.filter((a) => {
+      const giorni = conAttesa(a).days || [a.day];
       if (giornoScelto && giornoScelto !== "JOLLY") {
-        const suoGiorno = a.day === giornoScelto || (conJolly && a.day === "JOLLY");
+        const suoGiorno = giorni.includes(giornoScelto) || (conJolly && giorni.includes("JOLLY"));
         if (!suoGiorno) return false;
-      } else if (giornoScelto === "JOLLY" && a.day !== "JOLLY") {
+      } else if (giornoScelto === "JOLLY" && !giorni.includes("JOLLY")) {
         return false;
       }
       return parti.every((p) =>
@@ -296,7 +316,8 @@
       <div class="scheda" id="scheda_${a.member_id}">
         <div class="nomi">
           <span>${evidenzia(a.last_name, parti)} ${evidenzia(a.first_name, parti)}</span>
-          ${etichettaGiorno(a.day)}
+          ${(a.days || [a.day]).map(etichettaGiorno).join("")}
+          ${a.passes > 1 ? `<span>${a.passes} abbonamenti</span>` : ""}
           ${a.inInvio ? '<span class="in-invio">in invio</span>' : ""}
         </div>
 
@@ -306,13 +327,14 @@
             ${finito ? "ESAURITO" : "LIBERE " + a.trips_left}
           </span>
         </div>
-        <div class="barra ${(GIORNI[a.day] || {}).classe || ""}"><span style="width:${percento}%"></span></div>
+        <div class="progresso-gite" data-giorno="${esc(a.day || "")}"><span style="width:${percento}%"></span></div>
 
         <div class="azioni-pannello" style="margin-top:14px">
           <button class="btn-verde grande" data-segna="${a.member_id}" ${finito ? "disabled" : ""}>
             ＋ Segna una gita
           </button>
           <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usati})</button>
+          <button class="btn-chiaro" data-nuovo="${a.member_id}">＋ Nuovo abbonamento</button>
         </div>
 
         <div id="zona_${a.member_id}"></div>
@@ -342,7 +364,8 @@
       b.addEventListener("click", () => segna(b.dataset.segna, b)));
     lista().querySelectorAll("[data-registro]").forEach((b) =>
       b.addEventListener("click", () => apriRegistro(b.dataset.registro)));
-
+    lista().querySelectorAll("[data-nuovo]").forEach((b) =>
+      b.addEventListener("click", () => apriNuovoAbbonamento(b.dataset.nuovo)));
   }
 
   // -------------------------------------------------------------------------
@@ -368,13 +391,15 @@
 
     // L'id nasce qui, con la pressione, e resta lo stesso per tutti i
     // tentativi di invio: è così che un reinvio non diventa una seconda gita.
-    coda.push({ id: nuovoId(), socio: socioId });
+    // Il giorno scelto nel pannello viaggia con la gita: con più abbonamenti
+    // il database scala da quello di quel giorno (vedi use_trip), anche se
+    // la gita parte più tardi, quando torna la linea.
+    coda.push({ id: nuovoId(), socio: socioId, giorno: giornoScelto || null });
     salvaCoda();
 
-    const rimaste = inAttesa(socioId);
     disegna();
     const a = abbonamenti.find((x) => x.member_id === socioId);
-    const residuo = a ? Math.max(0, a.trips_left - rimaste) : null;
+    const residuo = a ? conAttesa(a).trips_left : null;
     confermaNellaScheda(socioId, residuo === 0
       ? "Gita segnata. Era l'ultima: abbonamento esaurito."
       : `Gita segnata. Ne restano ${residuo === null ? "—" : residuo}.`);
@@ -413,7 +438,11 @@
           if (voce.tipo === "abbonamento") {
             await inviaAbbonamento(voce);
           } else {
-            const { error } = await sb.rpc("use_trip", { member_id: voce.socio, client_id: voce.id });
+            // Le voci segnate con la versione precedente non hanno il giorno:
+            // senza, il database scala dal primo abbonamento con gite libere.
+            const { error } = await sb.rpc("use_trip", {
+              member_id: voce.socio, client_id: voce.id, ...(voce.giorno ? { day: voce.giorno } : {}),
+            });
             if (error) throw error;
           }
           togliDallaCoda(voce.id);
@@ -448,36 +477,17 @@
   /**
    * Assegna l'abbonamento di una voce in coda.
    *
-   * L'update scatta solo se il socio non ha ancora un abbonamento: il primo
-   * invio riuscito cambia la condizione, quindi un reinvio (risposta persa per
-   * strada) non trova più la riga e non somma una seconda volta.
+   * La somma al totale (e all'acconto, se pagato) la fa il database, sul
+   * valore di quel momento: prima la faceva il telefono su quello letto
+   * all'assegnazione, e una modifica fatta intanto da un altro operatore
+   * andava persa. L'id della voce rende ripetibile l'invio: un reinvio
+   * (risposta persa per strada) non vende un secondo abbonamento.
    */
   async function inviaAbbonamento(v) {
-    // ponytail: total e paid sono quelli letti all'assegnazione, come nel form
-    // soci; una modifica fatta intanto da un altro operatore viene sovrascritta.
-    // Se capita, la somma va spostata in una funzione del database.
-    const { data, error } = await sb
-      .from("members")
-      .update({
-        pass_type: v.nome,
-        total: v.total + v.prezzo,
-        paid: v.paid + (v.pagato ? v.prezzo : 0),
-      })
-      .eq("id", v.socio)
-      .or("pass_type.is.null,pass_type.eq.NO")
-      .select("id");
+    const { error } = await sb.rpc("add_pass", {
+      member_id: v.socio, pass_type: v.nome, paid: Boolean(v.pagato), client_id: v.id,
+    });
     if (error) throw error;
-    if (data.length) return;
-
-    // Nessuna riga toccata: o era un reinvio già arrivato, o un altro
-    // telefono gli ha dato nel frattempo un abbonamento diverso.
-    const { data: riga, error: errLettura } = await sb
-      .from("members").select("pass_type").eq("id", v.socio).single();
-    if (errLettura) throw errLettura;
-    if (riga.pass_type !== v.nome) {
-      // Con un code il rifiuto è definitivo: la voce esce dalla coda.
-      throw Object.assign(new Error(`ha già l'abbonamento «${riga.pass_type}»`), { code: "GIA_ASSEGNATO" });
-    }
   }
 
   /** Riprova più tardi, aspettando ogni volta un po' di più: 3s, 6s, 12s… fino a un minuto. */
@@ -609,7 +619,7 @@
 
     let query = sb
       .from("members")
-      .select("id, last_name, first_name, total, paid")
+      .select("id, last_name, first_name")
       .gte("enrolled_at", inizioStagione())
       // L'abbonamento si vende solo a chi è tesserato.
       .not("card_type", "is", null)
@@ -642,7 +652,7 @@
     const opzioni = opzioniAbbonamento
       .map((v) => `<label class="scelta">
           <input type="radio" name="abb_${s.id}" value="${esc(v.name)}">
-          <span>${esc(v.name)}</span><span class="prezzo">${esc(v.price)} €</span>
+          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
         </label>`)
       .join("");
 
@@ -691,15 +701,7 @@
     if (!voce) return;
 
     bottone.disabled = true;
-    coda.push({
-      id: nuovoId(), tipo: "abbonamento", socio: socioId,
-      chi: `${socio.last_name} ${socio.first_name}`,
-      cognome: socio.last_name, nome_socio: socio.first_name,
-      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
-      trips: Number(voce.trips || 0), day: voce.day,
-      total: Number(socio.total || 0), paid: Number(socio.paid || 0),
-    });
-    salvaCoda();
+    accodaAbbonamento(socio, voce, pagato);
 
     // Passa subito all'elenco principale, «in invio»: le gite gli si segnano
     // anche senza linea e partono dopo l'abbonamento.
@@ -711,9 +713,78 @@
     svuotaCoda();
   }
 
+  /** Mette in coda la vendita di un abbonamento: la manda add_pass, anche più tardi. */
+  function accodaAbbonamento(socio, voce, pagato) {
+    coda.push({
+      id: nuovoId(), tipo: "abbonamento", socio: socio.id,
+      chi: `${socio.last_name} ${socio.first_name}`,
+      cognome: socio.last_name, nome_socio: socio.first_name,
+      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
+      trips: Number(voce.trips || 0), day: voce.day,
+    });
+    salvaCoda();
+  }
+
+  // -------------------------------------------------------------------------
+  // Un altro abbonamento a chi ne ha già uno
+  //
+  // Chi finisce le cinque gite ne ricompra un altro sul pullman e lo paga lì,
+  // o lo pagherà: stessa scelta di «Assegna», dentro la sua scheda. Va in coda
+  // come le gite, quindi funziona anche senza linea, e le sue gite si possono
+  // segnare subito (vedi conAttesa).
+  // -------------------------------------------------------------------------
+
+  function apriNuovoAbbonamento(socioId) {
+    const zona = el("zona_" + socioId);
+    const a = abbonamenti.find((x) => x.member_id === socioId);
+    if (!zona || !a) return;
+    if (!opzioniAbbonamento.length) {
+      zona.innerHTML = `<p class="avviso avviso-errore">Il listino non si è caricato: serve la linea almeno una volta. Ricarica la pagina quando c'è campo.</p>`;
+      return;
+    }
+    // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
+    const opzioni = opzioniAbbonamento
+      .map((v) => `<label class="scelta">
+          <input type="radio" name="nuovo_${socioId}" value="${esc(v.name)}">
+          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
+        </label>`)
+      .join("");
+    zona.innerHTML = `
+      <div style="margin-top:12px">
+        <fieldset class="scelte" aria-label="Nuovo abbonamento">${opzioni}</fieldset>
+      </div>
+      <div class="azioni-pannello" style="margin-top:10px">
+        <button class="btn-verde" data-vendi="1">Aggiungi · pagato</button>
+        <button class="btn-rosso" data-vendi="0">Aggiungi · da pagare</button>
+        <button class="btn-chiaro" data-chiudi-nuovo>Chiudi</button>
+      </div>
+      <div data-esito-nuovo></div>`;
+    zona.querySelector("[data-chiudi-nuovo]").addEventListener("click", () => { zona.innerHTML = ""; });
+    zona.querySelectorAll("[data-vendi]").forEach((b) => b.addEventListener("click", () => {
+      const scelta = zona.querySelector(`input[name="nuovo_${socioId}"]:checked`);
+      const voce = scelta && opzioniAbbonamento.find((v) => v.name === scelta.value);
+      if (!voce) {
+        zona.querySelector("[data-esito-nuovo]").innerHTML =
+          `<p class="avviso avviso-errore">Scegli prima l'abbonamento.</p>`;
+        return;
+      }
+      accodaAbbonamento({ id: socioId, last_name: a.last_name, first_name: a.first_name }, voce, b.dataset.vendi === "1");
+      disegna();
+      confermaNellaScheda(socioId, `Abbonamento «${voce.name}» ${b.dataset.vendi === "1" ? "pagato" : "da pagare"}: in invio. `
+        + "Le sue gite si possono già segnare.");
+      svuotaCoda();
+    }));
+  }
+
   // -------------------------------------------------------------------------
 
   async function avvia() {
+    try {
+      if (!(await richiediPermesso("gite"))) return;
+    } catch (errore) {
+      messaggio(messaggioErrore(errore), "avviso-errore");
+      return;
+    }
     el("q").addEventListener("input", disegna);
     // La ricerca fra i soci senza abbonamento va sul database, quindi non
     // parte ad ogni tasto: 200ms come la ricerca di ricerca/index.html.

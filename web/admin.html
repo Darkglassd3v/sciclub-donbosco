@@ -6,45 +6,59 @@
   <title>Pannello Pagamenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo"));if(r)document.documentElement.dataset.ruolo=r.role}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1000px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .summary-bar { background: var(--testo); color: #fff; padding: 26px 28px; border-radius: var(--raggio-card); margin-bottom: 28px; }
-    .summary-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
-    .summary-value { font-size: 2.6rem; font-weight: 700; letter-spacing: -.022em; color: var(--giallo); line-height: 1.05; margin-top: 2px; }
-    .summary-bar .checkbox { color: #fff; font-size: 1rem; }
-    .summary-bar .checkbox input { width: 22px; height: 22px; vertical-align: -4px; margin-right: 8px; }
+    /* Cerca e filtra: il campo largo, la spunta e Aggiorna accanto. */
+    .comandi { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
+    .comandi .field { flex: 1 1 20rem; margin-bottom: 0; }
+    .comandi .checkbox { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco); font-weight: 600; }
+    .comandi .checkbox input { width: 22px; height: 22px; margin: 0; }
 
-    /* La famiglia è una scheda bianca con il suo titolo, non una riga di
-     * tabella sotto una fascia colorata. Il colore torna a essere un accento. */
-    .unit-card { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); margin-bottom: 20px; overflow: hidden; }
-    .unit-header { padding: 22px 24px 16px; display: flex; justify-content: space-between;
+    /* La famiglia è un riquadro con il suo titolo; la tabella va da bordo a
+     * bordo, con lo stesso margine del riquadro (28px). */
+    .unit-card { padding: 0; overflow: hidden; }
+    .unit-header { padding: 24px 28px 16px; display: flex; justify-content: space-between;
                    align-items: baseline; flex-wrap: wrap; gap: 10px; }
-    .unit-title { font-weight: 600; font-size: 1.5rem; letter-spacing: -.022em; color: var(--testo); }
+    .unit-title { font-weight: 600; font-size: 1.35rem; letter-spacing: -.022em; color: var(--testo); }
     .unit-badge { color: var(--testo-soft); font-size: .9375rem; }
 
     .custom-table { width: 100%; border-collapse: collapse; }
-    .custom-table th { text-align: left; padding: 10px 24px; }
-    .custom-table td { padding: 16px 24px; vertical-align: middle; }
+    .custom-table th { text-align: left; padding: 10px 28px; }
+    .custom-table td { padding: 16px 28px; vertical-align: middle; }
     .custom-table .num { text-align: right; white-space: nowrap; }
     .row-dependent td:first-child { padding-left: 44px; }
+    .a-carico { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
+                background: var(--blu-light); color: var(--blu-dark); font-size: .9375rem; font-weight: 600; }
     .dettagli-socio { display: flex; flex-direction: column; margin-top: 4px; color: var(--testo-soft); font-size: .9375rem; }
 
     /* La riga del pagamento sta in fondo alla famiglia, larga e da sola: è
      * l'unica cosa che si può fare in questa pagina. */
     .barra-saldo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-                   padding: 20px 24px; border-top: 1px solid var(--filo); }
+                   padding: 20px 28px; border-top: 1px solid var(--filo); }
     .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; }
     .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
     .barra-saldo .domanda { font-weight: 600; color: var(--blu-dark); }
     .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
 
+    /* Modifica degli importi e storico: si aprono sotto la riga del socio. */
+    .azioni-socio { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .azioni-socio .button { font-size: .9375rem; }
+    .a-mano { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
+              background: var(--giallo-light); color: var(--giallo-dark); font-size: .9375rem; font-weight: 600; }
+    .riga-aperta td { background: var(--riga-alt); }
+    .modifica-importi { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 12px 16px; align-items: end; }
+    .modifica-importi .motivo { grid-column: 1 / -1; }
+    .modifica-importi .azioni { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+    .storico { list-style: none; margin: 0; padding: 0; }
+    .storico li { padding: 8px 0; border-top: 1px solid var(--filo); }
+    .storico li:first-child { border-top: 0; }
+    .storico .quando { font-weight: 600; margin-right: 8px; }
+
     @media screen and (max-width: 768px) {
-      .summary-value { font-size: 2.1rem; }
-      .custom-table th, .custom-table td { padding-left: 18px; padding-right: 18px; }
-      .unit-header, .barra-saldo { padding-left: 18px; padding-right: 18px; }
+      .custom-table th, .custom-table td { padding-left: 20px; padding-right: 20px; }
+      .unit-header, .barra-saldo { padding-left: 20px; padding-right: 20px; }
     }
   </style>
 </head>
@@ -57,12 +71,17 @@
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
-      <a href="index.html">Soci</a>
-      <a href="admin.html">Pagamenti</a>
-      <a href="riepilogo.html">Riepilogo</a>
-      <a class="voce-rischiosa" href="stagione.html" title="Chiusura della stagione" data-ruolo="superadmin" hidden>Amministrazione</a>
-      <a class="voce-rischiosa" href="utenti.html" data-ruolo="superadmin" hidden>Utenti</a>
-      <a class="voce-rischiosa" href="impostazioni.html" data-ruolo="superadmin" hidden>Impostazioni</a>
+      <a href="index.html" data-permesso="soci" hidden>Soci</a>
+      <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
+      <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
+      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
+      <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
+      <a href="social.html" data-permesso="social" hidden>Social</a>
+      <a class="voce-rischiosa" href="stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" onclick="logout()">Esci</button>
     </nav>
   </div>
@@ -70,30 +89,31 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Pannello Pagamenti</h1>
+  <h1 class="title is-4">Pannello Pagamenti</h1>
+  <p class="occhiello">
+    Le famiglie con qualcosa da pagare. Quote e numero di tessera si modificano
+    dalla pagina <a href="index.html">Soci</a>; un rimborso o uno sconto si
+    scrive qui, con <b>Modifica importi</b> sulla riga del socio, e resta nello <b>Storico</b>.
+  </p>
 
-  <div class="summary-bar">
-    <div class="level is-mobile">
-      <div class="level-left">
-        <div>
-          <div class="summary-label">Totale da incassare</div>
-          <div class="summary-value" id="totalInsoluti">—</div>
-          <div class="filtro-attivo" id="conteggioNuclei" style="color:#C3CCD6"></div>
-        </div>
-      </div>
-      <div class="level-right">
-        <label class="checkbox mr-4">
-          <input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare
-        </label>
-        <button class="button is-link" onclick="caricaDati()">Aggiorna</button>
-      </div>
-    </div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Totale da incassare</div><div class="kpi-value rosso" id="totalInsoluti">—</div></div>
+    <div class="kpi"><div class="kpi-label">Nuclei</div><div class="kpi-value" id="numNuclei">—</div></div>
+    <div class="kpi"><div class="kpi-label">Familiari a carico</div><div class="kpi-value" id="numFamiliari">—</div></div>
   </div>
 
-  <p class="suggerimento mb-4">
-    Quote, polizza e numero di tessera si modificano dalla pagina
-    <a href="index.html">Soci</a>.
-  </p>
+  <div class="riquadro">
+    <h2>Cerca e filtra</h2>
+    <p class="occhiello">Per chi ha già pagato tutto togli la spunta «Solo chi deve pagare».</p>
+    <div class="comandi">
+      <div class="field">
+        <label class="label" for="cercaNucleo">Cerca una famiglia</label>
+        <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
+      </div>
+      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare</label>
+      <button class="button is-link is-outlined" onclick="caricaDati()">Aggiorna</button>
+    </div>
+  </div>
 
   <div id="displayArea"></div>
 </div>
@@ -104,9 +124,14 @@
 <script>
   const el = (id) => document.getElementById(id);
 
+  // L'ultimo elenco caricato (nuclei, capofamiglia, familiari): la ricerca
+  // lo filtra senza tornare al database.
+  let ultimi = [[], {}, []];
+
   (async function init() {
-    if (!(await requireAuth())) return;
+    if (!(await requirePermesso("pagamenti"))) return;
     el("soloInsoluti").addEventListener("change", caricaDati);
+    el("cercaNucleo").addEventListener("input", render);
     await caricaDati();
 
     // Aggiornamento in tempo reale: se un altro operatore incassa da un altro
@@ -120,6 +145,9 @@
    * ogni chiamata.
    */
   async function caricaDati({ silenzioso = false } = {}) {
+    // Un altro operatore ha salvato mentre qui si scrive una modifica: il
+    // ridisegno la cancellerebbe. Si aggiorna al prossimo giro.
+    if (silenzioso && document.querySelector(".riga-aperta")) return;
     if (!silenzioso) setLoading(true);
     try {
       let query = sb
@@ -143,8 +171,8 @@
         familiari = data;
       }
 
-      const capofamiglia = await caricaCapofamiglia(idPaganti);
-      render(nuclei, capofamiglia, familiari);
+      ultimi = [nuclei, await caricaCapofamiglia(idPaganti), familiari];
+      render();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -165,15 +193,27 @@
     return new Date(anno, 8, 1).toISOString();
   }
 
-  function render(nuclei, capofamiglia, familiari) {
-    const totale = nuclei.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
+  function render() {
+    const [tutti, capofamiglia, familiari] = ultimi;
+    const totale = tutti.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
     el("totalInsoluti").textContent = fmt(totale);
-    el("conteggioNuclei").textContent = `${nuclei.length} nuclei · ${familiari.length} familiari a carico`;
+
+    // Con centinaia di nuclei si scorreva a mano: una famiglia si trova per
+    // il nome di chiunque ne faccia parte, in qualsiasi ordine.
+    const termini = el("cercaNucleo").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const nuclei = termini.length
+      ? tutti.filter((n) => [n, ...familiari.filter((f) => f.payer_id === n.head_id)].some((p) => {
+          const nome = `${p.last_name} ${p.first_name}`.toLowerCase();
+          return termini.every((t) => nome.includes(t));
+        }))
+      : tutti;
+    el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${tutti.length}` : tutti.length;
+    el("numFamiliari").textContent = familiari.length;
 
     const contenitore = el("displayArea");
     if (!nuclei.length) {
-      contenitore.innerHTML =
-        '<div class="notification is-light has-text-centered">Nessun nucleo da mostrare.</div>';
+      contenitore.innerHTML = `<div class="notification is-light has-text-centered">${
+        termini.length ? "Nessuna famiglia con questo nome." : "Nessun nucleo da mostrare."}</div>`;
       return;
     }
 
@@ -184,7 +224,7 @@
       const saldo = parseFloat(nucleo.household_balance || 0);
 
       return `
-        <div class="unit-card">
+        <div class="riquadro unit-card">
           <div class="unit-header">
             <span class="unit-title">${nucleo.last_name} ${nucleo.first_name}</span>
             <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>
@@ -207,20 +247,34 @@
     contenitore.querySelectorAll("button[data-chiedi]").forEach((bottone) => {
       bottone.addEventListener("click", () => chiediConferma(bottone.dataset.chiedi));
     });
+    contenitore.querySelectorAll("button[data-modifica]").forEach((bottone) => {
+      bottone.addEventListener("click", () => apriModifica(bottone.dataset.modifica));
+    });
+    contenitore.querySelectorAll("button[data-storico]").forEach((bottone) => {
+      bottone.addEventListener("click", () => apriStorico(bottone.dataset.storico));
+    });
   }
 
-  /** Riga in sola lettura: in questa pagina non si modifica niente del socio. */
+  /**
+   * Riga del socio. Del socio qui si cambiano solo gli importi (Modifica
+   * importi, con il motivo): il resto si fa dalla pagina Soci.
+   */
   function rigaSocio(socio, eFamiliare) {
     const saldo = parseFloat(socio.balance || 0);
     const dettagli = [socio.card_type, socio.family_discount,
-                      socio.pass_type, socio.course_type]
+                      socio.pass_type, socio.preski_type, socio.course_type]
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `
-      <tr class="${eFamiliare ? "row-dependent" : ""}">
+      <tr class="${eFamiliare ? "row-dependent" : ""}" data-socio="${socio.id}">
         <td>
-          <b>${socio.last_name} ${socio.first_name}</b>${eFamiliare ? " <small>(a carico)</small>" : ""}
-          <div class="dettagli-socio">${dettagli.map((d) => `<span>${d}</span>`).join("")}</div>
+          <b>${esc(socio.last_name)} ${esc(socio.first_name)}</b>${eFamiliare ? '<span class="a-carico">a carico</span>' : ""}${
+            socio.total_manual ? '<span class="a-mano">totale a mano</span>' : ""}
+          <div class="dettagli-socio">${dettagli.map((d) => `<span>${esc(d)}</span>`).join("")}</div>
+          <div class="azioni-socio">
+            <button type="button" class="button is-light" data-modifica="${socio.id}">Modifica importi</button>
+            <button type="button" class="button is-light" data-storico="${socio.id}">Storico</button>
+          </div>
         </td>
         <td class="num">${fmt(socio.total)}</td>
         <td class="num">${fmt(socio.paid)}</td>
@@ -244,6 +298,103 @@
           <button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${fmt(saldo)}</button>
         </span>
       </div>`;
+  }
+
+  // -------------------------------------------------------------------------
+  // Modifica degli importi (rimborsi, sconti) e storico
+  // -------------------------------------------------------------------------
+
+  function socioDa(id) {
+    const [, capofamiglia, familiari] = ultimi;
+    return capofamiglia[id] || familiari.find((f) => f.id === id);
+  }
+
+  /** Apre sotto la riga del socio un riquadro: uno solo alla volta. */
+  function apriSotto(id, html) {
+    document.querySelectorAll(".riga-aperta").forEach((r) => r.remove());
+    const riga = document.querySelector(`tr[data-socio="${id}"]`);
+    if (!riga) return null;
+    const sotto = document.createElement("tr");
+    sotto.className = "riga-aperta";
+    sotto.innerHTML = `<td colspan="4">${html}</td>`;
+    riga.after(sotto);
+    return sotto;
+  }
+
+  function apriModifica(id) {
+    const socio = socioDa(id);
+    if (!socio) return;
+    const sotto = apriSotto(id, `
+      <div class="modifica-importi">
+        <div><label class="label" for="quota_${id}">Quota (€)</label>
+          <input class="input" type="number" step="0.01" min="0" id="quota_${id}" value="${num(socio.total)}"></div>
+        <div><label class="label" for="versato_${id}">Già versato (€)</label>
+          <input class="input" type="number" step="0.01" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
+        <div class="motivo"><label class="label" for="motivo_${id}">Motivo*</label>
+          <input class="input" id="motivo_${id}" maxlength="200" autocomplete="off"
+                 placeholder="Es. rimborso corso: fatte 2 lezioni su 8"></div>
+        <div class="azioni">
+          <button type="button" class="button is-success" data-salva>Salva ${esc(socio.last_name)} ${esc(socio.first_name)}</button>
+          <button type="button" class="button is-light" data-chiudi>Annulla</button>
+        </div>
+      </div>`);
+    sotto.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
+    sotto.querySelector("[data-salva]").addEventListener("click", () => salvaImporti(socio, sotto));
+    el("motivo_" + id).focus();
+  }
+
+  async function salvaImporti(socio, sotto) {
+    const quota = el("quota_" + socio.id).value;
+    const versato = el("versato_" + socio.id).value;
+    const motivo = el("motivo_" + socio.id).value.trim();
+    if (quota === "" || versato === "" || num(quota) < 0 || num(versato) < 0) {
+      showToast("Quota e già versato: scrivi una cifra, zero o più.", "is-danger");
+      return;
+    }
+    if (!motivo) {
+      showToast("Scrivi il motivo: resta nello storico del socio.", "is-danger");
+      el("motivo_" + socio.id).focus();
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("set_amounts", {
+        member_id: socio.id, total: num(quota), paid: num(versato), reason: motivo,
+      });
+      if (error) throw error;
+      sotto.remove();
+      showToast(`${socio.last_name} ${socio.first_name}: importi salvati.`);
+      await caricaDati({ silenzioso: true });
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function apriStorico(id) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("amount_history", { member_id: id });
+      if (error) throw error;
+      const quando = (t) => new Date(t).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
+      const cambio = (etichetta, prima, dopo) =>
+        num(prima) === num(dopo) ? "" : `${etichetta} ${fmt(prima)} → ${fmt(dopo)} · `;
+      const sotto = apriSotto(id, data.length
+        ? `<ul class="storico">${data.map((c) => `
+            <li><span class="quando">${quando(c.changed_at)}</span>
+              ${cambio("Quota", c.old_total, c.new_total)}${cambio("Versato", c.old_paid, c.new_paid)}
+              ${esc(c.reason || "Modifica della scheda socio")}${c.changed_by ? ` · ${esc(c.changed_by)}` : ""}</li>`).join("")}
+          </ul>
+          <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`
+        : `<p>Nessuna modifica degli importi registrata.</p>
+          <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`);
+      sotto?.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function chiediConferma(idPagante) {
