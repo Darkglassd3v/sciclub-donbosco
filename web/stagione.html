@@ -8,16 +8,11 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 860px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
-                padding: 30px; margin-bottom: 22px; }
     .riquadro.pericolo { border: 2px solid var(--errore); }
-    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 6px; }
     .riquadro h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.022em;
                    margin: 26px 0 4px; }
-    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
 
     .due-colonne { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
     .elenco { margin: 0; padding-left: 22px; list-style: disc; }
@@ -38,15 +33,6 @@
     .conferma label { font-weight: 600; display: block; margin-bottom: 10px; }
     .conferma code { background: #fff; border: 1px solid var(--filo); padding: 3px 10px;
                      border-radius: 6px; font-size: 1rem; }
-
-
-
-    @media screen and (max-width: 768px) {
-      .riquadro { padding: 22px 18px; }
-    }
-    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
   </style>
 </head>
 <body>
@@ -82,15 +68,15 @@
     <a href="impostazioni.html">Impostazioni</a>
     <a href="gestione.html">Ruoli e vedi come</a>
   </nav>
-  <h1 class="title is-4 mb-4">Amministrazione</h1>
-
+  <h1 class="title is-4">Amministrazione</h1>
+  <p class="occhiello">Chiusura della stagione e conti degli anni passati.</p>
 
   <div id="contenuto">
   <!-- Resoconto rapido: incasso corsi = iscritti al corso x listino. -->
-  <div class="columns is-mobile is-multiline mb-5">
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso corsi</div><div class="kpi-value" id="kCorsi">—</div></div></div>
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div></div>
-    <div class="column is-4-tablet is-12-mobile"><div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div></div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Incasso corsi</div><div class="kpi-value" id="kCorsi">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incasso totale</div><div class="kpi-value" id="kIncasso">—</div></div>
+    <div class="kpi"><div class="kpi-label">Tesserati</div><div class="kpi-value" id="kTesserati">—</div></div>
   </div>
   <div class="riquadro">
     <h2>Stagione in corso</h2>

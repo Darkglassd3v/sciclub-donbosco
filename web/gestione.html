@@ -8,11 +8,7 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 960px; margin: 28px auto 80px; padding: 0 18px; }
 
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 30px; margin-bottom: 22px; }
-    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 6px; }
-    .riquadro .occhiello { color: var(--testo-soft); margin-bottom: 18px; }
     .riga-vedi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .riga-vedi select { width: auto; min-width: 260px; }
 
@@ -55,7 +51,8 @@
     <a href="impostazioni.html">Impostazioni</a>
     <a href="gestione.html">Ruoli e vedi come</a>
   </nav>
-  <h1 class="title is-4 mb-4">Ruoli e vedi come</h1>
+  <h1 class="title is-4">Ruoli e vedi come</h1>
+  <p class="occhiello">Cosa può fare ogni ruolo, e il sito visto con gli occhi di un altro ruolo.</p>
 
   <div class="riquadro">
     <h2>Vedi come</h2>

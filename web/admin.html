@@ -8,25 +8,25 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1000px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .summary-bar { background: var(--testo); color: #fff; padding: 26px 28px; border-radius: var(--raggio-card); margin-bottom: 28px; }
-    .summary-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
-    .summary-value { font-size: 2.6rem; font-weight: 700; letter-spacing: -.022em; color: var(--giallo); line-height: 1.05; margin-top: 2px; }
-    .summary-bar .checkbox { color: #fff; font-size: 1rem; }
+    /* Cerca e filtra: il campo largo, la spunta e Aggiorna accanto. */
+    .comandi { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
+    .comandi .field { flex: 1 1 20rem; margin-bottom: 0; }
+    .comandi .checkbox { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco); font-weight: 600; }
+    .comandi .checkbox input { width: 22px; height: 22px; margin: 0; }
 
-    /* La famiglia è una scheda bianca con il suo titolo, non una riga di
-     * tabella sotto una fascia colorata. Il colore torna a essere un accento. */
-    .unit-card { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); margin-bottom: 20px; overflow: hidden; }
-    .unit-header { padding: 22px 24px 16px; display: flex; justify-content: space-between;
+    /* La famiglia è un riquadro con il suo titolo; la tabella va da bordo a
+     * bordo, con lo stesso margine del riquadro (28px). */
+    .unit-card { padding: 0; overflow: hidden; }
+    .unit-header { padding: 24px 28px 16px; display: flex; justify-content: space-between;
                    align-items: baseline; flex-wrap: wrap; gap: 10px; }
-    .unit-title { font-weight: 600; font-size: 1.5rem; letter-spacing: -.022em; color: var(--testo); }
+    .unit-title { font-weight: 600; font-size: 1.35rem; letter-spacing: -.022em; color: var(--testo); }
     .unit-badge { color: var(--testo-soft); font-size: .9375rem; }
 
     .custom-table { width: 100%; border-collapse: collapse; }
-    .custom-table th { text-align: left; padding: 10px 24px; }
-    .custom-table td { padding: 16px 24px; vertical-align: middle; }
+    .custom-table th { text-align: left; padding: 10px 28px; }
+    .custom-table td { padding: 16px 28px; vertical-align: middle; }
     .custom-table .num { text-align: right; white-space: nowrap; }
     .row-dependent td:first-child { padding-left: 44px; }
     .a-carico { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
@@ -36,7 +36,7 @@
     /* La riga del pagamento sta in fondo alla famiglia, larga e da sola: è
      * l'unica cosa che si può fare in questa pagina. */
     .barra-saldo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-                   padding: 20px 24px; border-top: 1px solid var(--filo); }
+                   padding: 20px 28px; border-top: 1px solid var(--filo); }
     .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; }
     .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
     .barra-saldo .domanda { font-weight: 600; color: var(--blu-dark); }
@@ -57,9 +57,8 @@
     .storico .quando { font-weight: 600; margin-right: 8px; }
 
     @media screen and (max-width: 768px) {
-      .summary-value { font-size: 2.1rem; }
-      .custom-table th, .custom-table td { padding-left: 18px; padding-right: 18px; }
-      .unit-header, .barra-saldo { padding-left: 18px; padding-right: 18px; }
+      .custom-table th, .custom-table td { padding-left: 20px; padding-right: 20px; }
+      .unit-header, .barra-saldo { padding-left: 20px; padding-right: 20px; }
     }
   </style>
 </head>
@@ -90,36 +89,30 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Pannello Pagamenti</h1>
-
-  <div class="summary-bar">
-    <div class="level is-mobile">
-      <div class="level-left">
-        <div>
-          <div class="summary-label">Totale da incassare</div>
-          <div class="summary-value" id="totalInsoluti">—</div>
-          <div class="filtro-attivo" id="conteggioNuclei" style="color:#C3CCD6"></div>
-        </div>
-      </div>
-      <div class="level-right">
-        <label class="checkbox mr-4">
-          <input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare
-        </label>
-        <button class="button is-link" onclick="caricaDati()">Aggiorna</button>
-      </div>
-    </div>
-  </div>
-
-  <p class="suggerimento mb-4">
-    Quote e numero di tessera si modificano dalla pagina
-    <a href="index.html">Soci</a>. Un rimborso o uno sconto si scrive qui, con
-    <b>Modifica importi</b> sulla riga del socio: resta nello <b>Storico</b>.
-    Per chi ha già pagato tutto togli la spunta «Solo chi deve pagare».
+  <h1 class="title is-4">Pannello Pagamenti</h1>
+  <p class="occhiello">
+    Le famiglie con qualcosa da pagare. Quote e numero di tessera si modificano
+    dalla pagina <a href="index.html">Soci</a>; un rimborso o uno sconto si
+    scrive qui, con <b>Modifica importi</b> sulla riga del socio, e resta nello <b>Storico</b>.
   </p>
 
-  <div class="field mb-5">
-    <label class="label" for="cercaNucleo">Cerca una famiglia</label>
-    <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Totale da incassare</div><div class="kpi-value rosso" id="totalInsoluti">—</div></div>
+    <div class="kpi"><div class="kpi-label">Nuclei</div><div class="kpi-value" id="numNuclei">—</div></div>
+    <div class="kpi"><div class="kpi-label">Familiari a carico</div><div class="kpi-value" id="numFamiliari">—</div></div>
+  </div>
+
+  <div class="riquadro">
+    <h2>Cerca e filtra</h2>
+    <p class="occhiello">Per chi ha già pagato tutto togli la spunta «Solo chi deve pagare».</p>
+    <div class="comandi">
+      <div class="field">
+        <label class="label" for="cercaNucleo">Cerca una famiglia</label>
+        <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
+      </div>
+      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare</label>
+      <button class="button is-link is-outlined" onclick="caricaDati()">Aggiorna</button>
+    </div>
   </div>
 
   <div id="displayArea"></div>
@@ -200,8 +193,6 @@
     return new Date(anno, 8, 1).toISOString();
   }
 
-  const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
-
   function render() {
     const [tutti, capofamiglia, familiari] = ultimi;
     const totale = tutti.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
@@ -216,8 +207,8 @@
           return termini.every((t) => nome.includes(t));
         }))
       : tutti;
-    el("conteggioNuclei").textContent = (termini.length ? `${nuclei.length} di ` : "")
-      + `${quanti(tutti.length, "nucleo", "nuclei")} · ${quanti(familiari.length, "familiare a carico", "familiari a carico")}`;
+    el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${tutti.length}` : tutti.length;
+    el("numFamiliari").textContent = familiari.length;
 
     const contenitore = el("displayArea");
     if (!nuclei.length) {
@@ -233,7 +224,7 @@
       const saldo = parseFloat(nucleo.household_balance || 0);
 
       return `
-        <div class="unit-card">
+        <div class="riquadro unit-card">
           <div class="unit-header">
             <span class="unit-title">${nucleo.last_name} ${nucleo.first_name}</span>
             <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>

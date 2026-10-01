@@ -8,29 +8,11 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
-
-    .section-card { background: #fff; border-radius: var(--raggio-card); overflow: hidden; box-shadow: var(--ombra); height: 100%; }
-
-    /* Il colore era una fascia piena in testa a ogni riquadro: quattro bande
-     * accese una sopra l'altra. Adesso è un punto, e il titolo si legge nero. */
-    .section-header { color: var(--testo); padding: 20px 22px 12px; font-weight: 600;
-                      font-size: 1.2rem; letter-spacing: -.022em;
-                      display: flex; align-items: center; gap: 10px; }
-    .section-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
-    /* Stesso codice colore degli abbonamenti: sabato blu, domenica giallo. */
-    .bg-blue::before   { background: var(--blu); }
-    .bg-yellow::before { background: var(--giallo); }
-    .bg-green::before  { background: var(--ok); }
-    .bg-grey::before   { background: var(--testo-soft); }
-
-    /* Su telefono la tabella scorre di lato invece di schiacciare le voci. */
-    .section-body { padding: 0 22px 20px; overflow-x: auto; }
+    /* Il riquadro dei comandi sparisce se chi guarda non può né scaricare né aprire lo storico. */
+    #zonaComandi:not(:has(#zonaScarica:not([hidden]), #zonaStagioni:not([hidden]))) { display: none; }
+    /* Su telefono la tabella scorre di lato (.tabella-scorrevole) invece di schiacciare le voci. */
     .rtable { width: 100%; min-width: 35rem; border-collapse: collapse; }
     .rtable th { text-align: left; padding: 10px 8px; font-size: 1rem; }
     /* Le voci si leggono da lontano: 21px, importi in grassetto. Per starci
@@ -80,17 +62,8 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4" id="titolo">Riepilogo Stagione</h1>
-
-  <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
-       pagina Assicurazione: chi ha quel ruolo non deve poterlo scaricare.
-       Solo per la stagione in corso. -->
-  <p class="mb-4" id="zonaScarica" hidden>
-    <button type="button" class="button is-link is-light" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
-  </p>
-
-  <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
-  <p class="mb-4" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
+  <h1 class="title is-4" id="titolo">Riepilogo Stagione</h1>
+  <p class="occhiello">Quanti soci, quanto è stato incassato e cosa è stato venduto.</p>
 
   <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
   <div class="notification is-warning is-light" id="fasciaStorico" hidden>
@@ -100,51 +73,49 @@
     <a href="riepilogo.html">Torna alla stagione in corso</a>
   </div>
 
-  <div class="columns is-multiline mb-2">
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value has-text-success" id="kInc">—</div></div></div>
-    <div class="column is-3"><div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value has-text-danger" id="kDa">—</div></div></div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="kSoci">—</div></div>
+    <div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="kTeor">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value verde" id="kInc">—</div></div>
+    <div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value rosso" id="kDa">—</div></div>
+  </div>
+
+  <div class="riquadro" id="zonaComandi">
+    <h2>Elenchi e stagioni chiuse</h2>
+    <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
+    <p class="occhiello" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
+    <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
+         pagina Assicurazione: chi ha quel ruolo non deve poterlo scaricare.
+         Solo per la stagione in corso. -->
+    <div class="azioni" id="zonaScarica" hidden>
+      <button type="button" class="button is-link is-outlined" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
+    </div>
   </div>
 
   <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. -->
-  <div class="columns is-multiline">
-    <div class="column is-12">
-      <div class="section-card">
-        <div class="section-header bg-blue">Tessere</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-12">
-      <div class="section-card">
-        <div class="section-header bg-yellow">Abbonamenti gite</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-12">
-      <div class="section-card">
-        <div class="section-header bg-green">Corsi</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-12">
-      <div class="section-card">
-        <div class="section-header bg-green">Presciistica</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-12 solo-bilancio" hidden>
-      <div class="section-card">
-        <div class="section-header bg-grey">Entrate extra</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
-      </div>
-    </div>
-    <div class="column is-12 solo-bilancio" hidden>
-      <div class="section-card">
-        <div class="section-header bg-grey">Uscite</div>
-        <div class="section-body"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
-      </div>
-    </div>
+  <div class="riquadro">
+    <h2>Tessere</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Abbonamenti gite</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Corsi</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
+  </div>
+  <div class="riquadro">
+    <h2>Presciistica</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
+  </div>
+  <div class="riquadro solo-bilancio" hidden>
+    <h2>Entrate extra</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
+  </div>
+  <div class="riquadro solo-bilancio" hidden>
+    <h2>Uscite</h2>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
   </div>
 </div>
 

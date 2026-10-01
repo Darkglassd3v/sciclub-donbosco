@@ -10,7 +10,6 @@
   <style>
     body { margin: 0; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
-    .container-main { max-width: 1100px; margin: 28px auto 200px; background: #fff; padding: 40px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
 
     /* La barra dei totali resta incollata in basso, ma smette di sembrare una
      * barra di stato: fondo scuro pieno, un filo giallo e basta. */
@@ -18,7 +17,6 @@
     .val-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
     .val-amount { font-size: 2.1rem; font-weight: 700; letter-spacing: -.022em; display: block; line-height: 1; margin-top: 4px; }
 
-    #searchZone { background: var(--giallo-light); padding: 18px; border-radius: var(--raggio-card); margin-bottom: 24px; border: 1px solid var(--giallo); }
     .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--filo); }
     .result-item:hover { background: var(--blu-light); }
     /* I tag di Bulma sono a 12px: codice fiscale e tessera servono a
@@ -81,7 +79,9 @@
     .indice-sezioni a { display: inline-flex; align-items: center; min-height: var(--aria); font-weight: 600; text-decoration: underline; }
     #azioniSocio { flex: none; }
     .fascia-socio .domanda-inline { max-width: 34rem; }
-    .section-title { scroll-margin-top: calc(var(--barra-h) + 9rem); }
+    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 7rem); }
+    /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
+    .container-main { padding-bottom: 200px; }
 
     /* Possibili doppioni: stesso codice fiscale, o stesso cognome e nome. */
     .avviso-doppioni { margin: 4px 0 24px; padding: 16px 18px; border: 2px solid var(--errore); border-radius: var(--raggio); background: var(--errore-bg); }
@@ -91,8 +91,8 @@
     .avviso-doppioni li span { flex: 1 1 20rem; }
 
     @media screen and (max-width: 768px) {
-      .container-main { padding: 24px 18px; margin: 16px auto 220px; }
       .indice-sezioni { display: none; }
+      .container-main { padding-bottom: 220px; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
        * selettore lungo il pulsante restava stretto, su tre righe. */
@@ -104,7 +104,7 @@
      * modulo, dove si arriva comunque per salvare. */
     @media screen and (max-height: 560px) {
       .total-box, .fascia-socio { position: static; }
-      .container-main { margin-bottom: 28px; }
+      .container-main { padding-bottom: 28px; }
     }
   </style>
 </head>
@@ -135,12 +135,14 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Gestione Soci</h1>
+  <h1 class="title is-4">Gestione Soci</h1>
+  <p class="occhiello">Iscrivi un socio nuovo, oppure cerca chi c'è già e modificalo.</p>
 
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
-  <div id="searchZone">
-    <label class="label" for="searchInput">Cerca un socio da aprire</label>
+  <div id="searchZone" class="riquadro">
+    <h2>Cerca un socio</h2>
+    <label class="label" for="searchInput">Cognome, nome o codice fiscale</label>
     <input id="searchInput" class="input" type="search" placeholder="Cognome, nome o codice fiscale" autocomplete="off">
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
   </div>
@@ -158,15 +160,15 @@
     </div>
   </div>
 
-  <p class="suggerimento mb-4">
-    I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
-    automaticamente in base alle voci selezionate.
-  </p>
-
   <form id="memberForm">
     <input type="hidden" id="f_id">
 
-    <div class="section-title" id="sez-anagrafica">Anagrafica</div>
+    <section class="riquadro" id="sez-anagrafica">
+    <h2>Anagrafica</h2>
+    <p class="occhiello">
+      I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
+      automaticamente in base alle voci selezionate.
+    </p>
     <div class="columns is-multiline mt-1">
       <div class="column is-4"><label class="label" for="f_cognome">Cognome*</label><input class="input" id="f_cognome" required></div>
       <div class="column is-4"><label class="label" for="f_nome">Nome*</label><input class="input" id="f_nome" required></div>
@@ -186,8 +188,10 @@
     </div>
 
     <div id="avvisoDoppioni" class="avviso-doppioni" role="status" hidden></div>
+    </section>
 
-    <div class="section-title" id="sez-iscrizione">Iscrizione</div>
+    <section class="riquadro" id="sez-iscrizione">
+    <h2>Iscrizione</h2>
     <div class="mt-4">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
@@ -224,7 +228,10 @@
       </div>
     </div>
 
-    <div class="section-title" id="sez-amministrazione">Amministrazione</div>
+    </section>
+
+    <section class="riquadro" id="sez-amministrazione">
+    <h2>Amministrazione</h2>
     <div class="columns mt-1">
       <div class="column is-4">
         <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
@@ -240,7 +247,10 @@
       </div>
     </div>
 
-    <div class="section-title" id="sez-pagamento">Pagamento</div>
+    </section>
+
+    <section class="riquadro" id="sez-pagamento">
+    <h2>Pagamento</h2>
     <!-- Una scelta al posto del campo spento con "Aggiungi pagante" di lato:
          il familiare si cerca solo dopo aver detto che paga lui. -->
     <fieldset class="scelte">
@@ -277,8 +287,10 @@
 
     <!-- Solo superadmin, solo su un socio iscritto: rimedio a un tesseramento
          fatto per sbaglio. Vedi remove_from_season() in schema.sql. -->
-    <div id="zonaTogli" class="togli-stagione" hidden>
-      <div class="section-title">Iscrizione sbagliata</div>
+    </section>
+
+    <section id="zonaTogli" class="riquadro togli-stagione" hidden>
+      <h2>Iscrizione sbagliata</h2>
       <p class="suggerimento">
         Toglie questa persona dalla stagione: tessera, numero, assicurazione, abbonamenti,
         corsi, partenze e quote tornano vuoti. L'anagrafica resta.
@@ -286,7 +298,7 @@
       <div id="azioniTogli">
         <button type="button" class="button is-danger is-outlined" id="btnTogli">Togli dalla stagione</button>
       </div>
-    </div>
+    </section>
   </form>
 </div>
 

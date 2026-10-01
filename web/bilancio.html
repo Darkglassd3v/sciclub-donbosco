@@ -8,18 +8,11 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1200px; margin: 28px auto 80px; padding: 0 18px; }
-
-    .kpi { background: #fff; border-radius: var(--raggio-card); padding: 26px 20px; box-shadow: var(--ombra); text-align: center; height: 100%; }
-    .kpi-label { font-size: .9375rem; letter-spacing: -.01em; color: var(--testo-soft); }
-    .kpi-value { font-size: 2.4rem; font-weight: 700; letter-spacing: -.022em; margin-top: 6px; line-height: 1.05; }
     /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
     .kpi.evidenza { border: 2px solid var(--blu); }
+    .kpi.evidenza { grid-column: 1 / -1; }
     .kpi.evidenza .kpi-value { font-size: 3rem; color: var(--blu); }
 
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra);
-                padding: 30px; margin-bottom: 22px; }
-    .riquadro h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 14px; }
 
     .riga-saldo { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
     .riga-saldo .field { margin: 0; min-width: 200px; }
@@ -61,9 +54,6 @@
     @media screen and (max-width: 1023px) {
       .riga-movimento { grid-template-columns: 1fr 1fr; }
     }
-    @media screen and (max-width: 768px) {
-      .riquadro { padding: 22px 18px; }
-    }
   </style>
 </head>
 <body>
@@ -93,16 +83,16 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4" id="titolo">Bilancio</h1>
-
+  <h1 class="title is-4" id="titolo">Bilancio</h1>
+  <p class="occhiello">Quanto c'è in banca: incassi dei soci, entrate extra e uscite della stagione.</p>
 
   <div id="contenuto">
-  <div class="columns is-multiline mb-2">
-    <div class="column is-12"><div class="kpi evidenza"><div class="kpi-label">Saldo attuale</div><div class="kpi-value" id="kSaldo">—</div></div></div>
-    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Incassato soci</div><div class="kpi-value" id="kSoci">—</div></div></div>
-    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Entrate extra</div><div class="kpi-value" id="kExtra">—</div></div></div>
-    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Totale incassato</div><div class="kpi-value" id="kTotale">—</div></div></div>
-    <div class="column is-3-desktop is-6-tablet"><div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div></div>
+  <div class="cifre">
+    <div class="kpi evidenza"><div class="kpi-label">Saldo attuale</div><div class="kpi-value" id="kSaldo">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incassato soci</div><div class="kpi-value" id="kSoci">—</div></div>
+    <div class="kpi"><div class="kpi-label">Entrate extra</div><div class="kpi-value" id="kExtra">—</div></div>
+    <div class="kpi"><div class="kpi-label">Totale incassato</div><div class="kpi-value" id="kTotale">—</div></div>
+    <div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div>
   </div>
 
   <div class="riquadro">

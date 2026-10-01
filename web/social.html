@@ -14,13 +14,9 @@
   <style>
     /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
      * post i campi accanto all'anteprima. */
-    .container-main { max-width: 1400px; margin: 28px auto 80px; padding: 0 18px; }
     .colonne-social { display: grid; grid-template-columns: 18rem minmax(0, 1fr); gap: 24px; align-items: start; }
     @media (max-width: 900px) { .colonne-social { grid-template-columns: minmax(0, 1fr); } }
     [data-sezione][hidden], [data-modulo][hidden], #riassunti[hidden] { display: none !important; }
-    .riquadro { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px; margin-bottom: 22px; }
-    .riquadro h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
-    .occhiello { color: var(--testo-soft); margin-bottom: 14px; }
 
     /* Elenco: un solo "Nuovo post" che apre i tipi, Da fare / Pubblicati,
      * i post divisi per mese. */
@@ -63,7 +59,7 @@
     .testa-post .occhiello-post { color: var(--testo-soft); font-weight: 600; font-size: .9375rem; }
     .testa-post h2 { margin: 0; font-size: 1.75rem; }
     .testa-post .manca-cosa { color: var(--giallo-dark); font-weight: 600; font-size: .9375rem; }
-    .griglia-post { display: grid; grid-template-columns: minmax(0, 1fr) 24rem; gap: 28px; align-items: start; }
+    .griglia-post { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 24px; align-items: start; }
     .parte { margin-bottom: 26px; }
     .parte h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 10px; }
     .elimina { padding-top: 18px; border-top: 1px solid var(--filo); }
@@ -87,8 +83,9 @@
      * le deve misurare e il pulsante le deve poter scaricare. */
     .anteprima.fuori { position: absolute; left: -10000px; top: 0; }
     /* Con il testo grande (A+) o lo schermo stretto le due colonne non ci
-     * stanno: l'anteprima va sotto i campi. */
-    @container (max-width: 50rem) {
+     * stanno: l'anteprima va sotto i campi. 44rem: a 1180px (la larghezza
+     * di tutte le pagine) i campi restano accanto all'anteprima. */
+    @container (max-width: 44rem) {
       .griglia-post { grid-template-columns: minmax(0, 1fr); }
       .lato { position: static; max-height: none; overflow: visible; }
     }
@@ -203,7 +200,8 @@
     <a href="social.html#grafiche" style="--scheda:#147A45">Grafiche</a>
     <a class="a-destra" href="social.html#impostazioni" style="--scheda:#4A5361"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Impostazioni</a>
   </nav>
-  <h1 class="title is-4 mb-4" id="titoloSezione">Post</h1>
+  <h1 class="title is-4" id="titoloSezione">Post</h1>
+  <p class="occhiello" id="fraseSezione"></p>
 
   <!-- Post: a sinistra i post, dal prossimo in avanti; a destra quello aperto. -->
   <div class="colonne-social" data-sezione="post">
@@ -539,6 +537,11 @@
   // ---------------------------------------------------------------------
 
   const SEZIONI = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
+  const FRASI = {
+    post: "I post da preparare e quelli pubblicati: si compilano i dati e il post si disegna da solo.",
+    grafiche: "Calendario delle gite e copertina, pronti da scaricare.",
+    impostazioni: "Sponsor, contatti e giorni delle gite che i post usano.",
+  };
   const MODULI = { sponsor: "impostazioni", contatti: "impostazioni", giorni: "impostazioni", calendario: "grafiche", copertina: "grafiche" };
 
   /** [sezione, modulo]: il modulo ("sponsor", "contatti", "giorni") c'è solo dentro Impostazioni. */
@@ -558,6 +561,7 @@
       a.toggleAttribute("aria-current", a.getAttribute("href") === `social.html#${s}`));
     document.querySelector('.schede-social a[aria-current]').setAttribute("aria-current", "page");
     el("titoloSezione").textContent = SEZIONI[s];
+    el("fraseSezione").textContent = FRASI[s];
     // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
     // (fit() non vede niente da restringere): si rifanno ora che si vedono.
     if (s === "post" && !el("editor").hidden) ridisegna();
@@ -1129,7 +1133,8 @@
     if (!lista.length) return;
     formato = Math.min(formato, lista.length - 1);
     const disegnati = lista.map((f, i) =>
-      anteprima(dove, f, Math.round(Math.min(352, 440 * f.w / f.h)), { fuori: i !== formato, pulsante: false }));
+      // 320px: ci sta nella colonna di 22rem accanto ai campi, barra di scorrimento compresa.
+      anteprima(dove, f, Math.round(Math.min(320, 400 * f.w / f.h)), { fuori: i !== formato, pulsante: false }));
     el("formati").innerHTML = lista.map((f, i) => `<button type="button" aria-pressed="${i === formato}" title="${esc(f.nome)}">${esc(f.breve)}</button>`).join("");
     el("formati").querySelectorAll("button").forEach((b, i) => b.addEventListener("click", () => {
       formato = i;

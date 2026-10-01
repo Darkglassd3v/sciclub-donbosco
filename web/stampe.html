@@ -8,14 +8,11 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-    .container-main { max-width: 1100px; margin: 28px auto 80px; padding: 0 18px; }
 
     /* Un pulsante per giorno, con il colore delle gite (.giorno-azione in
      * brand.css) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
-    .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; }
 
-    .esito { background: #fff; border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 24px 26px; }
-    .esito h2 { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
     .esito ul { margin: 0; padding-left: 1.2em; }
     .esito li { padding: 4px 0; }
   </style>
@@ -47,20 +44,24 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4 mb-4">Fogli dei soci</h1>
-  <p class="mb-4">
-    Un pulsante per giorno: scarica fino a tre fogli Excel con i soci della stagione, uno per i
-    corsisti (sabato e domenica), uno per gli abbonamenti di quel giorno e uno per i jolly, solo
-    quelli con qualcuno dentro. In ogni file c'è un foglio per partenza, in ordine alfabetico. La prima volta il browser può chiedere il permesso di
-    scaricare più file: rispondi di sì.
-  </p>
-  <div class="giorni-stampa">
-    <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
-    <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
-    <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
+  <h1 class="title is-4">Fogli dei soci</h1>
+  <p class="occhiello">Un pulsante per giorno: scarica i fogli Excel di corsisti, abbonamenti e jolly, un foglio per partenza.</p>
+
+  <div class="riquadro">
+    <h2>Scarica i fogli</h2>
+    <p class="occhiello">
+      Fino a tre file per giorno, solo quelli con qualcuno dentro: i corsisti (sabato e domenica),
+      gli abbonamenti di quel giorno e i jolly. In ogni file c'è un foglio per partenza, in ordine
+      alfabetico. La prima volta il browser può chiedere il permesso di scaricare più file: rispondi di sì.
+    </p>
+    <div class="giorni-stampa">
+      <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
+      <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
+      <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
+    </div>
   </div>
 
-  <div id="esito" class="esito" hidden></div>
+  <div id="esito" class="riquadro esito" hidden></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>

@@ -268,7 +268,44 @@ Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ---
 
-## 6. Sincronizzazione
+## 6. Impianto delle pagine
+
+Ogni pagina ha la stessa struttura, nello stesso punto, con le stesse misure:
+chi passa da una pagina all'altra trova barra, schede e titolo dove li ha
+lasciati, e cambia solo il contenuto. Mockup: «Impianto delle pagine»
+(proposta del 01/10/2026).
+
+```
+barra (68px, ferma)
+└─ .container-main    larga come la barra: max 1180px (1280 per il superadmin), margini 18px (16 sul telefono)
+   ├─ .schede-gestione / .schede-social   solo nelle sezioni con più pagine
+   ├─ h1.title.is-4
+   ├─ p.occhiello     una frase: a cosa serve la pagina
+   ├─ .cifre > .kpi   facoltative: caselle con un numero, in fila
+   └─ .riquadro × n   tutto il resto, uno sotto l'altro
+```
+
+| Regola | Misure |
+|--------|--------|
+| **Una larghezza sola** | `.container-main` max 1180px (= barra; 1280 per il superadmin, che ha la barra più larga), allineata al logo. Nessuna pagina ha una larghezza sua. Le pagine Gite e Cerca socio usano `.wrap` con le stesse misure. |
+| **Testata fissa** | 24px sotto la barra; schede, 16px; titolo 32px (26 sul telefono); occhiello in #4A5361, 8px sotto il titolo, 24px prima del contenuto. |
+| **Schede** | Un solo componente `.schede` per Gestione e Social: pillole da 48px, bordo #D5DAE1, la scheda aperta blu piena (`aria-current="page"`). |
+| **Riquadri** | Un solo `.riquadro`: bianco, raggio 18px, ombra `--ombra`, padding 28px (20 sul telefono), 24px fra uno e l'altro, sempre largo quanto la pagina. Dentro: `h2` (22px, 600), frase facoltativa `.occhiello`, contenuto, `.azioni`. |
+| **Cifre** | L'unica cosa affiancata: `.cifre` > `.kpi` (`.kpi-label` piccola + `.kpi-value` 32px; `.rosso` da incassare, `.verde` incassato), 4 per riga sul computer, 2 sul telefono, sopra i riquadri. |
+| **Pulsanti** | In `.azioni` (figlio diretto del riquadro) in fondo, a sinistra; prima l'azione principale (blu, o giallo per incassare). Chi cancella o chiude va a destra (`.a-destra`), contornato di rosso. |
+| **Comandi della pagina** | Cerca, filtri e «scarica tutto» valgono per tutta la pagina: stanno nel primo riquadro, sotto le cifre (Pagamenti: Cerca e filtra; Riepilogo: Excel e stagioni chiuse). |
+| **Tabelle** | Dentro il riquadro, in un contenitore che scorre di lato (`.tabella-scorrevole`); intestazione grigia, righe alternate, numeri a destra. |
+| **Niente stili di pagina** | Riquadri, cifre, schede, tabelle e pulsanti vivono in `web/brand.css`. Lo `<style>` di una pagina non ridefinisce queste classi: aggiunge solo quello che ha solo lei. |
+
+Quello che non si fa più:
+- contenuto appoggiato sul fondo grigio fuori da un riquadro (form Soci di prima);
+- riquadri affiancati di larghezze diverse (fuorché le cifre);
+- un `max-width` diverso per pagina (erano sette, da 820 a 1400px);
+- fasce colorate o titoli di riquadro con uno stile proprio.
+
+---
+
+## 7. Sincronizzazione
 
 `docs/brand-guidelines.md` è la fonte. Da qui:
 

@@ -46,7 +46,7 @@
   --aria: 44px;   /* distanza fra una sezione e la successiva */
 }
 
-html { font-size: 17px; }
+html { font-size: 17px; background: var(--sfondo); }  /* Bulma lo fa bianco: sotto una pagina corta si vedeva una fascia bianca */
 /* Pulsante A+ della barra (cambiaTesto() in shared.js): le misure delle
  * pagine sono in rem, quindi crescono insieme testo, campi e tabelle. */
 html[data-testo="1"] { font-size: 19px; }
@@ -187,10 +187,10 @@ dialog.finestra h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022e
 }
 .button.is-link.is-outlined:hover { background: var(--blu); color: #fff; }
 
-/* --- Titoli di sezione --------------------------------------------------
- * Le sezioni erano separate da barre blu piene. Ora la separazione è affidata
- * allo spazio, con una linea sottile a chiudere il blocco. */
-.section-title, .family-title {
+/* --- Familiari a carico ------------------------------------------------
+ * Titolo dentro il riquadro Pagamento dei Soci: le sezioni del modulo ora
+ * sono riquadri (vedi Impianto delle pagine in fondo). */
+.family-title {
   background: none;
   color: var(--testo);
   font-size: 1.35rem;
@@ -526,3 +526,50 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  * Dove il browser non lo supporta si ricarica come prima. */
 @view-transition { navigation: auto; }
 .barra { view-transition-name: barra; }
+
+/* --- Impianto delle pagine ------------------------------------------------
+ * docs/brand-guidelines.md, sezione 6. Ogni pagina ha la stessa larghezza (la
+ * barra), la stessa testata (schede, titolo, una frase) e il contenuto in
+ * riquadri uguali: passando da una pagina all'altra non si sposta niente.
+ * Le pagine non ridefiniscono queste classi con misure loro. */
+.container-main { max-width: 1180px; margin: 0 auto; padding: 24px 18px 80px; }
+/* Il superadmin ha la barra più larga (più voci): il contenuto la segue, col bordo sotto il logo. */
+html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wrap { max-width: 1280px; }
+
+/* Schede delle sezioni (Gestione, Social): subito sotto la barra, 16px sopra il titolo. */
+.schede-gestione, .schede-social { margin-bottom: 16px; }
+
+/* La frase sotto il titolo: a cosa serve la pagina. */
+.title.is-4 + .occhiello { margin-top: -.5rem; }
+.occhiello { color: var(--testo-soft); max-width: 70ch; margin-bottom: 24px; }
+
+.riquadro { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra);
+            padding: 28px; margin-bottom: 24px; }
+/* Il reset di Bulma dà display:block a <section>, che vincerebbe su hidden. */
+.riquadro[hidden] { display: none; }
+.riquadro > h2, .riquadro > header > h2 { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 14px; }
+.riquadro .occhiello { margin-bottom: 18px; }
+.riquadro > h2 + .occhiello { margin-top: -10px; }
+
+/* Le cifre: caselle con un numero, in fila sopra i riquadri. */
+.cifre { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px 24px; height: 100%; }
+.kpi-label { font-size: .9375rem; color: var(--testo-soft); }
+.kpi-value { font-size: 2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1.15; margin-top: 4px;
+             font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+/* Da incassare in rosso, incassato in verde: i colori di Bulma non si leggevano sul bianco. */
+.kpi-value.rosso { color: var(--errore); }
+.kpi-value.verde { color: var(--ok); }
+
+/* Pulsanti in fondo al riquadro: prima l'azione principale, chi cancella a destra. */
+/* Solo figli diretti: .azioni è anche il nome di celle di tabella (Bilancio, Utenti). */
+.riquadro > .azioni { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 22px; }
+.riquadro > .azioni .a-destra { margin-left: auto; }
+
+@media screen and (max-width: 768px) {
+  .container-main { padding: 20px 16px 80px; }
+  .riquadro { padding: 20px; }
+  .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { padding: 18px; }
+  .kpi-value { font-size: 1.6rem; }
+}
