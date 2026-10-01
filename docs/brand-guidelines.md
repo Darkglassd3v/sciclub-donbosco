@@ -90,6 +90,18 @@ lettura, non la sostituisce.
 Gli elementi pieni (barre di avanzamento, pallini dei filtri) non portano testo:
 lì il colore vivo si può usare senza vincoli di contrasto.
 
+In pagina il codice colore è un componente solo, in `web/brand.css`
+("Giorni delle gite"), in tre forme; basta `data-giorno="SABATO"` (DOMENICA,
+MARTEDI, JOLLY) sull'elemento:
+
+| Forma | Classe | Aspetto | Dove |
+|-------|--------|---------|------|
+| Etichetta | `.giorno-etichetta` | nome su fondo chiaro, bordino del colore | schede gite, ricerca soci, abbonamenti nel form Soci e nel Riepilogo |
+| Filtro | `.giorno-filtro` | pieno del colore come l'azione; quello scelto (`aria-pressed="true"`) ha un anello scuro e la spunta ✓; senza giorno è "Tutti", blu notte | giorni del pannello gite |
+| Azione | `.giorno-azione` | pulsante pieno del colore, testo bianco (domenica #6B5200) | Fogli dei soci |
+
+La barretta delle gite fatte prende lo stesso colore da `data-giorno`.
+
 ### Accessibility
 
 Rapporti di contrasto verificati su sfondo bianco:

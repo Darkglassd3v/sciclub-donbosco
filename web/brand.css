@@ -474,8 +474,9 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  * rosso, jolly verde. Tre forme, tutte con il nome del giorno scritto, perché
  * il colore aiuta ma non sostituisce:
  *   .giorno-etichetta  il nome su fondo chiaro (accanto a un abbonamento);
- *   .giorno-filtro     pillola bianca con il pallino, piena quando è scelta
- *                      (aria-pressed="true"); senza giorno è "Tutti";
+ *   .giorno-filtro     pulsante pieno come l'azione; quello scelto
+ *                      (aria-pressed="true") ha anello scuro e spunta;
+ *                      senza giorno è "Tutti";
  *   .giorno-azione     pulsante pieno del colore del giorno.
  * Basta data-giorno="SABATO" (DOMENICA, MARTEDI, JOLLY) sull'elemento: le
  * variabili qui sotto le leggono tutte e tre, e la barretta delle gite. */
@@ -490,16 +491,15 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
                     border: 1px solid color-mix(in srgb, var(--giorno, var(--filo)) 45%, transparent);
                     font-size: .9375rem; font-weight: 600; line-height: 1.4; white-space: nowrap; vertical-align: middle; }
 
+/* I filtri hanno la stessa faccia dei pulsanti (pieni del colore del giorno):
+ * quello scelto si riconosce dall'anello scuro e dalla spunta. Senza giorno
+ * (Tutti) il pulsante è blu notte. */
 .giorno-filtro { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco);
-                 padding: 0 18px; border: 1px solid var(--filo); border-radius: var(--pillola); background: var(--superficie);
-                 color: var(--testo); font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; }
-.giorno-filtro::before { content: ""; width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--giorno); }
-.giorno-filtro:not([data-giorno])::before, .giorno-filtro[data-giorno=""]::before { display: none; }
-.giorno-filtro:hover { border-color: var(--giorno, var(--testo-soft)); }
-/* Scelto: il colore pieno del giorno, non solo il pallino. "Tutti" diventa scuro. */
-.giorno-filtro[aria-pressed="true"] { background: var(--giorno, var(--testo)); border-color: var(--giorno, var(--testo));
-                                      color: var(--giorno-su, #fff); }
-.giorno-filtro[aria-pressed="true"]::before { background: currentColor; }
+                 padding: 0 18px; border: 0; border-radius: var(--pillola); background: var(--giorno, var(--testo));
+                 color: var(--giorno-su, #fff); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
+.giorno-filtro:hover { filter: brightness(.92); }
+.giorno-filtro[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--superficie), 0 0 0 6px var(--testo); }
+.giorno-filtro[aria-pressed="true"]::before { content: "\2713"; font-weight: 800; }
 
 .giorno-azione { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 8px 26px;
                  border: 0; border-radius: var(--pillola); background: var(--giorno); color: var(--giorno-su);
