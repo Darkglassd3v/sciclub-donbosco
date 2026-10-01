@@ -14,8 +14,8 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Dalla 2.5 i ruoli non sono più una scala: ognuno ha un elenco di permessi
 // (soci, pagamenti, riepilogo, storico, bilancio, gite, polizze, social,
 // gestione), scritto una volta sola nel database (role_permissions() in
-// supabase/schema.sql) e letto da qui con my_access(). Le pagine chiedono un
-// permesso, non un ruolo.
+// supabase/schema.sql; dalla 2.6 lo sceglie il superadmin in Gestione > Ruoli)
+// e letto da qui con my_access(). Le pagine chiedono un permesso, non un ruolo.
 // ---------------------------------------------------------------------------
 
 /**

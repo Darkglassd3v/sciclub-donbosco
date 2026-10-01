@@ -358,6 +358,8 @@ group by trim(place);
 -- soci, l'admin modifica i soci e non vede il Bilancio. Nessuno dei due sta
 -- "sopra" l'altro. Ogni ruolo ha quindi un elenco di permessi, scritto in un
 -- punto solo (role_permissions), e le policy chiedono un permesso (can()).
+-- Dalla 2.6 l'elenco lo sceglie il superadmin (tabella role_grants, pagina
+-- Gestione > Ruoli); qui sotto la divisione di partenza.
 --
 --   superadmin    — tutto, più "vedi come" (view_as) per provare il sito con
 --                   gli occhi di un altro ruolo.
@@ -488,16 +490,15 @@ $$;
 
 comment on function public.current_role is 'Ruolo con cui trattare la richiesta corrente ("vedi come" compreso), o null.';
 
--- I permessi di ogni ruolo: l'unico posto dove sono scritti. Li leggono
--- can() per le policy e my_access() per le pagine.
-create or replace function public.role_permissions(role text)
+-- I permessi di partenza di ogni ruolo: quelli fissi fino alla 2.5. Servono
+-- da seme della tabella role_grants e al pulsante "Ripristina" della pagina
+-- Ruoli. Il superadmin non c'è: ha sempre tutto (vedi role_permissions).
+create or replace function public.default_role_permissions(role text)
 returns text[]
 language sql
 immutable
 as $$
   select case role
-    when 'superadmin'    then array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
-                                    'gite', 'polizze', 'social', 'gestione']
     when 'admin'         then array['soci', 'pagamenti', 'riepilogo', 'gite']
     when 'tesoriere'     then array['pagamenti', 'riepilogo', 'storico', 'bilancio']
     when 'assicurazione' then array['polizze']
@@ -507,7 +508,67 @@ as $$
   end;
 $$;
 
-comment on function public.role_permissions is 'Permessi di un ruolo. Unico elenco: lo usano can() e my_access().';
+comment on function public.default_role_permissions is 'Permessi di partenza di un ruolo (quelli fino alla 2.5): seme di role_grants e "Ripristina".';
+
+-- Dalla 2.6 i permessi dei ruoli li sceglie il superadmin (Gestione > Ruoli).
+-- Il superadmin e il permesso 'gestione' non stanno nella tabella e i check
+-- non li fanno entrare: nessuno può chiudersi fuori o diventare superadmin
+-- da qui. Un permesso nuovo di una release futura non va a nessun ruolo
+-- finché il superadmin non lo spunta.
+-- Il seme si scrive solo quando la tabella nasce: con "on conflict do
+-- nothing" ogni riapplicazione dello schema rimetterebbe i permessi tolti.
+do $$
+begin
+  if to_regclass('public.role_grants') is null then
+    create table public.role_grants (
+      role       text not null check (role in ('admin', 'tesoriere', 'assicurazione', 'gite', 'social')),
+      permission text not null check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico',
+                                                     'bilancio', 'gite', 'polizze', 'social')),
+      primary key (role, permission)
+    );
+    insert into public.role_grants (role, permission)
+    select r, unnest(public.default_role_permissions(r))
+      from unnest(array['admin', 'tesoriere', 'assicurazione', 'gite', 'social']) r;
+  end if;
+end $$;
+
+-- Nessuna policy: si legge e si scrive solo con le funzioni qui sotto.
+alter table public.role_grants enable row level security;
+
+-- Chi ha cambiato i permessi, quando e cosa: la pagina Ruoli mostra le ultime modifiche.
+create table if not exists public.role_grant_changes (
+  id         bigint generated always as identity primary key,
+  changed_at timestamptz not null default clock_timestamp(),
+  changed_by text,
+  role       text not null,
+  added      text[] not null default '{}',
+  removed    text[] not null default '{}'
+);
+alter table public.role_grant_changes enable row level security;
+
+-- I permessi di un ruolo: li leggono can() per le policy e my_access() per le
+-- pagine. Stesso ordine di prima (quello della barra). Definer perché la
+-- tabella non ha policy: chiunque la chiami ottiene la stessa risposta.
+create or replace function public.role_permissions(role text)
+returns text[]
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select case
+    when role_permissions.role = 'superadmin' then
+      array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social', 'gestione']
+    else coalesce((
+      select array_agg(g.permission order by array_position(
+               array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social'],
+               g.permission))
+        from public.role_grants g
+       where g.role = role_permissions.role), array[]::text[])
+  end;
+$$;
+
+comment on function public.role_permissions is 'Permessi di un ruolo: superadmin tutto, gli altri da role_grants. Lo usano can() e my_access().';
 
 -- true se chi ha fatto la richiesta ha almeno uno dei permessi passati.
 -- Nelle policy va scritta dentro una select, `(select public.can('soci'))`:
@@ -671,6 +732,102 @@ $$;
 
 comment on function public.delete_account is 'Elimina per sempre un account Auth già rimosso dal pannello Utenti (senza riga profiles). Solo superadmin.';
 
+-- Pagina Ruoli: per ogni ruolo configurabile i permessi di adesso e quelli
+-- di partenza (per "Ripristina"). Solo superadmin.
+create or replace function public.role_grants_matrix()
+returns table (role text, permissions text[], defaults text[])
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.can('gestione') then
+    raise exception 'Solo un superadmin vede i permessi dei ruoli.';
+  end if;
+  return query
+    select r.nome, public.role_permissions(r.nome), public.default_role_permissions(r.nome)
+      from unnest(array['admin', 'tesoriere', 'assicurazione', 'gite', 'social'])
+           with ordinality as r(nome, n)
+     order by r.n;
+end;
+$$;
+
+comment on function public.role_grants_matrix is 'Permessi attuali e di partenza dei ruoli configurabili. Solo superadmin.';
+
+-- Salva la matrice in una volta: {"gite": ["gite", "soci"], ...}. I ruoli
+-- assenti non cambiano. Tutto o niente: un valore sbagliato annulla tutto.
+-- Ogni ruolo cambiato lascia una riga in role_grant_changes.
+create or replace function public.set_role_grants(grants jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  ruolo  text;
+  valore jsonb;
+  nuovi  text[];
+  vecchi text[];
+  chi    text;
+begin
+  if not public.can('gestione') then
+    raise exception 'Solo un superadmin può cambiare i permessi dei ruoli.';
+  end if;
+  if jsonb_typeof(set_role_grants.grants) is distinct from 'object' then
+    raise exception 'Matrice dei permessi non valida: ricarica la pagina.';
+  end if;
+
+  select p.email into chi from public.profiles p where p.user_id = auth.uid();
+
+  for ruolo, valore in select * from jsonb_each(set_role_grants.grants) loop
+    if ruolo not in ('admin', 'tesoriere', 'assicurazione', 'gite', 'social') then
+      raise exception 'Il ruolo % non si configura da qui.', ruolo;
+    end if;
+    if jsonb_typeof(valore) is distinct from 'array' then
+      raise exception 'Permessi del ruolo % non validi: ricarica la pagina.', ruolo;
+    end if;
+    nuovi := array(select distinct jsonb_array_elements_text(valore));
+    if exists (select 1 from unnest(nuovi) x
+                where x not in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social')) then
+      raise exception 'Permesso non assegnabile al ruolo % (Gestione resta del superadmin).', ruolo;
+    end if;
+
+    vecchi := public.role_permissions(ruolo);
+    continue when vecchi @> nuovi and nuovi @> vecchi;
+
+    delete from public.role_grants g where g.role = ruolo and g.permission <> all (nuovi);
+    insert into public.role_grants (role, permission)
+    select ruolo, x from unnest(nuovi) x
+    on conflict do nothing;
+
+    insert into public.role_grant_changes (changed_by, role, added, removed)
+    values (chi, ruolo,
+            array(select unnest(nuovi) except select unnest(vecchi)),
+            array(select unnest(vecchi) except select unnest(nuovi)));
+  end loop;
+end;
+$$;
+
+comment on function public.set_role_grants is 'Salva i permessi dei ruoli configurabili, tutto o niente, con il registro. Solo superadmin.';
+
+-- Le ultime modifiche ai permessi, per la pagina Ruoli. Solo superadmin.
+create or replace function public.role_grant_history()
+returns table (changed_at timestamptz, changed_by text, role text, added text[], removed text[])
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select c.changed_at, c.changed_by, c.role, c.added, c.removed
+    from public.role_grant_changes c
+   where public.can('gestione')
+   order by c.changed_at desc, c.id desc
+   limit 20;
+$$;
+
+comment on function public.role_grant_history is 'Ultime 20 modifiche ai permessi dei ruoli. Solo superadmin.';
+
 -- Supabase dà execute ad anon di default: senza login le funzioni non
 -- farebbero comunque niente, ma la porta resta chiusa.
 do $$
@@ -680,7 +837,9 @@ begin
   foreach f in array array[
     'public.can(text[])', 'public.my_access()', 'public.set_view_as(text)',
     'public.accounts_without_role()', 'public.restore_account(uuid, text)',
-    'public.delete_account(uuid)'] loop
+    'public.delete_account(uuid)', 'public.role_permissions(text)',
+    'public.role_grants_matrix()', 'public.set_role_grants(jsonb)',
+    'public.role_grant_history()'] loop
     execute format('revoke all on function %s from public', f);
     if exists (select 1 from pg_roles where rolname = 'anon') then
       execute format('revoke all on function %s from anon', f);

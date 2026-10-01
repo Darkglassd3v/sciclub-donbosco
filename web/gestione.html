@@ -8,14 +8,32 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
-
     .riga-vedi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .riga-vedi select { width: auto; min-width: 260px; }
 
-    .tabella-ruoli { width: 100%; border-collapse: collapse; }
-    .tabella-ruoli th { text-align: left; padding: 10px 8px; color: var(--testo-soft); font-weight: 600; border-bottom: 1px solid var(--filo); }
-    .tabella-ruoli td { padding: 12px 8px; border-top: 1px solid var(--filo); vertical-align: top; }
-    .tabella-ruoli td:first-child { font-weight: 600; white-space: nowrap; }
+    /* Matrice dei permessi: una riga per sezione, una colonna per ruolo. La
+     * spunta è dentro una cella cliccabile tutta (48px), non solo il quadratino. */
+    .tabella-permessi { width: 100%; min-width: 46rem; border-collapse: collapse; }
+    .tabella-permessi th, .tabella-permessi td { padding: 10px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
+    .tabella-permessi thead th { border-top: 0; border-bottom: 1px solid var(--filo); color: var(--testo-soft);
+                                 font-weight: 600; text-align: center; }
+    .tabella-permessi thead th:first-child, .tabella-permessi tbody th { text-align: left; }
+    .tabella-permessi tbody th { font-weight: 700; }
+    .tabella-permessi .descr { display: block; max-width: 30rem; font-weight: 400; font-size: .9375rem; color: var(--testo-soft); }
+    .tabella-permessi td { text-align: center; padding: 0; }
+    .tabella-permessi .cella { display: flex; align-items: center; justify-content: center; min-height: var(--tocco); cursor: pointer; }
+    .tabella-permessi input { width: 26px; height: 26px; margin: 0; accent-color: var(--blu); cursor: pointer; }
+    /* Spunta cambiata e non ancora salvata, come le righe di Impostazioni. */
+    .tabella-permessi td.cambiata { background: var(--giallo-light); }
+    .tabella-permessi .solo-super { color: var(--testo-soft); padding: 10px 8px; }
+    .tag-dati { display: inline-block; margin-left: 6px; padding: 1px 10px; border-radius: var(--pillola);
+                background: var(--errore-bg); color: var(--errore); font-size: .875rem; font-weight: 600; white-space: nowrap; }
+
+    .riquadro h3 { font-size: 1.1rem; font-weight: 600; margin: 28px 0 6px; }
+    .storico-permessi { list-style: none; margin: 0; padding: 0; }
+    .storico-permessi li { padding: 8px 0; border-top: 1px solid var(--filo); }
+    .storico-permessi li:first-child { border-top: 0; }
+    .storico-permessi .quando { font-weight: 600; margin-right: 8px; }
   </style>
 </head>
 <body>
@@ -52,7 +70,7 @@
     <a href="gestione.html">Ruoli e vedi come</a>
   </nav>
   <h1 class="title is-4">Ruoli e vedi come</h1>
-  <p class="occhiello">Cosa può fare ogni ruolo, e il sito visto con gli occhi di un altro ruolo.</p>
+  <p class="occhiello">Cosa vede ogni ruolo, e il sito visto con gli occhi di un altro ruolo.</p>
 
   <div class="riquadro">
     <h2>Vedi come</h2>
@@ -70,18 +88,23 @@
   </div>
 
   <div class="riquadro">
-    <h2>Chi fa cosa</h2>
-    <table class="tabella-ruoli">
-      <thead><tr><th>Ruolo</th><th>Può</th></tr></thead>
-      <tbody>
-        <tr><td>Superadmin</td><td>Tutto, più Gestione e "Vedi come".</td></tr>
-        <tr><td>Admin</td><td>Iscrivere e modificare i soci, incassare, vedere il Riepilogo della stagione in corso, segnare le gite. Non vede Bilancio, stagioni chiuse, Assicurazione e Gestione.</td></tr>
-        <tr><td>Tesoriere</td><td>Incassare, vedere il Riepilogo anche delle stagioni chiuse, tenere il Bilancio. I soci li legge ma non li modifica.</td></tr>
-        <tr><td>Assicurazione</td><td>Solo la pagina Assicurazione: liste Neve Base, Neve Plus e Global Sport da mandare, codice fiscale dei tesserati.</td></tr>
-        <tr><td>Utente (ricerca e gite)</td><td>Dal telefono: cercare un socio, segnare le gite, vendere un abbonamento.</td></tr>
-        <tr><td>Social</td><td>Solo la pagina Social: post e campagne degli sponsor.</td></tr>
-      </tbody>
-    </table>
+    <h2>Cosa vede ogni ruolo</h2>
+    <p class="occhiello">
+      Spunta le sezioni che ogni ruolo può aprire. Il superadmin vede sempre tutto e
+      Gestione resta solo sua. Le sezioni segnate <span class="tag-dati">dati personali</span>
+      fanno leggere l'anagrafica dei soci: codice fiscale, indirizzo e telefono.
+      Le modifiche valgono dalla prossima pagina che ognuno apre.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-permessi" id="tabellaPermessi"><tbody><tr><td>Caricamento…</td></tr></tbody></table>
+    </div>
+    <div class="azioni" id="azioniPermessi">
+      <button type="button" class="button is-link" id="btnSalvaPermessi" disabled>Salva i permessi</button>
+      <button type="button" class="button is-light" id="btnAnnullaPermessi" disabled>Annulla le modifiche</button>
+      <button type="button" class="button is-link is-outlined a-destra" id="btnRipristina">Torna ai permessi di partenza</button>
+    </div>
+    <h3>Ultime modifiche</h3>
+    <ul class="storico-permessi" id="storicoPermessi"></ul>
   </div>
 </div>
 
@@ -91,12 +114,157 @@
 <script>
   const el = (id) => document.getElementById(id);
 
+  // Le sezioni che il superadmin può dare, nell'ordine della barra. L'ultimo
+  // valore dice se apre l'anagrafica dei soci: con soci, pagamenti, riepilogo
+  // e gite si legge members, con polizze i codici fiscali dei tesserati
+  // (policy e funzioni insurance_* in supabase/schema.sql).
+  const PERMESSI = [
+    ["soci", "Soci", "Iscrivere e modificare i soci, vendere abbonamenti dal modulo.", true],
+    ["pagamenti", "Pagamenti", "Incassare dalle famiglie, modificare gli importi (rimborsi e sconti).", true],
+    ["riepilogo", "Riepilogo", "I numeri della stagione e l'Excel di tutti i tesserati.", true],
+    ["storico", "Stagioni chiuse", "Le stagioni passate, dentro il Riepilogo: serve anche Riepilogo.", false],
+    ["bilancio", "Bilancio", "Movimenti e saldo della banca.", false],
+    ["gite", "Gite", "Dal telefono: cercare un socio, segnare le gite, vendere un abbonamento. Fogli di Stampe.", true],
+    ["polizze", "Assicurazione", "Liste da mandare all'assicurazione, con codice fiscale e data di nascita.", true],
+    ["social", "Social", "Post, sponsor e contatti per i social.", false],
+  ];
+  const NOME_PERMESSO = Object.fromEntries(PERMESSI.map(([p, nome]) => [p, nome]));
+  const DATI_PERSONALI = new Set(PERMESSI.filter((p) => p[3]).map((p) => p[0]));
+
+  // [{ role, permissions, defaults }] dal database, e per ruolo i permessi salvati.
+  let matrice = [];
+  let salvati = {};
+
   (async function init() {
     if (!(await requirePermesso("gestione"))) return;
     el("vediRuolo").innerHTML = ["admin", "tesoriere", "assicurazione", "gite", "social"]
       .map((r) => `<option value="${r}">${esc(NOMI_RUOLI[r])}</option>`).join("");
     el("btnVedi").addEventListener("click", () => vediCome(el("vediRuolo").value));
+
+    el("tabellaPermessi").addEventListener("change", aggiornaStato);
+    el("btnAnnullaPermessi").addEventListener("click", disegnaMatrice);
+    el("btnRipristina").addEventListener("click", ripristina);
+    el("btnSalvaPermessi").addEventListener("click", chiediSalvataggio);
+    try {
+      await caricaPermessi();
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    }
   })();
+
+  async function caricaPermessi() {
+    const [m, h] = await Promise.all([sb.rpc("role_grants_matrix"), sb.rpc("role_grant_history")]);
+    if (m.error) throw m.error;
+    if (h.error) throw h.error;
+    matrice = m.data;
+    salvati = Object.fromEntries(matrice.map((r) => [r.role, new Set(r.permissions)]));
+    disegnaMatrice();
+    disegnaStorico(h.data);
+  }
+
+  function disegnaMatrice() {
+    el("tabellaPermessi").innerHTML = `
+      <thead><tr><th>Sezione</th>${matrice.map((r) => `<th>${esc(NOMI_RUOLI[r.role])}</th>`).join("")}</tr></thead>
+      <tbody>${PERMESSI.map(([p, nome, descr, dati]) => `<tr>
+        <th scope="row">${esc(nome)}${dati ? ' <span class="tag-dati">dati personali</span>' : ""}<span class="descr">${esc(descr)}</span></th>
+        ${matrice.map((r) => `<td><label class="cella"><input type="checkbox" data-ruolo="${r.role}" data-permesso="${p}"
+            aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}></label></td>`).join("")}
+      </tr>`).join("")}
+      <tr><th scope="row">Gestione<span class="descr">Amministrazione, Utenti, Impostazioni e questa pagina.</span></th>
+        <td colspan="${matrice.length}" class="solo-super">Solo il superadmin</td></tr>
+      </tbody>`;
+    aggiornaStato();
+  }
+
+  const caselle = () => [...el("tabellaPermessi").querySelectorAll("input[data-ruolo]")];
+
+  /** Per ruolo, i permessi spuntati adesso. */
+  function scelti() {
+    const m = Object.fromEntries(matrice.map((r) => [r.role, []]));
+    caselle().filter((c) => c.checked).forEach((c) => m[c.dataset.ruolo].push(c.dataset.permesso));
+    return m;
+  }
+
+  /** I ruoli con spunte diverse da quelle salvate: [{ ruolo, aggiunti, tolti }]. */
+  function differenze() {
+    const m = scelti();
+    return matrice.map((r) => ({
+      ruolo: r.role,
+      aggiunti: m[r.role].filter((p) => !salvati[r.role].has(p)),
+      tolti: [...salvati[r.role]].filter((p) => !m[r.role].includes(p)),
+    })).filter((d) => d.aggiunti.length || d.tolti.length);
+  }
+
+  function aggiornaStato() {
+    caselle().forEach((c) => c.closest("td").classList.toggle("cambiata",
+      c.checked !== salvati[c.dataset.ruolo].has(c.dataset.permesso)));
+    const cambi = differenze().length > 0;
+    el("btnSalvaPermessi").disabled = !cambi;
+    el("btnSalvaPermessi").classList.toggle("is-warning", cambi);
+    el("btnAnnullaPermessi").disabled = !cambi;
+  }
+
+  /** "Utente (ricerca e gite) ora vede Soci e non vede più Gite" */
+  function frase(ruolo, aggiunti, tolti) {
+    const nomi = (lista) => lista.map((p) => NOME_PERMESSO[p] || p).join(", ");
+    const parti = [];
+    if (aggiunti.length) parti.push(`ora vede ${nomi(aggiunti)}`);
+    if (tolti.length) parti.push(`non vede più ${nomi(tolti)}`);
+    return `${NOMI_RUOLI[ruolo] || ruolo} ${parti.join(" e ")}`;
+  }
+
+  /** I permessi di partenza nelle spunte: si salvano solo con Salva. */
+  function ripristina() {
+    const partenza = Object.fromEntries(matrice.map((r) => [r.role, r.defaults]));
+    caselle().forEach((c) => { c.checked = partenza[c.dataset.ruolo].includes(c.dataset.permesso); });
+    aggiornaStato();
+    showToast(differenze().length ? "Rimessi i permessi di partenza: controlla e premi Salva."
+                                  : "I permessi sono già quelli di partenza.", "is-warning");
+  }
+
+  /** Prima di salvare, la frase con cosa cambia; i dati personali in evidenza. */
+  function chiediSalvataggio() {
+    const diff = differenze();
+    if (!diff.length) return;
+    const datiNuovi = diff.some((d) => d.aggiunti.some((p) => DATI_PERSONALI.has(p)));
+    chiedi(el("azioniPermessi"),
+      diff.map((d) => frase(d.ruolo, d.aggiunti, d.tolti)).join("; ") + "."
+        + (datiNuovi ? " Attenzione: leggerà i dati personali dei soci." : "") + " Salvare?",
+      "Sì, salva", salvaPermessi);
+  }
+
+  async function salvaPermessi() {
+    const m = scelti();
+    const grants = Object.fromEntries(differenze().map((d) => [d.ruolo, m[d.ruolo]]));
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("set_role_grants", { grants });
+      if (error) throw error;
+      await caricaPermessi();
+      showToast("Permessi salvati: valgono dalla prossima pagina che ognuno apre.");
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function disegnaStorico(righe) {
+    const quando = (t) => new Date(t).toLocaleString("it-IT",
+      { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    el("storicoPermessi").innerHTML = righe.length
+      ? righe.map((h) => `<li><span class="quando">${quando(h.changed_at)}</span>${esc(h.changed_by || "")}:
+          ${esc(frase(h.role, h.added, h.removed))}</li>`).join("")
+      : "<li>Nessuna modifica: valgono i permessi di partenza.</li>";
+  }
+
+  // Lasciare la pagina con spunte non salvate: il browser chiede conferma.
+  window.addEventListener("beforeunload", (evento) => {
+    if (matrice.length && differenze().length) {
+      evento.preventDefault();
+      evento.returnValue = "";
+    }
+  });
 </script>
 </body>
 </html>
