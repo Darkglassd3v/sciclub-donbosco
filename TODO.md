@@ -262,6 +262,34 @@ Alla fine: chiedere l'ok per schema in produzione + push.
   - nome del file `scheda-COGNOME-NOME.pdf/jpg`. Sono dati personali: solo chi ha il permesso `soci`
     (o anche `pagamenti`?) e niente copie salvate sul server
 
+## Social: riprogettare le grafiche per farle leggere meglio (richiesto il 2026-10-07)
+
+Esempio: il post "Corso presciistica" (servizi, senza prezzo né foto). Nel biglietto bianco il testo
+occupa una fascia al centro e sotto restano ~250 px vuoti; titolo 88 px, sottotitolo 34 px grigio in
+maiuscolo, data 36 px: su un telefono, nel feed, si legge poco. Il riquadro "Servizi" in alto a
+destra prende tanto spazio per dire solo la categoria; telefoni a 32 px in fondo, piccoli.
+
+- **Perché succede**: `content()` in `web/social-templates.js` mette tutto attorno alla riga dei
+  prezzi, fissa a `o.py` (450 nel post, 920 nella story), così il prezzo resta sempre nello stesso
+  punto. Senza prezzo i dettagli salgono sotto il titolo e il resto del biglietto resta vuoto; con
+  pochi dati (titolo + data) il vuoto è più grande. Vale per eventi, corsi, servizi, e per le gite
+  senza quota o con poche partenze
+- **Obiettivo**: il testo riempie il biglietto in base a quanto ce n'è. Titolo più grande quando è
+  corto (fino a ~140 px, `data-fit` lo riduce se serve), data in evidenza (grande, nel colore della
+  categoria, o nel bollo come le gite: oggi i servizi con data mostrano l'etichetta "Servizi" e la
+  data in piccolo nel testo), informazioni a corpo leggibile (≥ 44 px nel post), contenuto
+  distribuito in verticale (centrato o con spaziatura che cresce) invece che appeso al prezzo
+- **Da provare**: foto/paesaggio più alto quando il testo è poco; bollo data uguale per tutti i
+  tipi con data; telefoni più grandi (40-44 px) o su due righe quando sono due; sottotitolo non in
+  maiuscolo grigio ma frase normale scura
+- **Come**: fare prima 3-4 casi di prova (servizio con solo titolo e data, corso con 4 informazioni,
+  gita con 3 partenze e quota, evento con prezzi adulti/ragazzi), metterli a confronto prima/dopo
+  (come `social/confronto.html` nella storia di git) e scegliere; poi aggiornare `content()` /
+  `disegnaPost()` per post e story. Tenere le regole che ci sono: fasce sicure di Instagram
+  (`SAFE`) nella story, avviso "troppo lungo" di `fit()`, colori dai giorni di gita, contrasto
+- **Test**: `node web/test-social.js` per le funzioni pure; per il disegno, screenshot dei casi di
+  prova a 1080 px (playwright) da guardare prima di pubblicare
+
 ## Dopo il giro dell'app: cosa resta
 
 - Social: confermare con chi pubblica la regola di "Da completare" (gita: meta, giorno, partenze,
