@@ -229,6 +229,39 @@ Alla fine: chiedere l'ok per schema in produzione + push.
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
 
+## Soci: da fare (richiesti il 2026-10-07, `web/index.html`)
+
+- **Pulsante Salva col nome aggiornato + conferma prima di salvare**
+  - bug: aprendo un socio il pulsante dice "Salva COGNOME NOME" e, se correggi cognome o nome,
+    resta quello vecchio. `aggiornaFascia()` legge `socioAperto` (la scheda com'era quando l'hai
+    aperta), non i campi: va aggiornato a ogni `input` su `f_cognome` / `f_nome` (anche la fascia
+    "Stai modificando", e per il socio nuovo "Salva ROSSI MARIO" appena scrivi il nome)
+  - premendo Salva, prima di scrivere, una conferma: "Salvare il socio NOME COGNOME, codice fiscale
+    …, nato il gg/mm/aaaa?" con Sì / Annulla. Usare `chiedi()` sulla pagina (come per le modifiche
+    non salvate), non `confirm()`: un browser che blocca le finestre risponde "no" da solo (vedi il
+    fix dei post Social). Codice fiscale o data mancanti scritti per esteso ("senza codice
+    fiscale"), così si nota. La conferma viene dopo i controlli che già ci sono (campi obbligatori,
+    familiare che paga, doppioni)
+- **Elimina il socio inserito per sbaglio**, dai risultati della ricerca (e/o nella fascia del socio
+  aperto), con conferma che dice chi si elimina
+  - oggi nel database non si può: `members` non ha policy di delete ("si archivia, non si
+    cancella", `supabase/schema.sql` vicino a `members_delete`). Proposta: funzione
+    `delete_member(id)` security definer, solo col permesso `soci`, che elimina solo se la scheda è
+    "da sbaglio": niente pagamenti (`paid` = 0), nessuna gita segnata (`trip_uses`), nessun
+    familiare a carico (`payer_id`), creata da poco (es. questa stagione o ultimi 7 giorni). Negli
+    altri casi un messaggio che dice perché no. Da decidere con chi la usa le regole esatte
+  - a cascata se ne vanno `member_passes`, `trip_uses`, `member_amount_changes`; tenere traccia di
+    chi ha eliminato chi (tabella di registro o almeno il log) perché non si torna indietro
+  - test in `supabase/test_ruoli.sh`: chi senza `soci` non elimina, scheda con pagamenti rifiutata
+- **Stampa la scheda del socio** (PDF o JPG), pulsante nella fascia del socio aperto
+  - una pagina A4 con logo, dati anagrafici, residenza, contatti, tessera e tipo, abbonamenti, corso,
+    pagato / da pagare, familiari a carico, data; più la riga per la firma se serve
+  - PDF: la via più semplice è una vista di stampa (`@media print` o una finestra con la sola scheda)
+    e `window.print()` → "Salva come PDF", senza librerie. JPG: `html-to-image` come i PNG dei post
+    Social (`caricaHtmlToImage()` / `scaricaPng()` in `web/social.html`), con `toJpeg`
+  - nome del file `scheda-COGNOME-NOME.pdf/jpg`. Sono dati personali: solo chi ha il permesso `soci`
+    (o anche `pagamenti`?) e niente copie salvate sul server
+
 ## Dopo il giro dell'app: cosa resta
 
 - Social: confermare con chi pubblica la regola di "Da completare" (gita: meta, giorno, partenze,
