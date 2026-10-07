@@ -231,6 +231,37 @@ Alla fine: chiedere l'ok per schema in produzione + push.
 
 ## Soci: da fare (richiesti il 2026-10-07, `web/index.html`)
 
+> **Stato al 2026-10-07**: lavoro iniziato e fermato prima di scrivere codice (niente è cambiato).
+> Letti `web/index.html` e `supabase/schema.sql`; scelte già fatte, da riprendere da qui:
+> - nome nel pulsante: `aggiornaFascia()` deve leggere `f_cognome` / `f_nome` (in maiuscolo) e
+>   va chiamata anche su `input` di quei due campi (oggi c'è solo `change` per CF e doppioni).
+>   Fascia: "Stai modificando: ROSSI MARIO" e, se il nome è cambiato, "(era ROSSO MARIO)"
+> - conferma del Salva: `salva()` va diviso in controlli (validità, familiare che paga, doppioni
+>   per il socio nuovo: oggi stanno dentro il `try`) → `chiedi()` → scrittura. `chiedi()` sta in
+>   `web/shared.js` e mette la domanda al posto dei pulsanti del contenitore: qui il contenitore è
+>   la colonna di `btnSalva` nella barra scura in basso (`.total-box`), quindi serve CSS per la
+>   domanda bianca e il "Sì" giallo invece che rosso. Data con `dataIt()` (shared.js)
+> - elimina: funzione `public.delete_member(member_id uuid)`, security definer, `can('soci')`,
+>   `for update` sulla riga, poi rifiuta con un messaggio se: `paid` > 0, gite in `trip_uses`,
+>   familiari a carico (`payer_id`), già in una lista assicurativa (`insurance_list_id`), creato
+>   prima di `current_season()`. Prima di cancellare copia la riga (`to_jsonb`) in una tabella
+>   `member_deletions` (deleted_at, deleted_by = auth.uid(), dati) senza policy: si legge dalla
+>   dashboard, e una scheda eliminata per sbaglio si può rimettere. Cascata già presente su
+>   `member_passes`, `trip_uses`, `member_amount_changes`. Metterla in fondo a schema.sql (usa
+>   tabelle definite dopo `members`) e uno script `supabase/applica_*.sql` per la produzione
+> - elimina nella pagina: pulsante "Elimina" nei risultati della ricerca (dentro `.result-item`,
+>   con `stopPropagation`) solo se dai dati già letti (`select *`) risulta eliminabile (pagato 0,
+>   creato in questa stagione, non assicurato); il resto lo controlla il database. Anche nella
+>   fascia del socio aperto (`#azioniSocio`). Conferma con `chiedi()` nella riga
+> - test in `supabase/test_ruoli.sh`: riga della matrice
+>   `('scrivi', 'select public.delete_member(''99999999-9999-9999-9999-999999999999'')', 'SSxxxxx')`
+>   (ROSSI MARIO dei dati di prova è creato ora, senza pagamenti né gite); più le prove dei rifiuti
+>   (con pagamento, con gita, capofamiglia) e che `member_deletions` riceva la copia
+> - stampa: in `web/social.html` ci sono `caricaHtmlToImage()` e `scaricaPng()` da riusare (JPG con
+>   `htmlToImage.toJpeg`); per il PDF la vista di stampa del browser. Logo: solo
+>   `web/logo_sciclubdonbosco.png` a 228×170 (piccolo per la stampa, servirebbe un originale più
+>   grande o un SVG)
+
 - **Pulsante Salva col nome aggiornato + conferma prima di salvare**
   - bug: aprendo un socio il pulsante dice "Salva COGNOME NOME" e, se correggi cognome o nome,
     resta quello vecchio. `aggiornaFascia()` legge `socioAperto` (la scheda com'era quando l'hai
