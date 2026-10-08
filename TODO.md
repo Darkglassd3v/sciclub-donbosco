@@ -1,9 +1,29 @@
-# Ripresa lavori — aggiornato il 2026-10-08 (2.6-SNAPSHOT)
+# Ripresa lavori — aggiornato il 2026-10-08 (2.7-SNAPSHOT)
 
 > Le richieste nuove si scrivono qui in cima, sotto la versione aperta (la più recente prima),
 > non in fondo ai blocchi delle versioni vecchie.
 
-## 2.6-SNAPSHOT (aperta il 01/10/2026 dalla 2.5)
+## 2.7-SNAPSHOT (aperta l'08/10/2026 dalla 2.6, rilasciata lo stesso giorno)
+
+1. [ ] **Social: portare nel sito la riprogettazione delle grafiche** (richiesta dell'08/10,
+       fermata prima di iniziare per il limite d'uso: niente è cambiato nel codice).
+       - Pagina di confronto: https://claude.ai/artifact/NpdaNcVzgmAWZPL24JzsYJ (leggerla con
+         Artifact read; immagini prima/dopo per post e story, 10 casi).
+       - Proposta in `social/proposta-grafiche/` (non committata, arriva da un'altra sessione):
+         `nuovo.js` con `disegnaPost2()` e `fit2()`, che sostituiscono `disegnaPost()` / `content()` /
+         `fit()` di `web/social-templates.js`; `casi.js` i casi di prova, `scatta.sh` + `render.html`
+         gli screenshot, `README.md`.
+       - Cosa fa: il biglietto è una colonna (foto, testo, telefoni dentro); tutto il testo va a
+         capo e si riduce solo a biglietto pieno (prima il titolo fino a 2,2 volte il testo, poi
+         tutto fino a 32 px nel post e 36 nella story); post fatti solo di titolo o solo di sottotesto.
+       - Errori del disegno di oggi che la proposta evita: nelle story il testo finisce sopra i
+         telefoni; un titolo lungo esce dal biglietto.
+       - **Da decidere con l'utente prima di portarlo nel sito**: permettere il post senza titolo
+         (`mancanti()`); fare del sottotesto un'area di testo nella pagina Social.
+       - Non committare senza conferma. Test: `node web/test-social.js`, screenshot a 1080 px.
+       - Le conferme nuove vanno in finestra sopra la pagina (`chiedi()`), mai in linea.
+
+## 2.6 (rilasciata l'08/10/2026: branch e tag `2.6`, schema in produzione)
 
 1. [x] feat(ruoli) 1b87030: matrice dei permessi in Gestione > Ruoli (tabella `role_grants`,
        registro `role_grant_changes`), superadmin sempre tutto, Gestione non assegnabile.
