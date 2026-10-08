@@ -47,9 +47,10 @@ per il prossimo.
 
 ## Stampare la scheda
 
-In alto, il pulsante blu **Stampa**: stampa quello che c'è nel modulo,
-anche prima di salvare. Dalla finestra di stampa si può scegliere
-**Salva come PDF**.
+In alto, il pulsante blu **Stampa**: scarica la scheda compilata, un PDF
+che si chiama `scheda-COGNOME-NOME.pdf` (lo trovi nella cartella dei file
+scaricati). C'è quello che è scritto nel modulo, anche prima di salvare. Il
+PDF si apre, si stampa o si manda come qualunque altro file.
 
 ## Una scheda doppia o inserita per sbaglio
 

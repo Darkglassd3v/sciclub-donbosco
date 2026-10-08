@@ -351,26 +351,41 @@ const COLONNE_ASSICURAZIONE = [
   ["Numero tessera", (s) => s.card_number],
 ];
 
+/**
+ * Carica una libreria dal CDN la prima volta che serve, una volta sola anche
+ * con due clic di fila. `cosa` finisce nel messaggio d'errore ("per l'Excel").
+ * Se il caricamento fallisce si può riprovare.
+ */
+const _scriptInArrivo = {};
+function caricaScript(src, cosa) {
+  _scriptInArrivo[src] ??= new Promise((ok, ko) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = ok;
+    script.onerror = () => {
+      delete _scriptInArrivo[src];
+      script.remove();
+      ko(new Error(`non riesco a scaricare il modulo ${cosa}: controlla la connessione e riprova.`));
+    };
+    document.head.append(script);
+  });
+  return _scriptInArrivo[src];
+}
+
 // SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
 // volte a stagione. È la versione pubblicata su npm, usata solo per
 // SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
 // un giorno si leggerà il file restituito dall'assicurazione, passare alla
 // versione di cdn.sheetjs.com.
-let _xlsxInArrivo = null;
 function caricaXlsx() {
   if (window.XLSX) return Promise.resolve();
-  _xlsxInArrivo ??= new Promise((ok, ko) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-    script.onload = ok;
-    script.onerror = () => {
-      _xlsxInArrivo = null;
-      script.remove();
-      ko(new Error("non riesco a scaricare il modulo per l'Excel: controlla la connessione e riprova."));
-    };
-    document.head.append(script);
-  });
-  return _xlsxInArrivo;
+  return caricaScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js", "per l'Excel");
+}
+
+// jsPDF per la scheda del socio, anche lui solo al primo clic.
+function caricaPdf() {
+  if (window.jspdf) return Promise.resolve();
+  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF");
 }
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */

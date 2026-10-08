@@ -67,7 +67,7 @@
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
 
     /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
-     * ed Elimina. Prima era una fascia gialla o blu incollata sotto la barra,
+     * (scarica la scheda in PDF) ed Elimina. Prima era una fascia gialla o blu incollata sotto la barra,
      * con l'indice delle sezioni e "Nuovo socio": troppe cose, e il modulo si
      * svuota già da solo dopo il salvataggio. Chi si salva lo dice comunque
      * il pulsante giallo in fondo, che resta sempre in vista. */
@@ -82,8 +82,8 @@
     #azioniSocio { display: flex; flex-wrap: wrap; gap: 12px; }
     #azioniSocio .button { min-height: 52px; font-size: 1.1rem; font-weight: 700; gap: 10px; border: 0; padding: 0 22px; }
     #azioniSocio .button svg { flex: none; }
-    .btn-stampa { background: var(--blu); color: #fff; }
-    .btn-stampa:hover, .btn-stampa:focus { background: var(--blu-dark); color: #fff; }
+    .btn-scarica { background: var(--blu); color: #fff; }
+    .btn-scarica:hover, .btn-scarica:focus { background: var(--blu-dark); color: #fff; }
     .btn-elimina { background: var(--errore); color: #fff; }
     .btn-elimina:hover, .btn-elimina:focus { background: #8E1D17; color: #fff; }
 
@@ -136,28 +136,6 @@
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
        * selettore lungo il pulsante restava stretto, su tre righe. */
       .total-box .columns.is-mobile > .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
-    }
-
-    /* Scheda del socio da stampare (stampaScheda()): a schermo non c'è, in
-     * stampa c'è solo lei. Misure in pt: sulla carta non conta il pulsante A+. */
-    .scheda-stampa { display: none; }
-    @media print {
-      @page { size: A4; margin: 14mm; }
-      body { background: #fff; }
-      body > *:not(.scheda-stampa) { display: none !important; }
-      .scheda-stampa { display: block; color: #000; font-size: 11pt; line-height: 1.35; }
-      .scheda-stampa header { display: flex; align-items: center; gap: 16px; padding-bottom: 8px; margin-bottom: 6px;
-                              border-bottom: 2px solid #084C8D; }
-      .scheda-stampa header img { width: 36mm; height: auto; }
-      .scheda-stampa h1 { font-size: 20pt; font-weight: 700; margin: 0; line-height: 1.15; }
-      .scheda-stampa header p { margin: 2px 0 0; font-size: 11pt; }
-      .scheda-stampa section { break-inside: avoid; }
-      .scheda-stampa h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #084C8D;
-                          margin: 14px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #999; }
-      .scheda-stampa table { width: 100%; border-collapse: collapse; }
-      .scheda-stampa th { width: 36%; padding: 2px 10px 2px 0; text-align: left; font-weight: 400; color: #333; vertical-align: top; }
-      .scheda-stampa td { padding: 2px 0; font-weight: 600; }
-      .scheda-stampa .piede { margin-top: 18px; padding-top: 6px; border-top: 1px solid #999; font-size: 9pt; color: #333; }
     }
 
     /* Schermo basso (zoom al 150-200%, telefono in orizzontale): la barra
@@ -218,7 +196,7 @@
         <button type="button" class="chiudi" id="btnChiudiScheda" onclick="nuovoSocio()" hidden>Chiudi scheda</button></p>
     </div>
     <div id="azioniSocio">
-      <button type="button" class="button btn-stampa" onclick="stampaScheda()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
+      <button type="button" class="button btn-scarica" id="btnScarica" onclick="scaricaScheda()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
       <button type="button" class="button btn-elimina" id="btnElimina" onclick="chiediElimina()" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6l1 2h5v2H3V4h5l1-2Zm-4 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z"/></svg>Elimina</button>
     </div>
   </div>
@@ -413,8 +391,6 @@
   </div>
 </div>
 
-<!-- Riempita da stampaScheda() al momento di stampare. -->
-<div class="scheda-stampa" id="schedaStampa"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -1449,27 +1425,21 @@
   }
 
   // -------------------------------------------------------------------------
-  // Stampa della scheda
+  // Scheda del socio da scaricare
   //
   // Quello che c'è nel modulo, anche se non è ancora salvato: è la scheda che
-  // il direttivo vuole su carta mentre iscrive. Una pagina A4 dalla stampa
-  // del browser, da cui si fa anche il PDF ("Salva come PDF"): niente
-  // librerie e niente file sul server, sono dati personali.
+  // il direttivo vuole compilata mentre iscrive. Il pulsante si chiama
+  // Stampa, come lo chiamano tutti, ma scarica un PDF A4,
+  // scheda-COGNOME-NOME.pdf, con il testo vero (si legge, si cerca, si
+  // stampa da qualunque lettore). Prima si apriva la stampa del browser, e
+  // per avere il file bisognava trovare "Salva come PDF". Si fa tutto nel
+  // browser: niente copie sul server, sono dati personali.
   // -------------------------------------------------------------------------
 
-  async function stampaScheda() {
-    const nome = nomeNelModulo();
-    if (!nome) {
-      showToast("Scrivi almeno cognome e nome, poi stampa la scheda.", "is-danger");
-      el("f_cognome").focus();
-      return;
-    }
+  /** I dati della scheda: il nome e le sezioni, come [titolo, [[etichetta, valore], ...]]. */
+  function datiScheda() {
     // In maiuscolo come li scrive il salvataggio.
     const v = (id) => el(id).value.trim().toUpperCase();
-    const riga = (etichetta, valore) => (valore ? `<tr><th>${esc(etichetta)}</th><td>${esc(valore)}</td></tr>` : "");
-    const sezione = (titolo, righe) =>
-      (righe.join("") ? `<section><h2>${titolo}</h2><table>${righe.join("")}</table></section>` : "");
-
     const nascita = [v("f_luogo_nascita"), v("f_provincia_nascita") && `(${v("f_provincia_nascita")})`,
       el("f_data_nascita").value && `il ${dataIt(el("f_data_nascita").value)}`].filter(Boolean).join(" ");
     const residenza = [v("f_indirizzo"), [el("f_cap").value.trim(), v("f_citta")].filter(Boolean).join(" "),
@@ -1480,42 +1450,104 @@
     const giorno = sceltaDi("f_giorno_corso")?.value;
     const totale = totaleIndividuale(), acconto = num(el("f_acconto").value);
     const pagante = el("pagaFamiliare").checked && el("f_payerDisplay").value.trim();
-    const adesso = new Date();
+    const sezioni = [
+      ["Anagrafica", [["Cognome", v("f_cognome")], ["Nome", v("f_nome")],
+        ["Nato/a a", nascita], ["Codice fiscale", v("f_codice_fiscale")]]],
+      ["Residenza e contatti", [["Residenza", residenza], ["Telefono", el("f_telefono").value.trim()],
+        ["Email", el("f_email").value.trim()]]],
+      ["Tessera", [["Numero tessera", numeroTessera()], ["Tessera", nomeSelezionato("f_tipologia_tessera")],
+        ["Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")]]],
+      ["Gite e corsi", [["Abbonamenti", abbonamenti], ["Presciistica", nomeSelezionato("f_presciistica")],
+        ["Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)],
+        ["Partenza del sabato", partenzeSelezionate("check_sabato")],
+        ["Partenza della domenica", partenzeSelezionate("check_domenica")]]],
+      ["Pagamento", [["Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")],
+        ["Acconto versato", fmt(acconto)], ["Da pagare", fmt(totale - acconto)], ["Pagato da", pagante],
+        ["Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", ")]]],
+    ];
+    // Le righe vuote non si scrivono, e nemmeno una sezione tutta vuota.
+    return sezioni.map(([t, righe]) => [t, righe.filter(([, val]) => val)]).filter(([, righe]) => righe.length);
+  }
 
-    el("schedaStampa").innerHTML = `
-      <header>
-        <img src="logo_sciclubdonbosco.svg" alt="">
-        <div><h1>${esc(nome)}</h1><p>Sci Club Don Bosco · scheda del socio</p></div>
-      </header>
-      ${sezione("Anagrafica", [
-        riga("Cognome", v("f_cognome")), riga("Nome", v("f_nome")),
-        riga("Nato/a a", nascita), riga("Codice fiscale", v("f_codice_fiscale"))])}
-      ${sezione("Residenza e contatti", [
-        riga("Residenza", residenza), riga("Telefono", el("f_telefono").value.trim()),
-        riga("Email", el("f_email").value.trim())])}
-      ${sezione("Iscrizione", [
-        riga("Numero tessera", numeroTessera()), riga("Tessera", nomeSelezionato("f_tipologia_tessera")),
-        riga("Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")),
-        riga("Abbonamenti", abbonamenti), riga("Presciistica", nomeSelezionato("f_presciistica")),
-        riga("Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)),
-        riga("Partenza del sabato", partenzeSelezionate("check_sabato")),
-        riga("Partenza della domenica", partenzeSelezionate("check_domenica"))])}
-      ${sezione("Pagamento", [
-        riga("Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")),
-        riga("Acconto versato", fmt(acconto)), riga("Da pagare", fmt(totale - acconto)),
-        riga("Pagato da", pagante),
-        riga("Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", "))])}
-      <p class="piede">Stampata il ${adesso.toLocaleDateString("it-IT")} alle
-        ${adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
-        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}</p>`;
+  /**
+   * Il logo del club per il PDF, disegnato su un canvas (jsPDF non legge
+   * l'SVG). JPEG su fondo bianco: in PNG il file pesava quasi un mega.
+   */
+  async function logoPdf() {
+    const img = new Image();
+    img.src = "logo_sciclubdonbosco.svg";
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = Math.round(600 * img.naturalHeight / img.naturalWidth);
+    const g = canvas.getContext("2d");
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, canvas.width, canvas.height);
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { dati: canvas.toDataURL("image/jpeg", .9), proporzione: canvas.height / canvas.width };
+  }
 
-    // Il logo deve essere caricato prima che parta la stampa, o esce il buco.
-    await el("schedaStampa").querySelector("img").decode().catch(() => {});
-    // Il titolo della pagina è il nome proposto per il PDF.
-    const titolo = document.title;
-    document.title = `scheda-${nome.replace(/[^A-Z0-9]+/g, "-")}`;
-    window.addEventListener("afterprint", () => { document.title = titolo; }, { once: true });
-    window.print();
+  async function scaricaScheda() {
+    const nome = nomeNelModulo();
+    if (!nome) {
+      showToast("Scrivi almeno cognome e nome, poi scarica la scheda.", "is-danger");
+      el("f_cognome").focus();
+      return;
+    }
+    const pulsante = el("btnScarica");
+    pulsante.classList.add("is-loading");
+    try {
+      await caricaPdf();
+      const logo = await logoPdf().catch(() => null);
+      const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+      const BLU = [8, 76, 141], GRIGIO = [70, 70, 70], M = 16, L = 210 - 2 * M, FONDO = 297 - 18;
+      let y = M;
+
+      // Testata: logo, nome, riga blu.
+      if (logo) doc.addImage(logo.dati, "JPEG", M, y, 34, 34 * logo.proporzione);
+      const xt = logo ? M + 40 : M;
+      doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(0);
+      doc.text(doc.splitTextToSize(nome, 210 - M - xt), xt, y + 9);
+      doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(...GRIGIO);
+      doc.text("Sci Club Don Bosco · scheda del socio", xt, y + 17);
+      y += Math.max(logo ? 34 * logo.proporzione : 0, 20) + 3;
+      doc.setDrawColor(...BLU).setLineWidth(.6).line(M, y, M + L, y);
+      y += 8;
+
+      // Sezioni: titolo blu in maiuscolo, poi etichetta a sinistra e valore in grassetto.
+      for (const [titolo, righe] of datiScheda()) {
+        if (y + 10 + 6 * righe.length > FONDO) { doc.addPage(); y = M; }
+        doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(...BLU);
+        doc.text(titolo.toUpperCase(), M, y);
+        doc.setDrawColor(160).setLineWidth(.2).line(M, y + 1.6, M + L, y + 1.6);
+        y += 7;
+        for (const [etichetta, valore] of righe) {
+          const righeValore = doc.setFont("helvetica", "bold").setFontSize(11).splitTextToSize(String(valore), L - 58);
+          if (y + 5.5 * righeValore.length > FONDO) { doc.addPage(); y = M; }
+          doc.setFont("helvetica", "normal").setFontSize(10.5).setTextColor(...GRIGIO).text(etichetta, M, y);
+          doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0).text(righeValore, M + 58, y);
+          y += 5.5 * righeValore.length + 1;
+        }
+        y += 5;
+      }
+
+      // Piede: quando è stata fatta, e se i dati non sono ancora salvati.
+      const adesso = new Date();
+      if (y + 8 > FONDO) { doc.addPage(); y = M; }
+      doc.setDrawColor(160).setLineWidth(.2).line(M, y, M + L, y);
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(...GRIGIO);
+      doc.text(`Scheda compilata il ${adesso.toLocaleDateString("it-IT")} alle ${
+        adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
+        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}`, M, y + 5);
+
+      // Nel nome del file niente accenti né spazi: ROSSI NICOLÒ → scheda-ROSSI-NICOLO.pdf
+      const file = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+      doc.save(`scheda-${file}.pdf`);
+    } catch (e) {
+      showToast("Scheda non scaricata: " + (e.message || e), "is-danger");
+    } finally {
+      pulsante.classList.remove("is-loading");
+    }
   }
 
   // -------------------------------------------------------------------------
