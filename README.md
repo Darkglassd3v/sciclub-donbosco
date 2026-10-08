@@ -131,7 +131,6 @@ quote, si aggiornano da Supabase.
 
 | Serve | Documento |
 |---|---|
-| Capire come funziona il sistema attuale e perché è fatto così | [docs/DOCUMENTAZIONE.md](docs/DOCUMENTAZIONE.md) |
 | Creare gli account (Supabase, GitHub, utenti del direttivo) | [docs/ACCOUNT.md](docs/ACCOUNT.md) |
 | Migrare i dati e pubblicare le pagine | [docs/MIGRAZIONE_2.0.md](docs/MIGRAZIONE_2.0.md) |
 | Spiegare ai volontari come si iscrive un socio | [docs/GUIDA_VOLONTARI.md](docs/GUIDA_VOLONTARI.md) |

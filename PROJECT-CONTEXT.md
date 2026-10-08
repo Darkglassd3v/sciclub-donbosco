@@ -12,9 +12,10 @@ come si lavora (rilascio, database, scelte dell'interfaccia): `docs/SVILUPPO.md`
   unico e idempotente); pagine pubblicate con GitHub Pages dal branch di lavoro.
   Test leggeri in node (`web/test-*.js`, `ricerca/test-ricerca.js`) e
   `supabase/test_ruoli.sh` in docker.
-- **Fase**: online la `2.7-SNAPSHOT` (aperta l'08/10/2026 dalla 2.6): grafiche social nuove,
-  scheda Soci a sezioni colorate con Stampa che scarica il PDF, logo vettoriale. Iscrizioni di
-  massa da metà novembre: prima la prova generale.
+- **Fase**: online la `2.7-SNAPSHOT` (aperta l'08/10/2026 dalla 2.6, non ancora rilasciata):
+  due grafiche social (Ritocco e Montagna) scelte in Impostazioni, scheda Soci a sezioni colorate
+  con Stampa che scarica il PDF e conferme a tabellina, sezioni colorate in Riepilogo, Assicurazione
+  e Bilancio, logo vettoriale. Iscrizioni di massa da metà novembre: prima la prova generale.
 - **Vincoli**: interfaccia, commenti e variabili JS in italiano, database in
   inglese; misure in rem (pulsante A+ 17/19/21px); contrasti documentati in
   `docs/brand-guidelines.md`; nessuna dipendenza nuova; conferme in una finestra

@@ -3,6 +3,18 @@
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
+## Stato del repository (08/10/2026, sera)
+
+- Branch di lavoro `2.7-SNAPSHOT`, tutto committato e pushato; le pagine online sono quelle di
+  questo branch (deploy riuscito). `dev` è allineato alla 2.6; la 2.7 non è ancora rilasciata
+  (procedura in `docs/SVILUPPO.md`).
+- Database di produzione: schema di `supabase/schema.sql` applicato l'08/10 (tabella nuova
+  `social_settings`, grafica dei post su **Ritocco**). Backup in
+  `supabase/migration/backup-2026-10-08-social/` (fuori da git).
+- Documenti puliti l'08/10: tolti `docs/DOCUMENTAZIONE.md` (la 1.x) e i piani 2.1, 2.3 e social
+  già realizzati (restano nella storia di git). Le pagine di prova su claude.ai sono cancellate.
+- Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
+
 ## Richieste nuove
 
 (nessuna)
@@ -10,8 +22,7 @@
 ## Versione aperta: 2.7-SNAPSHOT
 
 Aperta l'08/10/2026 dalla 2.6 (branch e tag `2.6`). Le pagine si pubblicano dal branch
-`2.7-SNAPSHOT`; lo schema del database è quello della 2.6 (niente da applicare). Fatto finora,
-già online:
+`2.7-SNAPSHOT`; schema in produzione l'08/10 (`social_settings`). Fatto finora, già online:
 
 - Social: grafiche nuove (testo che va a capo, post di solo sottotesto, Sottotesto su più righe)
 - Soci: scheda con sezioni colorate (Anagrafica, Tessera, Gite e corsi, Pagamento), testata con

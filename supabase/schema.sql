@@ -41,8 +41,8 @@ comment on table public.departures is 'Luoghi di partenza per giorno: ex foglio 
 -- stagione avviene in lettura: close_season() svuota enrolled_at, quindi chi
 -- ce l'ha è iscritto alla stagione aperta (vedi current_season()).
 --
--- Differenze volute rispetto al foglio Google (fix ai problemi documentati in
--- docs/DOCUMENTAZIONE.md):
+-- Differenze volute rispetto al foglio Google della 1.x (fix ai suoi problemi, descritti
+-- in docs/DOCUMENTAZIONE.md fino all'08/10/2026: si ritrova nella storia di git):
 --   * `balance` è una colonna GENERATA (total - paid): non può più andare
 --     fuori sincrono. Nella 1.x la colonna saldo del foglio era stale e
 --     Admin.gs doveva ricalcolarla a mano ad ogni lettura.
