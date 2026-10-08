@@ -89,6 +89,28 @@ function dataCorta(iso) {
 let COLORI_GITA = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
 function impostaColoriGita(colori) { COLORI_GITA = colori; }
 
+/* La grafica dei post, scelta in Social > Impostazioni (tabella
+ * social_settings, chiave "style"): "ritocco" è il biglietto di sempre con la
+ * neve sul fondo, "montagna" la foto a tutta immagine con le informazioni in
+ * una scheda bianca. La pagina la carica e la passa a impostaStile(); il post
+ * aperto la può cambiare solo per l'anteprima (secondo argomento dei disegni). */
+const STILI = ["ritocco", "montagna"];
+let STILE = "ritocco";
+function impostaStile(stile) { STILE = STILI.includes(stile) ? stile : "ritocco"; }
+
+/* Fiocchi di neve sparsi su w×h. Generatore a seme fisso: sempre gli stessi
+ * fiocchi negli stessi punti, così anteprima e immagine scaricata coincidono. */
+const FIOCCO = '<path d="M11 2h2v4l2-2 1.4 1.4L13 8.8V11h2.2l3.4-3.4L20 9l-2 2h4v2h-4l2 2-1.4 1.4-3.4-3.4H13v2.2l3.4 3.4L15 20l-2-2v4h-2v-4l-2 2-1.4-1.4 3.4-3.4V13H8.8l-3.4 3.4L4 15l2-2H2v-2h4L4 9l1.4-1.4L8.8 11H11V8.8L7.6 5.4 9 4l2 2V2Z"/>';
+function fiocchi(w, h, opacita = .32, seme = 7) {
+  let x = seme, out = "";
+  const caso = () => (x = (x * 9301 + 49297) % 233280) / 233280;
+  for (let i = Math.round(w * h / 42000); i > 0; i--) {
+    const px = Math.round(30 + caso() * 60);
+    out += `<svg class="abs" style="left:${Math.round(caso() * w)}px;top:${Math.round(caso() * h)}px;opacity:${(opacita * (.5 + caso() / 2)).toFixed(2)};transform:rotate(${Math.round(caso() * 60)}deg)" width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff">${FIOCCO}</svg>`;
+  }
+  return `<div class="abs" style="inset:0;pointer-events:none">${out}</div>`;
+}
+
 /** Il colore di una gita viene dal giorno: "g2" se il martedì è un giorno di gita. */
 function categoriaGita(iso) {
   const d = giornoDi(iso);
@@ -198,7 +220,7 @@ function telefoni(lista, k) {
   return `<div data-fittel style="flex:0 0 auto;margin:0 40px;border-top:4px dashed #C7D0DA;padding:${22 * k}px 16px ${28 * k}px;
       display:flex;flex-wrap:wrap;gap:${4 * k}px ${44 * k}px;font-size:${40 * k}px;font-weight:700;line-height:1.25;color:#14202E">
     ${lista.map((c) => `<span style="white-space:nowrap">${icoTel(Math.round(40 * k), "#14202E")} <span style="font-weight:500">${escS(c.name)}</span> ${escS(c.phone)}${c.hours
-      ? ` <span style="font-weight:500;font-size:.75em;color:#4A5361">${escS(c.hours)}</span>` : ""}</span>`).join("")}</div>`;
+      ? ` <span style="font-weight:500;font-size:.85em;color:#4A5361">${escS(c.hours)}</span>` : ""}</span>`).join("")}</div>`;
 }
 
 // Orari e intervalli ("18-20", "6-14") non vanno a capo sul trattino.
@@ -207,11 +229,12 @@ const intero = (v) => escS(v).replace(/\d+[-–]\d+/g, (x) => `<span style="whit
 /* Il testo del biglietto. I corpi sono tre variabili sul contenitore: --t
  * titolo, --b testo (sottotesto, informazioni, partenze, scadenza), --p
  * prezzi; fit() le abbassa se il biglietto non basta. */
-function testoBiglietto(s, accent, k) {
-  const gita = s.kind === "gita", titolo = String((gita ? s.dest : s.title) || "").trim();
+function testoBiglietto(s, accent, k, conTitolo = true) {
+  const gita = s.kind === "gita", titoloVero = String((gita ? s.dest : s.title) || "").trim();
+  const titolo = conTitolo ? titoloVero : "";
   const sub = gita ? "" : String(s.sub || "").trim();
   const prices = s.prices || [], facts = s.facts || [], stops = gita ? s.stops || [] : [];
-  const solo = !titolo && !facts.length && !prices.length;
+  const solo = !titoloVero && !facts.length && !prices.length;
   const T = corpoTitolo(titolo.length) * k, B = corpoTesto(sub.length, solo) * k * (s.fmt === "story" ? .9 : 1), P = 116 * k;
   const testa = titolo || sub ? `<div>
       ${titolo ? `<div class="t-dest" data-titolo style="font-size:var(--t);line-height:1.02;color:#14202E;text-wrap:balance">${escS(titolo)}</div>` : ""}
@@ -254,6 +277,15 @@ function fit(radice = document) {
     let f = parseFloat(el.style.fontSize);
     while (el.scrollWidth > el.clientWidth && f > 26) el.style.fontSize = (f -= 1) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
+  });
+  // Montagna: il titolo bianco sulla foto va a capo fino a data-titolofoto
+  // righe; oltre, o con una parola più larga della riga, scende fino a 56 px.
+  radice.querySelectorAll("[data-titolofoto]").forEach((el) => {
+    const righe = Number(el.dataset.titolofoto);
+    let f = parseFloat(el.style.fontSize);
+    const troppo = () => el.scrollWidth > el.clientWidth || el.offsetHeight > f * .95 * righe + 4;
+    while (troppo() && f > 56) el.style.fontSize = (f -= 2) + "px";
+    if (troppo()) sborda = true;
   });
   radice.querySelectorAll("[data-biglietto]").forEach((card) => {
     const box = card.querySelector("[data-testo]"), tit = box.querySelector("[data-titolo]"), k = Number(box.dataset.k);
@@ -335,9 +367,9 @@ function photo(w, h, src) {
 function calRows(rows) {
   return rows.map(([k, d, dest, corso]) => { const C = categoria(k);
     return `<div style="display:flex;align-items:center;gap:22px;padding:14px 0;border-bottom:2px solid #E4E6EB">
-      <span class="pill" style="background:${C.c};color:${C.ink};font-size:28px;padding:8px 0;width:190px;text-align:center">${escS(C.day)} ${escS(d)}</span>
-      <span style="font-size:42px;font-weight:700;color:#14202E">${escS(dest)}</span>
-      ${corso ? `<span style="margin-left:auto;background:${CAT.corso.c};color:#fff;border-radius:14px;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:26px;font-weight:800">${skier(34)}Corso</span>` : ""}</div>`; }).join("");
+      <span class="pill" style="background:${C.c};color:${C.ink};font-size:36px;padding:8px 0;width:250px;flex:none;text-align:center">${escS(C.day)} ${escS(d)}</span>
+      <span style="font-size:56px;font-weight:700;line-height:1.1;color:#14202E">${escS(dest)}</span>
+      ${corso ? `<span style="margin-left:auto;flex:none;background:${CAT.corso.c};color:#fff;border-radius:14px;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:34px;font-weight:800">${skier(42)}Corso</span>` : ""}</div>`; }).join("");
 }
 
 // ---------------------------------------------------------------------------
@@ -349,7 +381,8 @@ function calRows(rows) {
  * biglietto è una colonna: foto, testo, telefoni. Con poco testo la foto si
  * allunga invece di lasciare bianco in fondo; con tanto, fit() riduce il testo.
  */
-function disegnaPost(s) {
+function disegnaPost(s, stile = STILE) {
+  if (stile === "montagna") return disegnaMontagna(s);
   const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
   const m = 60, k = st ? 1.4 : 1;
   // Story: il biglietto finisce sopra la fascia della risposta di Instagram,
@@ -362,8 +395,8 @@ function disegnaPost(s) {
       <div class="abs" style="left:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
       <div class="abs" style="right:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
       <div class="abs" style="left:40px;right:40px;top:-2px;border-top:4px dashed #C7D0DA"></div></div>`;
-  return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">
-    <div class="abs" data-biglietto style="left:${m}px;right:${m}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden;display:flex;flex-direction:column">
+  return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">${fiocchi(W, H)}
+    <div class="abs" data-biglietto style="left:${m}px;right:${m}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.25)">
       <div style="position:relative;flex:3 1 0;min-height:${fotoMin}px;max-height:${st ? 820 : 460}px">
         ${fotoPiena(s.photo)}
         <div class="abs" style="left:0;top:${su}px;background:#fff;padding:18px 26px;border-radius:0 0 28px 0${su ? ";border-top-right-radius:28px" : ""}">
@@ -379,14 +412,76 @@ function disegnaPost(s) {
   </div>`;
 }
 
-/** Calendario del mese (post 1:1): righe [categoria, "DD/MM", meta, corso]. */
-function disegnaCalendario(titolo, righe) {
+/**
+ * Montagna: la foto (o il paesaggio disegnato) a tutta immagine con un velo
+ * scuro in alto, il titolo bianco grande, un nastro con il giorno nel colore
+ * della gita, e sotto una scheda bianca con tutto il resto. La scheda ha lo
+ * stesso contenuto e lo stesso adattamento del biglietto (testoBiglietto(),
+ * fit()): il testo grande va a capo e si riduce solo se non ci sta.
+ */
+function disegnaMontagna(s) {
+  const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
+  const k = st ? 1.3 : 1, m = 50, sopra = st ? SAFE.top : 40, sotto = st ? SAFE.bottom : m;
+  const titolo = String((s.kind === "gita" ? s.dest : s.title) || "").trim();
+  const t = testoBiglietto(s, C.txt, k, false);
+  const corso = s.corso ? `<div style="flex:none;background:${CAT.corso.c};color:#fff;border:6px solid #fff;border-radius:999px;padding:${8 * k}px ${24 * k}px;display:flex;align-items:center;gap:10px;font-size:${42 * k}px;font-weight:800;transform:rotate(-6deg);box-shadow:0 8px 20px rgba(0,0,0,.3)">${skier(46 * k)}Corso</div>` : "";
+  // Senza testo per la scheda (post di solo titolo) restano i telefoni, in fondo.
+  const scheda = t.html || s.contatti.length ? `<div data-biglietto style="flex:${t.html ? "1 1 0" : "0 0 auto"};min-height:0;margin-top:auto;background:#fff;border-radius:${30 * k}px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 36px rgba(0,0,0,.3)">
+        <div data-testo data-k="${k}" style="--t:${t.T}px;--b:${t.B}px;--p:${t.P}px;flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--b) * .5);padding:${t.html ? `${22 * k}px 40px` : "0"}">${t.html}</div>
+        ${telefoni(s.contatti, k)}</div>` : "";
+  return `<div class="cv" style="width:${W}px;height:${H}px;background:#0B2440">
+    ${photo(W, H, s.photo)}
+    <div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(6,24,44,.82) 0%,rgba(6,24,44,.6) ${st ? 30 : 38}%,rgba(6,24,44,.15) 75%)"></div>
+    ${fiocchi(W, Math.round(H * .45), .3, 5)}
+    <div class="abs" style="left:${m}px;right:${m}px;top:${sopra}px;bottom:${sotto}px;display:flex;flex-direction:column;gap:${14 * k}px">
+      <div style="flex:none;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
+        <div style="background:#fff;border-radius:18px;padding:8px 16px"><img class="logo" src="${SOCIAL.logo}" style="height:${72 * k}px"></div>${corso}</div>
+      ${titolo ? `<div data-titolofoto="${st ? 3 : 2}" style="flex:none;font-size:${corpoTitolo(titolo.length) * k}px;font-weight:800;letter-spacing:-.035em;line-height:.95;color:#fff;text-wrap:balance">${escS(titolo)}</div>` : ""}
+      <div style="flex:none;margin:${4 * k}px -${m + 30}px ${10 * k}px;background:${C.c};color:${C.ink};transform:rotate(-3deg);text-align:center;padding:${8 * k}px ${m + 40}px;font-size:${50 * k}px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.25)">${escS(s.date || C.label)}</div>
+      ${scheda}
+    </div>
+  </div>`;
+}
+
+/** Calendario Montagna (1080×1350): paesaggio di sera, righe bianche alte. */
+function calendarioMontagna(titolo, righe) {
+  const W = 1080, H = 1350, m = 50;
+  // Con più di sei gite le righe si abbassano un po', fino al 70%.
+  const f = righe.length > 6 ? Math.max(.7, 6 / righe.length) : 1;
+  const conCorso = righe.some((r) => r[3]);
+  const rows = righe.map(([kc, d, dest, corso]) => { const C = categoria(kc);
+    return `<div style="display:flex;align-items:center;gap:${24 * f}px;background:#fff;border-radius:22px;padding:${12 * f}px 20px ${12 * f}px 12px;box-shadow:0 6px 18px rgba(0,0,0,.2)">
+      <div style="width:${190 * f}px;flex:none;border-radius:16px;background:${C.c};color:${C.ink};text-align:center;padding:${6 * f}px 0 ${8 * f}px">
+        ${C.day ? `<div style="font-size:${38 * f}px;font-weight:800">${escS(C.day)}</div>` : ""}<div style="font-size:${62 * f}px;font-weight:800;line-height:.95">${escS(d)}</div></div>
+      <div style="flex:1;min-width:0;font-size:${58 * f}px;font-weight:800;letter-spacing:-.02em;line-height:1.05;color:#14202E">${escS(dest)}</div>
+      ${corso ? `<div style="width:${88 * f}px;height:${88 * f}px;flex:none;border-radius:50%;background:${CAT.corso.c};display:flex;align-items:center;justify-content:center">${skier(56 * f)}</div>` : ""}</div>`; }).join("");
+  return `<div class="cv" style="width:${W}px;height:${H}px;background:#0B2440">
+    ${photo(W, H, null)}
+    <div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(6,24,44,.88) 0%,rgba(6,24,44,.7) 55%,rgba(6,24,44,.45) 100%)"></div>
+    ${fiocchi(W, H, .3, 3)}
+    <div class="abs" style="left:${m}px;right:${m}px;top:44px;bottom:40px;display:flex;flex-direction:column;gap:22px">
+      <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:20px">
+        <div style="min-width:0"><div style="font-size:42px;font-weight:800;color:#FCCF02">Calendario gite</div>
+          <div data-titolofoto="2" style="font-size:110px;font-weight:800;letter-spacing:-.04em;line-height:.95;color:#fff;text-wrap:balance">${escS(titolo)}</div></div>
+        <div style="flex:none;background:#fff;border-radius:22px;padding:12px 18px"><img class="logo" src="${SOCIAL.logo}" style="height:110px"></div></div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:${18 * f}px">${rows}</div>
+      ${conCorso ? `<div style="flex:none;display:flex;align-items:center;gap:14px;font-size:38px;font-weight:700;color:#fff"><span style="width:60px;height:60px;border-radius:50%;background:${CAT.corso.c};display:inline-flex;align-items:center;justify-content:center">${skier(40)}</span>con il corso</div>` : ""}
+    </div>
+  </div>`;
+}
+
+/** Misure del calendario del mese nella grafica scelta. */
+const misureCalendario = (stile = STILE) => (stile === "montagna" ? { w: 1080, h: 1350 } : { w: 1080, h: 1080 });
+
+/** Calendario del mese: righe [categoria, "DD/MM", meta, corso]. Ritocco 1080×1080, montagna 1080×1350 (misureCalendario()). */
+function disegnaCalendario(titolo, righe, stile = STILE) {
+  if (stile === "montagna") return calendarioMontagna(titolo, righe);
   const bg = "#084C8D";
-  return `<div class="cv" style="width:1080px;height:1080px;background:${bg}">
-    <div class="abs" style="left:60px;width:960px;top:60px;height:960px;background:#fff;border-radius:40px;overflow:hidden">
+  return `<div class="cv" style="width:1080px;height:1080px;background:${bg}">${fiocchi(1080, 1080)}
+    <div class="abs" style="left:60px;width:960px;top:60px;height:960px;background:#fff;border-radius:40px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.25)">
       <div style="padding:44px 56px">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="pill" style="background:#FCCF02;color:#06396A;font-size:28px;padding:10px 26px">Calendario gite</span>
+          <span class="pill" style="background:#FCCF02;color:#06396A;font-size:34px;padding:10px 26px">Calendario gite</span>
           <img class="logo" src="${SOCIAL.logo}" style="height:110px"></div>
         <div class="t-dest" data-fit style="font-size:88px;color:#084C8D;margin:18px 0 10px">${escS(titolo)}</div>${calRows(righe)}</div></div>
   </div>`;
@@ -582,5 +677,6 @@ function testoPost(ev, sp, stagione) {
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
-                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL };
+                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
+                     impostaStile, stileCorrente: () => STILE, disegnaPost, disegnaCalendario, misureCalendario };
 }

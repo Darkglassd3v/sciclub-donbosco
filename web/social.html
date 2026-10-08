@@ -156,6 +156,14 @@
     .riassunto { display: flex; flex-direction: column; gap: 12px; }
     .riassunto h2 { color: var(--colore); margin-bottom: 0; }
     .riassunto .occhiello { margin-bottom: 0; }
+    .stile-pagina { grid-column: 1 / -1; }
+    .scelte-stile { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 16px; border: 0; padding: 0; margin: 0; }
+    .scelte-stile .esempio { display: block; margin-top: 12px; }
+    .scelte-stile .esempio .anteprima figcaption { display: none; }
+    .scelte-stile .spunta { align-items: flex-start; padding: 10px 14px; border: 2px solid var(--filo); border-radius: 12px; cursor: pointer; }
+    .scelte-stile .spunta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
+    .scelte-stile .spunta input { margin-top: .2em; }
+    .scelte-stile small { font-weight: 500; color: var(--testo-soft); }
     .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
     .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
     .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -401,6 +409,20 @@
   <div data-sezione="impostazioni" hidden>
     <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
     <div class="tre-colonne" id="riassunti">
+      <section class="riquadro riassunto stile-pagina" style="--colore:#084C8D" aria-labelledby="rStile">
+        <h2 id="rStile">Grafica dei post</h2>
+        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Qui sotto un post d'esempio con l'una e con l'altra.</p>
+        <fieldset class="scelte-stile">
+          <legend class="is-sr-only">Grafica dei post</legend>
+          <label class="spunta"><input type="radio" name="stile" value="ritocco" id="stileRitocco">
+            <span><b>Ritocco</b><br><small>Il biglietto di sempre, con la neve sul fondo</small>
+            <span class="esempio" id="esempioRitocco"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="montagna" id="stileMontagna">
+            <span><b>Montagna</b><br><small>Foto grande, informazioni in una scheda bianca</small>
+            <span class="esempio" id="esempioMontagna"></span></span></label>
+        </fieldset>
+        <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
+      </section>
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
         <p class="occhiello">Marchio e colori per le campagne.</p>
@@ -522,7 +544,8 @@
     collegaRubrica();
     window.addEventListener("hashchange", mostraSezione);
     mostraSezione();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
+    collegaStile();
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti(), caricaStile()]);
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
     disegnaElenco();
@@ -589,6 +612,7 @@
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
     el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
       || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
+    disegnaEsempiStile();
   }
 
   // ---------------------------------------------------------------------
@@ -614,6 +638,74 @@
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     apriSponsor(el("sScegli").value);
+  }
+
+  // -------------------------------------------------------------------------
+  // Grafica dei post (social_settings, chiave "style"): ritocco o montagna.
+  // Una sola per tutta la pagina, scelta in Impostazioni guardando un post
+  // d'esempio: un interruttore nel singolo post faceva rischiare di
+  // pubblicare un post con la grafica sbagliata.
+  // -------------------------------------------------------------------------
+  let stileSalvato = "ritocco";
+  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna" };
+
+  async function caricaStile() {
+    const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
+    if (error) showToast("Grafica dei post non caricata, uso il Ritocco: " + messaggioErrore(error), "is-danger");
+    mettiStile((data && data.value) || "ritocco");
+  }
+
+  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. */
+  function mettiStile(stile) {
+    impostaStile(stile);
+    stileSalvato = STILE;
+    el(stileSalvato === "montagna" ? "stileMontagna" : "stileRitocco").checked = true;
+    aggiornaStile();
+  }
+
+  const stileScelto = () => (el("stileMontagna").checked ? "montagna" : "ritocco");
+
+  function aggiornaStile() {
+    const cambiato = stileScelto() !== stileSalvato;
+    el("btnSalvaStile").textContent = cambiato ? "Salva modifiche" : "Salva la grafica";
+    el("btnSalvaStile").classList.toggle("salva-modifiche", cambiato);
+  }
+
+  function collegaStile() {
+    el("stileRitocco").addEventListener("change", aggiornaStile);
+    el("stileMontagna").addEventListener("change", aggiornaStile);
+    el("btnSalvaStile").addEventListener("click", salvaStile);
+  }
+
+  async function salvaStile() {
+    const stile = stileScelto();
+    setLoading(true);
+    try {
+      const { error } = await sb.from("social_settings").upsert({ key: "style", value: stile });
+      if (error) throw error;
+      mettiStile(stile);
+      if (aperto) ridisegna();
+      disegnaCalendarioMese();
+      showToast(`Grafica salvata: ${NOMI_STILE[stile]}.`);
+    } catch (e) {
+      showToast("Grafica non salvata: " + messaggioErrore(e), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Lo stesso post d'esempio (una gita di sabato) in tutte e due le grafiche, in Impostazioni. */
+  function disegnaEsempiStile() {
+    const sabato = new Date();
+    sabato.setDate(sabato.getDate() + ((6 - sabato.getDay() + 7) % 7 || 7));
+    const iso = `${sabato.getFullYear()}-${String(sabato.getMonth() + 1).padStart(2, "0")}-${String(sabato.getDate()).padStart(2, "0")}`;
+    const ev = { kind: "gita", title: "Sestriere", event_date: iso, course: true, show_price: true,
+      stops: [["6:00", "Asti, piazza Campo del Palio"]], prices: [["Soci", "45 €"], ["Ragazzi", "35 €"]],
+      deadline: iso, contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
+    for (const [st, id] of [["ritocco", "esempioRitocco"], ["montagna", "esempioMontagna"]]) {
+      el(id).innerHTML = "";
+      anteprima(el(id), { html: disegnaPost(modelloPost(ev, "post"), st), w: 1080, h: 1080, nome: "Esempio" }, 260, { pulsante: false });
+    }
   }
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
@@ -1395,7 +1487,8 @@
     const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w: 1080, h: 1080, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    const { w, h } = misureCalendario();
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
   }
 
   function disegnaCopertinaFb() {

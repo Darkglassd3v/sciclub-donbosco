@@ -2801,6 +2801,21 @@ on conflict (weekday) do nothing;
 
 comment on table public.trip_days is 'Giorni della settimana delle gite e il loro colore nei post social (colore vuoto = non è un giorno di gita).';
 
+-- Impostazioni della pagina Social, una riga per voce. Per ora solo la
+-- grafica dei post (style): 'ritocco' è il biglietto di sempre con la neve,
+-- 'montagna' la foto a tutta immagine con le informazioni in una scheda
+-- bianca. Vale per tutti quelli che pubblicano, da qualunque computer.
+create table if not exists public.social_settings (
+  key   text primary key,
+  value text not null
+);
+alter table public.social_settings drop constraint if exists social_settings_style_valid;
+alter table public.social_settings add constraint social_settings_style_valid
+  check (key <> 'style' or value in ('ritocco', 'montagna'));
+insert into public.social_settings (key, value) values ('style', 'ritocco')
+on conflict (key) do nothing;
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco o montagna).';
+
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;
 -- ogni post sceglie i suoi (social_events.contacts), perché una gita e un
@@ -2844,11 +2859,13 @@ create trigger social_contacts_remove_from_posts
 alter table public.sponsors      enable row level security;
 alter table public.social_events enable row level security;
 alter table public.trip_days     enable row level security;
+alter table public.social_settings enable row level security;
 alter table public.social_contacts enable row level security;
 
 drop policy if exists sponsors_all      on public.sponsors;
 drop policy if exists social_events_all on public.social_events;
 drop policy if exists trip_days_all     on public.trip_days;
+drop policy if exists social_settings_all on public.social_settings;
 drop policy if exists social_contacts_all on public.social_contacts;
 
 -- Tutto a chi ha il permesso social (social e superadmin), niente agli altri.
@@ -2857,6 +2874,8 @@ create policy sponsors_all on public.sponsors
 create policy social_events_all on public.social_events
   for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
 create policy trip_days_all on public.trip_days
+  for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
+create policy social_settings_all on public.social_settings
   for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));
 create policy social_contacts_all on public.social_contacts
   for all to authenticated using ((select public.can('social'))) with check ((select public.can('social')));

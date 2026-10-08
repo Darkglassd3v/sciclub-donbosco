@@ -208,6 +208,8 @@ begin
     ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
     ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
     ('scrivi', 'update public.trip_days set color = ''#147A45'' where weekday = 5', 'SxxxxSx'),
+    ('leggi',  'select 1 from public.social_settings',                           'SxxxxSx'),
+    ('scrivi', 'update public.social_settings set value = ''montagna'' where key = ''style''', 'SxxxxSx'),
     ('leggi',  'select 1 from public.social_contacts',                           'SxxxxSx'),
     ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
