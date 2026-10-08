@@ -5,23 +5,25 @@
 
 ## 2.7-SNAPSHOT (aperta l'08/10/2026 dalla 2.6, rilasciata lo stesso giorno)
 
-1. [ ] **Social: portare nel sito la riprogettazione delle grafiche** (richiesta dell'08/10,
-       fermata prima di iniziare per il limite d'uso: niente è cambiato nel codice).
-       - Pagina di confronto: https://claude.ai/artifact/NpdaNcVzgmAWZPL24JzsYJ (leggerla con
-         Artifact read; immagini prima/dopo per post e story, 10 casi).
-       - Proposta in `social/proposta-grafiche/` (non committata, arriva da un'altra sessione):
-         `nuovo.js` con `disegnaPost2()` e `fit2()`, che sostituiscono `disegnaPost()` / `content()` /
-         `fit()` di `web/social-templates.js`; `casi.js` i casi di prova, `scatta.sh` + `render.html`
-         gli screenshot, `README.md`.
-       - Cosa fa: il biglietto è una colonna (foto, testo, telefoni dentro); tutto il testo va a
-         capo e si riduce solo a biglietto pieno (prima il titolo fino a 2,2 volte il testo, poi
-         tutto fino a 32 px nel post e 36 nella story); post fatti solo di titolo o solo di sottotesto.
-       - Errori del disegno di oggi che la proposta evita: nelle story il testo finisce sopra i
-         telefoni; un titolo lungo esce dal biglietto.
-       - **Da decidere con l'utente prima di portarlo nel sito**: permettere il post senza titolo
-         (`mancanti()`); fare del sottotesto un'area di testo nella pagina Social.
-       - Non committare senza conferma. Test: `node web/test-social.js`, screenshot a 1080 px.
-       - Le conferme nuove vanno in finestra sopra la pagina (`chiedi()`), mai in linea.
+1. [~] **Social: grafiche nuove portate nel sito (08/10 notte), DA CONTROLLARE E COMMITTARE**:
+       il codice è nel working tree del branch `2.7-SNAPSHOT`, non committato (la richiesta diceva
+       "non committare senza conferma"). File: `web/social-templates.js`, `web/social.html`,
+       `web/test-social.js`.
+       - `disegnaPost()` è la proposta (`social/proposta-grafiche/nuovo.js`): biglietto a colonna,
+         testo che va a capo e si riduce solo a biglietto pieno, telefoni dentro il biglietto,
+         pastiglia al posto del riquadro "Servizi". Tolti `content()`, `facts()`, `phones()`, `tag()`;
+         `fit()` fa il lavoro di `fit2()` (più il titolo del calendario).
+       - Scelte dell'utente (08/10): il Sottotitolo diventa **Sottotesto**, area di testo di 4 righe
+         con gli a capo; un post (non gita) può essere **solo sottotesto**: `mancanti()` chiede "il
+         titolo o il sottotesto", salvataggio, elenco, nome dei file e calendario usano `nomePost()`.
+       - Provato: `node web/test-social.js` (nuovi casi per post senza titolo e `nomePost`), sintassi
+         dello script di `social.html`; i 10 casi di prova in post e story disegnati col codice del
+         sito sono **identici pixel per pixel** alle immagini "dopo" della proposta (`png/dopo-*`).
+       - Non provato: la pagina Social nel browser (editor, anteprime, scarica PNG), foto vere,
+         campagne sponsor (non toccate: `formatiCampagna()` non usa `disegnaPost()`).
+       - Per chiudere: provare la pagina, poi commit e push (deploy dal branch 2.7-SNAPSHOT).
+         `social/proposta-grafiche/` (non committata): il prototipo, `render.html` ora disegna con
+         il codice del sito anche in `v=prima`; si può tenere come strumento o cancellare.
 
 ## 2.6 (rilasciata l'08/10/2026: branch e tag `2.6`, schema in produzione)
 
