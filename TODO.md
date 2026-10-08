@@ -5,25 +5,22 @@
 
 ## 2.7-SNAPSHOT (aperta l'08/10/2026 dalla 2.6, rilasciata lo stesso giorno)
 
-1. [~] **Social: grafiche nuove portate nel sito (08/10 notte), DA CONTROLLARE E COMMITTARE**:
-       il codice è nel working tree del branch `2.7-SNAPSHOT`, non committato (la richiesta diceva
-       "non committare senza conferma"). File: `web/social-templates.js`, `web/social.html`,
-       `web/test-social.js`.
-       - `disegnaPost()` è la proposta (`social/proposta-grafiche/nuovo.js`): biglietto a colonna,
-         testo che va a capo e si riduce solo a biglietto pieno, telefoni dentro il biglietto,
-         pastiglia al posto del riquadro "Servizi". Tolti `content()`, `facts()`, `phones()`, `tag()`;
-         `fit()` fa il lavoro di `fit2()` (più il titolo del calendario).
-       - Scelte dell'utente (08/10): il Sottotitolo diventa **Sottotesto**, area di testo di 4 righe
-         con gli a capo; un post (non gita) può essere **solo sottotesto**: `mancanti()` chiede "il
-         titolo o il sottotesto", salvataggio, elenco, nome dei file e calendario usano `nomePost()`.
-       - Provato: `node web/test-social.js` (nuovi casi per post senza titolo e `nomePost`), sintassi
-         dello script di `social.html`; i 10 casi di prova in post e story disegnati col codice del
-         sito sono **identici pixel per pixel** alle immagini "dopo" della proposta (`png/dopo-*`).
-       - Non provato: la pagina Social nel browser (editor, anteprime, scarica PNG), foto vere,
-         campagne sponsor (non toccate: `formatiCampagna()` non usa `disegnaPost()`).
-       - Per chiudere: provare la pagina, poi commit e push (deploy dal branch 2.7-SNAPSHOT).
-         `social/proposta-grafiche/` (non committata): il prototipo, `render.html` ora disegna con
-         il codice del sito anche in `v=prima`; si può tenere come strumento o cancellare.
+1. [x] **Social: grafiche nuove** (provate e pubblicate il 08/10, deploy dal branch `2.7-SNAPSHOT`).
+       File: `web/social-templates.js`, `web/social.html`, `web/test-social.js`.
+       - `disegnaPost()`: biglietto a colonna (foto, testo, telefoni dentro), testo che va a capo e
+         si riduce solo a biglietto pieno, pastiglia al posto del riquadro "Servizi". Tolti
+         `content()`, `facts()`, `phones()`, `tag()`; `fit()` adatta anche il titolo del calendario.
+       - Il Sottotitolo diventa **Sottotesto**, area di testo di 4 righe con gli a capo; un post
+         (non gita) può essere **solo sottotesto**: `mancanti()` chiede "il titolo o il sottotesto",
+         salvataggio, elenco, nome dei file e calendario usano `nomePost()`.
+       - Provato: `node web/test-social.js`; la pagina nel browser con dati finti (editor, post
+         senza titolo, sottotesto su più righe, salva, anteprime post e story, Scarica il post e la
+         story a 1080 px, post vuoto rifiutato, gita, calendario e copertina).
+       - Non provato: foto vere, campagne sponsor (non toccate: `formatiCampagna()` non usa
+         `disegnaPost()`). Il prototipo `social/proposta-grafiche/` è stato tolto; il confronto
+         prima/dopo resta in https://claude.ai/artifact/NpdaNcVzgmAWZPL24JzsYJ.
+       - Da valutare: senza titolo ma con delle informazioni, il sottotesto resta a 46 px (la
+         misura grande, 72 px, scatta solo se c'è solo il sottotesto).
 
 ## 2.6 (rilasciata l'08/10/2026: branch e tag `2.6`, schema in produzione)
 
@@ -61,7 +58,7 @@
        riuscita, ripristino SQL, direttivo invariato. Script in scratchpad, non nel repository.
 
 ### Ancora aperto
-- [ ] Social: riprogettare le grafiche (sotto), proposta in `social/proposta-grafiche/`
+- [x] Social: grafiche riprogettate e pubblicate (08/10, vedi 2.7-SNAPSHOT in cima)
 - [ ] leggere `supabase/migration/cf-2026-09-30/warning-cf.md` (13 non trovati, 9 date diverse,
       73 codici fiscali che non passano il controllo)
 - [ ] tag locale `2.1` diverso da quello su GitHub: capire quale è giusto prima di toccarlo
