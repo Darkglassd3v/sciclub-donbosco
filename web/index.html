@@ -66,18 +66,46 @@
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
 
-    /* Fascia di chi c'è nel modulo: resta sotto la barra mentre si scorre,
-     * con l'indice delle sezioni. Gialla per un socio nuovo, blu per uno che
-     * esiste già: prima cambiava solo la scritta del pulsante in fondo. */
-    .fascia-socio { position: sticky; top: var(--barra-h); z-index: 50; display: flex; flex-wrap: wrap; align-items: center;
-                    gap: 6px 20px; padding: 10px 16px; margin-bottom: 20px; border: 2px solid var(--giallo);
-                    border-radius: var(--raggio); background: var(--giallo-light); }
-    .fascia-socio.modifica { border-color: var(--blu); background: var(--blu-light); }
-    .fascia-stato { flex: 1 1 18rem; font-size: 1.2rem; line-height: 1.3; }
-    .indice-sezioni { display: flex; flex-wrap: wrap; gap: 0 16px; }
-    .indice-sezioni a { display: inline-flex; align-items: center; min-height: var(--aria); font-weight: 600; text-decoration: underline; }
-    #azioniSocio { flex: none; margin-bottom: 0; }
-    #azioniSocio .button { margin-bottom: 0; }
+    /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
+     * ed Elimina. Prima era una fascia gialla o blu incollata sotto la barra,
+     * con l'indice delle sezioni e "Nuovo socio": troppe cose, e il modulo si
+     * svuota già da solo dopo il salvataggio. Chi si salva lo dice comunque
+     * il pulsante giallo in fondo, che resta sempre in vista. */
+    .testata-scheda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; padding: 20px 28px; }
+    .testata-scheda .chi { flex: 1 1 20rem; min-width: 0; }
+    .testata-scheda .tipo { font-size: .9375rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-soft); }
+    .testata-scheda .nome { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; overflow-wrap: anywhere; }
+    .testata-scheda .nome .era { font-size: 1.1rem; font-weight: 500; color: var(--testo-soft); }
+    .testata-scheda .dati { color: var(--testo-soft); margin-top: 2px; }
+    .testata-scheda .chiudi { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--blu);
+                              text-decoration: underline; cursor: pointer; }
+    #azioniSocio { display: flex; flex-wrap: wrap; gap: 12px; }
+    #azioniSocio .button { min-height: 52px; font-size: 1.1rem; font-weight: 700; gap: 10px; border: 0; padding: 0 22px; }
+    #azioniSocio .button svg { flex: none; }
+    .btn-stampa { background: var(--blu); color: #fff; }
+    .btn-stampa:hover, .btn-stampa:focus { background: var(--blu-dark); color: #fff; }
+    .btn-elimina { background: var(--errore); color: #fff; }
+    .btn-elimina:hover, .btn-elimina:focus { background: #8E1D17; color: #fff; }
+
+    /* Sezioni del modulo: ognuna col suo colore, il nome in una striscia piena
+     * in alto che resta sotto la barra mentre si scorre (si sa sempre dove si
+     * è, senza indice). Gli stessi colori delle categorie dei post social; il
+     * bianco su ognuno supera 4.5:1. overflow: clip e non hidden, che
+     * spegnerebbe lo sticky della striscia. */
+    .sezione { --colore: var(--blu); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
+               border: 2px solid var(--colore); box-shadow: none; }
+    .sezione.tessera { --colore: #147A45; --tinta: #EAF5EE; }
+    .sezione.gite { --colore: #5B2A86; --tinta: #F3EEF8; }
+    .sezione.pagamento { --colore: #B4400B; --tinta: #FCF0E8; }
+    .sezione > .striscia { position: sticky; top: var(--barra-h); z-index: 3; display: flex; flex-wrap: wrap; align-items: center;
+                           gap: 4px 14px; margin: 0; padding: 14px 28px; background: var(--colore); color: #fff;
+                           font-size: 1.35rem; font-weight: 800; letter-spacing: .08em; }
+    .sezione > .striscia svg { flex: none; }
+    .sezione > .striscia .cosa { font-size: 1rem; font-weight: 500; letter-spacing: 0; opacity: .92; }
+    .sezione > .striscia .cosa::before { content: "·"; margin-right: 12px; opacity: .7; }
+    .sezione > .corpo { padding: 24px 28px 28px; }
+    /* Sul colore chiaro i campi e le scelte restano bianchi. */
+    .partenze { padding: .5rem; background: #fff; border: 1px solid var(--filo); border-radius: var(--raggio); }
 
     /* Finestre dell'eliminazione: chi si elimina scritto grande, una riga per dato. */
     .chi-elimina { list-style: none; margin: 0 0 16px; padding: 14px 16px; border: 2px solid var(--errore);
@@ -85,7 +113,7 @@
     .chi-elimina li + li { margin-top: 4px; }
     .chi-elimina .nome { font-size: 1.35rem; font-weight: 700; }
     .elimina-avviso { font-size: 1.2rem; }
-    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 7rem); }
+    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
     .container-main { padding-bottom: 200px; }
 
@@ -97,8 +125,13 @@
     .avviso-doppioni li span { flex: 1 1 20rem; }
 
     @media screen and (max-width: 768px) {
-      .indice-sezioni { display: none; }
       .container-main { padding-bottom: 220px; }
+      .testata-scheda, .sezione > .striscia { padding-left: 20px; padding-right: 20px; }
+      .sezione > .corpo { padding: 20px; }
+      /* La descrizione va su una riga sua: il "·" in testa non serve. */
+      .sezione > .striscia .cosa { flex-basis: 100%; }
+      .sezione > .striscia .cosa::before { content: none; }
+      .testata-scheda .nome { font-size: 1.5rem; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
        * selettore lungo il pulsante restava stretto, su tre righe. */
@@ -131,7 +164,7 @@
      * incollata coprirebbe metà di quel che si vede. Scende in fondo al
      * modulo, dove si arriva comunque per salvare. */
     @media screen and (max-height: 560px) {
-      .total-box, .fascia-socio { position: static; }
+      .total-box, .sezione > .striscia { position: static; }
       .container-main { padding-bottom: 28px; }
     }
   </style>
@@ -163,8 +196,7 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4">Gestione Soci</h1>
-  <p class="occhiello">Iscrivi un socio nuovo, oppure cerca chi c'è già e modificalo.</p>
+  <h1 class="is-sr-only">Gestione Soci</h1>
 
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
@@ -175,26 +207,31 @@
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
   </div>
 
-  <div class="fascia-socio" id="fasciaSocio">
-    <p class="fascia-stato" id="statoSocio" role="status"></p>
-    <nav class="indice-sezioni" aria-label="Sezioni del modulo">
-      <a href="#sez-anagrafica">Anagrafica</a>
-      <a href="#sez-iscrizione">Iscrizione</a>
-      <a href="#sez-amministrazione">Amministrazione</a>
-      <a href="#sez-pagamento">Pagamento</a>
-    </nav>
-    <div id="azioniSocio" class="buttons">
-      <button type="button" class="button is-link is-outlined" onclick="nuovoSocio()">Nuovo socio</button>
-      <button type="button" class="button is-link is-outlined" onclick="stampaScheda()">Stampa scheda</button>
-      <button type="button" class="button is-danger is-outlined" id="btnElimina" onclick="chiediElimina()" hidden>Elimina socio</button>
+  <!-- Chi c'è nel modulo (aggiornaFascia()). Niente "Nuovo socio": dopo il
+       salvataggio il modulo si svuota da solo, e "Chiudi scheda" lascia un
+       socio aperto senza salvarlo. -->
+  <div class="riquadro testata-scheda">
+    <div class="chi">
+      <p class="tipo" id="tipoScheda">Socio nuovo</p>
+      <p class="nome" id="nomeScheda" role="status">Compila i campi e premi Salva</p>
+      <p class="dati"><span id="datiScheda">Se la persona c'è già, cercala qui sopra: si apre la sua scheda.</span>
+        <button type="button" class="chiudi" id="btnChiudiScheda" onclick="nuovoSocio()" hidden>Chiudi scheda</button></p>
+    </div>
+    <div id="azioniSocio">
+      <button type="button" class="button btn-stampa" onclick="stampaScheda()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
+      <button type="button" class="button btn-elimina" id="btnElimina" onclick="chiediElimina()" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6l1 2h5v2H3V4h5l1-2Zm-4 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z"/></svg>Elimina</button>
     </div>
   </div>
 
   <form id="memberForm">
     <input type="hidden" id="f_id">
 
-    <section class="riquadro" id="sez-anagrafica">
-    <h2>Anagrafica</h2>
+    <!-- Quattro sezioni come le pensa chi iscrive: chi è, la tessera, gite e
+         corsi, i soldi. Prima c'era anche "Amministrazione", con dentro il
+         numero tessera e l'acconto: ora stanno con la tessera e col pagamento. -->
+    <section class="riquadro sezione anagrafica" id="sez-anagrafica">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>ANAGRAFICA <span class="cosa">Chi è: nome, nascita, residenza, contatti</span></h2>
+    <div class="corpo">
     <p class="occhiello">
       I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
       automaticamente in base alle voci selezionate.
@@ -218,13 +255,26 @@
     </div>
 
     <div id="avvisoDoppioni" class="avviso-doppioni" role="status" hidden></div>
+    </div>
     </section>
 
-    <section class="riquadro" id="sez-iscrizione">
-    <h2>Iscrizione</h2>
-    <div class="mt-4">
+    <section class="riquadro sezione tessera" id="sez-tessera">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>TESSERA <span class="cosa">Tipo di tessera, famiglia e numero</span></h2>
+    <div class="corpo">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
+    <div class="columns mt-1">
+      <div class="column is-4">
+        <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
+        <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
+      </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="riquadro sezione gite" id="sez-gite">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>GITE E CORSI <span class="cosa">Abbonamenti, presciistica, corso e partenze</span></h2>
+    <div class="corpo">
       <!-- Gli abbonamenti non sono una scelta sola come le altre voci: chi
            finisce le cinque gite ne compra un altro, anche di un altro giorno.
            Sopra quelli che ha, con le gite fatte; sotto il listino, con un
@@ -245,28 +295,24 @@
           <label class="scelta" data-giorno="DOMENICA"><input type="radio" name="f_giorno_corso" value="DOMENICA"><span>Corso di domenica</span></label>
         </div>
       </fieldset>
-    </div>
 
     <div class="columns mt-1">
       <div class="column is-6">
         <label class="label">Partenza del sabato</label>
-        <div id="check_sabato" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
+        <div id="check_sabato" class="control partenze"></div>
       </div>
       <div class="column is-6">
         <label class="label">Partenza della domenica</label>
-        <div id="check_domenica" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
+        <div id="check_domenica" class="control partenze"></div>
       </div>
     </div>
-
+    </div>
     </section>
 
-    <section class="riquadro" id="sez-amministrazione">
-    <h2>Amministrazione</h2>
+    <section class="riquadro sezione pagamento" id="sez-pagamento">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>PAGAMENTO <span class="cosa">Acconto, totale, chi paga</span></h2>
+    <div class="corpo">
     <div class="columns mt-1">
-      <div class="column is-4">
-        <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
-        <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
-      </div>
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
       <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
            listino a ogni salvataggio, e lo sconto si perdeva. -->
@@ -277,10 +323,6 @@
       </div>
     </div>
 
-    </section>
-
-    <section class="riquadro" id="sez-pagamento">
-    <h2>Pagamento</h2>
     <!-- Una scelta al posto del campo spento con "Aggiungi pagante" di lato:
          il familiare si cerca solo dopo aver detto che paga lui. -->
     <fieldset class="scelte">
@@ -317,6 +359,7 @@
 
     <!-- Solo superadmin, solo su un socio iscritto: rimedio a un tesseramento
          fatto per sbaglio. Vedi remove_from_season() in schema.sql. -->
+    </div>
     </section>
 
     <section id="zonaTogli" class="riquadro togli-stagione" hidden>
@@ -395,12 +438,12 @@
   // propone un altro da sé. Uno scritto a mano invece non si tocca.
   let numeroProposto = null;
 
-  // Il socio caricato nel modulo (null = socio nuovo): lo dice la fascia in
+  // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
   // cima e il pulsante Salva.
   let socioAperto = null;
 
   // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
-  // firma(): se è cambiato, "Nuovo socio", un altro socio o uscire dalla
+  // firma(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
   // pagina chiedono prima di buttare via quello che si è scritto.
   let salvato = "";
 
@@ -450,7 +493,7 @@
         el(id).addEventListener("change", controllaCF);
         el(id).addEventListener("change", controllaDoppioni);
       });
-      // Il nome sul pulsante Salva e nella fascia segue quello che si scrive.
+      // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
       el("f_cognome").addEventListener("input", aggiornaFascia);
       el("f_nome").addEventListener("input", aggiornaFascia);
       document.querySelectorAll("input[name=chiPaga]").forEach((r) => r.addEventListener("change", () => {
@@ -787,21 +830,24 @@
     `${el("f_cognome").value} ${el("f_nome").value}`.trim().replace(/\s+/g, " ").toUpperCase();
 
   /**
-   * Fascia in cima e pulsante Salva: socio nuovo o quale socio si modifica.
-   * Il nome si legge dai campi e non da socioAperto: correggendo cognome o
-   * nome il pulsante diceva ancora quello vecchio, e non si capiva chi si
-   * stava per salvare. Il nome di prima resta scritto fra parentesi.
+   * Testata della scheda e pulsante Salva: socio nuovo o quale socio è
+   * aperto. Il nome si legge dai campi e non da socioAperto: correggendo
+   * cognome o nome il pulsante diceva ancora quello vecchio, e non si capiva
+   * chi si stava per salvare. Il nome di prima resta scritto fra parentesi.
    */
   function aggiornaFascia() {
     const s = socioAperto;
     const nome = nomeNelModulo();
     const prima = s ? `${s.last_name} ${s.first_name}` : "";
-    el("fasciaSocio").classList.toggle("modifica", Boolean(s));
-    el("statoSocio").innerHTML = s
-      ? `Stai modificando: <strong>${esc(nome || prima)}</strong>`
-        + (nome && nome !== prima ? ` (era ${esc(prima)})` : "")
-        + (s.card_number ? ` · tessera ${esc(s.card_number)}` : "")
-      : "<strong>Nuovo socio</strong>: salvando si crea una scheda nuova";
+    el("tipoScheda").textContent = s ? "Scheda del socio" : "Socio nuovo";
+    el("nomeScheda").innerHTML = s
+      ? esc(nome || prima) + (nome && nome !== prima ? ` <span class="era">(era ${esc(prima)})</span>` : "")
+      : nome ? esc(nome) : "Compila i campi e premi Salva";
+    el("datiScheda").textContent = s
+      ? [s.card_number ? `Tessera ${s.card_number}` : "Senza numero tessera",
+         s.enrolled_at ? `iscritto il ${dataIt(s.enrolled_at)}` : ""].filter(Boolean).join(" · ") + " ·"
+      : "Se la persona c'è già, cercala qui sopra: si apre la sua scheda.";
+    el("btnChiudiScheda").hidden = !s;
     el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${prima}` : "Salva il socio nuovo";
     // Si elimina solo una scheda salvata, aperta.
     el("btnElimina").hidden = !s;
@@ -821,7 +867,7 @@
 
   const modificato = () => firma() !== salvato;
 
-  /** Domanda sulla fascia prima di lasciare un modulo con modifiche non salvate. */
+  /** Domanda, in una finestra, prima di lasciare un modulo con modifiche non salvate. */
   function lasciaModifiche(poi) {
     if (!modificato()) { poi(); return; }
     const domanda = socioAperto
