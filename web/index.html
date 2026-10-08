@@ -91,11 +91,7 @@
     /* Sul colore chiaro i campi e le scelte restano bianchi. */
     .partenze { padding: .5rem; background: #fff; border: 1px solid var(--filo); border-radius: var(--raggio); }
 
-    /* Finestre dell'eliminazione: chi si elimina scritto grande, una riga per dato. */
-    .chi-elimina { list-style: none; margin: 0 0 16px; padding: 14px 16px; border: 2px solid var(--errore);
-                   border-radius: var(--raggio); background: var(--errore-bg); font-size: 1.1rem; }
-    .chi-elimina li + li { margin-top: 4px; }
-    .chi-elimina .nome { font-size: 1.35rem; font-weight: 700; }
+    /* Finestre dell'eliminazione: chi si elimina in una tabellina (tabellaDati() in shared.js). */
     .elimina-avviso { font-size: 1.2rem; }
     #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
@@ -338,7 +334,7 @@
      scelto è Annulla, così un Invio distratto non elimina niente. -->
 <dialog id="dlgElimina" class="finestra" aria-labelledby="dlgEliminaTitolo">
   <h2 id="dlgEliminaTitolo">Eliminare questo socio?</h2>
-  <ul class="chi-elimina" id="dlgEliminaChi"></ul>
+  <div id="dlgEliminaChi"></div>
   <p>
     La scheda sparisce dall'archivio insieme ai suoi abbonamenti. Serve per un
     doppione o per una persona inserita per sbaglio.
@@ -355,6 +351,7 @@
     Stai per eliminare <strong id="dlgElimina2Nome"></strong> <strong>per sempre</strong>.
     Dalla pagina non si può più rimettere.
   </p>
+  <div id="dlgElimina2Chi"></div>
   <div class="buttons mt-4">
     <button type="button" class="button is-medium" id="btnEliminaNo2">No, tienilo</button>
     <button type="button" class="button is-danger is-medium" id="btnEliminaSi"></button>
@@ -1220,24 +1217,39 @@
       }
     }
 
-    const domanda = domandaSalva();
-    chiedi(el("zonaSalva"), domanda, "Sì, salva", () => {
+    const dati = datiSalva();
+    chiedi(el("zonaSalva"), socioAperto ? "Salvare le modifiche a questo socio?" : "Salvare questo socio nuovo?", "Sì, salva", () => {
       // Per sicurezza: se fra la domanda e il "Sì" sono cambiati nome,
-      // codice fiscale o data, si ricomincia, così la risposta vale per
-      // quello che si salva davvero.
-      if (domandaSalva() !== domanda) { salva(); return; }
+      // codice fiscale, luogo o data di nascita, si ricomincia, così la
+      // risposta vale per quello che si salva davvero.
+      if (JSON.stringify(datiSalva()) !== JSON.stringify(dati)) { salva(); return; }
       scrivi();
-    }, { pericolo: false });
+    }, { pericolo: false, dettagli: dati });
   }
 
-  /** "Salvare ROSSI MARIO? Codice fiscale …, nascita …": i mancanti per esteso, così si notano. */
-  function domandaSalva() {
-    const cf = el("f_codice_fiscale").value.trim().toUpperCase();
-    const nascita = el("f_data_nascita").value;
-    return `Salvare ${nomeNelModulo()}? `
-      + (cf ? `Codice fiscale ${cf}` : "Senza codice fiscale")
-      + (nascita ? `, nascita ${dataIt(nascita)}.` : ", senza data di nascita.");
+  /** Luogo di nascita come si legge: "ASTI (AT)". Senza la città è "non scritto", anche con la provincia. */
+  const luogoNascita = (luogo, provincia) => {
+    const citta = String(luogo || "").trim().toUpperCase(), sigla = String(provincia || "").trim().toUpperCase();
+    return citta ? (sigla ? `${citta} (${sigla})` : citta) : "";
+  };
+
+  /** I dati della domanda prima di salvare, dal modulo: chi è, uno per riga. */
+  function datiSalva() {
+    return [
+      ["Nome e cognome", nomeNelModulo()],
+      ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
+      ["Luogo di nascita", luogoNascita(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
+      ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
+    ];
   }
+
+  /** Gli stessi dati della scheda salvata (per l'eliminazione: si elimina quella, non il modulo). */
+  const datiPersona = (s) => [
+    ["Nome e cognome", `${s.last_name} ${s.first_name}`],
+    ["Codice fiscale", s.tax_code || ""],
+    ["Luogo di nascita", luogoNascita(s.birth_place, s.birth_province)],
+    ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
+  ];
 
   async function scrivi() {
     const bottone = el("btnSalva");
@@ -1561,18 +1573,10 @@
     }
     // I dati della scheda com'è salvata, non quelli del modulo: si elimina
     // quella, anche se nel frattempo qualcosa è stato cambiato.
-    const righe = [
-      `<li class="nome">${esc(nome)}</li>`,
-      `<li>Nascita: ${s.birth_date ? dataIt(s.birth_date) : "non scritta"}${s.birth_place ? ` a ${esc(s.birth_place)}` : ""}</li>`,
-      `<li>Codice fiscale: ${s.tax_code ? esc(s.tax_code) : "non scritto"}</li>`,
-    ];
-    if (s.city) righe.push(`<li>Residenza: ${esc(s.city)}</li>`);
-    if (s.phone) righe.push(`<li>Telefono: ${esc(s.phone)}</li>`);
-    righe.push(s.card_number
-      ? `<li>Tessera ${esc(s.card_number)} di quest'anno${s.card_type ? ` (${esc(s.card_type)})` : ""}</li>`
-      : "<li>Nessuna tessera quest'anno</li>");
-    if (abbonamentiSalvati.length) righe.push(`<li>Abbonamenti: ${abbonamentiSalvati.length}, se ne vanno con lui</li>`);
-    el("dlgEliminaChi").innerHTML = righe.join("");
+    const righe = [...datiPersona(s),
+      ["Tessera", s.card_number ? `${s.card_number}${s.card_type ? ` · ${s.card_type}` : ""}` : "nessuna quest'anno"]];
+    if (abbonamentiSalvati.length) righe.push(["Abbonamenti", `${abbonamentiSalvati.length}, se ne vanno con lui`]);
+    el("dlgEliminaChi").innerHTML = tabellaDati(righe);
     el("dlgElimina").showModal();
     el("btnEliminaNo1").focus();
   }
@@ -1581,6 +1585,7 @@
     const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
     el("dlgElimina").close();
     el("dlgElimina2Nome").textContent = nome;
+    el("dlgElimina2Chi").innerHTML = tabellaDati(datiPersona(socioAperto).slice(1, 3));
     el("btnEliminaSi").textContent = `Sì, elimina ${nome} per sempre`;
     el("dlgElimina2").showModal();
     el("btnEliminaNo2").focus();

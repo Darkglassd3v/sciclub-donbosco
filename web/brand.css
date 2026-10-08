@@ -159,6 +159,19 @@ dialog.finestra .buttons { margin-top: 20px; }
 /* La domanda di chiedi() (shared.js): una frase sola, grande. */
 dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 0; }
 
+/* I dati di chi si salva o si elimina (tabellaDati() in shared.js): una riga
+ * per dato, valori grandi e in grassetto, i mancanti in rosso. */
+.tabella-dati { width: 100%; margin: 18px 0 4px; border-collapse: collapse; border: 2px solid var(--filo); border-radius: var(--raggio); }
+.tabella-dati th, .tabella-dati td { padding: 12px 16px; border-bottom: 1px solid var(--filo); vertical-align: top; text-align: left; }
+.tabella-dati tr:last-child th, .tabella-dati tr:last-child td { border-bottom: 0; }
+.tabella-dati th { width: 38%; font-size: 1.05rem; font-weight: 600; color: var(--testo-soft); background: var(--riga-alt); }
+.tabella-dati td { font-size: 1.4rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; letter-spacing: .01em; }
+.tabella-dati td.manca { color: var(--errore); font-weight: 600; font-size: 1.2rem; }
+@media screen and (max-width: 560px) {
+  .tabella-dati th, .tabella-dati td { display: block; width: auto; }
+  .tabella-dati th { border-bottom: 0; padding-bottom: 2px; }
+}
+
 .button.is-link, .button.is-primary, .button.is-info {
   background: var(--blu); border-color: var(--blu); color: #fff;
 }

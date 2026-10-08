@@ -456,13 +456,14 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(
  * niente (salvare, incassare): il "Sì" è blu invece che rosso.
  * Stile in brand.css (dialog.finestra.finestra-domanda).
  */
-function chiedi(dove, domanda, si, alSi, { pericolo = true } = {}) {
+function chiedi(dove, domanda, si, alSi, { pericolo = true, dettagli = null } = {}) {
   document.getElementById("finestraDomanda")?.remove();
   const finestra = document.createElement("dialog");
   finestra.id = "finestraDomanda";
   finestra.className = "finestra finestra-domanda";
   finestra.setAttribute("aria-labelledby", "finestraDomandaTesto");
   finestra.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(domanda)}</p>
+    ${dettagli ? tabellaDati(dettagli) : ""}
     <div class="buttons">
       <button type="button" class="button is-medium" data-no>Annulla</button>
       <button type="button" class="button is-medium ${pericolo ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>
@@ -479,6 +480,18 @@ function chiedi(dove, domanda, si, alSi, { pericolo = true } = {}) {
   document.body.append(finestra);
   finestra.showModal();
   finestra.querySelector("[data-no]").focus();
+}
+
+/**
+ * Una piccola tabella per le finestre: un dato per riga, l'etichetta a
+ * sinistra e il valore grande in grassetto. [[etichetta, valore], ...]; un
+ * valore vuoto si scrive "non scritto" in rosso, così si nota. Prima i dati
+ * stavano in una frase sola ("Salvare ROSSI MARIO? Codice fiscale …, nascita
+ * …") e non si leggevano.
+ */
+function tabellaDati(righe) {
+  return `<table class="tabella-dati"><tbody>${righe.map(([etichetta, valore]) => `<tr><th scope="row">${esc(etichetta)}</th>
+    <td${valore ? "" : ' class="manca"'}>${valore ? esc(valore) : "non scritto"}</td></tr>`).join("")}</tbody></table>`;
 }
 
 // ---------------------------------------------------------------------------
