@@ -33,7 +33,24 @@ il testo.
   cerca il suo cognome.
 
 In fondo allo schermo vedi **Totale** e **Residuo**. Premi il pulsante
-giallo **Salva** e aspetta il messaggio verde.
+giallo **Salva**: compare una finestra con nome, codice fiscale e data di
+nascita. Se sono giusti premi **Sì, salva** e aspetta il messaggio verde;
+se no **Annulla** e correggi.
+
+## Stampare la scheda
+
+Nella fascia in alto, **Stampa scheda**: stampa quello che c'è nel modulo,
+anche prima di salvare. Dalla finestra di stampa si può scegliere
+**Salva come PDF**.
+
+## Una scheda doppia o inserita per sbaglio
+
+Apri la scheda da togliere (quella sbagliata!) e premi **Elimina socio**
+nella fascia in alto. Compaiono due finestre: controlla nome, nascita e
+codice fiscale, poi conferma. Non si elimina chi ha pagato, ha gite segnate,
+paga per dei familiari o è già stato mandato all'assicurazione: il sito dice
+perché. Una scheda eliminata non si rimette dalla pagina: in caso di errore
+avvisa subito chi segue il sito.
 
 ## Incassare
 

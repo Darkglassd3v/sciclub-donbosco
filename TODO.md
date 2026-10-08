@@ -1,4 +1,7 @@
-# Ripresa lavori — aggiornato il 2026-10-01 (2.6-SNAPSHOT)
+# Ripresa lavori — aggiornato il 2026-10-08 (2.6-SNAPSHOT)
+
+> Le richieste nuove si scrivono qui in cima, sotto la versione aperta (la più recente prima),
+> non in fondo ai blocchi delle versioni vecchie.
 
 ## 2.6-SNAPSHOT (aperta il 01/10/2026 dalla 2.5)
 
@@ -6,6 +9,70 @@
        registro `role_grant_changes`), superadmin sempre tutto, Gestione non assegnabile.
        Schema in produzione il 01/10 (backup `supabase/migration/backup-2026-10-01/`).
        Deciso: niente separazione fra "elenco" e "dati personali" per ora.
+2. [x] feat(iscrizioni) 09993da: controlli `supabase/scripts/controlli.sh`, utente `monitor`
+       di sola lettura (creato in produzione, `supabase/.monitor_connect`), `docs/ISCRIZIONI.md`
+       e `docs/GUIDA_VOLONTARI.md`. Iscrizioni di massa da metà novembre.
+3. [x] Soci (richieste del 07/10, fatte l'08/10):
+       - pulsante Salva e fascia con il nome scritto nei campi ("(era …)" se cambiato); prima di
+         scrivere la domanda "Salvare ROSSI MARIO? Codice fiscale …, nascita …" (mancanti per esteso)
+       - **Elimina socio** nella fascia del socio aperto: anche i doppioni vecchi. La pagina dice
+         subito perché no (pagato, familiari a carico, gite, assicurazione), poi due finestre ("chi è",
+         poi "sei sicuro?"); `delete_member()` rifà i controlli e copia socio, abbonamenti e storico in
+         `member_deletions`. Si rimette solo dall'SQL Editor: `select public.restore_member(id) from
+         public.member_deletions where last_name = '…' order by deleted_at desc limit 1;`
+       - **Stampa scheda** nella fascia: A4 dalla stampa del browser (anche PDF), quello che c'è nel
+         modulo anche non salvato, logo vettoriale `web/logo_sciclubdonbosco.svg`
+4. [x] Doppioni: colonna generata `members.name_key` (`norm_name()`: solo lettere, senza accenti e
+       apostrofi), usata dalla ricerca di Soci e del telefono e dal controllo dei doppioni:
+       "D'ANGELO" trova "DANGELO". Trigger `members_no_double_insert`: due inserimenti della stessa
+       persona (stesso nome e data o codice fiscale) a meno di 10 minuti, il secondo si ferma.
+       In produzione 27 coppie di doppioni d'archivio, tutte vuote: si tolgono con Elimina socio.
+5. [x] Conferme in una finestra sopra tutta la pagina (`chiedi()` in `shared.js`, sfondo scuro,
+       Annulla già scelto, Esc = Annulla): Soci, Pagamenti ("Hai riscosso … da …?"), Assicurazione,
+       Ruoli, Social. Le finestre già esistenti (chiusura stagione, utenti) con lo stesso stile.
+6. [x] Impostazioni > Listino: colonna Assicurazione delle tessere (`prices.insurance`).
+       Sito `ricerca/`: presciistica nella scheda del socio (l'A+ c'era già).
+7. [x] Versione del sito in Gestione > Amministrazione: `web/versione.json`, riscritto dal workflow
+       a ogni deploy (branch, commit, data del commit).
+8. [x] Prova in produzione (08/10) dentro una transazione annullata: schema, doppio inserimento,
+       nuovo abbonamento, gita, modifica importi e storico, totale a mano, eliminazione rifiutata e
+       riuscita, ripristino SQL, direttivo invariato. Script in scratchpad, non nel repository.
+
+### Ancora aperto
+- [ ] Social: riprogettare le grafiche (sotto), proposta in `social/proposta-grafiche/`
+- [ ] leggere `supabase/migration/cf-2026-09-30/warning-cf.md` (13 non trovati, 9 date diverse,
+      73 codici fiscali che non passano il controllo)
+- [ ] tag locale `2.1` diverso da quello su GitHub: capire quale è giusto prima di toccarlo
+- [ ] facoltativo: ripubblicare la Edge Function `crea-utente`
+
+
+## Social: riprogettare le grafiche per farle leggere meglio (richiesto il 2026-10-07)
+
+Esempio: il post "Corso presciistica" (servizi, senza prezzo né foto). Nel biglietto bianco il testo
+occupa una fascia al centro e sotto restano ~250 px vuoti; titolo 88 px, sottotitolo 34 px grigio in
+maiuscolo, data 36 px: su un telefono, nel feed, si legge poco. Il riquadro "Servizi" in alto a
+destra prende tanto spazio per dire solo la categoria; telefoni a 32 px in fondo, piccoli.
+
+- **Perché succede**: `content()` in `web/social-templates.js` mette tutto attorno alla riga dei
+  prezzi, fissa a `o.py` (450 nel post, 920 nella story), così il prezzo resta sempre nello stesso
+  punto. Senza prezzo i dettagli salgono sotto il titolo e il resto del biglietto resta vuoto; con
+  pochi dati (titolo + data) il vuoto è più grande. Vale per eventi, corsi, servizi, e per le gite
+  senza quota o con poche partenze
+- **Obiettivo**: il testo riempie il biglietto in base a quanto ce n'è. Titolo più grande quando è
+  corto (fino a ~140 px, `data-fit` lo riduce se serve), data in evidenza (grande, nel colore della
+  categoria, o nel bollo come le gite: oggi i servizi con data mostrano l'etichetta "Servizi" e la
+  data in piccolo nel testo), informazioni a corpo leggibile (≥ 44 px nel post), contenuto
+  distribuito in verticale (centrato o con spaziatura che cresce) invece che appeso al prezzo
+- **Da provare**: foto/paesaggio più alto quando il testo è poco; bollo data uguale per tutti i
+  tipi con data; telefoni più grandi (40-44 px) o su due righe quando sono due; sottotitolo non in
+  maiuscolo grigio ma frase normale scura
+- **Come**: fare prima 3-4 casi di prova (servizio con solo titolo e data, corso con 4 informazioni,
+  gita con 3 partenze e quota, evento con prezzi adulti/ragazzi), metterli a confronto prima/dopo
+  (come `social/confronto.html` nella storia di git) e scegliere; poi aggiornare `content()` /
+  `disegnaPost()` per post e story. Tenere le regole che ci sono: fasce sicure di Instagram
+  (`SAFE`) nella story, avviso "troppo lungo" di `fit()`, colori dai giorni di gita, contrasto
+- **Test**: `node web/test-social.js` per le funzioni pure; per il disegno, screenshot dei casi di
+  prova a 1080 px (playwright) da guardare prima di pubblicare
 
 
 ## Richieste del 2026-09-30 (testo originale)
@@ -229,98 +296,6 @@ Alla fine: chiedere l'ok per schema in produzione + push.
 - facoltativo: ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna
   più ruoli); quella pubblicata funziona lo stesso
 
-## Soci: da fare (richiesti il 2026-10-07, `web/index.html`)
-
-> **Stato al 2026-10-07**: lavoro iniziato e fermato prima di scrivere codice (niente è cambiato).
-> Letti `web/index.html` e `supabase/schema.sql`; scelte già fatte, da riprendere da qui:
-> - nome nel pulsante: `aggiornaFascia()` deve leggere `f_cognome` / `f_nome` (in maiuscolo) e
->   va chiamata anche su `input` di quei due campi (oggi c'è solo `change` per CF e doppioni).
->   Fascia: "Stai modificando: ROSSI MARIO" e, se il nome è cambiato, "(era ROSSO MARIO)"
-> - conferma del Salva: `salva()` va diviso in controlli (validità, familiare che paga, doppioni
->   per il socio nuovo: oggi stanno dentro il `try`) → `chiedi()` → scrittura. `chiedi()` sta in
->   `web/shared.js` e mette la domanda al posto dei pulsanti del contenitore: qui il contenitore è
->   la colonna di `btnSalva` nella barra scura in basso (`.total-box`), quindi serve CSS per la
->   domanda bianca e il "Sì" giallo invece che rosso. Data con `dataIt()` (shared.js)
-> - elimina: funzione `public.delete_member(member_id uuid)`, security definer, `can('soci')`,
->   `for update` sulla riga, poi rifiuta con un messaggio se: `paid` > 0, gite in `trip_uses`,
->   familiari a carico (`payer_id`), già in una lista assicurativa (`insurance_list_id`), creato
->   prima di `current_season()`. Prima di cancellare copia la riga (`to_jsonb`) in una tabella
->   `member_deletions` (deleted_at, deleted_by = auth.uid(), dati) senza policy: si legge dalla
->   dashboard, e una scheda eliminata per sbaglio si può rimettere. Cascata già presente su
->   `member_passes`, `trip_uses`, `member_amount_changes`. Metterla in fondo a schema.sql (usa
->   tabelle definite dopo `members`) e uno script `supabase/applica_*.sql` per la produzione
-> - elimina nella pagina: pulsante "Elimina" nei risultati della ricerca (dentro `.result-item`,
->   con `stopPropagation`) solo se dai dati già letti (`select *`) risulta eliminabile (pagato 0,
->   creato in questa stagione, non assicurato); il resto lo controlla il database. Anche nella
->   fascia del socio aperto (`#azioniSocio`). Conferma con `chiedi()` nella riga
-> - test in `supabase/test_ruoli.sh`: riga della matrice
->   `('scrivi', 'select public.delete_member(''99999999-9999-9999-9999-999999999999'')', 'SSxxxxx')`
->   (ROSSI MARIO dei dati di prova è creato ora, senza pagamenti né gite); più le prove dei rifiuti
->   (con pagamento, con gita, capofamiglia) e che `member_deletions` riceva la copia
-> - stampa: in `web/social.html` ci sono `caricaHtmlToImage()` e `scaricaPng()` da riusare (JPG con
->   `htmlToImage.toJpeg`); per il PDF la vista di stampa del browser. Logo: solo
->   `web/logo_sciclubdonbosco.png` a 228×170 (piccolo per la stampa, servirebbe un originale più
->   grande o un SVG)
-
-- **Pulsante Salva col nome aggiornato + conferma prima di salvare**
-  - bug: aprendo un socio il pulsante dice "Salva COGNOME NOME" e, se correggi cognome o nome,
-    resta quello vecchio. `aggiornaFascia()` legge `socioAperto` (la scheda com'era quando l'hai
-    aperta), non i campi: va aggiornato a ogni `input` su `f_cognome` / `f_nome` (anche la fascia
-    "Stai modificando", e per il socio nuovo "Salva ROSSI MARIO" appena scrivi il nome)
-  - premendo Salva, prima di scrivere, una conferma: "Salvare il socio NOME COGNOME, codice fiscale
-    …, nato il gg/mm/aaaa?" con Sì / Annulla. Usare `chiedi()` sulla pagina (come per le modifiche
-    non salvate), non `confirm()`: un browser che blocca le finestre risponde "no" da solo (vedi il
-    fix dei post Social). Codice fiscale o data mancanti scritti per esteso ("senza codice
-    fiscale"), così si nota. La conferma viene dopo i controlli che già ci sono (campi obbligatori,
-    familiare che paga, doppioni)
-- **Elimina il socio inserito per sbaglio**, dai risultati della ricerca (e/o nella fascia del socio
-  aperto), con conferma che dice chi si elimina
-  - oggi nel database non si può: `members` non ha policy di delete ("si archivia, non si
-    cancella", `supabase/schema.sql` vicino a `members_delete`). Proposta: funzione
-    `delete_member(id)` security definer, solo col permesso `soci`, che elimina solo se la scheda è
-    "da sbaglio": niente pagamenti (`paid` = 0), nessuna gita segnata (`trip_uses`), nessun
-    familiare a carico (`payer_id`), creata da poco (es. questa stagione o ultimi 7 giorni). Negli
-    altri casi un messaggio che dice perché no. Da decidere con chi la usa le regole esatte
-  - a cascata se ne vanno `member_passes`, `trip_uses`, `member_amount_changes`; tenere traccia di
-    chi ha eliminato chi (tabella di registro o almeno il log) perché non si torna indietro
-  - test in `supabase/test_ruoli.sh`: chi senza `soci` non elimina, scheda con pagamenti rifiutata
-- **Stampa la scheda del socio** (PDF o JPG), pulsante nella fascia del socio aperto
-  - una pagina A4 con logo, dati anagrafici, residenza, contatti, tessera e tipo, abbonamenti, corso,
-    pagato / da pagare, familiari a carico, data; più la riga per la firma se serve
-  - PDF: la via più semplice è una vista di stampa (`@media print` o una finestra con la sola scheda)
-    e `window.print()` → "Salva come PDF", senza librerie. JPG: `html-to-image` come i PNG dei post
-    Social (`caricaHtmlToImage()` / `scaricaPng()` in `web/social.html`), con `toJpeg`
-  - nome del file `scheda-COGNOME-NOME.pdf/jpg`. Sono dati personali: solo chi ha il permesso `soci`
-    (o anche `pagamenti`?) e niente copie salvate sul server
-
-## Social: riprogettare le grafiche per farle leggere meglio (richiesto il 2026-10-07)
-
-Esempio: il post "Corso presciistica" (servizi, senza prezzo né foto). Nel biglietto bianco il testo
-occupa una fascia al centro e sotto restano ~250 px vuoti; titolo 88 px, sottotitolo 34 px grigio in
-maiuscolo, data 36 px: su un telefono, nel feed, si legge poco. Il riquadro "Servizi" in alto a
-destra prende tanto spazio per dire solo la categoria; telefoni a 32 px in fondo, piccoli.
-
-- **Perché succede**: `content()` in `web/social-templates.js` mette tutto attorno alla riga dei
-  prezzi, fissa a `o.py` (450 nel post, 920 nella story), così il prezzo resta sempre nello stesso
-  punto. Senza prezzo i dettagli salgono sotto il titolo e il resto del biglietto resta vuoto; con
-  pochi dati (titolo + data) il vuoto è più grande. Vale per eventi, corsi, servizi, e per le gite
-  senza quota o con poche partenze
-- **Obiettivo**: il testo riempie il biglietto in base a quanto ce n'è. Titolo più grande quando è
-  corto (fino a ~140 px, `data-fit` lo riduce se serve), data in evidenza (grande, nel colore della
-  categoria, o nel bollo come le gite: oggi i servizi con data mostrano l'etichetta "Servizi" e la
-  data in piccolo nel testo), informazioni a corpo leggibile (≥ 44 px nel post), contenuto
-  distribuito in verticale (centrato o con spaziatura che cresce) invece che appeso al prezzo
-- **Da provare**: foto/paesaggio più alto quando il testo è poco; bollo data uguale per tutti i
-  tipi con data; telefoni più grandi (40-44 px) o su due righe quando sono due; sottotitolo non in
-  maiuscolo grigio ma frase normale scura
-- **Come**: fare prima 3-4 casi di prova (servizio con solo titolo e data, corso con 4 informazioni,
-  gita con 3 partenze e quota, evento con prezzi adulti/ragazzi), metterli a confronto prima/dopo
-  (come `social/confronto.html` nella storia di git) e scegliere; poi aggiornare `content()` /
-  `disegnaPost()` per post e story. Tenere le regole che ci sono: fasce sicure di Instagram
-  (`SAFE`) nella story, avviso "troppo lungo" di `fit()`, colori dai giorni di gita, contrasto
-- **Test**: `node web/test-social.js` per le funzioni pure; per il disegno, screenshot dei casi di
-  prova a 1080 px (playwright) da guardare prima di pubblicare
-
 ## Dopo il giro dell'app: cosa resta
 
 - Social: confermare con chi pubblica la regola di "Da completare" (gita: meta, giorno, partenze,
@@ -432,9 +407,8 @@ destra prende tanto spazio per dire solo la categoria; telefoni a 32 px in fondo
 
 - 2.4-SNAPSHOT: funzioni social e campagne Santero. Piano già presente in
   `docs/PIANO_2.3_SOCIAL.md` (da rinominare o aggiornare per la 2.4?).
-  File Santero non committati da portare qui: `social/santero/958 Santero
-  Vini.png` (in stage), `campagna.html`, `export/`, `santero.png`,
-  `santero-chiaro.png`
+  Loghi Santero in `social/santero/`; il prototipo `campagna.html` e `export/`
+  cancellati l'08/10 (non servivano).
 - provare sul sito con i dati reali: righe del listino e ordine per prezzo,
   presciistica insieme a un abbonamento, totali della pagina Soci,
   Riepilogo, pulsante A+
