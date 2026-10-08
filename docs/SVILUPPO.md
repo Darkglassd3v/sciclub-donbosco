@@ -86,9 +86,13 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   class="finestra">`), mai `confirm()`: un browser che blocca le finestre risponde "no" da solo.
 - Errori (`showToast(..., "is-danger")`) restano finché non si preme Chiudi; le conferme
   spariscono dopo 8 secondi.
+- Sezioni colorate (`.sezione`, `.striscia`, `.corpo` in `brand.css`): il nome in una striscia
+  piena in alto, il colore dice di cosa si parla ed è lo stesso in tutto il sito (blu persone,
+  verde tessera e assicurazione, viola gite e corsi, arancio soldi). Le usano Soci, Riepilogo e
+  Assicurazione; non servono dove la pagina ha una sola parte o ha già i suoi colori.
 - Pagina Soci: testata con il nome e i pulsanti Stampa (scarica il PDF) ed Elimina; quattro
-  sezioni colorate (Anagrafica, Tessera, Gite e corsi, Pagamento) con il nome in una striscia
-  in alto. Le voci del listino sono righe radio grandi, ordinate per prezzo.
+  sezioni (Anagrafica, Tessera, Gite e corsi, Pagamento). Le voci del listino sono righe radio
+  grandi, ordinate per prezzo.
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
 - Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
