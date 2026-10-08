@@ -18,8 +18,8 @@ già online:
   Stampa ed Elimina, "Chiudi scheda" al posto di "Nuovo socio"
 - Soci: Stampa scarica la scheda compilata in PDF (`scheda-COGNOME-NOME.pdf`)
 - Logo vettoriale (`logo_sciclubdonbosco.svg`) in tutte le pagine, nei post e in `ricerca/`
-- Sezioni colorate anche in Riepilogo e Assicurazione (stile comune in `brand.css`): stessi colori
-  della scheda Soci. Bilancio lasciato com'è (due sezioni dello stesso colore, non serviva)
+- Sezioni colorate anche in Riepilogo, Assicurazione e Bilancio (stile comune in `brand.css`):
+  stessi colori della scheda Soci
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
