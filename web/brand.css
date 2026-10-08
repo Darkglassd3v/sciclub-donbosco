@@ -145,16 +145,19 @@ textarea:focus-visible,
  * showModal()): per i gesti che non si annullano o che stanno in una riga di
  * tabella, dove una domanda scritta allargherebbe la cella. Non è confirm(),
  * che il browser può bloccare senza dire niente. */
-dialog.finestra { border: 0; border-radius: var(--raggio-card); padding: 30px; color: var(--testo);
+/* Lo sfondo copre tutta la pagina e la scurisce molto: si deve capire che
+ * la pagina aspetta una risposta, e niente sotto distrae. Bordo giallo e
+ * testo grande, come i pulsanti più importanti. */
+dialog.finestra { border: 0; border-top: 6px solid var(--giallo); border-radius: var(--raggio-card); padding: 32px;
+                  color: var(--testo); font-size: 1.15rem; box-shadow: 0 20px 60px rgba(0, 0, 0, .45);
                   width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow-y: auto; }
-dialog.finestra::backdrop { background: rgba(0, 0, 0, .45); }
-dialog.finestra h2 { font-size: 1.5rem; font-weight: 600; letter-spacing: -.022em; margin-bottom: 10px; }
+dialog.finestra::backdrop { background: rgba(20, 32, 46, .78); }
+dialog.finestra h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.022em; margin-bottom: 12px; }
+dialog.finestra .buttons { margin-top: 20px; }
 @media screen and (max-width: 768px) { dialog.finestra { padding: 22px 18px; } }
 
-/* Domanda di conferma scritta sulla pagina (chiedi() in shared.js), al posto
- * dei pulsanti che l'hanno aperta. */
-.domanda-inline { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.domanda-inline .domanda { color: var(--errore); font-weight: 600; flex-basis: 100%; }
+/* La domanda di chiedi() (shared.js): una frase sola, grande. */
+dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 0; }
 
 .button.is-link, .button.is-primary, .button.is-info {
   background: var(--blu); border-color: var(--blu); color: #fff;

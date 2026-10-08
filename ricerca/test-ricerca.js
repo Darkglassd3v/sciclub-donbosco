@@ -11,10 +11,10 @@ const path = require("path");
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
-const { pezzi, filtroPezzo, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+const { pezzi, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
         giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile } =
   (0, eval)(`(() => { ${sorgente}
-    return { pezzi, filtroPezzo, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+    return { pezzi, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
              giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
@@ -40,7 +40,13 @@ assert.strictEqual(pezzi("a1 bb cc dd ee ff").length, 4);
 
 // Il filtro è quello di sempre: inizio della parola, nel cognome o nel nome.
 assert.strictEqual(filtroPezzo("cos"),
-  "last_name.ilike.cos%,first_name.ilike.cos%");
+  "last_name.ilike.cos%,first_name.ilike.cos%,name_key.like.COS%,name_key.like.% COS%");
+
+// "d'angelo" trova anche DANGELO, e "dangelo" trova D'ANGELO: la chiave del
+// nome toglie apostrofi e accenti (norm_name() nel database).
+assert.strictEqual(chiaveNome("d'àngelo"), "DANGELO");
+assert.strictEqual(filtroPezzo("d'angelo"),
+  "last_name.ilike.d'angelo%,first_name.ilike.d'angelo%,name_key.like.DANGELO%,name_key.like.% DANGELO%");
 
 // L'evidenziazione marca solo l'inizio della parola, e solo se corrisponde.
 assert.strictEqual(evidenzia("Cossetta", ["cos"]), "<mark>Cos</mark>setta");

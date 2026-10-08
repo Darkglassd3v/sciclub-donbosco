@@ -131,8 +131,8 @@
 <script>
   const el = (id) => document.getElementById(id);
 
-  // Nomi a schermo in NOMI_RUOLI (shared.js); i permessi di ciascuno stanno
-  // nel database (role_permissions() in supabase/schema.sql).
+  // Nomi a schermo in NOMI_RUOLI (shared.js); i permessi di ciascuno li sceglie
+  // il superadmin in Gestione > Ruoli (role_grants in supabase/schema.sql).
   const RUOLI = ["gite", "assicurazione", "social", "tesoriere", "admin", "superadmin"];
   const opzioneRuolo = (r, scelto) =>
     `<option value="${r}" ${r === scelto ? "selected" : ""}>${esc(NOMI_RUOLI[r])}</option>`;

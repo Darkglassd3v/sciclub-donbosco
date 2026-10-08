@@ -12,14 +12,13 @@ Riassunto per le sessioni di lavoro (anche `/ecc:dev-team`). Dettagli in
   unico e idempotente); pagine pubblicate con GitHub Pages dal branch di lavoro.
   Test leggeri in node (`web/test-*.js`, `ricerca/test-ricerca.js`) e
   `supabase/test_ruoli.sh` in docker.
-- **Fase**: branch `2.5-SNAPSHOT`, in produzione. Appena fatti (30/09): giorno del
-  corso, pagina Stampe, nuovo abbonamento dal telefono, assicurazione a liste
-  numerate (niente più numero di polizza), totale a mano, rimborsi e storico degli
-  importi, codici fiscali corretti dai fogli di `dati26`.
+- **Fase**: 2.6 rilasciata l'08/10/2026 (elimina e stampa della scheda socio, doppioni
+  con `members.name_key`, conferme in finestra sopra la pagina, versione del sito in
+  Amministrazione); branch di lavoro `2.7-SNAPSHOT`. Iscrizioni di massa da metà novembre.
 - **Vincoli**: interfaccia, commenti e variabili JS in italiano, database in
   inglese; misure in rem (pulsante A+ 17/19/21px); contrasti documentati in
-  `docs/brand-guidelines.md`; nessuna dipendenza nuova; conferme scritte nella
-  pagina (`chiedi()`), mai `confirm()`; commit solo dopo conferma dell'utente.
+  `docs/brand-guidelines.md`; nessuna dipendenza nuova; conferme in una finestra
+  sopra la pagina (`chiedi()` o `<dialog class="finestra">`), mai `confirm()`; commit solo dopo conferma dell'utente.
 - **Fatto vuol dire**: pagine provate nel browser con un client Supabase finto
   (anche con A+ al massimo), test verdi, schema riapplicabile, commit e deploy
   delle Pages dal branch.

@@ -69,7 +69,7 @@
   // Solo le informazioni di base. Codice fiscale, indirizzo e importi restano
   // fuori: qui si cerca un contatto, non si fa amministrazione, e quello che
   // non si scarica non si può neanche lasciare in giro.
-  const CAMPI = "id, last_name, first_name, phone, email, card_type, card_number, pass_type";
+  const CAMPI = "id, last_name, first_name, phone, email, card_type, card_number, pass_type, preski_type";
   const MAX = 40;
 
   const lista = () => el("risultati");
@@ -123,6 +123,7 @@
           ${riga("Email", email)}
           ${riga("Tessera", esc(testo(s.card_type)))}
           ${riga("Abbonamento", esc(testo(s.pass_type)))}
+          ${s.preski_type ? riga("Presciistica", esc(s.preski_type)) : ""}
         </dl>
         ${contattiHtml(s.phone)}
       </div>`;

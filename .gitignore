@@ -28,6 +28,8 @@ supabase/migration_seed.sql
 .postgre_connect
 # Frase che cifra i backup del database (vedi .github/workflows/backup-db.yml)
 .backup_passphrase
+# Utente di sola lettura per i controlli delle iscrizioni (supabase/scripts/crea_monitor.sql)
+.monitor_connect
 *_token
 *.pem
 *.key

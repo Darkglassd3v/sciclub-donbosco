@@ -77,9 +77,9 @@
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Assicurazione</th><th>Attiva</th><th></th>
           </tr></thead>
-          <tbody id="tabellaPrezzi"><tr><td colspan="6" class="vuota">Caricamento…</td></tr></tbody>
+          <tbody id="tabellaPrezzi"><tr><td colspan="7" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
             <td>
               <select id="nuovoCategoria">
@@ -97,6 +97,14 @@
                 <option value="utente">utente</option>
                 <option value="admin">admin</option>
                 <option value="superadmin">superadmin</option>
+              </select>
+            </td>
+            <td>
+              <select id="nuovoAssicurazione" aria-label="Assicurazione della tessera nuova">
+                <option value="">nessuna</option>
+                <option value="BASE">Neve Base</option>
+                <option value="PLUS">Neve Plus</option>
+                <option value="SPORT">Global Sport</option>
               </select>
             </td>
             <td></td>
@@ -193,6 +201,13 @@
   // Listino prezzi
   // ---------------------------------------------------------------------
 
+  // L'assicurazione che dà una tessera: decide in quale lista della pagina
+  // Assicurazione finisce chi ce l'ha (prices.insurance). Prima si scriveva
+  // solo dal database, e una tessera nuova restava senza.
+  const ASSICURAZIONI = [["", "nessuna"], ["BASE", "Neve Base"], ["PLUS", "Neve Plus"], ["SPORT", "Global Sport"]];
+  const opzioniAssicurazione = (scelta) => ASSICURAZIONI.map(([valore, nome]) =>
+    `<option value="${valore}" ${(scelta || "") === valore ? "selected" : ""}>${nome}</option>`).join("");
+
   function rigaPrezzo(p) {
     // Il livello di visibilità vale solo per le tessere (vincolo
     // prices_min_role_only_card nel database).
@@ -209,6 +224,8 @@
         <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
         <td><input type="number" data-prezzo step="0.01" min="0" value="${p.price}"></td>
         <td>${selettoreRuolo}</td>
+        <td>${p.category === "TESSERA"
+          ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>` : "—"}</td>
         <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
         <td><button type="button" class="button is-small" data-salva>Salva</button></td>
       </tr>`;
@@ -219,14 +236,14 @@
     try {
       const { data, error } = await sb
         .from("prices")
-        .select("id, category, name, price, active, min_role")
+        .select("id, category, name, price, active, min_role, insurance")
         .order("category")
         .order("name");
       if (error) throw error;
 
       el("tabellaPrezzi").innerHTML = data.length
         ? data.map(rigaPrezzo).join("")
-        : '<tr><td colspan="6" class="vuota">Nessuna voce in listino.</td></tr>';
+        : '<tr><td colspan="7" class="vuota">Nessuna voce in listino.</td></tr>';
 
       el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
@@ -249,6 +266,8 @@
       active: riga.querySelector("[data-attivo]").checked,
     };
     if (selettoreRuolo) patch.min_role = selettoreRuolo.value;
+    const assicurazione = riga.querySelector("[data-assicurazione]");
+    if (assicurazione) patch.insurance = assicurazione.value || null;
 
     bottone.disabled = true;
     try {
@@ -278,6 +297,7 @@
         name: nome,
         price: parseFloat(el("nuovoPrezzo").value) || 0,
         min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
+        insurance: categoria === "TESSERA" ? el("nuovoAssicurazione").value || null : null,
       });
       if (error) throw error;
       el("nuovoNome").value = "";

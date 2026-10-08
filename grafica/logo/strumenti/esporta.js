@@ -1,0 +1,23 @@
+const { chromium } = require(process.env.G + "/playwright");
+const fs = require("fs");
+const D = process.argv[2];
+(async () => {
+  const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  const p = await b.newPage({ viewport: { width: 2736, height: 2040 } });
+  let svg = fs.readFileSync(D + "/pieno.svg", "utf8");
+  await p.setContent(`<body style="margin:0">${svg}</body>`);
+  const bb = await p.evaluate(() => { const r = document.querySelector("svg").getBBox(); return [r.x, r.y, r.width, r.height]; });
+  const pad = Math.round(Math.max(bb[2], bb[3]) * 0.04);
+  const vb = [Math.floor(bb[0] - pad), Math.floor(bb[1] - pad), Math.ceil(bb[2] + 2 * pad), Math.ceil(bb[3] + 2 * pad)];
+  svg = svg.replace('viewBox="0 0 2736 2040"', `viewBox="${vb.join(" ")}"`);
+  fs.writeFileSync(D + "/logo_sciclubdonbosco.svg", svg);
+  const Wd = 3000, Hd = Math.round(3000 * vb[3] / vb[2]);
+  const tag = `<svg width="${Wd}" height="${Hd}" style="display:block" `;
+  await p.setViewportSize({ width: Wd, height: Hd });
+  await p.setContent(`<body style="margin:0;background:#fff">${svg.replace("<svg ", tag)}</body>`);
+  await p.screenshot({ path: D + "/logo_sciclubdonbosco.jpg", type: "jpeg", quality: 95 });
+  await p.setContent(`<body style="margin:0;background:transparent">${svg.replace("<svg ", tag)}</body>`);
+  await p.screenshot({ path: D + "/logo_sciclubdonbosco.png", omitBackground: true });
+  console.log(vb, Wd, Hd);
+  await b.close();
+})();

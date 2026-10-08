@@ -18,7 +18,7 @@ name: Deploy pagine su GitHub Pages
 
 on:
   push:
-    branches: ["2.5"]
+    branches: ["2.6"]
   workflow_dispatch:
 
 # Niente filtro paths: quando si crea il branch di una nuova release non c'è
@@ -76,6 +76,15 @@ jobs:
 
       - name: Controlla la ricerca soci
         run: node ricerca/test-ricerca.js
+
+      # La versione mostrata nella pagina Amministrazione: il branch pubblicato
+      # (2.5, 2.6-SNAPSHOT...), il commit e la sua data. Scritta qui, così non
+      # va mai aggiornata a mano; quella nel repository serve solo in locale.
+      - name: Scrivi la versione pubblicata (web/versione.json)
+        run: |
+          printf '{"versione": "%s", "commit": "%s", "data": "%s"}\n' \
+            "$GITHUB_REF_NAME" "$(git rev-parse --short HEAD)" "$(git log -1 --format=%cs)" > web/versione.json
+          cat web/versione.json
 
       # I due siti finiscono in un'unica cartella: web/ alla radice, ricerca/
       # sotto /ricerca/.

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="brand.css">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
+    .versione-sito { font-size: 1.15rem; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
     .riquadro.pericolo { border: 2px solid var(--errore); }
@@ -113,6 +114,14 @@
     <button type="button" class="button is-danger" id="btnApri">Chiudi stagione…</button>
     <div id="esito" class="mt-4"></div>
   </div>
+
+  <!-- Quale versione del sito è online: la scrive il deploy in versione.json
+       (vedi .github/workflows/deploy-pages.yml). Serve a dire "ce l'hai già?"
+       dopo un aggiornamento. -->
+  <div class="riquadro">
+    <h2>Versione del sito</h2>
+    <p class="versione-sito" id="versione">…</p>
+  </div>
   </div>
 </div>
 
@@ -167,6 +176,22 @@
   const el = (id) => document.getElementById(id);
   const FRASE = "CHIUDI STAGIONE";
 
+  /** "Versione 2.6 · pubblicata il 08/10/2026 · commit c7ae2d3", da versione.json. */
+  async function caricaVersione() {
+    try {
+      // no-store: dopo un deploy la pagina deve dire la versione nuova, non
+      // quella rimasta nella cache del browser.
+      const risposta = await fetch("versione.json", { cache: "no-store" });
+      if (!risposta.ok) throw new Error(risposta.status);
+      const v = await risposta.json();
+      el("versione").innerHTML = `Versione <strong>${esc(v.versione)}</strong>`
+        + (v.data ? ` · pubblicata il <strong>${dataIt(v.data)}</strong>` : "")
+        + (v.commit ? ` · commit <code>${esc(v.commit)}</code>` : "");
+    } catch {
+      el("versione").textContent = "Versione non disponibile.";
+    }
+  }
+
   (async function init() {
     if (!(await requirePermesso("gestione"))) return;
 
@@ -179,6 +204,7 @@
     el("btnApri").addEventListener("click", apriConferma);
     el("btnAnnulla").addEventListener("click", () => el("dlgChiudi").close());
 
+    caricaVersione();
     await Promise.all([caricaSituazione(), caricaResoconto()]);
   })();
 
