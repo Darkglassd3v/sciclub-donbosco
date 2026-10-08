@@ -3,7 +3,7 @@
  * Caricato DOPO bulma.min.css e PRIMA dello <style> di pagina, che usa le
  * variabili definite qui invece di ripetere i colori.
  *
- * I due colori vengono dal logo (web/logo_sciclubdonbosco.png) e non cambiano.
+ * I due colori vengono dal logo (web/logo_sciclubdonbosco.svg) e non cambiano.
  * Le misure sono tarate sull'utenza del gestionale, in buona parte non
  * abituata alle interfacce dense: corpo 17px, campi e pulsanti da 48px, focus
  * sempre visibile, contrasti verificati.

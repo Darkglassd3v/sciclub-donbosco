@@ -2,7 +2,7 @@
 
 > Ultimo aggiornamento: 2026-09-10
 > Stato: Attivo
-> Fonte dei colori: `web/logo_sciclubdonbosco.png` (il logo non si tocca)
+> Fonte dei colori: il logo, `web/logo_sciclubdonbosco.svg`
 
 Il gestionale è usato dal direttivo, in buona parte non abituato alle interfacce
 dense. La leggibilità viene prima dell'estetica: testo grande, contrasto alto,
@@ -166,8 +166,12 @@ I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ## 3. Logo Usage
 
-Il file `web/logo_sciclubdonbosco.png` è definitivo: non si ridisegna, non si
-ricolora, non si ricalca in SVG «migliorato».
+Il logo del sito è `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`): il
+vettoriale ricalcato il 07/10/2026 dal PNG piccolo di prima (228×170, ora in
+`grafica/logo/strumenti/originale_228x170.png`), che a schermo e in stampa
+usciva sgranato. Dall'08/10 lo usano tutte le pagine, i post social e la scheda
+PDF del socio. Non si ricolora e non si deforma; se si ritrova il file
+originale del grafico, sostituisce questo (vedi `grafica/logo/README.md`).
 
 ### Clear Space
 

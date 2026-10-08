@@ -11,7 +11,7 @@
 
 const SOCIAL = {
   // Relativo alla pagina che disegna.
-  logo: "logo_sciclubdonbosco.png",
+  logo: "logo_sciclubdonbosco.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
   // che la pagina carica e passa a impostaContatti(). Ogni post sceglie i suoi
   // (ev.contacts, id in ordine): contattiDi().
