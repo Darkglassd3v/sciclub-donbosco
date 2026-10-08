@@ -2867,3 +2867,201 @@ create policy social_contacts_all on public.social_contacts
 -- usavano sono state rifatte, altrimenti Postgres rifiuterebbe il drop.
 -- ---------------------------------------------------------------------------
 drop function if exists public.has_role(text);
+
+-- ---------------------------------------------------------------------------
+-- 2.6: doppioni e schede inserite per sbaglio
+--
+-- Cognome e nome ridotti alle sole lettere, senza accenti né apostrofi:
+-- "D'ANGELO", "D' ANGELO" e "DANGELO" diventano tutti DANGELO. Prima il
+-- controllo dei doppioni del form Soci confrontava i nomi così come erano
+-- scritti e non trovava la stessa persona scritta in due modi. La colonna
+-- name_key ("DANGELO MARIO") è generata dal database e la usano la ricerca e
+-- il controllo dei doppioni della pagina; la stessa regola, per il testo che
+-- si cerca, è chiaveNome() in web/shared.js.
+-- ---------------------------------------------------------------------------
+
+create or replace function public.norm_name(t text)
+returns text
+language sql
+immutable
+parallel safe
+as $$
+  select regexp_replace(
+    translate(upper(coalesce(t, '')), 'ÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜÇÑ', 'AAAAEEEEIIIIOOOOUUUUCN'),
+    '[^A-Z]', '', 'g');
+$$;
+
+comment on function public.norm_name is 'Cognome o nome con le sole lettere A-Z, senza accenti, spazi e apostrofi: confronta D''ANGELO con DANGELO.';
+
+alter table public.members add column if not exists name_key text
+  generated always as (public.norm_name(last_name) || ' ' || public.norm_name(first_name)) stored;
+create index if not exists members_name_key_idx on public.members (name_key);
+comment on column public.members.name_key is 'Colonna generata: norm_name(cognome) || '' '' || norm_name(nome). Per ricerca e doppioni.';
+
+-- Due operatori che iscrivono la stessa persona nello stesso momento: il
+-- controllo dei doppioni della pagina li lasciava passare entrambi, perché
+-- ciascuno cercava prima che l'altro avesse salvato. Il lucchetto (uno per
+-- nome) mette in fila i due inserimenti, e il secondo trova il primo. Vale
+-- solo per le schede create negli ultimi 10 minuti: i doppioni d'archivio li
+-- segnala già la pagina, e lì un omonimo vero si salva lo stesso ("No, è
+-- un'altra persona"). Stesso nome e stessa data di nascita (o stesso codice
+-- fiscale) a pochi minuti di distanza è la stessa persona.
+create or replace function public.members_no_double_insert()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  chiave text := public.norm_name(new.last_name) || ' ' || public.norm_name(new.first_name);
+begin
+  perform pg_advisory_xact_lock(hashtext('members:' || chiave));
+  if exists (select 1 from public.members m
+              where m.name_key = chiave
+                and m.created_at > now() - interval '10 minutes'
+                and (m.birth_date is not distinct from new.birth_date
+                     or m.tax_code = new.tax_code)) then
+    raise exception '% % è stato appena inserito, da te o da un altro operatore: cercalo e apri la sua scheda.',
+      new.last_name, new.first_name;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists members_no_double_insert on public.members;
+create trigger members_no_double_insert
+  before insert on public.members
+  for each row execute function public.members_no_double_insert();
+
+-- Le schede eliminate, intere: il socio e le righe che se ne vanno con lui
+-- (abbonamenti, storico degli importi). Nessuna policy e nessun permesso: ci
+-- scrive solo delete_member(), si legge dalla dashboard, e una scheda
+-- eliminata per sbaglio si rimette con restore_member() dall'SQL Editor.
+create table if not exists public.member_deletions (
+  id          uuid primary key default gen_random_uuid(),
+  deleted_at  timestamptz not null default now(),
+  deleted_by  uuid default auth.uid(),
+  member_id   uuid not null,
+  last_name   text,
+  first_name  text,
+  data        jsonb not null
+);
+
+alter table public.member_deletions enable row level security;
+
+comment on table public.member_deletions is 'Schede dei soci eliminate con delete_member(): socio, abbonamenti e storico importi in data. Si rimettono con restore_member().';
+
+-- Elimina per sempre la scheda di un socio: un doppione o una scheda
+-- inserita per sbaglio. La pagina chiede due volte; qui si rifiuta tutto
+-- quello che non è "vuoto": soldi versati, gite fatte, familiari a carico,
+-- un'assicurazione già mandata. Vale anche per le schede d'archivio: i
+-- doppioni vecchi sono proprio quelli da togliere. Il socio e le righe che
+-- la cascata cancella finiscono prima in member_deletions.
+create or replace function public.delete_member(member_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  m public.members;
+begin
+  if not public.can('soci') then
+    raise exception 'Non hai il permesso di eliminare i soci.';
+  end if;
+
+  -- for update: nessuno lo cambia (un pagamento, un familiare) fra i
+  -- controlli e la cancellazione.
+  select * into m from public.members x where x.id = delete_member.member_id for update;
+  if not found then
+    raise exception 'Socio non trovato: forse è già stato eliminato. Ricarica la pagina.';
+  end if;
+
+  if m.paid <> 0 then
+    raise exception '% % ha versato %: non si può eliminare. Se è un doppione, sposta prima il pagamento sulla scheda giusta.',
+      m.last_name, m.first_name, replace(to_char(m.paid, 'FM999999990.00'), '.', ',') || ' €';
+  end if;
+  if exists (select 1 from public.members d where d.payer_id = m.id) then
+    raise exception '% % paga per dei familiari: togli prima il pagante dalle loro schede.', m.last_name, m.first_name;
+  end if;
+  if exists (select 1 from public.trip_uses u where u.member_id = m.id) then
+    raise exception '% % ha delle gite segnate: non si può eliminare.', m.last_name, m.first_name;
+  end if;
+  if m.insurance_list_id is not null then
+    raise exception '% % è in una lista già mandata all''assicurazione: non si può eliminare.', m.last_name, m.first_name;
+  end if;
+
+  insert into public.member_deletions (member_id, last_name, first_name, data)
+  values (m.id, m.last_name, m.first_name, jsonb_build_object(
+    'member', to_jsonb(m),
+    'passes', coalesce((select jsonb_agg(to_jsonb(p)) from public.member_passes p where p.member_id = m.id), '[]'),
+    'amount_changes', coalesce((select jsonb_agg(to_jsonb(c)) from public.member_amount_changes c where c.member_id = m.id), '[]')));
+
+  delete from public.members x where x.id = m.id;
+end;
+$$;
+
+comment on function public.delete_member is 'Elimina per sempre un socio senza pagamenti, gite, familiari a carico né assicurazione. Copia in member_deletions. Permesso soci.';
+
+-- Rimette una scheda eliminata, dall'SQL Editor della dashboard:
+--   select public.restore_member(id) from public.member_deletions
+--    where last_name = 'ROSSI' and first_name = 'MARIO' order by deleted_at desc limit 1;
+-- Le colonne generate (balance, name_key) si ricalcolano da sole. Nessuno
+-- dalla pagina la può chiamare.
+create or replace function public.restore_member(deletion_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  d jsonb;
+  colonne text;
+begin
+  -- Dal sito c'è sempre un utente collegato; dall'SQL Editor no.
+  if auth.uid() is not null then
+    raise exception 'Una scheda eliminata si rimette solo dall''SQL Editor della dashboard.';
+  end if;
+  select x.data into d from public.member_deletions x where x.id = restore_member.deletion_id;
+  if d is null then
+    raise exception 'Eliminazione non trovata.';
+  end if;
+
+  select string_agg(quote_ident(a.attname), ', ' order by a.attnum) into colonne
+    from pg_attribute a
+   where a.attrelid = 'public.members'::regclass and a.attnum > 0
+     and not a.attisdropped and a.attgenerated = '';
+  -- Dall'SQL Editor non c'è un utente collegato: il controllo delle tessere
+  -- riservate rifiuterebbe un DIRETTIVO, e quello dei doppi inserimenti una
+  -- scheda rifatta nel frattempo. Si spengono per questo inserimento solo;
+  -- se qualcosa fallisce la transazione li riaccende con tutto il resto.
+  alter table public.members disable trigger check_card_type_role;
+  alter table public.members disable trigger members_no_double_insert;
+  execute format('insert into public.members (%1$s) select %1$s from jsonb_populate_record(null::public.members, $1)', colonne)
+    using d -> 'member';
+  alter table public.members enable trigger check_card_type_role;
+  alter table public.members enable trigger members_no_double_insert;
+
+  insert into public.member_passes
+  select * from jsonb_populate_recordset(null::public.member_passes, d -> 'passes');
+  insert into public.member_amount_changes
+  select * from jsonb_populate_recordset(null::public.member_amount_changes, d -> 'amount_changes');
+
+  delete from public.member_deletions x where x.id = restore_member.deletion_id;
+  return (d -> 'member' ->> 'id')::uuid;
+end;
+$$;
+
+revoke execute on function public.restore_member(uuid) from public;
+comment on function public.restore_member is 'Rimette un socio eliminato con delete_member(), con abbonamenti e storico. Solo dall''SQL Editor.';
+
+-- anon e authenticated ci sono su Supabase, non nel Postgres dei test.
+do $$
+declare r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    if exists (select 1 from pg_roles where rolname = r) then
+      execute format('revoke all on public.member_deletions from %I', r);
+      execute format('revoke execute on function public.restore_member(uuid) from %I', r);
+    end if;
+  end loop;
+end $$;

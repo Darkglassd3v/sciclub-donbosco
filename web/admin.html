@@ -39,7 +39,6 @@
                    padding: 20px 28px; border-top: 1px solid var(--filo); }
     .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; }
     .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
-    .barra-saldo .domanda { font-weight: 600; color: var(--blu-dark); }
     .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
 
     /* Modifica degli importi e storico: si aprono sotto la riga del socio. */
@@ -240,7 +239,7 @@
               </tbody>
             </table>
           </div>
-          ${barraSaldo(nucleo.head_id, saldo)}
+          ${barraSaldo(nucleo.head_id, saldo, `${nucleo.last_name} ${nucleo.first_name}`)}
         </div>`;
     }).join("");
 
@@ -283,16 +282,16 @@
   }
 
   /**
-   * Un solo pulsante per famiglia. La conferma è dentro la pagina e non una
-   * finestra del browser: chi incassa vede la cifra e il nome mentre conferma,
-   * invece di un avviso che copre tutto e si chiude a caso.
+   * Un solo pulsante per famiglia. La conferma è una finestra della pagina
+   * (chiedi()) e non del browser: dice la cifra e il nome di chi paga, e non
+   * si chiude da sola.
    */
-  function barraSaldo(idPagante, saldo) {
+  function barraSaldo(idPagante, saldo, nome) {
     if (saldo <= 0) {
       return `<div class="barra-saldo"><span class="nucleo-saldato">Nucleo saldato</span></div>`;
     }
     return `
-      <div class="barra-saldo" id="barra_${idPagante}">
+      <div class="barra-saldo" id="barra_${idPagante}" data-nome="${esc(nome)}">
         <span class="da-pagare">Da incassare: ${fmt(saldo)}</span>
         <span class="azioni">
           <button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${fmt(saldo)}</button>
@@ -400,20 +399,10 @@
   function chiediConferma(idPagante) {
     const barra = el("barra_" + idPagante);
     if (!barra) return;
-    const azioni = barra.querySelector(".azioni");
     const importo = barra.querySelector(".da-pagare").textContent.replace("Da incassare: ", "");
-
-    azioni.innerHTML = `
-      <span class="domanda">Hai riscosso ${importo}?</span>
-      <button class="button is-light" data-annulla>No</button>
-      <button class="button is-success" data-conferma>Sì, incassato</button>`;
-
-    azioni.querySelector("[data-annulla]").addEventListener("click", () => {
-      azioni.innerHTML =
-        `<button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${importo}</button>`;
-      azioni.querySelector("button").addEventListener("click", () => chiediConferma(idPagante));
-    });
-    azioni.querySelector("[data-conferma]").addEventListener("click", () => salda(idPagante));
+    const nome = barra.dataset.nome;
+    chiedi(barra.querySelector(".azioni"), `Hai riscosso ${importo}${nome ? ` da ${nome}` : ""}?`,
+      "Sì, incassato", () => salda(idPagante), { pericolo: false });
   }
 
   /**

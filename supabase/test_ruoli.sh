@@ -214,6 +214,8 @@ begin
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
+    -- ROSSI MARIO: iscritto ora, senza pagamenti né gite, quindi eliminabile.
+    ('scrivi', 'select public.delete_member(''99999999-9999-9999-9999-999999999999'')', 'SSxxxxx'),
     ('scrivi', 'select public.set_tax_code(' || m || ', ''X'')',                   'SxxSxxx'),
     ('scrivi', 'select public.insurance_send(''BASE'', 99, array[' || m || ']::uuid[])', 'SxxSxxx'),
     ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
@@ -951,7 +953,7 @@ end $$;
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
 insert into public.members (last_name, first_name, enrolled_at, card_type)
-select 'MOLTI', 'NOME' || i, now(), 'PROVA TESSERA ORDINARIA' from generate_series(1, 25) i;
+select 'MOLTI', 'NOME' || chr(64 + i), now(), 'PROVA TESSERA ORDINARIA' from generate_series(1, 25) i;
 set role authenticated;
 do $$ begin
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
@@ -1299,6 +1301,126 @@ begin
 end $$;
 reset role;
 drop function public.test_prova(uuid, text, text);
+SQL
+
+# ---------------------------------------------------------------------------
+# 2.6: doppioni (name_key, doppio inserimento) ed eliminazione dei soci.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+-- Vero se il comando fallisce con un messaggio che contiene `atteso`.
+create or replace function public.test_rifiuta(comando text, atteso text)
+returns boolean language plpgsql as $$
+begin
+  execute comando;
+  return false;
+exception when others then
+  if position(atteso in sqlerrm) = 0 then raise notice 'messaggio inatteso: %', sqlerrm; end if;
+  return position(atteso in sqlerrm) > 0;
+end $$;
+
+-- Schede di prova, scritte dal superuser come farebbe l'archivio.
+insert into public.members (id, last_name, first_name, birth_date, paid, enrolled_at, created_at) values
+  ('dddddddd-0000-0000-0000-000000000001', 'D''ANGELO', 'MARIA', '1970-01-01', 0, null, '2000-01-01'),
+  ('dddddddd-0000-0000-0000-000000000002', 'PAGATO',    'PIERO', null, 30, now(), now()),
+  ('dddddddd-0000-0000-0000-000000000003', 'CAPO',      'FAMIGLIA', null, 0, now(), now()),
+  ('dddddddd-0000-0000-0000-000000000004', 'FIGLIO',    'FAMIGLIA', null, 0, now(), now()),
+  ('dddddddd-0000-0000-0000-000000000005', 'GITANTE',   'GINO', null, 0, now(), now()),
+  ('dddddddd-0000-0000-0000-000000000006', 'ASSICURATO','ALDO', null, 0, now(), now()),
+  ('dddddddd-0000-0000-0000-000000000007', 'DOPPIONE',  'DINO', '1980-05-05', 0, null, '2000-01-01');
+update public.members set payer_id = 'dddddddd-0000-0000-0000-000000000003' where id = 'dddddddd-0000-0000-0000-000000000004';
+insert into public.trip_uses (member_id) values ('dddddddd-0000-0000-0000-000000000005');
+insert into public.insurance_lists (id, kind, number) values ('eeeeeeee-0000-0000-0000-000000000001', 'BASE', 900);
+update public.members set insurance_list_id = 'eeeeeeee-0000-0000-0000-000000000001' where id = 'dddddddd-0000-0000-0000-000000000006';
+-- Il doppione d'archivio ha un abbonamento e una modifica degli importi: se
+-- ne vanno con lui e devono tornare con il ripristino.
+insert into public.member_passes (member_id, pass_type) values ('dddddddd-0000-0000-0000-000000000007', 'PROVA 10 VIAGGI SABATO');
+insert into public.member_amount_changes (member_id, old_total, new_total, old_paid, new_paid, reason)
+values ('dddddddd-0000-0000-0000-000000000007', 0, 10, 0, 0, 'prova');
+
+do $$ begin
+  assert (select name_key from public.members where id = 'dddddddd-0000-0000-0000-000000000001') = 'DANGELO MARIA',
+         'name_key: l''apostrofo non è stato tolto';
+  assert public.norm_name('  d''Àngelo ') = 'DANGELO', 'norm_name: accenti, spazi o minuscole';
+end $$;
+
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin
+
+  -- Ricerca: "DANGELO" trova D'ANGELO.
+  assert exists (select 1 from public.members where name_key like '%DANGELO%'), 'ricerca: DANGELO non trova D''ANGELO';
+
+  -- Due inserimenti della stessa persona a pochi minuti: il secondo si ferma.
+  insert into public.members (last_name, first_name, birth_date) values ('PROVA', 'DOPPIA', '2001-02-03');
+  assert public.test_rifiuta($q$insert into public.members (last_name, first_name, birth_date) values ('Prova', 'Doppia', '2001-02-03')$q$,
+         'appena inserito'), 'doppio inserimento: il secondo è passato';
+  -- Un omonimo con un'altra data di nascita passa.
+  insert into public.members (last_name, first_name, birth_date) values ('PROVA', 'DOPPIA', '1950-01-01');
+
+  -- I rifiuti, uno per motivo.
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000002')$q$, 'ha versato'),
+         'elimina: passato un socio che ha pagato';
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000003')$q$, 'paga per dei familiari'),
+         'elimina: passato un capofamiglia';
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000005')$q$, 'gite segnate'),
+         'elimina: passato un socio con gite';
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000006')$q$, 'assicurazione'),
+         'elimina: passato un socio già assicurato';
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-00000000ffff')$q$, 'non trovato'),
+         'elimina: un socio che non c''è';
+
+  -- Chi non ha il permesso soci non elimina, nemmeno un doppione.
+  perform set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);  -- gite
+  assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000007')$q$, 'permesso'),
+         'elimina: il ruolo gite ha eliminato un socio';
+
+  -- Il doppione d'archivio si elimina; il familiare a carico anche (paga un altro).
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  perform public.delete_member('dddddddd-0000-0000-0000-000000000007');
+  perform public.delete_member('dddddddd-0000-0000-0000-000000000004');
+  assert not exists (select 1 from public.members where id in ('dddddddd-0000-0000-0000-000000000007',
+                                                              'dddddddd-0000-0000-0000-000000000004')),
+         'elimina: le schede sono ancora lì';
+  -- member_deletions non si legge dalle pagine, e restore_member non si chiama.
+  assert public.test_rifiuta('select 1 from public.member_deletions', 'permission denied'),
+         'member_deletions: si legge da un utente collegato';
+  assert public.test_rifiuta($q$select public.restore_member(gen_random_uuid())$q$, 'permission denied'),
+         'restore_member: si chiama da un utente collegato';
+end $$;
+reset role;
+
+do $$
+declare
+  d record;
+begin
+  perform set_config('test.uid', '', false);
+  select * into d from public.member_deletions where member_id = 'dddddddd-0000-0000-0000-000000000007';
+  assert d.last_name = 'DOPPIONE' and d.deleted_by = '44444444-4444-4444-4444-444444444444',
+         'member_deletions: manca chi è stato eliminato o da chi';
+  assert jsonb_array_length(d.data -> 'passes') = 1 and jsonb_array_length(d.data -> 'amount_changes') = 1,
+         'member_deletions: abbonamento o storico non copiati';
+
+  -- Ripristino dall'SQL Editor (superuser, nessun utente collegato).
+  assert public.restore_member(d.id) = 'dddddddd-0000-0000-0000-000000000007', 'ripristino: id sbagliato';
+  assert (select name_key from public.members where id = 'dddddddd-0000-0000-0000-000000000007') = 'DOPPIONE DINO',
+         'ripristino: la scheda non è tornata';
+  assert (select created_at from public.members where id = 'dddddddd-0000-0000-0000-000000000007') = '2000-01-01',
+         'ripristino: la data di creazione è cambiata';
+  assert (select count(*) from public.member_passes where member_id = 'dddddddd-0000-0000-0000-000000000007') = 1,
+         'ripristino: abbonamento perso';
+  assert (select count(*) from public.member_amount_changes where member_id = 'dddddddd-0000-0000-0000-000000000007') = 1,
+         'ripristino: storico importi perso';
+  assert not exists (select 1 from public.member_deletions where id = d.id), 'ripristino: la copia è rimasta';
+  -- I controlli spenti durante il ripristino sono di nuovo accesi.
+  assert (select bool_and(tgenabled = 'O') from pg_trigger
+           where tgrelid = 'public.members'::regclass
+             and tgname in ('check_card_type_role', 'members_no_double_insert')),
+         'ripristino: un trigger è rimasto spento';
+end $$;
+
+delete from public.members where id::text like 'dddddddd-%' or last_name = 'PROVA' and first_name = 'DOPPIA';
+delete from public.insurance_lists where id = 'eeeeeeee-0000-0000-0000-000000000001';
+drop function public.test_rifiuta(text, text);
 SQL
 
 echo "test ruoli: tutto a posto"

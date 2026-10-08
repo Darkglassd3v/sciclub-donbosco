@@ -1,7 +1,8 @@
 # Logo Sci Club Don Bosco in alta qualità
 
-Non fa parte del sito: il deploy copia solo `web/` e `ricerca/`, e il sito continua a usare
-`web/logo_sciclubdonbosco.png` (228×170).
+Il deploy copia solo `web/` e `ricerca/`: il sito usa `web/logo_sciclubdonbosco.png` (228×170)
+nella barra e una copia dell'SVG, `web/logo_sciclubdonbosco.svg`, nella scheda del socio stampata
+dalla pagina Soci. Se l'SVG qui cambia, va ricopiato anche là.
 
 | File | Cosa | Per |
 |---|---|---|

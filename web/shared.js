@@ -415,31 +415,55 @@ function etichettaGiorno(giorno) {
   return NOMI_GIORNI[giorno] ? `<span class="giorno-etichetta" data-giorno="${giorno}">${NOMI_GIORNI[giorno]}</span>` : "";
 }
 
+/**
+ * Cognome o nome con le sole lettere A-Z, senza accenti, spazi e apostrofi:
+ * "D'Angelo" → "DANGELO". È norm_name() di schema.sql, che riempie la colonna
+ * members.name_key ("DANGELO MARIO"): ricerca e doppioni confrontano quella,
+ * così la stessa persona scritta in due modi si trova.
+ */
+function chiaveNome(t) {
+  return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
+}
+
 /** Testo scritto dagli utenti, pronto per innerHTML. */
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * Domanda scritta sulla pagina al posto di confirm(). Un browser che ha
- * bloccato le finestre di conferma della pagina fa rispondere a confirm()
- * "no" da solo, senza mostrare niente: il pulsante sembrava non fare nulla.
- * `dove` è il riquadro dei pulsanti: finché la domanda è aperta sono
- * nascosti, poi tornano com'erano. Stile in brand.css (.domanda-inline).
+ * Domanda di conferma in una finestra sopra tutta la pagina, al posto di
+ * confirm(). Un browser che ha bloccato le finestre di conferma della pagina
+ * fa rispondere a confirm() "no" da solo, senza mostrare niente. Prima la
+ * domanda prendeva il posto dei pulsanti che l'avevano aperta: in fondo alla
+ * pagina o in una riga di tabella si notava poco, e non si capiva che la
+ * pagina stava aspettando una risposta. Ora copre lo schermo, e finché non si
+ * risponde non si tocca altro. Annulla è già scelto: un Invio distratto non
+ * fa niente. `dove` è il riquadro dei pulsanti che l'ha aperta: alla chiusura
+ * il cursore torna lì. `pericolo: false` per le domande che non tolgono
+ * niente (salvare, incassare): il "Sì" è blu invece che rosso.
+ * Stile in brand.css (dialog.finestra.finestra-domanda).
  */
-function chiedi(dove, domanda, si, alSi) {
-  dove.querySelector(".domanda-inline")?.remove();
-  const pulsanti = [...dove.children], nascosti = pulsanti.map((b) => b.hidden);
-  pulsanti.forEach((b) => { b.hidden = true; });
-  const riga = document.createElement("div");
-  riga.className = "domanda-inline";
-  riga.innerHTML = `<span class="domanda">${esc(domanda)}</span>
-    <button type="button" class="button is-danger">${esc(si)}</button>
-    <button type="button" class="button is-light">Annulla</button>`;
-  const chiudi = () => { riga.remove(); pulsanti.forEach((b, i) => { b.hidden = nascosti[i]; }); };
-  const [bSi, bNo] = riga.querySelectorAll("button");
-  bSi.addEventListener("click", () => { chiudi(); alSi(); });
-  bNo.addEventListener("click", chiudi);
-  dove.append(riga);
-  bNo.focus();
+function chiedi(dove, domanda, si, alSi, { pericolo = true } = {}) {
+  document.getElementById("finestraDomanda")?.remove();
+  const finestra = document.createElement("dialog");
+  finestra.id = "finestraDomanda";
+  finestra.className = "finestra finestra-domanda";
+  finestra.setAttribute("aria-labelledby", "finestraDomandaTesto");
+  finestra.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(domanda)}</p>
+    <div class="buttons">
+      <button type="button" class="button is-medium" data-no>Annulla</button>
+      <button type="button" class="button is-medium ${pericolo ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>
+    </div>`;
+  const chiudi = () => {
+    finestra.close();
+    finestra.remove();
+    dove?.querySelector("button:not([hidden]):not([disabled])")?.focus();
+  };
+  finestra.querySelector("[data-si]").addEventListener("click", () => { chiudi(); alSi(); });
+  finestra.querySelector("[data-no]").addEventListener("click", chiudi);
+  // Esc vale come Annulla.
+  finestra.addEventListener("cancel", (e) => { e.preventDefault(); chiudi(); });
+  document.body.append(finestra);
+  finestra.showModal();
+  finestra.querySelector("[data-no]").focus();
 }
 
 // ---------------------------------------------------------------------------

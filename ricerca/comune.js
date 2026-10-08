@@ -20,10 +20,23 @@ function pezzi(testoCercato) {
 /**
  * Il filtro per un pezzo di ricerca: la corrispondenza è all'inizio della
  * parola, si scrive "cos" e si trova Cossetta, che è il modo in cui il
- * direttivo ha sempre cercato.
+ * direttivo ha sempre cercato. Anche all'inizio del cognome o del nome nella
+ * chiave del nome, che ignora accenti e apostrofi.
  */
 function filtroPezzo(pezzo) {
-  return `last_name.ilike.${pezzo}%,first_name.ilike.${pezzo}%`;
+  const chiave = chiaveNome(pezzo);
+  return `last_name.ilike.${pezzo}%,first_name.ilike.${pezzo}%`
+    + (chiave ? `,name_key.like.${chiave}%,name_key.like.% ${chiave}%` : "");
+}
+
+/**
+ * Le sole lettere A-Z, senza accenti e apostrofi: "d'angelo" → "DANGELO". È
+ * norm_name() di schema.sql, con cui il database riempie members.name_key
+ * ("DANGELO MARIO"): così "d'angelo" trova DANGELO e "dangelo" trova
+ * D'ANGELO. Uguale a chiaveNome() in web/shared.js.
+ */
+function chiaveNome(t) {
+  return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>

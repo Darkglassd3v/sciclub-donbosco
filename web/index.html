@@ -61,7 +61,6 @@
     .scelta.aggiungi { cursor: default; flex-wrap: wrap; row-gap: 8px; }
     .scelta.aggiungi .nome { flex: 1 1 100%; }
     .scelta.aggiungi .prezzo { margin-left: 0; }
-    .togli-stagione .domanda { display: block; font-weight: 700; margin-bottom: 8px; }
     .label { margin-bottom: .3rem; }
     .totale-mano { display: flex; align-items: center; gap: 8px; min-height: 1.5rem; margin-bottom: .3rem; font-weight: 600; }
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
@@ -77,8 +76,15 @@
     .fascia-stato { flex: 1 1 18rem; font-size: 1.2rem; line-height: 1.3; }
     .indice-sezioni { display: flex; flex-wrap: wrap; gap: 0 16px; }
     .indice-sezioni a { display: inline-flex; align-items: center; min-height: var(--aria); font-weight: 600; text-decoration: underline; }
-    #azioniSocio { flex: none; }
-    .fascia-socio .domanda-inline { max-width: 34rem; }
+    #azioniSocio { flex: none; margin-bottom: 0; }
+    #azioniSocio .button { margin-bottom: 0; }
+
+    /* Finestre dell'eliminazione: chi si elimina scritto grande, una riga per dato. */
+    .chi-elimina { list-style: none; margin: 0 0 16px; padding: 14px 16px; border: 2px solid var(--errore);
+                   border-radius: var(--raggio); background: var(--errore-bg); font-size: 1.1rem; }
+    .chi-elimina li + li { margin-top: 4px; }
+    .chi-elimina .nome { font-size: 1.35rem; font-weight: 700; }
+    .elimina-avviso { font-size: 1.2rem; }
     #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 7rem); }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
     .container-main { padding-bottom: 200px; }
@@ -97,6 +103,28 @@
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
        * selettore lungo il pulsante restava stretto, su tre righe. */
       .total-box .columns.is-mobile > .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
+    }
+
+    /* Scheda del socio da stampare (stampaScheda()): a schermo non c'è, in
+     * stampa c'è solo lei. Misure in pt: sulla carta non conta il pulsante A+. */
+    .scheda-stampa { display: none; }
+    @media print {
+      @page { size: A4; margin: 14mm; }
+      body { background: #fff; }
+      body > *:not(.scheda-stampa) { display: none !important; }
+      .scheda-stampa { display: block; color: #000; font-size: 11pt; line-height: 1.35; }
+      .scheda-stampa header { display: flex; align-items: center; gap: 16px; padding-bottom: 8px; margin-bottom: 6px;
+                              border-bottom: 2px solid #084C8D; }
+      .scheda-stampa header img { width: 36mm; height: auto; }
+      .scheda-stampa h1 { font-size: 20pt; font-weight: 700; margin: 0; line-height: 1.15; }
+      .scheda-stampa header p { margin: 2px 0 0; font-size: 11pt; }
+      .scheda-stampa section { break-inside: avoid; }
+      .scheda-stampa h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #084C8D;
+                          margin: 14px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #999; }
+      .scheda-stampa table { width: 100%; border-collapse: collapse; }
+      .scheda-stampa th { width: 36%; padding: 2px 10px 2px 0; text-align: left; font-weight: 400; color: #333; vertical-align: top; }
+      .scheda-stampa td { padding: 2px 0; font-weight: 600; }
+      .scheda-stampa .piede { margin-top: 18px; padding-top: 6px; border-top: 1px solid #999; font-size: 9pt; color: #333; }
     }
 
     /* Schermo basso (zoom al 150-200%, telefono in orizzontale): la barra
@@ -155,8 +183,10 @@
       <a href="#sez-amministrazione">Amministrazione</a>
       <a href="#sez-pagamento">Pagamento</a>
     </nav>
-    <div id="azioniSocio">
+    <div id="azioniSocio" class="buttons">
       <button type="button" class="button is-link is-outlined" onclick="nuovoSocio()">Nuovo socio</button>
+      <button type="button" class="button is-link is-outlined" onclick="stampaScheda()">Stampa scheda</button>
+      <button type="button" class="button is-danger is-outlined" id="btnElimina" onclick="chiediElimina()" hidden>Elimina socio</button>
     </div>
   </div>
 
@@ -302,15 +332,46 @@
   </form>
 </div>
 
+<!-- Eliminare un socio: due finestre, una dopo l'altra. La prima dice chi è,
+     la seconda chiede ancora se si è sicuri. In tutte e due il pulsante già
+     scelto è Annulla, così un Invio distratto non elimina niente. -->
+<dialog id="dlgElimina" class="finestra" aria-labelledby="dlgEliminaTitolo">
+  <h2 id="dlgEliminaTitolo">Eliminare questo socio?</h2>
+  <ul class="chi-elimina" id="dlgEliminaChi"></ul>
+  <p>
+    La scheda sparisce dall'archivio insieme ai suoi abbonamenti. Serve per un
+    doppione o per una persona inserita per sbaglio.
+  </p>
+  <div class="buttons mt-4">
+    <button type="button" class="button is-medium" id="btnEliminaNo1">Annulla</button>
+    <button type="button" class="button is-danger is-medium" id="btnEliminaAvanti">Sì, vai avanti</button>
+  </div>
+</dialog>
+
+<dialog id="dlgElimina2" class="finestra" aria-labelledby="dlgElimina2Titolo">
+  <h2 id="dlgElimina2Titolo">Sei sicuro? Non si torna indietro</h2>
+  <p class="elimina-avviso">
+    Stai per eliminare <strong id="dlgElimina2Nome"></strong> <strong>per sempre</strong>.
+    Dalla pagina non si può più rimettere.
+  </p>
+  <div class="buttons mt-4">
+    <button type="button" class="button is-medium" id="btnEliminaNo2">No, tienilo</button>
+    <button type="button" class="button is-danger is-medium" id="btnEliminaSi"></button>
+  </div>
+</dialog>
+
 <div class="total-box">
   <div class="container">
     <div class="columns is-mobile is-vcentered">
       <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount" id="v_totale">0€</span></div>
       <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
-      <div class="column is-5"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
+      <div class="column is-5" id="zonaSalva"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
     </div>
   </div>
 </div>
+
+<!-- Riempita da stampaScheda() al momento di stampare. -->
+<div class="scheda-stampa" id="schedaStampa"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -389,6 +450,9 @@
         el(id).addEventListener("change", controllaCF);
         el(id).addEventListener("change", controllaDoppioni);
       });
+      // Il nome sul pulsante Salva e nella fascia segue quello che si scrive.
+      el("f_cognome").addEventListener("input", aggiornaFascia);
+      el("f_nome").addEventListener("input", aggiornaFascia);
       document.querySelectorAll("input[name=chiPaga]").forEach((r) => r.addEventListener("change", () => {
         if (!r.value) { disabilitaSezionePagante(); return; }
         abilitaSezionePagante();
@@ -397,6 +461,10 @@
       window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
       el("f_numero_tessera").addEventListener("input", () => (el("notaTessera").hidden = true));
       el("btnTogli").addEventListener("click", chiediTogli);
+      el("btnEliminaNo1").addEventListener("click", () => el("dlgElimina").close());
+      el("btnEliminaNo2").addEventListener("click", () => el("dlgElimina2").close());
+      el("btnEliminaAvanti").addEventListener("click", confermaElimina);
+      el("btnEliminaSi").addEventListener("click", eliminaSocio);
 
       ricalcola();
       await proponiNumeroTessera();
@@ -714,15 +782,29 @@
   // Chi c'è nel modulo
   // -------------------------------------------------------------------------
 
-  /** Fascia in cima e pulsante Salva: socio nuovo o quale socio si modifica. */
+  /** Cognome e nome come sono scritti adesso nel modulo, in maiuscolo come si salvano. */
+  const nomeNelModulo = () =>
+    `${el("f_cognome").value} ${el("f_nome").value}`.trim().replace(/\s+/g, " ").toUpperCase();
+
+  /**
+   * Fascia in cima e pulsante Salva: socio nuovo o quale socio si modifica.
+   * Il nome si legge dai campi e non da socioAperto: correggendo cognome o
+   * nome il pulsante diceva ancora quello vecchio, e non si capiva chi si
+   * stava per salvare. Il nome di prima resta scritto fra parentesi.
+   */
   function aggiornaFascia() {
     const s = socioAperto;
+    const nome = nomeNelModulo();
+    const prima = s ? `${s.last_name} ${s.first_name}` : "";
     el("fasciaSocio").classList.toggle("modifica", Boolean(s));
     el("statoSocio").innerHTML = s
-      ? `Stai modificando: <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>`
+      ? `Stai modificando: <strong>${esc(nome || prima)}</strong>`
+        + (nome && nome !== prima ? ` (era ${esc(prima)})` : "")
         + (s.card_number ? ` · tessera ${esc(s.card_number)}` : "")
       : "<strong>Nuovo socio</strong>: salvando si crea una scheda nuova";
-    el("btnSalva").textContent = s ? `Salva ${s.last_name} ${s.first_name}` : "Salva il socio nuovo";
+    el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${prima}` : "Salva il socio nuovo";
+    // Si elimina solo una scheda salvata, aperta.
+    el("btnElimina").hidden = !s;
   }
 
   /**
@@ -780,10 +862,13 @@
     const termini = query.split(/\s+/).filter(Boolean);
     let richiesta = sb.from("members").select("*").limit(limite);
 
-    // Ogni termine deve comparire in cognome, nome o codice fiscale.
+    // Ogni termine deve comparire in cognome, nome o codice fiscale; o nella
+    // chiave del nome, così "D'ANGELO" trova anche "DANGELO" e viceversa.
     termini.forEach((termine) => {
       const t = termine.replace(/[%,()]/g, "");
-      richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`);
+      const chiave = chiaveNome(t);
+      richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`
+        + (chiave ? `,name_key.like.%${chiave}%` : ""));
     });
     if (escludiId) richiesta = richiesta.neq("id", escludiId);
 
@@ -801,18 +886,18 @@
   // La pagina cerca in tutto l'archivio lo stesso codice fiscale, o lo stesso
   // cognome e nome (con la stessa data di nascita, se scritta), e propone di
   // aprire quella scheda: si rinnova quella, non se ne crea un'altra.
-  // ponytail: due operatori che salvano la stessa persona nello stesso
-  // momento passano entrambi; e "D'ANGELO" non trova "DANGELO".
+  // Cognome e nome si confrontano con la chiave del nome (members.name_key,
+  // chiaveNome()), che ignora accenti, spazi e apostrofi: "D'ANGELO" trova
+  // "DANGELO". Due operatori che inseriscono la stessa persona nello stesso
+  // momento li ferma il database (members_no_double_insert in schema.sql).
   // -------------------------------------------------------------------------
 
   const CAMPI_DOPPIONE = "id, last_name, first_name, birth_date, tax_code, city, card_number";
-  // Cognome e nome confrontati con ilike senza jolly: % e _ valgono come lettere.
-  const esatto = (t) => t.trim().replace(/\s+/g, " ").replace(/[\\%_]/g, "\\$&");
 
   async function cercaDoppioni() {
     if (el("f_id").value) return [];
     const cf = el("f_codice_fiscale").value.trim().toUpperCase();
-    const cognome = esatto(el("f_cognome").value), nome = esatto(el("f_nome").value);
+    const cognome = chiaveNome(el("f_cognome").value), nome = chiaveNome(el("f_nome").value);
     const nascita = el("f_data_nascita").value;
 
     const richieste = [];
@@ -820,7 +905,7 @@
       richieste.push(sb.from("members").select(CAMPI_DOPPIONE).ilike("tax_code", cf).limit(5));
     }
     if (cognome && nome) {
-      let r = sb.from("members").select(CAMPI_DOPPIONE).ilike("last_name", cognome).ilike("first_name", nome);
+      let r = sb.from("members").select(CAMPI_DOPPIONE).eq("name_key", `${cognome} ${nome}`);
       // Le schede d'archivio senza data restano: potrebbe essere la stessa persona.
       if (nascita) r = r.or(`birth_date.eq.${nascita},birth_date.is.null`);
       richieste.push(r.order("birth_date").limit(5));
@@ -1093,6 +1178,11 @@
     return spuntate.length ? spuntate.join(", ") : null;
   }
 
+  /**
+   * Premendo Salva: prima i controlli, poi una domanda che dice chi si sta
+   * per salvare, e solo al "Sì" la scrittura (scrivi()). Un socio salvato col
+   * nome o il codice fiscale di un altro si notava solo dopo.
+   */
   async function salva() {
     const form = el("memberForm");
     if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -1104,6 +1194,50 @@
       return;
     }
 
+    // Un socio nuovo che forse è già in archivio: si propone la sua scheda
+    // invece di farne un'altra (vedi cercaDoppioni()).
+    if (!el("f_id").value) {
+      const bottone = el("btnSalva");
+      bottone.disabled = true;
+      setLoading(true);
+      try {
+        const doppioni = await cercaDoppioni();
+        if (doppioni.length) {
+          mostraDoppioni(doppioni);
+          el("avvisoDoppioni").scrollIntoView({ block: "center" });
+          showToast("Questa persona sembra già in archivio: apri la sua scheda, "
+            + "oppure premi «No, è un'altra persona» e salva di nuovo.", "is-danger");
+          return;
+        }
+      } catch (error) {
+        showToast(messaggioErrore(error), "is-danger");
+        return;
+      } finally {
+        bottone.disabled = false;
+        setLoading(false);
+      }
+    }
+
+    const domanda = domandaSalva();
+    chiedi(el("zonaSalva"), domanda, "Sì, salva", () => {
+      // Per sicurezza: se fra la domanda e il "Sì" sono cambiati nome,
+      // codice fiscale o data, si ricomincia, così la risposta vale per
+      // quello che si salva davvero.
+      if (domandaSalva() !== domanda) { salva(); return; }
+      scrivi();
+    }, { pericolo: false });
+  }
+
+  /** "Salvare ROSSI MARIO? Codice fiscale …, nascita …": i mancanti per esteso, così si notano. */
+  function domandaSalva() {
+    const cf = el("f_codice_fiscale").value.trim().toUpperCase();
+    const nascita = el("f_data_nascita").value;
+    return `Salvare ${nomeNelModulo()}? `
+      + (cf ? `Codice fiscale ${cf}` : "Senza codice fiscale")
+      + (nascita ? `, nascita ${dataIt(nascita)}.` : ", senza data di nascita.");
+  }
+
+  async function scrivi() {
     const bottone = el("btnSalva");
     bottone.disabled = true;
     setLoading(true);
@@ -1148,6 +1282,8 @@
       // hanno bisogno del suo id, e se il socio non passa (es. numero tessera
       // già preso) non resta niente di scritto a metà.
       let id = el("f_id").value;
+      // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
+      // altro operatore può aver inserito la stessa persona.
       if (!id) {
         const doppioni = await cercaDoppioni();
         if (doppioni.length) {
@@ -1168,7 +1304,7 @@
         // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
         // Salva, va aggiornato, non inserito una seconda volta.
         el("f_id").value = id;
-        socioAperto = socio;
+        socioAperto = { ...socio, id };
         aggiornaFascia();
       }
 
@@ -1238,26 +1374,20 @@
   // -------------------------------------------------------------------------
 
   function ripristinaTogli() {
-    el("azioniTogli").innerHTML =
-      '<button type="button" class="button is-danger is-outlined" id="btnTogli">Togli dalla stagione</button>';
-    el("btnTogli").addEventListener("click", chiediTogli);
+    el("btnTogli").disabled = false;
   }
 
   function chiediTogli() {
     const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
     const acconto = num(el("f_acconto").value);
-    el("azioniTogli").innerHTML = `
-      <span class="domanda">Togliere ${esc(nome)} dalla stagione?
-        ${acconto > 0 ? `L'acconto di ${fmt(acconto)} esce dal totale incassato.` : ""}</span>
-      <button type="button" class="button is-danger" id="btnTogliSi">Sì, togli dalla stagione</button>
-      <button type="button" class="button is-light" id="btnTogliNo">Annulla</button>`;
-    el("btnTogliSi").addEventListener("click", togliDallaStagione);
-    el("btnTogliNo").addEventListener("click", ripristinaTogli);
+    chiedi(el("azioniTogli"), `Togliere ${nome} dalla stagione?`
+      + (acconto > 0 ? ` L'acconto di ${fmt(acconto)} esce dal totale incassato.` : ""),
+      "Sì, togli dalla stagione", togliDallaStagione);
   }
 
   async function togliDallaStagione() {
     const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
-    el("azioniTogli").querySelectorAll("button").forEach((b) => (b.disabled = true));
+    el("btnTogli").disabled = true;
     setLoading(true);
     try {
       const { error } = await sb.rpc("remove_from_season", { member_id: el("f_id").value });
@@ -1267,6 +1397,148 @@
     } catch (error) {
       showToast(messaggioErrore(error), "is-danger");
       ripristinaTogli();
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Stampa della scheda
+  //
+  // Quello che c'è nel modulo, anche se non è ancora salvato: è la scheda che
+  // il direttivo vuole su carta mentre iscrive. Una pagina A4 dalla stampa
+  // del browser, da cui si fa anche il PDF ("Salva come PDF"): niente
+  // librerie e niente file sul server, sono dati personali.
+  // -------------------------------------------------------------------------
+
+  async function stampaScheda() {
+    const nome = nomeNelModulo();
+    if (!nome) {
+      showToast("Scrivi almeno cognome e nome, poi stampa la scheda.", "is-danger");
+      el("f_cognome").focus();
+      return;
+    }
+    // In maiuscolo come li scrive il salvataggio.
+    const v = (id) => el(id).value.trim().toUpperCase();
+    const riga = (etichetta, valore) => (valore ? `<tr><th>${esc(etichetta)}</th><td>${esc(valore)}</td></tr>` : "");
+    const sezione = (titolo, righe) =>
+      (righe.join("") ? `<section><h2>${titolo}</h2><table>${righe.join("")}</table></section>` : "");
+
+    const nascita = [v("f_luogo_nascita"), v("f_provincia_nascita") && `(${v("f_provincia_nascita")})`,
+      el("f_data_nascita").value && `il ${dataIt(el("f_data_nascita").value)}`].filter(Boolean).join(" ");
+    const residenza = [v("f_indirizzo"), [el("f_cap").value.trim(), v("f_citta")].filter(Boolean).join(" "),
+      v("f_provincia") && `(${v("f_provincia")})`].filter(Boolean).join(", ").replace(", (", " (");
+    const abbonamenti = [...abbonamentiSalvati.filter((a) => !abbonamentiDaTogliere.has(a.pass_id)), ...abbonamentiNuovi]
+      .map((a) => a.pass_type).join(", ");
+    const corso = nomeSelezionato("f_tipologia_corso");
+    const giorno = sceltaDi("f_giorno_corso")?.value;
+    const totale = totaleIndividuale(), acconto = num(el("f_acconto").value);
+    const pagante = el("pagaFamiliare").checked && el("f_payerDisplay").value.trim();
+    const adesso = new Date();
+
+    el("schedaStampa").innerHTML = `
+      <header>
+        <img src="logo_sciclubdonbosco.svg" alt="">
+        <div><h1>${esc(nome)}</h1><p>Sci Club Don Bosco · scheda del socio</p></div>
+      </header>
+      ${sezione("Anagrafica", [
+        riga("Cognome", v("f_cognome")), riga("Nome", v("f_nome")),
+        riga("Nato/a a", nascita), riga("Codice fiscale", v("f_codice_fiscale"))])}
+      ${sezione("Residenza e contatti", [
+        riga("Residenza", residenza), riga("Telefono", el("f_telefono").value.trim()),
+        riga("Email", el("f_email").value.trim())])}
+      ${sezione("Iscrizione", [
+        riga("Numero tessera", numeroTessera()), riga("Tessera", nomeSelezionato("f_tipologia_tessera")),
+        riga("Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")),
+        riga("Abbonamenti", abbonamenti), riga("Presciistica", nomeSelezionato("f_presciistica")),
+        riga("Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)),
+        riga("Partenza del sabato", partenzeSelezionate("check_sabato")),
+        riga("Partenza della domenica", partenzeSelezionate("check_domenica"))])}
+      ${sezione("Pagamento", [
+        riga("Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")),
+        riga("Acconto versato", fmt(acconto)), riga("Da pagare", fmt(totale - acconto)),
+        riga("Pagato da", pagante),
+        riga("Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", "))])}
+      <p class="piede">Stampata il ${adesso.toLocaleDateString("it-IT")} alle
+        ${adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
+        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}</p>`;
+
+    // Il logo deve essere caricato prima che parta la stampa, o esce il buco.
+    await el("schedaStampa").querySelector("img").decode().catch(() => {});
+    // Il titolo della pagina è il nome proposto per il PDF.
+    const titolo = document.title;
+    document.title = `scheda-${nome.replace(/[^A-Z0-9]+/g, "-")}`;
+    window.addEventListener("afterprint", () => { document.title = titolo; }, { once: true });
+    window.print();
+  }
+
+  // -------------------------------------------------------------------------
+  // Eliminare un socio (doppioni e schede inserite per sbaglio)
+  //
+  // Due controlli: la pagina guarda i dati che ha già (pagato, familiari,
+  // assicurazione, gite) e dice subito perché no; il database li rifà tutti
+  // in delete_member(), che è quello che conta. E due finestre prima di
+  // eliminare: chi è, poi "sei sicuro?". La scheda si può rimettere solo
+  // dall'SQL Editor (restore_member() in schema.sql).
+  // -------------------------------------------------------------------------
+
+  /** Perché la scheda aperta non si può eliminare, o "" se si può. */
+  function motivoNonEliminabile() {
+    const s = socioAperto;
+    if (num(s.paid) !== 0) return `ha versato ${fmt(s.paid)}`;
+    if (familiariACarico.length) return "paga per dei familiari";
+    if (s.insurance_list_id) return "è in una lista già mandata all'assicurazione";
+    if (abbonamentiSalvati.some((a) => a.trips_used > 0)) return "ha delle gite segnate";
+    return "";
+  }
+
+  function chiediElimina() {
+    const s = socioAperto;
+    if (!s) return;
+    const nome = `${s.last_name} ${s.first_name}`;
+    const motivo = motivoNonEliminabile();
+    if (motivo) {
+      showToast(`${nome} ${motivo}: non si può eliminare.`, "is-danger");
+      return;
+    }
+    // I dati della scheda com'è salvata, non quelli del modulo: si elimina
+    // quella, anche se nel frattempo qualcosa è stato cambiato.
+    const righe = [
+      `<li class="nome">${esc(nome)}</li>`,
+      `<li>Nascita: ${s.birth_date ? dataIt(s.birth_date) : "non scritta"}${s.birth_place ? ` a ${esc(s.birth_place)}` : ""}</li>`,
+      `<li>Codice fiscale: ${s.tax_code ? esc(s.tax_code) : "non scritto"}</li>`,
+    ];
+    if (s.city) righe.push(`<li>Residenza: ${esc(s.city)}</li>`);
+    if (s.phone) righe.push(`<li>Telefono: ${esc(s.phone)}</li>`);
+    righe.push(s.card_number
+      ? `<li>Tessera ${esc(s.card_number)} di quest'anno${s.card_type ? ` (${esc(s.card_type)})` : ""}</li>`
+      : "<li>Nessuna tessera quest'anno</li>");
+    if (abbonamentiSalvati.length) righe.push(`<li>Abbonamenti: ${abbonamentiSalvati.length}, se ne vanno con lui</li>`);
+    el("dlgEliminaChi").innerHTML = righe.join("");
+    el("dlgElimina").showModal();
+    el("btnEliminaNo1").focus();
+  }
+
+  function confermaElimina() {
+    const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
+    el("dlgElimina").close();
+    el("dlgElimina2Nome").textContent = nome;
+    el("btnEliminaSi").textContent = `Sì, elimina ${nome} per sempre`;
+    el("dlgElimina2").showModal();
+    el("btnEliminaNo2").focus();
+  }
+
+  async function eliminaSocio() {
+    const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
+    el("dlgElimina2").close();
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("delete_member", { member_id: socioAperto.id });
+      if (error) throw error;
+      showToast(`${nome} eliminato.`);
+      resetForm();
+    } catch (error) {
+      showToast(messaggioErrore(error), "is-danger");
     } finally {
       setLoading(false);
     }
