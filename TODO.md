@@ -5,7 +5,13 @@
 
 ## 2.7-SNAPSHOT (aperta l'08/10/2026 dalla 2.6, rilasciata lo stesso giorno)
 
-1. [x] **Soci: scheda più chiara** (08/10, variante C del confronto
+1. [x] **Soci: Stampa scarica la scheda in PDF** (08/10, pubblicata dal 2.7-SNAPSHOT): il pulsante resta
+       "Stampa" con la stampante, ma invece della finestra di stampa del browser scarica
+       `scheda-COGNOME-NOME.pdf` (jsPDF 2.5.1 dal CDN al primo clic, `caricaPdf()` in `shared.js`,
+       che ora ha `caricaScript()` in comune con `caricaXlsx()`). Testo vero, logo in JPEG, 40 KB.
+       Tolto lo stile di stampa della pagina. Provato col client finto: file giusto, "€" e accenti,
+       nome del file senza accenti, avviso senza cognome e nome.
+2. [x] **Soci: scheda più chiara** (08/10, variante C del confronto
        https://claude.ai/artifact/JexqWzkMVcFokhhfEoFYUi). In `web/index.html`:
        - tolta la fascia gialla/blu con l'indice delle sezioni e "Nuovo socio": una testata con nome,
          tessera e data di iscrizione, i pulsanti **Stampa** (blu) ed **Elimina** (rosso, solo su un
@@ -19,7 +25,7 @@
          finestra aprendo un altro socio e con "Chiudi scheda", Stampa, Elimina (finestra e rifiuto
          per chi ha pagato), Salva; telefono a 400 px e A+ al massimo. `docs/GUIDA_VOLONTARI.md`
          aggiornata.
-2. [x] **Social: grafiche nuove** (provate e pubblicate il 08/10, deploy dal branch `2.7-SNAPSHOT`).
+3. [x] **Social: grafiche nuove** (provate e pubblicate il 08/10, deploy dal branch `2.7-SNAPSHOT`).
        File: `web/social-templates.js`, `web/social.html`, `web/test-social.js`.
        - `disegnaPost()`: biglietto a colonna (foto, testo, telefoni dentro), testo che va a capo e
          si riduce solo a biglietto pieno, pastiglia al posto del riquadro "Servizi". Tolti
