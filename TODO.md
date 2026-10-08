@@ -5,7 +5,21 @@
 
 ## 2.7-SNAPSHOT (aperta l'08/10/2026 dalla 2.6, rilasciata lo stesso giorno)
 
-1. [x] **Social: grafiche nuove** (provate e pubblicate il 08/10, deploy dal branch `2.7-SNAPSHOT`).
+1. [x] **Soci: scheda più chiara** (08/10, variante C del confronto
+       https://claude.ai/artifact/JexqWzkMVcFokhhfEoFYUi). In `web/index.html`:
+       - tolta la fascia gialla/blu con l'indice delle sezioni e "Nuovo socio": una testata con nome,
+         tessera e data di iscrizione, i pulsanti **Stampa** (blu) ed **Elimina** (rosso, solo su un
+         socio salvato) e "Chiudi scheda" per lasciare un socio senza salvarlo. Il modulo si svuota
+         già da solo dopo il salvataggio.
+       - quattro sezioni colorate con il nome in una striscia in alto che resta sotto la barra
+         scorrendo: Anagrafica (blu), Tessera (verde: tipo, famiglia, numero tessera), Gite e corsi
+         (viola: abbonamenti, presciistica, corso, partenze), Pagamento (arancio: acconto, totale a
+         mano, chi paga). Sparita "Amministrazione". Stessi campi e stessi id.
+       - Provato con il client finto: testata nuovo/aperto, nome che segue i campi, domande in
+         finestra aprendo un altro socio e con "Chiudi scheda", Stampa, Elimina (finestra e rifiuto
+         per chi ha pagato), Salva; telefono a 400 px e A+ al massimo. `docs/GUIDA_VOLONTARI.md`
+         aggiornata.
+2. [x] **Social: grafiche nuove** (provate e pubblicate il 08/10, deploy dal branch `2.7-SNAPSHOT`).
        File: `web/social-templates.js`, `web/social.html`, `web/test-social.js`.
        - `disegnaPost()`: biglietto a colonna (foto, testo, telefoni dentro), testo che va a capo e
          si riduce solo a biglietto pieno, pastiglia al posto del riquadro "Servizi". Tolti
