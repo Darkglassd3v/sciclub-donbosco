@@ -175,77 +175,101 @@ function badge(s, k = 1) {
 }
 
 /* Etichetta di categoria per ciò che non ha data: stesso riquadro e corpo del bollo. */
-const tag = (C, k = 1) => `<div style="background:${C.c};color:${C.ink};border-radius:${28 * k}px;padding:0 ${32 * k}px;height:${196 * k}px;display:flex;align-items:center;font-size:${64 * k}px;font-weight:800;letter-spacing:-.02em;white-space:nowrap">${escS(C.label)}</div>`;
 
-function facts(list, color, lab, size = 30) {
-  return list.map(([k, v]) => `<div><div style="font-size:${size * .8}px;font-weight:600;color:${lab}">${escS(k)}</div>
-    <div style="font-size:${size}px;font-weight:700;color:${color}">${escS(v)}</div></div>`).join("");
+function fotoPiena(src) {
+  return photo(1, 1, src).replace('width="1" height="1"', 'width="100%" height="100%"')
+    .replace("width:1px;height:1px", "width:100%;height:100%");
 }
 
-/* Testo di ogni post (gita o evento), in tre pezzi posizionati rispetto alla
- * riga dei prezzi, che sta sempre a o.py: il titolo cresce verso l'alto, i
- * dettagli verso il basso. Così il prezzo resta nello stesso punto con prezzo
- * singolo, «da … a …» o adulti/ragazzi. Senza prezzo (show_price spento) i
- * dettagli salgono subito sotto il titolo. o = { x, r, H, py, col, accent, lab, k,
- * limite }: `limite` è dove i dettagli devono finire (i telefoni della story,
- * il fondo del biglietto), e fit() lo controlla. */
-function content(s, o) {
-  const k = o.k, gita = s.kind === "gita", size = 104 * k;
-  const prices = s.prices || [], labels = prices.some((p) => p[0]);
-  const top = gita
-    ? `<div class="t-dest" data-fit style="font-size:${size}px;color:${o.col}">${escS(s.dest)}</div>`
-    : `<div class="t-dest" data-fit style="font-size:${88 * k}px;color:${o.col}">${escS(s.title)}</div>
-       ${s.sub ? `<div style="font-size:${34 * k}px;font-weight:600;color:${o.lab};margin-top:${10 * k}px">${escS(s.sub)}</div>` : ""}`;
-  const row = prices.map(([n, v]) => `<div>
-      <div class="t-dest" style="font-size:${size}px;color:${o.accent};white-space:nowrap">${escS(v)}</div>
-      ${n ? `<div style="font-size:${40 * k}px;font-weight:700;line-height:1.1;margin-top:${8 * k}px;color:${o.col};white-space:nowrap">${escS(n)}</div>` : ""}</div>`).join("");
-  const below = gita
-    ? `<div style="font-size:${54 * k}px;font-weight:700;line-height:1.12;letter-spacing:-.02em;color:${o.col}">${(s.stops || []).map(([t, l]) => `ore ${escS(t)} · ${escS(l)}`).join("<br>")}</div>
-       ${s.deadline ? `<div style="font-size:${38 * k}px;font-weight:700;color:${o.accent};margin-top:${18 * k}px">Iscrizioni ${escS(s.deadline)}</div>` : ""}`
-    : `<div style="display:flex;flex-wrap:wrap;gap:${12 * k}px ${44 * k}px">${facts(s.facts || [], o.col, o.lab, 36 * k)}</div>`;
-  // Senza prezzo il titolo scende di mezza riga: il biglietto non resta
-  // vuoto in fondo, e i dettagli partono subito sotto.
-  const py = prices.length ? o.py : o.py + size * .6;
-  const sotto = prices.length ? py + size * .95 + (labels ? 52 : 0) * k + 30 * k : py + 30 * k;
-  return `<div class="abs" style="left:${o.x}px;right:${o.r}px;bottom:${o.H - py + 14 * k}px">${top}</div>
-    ${prices.length ? `<div class="abs" data-fitrow style="left:${o.x}px;right:${o.r}px;top:${o.py}px;display:flex;gap:${64 * k}px">${row}</div>` : ""}
-    <div class="abs" data-fitsotto="${o.limite}" style="left:${o.x}px;right:${o.r}px;top:${sotto}px">${below}</div>`;
+// Corpi di partenza in base a quanto testo c'è (post; la story li moltiplica per k).
+const corpoTitolo = (n) => (n <= 14 ? 150 : n <= 24 ? 128 : n <= 45 ? 112 : n <= 80 ? 100 : 88);
+// Sottotesto: più grande quando è l'unico testo, poi scende con la lunghezza.
+const corpoTesto = (n, solo) => (solo ? (n <= 80 ? 72 : n <= 200 ? 58 : 50) : n <= 160 ? 46 : 42);
+
+// Etichetta di categoria per ciò che non ha data: una pastiglia, non un riquadro alto come il bollo.
+const pastiglia = (C, k) => `<div style="background:${C.c};color:${C.ink};border-radius:${20 * k}px;padding:${14 * k}px ${30 * k}px;font-size:${44 * k}px;font-weight:800;white-space:nowrap">${escS(C.label)}</div>`;
+
+const icoTel = (px, col) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="${col}" style="vertical-align:-.12em"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>`;
+
+/* Telefoni dentro il biglietto, scuri su bianco; due contatti che non stanno
+ * su una riga vanno a capo invece di rimpicciolirsi. */
+function telefoni(lista, k) {
+  if (!lista.length) return "";
+  return `<div data-fittel style="flex:0 0 auto;margin:0 40px;border-top:4px dashed #C7D0DA;padding:${22 * k}px 16px ${28 * k}px;
+      display:flex;flex-wrap:wrap;gap:${4 * k}px ${44 * k}px;font-size:${40 * k}px;font-weight:700;line-height:1.25;color:#14202E">
+    ${lista.map((c) => `<span style="white-space:nowrap">${icoTel(Math.round(40 * k), "#14202E")} <span style="font-weight:500">${escS(c.name)}</span> ${escS(c.phone)}${c.hours
+      ? ` <span style="font-weight:500;font-size:.75em;color:#4A5361">${escS(c.hours)}</span>` : ""}</span>`).join("")}</div>`;
 }
 
-/* Riduce il corpo dei titoli [data-fit] finché stanno su una riga, e quello
- * dei prezzi [data-fitrow] (tutti insieme, restano uguali) finché la riga sta
- * nel riquadro. Va chiamata dopo che il canvas è nella pagina e i font sono
- * caricati. Restituisce true se qualcosa è rimasto troppo lungo anche al
- * corpo minimo: la pagina lo segnala prima dell'export. */
+// Orari e intervalli ("18-20", "6-14") non vanno a capo sul trattino.
+const intero = (v) => escS(v).replace(/\d+[-–]\d+/g, (x) => `<span style="white-space:nowrap">${x}</span>`);
+
+/* Il testo del biglietto. I corpi sono tre variabili sul contenitore: --t
+ * titolo, --b testo (sottotesto, informazioni, partenze, scadenza), --p
+ * prezzi; fit() le abbassa se il biglietto non basta. */
+function testoBiglietto(s, accent, k) {
+  const gita = s.kind === "gita", titolo = String((gita ? s.dest : s.title) || "").trim();
+  const sub = gita ? "" : String(s.sub || "").trim();
+  const prices = s.prices || [], facts = s.facts || [], stops = gita ? s.stops || [] : [];
+  const solo = !titolo && !facts.length && !prices.length;
+  const T = corpoTitolo(titolo.length) * k, B = corpoTesto(sub.length, solo) * k * (s.fmt === "story" ? .9 : 1), P = 116 * k;
+  const testa = titolo || sub ? `<div>
+      ${titolo ? `<div class="t-dest" data-titolo style="font-size:var(--t);line-height:1.02;color:#14202E;text-wrap:balance">${escS(titolo)}</div>` : ""}
+      ${sub ? `<div style="font-size:var(--b);font-weight:600;line-height:1.25;color:#2E3A48;white-space:pre-line;text-wrap:pretty;${titolo ? `margin-top:calc(var(--b) * .35)` : ""}">${escS(sub)}</div>` : ""}</div>` : "";
+  const prezzi = prices.length ? `<div style="display:flex;flex-wrap:wrap;gap:calc(var(--b) * .4) calc(var(--p) * .55)">${prices.map(([n, v]) => `<div>
+      <div class="t-dest" style="font-size:var(--p);color:${accent};white-space:nowrap">${escS(v)}</div>
+      ${n ? `<div style="font-size:calc(var(--b) * .9);font-weight:700;margin-top:${6 * k}px;color:#14202E">${escS(n)}</div>` : ""}</div>`).join("")}</div>` : "";
+  const fatti = facts.length ? `<div style="display:grid;grid-template-columns:repeat(${facts.length > 1 ? 2 : 1},minmax(0,1fr));gap:calc(var(--b) * .45) calc(var(--b) * .95)">
+      ${facts.map(([n, v]) => `<div><div style="font-size:calc(var(--b) * .72);font-weight:600;color:#4A5361">${escS(n)}</div>
+        <div style="font-size:var(--b);font-weight:700;line-height:1.15;color:#14202E">${intero(v)}</div></div>`).join("")}</div>` : "";
+  const partenze = stops.length ? `<div style="font-size:calc(var(--b) * 1.15);font-weight:700;line-height:1.18;color:#14202E">
+      ${stops.map(([t, l]) => `<div><span style="color:${accent};white-space:nowrap">ore ${escS(t)}</span> · ${escS(l)}</div>`).join("")}</div>` : "";
+  const scadenza = gita && s.deadline ? `<div style="font-size:var(--b);font-weight:800;color:${accent}">Iscrizioni ${escS(s.deadline)}</div>` : "";
+  const pezzi = gita ? [testa, prezzi, partenze, scadenza] : [testa, fatti, prezzi];
+  return { html: pezzi.filter(Boolean).join(""), T, B, P };
+}
+
+/* Adatta il testo alla tela. Va chiamata dopo che il canvas è nella pagina e
+ * i font sono caricati; restituisce true se qualcosa resta troppo lungo anche
+ * al corpo minimo, e la pagina lo segnala prima dell'export.
+ * - [data-fit] (titolo del calendario): su una riga, il corpo scende fino a 40 px.
+ * - [data-fittel] (telefoni): una riga per contatto; un contatto più largo
+ *   della riga scende fino a 26 px.
+ * - [data-biglietto] (post e story): prima una parola più larga della riga
+ *   (il titolo va a capo, ma una parola sola non si spezza); poi, finché il
+ *   biglietto è pieno con la foto già alla misura minima, scende il titolo
+ *   fino a 2,2 volte il testo, poi titolo, testo e prezzi insieme, fino a un
+ *   testo di 32 px (36 nella story). Oltre, c'è davvero troppo da dire.
+ *   Prima il testo era appeso alla riga del prezzo e non si riduceva: nelle
+ *   story finiva sopra i telefoni, e un titolo lungo usciva dal biglietto. */
 function fit(radice = document) {
   let sborda = false;
-  radice.querySelectorAll("[data-fitrow]").forEach((row) => {
-    const vals = [...row.querySelectorAll(".t-dest")];
-    let f = parseFloat(vals[0].style.fontSize);
-    while (row.scrollWidth > row.clientWidth && f > 40) {
-      f -= 2;
-      vals.forEach((v) => (v.style.fontSize = f + "px"));
-    }
-    if (row.scrollWidth > row.clientWidth) sborda = true;
-  });
   radice.querySelectorAll("[data-fit]").forEach((el) => {
     el.style.whiteSpace = "nowrap";
     let f = parseFloat(el.style.fontSize);
     while (el.scrollWidth > el.clientWidth && f > 40) el.style.fontSize = (f -= 2) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
   });
-  // I telefoni: il corpo scende fino a 20 px, poi sborda (troppi contatti).
   radice.querySelectorAll("[data-fittel]").forEach((el) => {
     let f = parseFloat(el.style.fontSize);
-    while (el.scrollWidth > el.clientWidth && f > 20) el.style.fontSize = (f -= 1) + "px";
+    while (el.scrollWidth > el.clientWidth && f > 26) el.style.fontSize = (f -= 1) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
   });
-  // Partenze e scadenza scendono dal prezzo verso il basso senza un fondo: con
-  // tante partenze, o luoghi lunghi che vanno a capo, finivano sopra i
-  // telefoni della story, o fuori dal biglietto, e nessuno lo diceva.
-  // ponytail: solo l'avviso, niente rimpicciolimento; se capita spesso, ridurre il corpo come sopra.
-  radice.querySelectorAll("[data-fitsotto]").forEach((el) => {
-    if (el.offsetTop + el.scrollHeight > Number(el.dataset.fitsotto)) sborda = true;
+  radice.querySelectorAll("[data-biglietto]").forEach((card) => {
+    const box = card.querySelector("[data-testo]"), tit = box.querySelector("[data-titolo]"), k = Number(box.dataset.k);
+    const v = (n) => parseFloat(box.style.getPropertyValue(n));
+    let T = v("--t"), B = v("--b"), P = v("--p");
+    const metti = () => { box.style.setProperty("--t", T + "px"); box.style.setProperty("--b", B + "px"); box.style.setProperty("--p", P + "px"); };
+    const pieno = () => card.scrollHeight > card.clientHeight + 1;
+    const minB = k > 1 ? 36 : 32;
+    while (tit && tit.scrollWidth > tit.clientWidth && T > 40) { T -= 2; metti(); }
+    while (pieno()) {
+      if (T > Math.max(B * 2.2, 64 * k)) T -= 3;
+      else if (B > minB) { B -= 1; T = Math.max(T - 2.2, 48 * k); P = Math.max(P - 2.5, 64 * k); }
+      else break;
+      metti();
+    }
+    if (pieno()) sborda = true;
   });
   return sborda;
 }
@@ -256,9 +280,17 @@ function fit(radice = document) {
  * testata del post aperto, così dicono la stessa cosa. Salvare si può lo
  * stesso: salva() blocca solo meta, giorno della gita e sponsor.
  */
+/** Come chiamare un post nell'elenco e nei nomi dei file: la prima riga del titolo, o del sottotesto se non ha titolo. */
+function nomePost(ev) {
+  return (String(ev.title || "").trim() || String(ev.subtitle || "").trim()).split("\n")[0].trim();
+}
+
 function mancanti(ev) {
   const manca = [];
-  if (!String(ev.title || "").trim()) manca.push(ev.kind === "gita" ? "la meta" : "il titolo");
+  // Un post può essere solo un titolo o solo un sottotesto; la gita ha sempre la meta.
+  if (ev.kind === "gita" ? !String(ev.title || "").trim() : !nomePost(ev)) {
+    manca.push(ev.kind === "gita" ? "la meta" : "il titolo o il sottotesto");
+  }
   if (ev.kind === "gita") {
     if (!ev.event_date) manca.push("il giorno");
     if (!(ev.stops || []).some(([t, l]) => t || l)) manca.push("le partenze");
@@ -282,17 +314,6 @@ function impostaContatti(righe) {
 /** I contatti di un post, nel suo ordine; gli id tolti dalla rubrica si saltano. */
 function contattiDi(ev) {
   return (ev.contacts || []).map((id) => SOCIAL.contatti.find((c) => c.id === id)).filter(Boolean);
-}
-
-/* Riga dei telefoni in fondo al biglietto; senza contatti, niente. Gli orari
- * più piccoli e chiari, dopo il numero. data-fittel: fit() la rimpicciolisce
- * se non ci sta. */
-function phones(lista, col, k = 1) {
-  if (!lista.length) return "";
-  const ico = `<svg width="${34 * k}" height="${34 * k}" viewBox="0 0 24 24" fill="${col}"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>`;
-  return `<div data-fittel style="display:flex;align-items:center;gap:${16 * k}px;font-size:${32 * k}px;font-weight:700;color:${col};white-space:nowrap;overflow:hidden">${ico}
-    ${lista.map((c) => `<span><span style="font-weight:500;opacity:.85">${escS(c.name)}</span> ${escS(c.phone)}${c.hours
-      ? ` <span style="font-weight:500;font-size:.8em;opacity:.8">${escS(c.hours)}</span>` : ""}</span>`).join(`<span style="opacity:.5">·</span>`)}</div>`;
 }
 
 /* Foto della meta; senza, un paesaggio disegnato (la C perdona foto mediocri,
@@ -323,28 +344,38 @@ function calRows(rows) {
 // C · Skipass
 // ---------------------------------------------------------------------------
 
-/** Post o story di una gita o di un evento (modello da modelloPost()). */
+/**
+ * Post o story di una gita o di un evento (modello da modelloPost()). Il
+ * biglietto è una colonna: foto, testo, telefoni. Con poco testo la foto si
+ * allunga invece di lasciare bianco in fondo; con tanto, fit() riduce il testo.
+ */
 function disegnaPost(s) {
   const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
-  const notch = (y, m) => `<div class="abs" style="left:-${m}px;top:${y - m}px;width:${m * 2}px;height:${m * 2}px;border-radius:50%;background:${C.c}"></div>
-    <div class="abs" style="right:-${m}px;top:${y - m}px;width:${m * 2}px;height:${m * 2}px;border-radius:50%;background:${C.c}"></div>
-    <div class="abs" style="left:${m + 10}px;right:${m + 10}px;top:${y}px;border-top:4px dashed #C7D0DA"></div>`;
-  // Story: biglietto lungo quasi a tutta tela; logo, bollo e telefoni restano
-  // fuori dalle fasce di Instagram.
-  const m = 60, cw = W - m * 2, k = st ? 1.5 : 1, ph = st ? 640 : 260;
-  const cardH = H - m * 2 - (st ? 0 : 60);
-  const telStory = H - SAFE.bottom - m - 90;  // dove partono i telefoni della story, dentro il biglietto
-  const body = `${photo(cw, ph, s.photo)}
-      <div class="abs" style="left:0;top:0;background:#fff;padding:18px 26px;border-bottom-right-radius:28px">
-        <img class="logo" src="${SOCIAL.logo}" style="height:100px"></div>
-      <div class="abs" style="right:40px;top:36px">${s.date ? badge(s) : tag(C)}</div>
-      ${content(s, { x: 56, r: 56, H: cardH, py: st ? 920 : 450, col: "#14202E", accent: C.txt, lab: "#5B6472", k,
-        limite: st ? (s.contatti.length ? telStory - 16 : H - SAFE.bottom - m) : cardH - 30 })}
-      ${notch(ph, 30)}
-      ${st && s.contatti.length ? `<div class="abs" style="left:56px;right:56px;top:${telStory}px;border-top:4px dashed #C7D0DA;padding-top:28px">${phones(s.contatti, "#14202E", 1.15)}</div>` : ""}`;
+  const m = 60, k = st ? 1.4 : 1;
+  // Story: il biglietto finisce sopra la fascia della risposta di Instagram,
+  // logo e bollo scendono sotto quella del profilo.
+  const cardH = st ? H - m - SAFE.bottom : H - m * 2, su = st ? SAFE.top - m : 0;
+  // La foto non scende sotto il bollo della data (la pastiglia è più bassa).
+  const fotoMin = st ? (s.date ? 480 : 380) : (s.date ? 225 : 150);
+  const t = testoBiglietto(s, C.txt, k);
+  const notch = `<div style="position:relative;height:0;flex:0 0 auto">
+      <div class="abs" style="left:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
+      <div class="abs" style="right:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
+      <div class="abs" style="left:40px;right:40px;top:-2px;border-top:4px dashed #C7D0DA"></div></div>`;
   return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">
-    <div class="abs" style="left:${m}px;width:${cw}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden">${body}</div>
-    ${st ? "" : `<div class="abs" style="left:${m + 8}px;right:${m}px;bottom:44px">${phones(s.contatti, C.ink)}</div>`}
+    <div class="abs" data-biglietto style="left:${m}px;right:${m}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden;display:flex;flex-direction:column">
+      <div style="position:relative;flex:3 1 0;min-height:${fotoMin}px;max-height:${st ? 820 : 460}px">
+        ${fotoPiena(s.photo)}
+        <div class="abs" style="left:0;top:${su}px;background:#fff;padding:18px 26px;border-radius:0 0 28px 0${su ? ";border-top-right-radius:28px" : ""}">
+          <img class="logo" src="${SOCIAL.logo}" style="height:${100 * (st ? 1.2 : 1)}px"></div>
+        <div class="abs" style="right:40px;top:${su + 36}px">${s.date ? badge(s, st ? 1.3 : 1) : pastiglia(C, k)}</div>
+      </div>
+      ${notch}
+      <div data-testo data-k="${k}" style="--t:${t.T}px;--b:${t.B}px;--p:${t.P}px;flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--b) * .6);padding:${36 * k}px 56px ${30 * k}px">
+        ${t.html}</div>
+      ${telefoni(s.contatti, st ? 1.2 : 1)}
+    </div>
+    ${st ? `<div class="abs" style="left:0;right:0;top:${m + cardH + 56}px;text-align:center;color:${C.ink};font-size:46px;font-weight:800;letter-spacing:.12em;opacity:.9">SCI CLUB DON BOSCO</div>` : ""}
   </div>`;
 }
 
@@ -551,5 +582,5 @@ function testoPost(ev, sp, stagione) {
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
-                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, SOCIAL };
+                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL };
 }

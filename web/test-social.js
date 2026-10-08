@@ -7,7 +7,7 @@
 
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
-        contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, SOCIAL } = require("./social-templates.js");
+        contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -117,6 +117,13 @@ assert.deepStrictEqual(mancanti({ kind: "cena", title: "Cena sociale" }), ["la d
 assert.deepStrictEqual(mancanti({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
 assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo" }), ["lo sponsor"]);
 assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo", sponsor_id: "s1" }), []);
+// Un post può essere fatto solo di sottotesto; senza né titolo né sottotesto manca qualcosa.
+assert.deepStrictEqual(mancanti({ kind: "servizi", title: "", subtitle: "Palestra aperta il martedì" }), []);
+assert.deepStrictEqual(mancanti({ kind: "servizi", title: " ", subtitle: "" }), ["il titolo o il sottotesto"]);
+assert.deepStrictEqual(mancanti({ kind: "gita", title: "", subtitle: "x", event_date: "2027-01-10", stops: [["7", "Asti"]],
+  prices: [[null, "40 €"]], deadline: "2027-01-05" }), ["la meta"], "la gita senza meta");
+assert.strictEqual(nomePost({ title: "", subtitle: "Prima riga\nseconda" }), "Prima riga");
+assert.strictEqual(nomePost({ title: "Cena\nsociale", subtitle: "x" }), "Cena");
 
 // --- Colori -----------------------------------------------------------------
 

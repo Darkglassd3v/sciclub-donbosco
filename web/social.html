@@ -288,8 +288,10 @@
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
                 <div class="field campo-largo" data-per="evento sponsor">
-                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotitolo</label>
-                  <input class="input" id="fSottotitolo">
+                  <!-- Più righe: gli a capo restano nel post, e un post può essere
+                       fatto solo di sottotesto (senza titolo). -->
+                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
+                  <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                 </div>
                 <div class="field campo-largo" data-per="sponsor">
                   <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
@@ -804,7 +806,7 @@
     return `<li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
       <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
         ? `<span class="sett">${maiuscola(GIORNI[d.getDay()].slice(0, 3))}</span><span class="gm">${dataCorta(p.event_date)}</span>` : "—"}</span>
-      <span class="quale">${esc(String(p.title).split("\n")[0] || "(senza titolo)")}
+      <span class="quale">${esc(nomePost(p) || "(senza titolo)")}
         <small>${esc(NOMI_TIPO[p.kind])}${sponsor} ${stato(p)}</small></span>
     </button></li>`;
   }
@@ -922,7 +924,7 @@
     const g = gruppo(el("fTipo").value);
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
-    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotitolo";
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
@@ -933,7 +935,7 @@
   function aggiornaTesta() {
     const p = { ...daForm(), published_at: aperto && aperto.published_at }, quando = dataLunga(p.event_date);
     el("occhielloPost").textContent = `${NOMI_TIPO[p.kind]}${quando ? ` · ${quando}` : ""}`;
-    el("titoloEditor").textContent = p.title.split("\n")[0] || NOMI_NUOVO[p.kind] || "Nuovo post";
+    el("titoloEditor").textContent = nomePost(p) || NOMI_NUOVO[p.kind] || "Nuovo post";
     el("statoPost").innerHTML = stato(p);
     const manca = p.published_at ? [] : mancanti(p);
     el("mancaCosa").hidden = !manca.length;
@@ -1007,7 +1009,11 @@
 
   async function salva() {
     const riga = daForm();
-    if (!riga.title) { showToast("Scrivi la meta o il titolo.", "is-warning"); return; }
+    // Un post può essere solo sottotesto; la gita ha sempre la meta.
+    if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
+      showToast(riga.kind === "gita" ? "Scrivi la meta." : "Scrivi il titolo o il sottotesto.", "is-warning");
+      return;
+    }
     if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli il giorno della gita nel calendario: decide anche il colore.", "is-warning"); return; }
     if (riga.kind === "sponsor" && !riga.sponsor_id) { showToast("Scegli lo sponsor.", "is-warning"); return; }
     setLoading(true);
@@ -1161,8 +1167,8 @@
       return sp ? Object.entries(formatiCampagna(post, sp, STAGIONE)).map(([chiave, f]) =>
         ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${semplice(sp.name)}-${chiave}.png` })) : [];
     }
-    if (!post.title || (post.kind === "gita" && !post.event_date)) return [];
-    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
+    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
     return [
       { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
       { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
@@ -1245,7 +1251,7 @@
     const scelta = el("fData").value, [a, m] = meseGita.split("-").map(Number);
     const vuote = (new Date(a, m - 1, 1).getDay() + 6) % 7, giorni = new Date(a, m, 0).getDate();
     const altre = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (aperto && aperto.id))
-      .map((p) => [p.event_date, String(p.title).split("\n")[0]]));
+      .map((p) => [p.event_date, nomePost(p)]));
     const celle = Array(vuote).fill("<span></span>");
     for (let n = 1; n <= giorni; n++) {
       const iso = `${meseGita}-${String(n).padStart(2, "0")}`, cat = categoriaGita(iso), gia = altre.get(iso);
