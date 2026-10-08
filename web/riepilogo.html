@@ -80,8 +80,9 @@
     <div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value rosso" id="kDa">—</div></div>
   </div>
 
-  <div class="riquadro" id="zonaComandi">
-    <h2>Elenchi e stagioni chiuse</h2>
+  <section class="riquadro sezione anagrafica" id="zonaComandi">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Elenchi e stagioni chiuse</h2>
+    <div class="corpo">
     <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
     <p class="occhiello" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
     <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
@@ -90,33 +91,47 @@
     <div class="azioni" id="zonaScarica" hidden>
       <button type="button" class="button is-link is-outlined" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
     </div>
-  </div>
+    </div>
+  </section>
 
-  <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. -->
-  <div class="riquadro">
-    <h2>Tessere</h2>
+  <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. I colori
+       sono quelli della scheda Soci: tessere verdi, gite e corsi viola, soldi arancio. -->
+  <section class="riquadro sezione tessera">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>Tessere</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
-  </div>
-  <div class="riquadro">
-    <h2>Abbonamenti gite</h2>
+    </div>
+  </section>
+  <section class="riquadro sezione gite">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Abbonamenti gite</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
-  </div>
-  <div class="riquadro">
-    <h2>Corsi</h2>
+    </div>
+  </section>
+  <section class="riquadro sezione gite">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Corsi</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
-  </div>
-  <div class="riquadro">
-    <h2>Presciistica</h2>
+    </div>
+  </section>
+  <section class="riquadro sezione gite">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Presciistica</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
-  </div>
-  <div class="riquadro solo-bilancio" hidden>
-    <h2>Entrate extra</h2>
+    </div>
+  </section>
+  <section class="riquadro sezione pagamento solo-bilancio" hidden>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Entrate extra</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
-  </div>
-  <div class="riquadro solo-bilancio" hidden>
-    <h2>Uscite</h2>
+    </div>
+  </section>
+  <section class="riquadro sezione pagamento solo-bilancio" hidden>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Uscite</h2>
+    <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
-  </div>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>

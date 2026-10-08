@@ -87,23 +87,7 @@
     .btn-elimina { background: var(--errore); color: #fff; }
     .btn-elimina:hover, .btn-elimina:focus { background: #8E1D17; color: #fff; }
 
-    /* Sezioni del modulo: ognuna col suo colore, il nome in una striscia piena
-     * in alto che resta sotto la barra mentre si scorre (si sa sempre dove si
-     * è, senza indice). Gli stessi colori delle categorie dei post social; il
-     * bianco su ognuno supera 4.5:1. overflow: clip e non hidden, che
-     * spegnerebbe lo sticky della striscia. */
-    .sezione { --colore: var(--blu); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
-               border: 2px solid var(--colore); box-shadow: none; }
-    .sezione.tessera { --colore: #147A45; --tinta: #EAF5EE; }
-    .sezione.gite { --colore: #5B2A86; --tinta: #F3EEF8; }
-    .sezione.pagamento { --colore: #B4400B; --tinta: #FCF0E8; }
-    .sezione > .striscia { position: sticky; top: var(--barra-h); z-index: 3; display: flex; flex-wrap: wrap; align-items: center;
-                           gap: 4px 14px; margin: 0; padding: 14px 28px; background: var(--colore); color: #fff;
-                           font-size: 1.35rem; font-weight: 800; letter-spacing: .08em; }
-    .sezione > .striscia svg { flex: none; }
-    .sezione > .striscia .cosa { font-size: 1rem; font-weight: 500; letter-spacing: 0; opacity: .92; }
-    .sezione > .striscia .cosa::before { content: "·"; margin-right: 12px; opacity: .7; }
-    .sezione > .corpo { padding: 24px 28px 28px; }
+    /* Sezioni colorate (.sezione, .striscia, .corpo): in brand.css, uguali in tutto il sito. */
     /* Sul colore chiaro i campi e le scelte restano bianchi. */
     .partenze { padding: .5rem; background: #fff; border: 1px solid var(--filo); border-radius: var(--raggio); }
 
@@ -126,11 +110,7 @@
 
     @media screen and (max-width: 768px) {
       .container-main { padding-bottom: 220px; }
-      .testata-scheda, .sezione > .striscia { padding-left: 20px; padding-right: 20px; }
-      .sezione > .corpo { padding: 20px; }
-      /* La descrizione va su una riga sua: il "·" in testa non serve. */
-      .sezione > .striscia .cosa { flex-basis: 100%; }
-      .sezione > .striscia .cosa::before { content: none; }
+      .testata-scheda { padding-left: 20px; padding-right: 20px; }
       .testata-scheda .nome { font-size: 1.5rem; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
@@ -142,7 +122,7 @@
      * incollata coprirebbe metà di quel che si vede. Scende in fondo al
      * modulo, dove si arriva comunque per salvare. */
     @media screen and (max-height: 560px) {
-      .total-box, .sezione > .striscia { position: static; }
+      .total-box { position: static; }
       .container-main { padding-bottom: 28px; }
     }
   </style>
@@ -208,7 +188,7 @@
          corsi, i soldi. Prima c'era anche "Amministrazione", con dentro il
          numero tessera e l'acconto: ora stanno con la tessera e col pagamento. -->
     <section class="riquadro sezione anagrafica" id="sez-anagrafica">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>ANAGRAFICA <span class="cosa">Chi è: nome, nascita, residenza, contatti</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Anagrafica <span class="cosa">Chi è: nome, nascita, residenza, contatti</span></h2>
     <div class="corpo">
     <p class="occhiello">
       I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
@@ -237,7 +217,7 @@
     </section>
 
     <section class="riquadro sezione tessera" id="sez-tessera">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>TESSERA <span class="cosa">Tipo di tessera, famiglia e numero</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>Tessera <span class="cosa">Tipo di tessera, famiglia e numero</span></h2>
     <div class="corpo">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
@@ -251,7 +231,7 @@
     </section>
 
     <section class="riquadro sezione gite" id="sez-gite">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>GITE E CORSI <span class="cosa">Abbonamenti, presciistica, corso e partenze</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Gite e corsi <span class="cosa">Abbonamenti, presciistica, corso e partenze</span></h2>
     <div class="corpo">
       <!-- Gli abbonamenti non sono una scelta sola come le altre voci: chi
            finisce le cinque gite ne compra un altro, anche di un altro giorno.
@@ -288,7 +268,7 @@
     </section>
 
     <section class="riquadro sezione pagamento" id="sez-pagamento">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>PAGAMENTO <span class="cosa">Acconto, totale, chi paga</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Pagamento <span class="cosa">Acconto, totale, chi paga</span></h2>
     <div class="corpo">
     <div class="columns mt-1">
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
