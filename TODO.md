@@ -20,6 +20,11 @@ già online:
 - Logo vettoriale (`logo_sciclubdonbosco.svg`) in tutte le pagine, nei post e in `ricerca/`
 - Sezioni colorate anche in Riepilogo, Assicurazione e Bilancio (stile comune in `brand.css`):
   stessi colori della scheda Soci
+- Social: due grafiche, **Ritocco** (il biglietto di sempre con la neve) e **Montagna** (foto grande,
+  scheda bianca, calendario 1080×1350), scelte per tutta la pagina in Social > Impostazioni guardando
+  un post d'esempio (tabella `social_settings`, schema in produzione l'08/10)
+- Soci: le finestre di conferma del salvataggio e dell'eliminazione mostrano i dati in una tabellina
+  (nome e cognome, codice fiscale, luogo e data di nascita), grande e leggibile
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
