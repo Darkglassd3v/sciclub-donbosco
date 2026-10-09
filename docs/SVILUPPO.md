@@ -17,7 +17,7 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
   nuovo va aggiunto ai trigger di `.github/workflows/deploy-pages.yml`.
 - `gh` serve per seguire i deploy: `gh run list --workflow deploy-pages.yml --limit 3`.
 
-## Rilasciare una versione (fatto così dalla 2.2 alla 2.6)
+## Rilasciare una versione (fatto così dalla 2.2 alla 2.7)
 
 1. Sullo SNAPSHOT: trigger del workflow → `["X.Y"]`; commit
    `chore: il workflow delle pagine pubblica dal branch X.Y`.

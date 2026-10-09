@@ -1,16 +1,16 @@
-# TODO — aggiornato il 2026-10-08
+# TODO — aggiornato il 2026-10-09
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (08/10/2026, sera)
+## Stato del repository (09/10/2026)
 
-- Branch di lavoro `2.7-SNAPSHOT`, tutto committato e pushato; le pagine online sono quelle di
-  questo branch (deploy riuscito). `dev` è allineato alla 2.6; la 2.7 non è ancora rilasciata
-  (procedura in `docs/SVILUPPO.md`).
-- Database di produzione: schema di `supabase/schema.sql` applicato l'08/10 (tabella nuova
-  `social_settings`, grafica dei post su **Ritocco**). Backup in
-  `supabase/migration/backup-2026-10-08-social/` (fuori da git).
+- Rilasciata la **2.7** (branch e tag `2.7`): le pagine online sono quelle del branch `2.7`.
+  `dev` è allineato alla 2.7. Branch di lavoro `2.8-SNAPSHOT`: il suo primo push pubblica le
+  pagine da lì (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`).
+- Database di produzione: schema di `supabase/schema.sql` applicato il 09/10 (cambio della
+  password al primo accesso, tabella `pending_password_changes`). Backup in
+  `supabase/migration/backup-2026-10-09-password/` (fuori da git).
 - Documenti puliti l'08/10: tolti `docs/DOCUMENTAZIONE.md` (la 1.x) e i piani 2.1, 2.3 e social
   già realizzati (restano nella storia di git). Le pagine di prova su claude.ai sono cancellate.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
@@ -19,10 +19,10 @@
 
 (nessuna)
 
-## Versione aperta: 2.7-SNAPSHOT
+## Versione 2.7, rilasciata il 09/10/2026
 
-Aperta l'08/10/2026 dalla 2.6 (branch e tag `2.6`). Le pagine si pubblicano dal branch
-`2.7-SNAPSHOT`; schema in produzione l'08/10 (`social_settings`). Fatto finora, già online:
+Aperta l'08/10/2026 dalla 2.6, chiusa il 09/10 (branch e tag `2.7`); schema in produzione
+l'08/10 (`social_settings`) e il 09/10 (`pending_password_changes`). Contiene:
 
 - Social: grafiche nuove (testo che va a capo, post di solo sottotesto, Sottotesto su più righe)
 - Soci: scheda con sezioni colorate (Anagrafica, Tessera, Gite e corsi, Pagamento), testata con
