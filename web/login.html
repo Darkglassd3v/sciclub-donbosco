@@ -27,8 +27,11 @@
       <input class="input" type="email" id="email" required autocomplete="username">
     </div>
     <div class="field">
-      <label class="label">Password</label>
-      <input class="input" type="password" id="password" required autocomplete="current-password">
+      <label class="label" for="password">Password</label>
+      <div class="campo-password">
+        <input class="input" type="password" id="password" required autocomplete="current-password">
+        <button type="button" class="occhio" data-mostra="password"></button>
+      </div>
     </div>
     <button class="button is-link is-fullwidth has-text-weight-bold" id="btnLogin" type="submit">Entra</button>
   </form>
@@ -50,6 +53,8 @@
   const richiesta = new URLSearchParams(location.search);
   const next = richiesta.get("next");
   const paginaChiesta = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
+
+  collegaMostraPassword();
 
   const errore = document.getElementById("errore");
   function mostraErrore(testo) {

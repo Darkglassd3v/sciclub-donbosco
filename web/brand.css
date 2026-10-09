@@ -95,6 +95,19 @@ textarea:focus-visible,
   box-shadow: 0 0 0 5px var(--giallo);
 }
 
+/* Campo password con l'occhio dentro, a destra: mostra e nasconde quello che
+   si scrive (login e cambio password, collegaMostraPassword in shared.js). */
+.campo-password { position: relative; }
+.campo-password .input { padding-right: 3.25rem; }
+.campo-password .occhio {
+  position: absolute; top: 0; right: 0; width: 3rem; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; background: none; border-radius: var(--raggio-card);
+  color: var(--testo-soft); cursor: pointer;
+}
+.campo-password .occhio:hover { color: var(--testo); }
+.campo-password .occhio svg { width: 1.5rem; height: 1.5rem; }
+
 /* --- Campi --------------------------------------------------------------
  * Qui il bordo resta spesso: un campo che non si vede è un campo che non si
  * compila, e questa è l'unica parte della pagina dove il contorno lavora. */

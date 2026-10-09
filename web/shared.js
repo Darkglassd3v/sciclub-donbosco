@@ -134,6 +134,35 @@ async function requirePermesso(permesso) {
   return null;
 }
 
+const OCCHIO_APERTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OCCHIO_CHIUSO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>'
+  + '<line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+/**
+ * L'occhio dentro i campi password (login e cambio password, .campo-password
+ * in brand.css): data-mostra è l'id del campo. Chi vede poco scrive alla
+ * cieca e sbaglia.
+ */
+function collegaMostraPassword() {
+  document.querySelectorAll("[data-mostra]").forEach((bottone) => {
+    const campo = document.getElementById(bottone.dataset.mostra);
+    const disegna = () => {
+      const visibile = campo.type === "text";
+      bottone.innerHTML = visibile ? OCCHIO_CHIUSO : OCCHIO_APERTO;
+      bottone.setAttribute("aria-label", visibile ? "Nascondi la password" : "Mostra la password");
+      bottone.title = bottone.getAttribute("aria-label");
+      bottone.setAttribute("aria-pressed", String(visibile));
+    };
+    bottone.addEventListener("click", () => {
+      campo.type = campo.type === "password" ? "text" : "password";
+      disegna();
+    });
+    disegna();
+  });
+}
+
 /**
  * Chi può scegliere una tessera riservata (prices.min_role): la stessa regola
  * di card_allowed() nel database. 'utente' = tutti, 'admin' = admin e
