@@ -36,10 +36,16 @@ Aperta l'08/10/2026 dalla 2.6 (branch e tag `2.6`). Le pagine si pubblicano dal 
   un post d'esempio (tabella `social_settings`, schema in produzione l'08/10)
 - Soci: le finestre di conferma del salvataggio e dell'eliminazione mostrano i dati in una tabellina
   (nome e cognome, codice fiscale, luogo e data di nascita), grande e leggibile
+- Account: al primo accesso chi ha un account nuovo deve cambiare la password iniziale (pagina
+  `password.html`: attuale, nuova, conferma); gli account di prima no. In Utenti il superadmin ha
+  **Reimposta password**, che la riporta a `donbosco26!` con l'obbligo di cambiarla (tabella
+  `pending_password_changes`, schema in produzione il 09/10)
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
+- [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
+      cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al
       massimo, numero tessera proposto, secondo abbonamento, presciistica insieme a un
       abbonamento, totale a mano, Stampa), Pagamenti (Modifica importi, Storico), Riepilogo,

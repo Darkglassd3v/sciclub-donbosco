@@ -586,21 +586,81 @@ $$;
 
 comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi.';
 
+-- Cambio della password al primo accesso (dalla 2.7). Gli account nascono
+-- tutti con la stessa password iniziale (web/utenti.html), quindi chi entra
+-- per la prima volta deve sceglierne una sua prima di vedere qualunque pagina.
+-- Una riga qui = password ancora da cambiare. La mette il database quando
+-- nasce un account (o quando il superadmin la riporta a quella iniziale, vedi
+-- reset_password) e la toglie solo lui, quando la password in auth.users
+-- cambia davvero: dal browser non si toglie. Gli account che c'erano prima di
+-- questa tabella non hanno riga, cioè contano come password già cambiata.
+create table if not exists public.pending_password_changes (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+-- Nessuna policy: la legge my_access() e la scrivono i trigger qui sotto.
+alter table public.pending_password_changes enable row level security;
+
+comment on table public.pending_password_changes is 'Account che devono ancora cambiare la password iniziale. Senza riga: già cambiata.';
+
+-- Definer: le scritture su auth.users le fa l'utente di Supabase Auth, che
+-- su questa tabella non ha diritti.
+create or replace function public.require_password_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.pending_password_changes (user_id) values (new.id) on conflict do nothing;
+  return null;
+end;
+$$;
+
+create or replace function public.password_changed()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  delete from public.pending_password_changes p where p.user_id = new.id;
+  return null;
+end;
+$$;
+
+drop trigger if exists require_password_change on auth.users;
+create trigger require_password_change
+  after insert on auth.users
+  for each row execute function public.require_password_change();
+
+drop trigger if exists password_changed on auth.users;
+create trigger password_changed
+  after update of encrypted_password on auth.users
+  for each row when (old.encrypted_password is distinct from new.encrypted_password)
+  execute function public.password_changed();
+
 -- Quello che serve alle pagine per disegnare barra e contenuto: email, ruolo
--- con cui si sta guardando, ruolo vero e permessi. Una chiamata sola.
-create or replace function public.my_access()
-returns table (email text, role text, real_role text, permissions text[])
+-- con cui si sta guardando, ruolo vero, permessi e se la password è ancora
+-- da cambiare. Una chiamata sola. Il drop serve perché le colonne restituite
+-- sono cambiate nella 2.7 (create or replace non lo permette); i permessi li
+-- ridà il blocco "revoke/grant" più sotto.
+drop function if exists public.my_access();
+create function public.my_access()
+returns table (email text, role text, real_role text, permissions text[], change_password boolean)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select p.email, public.current_role(), p.role, public.role_permissions(public.current_role())
+  select p.email, public.current_role(), p.role, public.role_permissions(public.current_role()),
+         exists (select 1 from public.pending_password_changes c where c.user_id = p.user_id)
     from public.profiles p
    where p.user_id = auth.uid();
 $$;
 
-comment on function public.my_access is 'Email, ruolo effettivo, ruolo vero e permessi di chi è collegato.';
+comment on function public.my_access is 'Email, ruolo effettivo, ruolo vero, permessi di chi è collegato e se deve cambiare la password.';
 
 -- "Vedi come": solo il superadmin, controllato sul ruolo VERO. Così tornare
 -- sé stessi (null) funziona sempre, anche mentre si guarda come un ruolo che
@@ -732,6 +792,40 @@ $$;
 
 comment on function public.delete_account is 'Elimina per sempre un account Auth già rimosso dal pannello Utenti (senza riga profiles). Solo superadmin.';
 
+-- Chi ha dimenticato la password: il superadmin la riporta a quella iniziale
+-- (la passa il pannello Utenti, che la conosce) e al prossimo accesso la
+-- persona deve sceglierne una nuova. Scrive l'hash bcrypt in auth.users come
+-- lo scrive Supabase Auth: niente Admin API, quindi niente service_role.
+-- La riga in pending_password_changes va messa dopo l'update, che l'ha
+-- appena tolta (trigger password_changed).
+create or replace function public.reset_password(user_id uuid, password text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.can('gestione') then
+    raise exception 'Solo un superadmin può reimpostare una password.';
+  end if;
+  if length(coalesce(reset_password.password, '')) < 8 then
+    raise exception 'La password deve avere almeno 8 caratteri.';
+  end if;
+
+  update auth.users u
+     set encrypted_password = extensions.crypt(reset_password.password, extensions.gen_salt('bf', 10))
+   where u.id = reset_password.user_id;
+  if not found then
+    raise exception 'Account non trovato: ricarica la pagina.';
+  end if;
+
+  insert into public.pending_password_changes (user_id) values (reset_password.user_id)
+  on conflict do nothing;
+end;
+$$;
+
+comment on function public.reset_password is 'Riporta la password di un account a quella data e obbliga a cambiarla al prossimo accesso. Solo superadmin.';
+
 -- Pagina Ruoli: per ogni ruolo configurabile i permessi di adesso e quelli
 -- di partenza (per "Ripristina"). Solo superadmin.
 create or replace function public.role_grants_matrix()
@@ -837,7 +931,7 @@ begin
   foreach f in array array[
     'public.can(text[])', 'public.my_access()', 'public.set_view_as(text)',
     'public.accounts_without_role()', 'public.restore_account(uuid, text)',
-    'public.delete_account(uuid)', 'public.role_permissions(text)',
+    'public.delete_account(uuid)', 'public.reset_password(uuid, text)', 'public.role_permissions(text)',
     'public.role_grants_matrix()', 'public.set_role_grants(jsonb)',
     'public.role_grant_history()'] loop
     execute format('revoke all on function %s from public', f);

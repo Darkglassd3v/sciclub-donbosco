@@ -61,9 +61,11 @@ async function logout() {
 let _accessoCache = null;
 
 /**
- * Chi è collegato: { email, role, real_role, permissions }. `role` è il ruolo
- * con cui si sta guardando il sito ("vedi come" del superadmin), `real_role`
- * quello vero. null senza sessione o senza ruolo. Cache in memoria per pagina.
+ * Chi è collegato: { email, role, real_role, permissions, change_password }.
+ * `role` è il ruolo con cui si sta guardando il sito ("vedi come" del
+ * superadmin), `real_role` quello vero; `change_password` è true finché la
+ * password iniziale non è stata cambiata. null senza sessione o senza ruolo.
+ * Cache in memoria per pagina.
  */
 async function getProfile() {
   if (_accessoCache) return _accessoCache;
@@ -115,12 +117,17 @@ function paginaDiArrivo(accesso) {
  * il permesso manda alla pagina di arrivo del proprio ruolo (chi ha un link
  * vecchio o sbagliato finisce dove può lavorare, invece che davanti a una
  * pagina vuota). Chi non ha nessun ruolo torna al login, che glielo spiega.
+ * Chi ha ancora la password iniziale va a cambiarla, prima di tutto il resto.
  * Restituisce la sessione, o null se la pagina se ne sta andando.
  */
 async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
   const accesso = await getProfile();
+  if (accesso && accesso.change_password) {
+    location.replace("password.html");
+    return null;
+  }
   if (accesso && accesso.permissions.includes(permesso)) return sessione;
   const arrivo = paginaDiArrivo(accesso);
   location.replace(arrivo || "login.html?senza=1");

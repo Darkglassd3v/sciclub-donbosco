@@ -74,6 +74,9 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 - Ruoli: `superadmin`, `admin`, `tesoriere`, `assicurazione`, `gite` ("Utente"), `social`;
   permessi in `role_permissions()` e nella matrice di Gestione > Ruoli (`role_grants`); le
   pagine li controllano con `requirePermesso()`. Dettagli in `docs/ACCOUNT.md`.
+- Password iniziale da cambiare: riga in `pending_password_changes` (la mettono i trigger su
+  `auth.users` e `reset_password()`, la toglie il cambio vero della password); `my_access()` la
+  restituisce come `change_password` e le guardie delle pagine mandano a `password.html`.
 
 ## Interfaccia: scelte da non disfare
 

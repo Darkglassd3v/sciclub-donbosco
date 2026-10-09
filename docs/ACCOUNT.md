@@ -118,8 +118,24 @@ Il piano gratuito **non** include backup automatici. Consiglio: una volta al mes
 Le pagine non sono aperte al pubblico: senza login non si vede nulla.
 
 Dalla 2.2 gli account si creano dal **pannello Utenti** (`web/utenti.html`, riservato ai superadmin):
-email, ruolo, **+ Crea utente**. La password iniziale è sempre `donbosco26!` e va cambiata al primo
-accesso. Non serve più passare dalla dashboard, tranne che per il primissimo superadmin (sotto).
+email, ruolo, **+ Crea utente**. La password iniziale è sempre `donbosco26!`. Non serve più passare
+dalla dashboard, tranne che per il primissimo superadmin (sotto).
+
+### Cambio della password al primo accesso (dalla 2.7)
+
+Chi entra con un account nuovo, prima di vedere qualunque pagina, finisce su **Cambia la password**
+(`web/password.html`): password attuale, nuova password (almeno 8 caratteri, diversa da quella
+attuale) e conferma. Fatto il cambio, arriva sulla pagina del suo ruolo. Vale anche per il sito da
+telefono (`/ricerca/`).
+
+Lo decide il database: ogni account che nasce in `auth.users` riceve una riga in
+`pending_password_changes`, e la riga sparisce da sola quando la password cambia davvero (trigger su
+`auth.users`). Dal browser non si toglie. Gli account che esistevano prima della 2.7 non hanno la
+riga: per loro la password conta come già cambiata.
+
+**Chi dimentica la password**: pannello **Utenti** > **Reimposta password** > **Sì, reimposta la
+password**. La password torna `donbosco26!` (funzione `reset_password()`, solo superadmin) e al
+prossimo accesso la persona ne sceglie una nuova. Non serve la dashboard né nessuna mail.
 
 Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pagamenti. Non serve creare account per i soci: i soci non accedono al sistema.
 
