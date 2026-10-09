@@ -45,7 +45,7 @@
     .tabella-assic .input { min-width: 0; }
     .tabella-assic td.campo-cf { width: 38%; }
     .tabella-assic .cf { letter-spacing: .04em; text-transform: uppercase; }
-    .tabella-assic .vuota, .riquadro h2 .vuota { color: var(--testo-soft); font-weight: 400; }
+    .tabella-assic .vuota { color: var(--testo-soft); font-weight: 400; }
     .tabella-assic tr.salvata td { background: var(--ok-bg); }
     .tabella-assic tr.gruppo td { background: var(--riga-alt); font-weight: 700; font-size: 1.1rem; }
     /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
@@ -67,7 +67,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -96,8 +96,9 @@
     tornano nelle liste della volta dopo. Numeri e decorrenza sono proposti, e si possono cambiare.
   </p>
 
-  <div class="riquadro" id="invio">
-    <h2>Liste da mandare</h2>
+  <section class="riquadro sezione tessera" id="invio">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste da mandare</h2>
+    <div class="corpo">
     <p class="occhiello">Il numero di ogni lista è quello dopo l'ultima mandata dello stesso tipo.</p>
     <div class="progressivi" id="tipi"></div>
     <label class="label" for="decorrenza">Decorrenza, uguale per tutte le liste</label>
@@ -107,10 +108,12 @@
       <button type="button" class="button is-success" id="btnSegna" disabled>Segna come assicurati</button>
     </div>
     <p class="passo" id="passo" hidden></p>
-  </div>
+    </div>
+  </section>
 
-  <div class="riquadro">
-    <h2>Da assicurare <span class="vuota" id="quanti"></span></h2>
+  <section class="riquadro sezione tessera">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Da assicurare <span class="conta" id="quanti"></span></h2>
+    <div class="corpo">
     <p class="occhiello">
       Tutti i tesserati ancora da assicurare, per tipo di assicurazione e in ordine alfabetico.
       Senza codice fiscale un socio non si può assicurare: la riga è rossa finché non lo scrivi e premi Salva.
@@ -121,10 +124,12 @@
         <tbody id="elencoDa"><tr><td colspan="5" class="vuota">Caricamento…</td></tr></tbody>
       </table>
     </div>
-  </div>
+    </div>
+  </section>
 
-  <div class="riquadro">
-    <h2>Liste mandate in questa stagione</h2>
+  <section class="riquadro sezione tessera">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste mandate in questa stagione</h2>
+    <div class="corpo">
     <p class="occhiello">
       Si possono riscaricare uguali. Se una lista non è partita, annullala: i suoi soci
       tornano da assicurare. Si annulla solo l'ultima di ogni tipo.
@@ -135,10 +140,12 @@
         <tbody id="elencoListe"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
       </table>
     </div>
-  </div>
+    </div>
+  </section>
 
-  <div class="riquadro">
-    <h2>Cerca e correggi</h2>
+  <section class="riquadro sezione anagrafica">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Cerca e correggi</h2>
+    <div class="corpo">
     <p class="occhiello">
       Per correggere un codice fiscale già salvato: cerca fra i tesserati della stagione,
       anche quelli già assicurati. Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
@@ -150,7 +157,8 @@
         <tbody id="elencoCerca"></tbody>
       </table>
     </div>
-  </div>
+    </div>
+  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>

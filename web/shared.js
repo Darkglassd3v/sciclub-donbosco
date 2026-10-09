@@ -61,9 +61,11 @@ async function logout() {
 let _accessoCache = null;
 
 /**
- * Chi è collegato: { email, role, real_role, permissions }. `role` è il ruolo
- * con cui si sta guardando il sito ("vedi come" del superadmin), `real_role`
- * quello vero. null senza sessione o senza ruolo. Cache in memoria per pagina.
+ * Chi è collegato: { email, role, real_role, permissions, change_password }.
+ * `role` è il ruolo con cui si sta guardando il sito ("vedi come" del
+ * superadmin), `real_role` quello vero; `change_password` è true finché la
+ * password iniziale non è stata cambiata. null senza sessione o senza ruolo.
+ * Cache in memoria per pagina.
  */
 async function getProfile() {
   if (_accessoCache) return _accessoCache;
@@ -115,16 +117,50 @@ function paginaDiArrivo(accesso) {
  * il permesso manda alla pagina di arrivo del proprio ruolo (chi ha un link
  * vecchio o sbagliato finisce dove può lavorare, invece che davanti a una
  * pagina vuota). Chi non ha nessun ruolo torna al login, che glielo spiega.
+ * Chi ha ancora la password iniziale va a cambiarla, prima di tutto il resto.
  * Restituisce la sessione, o null se la pagina se ne sta andando.
  */
 async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
   const accesso = await getProfile();
+  if (accesso && accesso.change_password) {
+    location.replace("password.html");
+    return null;
+  }
   if (accesso && accesso.permissions.includes(permesso)) return sessione;
   const arrivo = paginaDiArrivo(accesso);
   location.replace(arrivo || "login.html?senza=1");
   return null;
+}
+
+const OCCHIO_APERTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const OCCHIO_CHIUSO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>'
+  + '<line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+/**
+ * L'occhio dentro i campi password (login e cambio password, .campo-password
+ * in brand.css): data-mostra è l'id del campo. Chi vede poco scrive alla
+ * cieca e sbaglia.
+ */
+function collegaMostraPassword() {
+  document.querySelectorAll("[data-mostra]").forEach((bottone) => {
+    const campo = document.getElementById(bottone.dataset.mostra);
+    const disegna = () => {
+      const visibile = campo.type === "text";
+      bottone.innerHTML = visibile ? OCCHIO_CHIUSO : OCCHIO_APERTO;
+      bottone.setAttribute("aria-label", visibile ? "Nascondi la password" : "Mostra la password");
+      bottone.title = bottone.getAttribute("aria-label");
+      bottone.setAttribute("aria-pressed", String(visibile));
+    };
+    bottone.addEventListener("click", () => {
+      campo.type = campo.type === "password" ? "text" : "password";
+      disegna();
+    });
+    disegna();
+  });
 }
 
 /**
@@ -351,26 +387,41 @@ const COLONNE_ASSICURAZIONE = [
   ["Numero tessera", (s) => s.card_number],
 ];
 
+/**
+ * Carica una libreria dal CDN la prima volta che serve, una volta sola anche
+ * con due clic di fila. `cosa` finisce nel messaggio d'errore ("per l'Excel").
+ * Se il caricamento fallisce si può riprovare.
+ */
+const _scriptInArrivo = {};
+function caricaScript(src, cosa) {
+  _scriptInArrivo[src] ??= new Promise((ok, ko) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = ok;
+    script.onerror = () => {
+      delete _scriptInArrivo[src];
+      script.remove();
+      ko(new Error(`non riesco a scaricare il modulo ${cosa}: controlla la connessione e riprova.`));
+    };
+    document.head.append(script);
+  });
+  return _scriptInArrivo[src];
+}
+
 // SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
 // volte a stagione. È la versione pubblicata su npm, usata solo per
 // SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
 // un giorno si leggerà il file restituito dall'assicurazione, passare alla
 // versione di cdn.sheetjs.com.
-let _xlsxInArrivo = null;
 function caricaXlsx() {
   if (window.XLSX) return Promise.resolve();
-  _xlsxInArrivo ??= new Promise((ok, ko) => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
-    script.onload = ok;
-    script.onerror = () => {
-      _xlsxInArrivo = null;
-      script.remove();
-      ko(new Error("non riesco a scaricare il modulo per l'Excel: controlla la connessione e riprova."));
-    };
-    document.head.append(script);
-  });
-  return _xlsxInArrivo;
+  return caricaScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js", "per l'Excel");
+}
+
+// jsPDF per la scheda del socio, anche lui solo al primo clic.
+function caricaPdf() {
+  if (window.jspdf) return Promise.resolve();
+  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF");
 }
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
@@ -441,13 +492,14 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(
  * niente (salvare, incassare): il "Sì" è blu invece che rosso.
  * Stile in brand.css (dialog.finestra.finestra-domanda).
  */
-function chiedi(dove, domanda, si, alSi, { pericolo = true } = {}) {
+function chiedi(dove, domanda, si, alSi, { pericolo = true, dettagli = null } = {}) {
   document.getElementById("finestraDomanda")?.remove();
   const finestra = document.createElement("dialog");
   finestra.id = "finestraDomanda";
   finestra.className = "finestra finestra-domanda";
   finestra.setAttribute("aria-labelledby", "finestraDomandaTesto");
   finestra.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(domanda)}</p>
+    ${dettagli ? tabellaDati(dettagli) : ""}
     <div class="buttons">
       <button type="button" class="button is-medium" data-no>Annulla</button>
       <button type="button" class="button is-medium ${pericolo ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>
@@ -464,6 +516,18 @@ function chiedi(dove, domanda, si, alSi, { pericolo = true } = {}) {
   document.body.append(finestra);
   finestra.showModal();
   finestra.querySelector("[data-no]").focus();
+}
+
+/**
+ * Una piccola tabella per le finestre: un dato per riga, l'etichetta a
+ * sinistra e il valore grande in grassetto. [[etichetta, valore], ...]; un
+ * valore vuoto si scrive "non scritto" in rosso, così si nota. Prima i dati
+ * stavano in una frase sola ("Salvare ROSSI MARIO? Codice fiscale …, nascita
+ * …") e non si leggevano.
+ */
+function tabellaDati(righe) {
+  return `<table class="tabella-dati"><tbody>${righe.map(([etichetta, valore]) => `<tr><th scope="row">${esc(etichetta)}</th>
+    <td${valore ? "" : ' class="manca"'}>${valore ? esc(valore) : "non scritto"}</td></tr>`).join("")}</tbody></table>`;
 }
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,8 @@
 
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
-        contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, SOCIAL } = require("./social-templates.js");
+        contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
+        impostaStile, stileCorrente, disegnaPost, disegnaCalendario, misureCalendario } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -117,6 +118,13 @@ assert.deepStrictEqual(mancanti({ kind: "cena", title: "Cena sociale" }), ["la d
 assert.deepStrictEqual(mancanti({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
 assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo" }), ["lo sponsor"]);
 assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo", sponsor_id: "s1" }), []);
+// Un post può essere fatto solo di sottotesto; senza né titolo né sottotesto manca qualcosa.
+assert.deepStrictEqual(mancanti({ kind: "servizi", title: "", subtitle: "Palestra aperta il martedì" }), []);
+assert.deepStrictEqual(mancanti({ kind: "servizi", title: " ", subtitle: "" }), ["il titolo o il sottotesto"]);
+assert.deepStrictEqual(mancanti({ kind: "gita", title: "", subtitle: "x", event_date: "2027-01-10", stops: [["7", "Asti"]],
+  prices: [[null, "40 €"]], deadline: "2027-01-05" }), ["la meta"], "la gita senza meta");
+assert.strictEqual(nomePost({ title: "", subtitle: "Prima riga\nseconda" }), "Prima riga");
+assert.strictEqual(nomePost({ title: "Cena\nsociale", subtitle: "x" }), "Cena");
 
 // --- Colori -----------------------------------------------------------------
 
@@ -124,5 +132,27 @@ assert.strictEqual(contrasto("#000000", "#FFFFFF").toFixed(1), "21.0");
 assert.strictEqual(contrasto("#FFFFFF", "#000000").toFixed(1), "21.0");   // l'ordine non conta
 assert.ok(contrasto(santero.color_light, santero.color_dark) > 4.5, "crema su marrone non si legge");
 assert.strictEqual(schiarisci("#000000", .5), "#808080");
+
+// --- Grafica dei post (social_settings) --------------------------------------
+
+impostaStile("montagna");
+assert.strictEqual(stileCorrente(), "montagna");
+assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1350 });
+impostaStile("qualcosa");                                  // un valore sconosciuto torna al ritocco
+assert.strictEqual(stileCorrente(), "ritocco");
+assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1080 });
+{
+  impostaContatti([{ id: 1, name: "Marco", phone: "333 1" }]);
+  const gita = modelloPost({ kind: "gita", title: "Sestriere", event_date: "2027-01-16", course: true,
+    stops: [["6:00", "Asti"]], prices: [["", "45 €"]], deadline: "2027-01-14", contacts: [1] }, "post");
+  const ritocco = disegnaPost(gita), montagna = disegnaPost(gita, "montagna");
+  assert.ok(ritocco.includes("data-biglietto") && !ritocco.includes("data-titolofoto"), "il ritocco non è il biglietto");
+  assert.ok(montagna.includes("data-titolofoto") && montagna.includes("data-biglietto"), "la montagna non ha titolo e scheda");
+  assert.ok(montagna.includes("Sabato 16 gennaio") && montagna.includes("333 1") && montagna.includes("Corso"), "manca il nastro, il telefono o il corso");
+  // Un post di solo titolo, senza contatti: niente scheda vuota.
+  const solo = disegnaPost(modelloPost({ kind: "servizi", title: "Apertura iscrizioni", contacts: [] }, "post"), "montagna");
+  assert.ok(!solo.includes("data-biglietto"), "scheda vuota in un post di solo titolo");
+  assert.ok(disegnaCalendario("Gennaio", [["g6", "09/01", "Prato Nevoso", true]], "montagna").includes("height:1350px"));
+}
 
 console.log("social: tutti i controlli passati");

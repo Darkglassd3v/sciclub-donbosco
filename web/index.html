@@ -66,26 +66,34 @@
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
 
-    /* Fascia di chi c'è nel modulo: resta sotto la barra mentre si scorre,
-     * con l'indice delle sezioni. Gialla per un socio nuovo, blu per uno che
-     * esiste già: prima cambiava solo la scritta del pulsante in fondo. */
-    .fascia-socio { position: sticky; top: var(--barra-h); z-index: 50; display: flex; flex-wrap: wrap; align-items: center;
-                    gap: 6px 20px; padding: 10px 16px; margin-bottom: 20px; border: 2px solid var(--giallo);
-                    border-radius: var(--raggio); background: var(--giallo-light); }
-    .fascia-socio.modifica { border-color: var(--blu); background: var(--blu-light); }
-    .fascia-stato { flex: 1 1 18rem; font-size: 1.2rem; line-height: 1.3; }
-    .indice-sezioni { display: flex; flex-wrap: wrap; gap: 0 16px; }
-    .indice-sezioni a { display: inline-flex; align-items: center; min-height: var(--aria); font-weight: 600; text-decoration: underline; }
-    #azioniSocio { flex: none; margin-bottom: 0; }
-    #azioniSocio .button { margin-bottom: 0; }
+    /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
+     * (scarica la scheda in PDF) ed Elimina. Prima era una fascia gialla o blu incollata sotto la barra,
+     * con l'indice delle sezioni e "Nuovo socio": troppe cose, e il modulo si
+     * svuota già da solo dopo il salvataggio. Chi si salva lo dice comunque
+     * il pulsante giallo in fondo, che resta sempre in vista. */
+    .testata-scheda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; padding: 20px 28px; }
+    .testata-scheda .chi { flex: 1 1 20rem; min-width: 0; }
+    .testata-scheda .tipo { font-size: .9375rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--testo-soft); }
+    .testata-scheda .nome { font-size: 1.9rem; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; overflow-wrap: anywhere; }
+    .testata-scheda .nome .era { font-size: 1.1rem; font-weight: 500; color: var(--testo-soft); }
+    .testata-scheda .dati { color: var(--testo-soft); margin-top: 2px; }
+    .testata-scheda .chiudi { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: var(--blu);
+                              text-decoration: underline; cursor: pointer; }
+    #azioniSocio { display: flex; flex-wrap: wrap; gap: 12px; }
+    #azioniSocio .button { min-height: 52px; font-size: 1.1rem; font-weight: 700; gap: 10px; border: 0; padding: 0 22px; }
+    #azioniSocio .button svg { flex: none; }
+    .btn-scarica { background: var(--blu); color: #fff; }
+    .btn-scarica:hover, .btn-scarica:focus { background: var(--blu-dark); color: #fff; }
+    .btn-elimina { background: var(--errore); color: #fff; }
+    .btn-elimina:hover, .btn-elimina:focus { background: #8E1D17; color: #fff; }
 
-    /* Finestre dell'eliminazione: chi si elimina scritto grande, una riga per dato. */
-    .chi-elimina { list-style: none; margin: 0 0 16px; padding: 14px 16px; border: 2px solid var(--errore);
-                   border-radius: var(--raggio); background: var(--errore-bg); font-size: 1.1rem; }
-    .chi-elimina li + li { margin-top: 4px; }
-    .chi-elimina .nome { font-size: 1.35rem; font-weight: 700; }
+    /* Sezioni colorate (.sezione, .striscia, .corpo): in brand.css, uguali in tutto il sito. */
+    /* Sul colore chiaro i campi e le scelte restano bianchi. */
+    .partenze { padding: .5rem; background: #fff; border: 1px solid var(--filo); border-radius: var(--raggio); }
+
+    /* Finestre dell'eliminazione: chi si elimina in una tabellina (tabellaDati() in shared.js). */
     .elimina-avviso { font-size: 1.2rem; }
-    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 7rem); }
+    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
     .container-main { padding-bottom: 200px; }
 
@@ -97,41 +105,20 @@
     .avviso-doppioni li span { flex: 1 1 20rem; }
 
     @media screen and (max-width: 768px) {
-      .indice-sezioni { display: none; }
       .container-main { padding-bottom: 220px; }
+      .testata-scheda { padding-left: 20px; padding-right: 20px; }
+      .testata-scheda .nome { font-size: 1.5rem; }
       .total-box .columns { display: flex; flex-wrap: wrap; }
       /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
        * selettore lungo il pulsante restava stretto, su tre righe. */
       .total-box .columns.is-mobile > .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
     }
 
-    /* Scheda del socio da stampare (stampaScheda()): a schermo non c'è, in
-     * stampa c'è solo lei. Misure in pt: sulla carta non conta il pulsante A+. */
-    .scheda-stampa { display: none; }
-    @media print {
-      @page { size: A4; margin: 14mm; }
-      body { background: #fff; }
-      body > *:not(.scheda-stampa) { display: none !important; }
-      .scheda-stampa { display: block; color: #000; font-size: 11pt; line-height: 1.35; }
-      .scheda-stampa header { display: flex; align-items: center; gap: 16px; padding-bottom: 8px; margin-bottom: 6px;
-                              border-bottom: 2px solid #084C8D; }
-      .scheda-stampa header img { width: 36mm; height: auto; }
-      .scheda-stampa h1 { font-size: 20pt; font-weight: 700; margin: 0; line-height: 1.15; }
-      .scheda-stampa header p { margin: 2px 0 0; font-size: 11pt; }
-      .scheda-stampa section { break-inside: avoid; }
-      .scheda-stampa h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #084C8D;
-                          margin: 14px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #999; }
-      .scheda-stampa table { width: 100%; border-collapse: collapse; }
-      .scheda-stampa th { width: 36%; padding: 2px 10px 2px 0; text-align: left; font-weight: 400; color: #333; vertical-align: top; }
-      .scheda-stampa td { padding: 2px 0; font-weight: 600; }
-      .scheda-stampa .piede { margin-top: 18px; padding-top: 6px; border-top: 1px solid #999; font-size: 9pt; color: #333; }
-    }
-
     /* Schermo basso (zoom al 150-200%, telefono in orizzontale): la barra
      * incollata coprirebbe metà di quel che si vede. Scende in fondo al
      * modulo, dove si arriva comunque per salvare. */
     @media screen and (max-height: 560px) {
-      .total-box, .fascia-socio { position: static; }
+      .total-box { position: static; }
       .container-main { padding-bottom: 28px; }
     }
   </style>
@@ -141,7 +128,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -163,8 +150,7 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4">Gestione Soci</h1>
-  <p class="occhiello">Iscrivi un socio nuovo, oppure cerca chi c'è già e modificalo.</p>
+  <h1 class="is-sr-only">Gestione Soci</h1>
 
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
@@ -175,26 +161,31 @@
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
   </div>
 
-  <div class="fascia-socio" id="fasciaSocio">
-    <p class="fascia-stato" id="statoSocio" role="status"></p>
-    <nav class="indice-sezioni" aria-label="Sezioni del modulo">
-      <a href="#sez-anagrafica">Anagrafica</a>
-      <a href="#sez-iscrizione">Iscrizione</a>
-      <a href="#sez-amministrazione">Amministrazione</a>
-      <a href="#sez-pagamento">Pagamento</a>
-    </nav>
-    <div id="azioniSocio" class="buttons">
-      <button type="button" class="button is-link is-outlined" onclick="nuovoSocio()">Nuovo socio</button>
-      <button type="button" class="button is-link is-outlined" onclick="stampaScheda()">Stampa scheda</button>
-      <button type="button" class="button is-danger is-outlined" id="btnElimina" onclick="chiediElimina()" hidden>Elimina socio</button>
+  <!-- Chi c'è nel modulo (aggiornaFascia()). Niente "Nuovo socio": dopo il
+       salvataggio il modulo si svuota da solo, e "Chiudi scheda" lascia un
+       socio aperto senza salvarlo. -->
+  <div class="riquadro testata-scheda">
+    <div class="chi">
+      <p class="tipo" id="tipoScheda">Socio nuovo</p>
+      <p class="nome" id="nomeScheda" role="status">Compila i campi e premi Salva</p>
+      <p class="dati"><span id="datiScheda">Se la persona c'è già, cercala qui sopra: si apre la sua scheda.</span>
+        <button type="button" class="chiudi" id="btnChiudiScheda" onclick="nuovoSocio()" hidden>Chiudi scheda</button></p>
+    </div>
+    <div id="azioniSocio">
+      <button type="button" class="button btn-scarica" id="btnScarica" onclick="scaricaScheda()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
+      <button type="button" class="button btn-elimina" id="btnElimina" onclick="chiediElimina()" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6l1 2h5v2H3V4h5l1-2Zm-4 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z"/></svg>Elimina</button>
     </div>
   </div>
 
   <form id="memberForm">
     <input type="hidden" id="f_id">
 
-    <section class="riquadro" id="sez-anagrafica">
-    <h2>Anagrafica</h2>
+    <!-- Quattro sezioni come le pensa chi iscrive: chi è, la tessera, gite e
+         corsi, i soldi. Prima c'era anche "Amministrazione", con dentro il
+         numero tessera e l'acconto: ora stanno con la tessera e col pagamento. -->
+    <section class="riquadro sezione anagrafica" id="sez-anagrafica">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Anagrafica <span class="cosa">Chi è: nome, nascita, residenza, contatti</span></h2>
+    <div class="corpo">
     <p class="occhiello">
       I campi contrassegnati con * sono obbligatori. Il saldo si aggiorna
       automaticamente in base alle voci selezionate.
@@ -218,13 +209,26 @@
     </div>
 
     <div id="avvisoDoppioni" class="avviso-doppioni" role="status" hidden></div>
+    </div>
     </section>
 
-    <section class="riquadro" id="sez-iscrizione">
-    <h2>Iscrizione</h2>
-    <div class="mt-4">
+    <section class="riquadro sezione tessera" id="sez-tessera">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>Tessera <span class="cosa">Tipo di tessera, famiglia e numero</span></h2>
+    <div class="corpo">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
+    <div class="columns mt-1">
+      <div class="column is-4">
+        <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
+        <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
+      </div>
+    </div>
+    </div>
+    </section>
+
+    <section class="riquadro sezione gite" id="sez-gite">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Gite e corsi <span class="cosa">Abbonamenti, presciistica, corso e partenze</span></h2>
+    <div class="corpo">
       <!-- Gli abbonamenti non sono una scelta sola come le altre voci: chi
            finisce le cinque gite ne compra un altro, anche di un altro giorno.
            Sopra quelli che ha, con le gite fatte; sotto il listino, con un
@@ -245,28 +249,24 @@
           <label class="scelta" data-giorno="DOMENICA"><input type="radio" name="f_giorno_corso" value="DOMENICA"><span>Corso di domenica</span></label>
         </div>
       </fieldset>
-    </div>
 
     <div class="columns mt-1">
       <div class="column is-6">
         <label class="label">Partenza del sabato</label>
-        <div id="check_sabato" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
+        <div id="check_sabato" class="control partenze"></div>
       </div>
       <div class="column is-6">
         <label class="label">Partenza della domenica</label>
-        <div id="check_domenica" class="control p-2" style="background:var(--riga-alt);border-radius:var(--raggio)"></div>
+        <div id="check_domenica" class="control partenze"></div>
       </div>
     </div>
-
+    </div>
     </section>
 
-    <section class="riquadro" id="sez-amministrazione">
-    <h2>Amministrazione</h2>
+    <section class="riquadro sezione pagamento" id="sez-pagamento">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Pagamento <span class="cosa">Acconto, totale, chi paga</span></h2>
+    <div class="corpo">
     <div class="columns mt-1">
-      <div class="column is-4">
-        <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
-        <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
-      </div>
       <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
       <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
            listino a ogni salvataggio, e lo sconto si perdeva. -->
@@ -277,10 +277,6 @@
       </div>
     </div>
 
-    </section>
-
-    <section class="riquadro" id="sez-pagamento">
-    <h2>Pagamento</h2>
     <!-- Una scelta al posto del campo spento con "Aggiungi pagante" di lato:
          il familiare si cerca solo dopo aver detto che paga lui. -->
     <fieldset class="scelte">
@@ -317,6 +313,7 @@
 
     <!-- Solo superadmin, solo su un socio iscritto: rimedio a un tesseramento
          fatto per sbaglio. Vedi remove_from_season() in schema.sql. -->
+    </div>
     </section>
 
     <section id="zonaTogli" class="riquadro togli-stagione" hidden>
@@ -337,7 +334,7 @@
      scelto è Annulla, così un Invio distratto non elimina niente. -->
 <dialog id="dlgElimina" class="finestra" aria-labelledby="dlgEliminaTitolo">
   <h2 id="dlgEliminaTitolo">Eliminare questo socio?</h2>
-  <ul class="chi-elimina" id="dlgEliminaChi"></ul>
+  <div id="dlgEliminaChi"></div>
   <p>
     La scheda sparisce dall'archivio insieme ai suoi abbonamenti. Serve per un
     doppione o per una persona inserita per sbaglio.
@@ -354,6 +351,7 @@
     Stai per eliminare <strong id="dlgElimina2Nome"></strong> <strong>per sempre</strong>.
     Dalla pagina non si può più rimettere.
   </p>
+  <div id="dlgElimina2Chi"></div>
   <div class="buttons mt-4">
     <button type="button" class="button is-medium" id="btnEliminaNo2">No, tienilo</button>
     <button type="button" class="button is-danger is-medium" id="btnEliminaSi"></button>
@@ -370,8 +368,6 @@
   </div>
 </div>
 
-<!-- Riempita da stampaScheda() al momento di stampare. -->
-<div class="scheda-stampa" id="schedaStampa"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -395,12 +391,12 @@
   // propone un altro da sé. Uno scritto a mano invece non si tocca.
   let numeroProposto = null;
 
-  // Il socio caricato nel modulo (null = socio nuovo): lo dice la fascia in
+  // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
   // cima e il pulsante Salva.
   let socioAperto = null;
 
   // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
-  // firma(): se è cambiato, "Nuovo socio", un altro socio o uscire dalla
+  // firma(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
   // pagina chiedono prima di buttare via quello che si è scritto.
   let salvato = "";
 
@@ -450,7 +446,7 @@
         el(id).addEventListener("change", controllaCF);
         el(id).addEventListener("change", controllaDoppioni);
       });
-      // Il nome sul pulsante Salva e nella fascia segue quello che si scrive.
+      // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
       el("f_cognome").addEventListener("input", aggiornaFascia);
       el("f_nome").addEventListener("input", aggiornaFascia);
       document.querySelectorAll("input[name=chiPaga]").forEach((r) => r.addEventListener("change", () => {
@@ -787,21 +783,24 @@
     `${el("f_cognome").value} ${el("f_nome").value}`.trim().replace(/\s+/g, " ").toUpperCase();
 
   /**
-   * Fascia in cima e pulsante Salva: socio nuovo o quale socio si modifica.
-   * Il nome si legge dai campi e non da socioAperto: correggendo cognome o
-   * nome il pulsante diceva ancora quello vecchio, e non si capiva chi si
-   * stava per salvare. Il nome di prima resta scritto fra parentesi.
+   * Testata della scheda e pulsante Salva: socio nuovo o quale socio è
+   * aperto. Il nome si legge dai campi e non da socioAperto: correggendo
+   * cognome o nome il pulsante diceva ancora quello vecchio, e non si capiva
+   * chi si stava per salvare. Il nome di prima resta scritto fra parentesi.
    */
   function aggiornaFascia() {
     const s = socioAperto;
     const nome = nomeNelModulo();
     const prima = s ? `${s.last_name} ${s.first_name}` : "";
-    el("fasciaSocio").classList.toggle("modifica", Boolean(s));
-    el("statoSocio").innerHTML = s
-      ? `Stai modificando: <strong>${esc(nome || prima)}</strong>`
-        + (nome && nome !== prima ? ` (era ${esc(prima)})` : "")
-        + (s.card_number ? ` · tessera ${esc(s.card_number)}` : "")
-      : "<strong>Nuovo socio</strong>: salvando si crea una scheda nuova";
+    el("tipoScheda").textContent = s ? "Scheda del socio" : "Socio nuovo";
+    el("nomeScheda").innerHTML = s
+      ? esc(nome || prima) + (nome && nome !== prima ? ` <span class="era">(era ${esc(prima)})</span>` : "")
+      : nome ? esc(nome) : "Compila i campi e premi Salva";
+    el("datiScheda").textContent = s
+      ? [s.card_number ? `Tessera ${s.card_number}` : "Senza numero tessera",
+         s.enrolled_at ? `iscritto il ${dataIt(s.enrolled_at)}` : ""].filter(Boolean).join(" · ") + " ·"
+      : "Se la persona c'è già, cercala qui sopra: si apre la sua scheda.";
+    el("btnChiudiScheda").hidden = !s;
     el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${prima}` : "Salva il socio nuovo";
     // Si elimina solo una scheda salvata, aperta.
     el("btnElimina").hidden = !s;
@@ -821,7 +820,7 @@
 
   const modificato = () => firma() !== salvato;
 
-  /** Domanda sulla fascia prima di lasciare un modulo con modifiche non salvate. */
+  /** Domanda, in una finestra, prima di lasciare un modulo con modifiche non salvate. */
   function lasciaModifiche(poi) {
     if (!modificato()) { poi(); return; }
     const domanda = socioAperto
@@ -1218,24 +1217,39 @@
       }
     }
 
-    const domanda = domandaSalva();
-    chiedi(el("zonaSalva"), domanda, "Sì, salva", () => {
+    const dati = datiSalva();
+    chiedi(el("zonaSalva"), socioAperto ? "Salvare le modifiche a questo socio?" : "Salvare questo socio nuovo?", "Sì, salva", () => {
       // Per sicurezza: se fra la domanda e il "Sì" sono cambiati nome,
-      // codice fiscale o data, si ricomincia, così la risposta vale per
-      // quello che si salva davvero.
-      if (domandaSalva() !== domanda) { salva(); return; }
+      // codice fiscale, luogo o data di nascita, si ricomincia, così la
+      // risposta vale per quello che si salva davvero.
+      if (JSON.stringify(datiSalva()) !== JSON.stringify(dati)) { salva(); return; }
       scrivi();
-    }, { pericolo: false });
+    }, { pericolo: false, dettagli: dati });
   }
 
-  /** "Salvare ROSSI MARIO? Codice fiscale …, nascita …": i mancanti per esteso, così si notano. */
-  function domandaSalva() {
-    const cf = el("f_codice_fiscale").value.trim().toUpperCase();
-    const nascita = el("f_data_nascita").value;
-    return `Salvare ${nomeNelModulo()}? `
-      + (cf ? `Codice fiscale ${cf}` : "Senza codice fiscale")
-      + (nascita ? `, nascita ${dataIt(nascita)}.` : ", senza data di nascita.");
+  /** Luogo di nascita come si legge: "ASTI (AT)". Senza la città è "non scritto", anche con la provincia. */
+  const luogoNascita = (luogo, provincia) => {
+    const citta = String(luogo || "").trim().toUpperCase(), sigla = String(provincia || "").trim().toUpperCase();
+    return citta ? (sigla ? `${citta} (${sigla})` : citta) : "";
+  };
+
+  /** I dati della domanda prima di salvare, dal modulo: chi è, uno per riga. */
+  function datiSalva() {
+    return [
+      ["Nome e cognome", nomeNelModulo()],
+      ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
+      ["Luogo di nascita", luogoNascita(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
+      ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
+    ];
   }
+
+  /** Gli stessi dati della scheda salvata (per l'eliminazione: si elimina quella, non il modulo). */
+  const datiPersona = (s) => [
+    ["Nome e cognome", `${s.last_name} ${s.first_name}`],
+    ["Codice fiscale", s.tax_code || ""],
+    ["Luogo di nascita", luogoNascita(s.birth_place, s.birth_province)],
+    ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
+  ];
 
   async function scrivi() {
     const bottone = el("btnSalva");
@@ -1403,27 +1417,21 @@
   }
 
   // -------------------------------------------------------------------------
-  // Stampa della scheda
+  // Scheda del socio da scaricare
   //
   // Quello che c'è nel modulo, anche se non è ancora salvato: è la scheda che
-  // il direttivo vuole su carta mentre iscrive. Una pagina A4 dalla stampa
-  // del browser, da cui si fa anche il PDF ("Salva come PDF"): niente
-  // librerie e niente file sul server, sono dati personali.
+  // il direttivo vuole compilata mentre iscrive. Il pulsante si chiama
+  // Stampa, come lo chiamano tutti, ma scarica un PDF A4,
+  // scheda-COGNOME-NOME.pdf, con il testo vero (si legge, si cerca, si
+  // stampa da qualunque lettore). Prima si apriva la stampa del browser, e
+  // per avere il file bisognava trovare "Salva come PDF". Si fa tutto nel
+  // browser: niente copie sul server, sono dati personali.
   // -------------------------------------------------------------------------
 
-  async function stampaScheda() {
-    const nome = nomeNelModulo();
-    if (!nome) {
-      showToast("Scrivi almeno cognome e nome, poi stampa la scheda.", "is-danger");
-      el("f_cognome").focus();
-      return;
-    }
+  /** I dati della scheda: il nome e le sezioni, come [titolo, [[etichetta, valore], ...]]. */
+  function datiScheda() {
     // In maiuscolo come li scrive il salvataggio.
     const v = (id) => el(id).value.trim().toUpperCase();
-    const riga = (etichetta, valore) => (valore ? `<tr><th>${esc(etichetta)}</th><td>${esc(valore)}</td></tr>` : "");
-    const sezione = (titolo, righe) =>
-      (righe.join("") ? `<section><h2>${titolo}</h2><table>${righe.join("")}</table></section>` : "");
-
     const nascita = [v("f_luogo_nascita"), v("f_provincia_nascita") && `(${v("f_provincia_nascita")})`,
       el("f_data_nascita").value && `il ${dataIt(el("f_data_nascita").value)}`].filter(Boolean).join(" ");
     const residenza = [v("f_indirizzo"), [el("f_cap").value.trim(), v("f_citta")].filter(Boolean).join(" "),
@@ -1434,42 +1442,104 @@
     const giorno = sceltaDi("f_giorno_corso")?.value;
     const totale = totaleIndividuale(), acconto = num(el("f_acconto").value);
     const pagante = el("pagaFamiliare").checked && el("f_payerDisplay").value.trim();
-    const adesso = new Date();
+    const sezioni = [
+      ["Anagrafica", [["Cognome", v("f_cognome")], ["Nome", v("f_nome")],
+        ["Nato/a a", nascita], ["Codice fiscale", v("f_codice_fiscale")]]],
+      ["Residenza e contatti", [["Residenza", residenza], ["Telefono", el("f_telefono").value.trim()],
+        ["Email", el("f_email").value.trim()]]],
+      ["Tessera", [["Numero tessera", numeroTessera()], ["Tessera", nomeSelezionato("f_tipologia_tessera")],
+        ["Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")]]],
+      ["Gite e corsi", [["Abbonamenti", abbonamenti], ["Presciistica", nomeSelezionato("f_presciistica")],
+        ["Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)],
+        ["Partenza del sabato", partenzeSelezionate("check_sabato")],
+        ["Partenza della domenica", partenzeSelezionate("check_domenica")]]],
+      ["Pagamento", [["Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")],
+        ["Acconto versato", fmt(acconto)], ["Da pagare", fmt(totale - acconto)], ["Pagato da", pagante],
+        ["Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", ")]]],
+    ];
+    // Le righe vuote non si scrivono, e nemmeno una sezione tutta vuota.
+    return sezioni.map(([t, righe]) => [t, righe.filter(([, val]) => val)]).filter(([, righe]) => righe.length);
+  }
 
-    el("schedaStampa").innerHTML = `
-      <header>
-        <img src="logo_sciclubdonbosco.svg" alt="">
-        <div><h1>${esc(nome)}</h1><p>Sci Club Don Bosco · scheda del socio</p></div>
-      </header>
-      ${sezione("Anagrafica", [
-        riga("Cognome", v("f_cognome")), riga("Nome", v("f_nome")),
-        riga("Nato/a a", nascita), riga("Codice fiscale", v("f_codice_fiscale"))])}
-      ${sezione("Residenza e contatti", [
-        riga("Residenza", residenza), riga("Telefono", el("f_telefono").value.trim()),
-        riga("Email", el("f_email").value.trim())])}
-      ${sezione("Iscrizione", [
-        riga("Numero tessera", numeroTessera()), riga("Tessera", nomeSelezionato("f_tipologia_tessera")),
-        riga("Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")),
-        riga("Abbonamenti", abbonamenti), riga("Presciistica", nomeSelezionato("f_presciistica")),
-        riga("Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)),
-        riga("Partenza del sabato", partenzeSelezionate("check_sabato")),
-        riga("Partenza della domenica", partenzeSelezionate("check_domenica"))])}
-      ${sezione("Pagamento", [
-        riga("Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")),
-        riga("Acconto versato", fmt(acconto)), riga("Da pagare", fmt(totale - acconto)),
-        riga("Pagato da", pagante),
-        riga("Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", "))])}
-      <p class="piede">Stampata il ${adesso.toLocaleDateString("it-IT")} alle
-        ${adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
-        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}</p>`;
+  /**
+   * Il logo del club per il PDF, disegnato su un canvas (jsPDF non legge
+   * l'SVG). JPEG su fondo bianco: in PNG il file pesava quasi un mega.
+   */
+  async function logoPdf() {
+    const img = new Image();
+    img.src = "logo_sciclubdonbosco.svg";
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 600;
+    canvas.height = Math.round(600 * img.naturalHeight / img.naturalWidth);
+    const g = canvas.getContext("2d");
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, canvas.width, canvas.height);
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { dati: canvas.toDataURL("image/jpeg", .9), proporzione: canvas.height / canvas.width };
+  }
 
-    // Il logo deve essere caricato prima che parta la stampa, o esce il buco.
-    await el("schedaStampa").querySelector("img").decode().catch(() => {});
-    // Il titolo della pagina è il nome proposto per il PDF.
-    const titolo = document.title;
-    document.title = `scheda-${nome.replace(/[^A-Z0-9]+/g, "-")}`;
-    window.addEventListener("afterprint", () => { document.title = titolo; }, { once: true });
-    window.print();
+  async function scaricaScheda() {
+    const nome = nomeNelModulo();
+    if (!nome) {
+      showToast("Scrivi almeno cognome e nome, poi scarica la scheda.", "is-danger");
+      el("f_cognome").focus();
+      return;
+    }
+    const pulsante = el("btnScarica");
+    pulsante.classList.add("is-loading");
+    try {
+      await caricaPdf();
+      const logo = await logoPdf().catch(() => null);
+      const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+      const BLU = [8, 76, 141], GRIGIO = [70, 70, 70], M = 16, L = 210 - 2 * M, FONDO = 297 - 18;
+      let y = M;
+
+      // Testata: logo, nome, riga blu.
+      if (logo) doc.addImage(logo.dati, "JPEG", M, y, 34, 34 * logo.proporzione);
+      const xt = logo ? M + 40 : M;
+      doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(0);
+      doc.text(doc.splitTextToSize(nome, 210 - M - xt), xt, y + 9);
+      doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(...GRIGIO);
+      doc.text("Sci Club Don Bosco · scheda del socio", xt, y + 17);
+      y += Math.max(logo ? 34 * logo.proporzione : 0, 20) + 3;
+      doc.setDrawColor(...BLU).setLineWidth(.6).line(M, y, M + L, y);
+      y += 8;
+
+      // Sezioni: titolo blu in maiuscolo, poi etichetta a sinistra e valore in grassetto.
+      for (const [titolo, righe] of datiScheda()) {
+        if (y + 10 + 6 * righe.length > FONDO) { doc.addPage(); y = M; }
+        doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(...BLU);
+        doc.text(titolo.toUpperCase(), M, y);
+        doc.setDrawColor(160).setLineWidth(.2).line(M, y + 1.6, M + L, y + 1.6);
+        y += 7;
+        for (const [etichetta, valore] of righe) {
+          const righeValore = doc.setFont("helvetica", "bold").setFontSize(11).splitTextToSize(String(valore), L - 58);
+          if (y + 5.5 * righeValore.length > FONDO) { doc.addPage(); y = M; }
+          doc.setFont("helvetica", "normal").setFontSize(10.5).setTextColor(...GRIGIO).text(etichetta, M, y);
+          doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0).text(righeValore, M + 58, y);
+          y += 5.5 * righeValore.length + 1;
+        }
+        y += 5;
+      }
+
+      // Piede: quando è stata fatta, e se i dati non sono ancora salvati.
+      const adesso = new Date();
+      if (y + 8 > FONDO) { doc.addPage(); y = M; }
+      doc.setDrawColor(160).setLineWidth(.2).line(M, y, M + L, y);
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(...GRIGIO);
+      doc.text(`Scheda compilata il ${adesso.toLocaleDateString("it-IT")} alle ${
+        adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
+        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}`, M, y + 5);
+
+      // Nel nome del file niente accenti né spazi: ROSSI NICOLÒ → scheda-ROSSI-NICOLO.pdf
+      const file = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+      doc.save(`scheda-${file}.pdf`);
+    } catch (e) {
+      showToast("Scheda non scaricata: " + (e.message || e), "is-danger");
+    } finally {
+      pulsante.classList.remove("is-loading");
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -1503,18 +1573,10 @@
     }
     // I dati della scheda com'è salvata, non quelli del modulo: si elimina
     // quella, anche se nel frattempo qualcosa è stato cambiato.
-    const righe = [
-      `<li class="nome">${esc(nome)}</li>`,
-      `<li>Nascita: ${s.birth_date ? dataIt(s.birth_date) : "non scritta"}${s.birth_place ? ` a ${esc(s.birth_place)}` : ""}</li>`,
-      `<li>Codice fiscale: ${s.tax_code ? esc(s.tax_code) : "non scritto"}</li>`,
-    ];
-    if (s.city) righe.push(`<li>Residenza: ${esc(s.city)}</li>`);
-    if (s.phone) righe.push(`<li>Telefono: ${esc(s.phone)}</li>`);
-    righe.push(s.card_number
-      ? `<li>Tessera ${esc(s.card_number)} di quest'anno${s.card_type ? ` (${esc(s.card_type)})` : ""}</li>`
-      : "<li>Nessuna tessera quest'anno</li>");
-    if (abbonamentiSalvati.length) righe.push(`<li>Abbonamenti: ${abbonamentiSalvati.length}, se ne vanno con lui</li>`);
-    el("dlgEliminaChi").innerHTML = righe.join("");
+    const righe = [...datiPersona(s),
+      ["Tessera", s.card_number ? `${s.card_number}${s.card_type ? ` · ${s.card_type}` : ""}` : "nessuna quest'anno"]];
+    if (abbonamentiSalvati.length) righe.push(["Abbonamenti", `${abbonamentiSalvati.length}, se ne vanno con lui`]);
+    el("dlgEliminaChi").innerHTML = tabellaDati(righe);
     el("dlgElimina").showModal();
     el("btnEliminaNo1").focus();
   }
@@ -1523,6 +1585,7 @@
     const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
     el("dlgElimina").close();
     el("dlgElimina2Nome").textContent = nome;
+    el("dlgElimina2Chi").innerHTML = tabellaDati(datiPersona(socioAperto).slice(1, 3));
     el("btnEliminaSi").textContent = `Sì, elimina ${nome} per sempre`;
     el("dlgElimina2").showModal();
     el("btnEliminaNo2").focus();

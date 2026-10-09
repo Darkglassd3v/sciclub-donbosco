@@ -7,46 +7,55 @@ il testo.
 ## Il socio c'era già l'anno scorso (quasi sempre)
 
 1. Pagina **Soci**, riquadro **Cerca un socio**: scrivi il cognome.
-2. Tocca il nome giusto: la scheda si apre con i suoi dati. La fascia blu
-   in alto dice chi stai modificando.
+2. Tocca il nome giusto: la scheda si apre con i suoi dati. In alto c'è il
+   suo nome con il numero di tessera.
 3. Controlla telefono, indirizzo e **codice fiscale**.
-4. Vai al punto **Iscrizione** qui sotto.
+4. Vai al punto **Tessera, gite e corsi** qui sotto.
 
 ## Il socio è nuovo
 
 1. Pagina **Soci**: prima **cercalo** comunque (potrebbe esserci già).
-2. Se non c'è: **Nuovo socio**. La fascia diventa gialla.
+2. Se non c'è, scrivi i suoi dati nel modulo: in alto c'è scritto **Socio
+   nuovo**. Se avevi aperto un altro socio, premi **Chiudi scheda** accanto al
+   suo nome.
 3. Scrivi almeno **Cognome, Nome, Telefono**. Il **codice fiscale** serve
    per l'assicurazione: senza, il socio non è assicurato.
 4. Se compare il riquadro rosso **"Questa persona forse è già in archivio"**, fermati: apri la
    scheda che c'è già invece di crearne una nuova.
 
-## Iscrizione
+## Tessera, gite e corsi
+
+Il modulo ha quattro parti colorate, con il nome scritto nella striscia in
+alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
+**Pagamento** (arancio).
 
 - **Tessera**: scegli quella giusta (il prezzo è scritto accanto).
 - **Abbonamenti gite**: premi **+ Aggiungi** sull'abbonamento. Se lo paga
   subito sul pullman, spunta **già pagato**.
 - **Corso**: sceglilo e poi scegli il **giorno** (sabato o domenica).
 - **Partenze**: spunta da dove parte il sabato e la domenica.
-- **Numero tessera**: è già proposto, cambialo solo se serve.
+- **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
+- **Acconto** (nella parte Pagamento): quanto ha già dato.
 - **Chi paga**: se paga un familiare, scegli **"La paga un familiare"** e
   cerca il suo cognome.
 
 In fondo allo schermo vedi **Totale** e **Residuo**. Premi il pulsante
 giallo **Salva**: compare una finestra con nome, codice fiscale e data di
 nascita. Se sono giusti premi **Sì, salva** e aspetta il messaggio verde;
-se no **Annulla** e correggi.
+se no **Annulla** e correggi. Dopo il salvataggio il modulo si svuota, pronto
+per il prossimo.
 
 ## Stampare la scheda
 
-Nella fascia in alto, **Stampa scheda**: stampa quello che c'è nel modulo,
-anche prima di salvare. Dalla finestra di stampa si può scegliere
-**Salva come PDF**.
+In alto, il pulsante blu **Stampa**: scarica la scheda compilata, un PDF
+che si chiama `scheda-COGNOME-NOME.pdf` (lo trovi nella cartella dei file
+scaricati). C'è quello che è scritto nel modulo, anche prima di salvare. Il
+PDF si apre, si stampa o si manda come qualunque altro file.
 
 ## Una scheda doppia o inserita per sbaglio
 
-Apri la scheda da togliere (quella sbagliata!) e premi **Elimina socio**
-nella fascia in alto. Compaiono due finestre: controlla nome, nascita e
+Apri la scheda da togliere (quella sbagliata!) e premi il pulsante rosso
+**Elimina** in alto. Compaiono due finestre: controlla nome, nascita e
 codice fiscale, poi conferma. Non si elimina chi ha pagato, ha gite segnate,
 paga per dei familiari o è già stato mandato all'assicurazione: il sito dice
 perché. Una scheda eliminata non si rimette dalla pagina: in caso di errore

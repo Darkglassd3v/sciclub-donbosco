@@ -1,4 +1,4 @@
-"""Ricalca web/logo_sciclubdonbosco.png (228x170) in due maschere, giallo e blu,
+"""Ricalca strumenti/originale_228x170.png (il PNG del sito fino all'08/10) in due maschere, giallo e blu,
 ingrandite 12 volte e ammorbidite, pronte per potrace.
 
     python3 vettorializza.py            # scrive giallo.pbm e blu.pbm qui
@@ -13,7 +13,7 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 import numpy as np
 
-ORIGINALE = Path(__file__).resolve().parents[3] / "web" / "logo_sciclubdonbosco.png"
+ORIGINALE = Path(__file__).resolve().parent / "originale_228x170.png"
 K = 12  # ingrandimento prima del ricalco
 
 im = np.array(Image.open(ORIGINALE).convert("RGBA")).astype(float) / 255

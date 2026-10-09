@@ -118,8 +118,24 @@ Il piano gratuito **non** include backup automatici. Consiglio: una volta al mes
 Le pagine non sono aperte al pubblico: senza login non si vede nulla.
 
 Dalla 2.2 gli account si creano dal **pannello Utenti** (`web/utenti.html`, riservato ai superadmin):
-email, ruolo, **+ Crea utente**. La password iniziale è sempre `donbosco26!` e va cambiata al primo
-accesso. Non serve più passare dalla dashboard, tranne che per il primissimo superadmin (sotto).
+email, ruolo, **+ Crea utente**. La password iniziale è sempre `donbosco26!`. Non serve più passare
+dalla dashboard, tranne che per il primissimo superadmin (sotto).
+
+### Cambio della password al primo accesso (dalla 2.7)
+
+Chi entra con un account nuovo, prima di vedere qualunque pagina, finisce su **Cambia la password**
+(`web/password.html`): password attuale, nuova password (almeno 8 caratteri, diversa da quella
+attuale) e conferma. Fatto il cambio, arriva sulla pagina del suo ruolo. Vale anche per il sito da
+telefono (`/ricerca/`).
+
+Lo decide il database: ogni account che nasce in `auth.users` riceve una riga in
+`pending_password_changes`, e la riga sparisce da sola quando la password cambia davvero (trigger su
+`auth.users`). Dal browser non si toglie. Gli account che esistevano prima della 2.7 non hanno la
+riga: per loro la password conta come già cambiata.
+
+**Chi dimentica la password**: pannello **Utenti** > **Reimposta password** > **Sì, reimposta la
+password**. La password torna `donbosco26!` (funzione `reset_password()`, solo superadmin) e al
+prossimo accesso la persona ne sceglie una nuova. Non serve la dashboard né nessuna mail.
 
 Quante persone: una per ciascun volontario che inserisce iscrizioni o incassa pagamenti. Non serve creare account per i soci: i soci non accedono al sistema.
 
@@ -172,12 +188,16 @@ Dalla 2.5 i ruoli non sono più una scala: ognuno ha i suoi **permessi**, scritt
 del database (`role_permissions()` in `supabase/schema.sql`). Il tesoriere vede il Bilancio ma non
 modifica i soci, l'admin modifica i soci ma non vede il Bilancio.
 
+Dalla 2.6 il superadmin decide cosa vede ogni ruolo in **Gestione > Ruoli e vedi come**: una
+matrice di spunte (tabella `role_grants`, ogni cambio registrato in `role_grant_changes`). Il
+superadmin vede sempre tutto e Gestione non si assegna. La tabella qui sotto è la partenza.
+
 | Ruolo | Chi è | Arriva su | Può fare |
 |---|---|---|---|
 | `superadmin` | direttivo con delega | Soci | tutto, più la voce rossa **Gestione** (quattro schede sempre visibili: Amministrazione con la chiusura della stagione, Utenti, Impostazioni, Ruoli e vedi come), **Togli dalla stagione** nella pagina Soci e **Vedi come** |
-| `admin` | chi iscrive e incassa | Soci | iscrivere e modificare i soci, incassare, Riepilogo della **stagione in corso**, pannello gite, tessere riservate (oggi **TESSERA DIRETTIVO**). Non vede Bilancio, stagioni chiuse e Gestione; il numero di polizza lo legge ma non lo cambia |
+| `admin` | chi iscrive e incassa | Soci | iscrivere e modificare i soci, incassare, Riepilogo della **stagione in corso**, pannello gite, tessere riservate (oggi **TESSERA DIRETTIVO**). Non vede Bilancio, stagioni chiuse e Gestione |
 | `tesoriere` | chi tiene i conti | Riepilogo | incassare (pagina Pagamenti), Riepilogo anche delle **stagioni chiuse**, **Bilancio**. I soci li legge ma non li modifica |
-| `assicurazione` | chi manda i soci all'assicurazione | Assicurazione | **solo** la pagina Assicurazione: tesserati ancora senza polizza, Excel "da assicurare", codice fiscale e numero di polizza, ricerca (al massimo 20 risultati) per correggere chi è già assicurato. È l'unico, con il superadmin, che scrive le polizze. Non vede soci, quote, abbonamenti né il sito di ricerca |
+| `assicurazione` | chi manda i soci all'assicurazione | Assicurazione | **solo** la pagina Assicurazione: le liste da mandare per tipo (Base, Plus, Sport), l'Excel, "Segna come assicurati", le liste già mandate e la correzione dei codici fiscali (ricerca, al massimo 20 risultati). Non vede soci, quote, abbonamenti né il sito di ricerca |
 | `gite` (a schermo "Utente") | chi è sul pullman | `ricerca/` | dal telefono: cercare un socio, segnare le gite, vendere un abbonamento |
 | `social` | chi pubblica i post | Social | **solo** la pagina Social: post, campagne degli sponsor e sponsor |
 
@@ -208,9 +228,9 @@ on conflict (user_id) do update set role = 'superadmin';
 
 Da lì in poi tutto il resto si fa dal pannello Utenti, senza tornare in SQL Editor.
 
-**Dalla 2.4 alla 2.5**: applicando lo schema, gli account `utente` (i volontari che iscrivevano e
-incassavano) diventano `admin`, e quelli `ospite` e `kiosk` restano senza accesso. Gli `admin` di
-prima **perdono il Bilancio**: chi lo usa va messo `tesoriere` o `superadmin` dal pannello Utenti.
+**Utente `monitor`** (non è un account del sito): un utente del database di sola lettura per i
+controlli prima e durante le iscrizioni (`supabase/scripts/controlli.sh`, connessione in
+`supabase/.monitor_connect`, fuori da git). Vedi `docs/ISCRIZIONI.md`.
 
 ### Se qualcuno lascia il direttivo
 

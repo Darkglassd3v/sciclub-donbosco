@@ -156,6 +156,14 @@
     .riassunto { display: flex; flex-direction: column; gap: 12px; }
     .riassunto h2 { color: var(--colore); margin-bottom: 0; }
     .riassunto .occhiello { margin-bottom: 0; }
+    .stile-pagina { grid-column: 1 / -1; }
+    .scelte-stile { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 16px; border: 0; padding: 0; margin: 0; }
+    .scelte-stile .esempio { display: block; margin-top: 12px; }
+    .scelte-stile .esempio .anteprima figcaption { display: none; }
+    .scelte-stile .spunta { align-items: flex-start; padding: 10px 14px; border: 2px solid var(--filo); border-radius: 12px; cursor: pointer; }
+    .scelte-stile .spunta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
+    .scelte-stile .spunta input { margin-top: .2em; }
+    .scelte-stile small { font-weight: 500; color: var(--testo-soft); }
     .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
     .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
     .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -171,7 +179,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -288,8 +296,10 @@
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
                 <div class="field campo-largo" data-per="evento sponsor">
-                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotitolo</label>
-                  <input class="input" id="fSottotitolo">
+                  <!-- Più righe: gli a capo restano nel post, e un post può essere
+                       fatto solo di sottotesto (senza titolo). -->
+                  <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
+                  <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                 </div>
                 <div class="field campo-largo" data-per="sponsor">
                   <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
@@ -399,6 +409,20 @@
   <div data-sezione="impostazioni" hidden>
     <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
     <div class="tre-colonne" id="riassunti">
+      <section class="riquadro riassunto stile-pagina" style="--colore:#084C8D" aria-labelledby="rStile">
+        <h2 id="rStile">Grafica dei post</h2>
+        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Qui sotto un post d'esempio con l'una e con l'altra.</p>
+        <fieldset class="scelte-stile">
+          <legend class="is-sr-only">Grafica dei post</legend>
+          <label class="spunta"><input type="radio" name="stile" value="ritocco" id="stileRitocco">
+            <span><b>Ritocco</b><br><small>Il biglietto di sempre, con la neve sul fondo</small>
+            <span class="esempio" id="esempioRitocco"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="montagna" id="stileMontagna">
+            <span><b>Montagna</b><br><small>Foto grande, informazioni in una scheda bianca</small>
+            <span class="esempio" id="esempioMontagna"></span></span></label>
+        </fieldset>
+        <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
+      </section>
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
         <p class="occhiello">Marchio e colori per le campagne.</p>
@@ -520,7 +544,8 @@
     collegaRubrica();
     window.addEventListener("hashchange", mostraSezione);
     mostraSezione();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
+    collegaStile();
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti(), caricaStile()]);
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
     disegnaElenco();
@@ -587,6 +612,7 @@
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
     el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
       || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
+    disegnaEsempiStile();
   }
 
   // ---------------------------------------------------------------------
@@ -612,6 +638,74 @@
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     apriSponsor(el("sScegli").value);
+  }
+
+  // -------------------------------------------------------------------------
+  // Grafica dei post (social_settings, chiave "style"): ritocco o montagna.
+  // Una sola per tutta la pagina, scelta in Impostazioni guardando un post
+  // d'esempio: un interruttore nel singolo post faceva rischiare di
+  // pubblicare un post con la grafica sbagliata.
+  // -------------------------------------------------------------------------
+  let stileSalvato = "ritocco";
+  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna" };
+
+  async function caricaStile() {
+    const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
+    if (error) showToast("Grafica dei post non caricata, uso il Ritocco: " + messaggioErrore(error), "is-danger");
+    mettiStile((data && data.value) || "ritocco");
+  }
+
+  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. */
+  function mettiStile(stile) {
+    impostaStile(stile);
+    stileSalvato = STILE;
+    el(stileSalvato === "montagna" ? "stileMontagna" : "stileRitocco").checked = true;
+    aggiornaStile();
+  }
+
+  const stileScelto = () => (el("stileMontagna").checked ? "montagna" : "ritocco");
+
+  function aggiornaStile() {
+    const cambiato = stileScelto() !== stileSalvato;
+    el("btnSalvaStile").textContent = cambiato ? "Salva modifiche" : "Salva la grafica";
+    el("btnSalvaStile").classList.toggle("salva-modifiche", cambiato);
+  }
+
+  function collegaStile() {
+    el("stileRitocco").addEventListener("change", aggiornaStile);
+    el("stileMontagna").addEventListener("change", aggiornaStile);
+    el("btnSalvaStile").addEventListener("click", salvaStile);
+  }
+
+  async function salvaStile() {
+    const stile = stileScelto();
+    setLoading(true);
+    try {
+      const { error } = await sb.from("social_settings").upsert({ key: "style", value: stile });
+      if (error) throw error;
+      mettiStile(stile);
+      if (aperto) ridisegna();
+      disegnaCalendarioMese();
+      showToast(`Grafica salvata: ${NOMI_STILE[stile]}.`);
+    } catch (e) {
+      showToast("Grafica non salvata: " + messaggioErrore(e), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  /** Lo stesso post d'esempio (una gita di sabato) in tutte e due le grafiche, in Impostazioni. */
+  function disegnaEsempiStile() {
+    const sabato = new Date();
+    sabato.setDate(sabato.getDate() + ((6 - sabato.getDay() + 7) % 7 || 7));
+    const iso = `${sabato.getFullYear()}-${String(sabato.getMonth() + 1).padStart(2, "0")}-${String(sabato.getDate()).padStart(2, "0")}`;
+    const ev = { kind: "gita", title: "Sestriere", event_date: iso, course: true, show_price: true,
+      stops: [["6:00", "Asti, piazza Campo del Palio"]], prices: [["Soci", "45 €"], ["Ragazzi", "35 €"]],
+      deadline: iso, contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
+    for (const [st, id] of [["ritocco", "esempioRitocco"], ["montagna", "esempioMontagna"]]) {
+      el(id).innerHTML = "";
+      anteprima(el(id), { html: disegnaPost(modelloPost(ev, "post"), st), w: 1080, h: 1080, nome: "Esempio" }, 260, { pulsante: false });
+    }
   }
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
@@ -804,7 +898,7 @@
     return `<li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
       <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
         ? `<span class="sett">${maiuscola(GIORNI[d.getDay()].slice(0, 3))}</span><span class="gm">${dataCorta(p.event_date)}</span>` : "—"}</span>
-      <span class="quale">${esc(String(p.title).split("\n")[0] || "(senza titolo)")}
+      <span class="quale">${esc(nomePost(p) || "(senza titolo)")}
         <small>${esc(NOMI_TIPO[p.kind])}${sponsor} ${stato(p)}</small></span>
     </button></li>`;
   }
@@ -922,7 +1016,7 @@
     const g = gruppo(el("fTipo").value);
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
-    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotitolo";
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
@@ -933,7 +1027,7 @@
   function aggiornaTesta() {
     const p = { ...daForm(), published_at: aperto && aperto.published_at }, quando = dataLunga(p.event_date);
     el("occhielloPost").textContent = `${NOMI_TIPO[p.kind]}${quando ? ` · ${quando}` : ""}`;
-    el("titoloEditor").textContent = p.title.split("\n")[0] || NOMI_NUOVO[p.kind] || "Nuovo post";
+    el("titoloEditor").textContent = nomePost(p) || NOMI_NUOVO[p.kind] || "Nuovo post";
     el("statoPost").innerHTML = stato(p);
     const manca = p.published_at ? [] : mancanti(p);
     el("mancaCosa").hidden = !manca.length;
@@ -1007,7 +1101,11 @@
 
   async function salva() {
     const riga = daForm();
-    if (!riga.title) { showToast("Scrivi la meta o il titolo.", "is-warning"); return; }
+    // Un post può essere solo sottotesto; la gita ha sempre la meta.
+    if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
+      showToast(riga.kind === "gita" ? "Scrivi la meta." : "Scrivi il titolo o il sottotesto.", "is-warning");
+      return;
+    }
     if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli il giorno della gita nel calendario: decide anche il colore.", "is-warning"); return; }
     if (riga.kind === "sponsor" && !riga.sponsor_id) { showToast("Scegli lo sponsor.", "is-warning"); return; }
     setLoading(true);
@@ -1161,8 +1259,8 @@
       return sp ? Object.entries(formatiCampagna(post, sp, STAGIONE)).map(([chiave, f]) =>
         ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${semplice(sp.name)}-${chiave}.png` })) : [];
     }
-    if (!post.title || (post.kind === "gita" && !post.event_date)) return [];
-    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(post.title).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
+    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
     return [
       { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
       { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
@@ -1245,7 +1343,7 @@
     const scelta = el("fData").value, [a, m] = meseGita.split("-").map(Number);
     const vuote = (new Date(a, m - 1, 1).getDay() + 6) % 7, giorni = new Date(a, m, 0).getDate();
     const altre = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (aperto && aperto.id))
-      .map((p) => [p.event_date, String(p.title).split("\n")[0]]));
+      .map((p) => [p.event_date, nomePost(p)]));
     const celle = Array(vuote).fill("<span></span>");
     for (let n = 1; n <= giorni; n++) {
       const iso = `${meseGita}-${String(n).padStart(2, "0")}`, cat = categoriaGita(iso), gia = altre.get(iso);
@@ -1389,7 +1487,8 @@
     const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w: 1080, h: 1080, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    const { w, h } = misureCalendario();
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
   }
 
   function disegnaCopertinaFb() {

@@ -20,8 +20,10 @@
        tabella oltre il riquadro e i pulsanti finivano fuori dallo schermo. */
     .tabella-utenti td:first-child { overflow-wrap: anywhere; }
     .tabella-utenti select { min-width: 150px; }
-    .tabella-utenti .azioni { text-align: right; white-space: nowrap; }
-    .tabella-utenti .azioni button { margin-left: 6px; }
+    /* Tre pulsanti in fila non stanno sul telefono con A+: vanno a capo, anche
+       dentro il pulsante, invece di uscire dal riquadro. */
+    .tabella-utenti .azioni { text-align: right; }
+    .tabella-utenti .azioni button { margin: 3px 0 3px 6px; white-space: normal; height: auto; }
     /* Conferma sta quasi sempre spento, ed è il suo essere spento a dire che
        non c'è niente da salvare: deve leggersi come inattivo da solo, non per
        il mezzo velo che Bulma mette sopra al blu pieno. */
@@ -46,7 +48,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -99,6 +101,8 @@
         fondo, <b>senza accesso</b>, e non vede più niente. Da lì si può
         <b>Riattivare</b> con un ruolo (la password resta quella che aveva) o
         <b>Eliminare per sempre</b>, che libera anche l'indirizzo email.
+        Chi ha dimenticato la password: <b>Reimposta password</b> la riporta a quella
+        iniziale, e al prossimo accesso ne sceglie una nuova.
         Cosa può fare ogni ruolo: vedi la scheda <a href="gestione.html">Ruoli e vedi come</a>.
       </p>
       <table class="tabella-utenti">
@@ -162,6 +166,7 @@
   function azioniHtml() {
     return `
       <button type="button" class="button is-small is-link" data-conferma disabled>Conferma</button>
+      <button type="button" class="button is-small" data-reset>Reimposta password</button>
       <button type="button" class="button is-small is-danger is-light" data-rimuovi>Rimuovi</button>`;
   }
 
@@ -204,6 +209,7 @@
     const conferma = riga.querySelector("[data-conferma]");
     conferma.disabled = select.value === riga.dataset.ruoloSalvato;
     conferma.addEventListener("click", () => cambiaRuolo(riga));
+    riga.querySelector("[data-reset]").addEventListener("click", () => chiediReset(riga));
     riga.querySelector("[data-rimuovi]").addEventListener("click", () => chiediRimozione(riga));
   }
 
@@ -452,6 +458,31 @@
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
       riga.querySelectorAll("select, button").forEach((x) => { x.disabled = false; });
+    }
+  }
+
+  /** Per chi ha dimenticato la password: torna quella iniziale, da cambiare al prossimo accesso. */
+  async function chiediReset(riga) {
+    const si = await chiediInFinestra({
+      titolo: "Riportare la password a quella iniziale?", chi: emailDi(riga),
+      testo: `La password diventa ${PASSWORD_INIZIALE} e quella di adesso smette di funzionare. `
+        + "Al prossimo accesso dovrà sceglierne una nuova.",
+      si: "Sì, reimposta la password",
+    });
+    if (si) reimpostaPassword(riga);
+  }
+
+  async function reimpostaPassword(riga) {
+    const bottone = riga.querySelector("[data-reset]");
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.rpc("reset_password", { user_id: riga.dataset.id, password: PASSWORD_INIZIALE });
+      if (error) throw error;
+      showToast(`Password di ${emailDi(riga)} riportata a ${PASSWORD_INIZIALE}: al prossimo accesso ne sceglierà una nuova.`);
+    } catch (error) {
+      showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
     }
   }
 

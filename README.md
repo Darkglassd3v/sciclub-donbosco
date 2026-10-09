@@ -2,22 +2,25 @@
 
 Gestione iscrizioni, pagamenti e riepilogo stagionale dello Sci Club Don Bosco.
 
-Nel repository convivono due versioni: quella in uso e quella nuova.
+Nel repository convivono due versioni: quella in uso e quella di prima.
 
-| | Versione 2.0 (`web/` + `ricerca/` + `supabase/`) | Versione 1.x (`legacy/`) |
+| | Versione 2.x (`web/` + `ricerca/` + `supabase/`) | Versione 1.x (`legacy/`) |
 |---|---|---|
 | Database | Supabase (PostgreSQL) | Google Sheet |
 | Pagine | HTML statico su GitHub Pages | Web app Google Apps Script |
-| Stato | in collaudo | in uso |
+| Stato | in uso (dalla stagione 2026/27) | solo riferimento |
 
-La 1.x resta funzionante e intatta in `legacy/` finché la 2.0 non è collaudata.
+La 1.x resta in `legacy/` come riferimento. Ogni versione rilasciata ha un branch e un tag
+(`2.6`, ...); il lavoro in corso sta sul branch `X.Y-SNAPSHOT`.
 
 ## Struttura
 
 ```
 web/           il gestionale: iscrizioni, pagamenti, riepilogo, bilancio, social, gestione
 ricerca/       sito separato per telefono: ricerca soci e abbonamenti gite
-supabase/      schema del database, verifiche e generatore della migrazione
+supabase/      schema del database, verifiche, script e generatore della migrazione
+grafica/logo/  il logo in alta qualità (SVG, PNG, JPG) e gli strumenti con cui è stato fatto
+social/        materiale delle campagne sponsor (loghi Santero)
 legacy/        la versione 1.x su Apps Script, lasciata come riferimento
 docs/          documentazione, incluse le linee guida del marchio
 ```
@@ -30,9 +33,14 @@ misure stanno in `web/brand.css`, che nasce da
 
 | Pagina | A cosa serve |
 |---|---|
-| `web/index.html` | anagrafica e iscrizione soci, con gestione del capofamiglia |
-| `web/admin.html` | incassi: un pulsante per nucleo familiare, niente altro |
+| `web/index.html` | Soci: anagrafica e iscrizione, capofamiglia, scheda in PDF (Stampa), eliminazione dei doppioni |
+| `web/admin.html` | incassi: un pulsante per nucleo familiare, rimborsi e modifiche degli importi con lo storico |
 | `web/riepilogo.html` | riepilogo della stagione: soci, incassato, da incassare, conteggi |
+| `web/bilancio.html` | bilancio: saldo della banca, movimenti, entrate e uscite della stagione |
+| `web/stampe.html` | fogli Excel di corsisti e abbonamenti per sabato e domenica e per il martedì, divisi per partenza |
+| `web/assicurazione.html` | liste per l'assicurazione (Base, Plus, Sport): scarica l'Excel, segna come inviata |
+| `web/impostazioni.html` | listino (con l'assicurazione di ogni tessera) e luoghi di partenza |
+| `web/utenti.html` | account dei volontari e il loro ruolo |
 | `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
 | `web/gestione.html` | solo superadmin, scheda "Ruoli e vedi come" di Gestione (con Amministrazione, Utenti e Impostazioni): chi fa cosa, e "Vedi come" per guardare il sito con gli occhi di un altro ruolo |
 | `web/social.html` | post per Instagram e Facebook (grafica "Skipass"), calendario del mese, copertina, campagne degli sponsor: anteprima, PNG e testo da incollare |
@@ -123,9 +131,12 @@ quote, si aggiornano da Supabase.
 
 | Serve | Documento |
 |---|---|
-| Capire come funziona il sistema attuale e perché è fatto così | [docs/DOCUMENTAZIONE.md](docs/DOCUMENTAZIONE.md) |
 | Creare gli account (Supabase, GitHub, utenti del direttivo) | [docs/ACCOUNT.md](docs/ACCOUNT.md) |
 | Migrare i dati e pubblicare le pagine | [docs/MIGRAZIONE_2.0.md](docs/MIGRAZIONE_2.0.md) |
+| Spiegare ai volontari come si iscrive un socio | [docs/GUIDA_VOLONTARI.md](docs/GUIDA_VOLONTARI.md) |
+| Preparare le iscrizioni di massa | [docs/ISCRIZIONI.md](docs/ISCRIZIONI.md) |
+| Lavorare sul codice: regole, rilascio, database | [docs/SVILUPPO.md](docs/SVILUPPO.md) |
+| Cosa c'è da fare | [TODO.md](TODO.md) |
 
 ## Sviluppo in locale
 
@@ -135,6 +146,7 @@ cd ricerca && python3 -m http.server 8001 # sito di ricerca
 node ricerca/test-ricerca.js              # controlla la logica della ricerca
 node web/test-social.js                   # controlla testi, prezzo facoltativo, contatti e UTM dei post
 node web/test-codicefiscale.js            # controlla il validatore del codice fiscale
+node web/test-stampe.js                   # controlla i fogli delle Stampe
 ./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```
 

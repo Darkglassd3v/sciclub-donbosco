@@ -191,7 +191,7 @@ async function proteggiPagina(alPronto) {
 
 let _accessoCache = null;
 
-/** { email, role, real_role, permissions } di chi è collegato, o null. */
+/** { email, role, real_role, permissions, change_password } di chi è collegato, o null. */
 async function getAccesso() {
   if (_accessoCache) return _accessoCache;
   const { data, error } = await sb.rpc("my_access");
@@ -203,8 +203,9 @@ async function getAccesso() {
 /**
  * Da chiamare dentro alPronto(): chi non ha il permesso va alla radice del
  * sito, che lo porta alla pagina del suo ruolo; chi non ha ruolo al login,
- * che glielo spiega. Senza linea (sul pullman succede) si resta: la pagina
- * gite lavora con la coda, e il database controlla comunque ogni richiesta.
+ * che glielo spiega; chi ha ancora la password iniziale va a cambiarla.
+ * Senza linea (sul pullman succede) si resta: la pagina gite lavora con la
+ * coda, e il database controlla comunque ogni richiesta.
  */
 async function richiediPermesso(permesso) {
   let accesso;
@@ -213,6 +214,10 @@ async function richiediPermesso(permesso) {
   } catch (errore) {
     if (erroreDiRete(errore)) return true;
     throw errore;
+  }
+  if (accesso && accesso.change_password) {
+    location.replace("../password.html");
+    return false;
   }
   if (accesso && accesso.permissions.includes(permesso)) {
     disegnaBarra(accesso);

@@ -32,7 +32,14 @@ psql_() { docker exec -i -e PGOPTIONS="-c client_min_messages=warning" "$CONTENI
 # sessione, ruolo authenticated.
 psql_ <<'SQL'
 create schema if not exists auth;
-create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text);
+create table if not exists auth.users (id uuid primary key default gen_random_uuid(), email text, encrypted_password text);
+-- Su Supabase pgcrypto sta nello schema extensions (serve a reset_password).
+create schema if not exists extensions;
+create extension if not exists pgcrypto schema extensions;
+-- Un account che c'era già prima dello schema: per lui la password conta
+-- come già cambiata.
+insert into auth.users (id, email, encrypted_password)
+values ('a0000000-0000-0000-0000-0000000000ee', 'esistente@test', 'vecchia');
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('test.uid', true), '')::uuid;
 $$;
@@ -75,8 +82,11 @@ do $$ begin
          'il volontario (utente) della 2.4 non è diventato admin';
   assert (select count(*) from public.profiles where email in ('vecchio-ospite@test', 'vecchio-kiosk@test')) = 0,
          'ospite e kiosk della 2.4 hanno ancora un ruolo';
+  assert not exists (select 1 from public.pending_password_changes
+                      where user_id = 'a0000000-0000-0000-0000-0000000000ee'),
+         'un account di prima deve cambiare la password';
 end $$;
-delete from auth.users where email like 'vecchio-%';
+delete from auth.users where email like 'vecchio-%' or email = 'esistente@test';
 SQL
 
 psql_ <<'SQL'
@@ -208,6 +218,8 @@ begin
     ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
     ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
     ('scrivi', 'update public.trip_days set color = ''#147A45'' where weekday = 5', 'SxxxxSx'),
+    ('leggi',  'select 1 from public.social_settings',                           'SxxxxSx'),
+    ('scrivi', 'update public.social_settings set value = ''montagna'' where key = ''style''', 'SxxxxSx'),
     ('leggi',  'select 1 from public.social_contacts',                           'SxxxxSx'),
     ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
@@ -228,7 +240,10 @@ begin
     ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
     ('scrivi', 'update public.departures set place = place',                      'Sxxxxxx'),
     ('scrivi', 'insert into public.season_history (season, members) values (''1991-09-01'', 0)', 'Sxxxxxx'),
-    ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx')
+    ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx'),
+    ('leggi',  'select 1 from public.pending_password_changes',                  'xxxxxxx'),
+    ('scrivi', 'delete from public.pending_password_changes',                    'xxxxxxx'),
+    ('scrivi', 'select public.reset_password(''33333333-3333-3333-3333-333333333333'', ''donbosco26!'')', 'Sxxxxxx')
   ) as t(tipo, comando, atteso) loop
     for i in 1..7 loop
       if public.test_prova(chi[i], prova.tipo, prova.comando) <> (substr(prova.atteso, i, 1) = 'S') then
@@ -1421,6 +1436,45 @@ end $$;
 delete from public.members where id::text like 'dddddddd-%' or last_name = 'PROVA' and first_name = 'DOPPIA';
 delete from public.insurance_lists where id = 'eeeeeeee-0000-0000-0000-000000000001';
 drop function public.test_rifiuta(text, text);
+SQL
+
+# ---------------------------------------------------------------------------
+# Cambio della password al primo accesso: gli account nati dopo lo schema la
+# devono cambiare finché la password in auth.users non cambia davvero; il
+# superadmin la riporta a quella iniziale e l'obbligo torna.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+do $$
+declare
+  tesoriere constant uuid := '33333333-3333-3333-3333-333333333333';
+begin
+  perform set_config('test.uid', tesoriere::text, false);
+  assert (select change_password from public.my_access()), 'un account nuovo non deve cambiare la password';
+
+  update auth.users set email = email where id = tesoriere;
+  update auth.users set encrypted_password = encrypted_password where id = tesoriere;
+  assert (select change_password from public.my_access()), 'obbligo tolto senza cambiare la password';
+
+  -- Come fa Supabase Auth con updateUser({ password }).
+  update auth.users set encrypted_password = 'nuova' where id = tesoriere;
+  assert not (select change_password from public.my_access()), 'password cambiata ma obbligo rimasto';
+
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  perform public.reset_password(tesoriere, 'donbosco26!');
+  assert (select encrypted_password = extensions.crypt('donbosco26!', encrypted_password)
+            from auth.users where id = tesoriere), 'reset_password: la password non è quella data';
+  perform set_config('test.uid', tesoriere::text, false);
+  assert (select change_password from public.my_access()), 'dopo il reset la password va cambiata di nuovo';
+
+  begin
+    perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+    perform public.reset_password(tesoriere, 'corta');
+    raise exception 'reset_password ha accettato una password corta';
+  exception when raise_exception then
+    if sqlerrm not like '%almeno 8%' then raise; end if;
+  end;
+  perform set_config('test.uid', '', false);
+end $$;
 SQL
 
 echo "test ruoli: tutto a posto"

@@ -3,7 +3,7 @@
  * Caricato DOPO bulma.min.css e PRIMA dello <style> di pagina, che usa le
  * variabili definite qui invece di ripetere i colori.
  *
- * I due colori vengono dal logo (web/logo_sciclubdonbosco.png) e non cambiano.
+ * I due colori vengono dal logo (web/logo_sciclubdonbosco.svg) e non cambiano.
  * Le misure sono tarate sull'utenza del gestionale, in buona parte non
  * abituata alle interfacce dense: corpo 17px, campi e pulsanti da 48px, focus
  * sempre visibile, contrasti verificati.
@@ -95,6 +95,19 @@ textarea:focus-visible,
   box-shadow: 0 0 0 5px var(--giallo);
 }
 
+/* Campo password con l'occhio dentro, a destra: mostra e nasconde quello che
+   si scrive (login e cambio password, collegaMostraPassword in shared.js). */
+.campo-password { position: relative; }
+.campo-password .input { padding-right: 3.25rem; }
+.campo-password .occhio {
+  position: absolute; top: 0; right: 0; width: 3rem; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; border: 0; background: none; border-radius: var(--raggio-card);
+  color: var(--testo-soft); cursor: pointer;
+}
+.campo-password .occhio:hover { color: var(--testo); }
+.campo-password .occhio svg { width: 1.5rem; height: 1.5rem; }
+
 /* --- Campi --------------------------------------------------------------
  * Qui il bordo resta spesso: un campo che non si vede è un campo che non si
  * compila, e questa è l'unica parte della pagina dove il contorno lavora. */
@@ -158,6 +171,19 @@ dialog.finestra .buttons { margin-top: 20px; }
 
 /* La domanda di chiedi() (shared.js): una frase sola, grande. */
 dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 0; }
+
+/* I dati di chi si salva o si elimina (tabellaDati() in shared.js): una riga
+ * per dato, valori grandi e in grassetto, i mancanti in rosso. */
+.tabella-dati { width: 100%; margin: 18px 0 4px; border-collapse: collapse; border: 2px solid var(--filo); border-radius: var(--raggio); }
+.tabella-dati th, .tabella-dati td { padding: 12px 16px; border-bottom: 1px solid var(--filo); vertical-align: top; text-align: left; }
+.tabella-dati tr:last-child th, .tabella-dati tr:last-child td { border-bottom: 0; }
+.tabella-dati th { width: 38%; font-size: 1.05rem; font-weight: 600; color: var(--testo-soft); background: var(--riga-alt); }
+.tabella-dati td { font-size: 1.4rem; font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; letter-spacing: .01em; }
+.tabella-dati td.manca { color: var(--errore); font-weight: 600; font-size: 1.2rem; }
+@media screen and (max-width: 560px) {
+  .tabella-dati th, .tabella-dati td { display: block; width: auto; }
+  .tabella-dati th { border-bottom: 0; padding-bottom: 2px; }
+}
 
 .button.is-link, .button.is-primary, .button.is-info {
   background: var(--blu); border-color: var(--blu); color: #fff;
@@ -575,4 +601,50 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
   .cifre { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kpi { padding: 18px; }
   .kpi-value { font-size: 1.6rem; }
+}
+
+/* --- Sezioni colorate ----------------------------------------------------
+ * Un riquadro con il nome in una striscia piena in alto, che resta sotto la
+ * barra mentre si scorre: si sa sempre dove si è, senza indice. Il colore
+ * dice di cosa si parla, uguale in tutto il sito (scheda Soci, Riepilogo,
+ * Assicurazione): blu le persone, verde tessera e assicurazione, viola gite
+ * e corsi, arancio i soldi. Il bianco su ognuno supera 4.5:1.
+ *   <section class="riquadro sezione tessera">
+ *     <h2 class="striscia"><svg …></svg>Tessere</h2>
+ *     <div class="corpo">…</div>
+ *   </section>
+ * Il nome si scrive normale: il maiuscolo lo mette il CSS (i lettori di
+ * schermo leggono la parola, non le lettere). overflow: clip e non hidden,
+ * che spegnerebbe lo sticky della striscia. */
+.sezione { --colore: var(--blu); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
+           border: 2px solid var(--colore); box-shadow: none; }
+.sezione.tessera { --colore: #147A45; --tinta: #EAF5EE; }
+.sezione.gite { --colore: #5B2A86; --tinta: #F3EEF8; }
+.sezione.pagamento { --colore: #B4400B; --tinta: #FCF0E8; }
+/* Un blocco di testo e non una fila flex: un nome lungo va a capo accanto
+ * all'icona invece di mandarla da sola su una riga (succedeva sul telefono). */
+.sezione > .striscia { position: sticky; top: var(--barra-h); z-index: 3; display: block; margin: 0; padding: 14px 28px;
+                       background: var(--colore); color: #fff; line-height: 1.25;
+                       font-size: 1.35rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.sezione > .striscia svg { display: inline-block; vertical-align: -.22em; margin-right: .45em; }
+/* Una riga su cosa contiene, e i numeri accanto al nome ("12 soci"): normali, bianchi. */
+.sezione > .striscia .cosa, .sezione > .striscia .conta { font-size: 1rem; font-weight: 500; letter-spacing: 0;
+                                                          text-transform: none; color: #fff; opacity: .92; }
+.sezione > .striscia .cosa::before { content: "·"; margin: 0 12px; opacity: .7; }
+.sezione > .corpo { padding: 24px 28px 28px; }
+/* Sul colore chiaro le tabelle restano bianche. */
+.sezione .tabella-scorrevole { background: #fff; border-radius: var(--raggio); }
+/* Un pulsante con una scritta lunga va a capo: overflow: clip lo taglierebbe al bordo. */
+.sezione > .corpo .button { max-width: 100%; white-space: normal; height: auto; }
+
+@media screen and (max-width: 768px) {
+  .sezione > .striscia { padding-left: 20px; padding-right: 20px; }
+  .sezione > .corpo { padding: 20px; }
+  /* La descrizione va su una riga sua: il "·" in testa non serve. */
+  .sezione > .striscia .cosa { display: block; margin-top: 2px; }
+  .sezione > .striscia .cosa::before { content: none; }
+}
+/* Schermo basso (zoom alto): la striscia non resta incollata, come la barra. */
+@media screen and (max-height: 560px) {
+  .sezione > .striscia { position: static; }
 }

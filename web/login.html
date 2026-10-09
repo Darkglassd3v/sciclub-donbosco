@@ -16,7 +16,7 @@
 <body>
 
 <div class="card-login">
-  <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco" style="display:block;margin:0 auto 18px;max-width:220px">
+  <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco" style="display:block;margin:0 auto 18px;max-width:220px">
   <h1 class="title is-4 has-text-centered">Sci Club Don Bosco</h1>
   <p class="sottotitolo">Gestione soci, iscrizioni e pagamenti.</p>
   <p class="subtitle is-6 has-text-centered has-text-grey">Accesso riservato ai volontari del club</p>
@@ -27,8 +27,11 @@
       <input class="input" type="email" id="email" required autocomplete="username">
     </div>
     <div class="field">
-      <label class="label">Password</label>
-      <input class="input" type="password" id="password" required autocomplete="current-password">
+      <label class="label" for="password">Password</label>
+      <div class="campo-password">
+        <input class="input" type="password" id="password" required autocomplete="current-password">
+        <button type="button" class="occhio" data-mostra="password"></button>
+      </div>
     </div>
     <button class="button is-link is-fullwidth has-text-weight-bold" id="btnLogin" type="submit">Entra</button>
   </form>
@@ -51,6 +54,8 @@
   const next = richiesta.get("next");
   const paginaChiesta = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
 
+  collegaMostraPassword();
+
   const errore = document.getElementById("errore");
   function mostraErrore(testo) {
     errore.textContent = testo;
@@ -66,7 +71,10 @@
     sb.auth.signOut();
   }
 
-  /** Dopo l'accesso: la pagina chiesta o quella del ruolo; senza ruolo si resta qui. */
+  /**
+   * Dopo l'accesso: la pagina chiesta o quella del ruolo; senza ruolo si resta
+   * qui. Con la password iniziale ancora da cambiare, prima si cambia quella.
+   */
   async function entra() {
     const accesso = await getProfile();
     const arrivo = paginaDiArrivo(accesso);
@@ -75,7 +83,7 @@
       mostraErrore(SENZA_RUOLO);
       return;
     }
-    location.replace(paginaChiesta || arrivo);
+    location.replace(accesso.change_password ? "password.html" : paginaChiesta || arrivo);
   }
 
   // Se la sessione è già valida si salta il login (ma non se si è appena

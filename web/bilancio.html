@@ -61,7 +61,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.png" alt="Sci Club Don Bosco">
+      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -95,8 +95,9 @@
     <div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div>
   </div>
 
-  <div class="riquadro">
-    <h2>Saldo banca inizio stagione</h2>
+  <section class="riquadro sezione pagamento">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Saldo banca inizio stagione <span class="cosa">Il saldo da cui parte la stagione</span></h2>
+    <div class="corpo">
     <form class="riga-saldo" id="formSaldo">
       <div class="field">
         <label class="label" for="saldoInizio">Importo (€)</label>
@@ -105,10 +106,12 @@
       <button class="button is-link" type="submit" id="btnSaldo">Salva</button>
     </form>
     <p class="help mt-2" id="saldoProposto" hidden>Proposto dalla stagione precedente: salvalo per confermarlo.</p>
-  </div>
+    </div>
+  </section>
 
-  <div class="riquadro">
-    <h2>Movimenti</h2>
+  <section class="riquadro sezione pagamento">
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Movimenti <span class="cosa">Entrate e uscite che non sono quote dei soci</span></h2>
+    <div class="corpo">
     <form id="formMovimento">
       <div class="riga-movimento">
         <fieldset class="tipo-movimento">
@@ -164,7 +167,8 @@
         <tbody id="elencoMovimenti"><tr><td colspan="7" class="vuota">Caricamento…</td></tr></tbody>
       </table>
     </div>
-  </div>
+    </div>
+  </section>
   </div>
 </div>
 

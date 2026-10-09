@@ -151,7 +151,7 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 ### Problemi risolti
 
-| Problema (vedi `docs/DOCUMENTAZIONE.md`) | Come è risolto |
+| Problema della 1.x | Come è risolto |
 |---|---|
 | Colonne 21 e 23 del foglio con etichette invertite rispetto al contenuto | Colonne con nome esplicito: `total`, `paid`, `balance` |
 | Colonna `balance` disallineata, ricalcolata a mano da `Admin.gs` ad ogni lettura | `balance` è una **colonna generata** (`total - paid`): non può andare fuori sincrono |
@@ -171,7 +171,7 @@ cd web && python3 -m http.server 8000   # poi apri http://localhost:8000/login.h
 
 ### Cosa non è ancora stato portato
 
-Non erano presenti nemmeno nella 1.x — sono le voci del vecchio Excel `soci 26_originale.xlsx` elencate in `docs/DOCUMENTAZIONE.md`: uscite e compensi maestri, saldo dell'anno precedente, assicurazioni come voce separata, pass giornalieri, grafici. Vanno decise a parte: il posto naturale è il riepilogo.
+Non erano presenti nemmeno nella 1.x — sono le voci del vecchio Excel `soci 26_originale.xlsx` (descritte in `docs/DOCUMENTAZIONE.md`, tolto l'08/10/2026 e rimasto nella storia di git): uscite e compensi maestri, saldo dell'anno precedente, assicurazioni come voce separata, pass giornalieri, grafici. Vanno decise a parte: il posto naturale è il riepilogo.
 
 Non è stata portata la **email di riepilogo iscrizione** che la 1.x inviava con `MailApp` (funzione `sendSummaryEmail`). Su Supabase serve un servizio esterno (es. Resend, piano gratuito) chiamato da una Edge Function. Da valutare se serve davvero: oggi l'email arrivava a un solo indirizzo fisso.
 
