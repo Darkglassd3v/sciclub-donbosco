@@ -5,6 +5,11 @@
 Tre grafiche per annunciare il corso su Instagram e Facebook. Per ognuna:
 il **post** 4:5 (1080×1350, come Montagna) e la **story** (1080×1920).
 
+**Rivista il 10/10** dopo il primo giro: A sul giallo, che diventa il colore
+di tutti i corsi; B senza "Torna il corso di", senza la linea del tempo e la
+pausa di Natale, con la frase "Tutti i mercoledì fino al 13 gennaio"; logo
+più grande in tutte e tre (150 px invece di 96–100).
+
 - Testi presi dalla mail `Mail per Presciistica.docx`, niente di aggiunto:
   niente prezzo, niente nome dell'istruttore, niente telefoni.
 - Testo grande: almeno 34 px nel post e 44 px nella story.
@@ -23,13 +28,15 @@ copiare e da un'immagine no.
 
 <img src="a-biglietto-post.jpg" width="49%"> <img src="a-biglietto-story.jpg" width="49%">
 
-**Idea.** È Ritocco portato al 4:5: il biglietto bianco sul verde dei corsi,
-con il bollo della data in alto. Al posto della foto, il paesaggio disegnato
+**Idea.** È Ritocco portato al 4:5: il biglietto bianco sul giallo dei corsi,
+con il bollo blu della data in alto. Il giallo vale per tutti i corsi (in
+Genera post andrebbe cambiato il colore della categoria corso), e sul giallo
+gli accenti sono il blu del club. Al posto della foto, il paesaggio disegnato
 con una figura in posizione da sci. È la più vicina a quello che c'è già e
 può diventare il modello "corso" di Genera post.
 
 **Nell'immagine:** tutto. Titolo, primo giorno, orario e durata, palestra,
-ogni mercoledì fino al 13 gennaio escluso Natale, per chi, iscrizioni e mail.
+ogni mercoledì fino al 13 gennaio, per chi, iscrizioni e mail.
 
 **Nel testo:** l'invito, l'istruttore dello scorso anno, le stesse
 informazioni scritte per esteso.
@@ -61,19 +68,16 @@ Vi aspettiamo numerosi!
 <img src="b-calendario-post.jpg" width="49%"> <img src="b-calendario-story.jpg" width="49%">
 
 **Idea.** Il messaggio è la data. Un foglio di calendario con il 21 ottobre
-e sotto una linea del tempo fino al 13 gennaio, con la pausa di Natale.
+e sotto una frase sola: "Tutti i mercoledì fino al 13 gennaio".
 Fondo blu del club con neve e montagne, come Montagna.
 
 **Nell'immagine:** primo giorno e ora, palestra, durata della lezione,
-tutti i mercoledì fino al 13 gennaio, pausa di Natale, "Riservato ai soci".
+tutti i mercoledì fino al 13 gennaio, "Riservato ai soci".
 
 **Nel testo:** soci tesserati e assicurati, istruttore, come iscriversi e mail.
 
 **Perché:** chi salva l'immagine come promemoria vede subito giorno, ora e
 fino a quando dura. Come iscriversi serve una volta sola: sta nel testo.
-
-**Da controllare:** sulla linea la pausa di Natale è indicativa (fine
-dicembre – inizio gennaio), perché la mail non dà le date precise.
 
 ```text
 📅 Segnatevi il mercoledì: dal 21 ottobre torna la ginnastica presciistica!
