@@ -549,6 +549,7 @@ begin
   assert (select count(*) from public.season_history) = 0, 'un admin legge lo storico stagioni';
   assert public.current_season() = '2030-09-01'::timestamptz + interval '1 year',
          'per l''admin la stagione aperta non segue l''ultima chiusura';
+  assert public.previous_bank_closing('2031-09-01') is null, 'senza il bilancio legge il saldo di chiusura';
 
   -- Il bilancio è del tesoriere.
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
@@ -913,6 +914,13 @@ begin
     raise exception 'ASSERZIONE: pagato negativo accettato';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  begin
+    perform public.set_amounts(gen_random_uuid(), 200, 100, 'prova');
+    raise exception 'ASSERZIONE: importi di un socio inesistente dati per cambiati';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%non trovato%', 'errore inatteso: ' || sqlerrm;
   end;
 
   -- Una modifica dal form Soci finisce nello storico anche lei, senza motivo.

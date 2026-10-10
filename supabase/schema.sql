@@ -1632,8 +1632,8 @@ comment on table public.season_accounts is 'Saldo banca a inizio stagione.';
 
 -- Saldo di chiusura dell'ultima stagione chiusa prima di `before`. Security
 -- definer apposta: lo storico lo legge solo il superadmin, ma il saldo da
--- proporre serve anche all'admin che compila il bilancio, e questa funzione
--- restituisce quel numero e nient'altro.
+-- proporre serve anche a chi compila il bilancio, e questa funzione
+-- restituisce quel numero e nient'altro, solo a chi ha il permesso bilancio.
 create or replace function public.previous_bank_closing(before timestamptz)
 returns numeric
 language sql
@@ -1642,10 +1642,16 @@ security definer
 set search_path = public
 as $$
   select h.bank_closing from public.season_history h
-   where h.season < before order by h.season desc limit 1;
+   where public.can('bilancio') and h.season < before order by h.season desc limit 1;
 $$;
 
 revoke all on function public.previous_bank_closing(timestamptz) from public;
+-- Supabase dà l'esecuzione ad anon esplicitamente: togliere a public non basta.
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.previous_bank_closing(timestamptz) from anon;
+  end if;
+end $$;
 grant execute on function public.previous_bank_closing(timestamptz) to authenticated;
 
 -- Il bilancio della stagione corrente, una riga. Senza saldo iniziale scritto
@@ -2171,12 +2177,12 @@ begin
     total_manual = m.total_manual or set_amounts.total is distinct from m.total
    where m.id = set_amounts.member_id
      and m.enrolled_at is not null;
-  -- Il motivo vale per questa modifica sola, non per le altre della transazione.
-  perform set_config('sciclub.motivo', '', true);
-
+  -- Subito dopo l'UPDATE: anche PERFORM imposta FOUND, e lo metterebbe sempre a vero.
   if not found then
     raise exception 'Socio non trovato fra gli iscritti della stagione: ricarica la pagina.';
   end if;
+  -- Il motivo vale per questa modifica sola, non per le altre della transazione.
+  perform set_config('sciclub.motivo', '', true);
 end;
 $$;
 
