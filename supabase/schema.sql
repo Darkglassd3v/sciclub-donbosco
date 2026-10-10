@@ -2355,8 +2355,41 @@ $$;
 
 drop trigger if exists sync_pass_type on public.member_passes;
 create trigger sync_pass_type
-  after insert or delete on public.member_passes
+  after insert or delete or update of pass_type on public.member_passes
   for each row execute function public.sync_pass_type();
+
+-- Le schede dei soci tengono le voci del listino per nome. Rinominare una voce
+-- da Impostazioni rinomina anche le scelte dei soci: altrimenti il form Soci
+-- non le ritrova e al primo salvataggio le cancella (tessera, corso...), e il
+-- pannello gite non trova più gite e giorno dell'abbonamento. Gli abbonamenti
+-- delle stagioni chiuse restano col nome di allora.
+create or replace function public.rename_price_choices()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  case new.category
+    when 'TESSERA'      then update public.members set card_type       = new.name where card_type       = old.name;
+    when 'FAMIGLIA'     then update public.members set family_discount = new.name where family_discount = old.name;
+    when 'CORSO'        then update public.members set course_type     = new.name where course_type     = old.name;
+    when 'PRESCIISTICA' then update public.members set preski_type     = new.name where preski_type     = old.name;
+    when 'ABBONAMENTO'  then
+      update public.member_passes set pass_type = new.name
+       where pass_type = old.name and season = public.current_season();
+  end case;
+  return null;
+end;
+$$;
+
+revoke all on function public.rename_price_choices() from public;
+
+drop trigger if exists rename_price_choices on public.prices;
+create trigger rename_price_choices
+  after update of name on public.prices
+  for each row when (old.name is distinct from new.name)
+  execute function public.rename_price_choices();
 
 -- ---------------------------------------------------------------------------
 -- Gite usate

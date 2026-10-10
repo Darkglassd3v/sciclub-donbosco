@@ -225,7 +225,7 @@
       return `
         <div class="riquadro unit-card">
           <div class="unit-header">
-            <span class="unit-title">${nucleo.last_name} ${nucleo.first_name}</span>
+            <span class="unit-title">${esc(nucleo.last_name)} ${esc(nucleo.first_name)}</span>
             <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>
           </div>
           <div class="tabella-scorrevole">
@@ -396,12 +396,25 @@
     }
   }
 
-  function chiediConferma(idPagante) {
+  async function chiediConferma(idPagante) {
     const barra = el("barra_" + idPagante);
     if (!barra) return;
-    const importo = barra.querySelector(".da-pagare").textContent.replace("Da incassare: ", "");
+    // Il saldo di adesso, non quello di quando si è aperta la pagina: il
+    // database incassa il saldo del momento, e la domanda deve dire quello.
+    setLoading(true);
+    const { data, error } = await sb.from("households").select("household_balance")
+      .eq("head_id", idPagante).maybeSingle();
+    setLoading(false);
+    if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
+    const saldo = parseFloat(data?.household_balance || 0);
+    if (saldo <= 0) {
+      showToast("Questo nucleo è già saldato.");
+      await caricaDati({ silenzioso: true });
+      return;
+    }
+    barra.querySelector(".da-pagare").textContent = `Da incassare: ${fmt(saldo)}`;
     const nome = barra.dataset.nome;
-    chiedi(barra.querySelector(".azioni"), `Hai riscosso ${importo}${nome ? ` da ${nome}` : ""}?`,
+    chiedi(barra.querySelector(".azioni"), `Hai riscosso ${fmt(saldo)}${nome ? ` da ${nome}` : ""}?`,
       "Sì, incassato", () => salda(idPagante), { pericolo: false });
   }
 

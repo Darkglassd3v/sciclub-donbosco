@@ -60,7 +60,8 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 - Listino `prices`: categorie `TESSERA`, `FAMIGLIA`, `ABBONAMENTO`, `CORSO`, `PRESCIISTICA`.
   `min_role` solo sulle tessere (es. TESSERA DIRETTIVO = admin); `insurance` dice in che lista
   dell'assicurazione va la tessera. Gli abbonamenti ricavano `trips`/`day` dal nome (trigger
-  `fill_pass_details`).
+  `fill_pass_details`). I soci tengono le voci per nome: rinominare una voce rinomina anche le
+  scelte dei soci e gli abbonamenti della stagione aperta (trigger `rename_price_choices`).
 - `members`: una colonna per categoria (`card_type`, `family_discount`, `pass_type`,
   `preski_type`, `course_type`, `course_day`); partenze `saturday_departure` /
   `sunday_departure` (testo separato da virgole); `total` salvato dalla pagina (o scritto a
@@ -87,6 +88,9 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   andare a capo.
 - Conferme sempre in una finestra sopra la pagina (`chiedi()` in `shared.js` o `<dialog
   class="finestra">`), mai `confirm()`: un browser che blocca le finestre risponde "no" da solo.
+- Pagina Soci: si salva solo se la scheda non è cambiata da quando è aperta (`updated_at`
+  letto all'apertura); se Pagamenti, il pannello gite o l'Assicurazione l'hanno toccata, avviso
+  e niente scritto.
 - Errori (`showToast(..., "is-danger")`) restano finché non si preme Chiudi; le conferme
   spariscono dopo 8 secondi.
 - Sezioni colorate (`.sezione`, `.striscia`, `.corpo` in `brand.css`): il nome in una striscia

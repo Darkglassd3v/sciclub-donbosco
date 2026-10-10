@@ -1485,4 +1485,38 @@ begin
 end $$;
 SQL
 
+# ---------------------------------------------------------------------------
+# Rinominare una voce del listino rinomina anche le scelte dei soci: il form
+# Soci e il pannello gite le cercano per nome.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+insert into public.prices (category, name, price) values
+  ('CORSO', 'PROVA CORSO VECCHIO', 100),
+  ('ABBONAMENTO', 'PROVA 5 VIAGGI DOMENICA', 120);
+insert into public.members (id, last_name, first_name, enrolled_at, course_type)
+values ('aaaaaaaa-0000-0000-0000-0000000000aa', 'ROSSI', 'RINOMINA', now(), 'PROVA CORSO VECCHIO');
+insert into public.member_passes (member_id, pass_type)
+values ('aaaaaaaa-0000-0000-0000-0000000000aa', 'PROVA 5 VIAGGI DOMENICA');
+
+set role authenticated;
+do $$
+declare
+  chi constant uuid := 'aaaaaaaa-0000-0000-0000-0000000000aa';
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.prices set name = 'PROVA CORSO NUOVO' where name = 'PROVA CORSO VECCHIO';
+  update public.prices set name = 'PROVA 5 VIAGGI DOMENICA BIS' where name = 'PROVA 5 VIAGGI DOMENICA';
+  assert (select course_type from public.members where id = chi) = 'PROVA CORSO NUOVO',
+         'rinomina: il corso del socio ha ancora il nome vecchio';
+  assert (select pass_type from public.member_passes where member_id = chi) = 'PROVA 5 VIAGGI DOMENICA BIS',
+         'rinomina: l''abbonamento ha ancora il nome vecchio';
+  assert (select pass_type from public.members where id = chi) = 'PROVA 5 VIAGGI DOMENICA BIS',
+         'rinomina: il riassunto degli abbonamenti del socio non è aggiornato';
+  perform set_config('test.uid', '', false);
+end $$;
+reset role;
+delete from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000aa';
+delete from public.prices where name in ('PROVA CORSO NUOVO', 'PROVA 5 VIAGGI DOMENICA BIS');
+SQL
+
 echo "test ruoli: tutto a posto"

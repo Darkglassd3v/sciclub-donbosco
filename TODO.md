@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-09
+# TODO — aggiornato il 2026-10-10
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -22,11 +22,18 @@
 ## Versione aperta: 2.8-SNAPSHOT
 
 Aperta il 09/10/2026 dalla 2.7 (branch e tag `2.7`, cosa contiene: `git show 2.7` e il TODO del
-tag). Le pagine si pubblicano dal branch `2.8-SNAPSHOT` dal primo push. Fatto finora: niente.
+tag). Le pagine si pubblicano dal branch `2.8-SNAPSHOT`. Fatto finora (10/10, review del codice
+prima delle iscrizioni): salvataggio Soci che non cancella pagamenti e abbonamenti scritti
+intanto da altri; nomi e dati dal database passati da `esc()` in Soci e Pagamenti; conferma
+dell'incasso col saldo del momento; gite in coda tenute se la sessione scade; Elimina movimento
+del Bilancio in finestra; rinomina delle voci di listino estesa ai soci; `set_amounts()` che
+segnala il socio non trovato; saldo di chiusura non più leggibile senza login.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
+- [ ] Provare sul sito vero due operatori sullo stesso socio: aprire la scheda in Soci, segnare un
+      acconto da Pagamenti, poi Salva in Soci: deve dire "Socio NON salvato" e non toccare niente.
 - [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
       cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al
