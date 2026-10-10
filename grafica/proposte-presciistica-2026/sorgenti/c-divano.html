@@ -8,8 +8,9 @@
 <style>
 /* C · Divano. Manifesto: la prima riga della mail ("Alzati dal divano")
  * diventa il titolo, enorme, sul giallo del logo; un divano rimasto vuoto con
- * gli sci appoggiati. Nell'immagine solo cosa, quando e dove; il resto nel
- * testo del post. Sul giallo si scrive solo blu scuro (brand-guidelines §1),
+ * gli sci appoggiati. Le informazioni sono quelle di A (orario e durata,
+ * palestra, fino a quando, per chi, iscrizioni e mail): il divano si stringe
+ * per fare posto. Sul giallo si scrive solo blu scuro (brand-guidelines §1),
  * il logo sta su bianco (§3). */
 .cv { background: var(--giallo); color: var(--blu-dark); }
 .contenuto { position: absolute; left: 64px; right: 64px; top: 56px; bottom: 56px; display: flex; flex-direction: column; }
@@ -18,8 +19,6 @@ html.story .contenuto { top: 262px; bottom: 352px; }
 .testa { flex: none; display: flex; justify-content: space-between; align-items: flex-start; }
 .testa .logo-box { border-radius: 22px; padding: 12px 18px; }
 .testa .logo-box img { height: 150px; }
-.pill { background: var(--blu-dark); color: #fff; border-radius: 999px; font-size: 36px; font-weight: 800; padding: 12px 30px; margin-top: 18px; }
-html.story .pill { font-size: 44px; }
 
 .gancio { flex: none; font-size: 158px; font-weight: 800; letter-spacing: -.045em; line-height: .9; margin-top: 30px; }
 html.story .gancio { font-size: 176px; margin-top: 44px; }
@@ -32,14 +31,24 @@ html.story .gancio { font-size: 176px; margin-top: 44px; }
   box-shadow: 0 10px 24px rgba(6,57,106,.3); }
 html.story .nastro { font-size: 88px; }
 
-.info { flex: none; margin-top: 40px; }
+.info { flex: none; margin-top: 36px; }
 .info .quando { font-size: 60px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
 .info .dove { font-size: 52px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
-.info .poi { font-size: 42px; font-weight: 600; margin-top: 14px; line-height: 1.2; }
-html.story .info { margin-top: 50px; }
+.info .poi { font-size: 40px; font-weight: 600; margin-top: 10px; line-height: 1.2; }
+.info .poi + .poi { margin-top: 4px; }
+/* Iscrizioni e mail, come in fondo al biglietto di A. */
+.iscrizioni { flex: none; display: flex; gap: 20px; align-items: center; margin-top: 26px; padding-top: 22px;
+  border-top: 4px dashed rgba(6,57,106,.35); }
+.iscrizioni svg { flex: none; width: 60px; height: 60px; }
+.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 42px; font-weight: 800; letter-spacing: -.02em; }
+html.story .info { margin-top: 44px; }
 html.story .info .quando { font-size: 66px; }
 html.story .info .dove { font-size: 56px; }
-html.story .info .poi { font-size: 48px; }
+html.story .info .poi { font-size: 46px; }
+html.story .iscrizioni div { font-size: 44px; }
+html.story .iscrizioni b { font-size: 48px; }
+html.story .iscrizioni svg { width: 70px; height: 70px; }
 </style>
 </head>
 <body>
@@ -47,7 +56,6 @@ html.story .info .poi { font-size: 48px; }
   <div class="contenuto">
     <div class="testa">
       <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
-      <div class="pill">Riservato ai soci</div>
     </div>
     <div class="gancio">Alzati<br>dal divano!</div>
     <div class="scena">
@@ -88,6 +96,11 @@ html.story .info .poi { font-size: 48px; }
       <div class="quando">Mercoledì 21 ottobre · ore 19:30</div>
       <div class="dove">Palestra Way Assauto, Asti</div>
       <div class="poi">poi tutti i mercoledì fino al 13 gennaio</div>
+      <div class="poi">Lezioni di un'ora · soci tesserati e assicurati</div>
+    </div>
+    <div class="iscrizioni">
+      <svg viewBox="0 0 24 24" fill="#06396A" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+      <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
     </div>
   </div>
 </div>

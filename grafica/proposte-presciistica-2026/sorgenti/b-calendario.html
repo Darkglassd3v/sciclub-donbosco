@@ -8,27 +8,30 @@
 <style>
 /* B · Calendario. Il messaggio è la data: un foglio di calendario a strappo
  * con il primo mercoledì, e sotto in una frase fino a quando dura. Fondo blu
- * del club con la neve e le montagne di Montagna, di sera. */
+ * del club con la neve e le montagne di Montagna, di sera. Le informazioni
+ * sono quelle di A (orario e durata, palestra, fino a quando, per chi,
+ * iscrizioni e mail): cambia solo come sono disegnate. */
 html { --k: 1; }
 .contenuto { justify-content: space-between; }
-html.story { --k: 1.1; }
+html.story { --k: 1.02; }
 .cv { background: var(--blu); }
 .monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
 html.story .monti { height: 520px; }
 .contenuto { position: absolute; left: 60px; right: 60px; top: 56px; bottom: 60px;
   display: flex; flex-direction: column; gap: calc(34px * var(--k)); }
-html.story .contenuto { top: 262px; bottom: 350px; justify-content: space-between; gap: 0; }
+html.story .contenuto { top: 262px; bottom: 350px; justify-content: space-between; gap: 24px; }
 /* Story: i testi piccoli a corpo fisso, per non scendere sotto i 44 px. */
-html.story .pill, html.story .dove .et { font-size: 44px; }
-html.story .foglio .num { font-size: 240px; }
-html.story .titolo { font-size: 112px; }
-html.story .centro { padding-top: 26px; }
+html.story .dove .et, html.story .iscrizioni div { font-size: 44px; }
+html.story .foglio .num { font-size: 220px; }
+html.story .titolo { font-size: 110px; }
+html.story .centro { padding-top: 22px; }
+html.story .dove .chi { font-size: 48px; }
+html.story .dove .nota { font-size: 44px; }
+html.story .iscrizioni b { font-size: 46px; }
 
 .testa { display: flex; justify-content: space-between; align-items: flex-start; }
 .testa .logo-box { border-radius: 22px; padding: 12px 18px; }
 .testa .logo-box img { height: calc(150px * var(--k)); }
-.pill { background: var(--giallo); color: var(--blu-dark); border-radius: 999px; font-size: calc(36px * var(--k));
-  font-weight: 800; padding: calc(12px * var(--k)) calc(30px * var(--k)); margin-top: 18px; }
 
 .titolo { color: #fff; font-size: calc(108px * var(--k)); font-weight: 800; letter-spacing: -.035em; line-height: .95; }
 
@@ -46,13 +49,21 @@ html.story .centro { padding-top: 26px; }
 .dove { color: #fff; min-width: 0; }
 .dove .et { color: var(--giallo); font-size: calc(38px * var(--k)); font-weight: 700; }
 .dove .luogo { font-size: calc(64px * var(--k)); font-weight: 800; line-height: 1; letter-spacing: -.025em; margin-top: 8px; }
-.dove .nota { font-size: calc(40px * var(--k)); font-weight: 600; margin-top: calc(22px * var(--k)); line-height: 1.2; color: #E7EFF7; }
+.dove .nota { font-size: calc(40px * var(--k)); font-weight: 600; margin-top: 8px; line-height: 1.2; color: #E7EFF7; }
+.dove .chi { font-size: calc(46px * var(--k)); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; margin-top: 8px; }
+.dove .et + .et, .dove .nota + .et { margin-top: calc(26px * var(--k)); }
 
 /* Fino a quando dura: una frase sola, senza date di pausa. */
 .durata { background: var(--blu-dark); border-radius: 28px; padding: calc(30px * var(--k)) 40px; color: #fff;
   box-shadow: 0 12px 30px rgba(0,0,0,.3); }
 .durata .frase { font-size: calc(58px * var(--k)); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .durata .frase em { font-style: normal; color: var(--giallo); }
+
+/* Iscrizioni e mail, come in fondo al biglietto di A. */
+.iscrizioni { display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
+.iscrizioni svg { flex: none; width: calc(64px * var(--k)); height: calc(64px * var(--k)); }
+.iscrizioni div { font-size: calc(36px * var(--k)); font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: calc(42px * var(--k)); font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }
 </style>
 </head>
 <body>
@@ -67,7 +78,6 @@ html.story .centro { padding-top: 26px; }
   <div class="contenuto">
     <div class="testa">
       <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
-      <div class="pill">Riservato ai soci</div>
     </div>
     <div class="titolo">Ginnastica presciistica</div>
     <div class="centro">
@@ -83,10 +93,16 @@ html.story .centro { padding-top: 26px; }
         <div class="luogo">Palestra Way&nbsp;Assauto</div>
         <div class="luogo">Asti</div>
         <div class="nota">Lezioni di un'ora</div>
+        <div class="et">Per chi</div>
+        <div class="chi">Soci tesserati e assicurati</div>
       </div>
     </div>
     <div class="durata">
       <div class="frase">Tutti i <em>mercoledì</em> <span style="white-space:nowrap">fino al 13 gennaio</span></div>
+    </div>
+    <div class="iscrizioni">
+      <svg viewBox="0 0 24 24" fill="#FCCF02" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+      <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
     </div>
   </div>
 </div>

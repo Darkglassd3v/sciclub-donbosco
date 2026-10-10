@@ -10,6 +10,13 @@ di tutti i corsi; B senza "Torna il corso di", senza la linea del tempo e la
 pausa di Natale, con la frase "Tutti i mercoledì fino al 13 gennaio"; logo
 più grande in tutte e tre (150 px invece di 96–100).
 
+**Riviste di nuovo il 10/10**: B e C danno le stesse informazioni di A, cambia
+solo lo stile. In tutte e tre: titolo, mercoledì 21 ottobre, ore 19:30 e
+lezioni di un'ora, Palestra Way Assauto ad Asti, ogni mercoledì fino al 13
+gennaio, soci tesserati e assicurati, iscrizioni in negozio o via mail con
+l'indirizzo. Tolta la pastiglia "Riservato ai soci" di B e C: lo dice la riga
+dei soci tesserati e assicurati.
+
 - Testi presi dalla mail `Mail per Presciistica.docx`, niente di aggiunto:
   niente prezzo, niente nome dell'istruttore, niente telefoni.
 - Testo grande: almeno 34 px nel post e 44 px nella story.
@@ -17,10 +24,10 @@ più grande in tutte e tre (150 px invece di 96–100).
   dove Instagram mette il profilo e la risposta.
 
 **Regola per dividere immagine e testo.** L'immagine gira da sola (WhatsApp,
-schermate, inoltri): deve dire almeno cosa, quando, dove e per chi. Il testo
-del post porta il resto: istruttore, durata, pausa di Natale, requisiti,
-come iscriversi. La mail va sempre anche nel testo, perché dal testo si può
-copiare e da un'immagine no.
+schermate, inoltri): in tutte e tre c'è tutto quello che serve per andarci e
+iscriversi (le informazioni di A). Il testo del post aggiunge l'invito,
+l'istruttore dello scorso anno e la pausa di Natale. La mail va sempre anche
+nel testo, perché dal testo si può copiare e da un'immagine no.
 
 ---
 
@@ -71,13 +78,14 @@ Vi aspettiamo numerosi!
 e sotto una frase sola: "Tutti i mercoledì fino al 13 gennaio".
 Fondo blu del club con neve e montagne, come Montagna.
 
-**Nell'immagine:** primo giorno e ora, palestra, durata della lezione,
-tutti i mercoledì fino al 13 gennaio, "Riservato ai soci".
+**Nell'immagine:** le stesse informazioni di A. Il foglio porta giorno e ora;
+accanto palestra, lezioni di un'ora e per chi (soci tesserati e assicurati);
+sotto "Tutti i mercoledì fino al 13 gennaio" e le iscrizioni con la mail.
 
-**Nel testo:** soci tesserati e assicurati, istruttore, come iscriversi e mail.
+**Nel testo:** l'invito, l'istruttore dello scorso anno, la pausa di Natale.
 
 **Perché:** chi salva l'immagine come promemoria vede subito giorno, ora e
-fino a quando dura. Come iscriversi serve una volta sola: sta nel testo.
+fino a quando dura, e ha comunque tutto per iscriversi.
 
 ```text
 📅 Segnatevi il mercoledì: dal 21 ottobre torna la ginnastica presciistica!
@@ -104,15 +112,17 @@ diventa il titolo, enorme, sul giallo del logo; sotto, un divano vuoto con
 il telecomando lasciato lì e gli sci appoggiati. È la più diversa dai post
 di sempre e quella che si nota di più scorrendo.
 
-**Nell'immagine:** solo il titolo, il nome del corso, il primo appuntamento
-(giorno, ora, palestra), "poi tutti i mercoledì fino al 13 gennaio" e
-"Riservato ai soci".
+**Nell'immagine:** il titolo «Alzati dal divano!», il nome del corso e sotto
+le stesse informazioni di A: primo appuntamento (giorno, ora, palestra), poi
+tutti i mercoledì fino al 13 gennaio, lezioni di un'ora, soci tesserati e
+assicurati, iscrizioni in negozio o via mail con l'indirizzo. Il divano si è
+rimpicciolito per fare posto.
 
-**Nel testo:** tutto il resto.
+**Nel testo:** l'invito, l'istruttore dello scorso anno, la pausa di Natale.
 
-**Perché:** un manifesto funziona se si legge in un secondo: poche righe,
-grandissime. Chi è interessato apre il testo. Sul giallo si scrive solo blu
-scuro e il logo sta su bianco, come chiedono le regole del marchio.
+**Perché:** il titolo grande si nota scorrendo, le informazioni sotto bastano
+per iscriversi. Sul giallo si scrive solo blu scuro e il logo sta su bianco,
+come chiedono le regole del marchio.
 
 ```text
 Alzati dal divano: la prossima stagione sci si prepara adesso! 🛋️⛷️
