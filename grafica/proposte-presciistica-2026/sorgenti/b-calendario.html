@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>B · Calendario</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="comune.css">
+<style>
+/* B · Calendario. Il messaggio è la data: un foglio di calendario a strappo
+ * con il primo mercoledì, e sotto una linea del tempo da ottobre a gennaio
+ * con la pausa di Natale. Fondo blu del club con la neve e le montagne di
+ * Montagna, di sera. La pausa sulla linea è indicativa: la mail non dà le date. */
+html { --k: 1; }
+html.story { --k: 1.1; }
+.cv { background: var(--blu); }
+.monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
+html.story .monti { height: 520px; }
+.contenuto { position: absolute; left: 60px; right: 60px; top: 56px; bottom: 60px;
+  display: flex; flex-direction: column; gap: calc(34px * var(--k)); }
+html.story .contenuto { top: 262px; bottom: 350px; justify-content: space-between; gap: 0; }
+/* Story: i testi piccoli a corpo fisso, per non scendere sotto i 44 px. */
+html.story .pill, html.story .linea .sopra, html.story .dove .et { font-size: 44px; }
+html.story .linea .et.sotto { font-size: 46px; }
+html.story .foglio .num { font-size: 240px; }
+html.story .titolo { font-size: 112px; }
+html.story .centro { padding-top: 26px; }
+
+.testa { display: flex; justify-content: space-between; align-items: flex-start; }
+.testa .logo-box { border-radius: 22px; padding: 12px 18px; }
+.testa .logo-box img { height: calc(96px * var(--k)); }
+.pill { background: var(--giallo); color: var(--blu-dark); border-radius: 999px; font-size: calc(36px * var(--k));
+  font-weight: 800; padding: calc(12px * var(--k)) calc(30px * var(--k)); margin-top: 18px; }
+
+.titolo { color: #fff; font-size: calc(108px * var(--k)); font-weight: 800; letter-spacing: -.035em; line-height: .95; }
+.titolo small { display: block; font-size: calc(44px * var(--k)); letter-spacing: -.01em; color: var(--giallo); margin-bottom: calc(10px * var(--k)); }
+
+.centro { display: flex; gap: calc(44px * var(--k)); align-items: center; }
+/* Il foglio: testata verde (il colore dei corsi), due anelli, il giorno grande. */
+.foglio { flex: none; width: calc(430px * var(--k)); background: #fff; border-radius: 28px; text-align: center;
+  position: relative; box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
+.foglio .mese { background: var(--verde); color: #fff; font-size: calc(46px * var(--k)); font-weight: 800;
+  border-radius: 28px 28px 0 0; padding: calc(30px * var(--k)) 0 calc(14px * var(--k)); letter-spacing: -.01em; }
+.foglio .anello { position: absolute; top: calc(-22px * var(--k)); width: calc(30px * var(--k)); height: calc(58px * var(--k));
+  border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
+.foglio .giorno { font-size: calc(48px * var(--k)); font-weight: 700; margin-top: calc(18px * var(--k)); }
+.foglio .num { font-size: calc(250px * var(--k)); font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--verde); margin-top: calc(6px * var(--k)); }
+.foglio .ora { font-size: calc(58px * var(--k)); font-weight: 800; padding: calc(14px * var(--k)) 0 calc(28px * var(--k)); }
+.dove { color: #fff; min-width: 0; }
+.dove .et { color: var(--giallo); font-size: calc(38px * var(--k)); font-weight: 700; }
+.dove .luogo { font-size: calc(64px * var(--k)); font-weight: 800; line-height: 1; letter-spacing: -.025em; margin-top: 8px; }
+.dove .nota { font-size: calc(40px * var(--k)); font-weight: 600; margin-top: calc(22px * var(--k)); line-height: 1.2; color: #E7EFF7; }
+
+/* Linea del tempo: dal 21/10 (giorno 0) al 13/01 (giorno 84), con la pausa
+ * di Natale fra il giorno 62 (22/12) e il 78 (7/1), su 100 parti. */
+.durata { background: var(--blu-dark); border-radius: 28px; padding: calc(28px * var(--k)) 40px calc(26px * var(--k)); color: #fff;
+  box-shadow: 0 12px 30px rgba(0,0,0,.3); }
+.durata .frase { font-size: calc(48px * var(--k)); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.durata .frase em { font-style: normal; color: var(--giallo); }
+.linea { position: relative; height: calc(150px * var(--k)); margin: calc(8px * var(--k)) 14px 0; }
+.linea .tratto { position: absolute; top: calc(70px * var(--k)); height: 16px; background: #fff; border-radius: 8px; }
+.linea .pausa { position: absolute; top: calc(70px * var(--k)); height: 16px; border-top: 5px dashed var(--giallo); border-bottom: 5px dashed var(--giallo); }
+.linea .punto { position: absolute; top: calc(78px * var(--k)); width: calc(40px * var(--k)); height: calc(40px * var(--k));
+  margin: calc(-20px * var(--k)) 0 0 calc(-20px * var(--k)); border-radius: 50%; background: var(--giallo); border: 6px solid #fff; }
+.linea .et { position: absolute; font-size: calc(38px * var(--k)); font-weight: 700; white-space: nowrap; }
+.linea .sotto { top: calc(104px * var(--k)); }
+.linea .sopra { top: 0; color: var(--giallo); font-size: calc(36px * var(--k)); }
+</style>
+</head>
+<body>
+<div class="cv">
+  <div class="neve" data-neve=".18"></div>
+  <!-- Montagne di sera, dal paesaggio di Montagna. -->
+  <svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <polygon fill="#1D5E9E" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
+    <polygon fill="#0A4279" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
+    <polygon fill="#06396A" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
+  </svg>
+  <div class="contenuto">
+    <div class="testa">
+      <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+      <div class="pill">Riservato ai soci</div>
+    </div>
+    <div class="titolo"><small>Torna il corso di</small>Ginnastica presciistica</div>
+    <div class="centro">
+      <div class="foglio">
+        <div class="anello" style="left:26%"></div><div class="anello" style="right:26%"></div>
+        <div class="mese">Ottobre</div>
+        <div class="giorno">Mercoledì</div>
+        <div class="num">21</div>
+        <div class="ora">ore 19:30</div>
+      </div>
+      <div class="dove">
+        <div class="et">Dove</div>
+        <div class="luogo">Palestra Way&nbsp;Assauto</div>
+        <div class="luogo">Asti</div>
+        <div class="nota">Lezioni di un'ora</div>
+      </div>
+    </div>
+    <div class="durata">
+      <div class="frase">Poi <em>tutti i mercoledì</em> fino al 13 gennaio</div>
+      <div class="linea">
+        <div class="tratto" style="left:0;width:73.8%"></div>
+        <div class="pausa" style="left:73.8%;width:19%"></div>
+        <div class="tratto" style="left:92.8%;width:7.2%"></div>
+        <div class="punto" style="left:0"></div>
+        <div class="punto" style="left:100%"></div>
+        <div class="et sotto" style="left:-14px">21 ottobre</div>
+        <div class="et sotto" style="right:-14px">13 gennaio</div>
+        <div class="et sopra" style="right:-14px">pausa di Natale</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="comune.js"></script>
+</body>
+</html>

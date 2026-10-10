@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Panoramica</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="comune.css">
+<style>
+/* Le tre proposte affiancate, con i JPEG già resi (rendi.sh li fa prima). */
+html, body { width: 1720px; height: 1980px; background: #F5F5F7; }
+.pagina { padding: 50px; }
+h1 { font-size: 66px; font-weight: 800; letter-spacing: -.03em; color: var(--blu); line-height: 1; }
+.sotto { font-size: 38px; font-weight: 600; color: var(--testo-soft); margin-top: 12px; }
+.colonne { display: grid; grid-template-columns: repeat(3, 500px); gap: 60px; margin-top: 40px; }
+h2 { font-size: 62px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--testo); }
+h2 b { color: var(--blu); }
+.idea { font-size: 36px; font-weight: 600; color: var(--testo-soft); line-height: 1.15; margin: 10px 0 20px; height: 84px; }
+img { display: block; width: 500px; border-radius: 14px; box-shadow: 0 6px 20px rgba(20,32,46,.15); }
+img + img { margin-top: 22px; }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <h1>Ginnastica presciistica · tre proposte</h1>
+  <div class="sotto">Sopra il post (4:5), sotto la story</div>
+  <div class="colonne">
+    <div><h2><b>A</b> · Biglietto</h2><div class="idea">Il biglietto di Ritocco, verde dei corsi, tutto scritto</div>
+      <img src="../a-biglietto-post.jpg" alt=""><img src="../a-biglietto-story.jpg" alt=""></div>
+    <div><h2><b>B</b> · Calendario</h2><div class="idea">Il foglio del 21 e la linea fino al 13 gennaio</div>
+      <img src="../b-calendario-post.jpg" alt=""><img src="../b-calendario-story.jpg" alt=""></div>
+    <div><h2><b>C</b> · Divano</h2><div class="idea">Manifesto giallo: «Alzati dal divano!»</div>
+      <img src="../c-divano-post.jpg" alt=""><img src="../c-divano-story.jpg" alt=""></div>
+  </div>
+</div>
+</body>
+</html>

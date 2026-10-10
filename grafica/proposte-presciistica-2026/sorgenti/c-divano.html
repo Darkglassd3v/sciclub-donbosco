@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>C · Divano</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="comune.css">
+<style>
+/* C · Divano. Manifesto: la prima riga della mail ("Alzati dal divano")
+ * diventa il titolo, enorme, sul giallo del logo; un divano rimasto vuoto con
+ * gli sci appoggiati. Nell'immagine solo cosa, quando e dove; il resto nel
+ * testo del post. Sul giallo si scrive solo blu scuro (brand-guidelines §1),
+ * il logo sta su bianco (§3). */
+.cv { background: var(--giallo); color: var(--blu-dark); }
+.contenuto { position: absolute; left: 64px; right: 64px; top: 56px; bottom: 56px; display: flex; flex-direction: column; }
+html.story .contenuto { top: 262px; bottom: 352px; }
+
+.testa { flex: none; display: flex; justify-content: space-between; align-items: flex-start; }
+.testa .logo-box { border-radius: 22px; padding: 12px 18px; }
+.testa .logo-box img { height: 96px; }
+.pill { background: var(--blu-dark); color: #fff; border-radius: 999px; font-size: 36px; font-weight: 800; padding: 12px 30px; margin-top: 18px; }
+html.story .pill { font-size: 44px; }
+
+.gancio { flex: none; font-size: 158px; font-weight: 800; letter-spacing: -.045em; line-height: .9; margin-top: 30px; }
+html.story .gancio { font-size: 176px; margin-top: 44px; }
+
+.scena { flex: 1 1 0; min-height: 0; position: relative; z-index: 1; margin-bottom: -14px; }
+.scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; background: var(--blu-dark); color: #fff;
+  transform: rotate(-2deg); text-align: center; font-size: 80px; font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px;
+  box-shadow: 0 10px 24px rgba(6,57,106,.3); }
+html.story .nastro { font-size: 88px; }
+
+.info { flex: none; margin-top: 40px; }
+.info .quando { font-size: 60px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
+.info .dove { font-size: 52px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
+.info .poi { font-size: 42px; font-weight: 600; margin-top: 14px; line-height: 1.2; }
+html.story .info { margin-top: 50px; }
+html.story .info .quando { font-size: 66px; }
+html.story .info .dove { font-size: 56px; }
+html.story .info .poi { font-size: 48px; }
+</style>
+</head>
+<body>
+<div class="cv">
+  <div class="contenuto">
+    <div class="testa">
+      <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+      <div class="pill">Riservato ai soci</div>
+    </div>
+    <div class="gancio">Alzati<br>dal divano!</div>
+    <div class="scena">
+      <!-- Il divano vuoto e gli sci appoggiati. -->
+      <svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+        <ellipse cx="350" cy="352" rx="330" ry="14" fill="#06396A" opacity=".18"/>
+        <rect x="72" y="300" width="28" height="48" rx="6" fill="#14202E"/>
+        <rect x="560" y="300" width="28" height="48" rx="6" fill="#14202E"/>
+        <rect x="80" y="56" width="500" height="196" rx="50" fill="#084C8D"/>
+        <rect x="118" y="86" width="206" height="118" rx="38" fill="#1D5E9E"/>
+        <rect x="336" y="86" width="206" height="118" rx="38" fill="#1D5E9E"/>
+        <rect x="40" y="222" width="580" height="92" rx="28" fill="#06396A"/>
+        <rect x="112" y="186" width="214" height="70" rx="26" fill="#2E6DB0"/>
+        <rect x="334" y="186" width="214" height="70" rx="26" fill="#2E6DB0"/>
+        <rect x="18" y="138" width="104" height="176" rx="48" fill="#06396A"/>
+        <rect x="538" y="138" width="104" height="176" rx="48" fill="#06396A"/>
+        <!-- Il telecomando lasciato sul cuscino: qualcuno si è appena alzato. -->
+        <g transform="rotate(-10 215 205)">
+          <rect x="160" y="190" width="110" height="30" rx="12" fill="#14202E"/>
+          <circle cx="182" cy="205" r="7" fill="#B3261E"/><circle cx="208" cy="205" r="5" fill="#fff"/><circle cx="228" cy="205" r="5" fill="#fff"/><circle cx="248" cy="205" r="5" fill="#fff"/>
+        </g>
+        <!-- Sci e bastoncini appoggiati al bracciolo. -->
+        <g transform="rotate(-9 700 350)">
+          <line x1="752" y1="350" x2="752" y2="40" stroke="#14202E" stroke-width="9" stroke-linecap="round"/>
+          <circle cx="752" cy="318" r="15" fill="none" stroke="#14202E" stroke-width="6"/>
+          <rect x="743" y="30" width="18" height="46" rx="8" fill="#14202E"/>
+          <rect x="650" y="16" width="36" height="336" rx="18" fill="#B3261E"/>
+          <rect x="694" y="8" width="36" height="344" rx="18" fill="#B3261E"/>
+          <rect x="650" y="16" width="36" height="46" rx="18" fill="#fff"/>
+          <rect x="694" y="8" width="36" height="46" rx="18" fill="#fff"/>
+          <rect x="646" y="190" width="44" height="34" rx="8" fill="#14202E"/>
+          <rect x="690" y="186" width="44" height="34" rx="8" fill="#14202E"/>
+        </g>
+      </svg>
+    </div>
+    <div class="nastro">Ginnastica presciistica</div>
+    <div class="info">
+      <div class="quando">Mercoledì 21 ottobre · ore 19:30</div>
+      <div class="dove">Palestra Way Assauto, Asti</div>
+      <div class="poi">poi tutti i mercoledì fino al 13 gennaio</div>
+    </div>
+  </div>
+</div>
+<script src="comune.js"></script>
+</body>
+</html>
