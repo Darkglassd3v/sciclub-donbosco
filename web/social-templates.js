@@ -47,6 +47,11 @@ const SAFE = { top: 250, bottom: 340 };
 
 const escS = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 
+/* "*fino al 13 gennaio*": fra due asterischi quello che chi pubblica ha
+ * evidenziato (pulsante Evidenzia del sottotesto; evidenzia(), grafiche della
+ * 2.8). Nelle altre grafiche e nel testo del post gli asterischi si tolgono. */
+const senzaSegni = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
+
 // Lo stile dei canvas, messo una volta nella pagina che disegna.
 (function stileSocial() {
   if (typeof document === "undefined" || document.getElementById("stile-social")) return;
@@ -204,6 +209,20 @@ function fattiEvento(ev) {
 /* Sciatore: segno del corso, uguale nel bollo della gita e nel calendario. */
 const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff"><circle cx="16" cy="4" r="2.2"/><path d="M4 21.5l17-5.2-.5-1.4-4 1.2-1.9-4.8 2.6-2.2-2.7-3.4-5.4 2.6.8 1.6 3.6-1.7 1.1 1.4-3.4 2.9 2.2 5.5-9.6 2.9z"/></svg>`;
 
+/* La coccarda verde del corso, una stella con lo sciatore, larga 210·k: il
+ * contenuto (la stella e la scritta), il contenitore lo mette chi la usa. La
+ * usano il bollo del Ritocco e, in alto a destra, Calendario e Divano. */
+function stellaCorso(k = 1) {
+  const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
+    const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
+    return `${100 + r * Math.sin(a)},${100 - r * Math.cos(a)}`;
+  }).join(" ");
+  return `
+      <svg class="abs" style="inset:0" width="${d}" height="${d}" viewBox="-6 -6 212 212"><polygon points="${pts}" fill="${CAT.corso.c}" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></svg>
+      <div class="abs" style="inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:${4 * k}px">
+        ${skier(62 * k)}<div style="font-size:${36 * k}px;font-weight:800;line-height:1">Corso</div></div>`;
+}
+
 /* Bollo data nel colore della categoria: giorno e DD/MM, che si legge a colpo
  * d'occhio anche postando con settimane d'anticipo. Con il corso nello stesso
  * giorno, una coccarda verde a stella sovrapposta come un adesivo. */
@@ -211,17 +230,11 @@ function badge(s, k = 1) {
   const C = categoria(s.cat), [day, n, month] = s.date.split(" ");
   const big = `${n.padStart(2, "0")}/${String(MESI.indexOf(month.toLowerCase()) + 1).padStart(2, "0")}`;
   const box = `border-radius:${28 * k}px;text-align:center;padding:${16 * k}px ${24 * k}px`;
-  const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
-    const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
-    return `${100 + r * Math.sin(a)},${100 - r * Math.cos(a)}`;
-  }).join(" ");
+  const d = 210 * k;
   // Margini verticali di -d/2: la coccarda non occupa altezza, così il
   // riquadro della data resta alto uguale con e senza corso, e lei gli sta
   // centrata sopra.
-  const corso = s.corso ? `<div style="position:relative;z-index:2;width:${d}px;height:${d}px;margin:${-d / 2}px ${-8 * k}px ${-d / 2}px 0;align-self:center;transform:rotate(-12deg)">
-      <svg class="abs" style="inset:0" width="${d}" height="${d}" viewBox="-6 -6 212 212"><polygon points="${pts}" fill="${CAT.corso.c}" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></svg>
-      <div class="abs" style="inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:${4 * k}px">
-        ${skier(62 * k)}<div style="font-size:${36 * k}px;font-weight:800;line-height:1">Corso</div></div></div>` : "";
+  const corso = s.corso ? `<div style="position:relative;z-index:2;width:${d}px;height:${d}px;margin:${-d / 2}px ${-8 * k}px ${-d / 2}px 0;align-self:center;transform:rotate(-12deg)">${stellaCorso(k)}</div>` : "";
   return `<div style="display:flex;align-items:flex-start">${corso}
     <div style="${box};position:relative;background:${C.c};color:${C.ink};min-width:${190 * k}px">
     <div style="font-size:${34 * k}px;font-weight:700">${escS(day)}</div>
@@ -270,13 +283,13 @@ function testoBiglietto(s, accent, k, conTitolo = true) {
   const T = corpoTitolo(titolo.length) * k, B = corpoTesto(sub.length, solo) * k * (s.fmt === "story" ? .9 : 1), P = 116 * k;
   const testa = titolo || sub ? `<div>
       ${titolo ? `<div class="t-dest" data-titolo style="font-size:var(--t);line-height:1.02;color:#14202E;text-wrap:balance">${escS(titolo)}</div>` : ""}
-      ${sub ? `<div style="font-size:var(--b);font-weight:600;line-height:1.25;color:#2E3A48;white-space:pre-line;text-wrap:pretty;${titolo ? `margin-top:calc(var(--b) * .35)` : ""}">${escS(sub)}</div>` : ""}</div>` : "";
+      ${sub ? `<div style="font-size:var(--b);font-weight:600;line-height:1.25;color:#2E3A48;white-space:pre-line;text-wrap:pretty;${titolo ? `margin-top:calc(var(--b) * .35)` : ""}">${escS(senzaSegni(sub))}</div>` : ""}</div>` : "";
   const prezzi = prices.length ? `<div style="display:flex;flex-wrap:wrap;gap:calc(var(--b) * .4) calc(var(--p) * .55)">${prices.map(([n, v]) => `<div>
       <div class="t-dest" style="font-size:var(--p);color:${accent};white-space:nowrap">${escS(v)}</div>
       ${n ? `<div style="font-size:calc(var(--b) * .9);font-weight:700;margin-top:${6 * k}px;color:#14202E">${escS(n)}</div>` : ""}</div>`).join("")}</div>` : "";
   const fatti = facts.length ? `<div style="display:grid;grid-template-columns:repeat(${facts.length > 1 ? 2 : 1},minmax(0,1fr));gap:calc(var(--b) * .45) calc(var(--b) * .95)">
       ${facts.map(([n, v]) => `<div><div style="font-size:calc(var(--b) * .72);font-weight:600;color:#4A5361">${escS(n)}</div>
-        <div style="font-size:var(--b);font-weight:700;line-height:1.15;color:#14202E">${intero(v)}</div></div>`).join("")}</div>` : "";
+        <div style="font-size:var(--b);font-weight:700;line-height:1.15;color:#14202E">${intero(senzaSegni(v))}</div></div>`).join("")}</div>` : "";
   const partenze = stops.length ? `<div style="font-size:calc(var(--b) * 1.15);font-weight:700;line-height:1.18;color:#14202E">
       ${stops.map(([t, l]) => `<div><span style="color:${accent};white-space:nowrap">ore ${escS(t)}</span> · ${escS(l)}</div>`).join("")}</div>` : "";
   const scadenza = gita && s.deadline ? `<div style="font-size:var(--b);font-weight:800;color:${accent}">Iscrizioni ${escS(s.deadline)}</div>` : "";
@@ -622,7 +635,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sa.story .fatti dt { font-size: ${z(44)}; }
     .sa .fatti dd { font-size: ${z(50)}; font-weight: 700; line-height: 1.12; }
     .sa.story .fatti dd { font-size: ${z(56)}; }
-    .sa .fatti b { color: #084C8D; }
+    .sa .fatti b, .sa .tit small b { color: #084C8D; }
     .sa .isc { flex: none; margin: 0 40px; border-top: 4px dashed #C7D0DA; padding: 20px 16px 26px; display: flex; column-gap: 22px; align-items: center; }
     .sa.story .isc { padding: 26px 16px 34px; }
     .sa .isc > svg { flex: none; width: 70px; height: 70px; fill: #084C8D; }
@@ -639,6 +652,10 @@ const NUOVI = ["biglietto", "calendario", "divano"];
       color: #084C8D; border: 3px solid #084C8D; border-radius: 14px; padding: 2px 14px 2px 8px; }
     .sa .righe .corso svg, .sc .righe .corso svg { width: 1.2em; height: 1.2em; }
 
+    /* Gita con il corso: la coccarda verde del Ritocco in alto a destra, accanto al logo, fuori dal flusso. */
+    .cv.nuovo .stella { position: absolute; z-index: 3; right: 44px; top: 30px; transform: rotate(-12deg); }
+    /* Nella story più grande (la scritta "Corso" a 45 px) e più in alto, per non toccare il titolo. */
+    .cv.nuovo.story .stella { top: 196px; }
     .sb { background: #084C8D; }
     .sb .monti { position: absolute; left: 0; bottom: 0; width: 1080px; height: 330px; }
     .sb.story .monti { height: 520px; }
@@ -667,6 +684,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sb .dati .et ~ .et { margin-top: ${q(26)}; }
     .sb .dati .v { font-size: ${z(56)}; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
     .sb .dati b { color: #FCCF02; }
+    .sb .tit small b { color: #fff; }
     .sb .dati small { font-size: ${z(40)}; font-weight: 600; letter-spacing: 0; color: #fff; }
     .sb.story .dati small { font-size: ${z(44)}; }
     .sb .evid { flex: none; background: #FCCF02; border-radius: 28px; padding: ${q(28)} 40px; color: #084C8D; box-shadow: 0 12px 30px rgba(0,0,0,.3);
@@ -733,12 +751,15 @@ function coloreNuovo(k) {
   return { c, ink: scrittaSu(c) };
 }
 
-/* Orari, prezzi e date dentro un testo scritto a mano ("ore 20:00", "€ 30",
- * "mercoledì 7 aprile", "14/01"): finiscono in <b>, che ogni grafica mette in
- * evidenza a modo suo. Il prezzo viene prima dell'orario: "12.50 €" è un prezzo. */
+/* Quello che chi pubblica ha evidenziato ("*fino al 13 gennaio*") finisce in
+ * <b>, che ogni grafica mette in evidenza a modo suo, senza gli asterischi.
+ * Con `auto` (le informazioni) anche orari, prezzi e date ("ore 20:00",
+ * "€ 30", "mercoledì 7 aprile", "14/01"); nel sottotesto no, decide chi
+ * scrive. Il prezzo viene prima dell'orario: "12.50 €" è un prezzo. */
 const EVIDENZA = new RegExp(`€\\s?\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s?€|(?:ore\\s)?\\d{1,2}[:.]\\d{2}`
   + `|(?:(?:${GIORNI.join("|")})\\s)?\\d{1,2}\\s(?:${MESI.join("|")})|\\d{1,2}\\/\\d{1,2}`, "gi");
-const evidenzia = (testo) => escS(testo).replace(EVIDENZA, "<b>$&</b>");
+const evidenzia = (testo, auto = true) => String(testo ?? "").split(/(\*[^*\n]+\*)/).map((pezzo, i) => (i % 2
+  ? `<b>${escS(pezzo.slice(1, -1))}</b>` : auto ? escS(pezzo).replace(EVIDENZA, "<b>$&</b>") : escS(pezzo))).join("");
 
 /** "Gita a La Thuile": il titolo dice cos'è (README delle proposte); `capo` va fra "Gita a" e la meta. */
 const titoloGita = (dest, capo = " ") => (/^gita\b/i.test(dest || "") ? escS(dest) : `Gita a${capo}${escS(dest)}`);
@@ -771,6 +792,9 @@ const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt="">
 const sciatore = (col = "currentColor") => `<svg viewBox="0 0 250 240" aria-hidden="true"><rect x="4" y="208" width="242" height="16" rx="8" fill="${col}"/>
   <g stroke="${col}" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M120 70 L84 136"/><path d="M114 82 L192 92"/>
   <path d="M84 136 L154 142 L140 206 L172 206"/></g><circle cx="134" cy="38" r="27" fill="${col}"/></svg>`;
+
+/** La coccarda del corso in alto a destra (Calendario e Divano); nella story più grande. */
+const stellaNuova = (story) => `<div class="stella" style="width:${210 * (story ? 1.25 : 1)}px;height:${210 * (story ? 1.25 : 1)}px">${stellaCorso(story ? 1.25 : 1)}</div>`;
 
 /** Le gite del mese, una riga ciascuna: il giorno nel colore della gita, la meta, il corso (`corso`, l'HTML). */
 function righeMese(righe, breve, corso) {
@@ -829,7 +853,7 @@ function postBiglietto(s) {
   const iscr = righe.findIndex(([n]) => ISCRIZIONI.test(n));
   if (!gita && iscr >= 0) righe.splice(iscr, 0, righe.pop());
   const sub = gita ? "" : String(s.sub || "").trim();
-  const testo = `<div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${escS(sub)}</small>` : ""}</div>
+  const testo = `<div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
     ${righe.some(([, v]) => v) ? `<dl class="fatti">${righe.filter(([, v]) => v).map(([n, v]) => `<dt>${n}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}`;
   const scena = s.photo ? `<img class="foto" src="${escS(s.photo)}" alt="">` : PAESAGGIO + (s.cat === "corso" ? FIGURA : "");
   return biglietto(C, s.fmt === "story", scena, bollo, testo, s.contatti);
@@ -852,9 +876,10 @@ const MONTI_B = `<svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="
   <polygon fill="#fff" fill-opacity=".11" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
   <polygon fill="#fff" fill-opacity=".16" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/></svg>`;
 
-const fondoB = (story, corpo) => `<div class="cv nuovo sb${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px">
+const fondoB = (story, corpo, corso = false) => `<div class="cv nuovo sb${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px">
     ${fiocchi(1080, story ? 1920 : 1350, .18)}${MONTI_B}
-    <div class="col" data-adatta=".6"><div class="testa">${logoNuovo()}</div>${corpo}</div></div>`;
+    <div class="col" data-adatta=".6"><div class="testa">${logoNuovo()}</div>${corpo}</div>
+    ${corso ? stellaNuova(story) : ""}</div>`;
 
 /**
  * B · Calendario: sempre il blu del club; il foglio a strappo porta la data,
@@ -872,19 +897,18 @@ function postCalendario(s) {
   const dati = (gita ? [
     ["Partenze", partenze(s).map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join("<br>")],
     ["Quota", quota],
-    ["Corso", s.corso && "nello stesso giorno"],
   ] : [...fatti.filter((f) => f !== ora && f !== iscr).map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]]).filter(([, v]) => v);
   const foglio = g ? `<div class="foglio"><i class="anello" style="left:26%"></i><i class="anello" style="right:26%"></i>
       <div class="mese" style="background:${testa};color:${scrittaSu(testa)}">${maiuscola(MESI[g.getMonth()])}</div>
       <div class="giorno">${maiuscola(GIORNI[g.getDay()])}</div>
       <div class="num" style="color:${testa === GIALLO ? BLU : suBianco(testa)}">${g.getDate()}</div>
-      <div class="ora">${ora ? escS(ora[1]) : "&nbsp;"}</div></div>` : "";
+      <div class="ora">${ora ? escS(senzaSegni(ora[1])) : "&nbsp;"}</div></div>` : "";
   const sub = gita ? "" : String(s.sub || "").trim();
   return fondoB(s.fmt === "story", `
-    <div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${escS(sub)}</small>` : ""}</div>
+    <div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
     ${foglio || dati.length ? `<div class="centro">${foglio}<div class="dati">${dati.map(([n, v]) => `<div class="et">${n}</div><div class="v">${v}</div>`).join("")}</div></div>` : ""}
-    ${evid ? `<div class="evid">${escS(evid)}</div>` : ""}
-    ${iscrizioni(s.contatti)}`);
+    ${evid ? `<div class="evid">${escS(senzaSegni(evid))}</div>` : ""}
+    ${iscrizioni(s.contatti)}`, gita && s.corso);
 }
 
 /** Calendario del mese in B: le gite in righe dentro il foglio, con la testata del mese (senza la griglia dei giorni). */
@@ -961,7 +985,7 @@ function disegnoDivano(s, C) {
 /* Il fondo di C: il colore del post, in alto il nome grande, poi il disegno
  * (scena), la fascia e il riquadro bianco con dentro le iscrizioni. Sul blu
  * il nome e la fascia sono gialli, sul giallo e sugli altri colori blu. */
-function manifesto(C, story, nome, scena, fascia, dentro) {
+function manifesto(C, story, nome, scena, fascia, dentro, corso = false) {
   const giallo = C.c === GIALLO, blu = C.c === BLU;
   return `<div class="cv nuovo sc${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px;background:${C.c};color:${C.ink}">
     ${fiocchi(1080, story ? 1920 : 1350, giallo ? .7 : .38)}${montiC(giallo)}
@@ -971,7 +995,7 @@ function manifesto(C, story, nome, scena, fascia, dentro) {
       ${scena === null ? "" : `<div class="scena">${scena}</div>`}
       <div class="nastro${scena === null ? " mese" : ""}" style="background:${blu ? GIALLO : BLU};color:${blu ? BLU : "#fff"}">${escS(fascia)}</div>
       <div class="scheda"${story ? "" : ' data-adatta=".6"'}>${dentro}</div>
-    </div></div>`;
+    </div>${corso ? stellaNuova(story) : ""}</div>`;
 }
 
 /**
@@ -993,7 +1017,6 @@ function postDivano(s) {
   const righe = gita ? [
     p.length && `<div class="riga">Partenze: ${p.map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join(" · ")}</div>`,
     quota && `<div class="riga">${quota}</div>`,
-    s.corso && '<div class="poi">Nello stesso giorno c\'è il corso</div>',
     s.scadenza && `<div class="poi">Iscrizioni entro <b>${escS(s.scadenza)}</b></div>`,
   ] : [
     // In grande l'ora con i prezzi (o con il luogo) e il luogo; il resto sotto, più piccolo.
@@ -1001,11 +1024,11 @@ function postDivano(s) {
     dove && (!ora || quota) && `<div class="riga">${evidenzia(dove[1])}</div>`,
     !ora && quota && `<div class="riga">${quota}</div>`,
     ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map((f) => `<div class="poi">${fatto(f)}</div>`),
-    String(s.sub || "").trim() && `<div class="poi">${escS(String(s.sub).trim())}</div>`,
+    String(s.sub || "").trim() && `<div class="poi">${evidenzia(String(s.sub).trim(), false)}</div>`,
     iscr && `<div class="poi">${fatto(iscr)}</div>`,
   ];
   const dentro = `<div class="info">${s.hook ? `<div class="gancio">${escS(s.hook)}</div>` : ""}${righe.filter(Boolean).join("")}</div>${iscrizioni(s.contatti)}`;
-  return manifesto(C, s.fmt === "story", titoloNuovo(s, "<br>"), disegnoDivano(s, C), s.date || categoria(s.cat).label, dentro);
+  return manifesto(C, s.fmt === "story", titoloNuovo(s, "<br>"), disegnoDivano(s, C), s.date || categoria(s.cat).label, dentro, gita && s.corso);
 }
 
 /** Calendario del mese in C: il nome, la fascia "Le gite del mese" e le gite nel riquadro bianco (niente disegno). */
@@ -1192,9 +1215,9 @@ function testoPost(ev, sp, stagione) {
     if (ev.deadline) righe.push(`Iscrizioni ${entro(ev.deadline)}`);
   } else {
     righe.push(`${ev.title}${ev.event_date ? ` · ${dataLunga(ev.event_date)}` : ""}`);
-    if (ev.subtitle) righe.push(ev.subtitle);
+    if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
     if (quote) righe.push("", quote);
-    for (const [k, v] of fattiEvento(ev)) righe.push(`${k}: ${v}`);
+    for (const [k, v] of fattiEvento(ev)) righe.push(`${k}: ${senzaSegni(v)}`);
   }
   if (tel) righe.push("", `Info e iscrizioni: ${tel}`);
   righe.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${semplice(ev.title)}` : ""}`);

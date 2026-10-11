@@ -185,6 +185,25 @@ assert.strictEqual(evidenzia("entro mercoledì 7 aprile"), "entro <b>mercoledì 
 assert.strictEqual(evidenzia("fino al 13 gennaio, dal 14/01"), "fino al <b>13 gennaio</b>, dal <b>14/01</b>");
 assert.strictEqual(evidenzia("Palestra Way Assauto, Asti"), "Palestra Way Assauto, Asti");
 assert.strictEqual(evidenzia("<i>12.50 €</i>"), "&lt;i&gt;<b>12.50 €</b>&lt;/i&gt;", "il testo non è passato da escS");
+// Evidenziato a mano (pulsante Evidenzia): fra asterischi, che spariscono; nel sottotesto niente automatico.
+assert.strictEqual(evidenzia("Tutti i mercoledì *fino al 13 gennaio*"), "Tutti i mercoledì <b>fino al 13 gennaio</b>");
+assert.strictEqual(evidenzia("dal 21 ottobre *fino al 13 gennaio*", false), "dal 21 ottobre <b>fino al 13 gennaio</b>");
+assert.strictEqual(evidenzia("*<i>*"), "<b>&lt;i&gt;</b>", "il pezzo evidenziato non passa da escS");
+assert.strictEqual(evidenzia("2 * 3 = 6"), "2 * 3 = 6", "un asterisco solo non è un'evidenza");
+{
+  const ev = { kind: "corso", title: "Presciistica", event_date: "2026-10-21", subtitle: "Ogni mercoledì\n*fino al 13 gennaio*",
+    facts: [["Per chi", "*soci* tesserati"]] };
+  assert.ok(!testoPost(ev).includes("*"), "asterischi nel testo da incollare");
+  assert.match(testoPost(ev), /Ogni mercoledì\nfino al 13 gennaio/);
+  // (il CSS ha i suoi asterischi, nei calc(): si cercano i segni attaccati alle parole)
+  const segni = /\*(fino|soci)|(gennaio|soci)\*/;
+  assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "ritocco")), "asterischi nel Ritocco");
+  assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "montagna")), "asterischi nella Montagna");
+  for (const st of ["biglietto", "calendario", "divano"]) {
+    const html = disegnaPost(modelloPost(ev, "post"), st);
+    assert.ok(html.includes("<b>fino al 13 gennaio</b>") && !segni.test(html), `${st}: evidenza del sottotesto`);
+  }
+}
 assert.strictEqual(giornoMese("2027-01-14"), "giovedì 14 gennaio");
 assert.strictEqual(giornoMese(null), "");
 {
@@ -206,6 +225,12 @@ assert.strictEqual(giornoMese(null), "");
       assert.strictEqual(html.includes(" story"), fmt === "story");
     }
   }
+  // Il corso nello stesso giorno: la coccarda verde in alto a destra in Calendario e Divano, una riga nel Biglietto.
+  for (const st of ["calendario", "divano"]) for (const fmt of ["post", "story"]) {
+    assert.ok(disegnaPost(modelloPost(ev, fmt), st).includes('class="stella"'), `${st} ${fmt}: manca la coccarda del corso`);
+    assert.ok(!disegnaPost(modelloPost({ ...ev, course: false }, fmt), st).includes('class="stella"'), `${st} ${fmt}: coccarda senza corso`);
+  }
+  assert.ok(disegnaPost(m, "biglietto").includes("nello stesso giorno"), "il Biglietto ha perso il corso");
   assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && !disegnaPost(m, "biglietto").includes("Tutti in pista!"),
     "il gancio deve stare solo nel Divano");
   assert.ok(disegnaPost(m, "biglietto").includes("giovedì 14 gennaio</b>") && disegnaPost(m, "calendario").includes("Iscrizioni entro giovedì 14 gennaio"));
