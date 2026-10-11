@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>Calendario · A Biglietto</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="../comune.css">
+<link rel="stylesheet" href="a.css">
+<!-- Calendario del mese: il blu del club (categoria "cal"), scena più bassa per fare posto alle righe. -->
+<style>
+html { --cat: #084C8D; --scena: 250px; }
+.testo { justify-content: center; gap: 22px; }
+h1 { font-size: 100px; }
+/* Righe come calRows() di social-templates.js: il giorno nel colore della gita, la meta, il corso. */
+.righe { display: flex; flex-direction: column; }
+.righe div { display: flex; align-items: center; gap: 22px; padding: 18px 0; border-bottom: 2px solid #E4E6EB; }
+.giorno { flex: none; width: 230px; text-align: center; border-radius: 999px; font-size: 36px; font-weight: 800; padding: 6px 0; }
+.meta { font-size: 54px; font-weight: 700; line-height: 1.1; }
+/* Il corso senza colore pieno: il giallo dei corsi qui si confonderebbe con la domenica. */
+.corso { margin-left: auto; flex: none; display: flex; align-items: center; gap: 8px; font-size: 34px; font-weight: 800;
+  color: var(--blu); border: 3px solid var(--blu); border-radius: 14px; padding: 2px 14px 2px 8px; }
+.corso svg { width: 40px; height: 40px; }
+.dom { background: #FCCF02; color: #06396A; } .sab { background: #084C8D; color: #fff; } .mar { background: #B3261E; color: #fff; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="sciatore" viewBox="0 0 250 240">
+  <rect x="4" y="208" width="242" height="16" rx="8" fill="currentColor"/>
+  <g stroke="currentColor" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M120 70 L84 136"/><path d="M114 82 L192 92"/><path d="M84 136 L154 142 L140 206 L172 206"/></g>
+  <circle cx="134" cy="38" r="27" fill="currentColor"/></symbol></svg>
+<div class="cv">
+  <div class="neve" data-neve=".3"></div>
+  <div class="biglietto">
+    <div class="scena">
+      <svg viewBox="0 0 1080 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E7CB8"/><stop offset=".75" stop-color="#BFD7EC"/></linearGradient>
+          <linearGradient id="neve" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#C9D7E4"/></linearGradient>
+        </defs>
+        <rect width="1080" height="600" fill="url(#cielo)"/>
+        <polygon fill="#8FA9C4" points="0,400 150,290 290,350 460,230 600,330 760,220 900,310 1080,250 1080,600 0,600"/>
+        <polygon fill="url(#neve)" points="0,480 200,360 340,430 560,300 740,430 900,360 1080,450 1080,600 0,600"/>
+        <polygon fill="#2E4A63" points="0,540 140,500 260,530 420,490 600,540 800,500 1080,545 1080,600 0,600"/>
+        <polygon fill="#fff" points="0,585 1080,560 1080,600 0,600"/>
+      </svg>
+      <div class="logo-box"><img src="../../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+      <div class="bollo"><div class="g">Gennaio</div><div class="n">2027</div></div>
+    </div>
+    <div class="taglio"><i></i></div>
+    <div class="testo">
+      <h1>Gennaio sulla neve</h1>
+      <div class="righe">
+        <div><span class="giorno dom">Dom 10/01</span><span class="meta">Prato Nevoso</span><span class="corso"><svg><use href="#sciatore"/></svg>Corso</span></div>
+        <div><span class="giorno sab">Sab 16/01</span><span class="meta">Sestriere</span></div>
+        <div><span class="giorno dom">Dom 17/01</span><span class="meta">La Thuile</span><span class="corso"><svg><use href="#sciatore"/></svg>Corso</span></div>
+        <div><span class="giorno mar">Mar 19/01</span><span class="meta">Courmayeur</span></div>
+        <div><span class="giorno dom">Dom 24/01</span><span class="meta">Cervinia</span><span class="corso"><svg><use href="#sciatore"/></svg>Corso</span></div>
+        <div><span class="giorno dom">Dom 31/01</span><span class="meta">Pila</span><span class="corso"><svg><use href="#sciatore"/></svg>Corso</span></div>
+      </div>
+    </div>
+    <div class="iscrizioni">
+      <svg viewBox="0 0 24 24" fill="#084C8D" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+      <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
+    </div>
+  </div>
+  <div class="luna" style="left:30px"></div><div class="luna" style="right:30px"></div>
+</div>
+<script src="../comune.js"></script>
+</body>
+</html>

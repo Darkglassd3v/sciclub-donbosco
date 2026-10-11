@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>Calendario · B Calendario</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="../comune.css">
+<link rel="stylesheet" href="b.css">
+<!-- Il calendario del mese è il caso naturale di B: il foglio diventa il mese intero,
+     con i giorni di gita nel loro colore; sotto, le mete. -->
+<style>
+html { --cat: #FCCF02; --cat-ink: #06396A; }
+.titolo { font-size: 96px; }
+.mese-intero { background: #fff; border-radius: 28px; box-shadow: 0 16px 40px rgba(0,0,0,.35); position: relative; padding-bottom: 18px; }
+.mese-intero .mese { background: var(--cat); color: var(--cat-ink); font-size: 50px; font-weight: 800; text-align: center;
+  border-radius: 28px 28px 0 0; padding: 26px 0 12px; }
+.mese-intero .anello { position: absolute; top: -22px; width: 30px; height: 58px; border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
+.griglia { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 24px 0; text-align: center; }
+.griglia b { font-size: 34px; font-weight: 700; color: var(--testo-soft); padding: 6px 0; }
+.griglia span { font-size: 40px; font-weight: 700; height: 68px; display: flex; align-items: center; justify-content: center; position: relative; }
+.griglia span.g { margin: 4px 14px; border-radius: 18px; font-weight: 800; }
+.griglia span.c::after { content: ""; position: absolute; right: 2px; top: -2px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; border: 4px solid var(--blu); }
+.mete { display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; row-gap: 14px; color: #fff; }
+.mete div { display: flex; align-items: center; gap: 16px; font-size: 42px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+.mete i { flex: none; font-style: normal; width: 92px; text-align: center; border-radius: 14px; font-size: 36px; padding: 2px 0; border: 3px solid #fff; }
+.mete small { font-size: 34px; font-weight: 600; color: #E7EFF7; }
+.dom { background: #FCCF02; color: #06396A; } .sab { background: #084C8D; color: #fff; } .mar { background: #B3261E; color: #fff; }
+.legenda { color: #fff; font-size: 34px; font-weight: 600; display: flex; align-items: center; gap: 14px; margin-top: -10px; }
+.legenda i { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 4px solid var(--blu); outline: 3px solid #fff; }
+</style>
+</head>
+<body>
+<div class="cv">
+  <div class="neve" data-neve=".18"></div>
+  <svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <polygon fill="#1D5E9E" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
+    <polygon fill="#0A4279" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
+    <polygon fill="#06396A" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
+  </svg>
+  <div class="contenuto">
+    <div class="testa">
+      <div class="logo-box"><img src="../../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+    </div>
+    <div class="titolo">Gennaio sulla neve</div>
+    <div class="mese-intero">
+      <div class="anello" style="left:22%"></div><div class="anello" style="right:22%"></div>
+      <div class="mese">Gennaio 2027</div>
+      <!-- Il 1° gennaio 2027 è venerdì. g = giorno di gita, c = col corso. -->
+      <div class="griglia">
+        <b>L</b><b>M</b><b>M</b><b>G</b><b>V</b><b>S</b><b>D</b>
+        <span></span><span></span><span></span><span></span><span>1</span><span>2</span><span>3</span>
+        <span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span class="g c dom">10</span>
+        <span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span class="g sab">16</span><span class="g c dom">17</span>
+        <span>18</span><span class="g mar">19</span><span>20</span><span>21</span><span>22</span><span>23</span><span class="g c dom">24</span>
+        <span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span class="g c dom">31</span>
+      </div>
+    </div>
+    <div class="mete">
+      <div><i class="dom">10</i>Prato Nevoso</div>
+      <div><i class="mar">19</i>Courmayeur</div>
+      <div><i class="sab">16</i>Sestriere</div>
+      <div><i class="dom">24</i>Cervinia</div>
+      <div><i class="dom">17</i>La Thuile</div>
+      <div><i class="dom">31</i>Pila</div>
+    </div>
+    <div class="legenda"><i></i>con il corso di sci</div>
+    <div class="iscrizioni">
+      <svg viewBox="0 0 24 24" fill="#FCCF02" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+      <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
+    </div>
+  </div>
+</div>
+<script src="../comune.js"></script>
+</body>
+</html>

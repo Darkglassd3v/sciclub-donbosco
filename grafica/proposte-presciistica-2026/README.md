@@ -143,9 +143,42 @@ Vi aspettiamo numerosi!
 
 ---
 
+## Le tre grafiche su gite, calendario ed eventi
+
+Per scegliere guardando anche gli altri post, non solo il corso: le stesse tre
+grafiche applicate a una gita, al calendario del mese e a una cena. Una
+tavola per tipo, in `tavole/`; ogni post da solo è accanto (`gita-a.jpg`...).
+Dati inventati, solo post 4:5 (niente story).
+
+![Gita](tavole/tavola-gita.jpg)
+
+![Calendario del mese](tavole/tavola-calendario.jpg)
+
+![Eventi](tavole/tavola-evento.jpg)
+
+- **A e C prendono il colore della categoria** (il giorno della gita, il blu
+  del calendario, l'arancio delle cene), come oggi Genera post; **B è sempre
+  blu** e il colore sta nella testata del foglio.
+- In ogni tavola le tre danno le stesse informazioni; cambia solo come sono
+  disegnate.
+- **Da decidere col giallo dei corsi:** la domenica è già gialla (colore del
+  giorno in Impostazioni). Nel calendario il corso qui è un'etichetta
+  contornata, non piena, per non confondersi con le domeniche; se i corsi
+  passano al giallo, Genera post dovrà fare lo stesso.
+- C per il corso era "Divano"; su gite ed eventi il gancio cambia ("Tutti in
+  pista!", "Si chiude in festa!") e va scritto post per post: è la grafica
+  che chiede più lavoro a chi pubblica.
+
+---
+
 ## Sorgenti
 
 In `sorgenti/` ci sono le pagine HTML (una per proposta: `#post` o `#story`
 nell'indirizzo sceglie il formato) e `rendi.sh`, che rifà i JPEG con Chrome
 (serve internet per il font Barlow). `./rendi.sh verifica` controlla corpi
 minimi, fasce coperte della story e testo tagliato.
+
+Le tavole: `sorgenti/tavole/`, una pagina per tipo e grafica (`gita-a.html`...,
+fogli di stile comuni `a.css`, `b.css`, `c.css`) e `tavola.html#gita`,
+`#calendario`, `#evento`; `sorgenti/tavole/rendi.sh` rifà post e tavole
+(`verifica` come sopra).

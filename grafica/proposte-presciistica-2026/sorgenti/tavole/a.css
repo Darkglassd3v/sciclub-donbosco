@@ -1,0 +1,40 @@
+/* A · Biglietto per gite, calendario ed eventi. Il biglietto bianco sul colore
+ * della categoria (--cat: il giorno della gita, il blu del calendario,
+ * l'arancio delle cene), gli accenti nel blu del club (--accento). In alto la
+ * scena disegnata (nel gestionale ci andrebbe la foto), sotto il taglio
+ * tratteggiato, i dati e le iscrizioni. Solo post 4:5. */
+html { --m: 60px; --scena: 330px; --accento: var(--blu); }
+.cv { background: var(--cat); }
+.biglietto { position: absolute; left: var(--m); right: var(--m); top: var(--m); bottom: var(--m);
+  background: #fff; border-radius: 40px; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 14px 40px rgba(0,0,0,.25); }
+
+.scena { position: relative; flex: 0 0 var(--scena); }
+.scena > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scena .figura { position: absolute; top: auto; right: auto; left: 400px; bottom: 14px; width: auto; height: calc(var(--scena) * .62); }
+.scena .logo-box { position: absolute; left: 0; top: 0; padding: 18px 26px; border-radius: 0 0 28px 0; }
+.scena .logo-box img { height: 150px; }
+.bollo { position: absolute; right: 40px; top: 36px; background: var(--accento); color: #fff;
+  border-radius: 28px; text-align: center; padding: 14px 26px 10px; }
+.bollo .g { font-size: 36px; font-weight: 700; }
+.bollo .n { font-size: 100px; font-weight: 800; line-height: .95; letter-spacing: -.03em; padding-bottom: 8px; }
+
+/* Il taglio del biglietto: il tratteggio, e due mezzelune del colore di fondo
+ * sopra i bordi (stanno nella tela, non nel biglietto, che non deve sbordare). */
+.taglio { position: relative; height: 0; flex: 0 0 auto; }
+.taglio i { position: absolute; left: 40px; right: 40px; top: -2px; border-top: 4px dashed var(--filo); }
+.luna { position: absolute; top: calc(var(--m) + var(--scena) - 30px); width: 60px; height: 60px; border-radius: 50%; background: var(--cat); }
+
+.testo { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 20px 56px 12px; }
+h1 { font-size: 116px; font-weight: 800; letter-spacing: -.035em; line-height: .98; }
+h1 small { display: block; font-size: 40px; font-weight: 700; letter-spacing: -.01em; color: var(--testo-soft); margin-top: 12px; line-height: 1.15; }
+.fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: 14px; align-items: baseline; }
+.fatti dt { font-size: 36px; font-weight: 600; color: var(--testo-soft); }
+.fatti dd { font-size: 48px; font-weight: 700; line-height: 1.12; }
+.fatti .forte { color: var(--accento); font-weight: 800; }
+
+.iscrizioni { flex: none; margin: 0 40px; border-top: 4px dashed var(--filo);
+  padding: 20px 16px 26px; display: flex; gap: 22px; align-items: center; }
+.iscrizioni svg { flex: none; width: 64px; height: 64px; }
+.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 40px; font-weight: 800; color: var(--accento); letter-spacing: -.02em; }

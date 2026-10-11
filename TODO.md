@@ -53,7 +53,7 @@ segnala il socio non trovato; saldo di chiusura non più leggibile senza login.
 ## Social
 
 - [ ] Scegliere fra le proposte della presciistica (`grafica/proposte-presciistica-2026/`,
-      riviste il 10/10). Se va A: i corsi passano al giallo in Genera post (colore della
+      riviste il 10/10; tavole di confronto su gita, calendario e cena in `tavole/`). Se va A: i corsi passano al giallo in Genera post (colore della
       categoria corso in `web/social-templates.js`, accenti blu sul giallo) e logo più grande.
 - [ ] Provare le grafiche nuove con foto vere e con le campagne sponsor.
 - [ ] Inserire i contatti veri in Social > Impostazioni > Contatti e spuntarli nei post.

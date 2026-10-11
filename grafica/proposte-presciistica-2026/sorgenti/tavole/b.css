@@ -1,0 +1,40 @@
+/* B · Calendario per gite, calendario ed eventi. Sempre il blu del club, di
+ * sera, con la neve e le montagne; il foglio a strappo porta la data, con la
+ * testata nel colore della categoria (--cat, scritta in --cat-ink). Accanto
+ * le informazioni, sotto la frase in evidenza e le iscrizioni. Solo post 4:5. */
+.cv { background: var(--blu); }
+.monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
+.contenuto { position: absolute; left: 60px; right: 60px; top: 56px; bottom: 60px;
+  display: flex; flex-direction: column; justify-content: space-between; }
+
+.testa { display: flex; justify-content: space-between; align-items: flex-start; }
+.testa .logo-box { border-radius: 22px; padding: 12px 18px; }
+.testa .logo-box img { height: 150px; }
+
+.titolo { color: #fff; font-size: 108px; font-weight: 800; letter-spacing: -.035em; line-height: .95; }
+
+.centro { display: flex; gap: 44px; align-items: center; }
+.foglio { flex: none; width: 430px; background: #fff; border-radius: 28px; text-align: center;
+  position: relative; box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
+.foglio .mese { background: var(--cat); color: var(--cat-ink); font-size: 46px; font-weight: 800;
+  border-radius: 28px 28px 0 0; padding: 30px 0 14px; letter-spacing: -.01em; }
+.foglio .anello { position: absolute; top: -22px; width: 30px; height: 58px;
+  border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
+.foglio .giorno { font-size: 48px; font-weight: 700; margin-top: 18px; }
+.foglio .num { font-size: 250px; font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--cat-txt); margin-top: 6px; }
+.foglio .ora { font-size: 58px; font-weight: 800; padding: 14px 0 28px; }
+
+.dati { color: #fff; min-width: 0; }
+.dati .et { color: var(--giallo); font-size: 38px; font-weight: 700; }
+.dati .et ~ .et { margin-top: 26px; }
+.dati .v { font-size: 50px; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
+.dati .v small { font-size: 40px; font-weight: 600; color: #E7EFF7; letter-spacing: 0; }
+
+.evidenza { background: var(--blu-dark); border-radius: 28px; padding: 28px 40px; color: #fff;
+  box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 52px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.evidenza em { font-style: normal; color: var(--giallo); }
+
+.iscrizioni { display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
+.iscrizioni svg { flex: none; width: 64px; height: 64px; }
+.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 42px; font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }
