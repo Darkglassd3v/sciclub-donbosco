@@ -36,5 +36,12 @@ if (verifica) document.fonts.ready.then(() => {
     if (getComputedStyle(el).overflow !== "hidden" || el.matches(".cv,[data-decoro]")) return;
     if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) problemi.push(`taglia: ${el.className} (${el.scrollWidth}×${el.scrollHeight} in ${el.clientWidth}×${el.clientHeight})`);
   });
-  document.title = "VERIFICA " + JSON.stringify(problemi);
+  // Dove partono titolo, fascia e testo: fra i post della stessa proposta
+  // devono coincidere (il testo lungo può solo scendere più in basso).
+  const pos = {};
+  for (const sel of ["h1", ".titolo", ".gancio", ".nastro", ".info", ".fatti", ".righe"]) {
+    const el = document.querySelector(sel);
+    if (el) pos[sel] = Math.round(el.getBoundingClientRect().top);
+  }
+  document.title = "VERIFICA " + JSON.stringify(problemi) + " POS " + JSON.stringify(pos);
 });

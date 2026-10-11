@@ -20,20 +20,25 @@ html.story .contenuto { top: 262px; bottom: 352px; }
 .testa .logo-box { border-radius: 22px; padding: 12px 18px; }
 .testa .logo-box img { height: 150px; }
 
-.gancio { flex: none; font-size: 158px; font-weight: 800; letter-spacing: -.045em; line-height: .9; margin-top: 30px; }
+/* Nel post, altezze fisse come negli altri post di C: la fascia e il testo sotto stanno
+ * sempre nello stesso punto. */
+.gancio { flex: none; height: 270px; font-size: 150px; font-weight: 800; letter-spacing: -.045em; line-height: .9; margin-top: 28px; }
+html.story .gancio { height: auto; }
 html.story .gancio { font-size: 176px; margin-top: 44px; }
 
 .scena { flex: 1 1 0; min-height: 0; position: relative; z-index: 1; margin-bottom: -14px; }
+html.post .scena { flex: none; height: 180px; }
 .scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; background: var(--blu-dark); color: #fff;
-  transform: rotate(-2deg); text-align: center; font-size: 80px; font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px;
+  transform: rotate(-2deg); text-align: center; font-size: 72px; font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px; white-space: nowrap;
   box-shadow: 0 10px 24px rgba(6,57,106,.3); }
 html.story .nastro { font-size: 88px; }
 
-.info { flex: none; margin-top: 36px; }
-.info .quando { font-size: 60px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
-.info .dove { font-size: 52px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
+.info { flex: none; margin-top: 34px; }
+html.post .info { flex: 1 1 auto; }
+.info .quando { font-size: 58px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
+.info .dove { font-size: 46px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
 .info .poi { font-size: 40px; font-weight: 600; margin-top: 10px; line-height: 1.2; }
 .info .poi + .poi { margin-top: 4px; }
 /* Iscrizioni e mail, come in fondo al biglietto di A. */

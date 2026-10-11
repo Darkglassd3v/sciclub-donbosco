@@ -21,6 +21,14 @@ partito tutto), una gita, un evento (una cena) e il calendario del mese.
 Tutti i post sono 4:5 (1080×1350, come Montagna); gita, evento e calendario
 hanno dati inventati.
 
+- **Il testo non si sposta:** in ogni proposta titolo, fascia e testo partono
+  sempre dallo stesso punto, in tutti i post; un testo più lungo scende più in
+  basso. In A la foto (o il disegno) in alto è alta uguale per tutti; in C
+  gancio e disegno hanno altezza fissa, così la fascia centrale sta sempre lì
+  (tranne nel calendario, che non ha disegno). `./sorgenti/rendi.sh verifica`
+  stampa le coordinate per controllarlo.
+- **B senza la griglia del mese:** nel calendario le gite sono righe dentro il
+  foglio, perché la griglia dei giorni ripeteva le stesse date.
 - **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
   cene): gita di domenica in giallo, evento e calendario in blu; nel
   calendario c'è un sabato al posto della gita del martedì.

@@ -6,14 +6,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
 <link rel="stylesheet" href="comune.css">
 <link rel="stylesheet" href="a.css">
-<!-- Calendario del mese: il blu del club (categoria "cal"), scena più bassa per fare posto alle righe. -->
+<!-- Calendario del mese: il blu del club (categoria "cal"), la scena alta come negli altri post. -->
 <style>
-html { --cat: #084C8D; --scena: 250px; }
-.testo { justify-content: center; gap: 22px; }
-h1 { font-size: 100px; }
+html { --cat: #084C8D; }
 /* Righe come calRows() di social-templates.js: il giorno nel colore della gita, la meta, il corso. */
 .righe { display: flex; flex-direction: column; }
-.righe div { display: flex; align-items: center; gap: 22px; padding: 18px 0; border-bottom: 2px solid #E4E6EB; }
+.righe div { display: flex; align-items: center; gap: 22px; padding: 9px 0; border-bottom: 2px solid #E4E6EB; }
 .giorno { flex: none; width: 230px; text-align: center; border-radius: 999px; font-size: 36px; font-weight: 800; padding: 6px 0; }
 .meta { font-size: 54px; font-weight: 700; line-height: 1.1; }
 /* Il corso senza colore pieno: il giallo dei corsi qui si confonderebbe con la domenica. */

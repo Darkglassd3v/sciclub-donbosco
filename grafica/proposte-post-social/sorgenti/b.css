@@ -4,8 +4,9 @@
  * le informazioni, sotto la frase in evidenza e le iscrizioni. Solo post 4:5. */
 .cv { background: var(--blu); }
 .monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
+/* Dall'alto, con spazi fissi: il titolo sta sempre nello stesso punto; le iscrizioni in fondo. */
 .contenuto { position: absolute; left: 60px; right: 60px; top: 56px; bottom: 60px;
-  display: flex; flex-direction: column; justify-content: space-between; }
+  display: flex; flex-direction: column; gap: 34px; }
 
 .testa { display: flex; justify-content: space-between; align-items: flex-start; }
 .testa .logo-box { border-radius: 22px; padding: 12px 18px; }
@@ -34,7 +35,7 @@
   box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 52px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .evidenza em { font-style: normal; color: var(--giallo); }
 
-.iscrizioni { display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
+.iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
 .iscrizioni svg { flex: none; width: 64px; height: 64px; }
 .iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
 .iscrizioni b { display: block; font-size: 42px; font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }

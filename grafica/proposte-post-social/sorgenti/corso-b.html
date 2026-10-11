@@ -12,7 +12,6 @@
  * sono quelle di A (orario e durata, palestra, fino a quando, per chi,
  * iscrizioni e mail): cambia solo come sono disegnate. */
 html { --k: 1; }
-.contenuto { justify-content: space-between; }
 html.story { --k: 1.02; }
 .cv { background: var(--blu); }
 .monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
@@ -60,7 +59,7 @@ html.story .iscrizioni b { font-size: 46px; }
 .durata .frase em { font-style: normal; color: var(--giallo); }
 
 /* Iscrizioni e mail, come in fondo al biglietto di A. */
-.iscrizioni { display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
+.iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
 .iscrizioni svg { flex: none; width: calc(64px * var(--k)); height: calc(64px * var(--k)); }
 .iscrizioni div { font-size: calc(36px * var(--k)); font-weight: 600; line-height: 1.2; }
 .iscrizioni b { display: block; font-size: calc(42px * var(--k)); font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }
