@@ -23,6 +23,10 @@ tavole (non ancora nel generatore): **D · Pista** (stile da gara, alla Head) ed
 
 ![E · Fascia](tavola-e.jpg)
 
+E una terza, **F · Diagonale**, ispirata ai post dello Ski Club of Great Britain.
+
+![F · Diagonale](tavola-f.jpg)
+
 | Cartella | Cosa |
 |---|---|
 | `tavola-a.jpg`, `-b`, `-c` | le tre proposte, una tavola ciascuna |
@@ -241,7 +245,7 @@ story e testo tagliato.
 
 ---
 
-## Le proposte di stile (D ed E)
+## Le proposte di stile (D, E ed F)
 
 Richiesta dell'11/10: un redesign con i colori del club ma con lo stile dei marchi
 famosi dello sci. Solo l'ispirazione: niente loghi, galletti o strisce riconoscibili
@@ -286,5 +290,29 @@ dritto, minuscolo e grande, per chi legge con vista debole.
 - Senza foto (il corso), montagne disegnate a linee bianche sul blu, il sole giallo
   e la figura dell'esercizio.
 
-**Da decidere:** quale delle due (o nessuna) portare nel generatore come sesta e
-settima grafica, accanto a Ritocco, Montagna, Biglietto, Calendario e Divano.
+### F · Diagonale (alla Ski Club of Great Britain)
+
+<img src="post/corso-f.jpg" width="49%"> <img src="post/corso-f-story.jpg" width="49%">
+
+Dagli esempi del loro Instagram: foto a tutta pagina, grandi blocchi di colore in
+diagonale, tre livelli di testo ognuno col suo colore, dati brevi separati da "//".
+
+- La **foto a tutta pagina** (meglio se con le persone della gita). In alto un velo
+  blu che sfuma, con la riga bianca che dice cos'è (Barlow Condensed 42) e il
+  **titolo giallo** in Barlow maiuscolo 98, sempre alto due righe.
+- In basso il **grande blocco blu in diagonale**, che parte sempre dallo stesso
+  punto: la **data in giallo** (Barlow maiuscolo 62), poi i dati in bianco 46 su
+  righe brevi; orari, prezzi e scadenze in giallo; le barre gialle `//` solo fra
+  due dati che stanno sulla stessa riga. In fondo le iscrizioni con la mail gialla.
+- Il **logo nel triangolo bianco** in alto a destra: le regole del marchio lo
+  vogliono su bianco. Lo stesso triangolo, più grande, potrebbe portare gli
+  sponsor (come il blocco bianco dei loro post con gli sponsor).
+- **Diverso da loro:** i dati non vanno mai sulla foto, perché con foto qualsiasi
+  resterebbero illeggibili; solo bianco, giallo e blu al posto dei loro cinque colori.
+  Il velo e il triangolo trasparente sul blocco fanno vedere sfumature di blu sulla
+  foto: è il compromesso con la regola di un solo blu.
+- Nel calendario il blocco non ha la riga della data (il mese è nel titolo).
+- Senza foto (il corso) il blu con le montagne a linee, il sole giallo e la figura.
+
+**Da decidere:** quale delle tre (o nessuna) portare nel generatore, accanto a
+Ritocco, Montagna, Biglietto, Calendario e Divano.

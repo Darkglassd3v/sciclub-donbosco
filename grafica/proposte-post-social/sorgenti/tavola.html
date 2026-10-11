@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <style>
-/* Una tavola per proposta (#a … #e): i quattro post della stessa grafica
+/* Una tavola per proposta (#a … #f): i quattro post della stessa grafica
  * affiancati, il corso (la presciistica), una gita, un evento e il
  * calendario del mese, con i JPEG già resi (rendi.sh li fa prima). */
 html, body { width: 1720px; height: 820px; background: #F5F5F7; }
@@ -32,6 +32,7 @@ const PROPOSTE = {
   c: { nome: "Divano", idea: "Il manifesto: in alto il nome grande, nella fascia la data, sotto in un riquadro bianco il gancio («Alzati dal divano!», «Tutti in pista!»…) e i dati." },
   d: { nome: "Pista", idea: "Stile da gara (Head): sempre blu pieno, foto tagliata in diagonale con la doppia striscia gialla, titolo corsivo maiuscolo, data in numeri grandi." },
   e: { nome: "Fascia", idea: "Stile classico (Rossignol): fondo bianco e spazio vuoto, foto grande con la doppia fascia blu e gialla, data nel riquadro bianco, iscrizioni nella fascia blu." },
+  f: { nome: "Diagonale", idea: "Come lo Ski Club of Great Britain: foto a tutta pagina, titolo giallo su un velo blu, dati nel grande blocco blu in diagonale, logo nel triangolo bianco." },
 };
 const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
 document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;

@@ -1,0 +1,69 @@
+/* F · Diagonale, ispirata ai post dello Ski Club of Great Britain: la foto a
+ * tutta pagina, con le persone; sopra, su un velo blu, una riga bianca che dice
+ * cos'è e il titolo giallo enorme; in basso un grande blocco blu in diagonale con
+ * la data in giallo e i dati su righe brevi, separati da "//". Il logo sta in un
+ * triangolo bianco nell'angolo in alto a destra (le regole del marchio lo
+ * vogliono su bianco). I dati non stanno mai sulla foto: con foto qualsiasi,
+ * fatte col telefono, resterebbero illeggibili. Tre livelli di testo e solo tre
+ * colori: bianco, giallo, blu. Il blocco blu parte sempre dallo stesso punto.
+ * Con la classe "story" su <html> la tela è 1080×1920 (fasce coperte 250 e 340). */
+html { --k: 1; --su: 0px; --blocco: 730px; --cala: 120px; --giu: 0px; }
+html.story { --k: 1.1; --su: 250px; --blocco: 1000px; --cala: 120px; --giu: 340px; }
+.cv { background: var(--blu); color: #fff; }
+
+.sfondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Il velo blu dall'alto, sotto la riga e il titolo. */
+.velo { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--su) + 520px);
+  background: linear-gradient(180deg, rgba(8,76,141,.9) 0, rgba(8,76,141,.72) 50%, rgba(8,76,141,0) 100%); }
+
+/* Il triangolo bianco col logo, nell'angolo in alto a destra. */
+.angolo { position: absolute; right: 0; top: var(--su); width: 420px; height: 340px; background: #fff;
+  clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.angolo img { position: absolute; right: 28px; top: 26px; height: 130px; }
+
+.testa { position: absolute; left: 60px; right: 60px; top: calc(var(--su) + 70px); }
+.occhiello { font: 700 calc(42px * var(--k)) / 1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+/* Titolo sempre alto due righe; la prima riga non entra nel triangolo del logo. */
+h1 { font: 800 calc(98px * var(--k)) / .95 Barlow, sans-serif; text-transform: uppercase; color: var(--giallo); letter-spacing: -.025em;
+  margin-top: calc(18px * var(--k)); min-height: calc(2 * .95 * 98px * var(--k)); max-width: 800px; }
+html.story h1 { max-width: 840px; }
+h1 small { display: block; font: 600 calc(40px * var(--k)) / 1.15 Barlow, sans-serif; text-transform: none; color: #fff; letter-spacing: 0; margin-top: 14px; }
+
+/* Il blocco blu in basso, col bordo alto che sale verso destra. */
+.blocco { position: absolute; left: 0; right: 0; top: calc(var(--blocco) - var(--cala)); bottom: 0; background: var(--blu);
+  clip-path: polygon(0 var(--cala), 100% 0, 100% 100%, 0 100%); }
+/* Un triangolo bianco trasparente sopra il blocco, come i piani sovrapposti dei loro post. */
+.blocco::after { content: ""; position: absolute; right: 0; top: 0; width: 520px; height: 100%; background: rgba(255,255,255,.07);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.dati { position: absolute; left: 60px; right: 60px; top: calc(var(--blocco) + 34px); bottom: calc(var(--giu) + 30px);
+  display: flex; flex-direction: column; z-index: 1; }
+.quando { font: 800 calc(62px * var(--k)) / 1 Barlow, sans-serif; text-transform: uppercase; color: var(--giallo); letter-spacing: -.02em; }
+.fatti { margin-top: calc(18px * var(--k)); display: flex; flex-direction: column; gap: calc(10px * var(--k)); }
+.fatti p { font-size: calc(46px * var(--k)); font-weight: 600; line-height: 1.16; }
+.fatti b { font-weight: 800; color: var(--giallo); }
+/* Le barre fra un dato e l'altro, in giallo: solo fra due dati che stanno sulla stessa riga. */
+.fatti i { font-style: normal; font-weight: 800; color: var(--giallo); padding: 0 .2em; }
+.fatti .nw { white-space: nowrap; }
+
+.iscrizioni { margin-top: auto; border-top: 2px solid rgba(255,255,255,.3); padding-top: calc(18px * var(--k));
+  display: flex; gap: 24px; align-items: center; }
+.iscrizioni svg { flex: none; width: calc(62px * var(--k)); height: calc(62px * var(--k)); }
+.iscrizioni div { font: 700 calc(36px * var(--k)) / 1.2 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .1em; }
+.iscrizioni b { display: block; font: 800 calc(46px * var(--k)) / 1.15 Barlow, sans-serif; text-transform: none; letter-spacing: -.01em; color: var(--giallo); }
+
+.firma { display: none; position: absolute; left: 0; right: 0; bottom: 150px; text-align: center; z-index: 1;
+  font: 800 46px / 1 "Barlow Condensed", sans-serif; letter-spacing: .3em; color: #fff; }
+html.story .firma { display: block; }
+html.story .occhiello, html.story .iscrizioni div { font-size: 44px; }
+
+/* Il calendario: le gite del mese in righe, il giorno nel colore della gita. */
+.righe { display: flex; flex-direction: column; }
+.righe > div { display: flex; align-items: center; gap: 24px; padding: 4px 0; border-top: 2px solid rgba(255,255,255,.22); }
+.righe > div:first-child { border-top: 0; }
+.giorno { flex: none; width: 200px; text-align: center; font: 700 38px / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .08em; }
+.dom { background: var(--giallo); color: var(--blu); } .sab { background: #fff; color: var(--blu); }
+.meta { font-size: 46px; font-weight: 700; line-height: 1.1; }
+.corso { margin-left: auto; flex: none; font: 700 34px / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .12em; color: var(--giallo); border: 2px solid var(--giallo); padding: 0 14px; }
+
+/* La scena del corso, senza foto: montagne a linee bianche sul blu e la figura. */
+.figura { position: absolute; left: 600px; top: calc(var(--blocco) - var(--cala) - 300px); height: 270px; }
