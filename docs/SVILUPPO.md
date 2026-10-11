@@ -110,7 +110,15 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   uno con la grafica sbagliata. Il testo resta grande: post almeno 34 px su 1080, story 44
   (misurato). Nelle tre della 2.8 il titolo è sempre alto due righe e il testo parte dallo stesso
   punto; se non ci sta, `fit()` abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi.
-  Il gancio del Divano ("Tutti in pista!") è `social_events.hook`, scritto post per post.
+  Il gancio del Divano ("Tutti in pista!") è `social_events.hook`, scritto post per post. Gli eventi
+  hanno Ora, Dove e Iscrizioni entro (`event_time`, `place`, `deadline`: `fattiEvento()`); nel
+  sottotesto il pulsante Evidenzia mette le parole fra asterischi (`evidenzia()` le disegna,
+  `senzaSegni()` le toglie nelle altre grafiche e nel testo del post). Il form segue l'ordine del
+  post nella grafica scelta (`ORDINE_CAMPI` in `social.html`). La gita col corso ha la coccarda
+  verde del Ritocco (`stellaCorso()`), in alto a destra in Calendario e Divano.
+- Dopo ogni modifica ai post, controllare tutte le grafiche (post, story, calendario) contro la
+  versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
+  sparire o rimpicciolirsi.
 - Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di
   `chiedi()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 

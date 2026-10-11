@@ -97,6 +97,8 @@
     /* La gita ha una quota sola: l'etichetta non serve. */
     .righe-editor.una-quota .riga input:first-child { display: none; }
     .spunta { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 2.5em; }
+    .evidenzia { display: flex; gap: 12px; align-items: flex-start; margin-top: 8px; }
+    .evidenzia .button { flex: none; }
     .spunta input { width: 1.3em; height: 1.3em; }
     /* Rubrica dei contatti: una riga per contatto con nome, telefono, orari,
      * proposto, ↑, ✕. */
@@ -250,41 +252,38 @@
 
         <div class="griglia-post">
           <div>
-            <section class="parte" aria-labelledby="pQuando">
-              <h3 id="pQuando">Quando</h3>
-              <div class="campi">
-                <div class="field" data-per="evento sponsor">
+            <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nella grafica scelta:
+                 ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
+            <section class="parte" aria-labelledby="pCampi">
+              <h3 id="pCampi">Il post, dall'alto in basso</h3>
+              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post, con la grafica scelta in Impostazioni.</p>
+              <div class="campi" id="campiPost">
+                <div data-campo="data" class="field" data-per="evento sponsor">
                   <label class="label" for="fData">Data</label>
                   <input class="input" type="date" id="fData">
                 </div>
-                <div class="field" data-per="evento">
+                <div data-campo="ora" class="field" data-per="evento">
                   <label class="label" for="fOra">Ora</label>
                   <input class="input" id="fOra" placeholder="Es. 19:30">
                 </div>
-                <div class="field campo-largo" data-per="evento">
+                <div data-campo="dove" class="field campo-largo" data-per="evento">
                   <label class="label" for="fDove">Dove</label>
                   <input class="input" id="fDove" placeholder="Es. Palestra Way Assauto, Asti">
                 </div>
-                <div class="field campo-largo" data-per="gita">
+                <div data-campo="giorno" class="field campo-largo" data-per="gita">
                   <span class="label" id="lCalGita">Giorno della gita</span>
                   <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
                 </div>
-                <div class="field" data-per="gita evento">
+                <div data-campo="scadenza" class="field" data-per="gita evento">
                   <label class="label" for="fScadenza">Iscrizioni entro</label>
                   <input class="input" type="date" id="fScadenza">
                 </div>
-                <div class="field" data-per="gita">
+                <div data-campo="corso" class="field" data-per="gita">
                   <label class="spunta"><input type="checkbox" id="fCorso"> Nello stesso giorno c'è il corso</label>
                 </div>
-              </div>
-            </section>
-
-            <section class="parte" aria-labelledby="pCosa">
-              <h3 id="pCosa">Cosa</h3>
-              <div class="campi">
                 <!-- Il tipo si sceglie con "+ Nuovo post"; resta qui solo per gli
                      eventi, che si possono spostare fra corso, cena, gara e servizi. -->
-                <div class="field" data-per="evento">
+                <div data-campo="tipo" class="field" data-per="evento">
                   <label class="label" for="fTipo">Tipo di evento</label>
                   <select class="input" id="fTipo">
                     <option value="gita" hidden>Gita</option>
@@ -295,45 +294,51 @@
                     <option value="sponsor" hidden>Campagna sponsor</option>
                   </select>
                 </div>
-                <div class="field" data-per="sponsor">
+                <div data-campo="sponsor" class="field" data-per="sponsor">
                   <label class="label" for="fSponsor">Sponsor</label>
                   <select class="input" id="fSponsor"></select>
                 </div>
-                <div class="field campo-largo">
+                <div data-campo="titolo" class="field campo-largo">
                   <label class="label" for="fTitolo" id="lTitolo">Meta</label>
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
-                <div class="field campo-largo" data-per="evento sponsor">
+                <div data-campo="sottotesto" class="field campo-largo" data-per="evento sponsor">
                   <!-- Più righe: gli a capo restano nel post, e un post può essere
                        fatto solo di sottotesto (senza titolo). -->
                   <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
+                  <div class="evidenzia" data-per="evento">
+                    <button type="button" class="button is-small is-light" id="btnEvidenzia">Evidenzia</button>
+                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nelle grafiche Biglietto, Calendario
+                      e Divano escono evidenziate; qui restano fra due asterischi. Per togliere, selezionale di
+                      nuovo e premi Evidenzia.</p>
+                  </div>
                 </div>
                 <!-- Solo nella grafica Divano: mostraCampi() lo nasconde con le altre. -->
-                <div class="field campo-largo" data-per="gita evento" id="campoGancio">
+                <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
                   <label class="label" for="fGancio">Gancio: la prima riga del riquadro bianco, nella grafica Divano</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
-                <div class="field campo-largo" data-per="sponsor">
+                <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
                   <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
                   <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
                 </div>
-                <div class="field" data-per="sponsor">
+                <div data-campo="cta" class="field" data-per="sponsor">
                   <label class="label" for="fCta">Testo del pulsante</label>
                   <input class="input" id="fCta" placeholder="Es. Scopri le bollicine">
                 </div>
-                <div class="field campo-largo" data-per="gita">
+                <div data-campo="partenze" class="field campo-largo" data-per="gita">
                   <label class="label">Partenze (ora e luogo)</label>
                   <div class="righe-editor" id="fFermate"></div>
                   <button type="button" class="button is-small is-light" data-aggiungi="fFermate">+ Partenza</button>
                 </div>
-                <div class="field campo-largo" data-per="gita evento">
+                <div data-campo="prezzi" class="field campo-largo" data-per="gita evento">
                   <label class="label">Prezzi</label>
                   <div class="righe-editor" id="fPrezzi"></div>
                   <button type="button" class="button is-small is-light" data-aggiungi="fPrezzi" data-per="evento">+ Prezzo</button>
                   <label class="spunta"><input type="checkbox" id="fMostraPrezzo" checked> Mostra il prezzo nel post</label>
                 </div>
-                <div class="field campo-largo" data-per="evento">
+                <div data-campo="info" class="field campo-largo" data-per="evento">
                   <label class="label">Informazioni (es. Età · 5–12 anni)</label>
                   <div class="righe-editor" id="fInfo"></div>
                   <button type="button" class="button is-small is-light" data-aggiungi="fInfo">+ Informazione</button>
@@ -686,6 +691,7 @@
     aggiornaStile();
     // Il gancio si scrive solo con la grafica Divano.
     el("campoGancio").hidden = STILE !== "divano" || gruppo(el("fTipo").value) === "sponsor";
+    ordinaCampi();
     // Il titolo proposto del calendario cambia con la grafica; uno scritto a mano resta.
     if (el("calTitolo").value === titoloPrima) el("calTitolo").value = titoloMese(el("calMese").value);
     if (aperto && !el("editor").hidden) ridisegna();
@@ -973,6 +979,7 @@
       cambiato();
     });
     el("btnTogliFoto").addEventListener("click", () => { foto = null; cambiato(); });
+    el("btnEvidenzia").addEventListener("click", evidenziaSelezione);
     el("btnSalva").addEventListener("click", salva);
     el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
     el("btnCopia").addEventListener("click", copiaTesto);
@@ -986,6 +993,29 @@
     window.addEventListener("beforeunload", (e) => {
       if (modificato() || giorniModificati() || rubricaModificata()) { e.preventDefault(); e.returnValue = ""; }
     });
+  }
+
+  /**
+   * Evidenzia del sottotesto: mette fra due asterischi le parole selezionate,
+   * riga per riga (un'evidenza non va a capo) e con gli spazi fuori. Se la
+   * selezione tocca parole già evidenziate, toglie quelle evidenze per intero:
+   * togliere solo l'asterisco selezionato ne lasciava uno spaiato, che nel
+   * post si vedeva. Le grafiche della 2.8 disegnano le evidenze (evidenzia()
+   * in social-templates.js).
+   */
+  function evidenziaSelezione() {
+    const t = el("fSottotitolo"), v = t.value, a = t.selectionStart, b = t.selectionEnd;
+    if (a === b) { showToast("Seleziona prima, nel sottotesto, le parole da evidenziare.", "is-warning"); t.focus(); return; }
+    const toccate = [...v.matchAll(/\*[^*\n]+\*/g)].filter((m) => m.index < b && m.index + m[0].length > a);
+    if (toccate.length) {
+      const inizio = toccate[0].index, fine = toccate.at(-1).index + toccate.at(-1)[0].length;
+      t.setRangeText(v.slice(inizio, fine).replace(/\*([^*\n]+)\*/g, "$1"), inizio, fine, "select");
+    } else {
+      t.setRangeText(v.slice(a, b).split("\n").map((r) => r.replace(/^(\s*)(.*?)(\s*)$/,
+        (x, prima, parole, dopo) => (parole ? `${prima}*${parole}*${dopo}` : x))).join("\n"), a, b, "select");
+    }
+    t.focus();
+    t.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
@@ -1042,8 +1072,38 @@
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  /* L'ordine dei campi è quello in cui si leggono nel post, grafica per
+   * grafica (vedi i disegni in social-templates.js): nel Divano il nome viene
+   * prima della data e il gancio subito sotto la fascia, nel Biglietto la data
+   * è nel bollo in alto... Il tipo di evento sta sempre in testa. I campi si
+   * spostano davvero (non con CSS order), così anche il tasto Tab li segue. */
+  const ORDINE_CAMPI = {
+    ritocco: { gita: ["giorno", "corso", "titolo", "prezzi", "partenze", "scadenza"],
+               evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
+    montagna: { gita: ["corso", "titolo", "giorno", "prezzi", "partenze", "scadenza"],
+                evento: ["tipo", "titolo", "data", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
+    biglietto: { gita: ["giorno", "titolo", "partenze", "prezzi", "scadenza", "corso"],
+                 evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "prezzi", "scadenza"] },
+    calendario: { gita: ["corso", "titolo", "giorno", "partenze", "prezzi", "scadenza"],
+                  evento: ["tipo", "titolo", "sottotesto", "data", "ora", "dove", "info", "prezzi", "scadenza"] },
+    divano: { gita: ["corso", "titolo", "giorno", "gancio", "partenze", "prezzi", "scadenza"],
+              evento: ["tipo", "titolo", "data", "gancio", "ora", "prezzi", "dove", "info", "sottotesto", "scadenza"] },
+  };
+  const ORDINE_SPONSOR = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
+
+  function ordinaCampi() {
+    const g = gruppo(el("fTipo").value), box = el("campiPost");
+    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[STILE][g];
+    const campi = ordine.map((nome) => box.querySelector(`[data-campo="${nome}"]`));
+    // Già in fila: niente da spostare (spostare un campo gli toglie il cursore).
+    const ora = [...box.children].filter((c) => campi.includes(c));
+    if (ora.every((c, i) => c === campi[i])) return;
+    for (const c of campi) box.append(c);
+  }
+
   function mostraCampi() {
     const g = gruppo(el("fTipo").value);
+    ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     if (STILE !== "divano") el("campoGancio").hidden = true;
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
