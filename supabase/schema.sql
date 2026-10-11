@@ -2984,6 +2984,14 @@ comment on column public.social_events.contacts is 'Contatti (social_contacts.id
 alter table public.social_events add column if not exists hook text;
 comment on column public.social_events.hook is 'Gancio del post nella grafica Divano (es. "Tutti in pista!"); vuoto = nessuno.';
 
+-- Ora e luogo di un evento (corso, cena, gara, servizi), con un campo loro nel
+-- form: prima l'ora finiva nei prezzi o nelle informazioni scritte a mano, e le
+-- grafiche non la trovavano. La gita ha le partenze (stops).
+alter table public.social_events add column if not exists event_time text;
+alter table public.social_events add column if not exists place text;
+comment on column public.social_events.event_time is 'Ora di un evento, come la scrive chi pubblica (es. "19:30").';
+comment on column public.social_events.place is 'Luogo di un evento (es. "Palestra Way Assauto, Asti").';
+
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()
 returns trigger language plpgsql set search_path = public as $$

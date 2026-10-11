@@ -8,8 +8,8 @@
 - Rilasciata la **2.7** (branch e tag `2.7`). Branch di lavoro `2.8-SNAPSHOT`: le pagine online
   sono le sue (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`) e `dev` è allineato a lui.
 - Database di produzione: schema di `supabase/schema.sql` applicato l'11/10 (grafiche nuove dei
-  post: colonna `social_events.hook`, check di `social_settings.style`). Backup in
-  `supabase/migration/backup-2026-10-11-grafiche/` (fuori da git).
+  post: colonne `social_events.hook`, `event_time` e `place`, check di `social_settings.style`).
+  Backup in `supabase/migration/backup-2026-10-11-ora-luogo/` (fuori da git).
 - Documenti puliti l'08/10: tolti `docs/DOCUMENTAZIONE.md` (la 1.x) e i piani 2.1, 2.3 e social
   già realizzati (restano nella storia di git). Le pagine di prova su claude.ai sono cancellate.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
