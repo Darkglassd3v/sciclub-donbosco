@@ -1,7 +1,10 @@
 # Proposte di grafica per i post social
 
 Tre grafiche da scegliere per tutti i post del club su Instagram e Facebook:
-**A · Biglietto**, **B · Calendario**, **C · Divano**. Ogni tavola mostra una
+**A · Biglietto**, **B · Calendario**, **C · Divano**. Dalla 2.8 sono nel
+generatore dei post (Social > Impostazioni > Grafica dei post: `biglietto`,
+`calendario`, `divano` in `web/social-templates.js`), accanto a Ritocco e
+Montagna; queste pagine restano il riferimento del disegno. Ogni tavola mostra una
 proposta su quattro post: il corso (la ginnastica presciistica, da cui è
 partito tutto), una gita, un evento (una cena) e il calendario del mese.
 

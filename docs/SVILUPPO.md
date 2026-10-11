@@ -103,10 +103,14 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
 - Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
-- Post social: due grafiche in `web/social-templates.js`, `ritocco` e `montagna`, scelte per tutta
-  la pagina in Social > Impostazioni (`social_settings`, chiave `style`; `impostaStile()`). Niente
-  scelta nel singolo post: si rischierebbe di pubblicarne uno con la grafica sbagliata. Il testo
-  resta grande: post almeno 34 px su 1080, story 44 (misurato).
+- Post social: cinque grafiche in `web/social-templates.js`, `ritocco`, `montagna` e dalla 2.8
+  `biglietto`, `calendario`, `divano` (le proposte A, B, C di `grafica/proposte-post-social/`, post
+  4:5: `misurePost()`), scelte per tutta la pagina in Social > Impostazioni (`social_settings`,
+  chiave `style`; `impostaStile()`). Niente scelta nel singolo post: si rischierebbe di pubblicarne
+  uno con la grafica sbagliata. Il testo resta grande: post almeno 34 px su 1080, story 44
+  (misurato). Nelle tre della 2.8 il titolo è sempre alto due righe e il testo parte dallo stesso
+  punto; se non ci sta, `fit()` abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi.
+  Il gancio del Divano ("Tutti in pista!") è `social_events.hook`, scritto post per post.
 - Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di
   `chiedi()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 

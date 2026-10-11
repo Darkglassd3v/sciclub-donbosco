@@ -2937,17 +2937,19 @@ comment on table public.trip_days is 'Giorni della settimana delle gite e il lor
 -- Impostazioni della pagina Social, una riga per voce. Per ora solo la
 -- grafica dei post (style): 'ritocco' è il biglietto di sempre con la neve,
 -- 'montagna' la foto a tutta immagine con le informazioni in una scheda
--- bianca. Vale per tutti quelli che pubblicano, da qualunque computer.
+-- bianca; dalla 2.8 le tre proposte di grafica/proposte-post-social/:
+-- 'biglietto' (A), 'calendario' (B), 'divano' (C). Vale per tutti quelli che
+-- pubblicano, da qualunque computer.
 create table if not exists public.social_settings (
   key   text primary key,
   value text not null
 );
 alter table public.social_settings drop constraint if exists social_settings_style_valid;
 alter table public.social_settings add constraint social_settings_style_valid
-  check (key <> 'style' or value in ('ritocco', 'montagna'));
+  check (key <> 'style' or value in ('ritocco', 'montagna', 'biglietto', 'calendario', 'divano'));
 insert into public.social_settings (key, value) values ('style', 'ritocco')
 on conflict (key) do nothing;
-comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco o montagna).';
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco, montagna, biglietto, calendario o divano).';
 
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;
@@ -2975,6 +2977,12 @@ comment on table public.social_contacts is 'Rubrica dei contatti per info e iscr
 -- I contatti del post, nell'ordine in cui compaiono.
 alter table public.social_events add column if not exists contacts uuid[] not null default '{}';
 comment on column public.social_events.contacts is 'Contatti (social_contacts.id) in fondo al post, in ordine.';
+
+-- Il gancio della grafica Divano ("Alzati dal divano!", "Tutti in pista!"):
+-- la prima riga del riquadro bianco, scritta post per post. Le altre grafiche
+-- non lo mostrano.
+alter table public.social_events add column if not exists hook text;
+comment on column public.social_events.hook is 'Gancio del post nella grafica Divano (es. "Tutti in pista!"); vuoto = nessuno.';
 
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()

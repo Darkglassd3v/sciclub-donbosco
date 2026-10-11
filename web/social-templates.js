@@ -1,11 +1,13 @@
-// Disegni dei post social: grafica "C · Skipass" (il post è un biglietto su
-// fondo pieno nel colore della categoria) e formati delle campagne sponsor.
+// Disegni dei post social: le grafiche scelte in Social > Impostazioni
+// (Ritocco, Montagna e, dalla 2.8, Biglietto, Calendario e Divano) e i
+// formati delle campagne sponsor.
 //
 // La usa web/social.html, la pagina che genera i post; le funzioni pure le
 // prova web/test-social.js. I prototipi da cui viene (social/templates.html
 // con le tre proposte A, B, C, social/confronto.html, social/export.sh) sono
 // nella storia di git, fino alla 2.4. Ogni funzione restituisce l'HTML di un canvas a misura reale (post
-// 1080×1080, story 1080×1920, collab 1080×1350, copertina 820×312); lo stile
+// 1080×1080, o 1080×1350 nelle grafiche della 2.8 (misurePost()), story 1080×1920, collab 1080×1350,
+// copertina 820×312); lo stile
 // che serve è tutto qui, così la pagina che lo usa non deve sapere niente.
 // Colori del club da docs/brand-guidelines.md.
 
@@ -18,6 +20,9 @@ const SOCIAL = {
   // [{ id, name: "Marco", phone: "333 000 0000", hours: "dopo le 18" }, ...]
   contatti: [],
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
+  // In fondo ai post delle grafiche della 2.8, sopra i telefoni scelti.
+  iscrizioni: "Iscrizioni in negozio o via mail",
+  mail: "sciclubdonboscoasti@gmail.com",
 };
 
 /* Una categoria = un colore. Le gite prendono il colore dal giorno della
@@ -76,6 +81,12 @@ function entro(iso) {
   return d ? `entro ${GIORNI[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}` : "";
 }
 
+/** "giovedì 14 gennaio": la scadenza scritta per esteso, nelle grafiche della 2.8. */
+function giornoMese(iso) {
+  const d = giornoDi(iso);
+  return d ? `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}` : "";
+}
+
 /** "13/01" */
 function dataCorta(iso) {
   const d = giornoDi(iso);
@@ -92,9 +103,11 @@ function impostaColoriGita(colori) { COLORI_GITA = colori; }
 /* La grafica dei post, scelta in Social > Impostazioni (tabella
  * social_settings, chiave "style"): "ritocco" è il biglietto di sempre con la
  * neve sul fondo, "montagna" la foto a tutta immagine con le informazioni in
- * una scheda bianca. La pagina la carica e la passa a impostaStile(); il post
- * aperto la può cambiare solo per l'anteprima (secondo argomento dei disegni). */
-const STILI = ["ritocco", "montagna"];
+ * una scheda bianca; "biglietto", "calendario" e "divano" sono le proposte A,
+ * B e C della 2.8 (grafica/proposte-post-social/). La pagina la carica e la
+ * passa a impostaStile(); gli esempi di Impostazioni la scelgono col secondo
+ * argomento dei disegni. */
+const STILI = ["ritocco", "montagna", "biglietto", "calendario", "divano"];
 let STILE = "ritocco";
 function impostaStile(stile) { STILE = STILI.includes(stile) ? stile : "ritocco"; }
 
@@ -150,13 +163,14 @@ function categoriaDi(ev) {
 function modelloPost(ev, fmt) {
   const prezzi = (ev.prices || []).filter((p) => p && p[1]);
   const base = {
-    fmt, photo: ev.photo || null, cat: categoriaDi(ev),
+    fmt, photo: ev.photo || null, cat: categoriaDi(ev), iso: ev.event_date || null,
+    hook: String(ev.hook || "").trim(),
     prices: ev.show_price === false ? [] : prezzi, contatti: contattiDi(ev),
   };
   if (ev.kind === "gita") {
     return {
       ...base, kind: "gita", dest: ev.title, date: dataLunga(ev.event_date),
-      stops: ev.stops || [], corso: !!ev.course, deadline: entro(ev.deadline),
+      stops: ev.stops || [], corso: !!ev.course, deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
     };
   }
   return {
@@ -264,7 +278,12 @@ function testoBiglietto(s, accent, k, conTitolo = true) {
  *   fino a 2,2 volte il testo, poi titolo, testo e prezzi insieme, fino a un
  *   testo di 32 px (36 nella story). Oltre, c'è davvero troppo da dire.
  *   Prima il testo era appeso alla riga del prezzo e non si riduceva: nelle
- *   story finiva sopra i telefoni, e un titolo lungo usciva dal biglietto. */
+ *   story finiva sopra i telefoni, e un titolo lungo usciva dal biglietto.
+ * - [data-righe] (titoli delle grafiche della 2.8): va a capo fino a quelle
+ *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a 48 px.
+ * - [data-adatta] (la colonna di quelle grafiche): se il contenuto non ci sta,
+ *   scende tutto insieme (--s) fino alla scala scritta nell'attributo; i testi
+ *   piccoli si fermano al corpo minimo (--min). */
 function fit(radice = document) {
   let sborda = false;
   radice.querySelectorAll("[data-fit]").forEach((el) => {
@@ -301,6 +320,22 @@ function fit(radice = document) {
       else break;
       metti();
     }
+    if (pieno()) sborda = true;
+  });
+  radice.querySelectorAll("[data-righe]").forEach((el) => {
+    const righe = Number(el.dataset.righe);
+    let t = parseFloat(getComputedStyle(el).getPropertyValue("--t"));
+    const troppo = () => el.scrollWidth > el.clientWidth + 1
+      || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * righe + 2;
+    while (troppo() && t > 48) el.style.setProperty("--t", (t -= 2) + "px");
+    if (troppo()) sborda = true;
+  });
+  radice.querySelectorAll("[data-adatta]").forEach((el) => {
+    const min = Number(el.dataset.adatta);
+    let s = 1;
+    // 6 px di tolleranza: come nelle proposte, l'ultima riga può entrare un poco nel margine in fondo.
+    const pieno = () => el.scrollHeight > el.clientHeight + 6;
+    while (pieno() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
     if (pieno()) sborda = true;
   });
   return sborda;
@@ -383,6 +418,9 @@ function calRows(rows) {
  */
 function disegnaPost(s, stile = STILE) {
   if (stile === "montagna") return disegnaMontagna(s);
+  if (stile === "biglietto") return postBiglietto(s);
+  if (stile === "calendario") return postCalendario(s);
+  if (stile === "divano") return postDivano(s);
   const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
   const m = 60, k = st ? 1.4 : 1;
   // Story: il biglietto finisce sopra la fascia della risposta di Instagram,
@@ -470,12 +508,19 @@ function calendarioMontagna(titolo, righe) {
   </div>`;
 }
 
-/** Misure del calendario del mese nella grafica scelta. */
-const misureCalendario = (stile = STILE) => (stile === "montagna" ? { w: 1080, h: 1350 } : { w: 1080, h: 1080 });
+/** Misure del calendario del mese nella grafica scelta: 4:5 in tutte tranne il ritocco. */
+const misureCalendario = (stile = STILE) => (stile === "ritocco" ? { w: 1080, h: 1080 } : { w: 1080, h: 1350 });
 
-/** Calendario del mese: righe [categoria, "DD/MM", meta, corso]. Ritocco 1080×1080, montagna 1080×1350 (misureCalendario()). */
-function disegnaCalendario(titolo, righe, stile = STILE) {
+/** Misure del post (non della story) nella grafica scelta: le grafiche della 2.8 sono 4:5. */
+const misurePost = (stile = STILE) => ({ w: 1080, h: NUOVI.includes(stile) ? 1350 : 1080 });
+
+/** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per l'intestazione
+ *  delle grafiche della 2.8. Ritocco 1080×1080, le altre 1080×1350 (misureCalendario()). */
+function disegnaCalendario(titolo, righe, stile = STILE, mese = "") {
   if (stile === "montagna") return calendarioMontagna(titolo, righe);
+  if (stile === "biglietto") return meseBiglietto(titolo, righe, mese);
+  if (stile === "calendario") return meseCalendario(titolo, righe, mese);
+  if (stile === "divano") return meseDivano(titolo, righe);
   const bg = "#084C8D";
   return `<div class="cv" style="width:1080px;height:1080px;background:${bg}">${fiocchi(1080, 1080)}
     <div class="abs" style="left:60px;width:960px;top:60px;height:960px;background:#fff;border-radius:40px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.25)">
@@ -485,6 +530,459 @@ function disegnaCalendario(titolo, righe, stile = STILE) {
           <img class="logo" src="${SOCIAL.logo}" style="height:110px"></div>
         <div class="t-dest" data-fit style="font-size:88px;color:#084C8D;margin:18px 0 10px">${escS(titolo)}</div>${calRows(righe)}</div></div>
   </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Grafiche della 2.8: A · Biglietto, B · Calendario, C · Divano
+//
+// Rifatte uguali dalle proposte di grafica/proposte-post-social/ (tavole,
+// sorgenti e regole fisse nel README): post 4:5 (1080×1350) e story. Un solo
+// blu e un solo giallo, quelli del logo; il titolo occupa sempre due righe,
+// così il testo parte sempre dallo stesso punto e un testo lungo scende più in
+// basso; orari, prezzi e scadenze in evidenza; in fondo le iscrizioni, grandi.
+// I corpi stanno nel CSS qui sotto, moltiplicati per --s: fit() la abbassa
+// quando il testo non ci sta, e i testi piccoli si fermano a --min (34 px nel
+// post, 44 nella story, come nelle proposte).
+// ---------------------------------------------------------------------------
+
+const BLU = "#084C8D", GIALLO = "#FCCF02";
+const NUOVI = ["biglietto", "calendario", "divano"];
+
+(function stileNuovi() {
+  if (typeof document === "undefined" || document.getElementById("stile-social-nuovi")) return;
+  // z(): corpo che scende con --s ma non sotto il minimo; q(): misura che scende e basta.
+  const z = (n) => `max(var(--min), calc(${n}px * var(--s)))`, q = (n) => `calc(${n}px * var(--s))`;
+  const stile = document.createElement("style");
+  stile.id = "stile-social-nuovi";
+  stile.textContent = `
+    .cv.nuovo { --s: 1; --min: 34px; }
+    .cv.nuovo.story { --min: 44px; }
+    .cv.nuovo b { font-weight: 800; }
+    .cv.nuovo .logo-box { background: #fff; }
+    .cv.nuovo .logo-box img { display: block; height: 150px; }
+    .cv.nuovo .col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .cv.nuovo [data-righe] { font-size: calc(var(--t) * var(--s)); }
+    .cv.nuovo .isc .tel { display: block; font-weight: 700; }
+    .cv.nuovo .isc .tel span { font-weight: 500; }
+
+    .sa .biglietto { position: absolute; left: 60px; right: 60px; top: 60px; bottom: 60px; background: #fff; border-radius: 40px;
+      overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 14px 40px rgba(0,0,0,.25); }
+    .sa.story .biglietto { bottom: 340px; }
+    .sa .scena { position: relative; flex: 0 0 330px; }
+    .sa.story .scena { flex-basis: 500px; }
+    .sa .scena .foto, .sa .scena .paesaggio { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .sa .scena .figura { position: absolute; left: 330px; bottom: 16px; height: 64%; }
+    .sa.story .scena .figura { bottom: 26px; height: 50%; }
+    .sa .logo-box { position: absolute; left: 0; top: 0; padding: 18px 26px; border-radius: 0 0 28px 0; }
+    .sa.story .logo-box { top: 190px; border-top-right-radius: 28px; }
+    .sa.story .logo-box img { height: 195px; }
+    .sa .bollo { position: absolute; right: 40px; top: 36px; background: #084C8D; color: #fff; border-radius: 28px; text-align: center; padding: 14px 26px 10px; }
+    .sa.story .bollo { top: 226px; border-radius: 36px; padding: 18px 34px 13px; }
+    .sa .bollo .g { font-size: 36px; font-weight: 700; }
+    .sa.story .bollo .g { font-size: 47px; }
+    .sa .bollo .n { font-size: 100px; font-weight: 800; line-height: .95; letter-spacing: -.03em; padding-bottom: 8px; }
+    .sa.story .bollo .n { font-size: 130px; padding-bottom: 10px; }
+    .sa .taglio { position: relative; height: 0; flex: 0 0 auto; }
+    .sa .taglio i { position: absolute; left: 40px; right: 40px; top: -2px; border-top: 4px dashed #C7D0DA; }
+    .sa .luna { position: absolute; top: 360px; width: 60px; height: 60px; border-radius: 50%; }
+    .sa.story .luna { top: 530px; }
+    .sa .testo { flex: 1 0 auto; display: flex; flex-direction: column; gap: ${q(22)}; padding: ${q(34)} 56px ${q(12)}; }
+    .sa.story .testo { gap: ${q(29)}; padding: ${q(44)} 56px ${q(21)}; }
+    .sa .tit { --t: 104px; min-height: calc((2 * .98 * 104px + 58px) * var(--s)); }
+    .sa.story .tit { --t: 134px; min-height: calc(2 * .98 * 134px * var(--s)); }
+    .sa .tit > div { font-weight: 800; letter-spacing: -.035em; line-height: .98; }
+    .sa .tit small { display: block; font-size: ${z(40)}; font-weight: 700; letter-spacing: -.01em; color: #4A5361; margin-top: 12px; line-height: 1.15; white-space: pre-line; }
+    .sa.story .tit small { font-size: ${z(48)}; }
+    .sa .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: ${q(14)}; align-items: baseline; }
+    .sa.story .fatti { row-gap: ${q(20)}; }
+    .sa .fatti dt { font-size: ${z(36)}; font-weight: 600; color: #4A5361; }
+    .sa.story .fatti dt { font-size: ${z(44)}; }
+    .sa .fatti dd { font-size: ${z(50)}; font-weight: 700; line-height: 1.12; }
+    .sa.story .fatti dd { font-size: ${z(56)}; }
+    .sa .fatti b { color: #084C8D; }
+    .sa .isc { flex: none; margin: 0 40px; border-top: 4px dashed #C7D0DA; padding: 20px 16px 26px; display: flex; gap: 22px; align-items: center; }
+    .sa.story .isc { padding: 26px 16px 34px; }
+    .sa .isc > svg { flex: none; width: 70px; height: 70px; fill: #084C8D; }
+    .sa.story .isc > svg { width: 91px; height: 91px; }
+    .sa .isc > div { font-size: ${z(40)}; font-weight: 600; line-height: 1.2; }
+    .sa.story .isc > div { font-size: ${z(44)}; }
+    .sa .isc > div > b { display: block; font-size: ${z(46)}; color: #084C8D; letter-spacing: -.02em; }
+    .sa .firma { position: absolute; left: 0; right: 0; top: 1640px; text-align: center; font-size: 46px; font-weight: 800; letter-spacing: .12em; }
+    .sa .righe { display: flex; flex-direction: column; }
+    .sa .righe > div { display: flex; align-items: center; gap: 22px; padding: ${q(6)} 0; border-bottom: 2px solid #E4E6EB; }
+    .sa .righe .giorno { flex: none; width: ${q(230)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: ${q(6)} 0; }
+    .sa .righe .meta { font-size: ${q(50)}; font-weight: 700; line-height: 1.1; min-width: 0; }
+    .sa .righe .corso { margin-left: auto; flex: none; display: flex; align-items: center; gap: 8px; font-size: ${q(34)}; font-weight: 800;
+      color: #084C8D; border: 3px solid #084C8D; border-radius: 14px; padding: 2px 14px 2px 8px; }
+    .sa .righe .corso svg, .sc .righe .corso svg { width: 1.2em; height: 1.2em; }
+
+    .sb { background: #084C8D; }
+    .sb .monti { position: absolute; left: 0; bottom: 0; width: 1080px; height: 330px; }
+    .sb.story .monti { height: 520px; }
+    /* Come nella proposta, le iscrizioni scendono fino a 26 px dal fondo del post. */
+    .sb .col { padding: 56px 60px 26px; gap: ${q(34)}; }
+    .sb.story .col { padding: 262px 60px 350px; gap: ${q(24)}; }
+    .sb .testa, .sc .testa { flex: none; display: flex; }
+    .sb .logo-box, .sc .logo-box { border-radius: 22px; padding: 12px 18px; }
+    .sb .tit { flex: none; --t: 104px; color: #fff; min-height: calc(2 * .95 * 104px * var(--s)); }
+    .sb.story .tit { --t: 110px; min-height: calc(2 * .95 * 110px * var(--s)); }
+    .sb .tit > div { font-weight: 800; letter-spacing: -.035em; line-height: .95; }
+    .sb .tit small { display: block; font-size: ${z(40)}; font-weight: 700; letter-spacing: -.01em; color: #FCCF02; margin-top: 12px; line-height: 1.15; white-space: pre-line; }
+    .sb .centro { flex: none; display: flex; gap: ${q(44)}; align-items: center; }
+    .sb.story .centro { padding-top: 22px; }
+    .sb .foglio { flex: none; width: ${q(430)}; background: #fff; border-radius: 28px; text-align: center; position: relative;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
+    .sb .foglio .mese { font-size: ${q(46)}; font-weight: 800; border-radius: 28px 28px 0 0; padding: ${q(30)} 0 ${q(14)}; letter-spacing: -.01em; }
+    .sb .anello { position: absolute; top: -22px; width: 30px; height: 58px; border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
+    .sb .foglio .giorno { font-size: ${z(48)}; font-weight: 700; margin-top: ${q(18)}; }
+    .sb .foglio .num { font-size: ${q(250)}; font-weight: 800; line-height: .82; letter-spacing: -.05em; margin-top: ${q(6)}; }
+    .sb.story .foglio .num { font-size: ${q(220)}; }
+    .sb .foglio .ora { font-size: ${z(58)}; font-weight: 800; padding: ${q(14)} 0 ${q(28)}; }
+    .sb .dati { flex: 1; color: #fff; min-width: 0; }
+    .sb .dati .et { font-size: ${z(38)}; font-weight: 600; }
+    .sb.story .dati .et { font-size: ${z(44)}; }
+    .sb .dati .et ~ .et { margin-top: ${q(26)}; }
+    .sb .dati .v { font-size: ${z(56)}; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
+    .sb .dati b { color: #FCCF02; }
+    .sb .dati small { font-size: ${z(40)}; font-weight: 600; letter-spacing: 0; color: #fff; }
+    .sb.story .dati small { font-size: ${z(44)}; }
+    .sb .evid { flex: none; background: #FCCF02; border-radius: 28px; padding: ${q(28)} 40px; color: #084C8D; box-shadow: 0 12px 30px rgba(0,0,0,.3);
+      font-size: ${z(54)}; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+    .sb .isc { flex: none; margin-top: auto; display: flex; gap: 24px; align-items: center; background: #fff; color: #084C8D;
+      border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+    .sb .isc > svg, .sc .isc > svg { flex: none; width: 72px; height: 72px; fill: currentColor; }
+    .sb .isc > div, .sc .isc > div { font-size: ${z(40)}; font-weight: 600; line-height: 1.2; }
+    .sb.story .isc > div, .sc.story .isc > div { font-size: ${z(44)}; }
+    .sb .isc > div > b, .sc .isc > div > b { display: block; font-size: ${z(48)}; letter-spacing: -.02em; }
+    .sb.story .isc > div > b { font-size: ${z(46)}; }
+    .sb .mese-intero { flex: none; background: #fff; border-radius: 28px; box-shadow: 0 16px 40px rgba(0,0,0,.35); position: relative; padding-bottom: 18px; }
+    .sb .mese-intero .mese { background: #FCCF02; color: #084C8D; font-size: ${q(50)}; font-weight: 800; text-align: center;
+      border-radius: 28px 28px 0 0; padding: ${q(26)} 0 ${q(12)}; }
+    .sb .righe { padding: 6px 28px 0; }
+    .sb .righe > div { display: flex; align-items: center; gap: 20px; padding: ${q(13)} 0; border-bottom: 2px solid #E4E6EB; }
+    .sb .righe > div:last-child { border-bottom: 0; }
+    .sb .righe .giorno { flex: none; width: ${q(210)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: ${q(6)} 0; }
+    .sb .righe .meta { font-size: ${q(52)}; font-weight: 700; line-height: 1.1; min-width: 0; }
+    .sb .righe .corso { margin-left: auto; flex: none; font-size: ${q(34)}; font-weight: 800; color: #084C8D; border: 3px solid #084C8D; border-radius: 14px; padding: 2px 14px; }
+
+    .sc .monti { position: absolute; left: 0; top: 380px; width: 1080px; height: 400px; }
+    .sc.story .monti { top: 560px; }
+    .sc .col { padding: 56px 64px; }
+    .sc.story .col { padding: 262px 64px 352px; }
+    .sc .nome { flex: none; --t: 150px; height: ${q(270)}; margin-top: ${q(28)}; }
+    .sc.story .nome { height: auto; margin-top: ${q(44)}; }
+    .sc .nome > div { font-weight: 800; letter-spacing: -.045em; line-height: .9; }
+    .sc .scena { flex: none; height: ${q(150)}; position: relative; z-index: 1; margin-bottom: -14px; }
+    .sc.story .scena { flex: 1 1 0; height: auto; min-height: 0; }
+    .sc .scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .sc .nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; transform: rotate(-2deg); text-align: center; font-size: ${q(72)};
+      font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px; white-space: nowrap; box-shadow: 0 10px 24px rgba(6,57,106,.3); }
+    .sc.story .nastro { font-size: ${q(88)}; }
+    .sc .nastro.mese { margin-top: ${q(34)}; }
+    /* Nel post nome, disegno e fascia stanno fermi: se il testo non ci sta si stringe solo il riquadro (data-adatta). */
+    .sc .scheda { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin-top: ${q(34)}; background: #fff; color: #084C8D;
+      border-radius: 28px; padding: 22px 32px 18px; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+    .sc.story .scheda { flex: none; overflow: visible; margin-top: ${q(44)}; }
+    .sc .info { flex: 1 0 auto; }
+    .sc .gancio { font-size: ${z(58)}; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
+    .sc.story .gancio { font-size: ${z(66)}; }
+    .sc .riga { font-size: ${z(46)}; font-weight: 700; margin-top: 8px; line-height: 1.15; }
+    .sc.story .riga { font-size: ${z(56)}; }
+    .sc .poi { font-size: ${z(40)}; font-weight: 600; margin-top: 8px; line-height: 1.2; white-space: pre-line; }
+    .sc.story .poi { font-size: ${z(46)}; }
+    .sc .info b { background: #084C8D; color: #FCCF02; padding: 0 .16em; border-radius: .14em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    .sc .isc { flex: none; display: flex; gap: 24px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 3px solid #C7D0DA; }
+    .sc.story .isc > svg { width: 70px; height: 70px; }
+    .sc .righe { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+    .sc .righe > div { display: flex; align-items: center; gap: 20px; }
+    .sc .righe .giorno { flex: none; width: ${q(210)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: 4px 0; }
+    .sc .righe .meta { font-size: ${q(50)}; font-weight: 800; letter-spacing: -.02em; min-width: 0; }
+    .sc .righe .corso { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: ${q(36)}; font-weight: 800; }`;
+  document.head.append(stile);
+})();
+
+/* Il colore del post: le gite quello del loro giorno (trip_days), i corsi il
+ * giallo (lo stesso delle domeniche), tutto il resto il blu del club. La
+ * scritta sopra è bianca o blu, quella che si legge meglio. */
+const scrittaSu = (c) => (contrasto(c, "#FFFFFF") >= contrasto(c, BLU) ? "#FFFFFF" : BLU);
+function coloreNuovo(k) {
+  const c = k === "corso" ? GIALLO : /^g\d$/.test(k) ? categoria(k).c : BLU;
+  return { c, ink: scrittaSu(c) };
+}
+
+/* Orari, prezzi e date dentro un testo scritto a mano ("ore 20:00", "€ 30",
+ * "mercoledì 7 aprile", "14/01"): finiscono in <b>, che ogni grafica mette in
+ * evidenza a modo suo. Il prezzo viene prima dell'orario: "12.50 €" è un prezzo. */
+const EVIDENZA = new RegExp(`€\\s?\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s?€|(?:ore\\s)?\\d{1,2}[:.]\\d{2}`
+  + `|(?:(?:${GIORNI.join("|")})\\s)?\\d{1,2}\\s(?:${MESI.join("|")})|\\d{1,2}\\/\\d{1,2}`, "gi");
+const evidenzia = (testo) => escS(testo).replace(EVIDENZA, "<b>$&</b>");
+
+/** "Gita a La Thuile": il titolo dice cos'è (README delle proposte); `capo` va fra "Gita a" e la meta. */
+const titoloGita = (dest, capo = " ") => (/^gita\b/i.test(dest || "") ? escS(dest) : `Gita a${capo}${escS(dest)}`);
+
+/* Il titolo del post; un post di solo sottotesto prende il nome del tipo
+ * ("Servizi"), così la grafica resta quella e il sottotesto sta al suo posto. */
+const titoloNuovo = (s, capo) => (s.kind === "gita" ? titoloGita(s.dest, capo)
+  : escS(String(s.title || "").trim() || categoria(s.cat).label));
+
+const partenze = (s) => (s.stops || []).filter(([t, l]) => t || l)
+  .map(([t, l]) => [String(t || "").replace(/^ore\s*/i, ""), l || ""]);
+
+const icoMail = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>';
+
+/** In fondo a ogni post: come ci si iscrive (in negozio o via mail) e i telefoni scelti per il post. */
+function iscrizioni(contatti = []) {
+  const tel = contatti.map((c) => `<span class="tel">${icoTel("1em", "currentColor")} <span>${escS(c.name)}</span> ${escS(c.phone)}${c.hours
+    ? ` <span>${escS(c.hours)}</span>` : ""}</span>`).join("");
+  return `<div class="isc">${icoMail}<div>${escS(SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b>${tel}</div></div>`;
+}
+
+const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt=""></div>`;
+
+/* Lo sciatore sul tappetino del corso, nelle righe del calendario. */
+const sciatore = (col = "currentColor") => `<svg viewBox="0 0 250 240" aria-hidden="true"><rect x="4" y="208" width="242" height="16" rx="8" fill="${col}"/>
+  <g stroke="${col}" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M120 70 L84 136"/><path d="M114 82 L192 92"/>
+  <path d="M84 136 L154 142 L140 206 L172 206"/></g><circle cx="134" cy="38" r="27" fill="${col}"/></svg>`;
+
+/** Le gite del mese, una riga ciascuna: il giorno nel colore della gita, la meta, il corso (`corso`, l'HTML). */
+function righeMese(righe, breve, corso) {
+  return righe.map(([k, d, dest, c]) => {
+    const C = categoria(k), giorno = `${C.day} ${breve ? Number(String(d).slice(0, 2)) : d}`.trim();
+    return `<div><span class="giorno" style="background:${C.c};color:${scrittaSu(C.c)}">${escS(giorno)}</span>
+      <span class="meta">${escS(dest)}</span>${c ? corso : ""}</div>`;
+  }).join("");
+}
+
+// --- A · Biglietto -----------------------------------------------------------
+
+/* Senza foto, in alto il paesaggio disegnato (largo: il post ne mostra la
+ * parte bassa, la story tutto); nel corso, con la figura dell'esercizio. */
+const PAESAGGIO = `<svg class="paesaggio" viewBox="0 0 1080 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <defs><linearGradient id="cielo-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E7CB8"/><stop offset=".75" stop-color="#fff"/></linearGradient>
+  <linearGradient id="neve-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#C9D7E4"/></linearGradient></defs>
+  <rect width="1080" height="600" fill="url(#cielo-a)"/>
+  <polygon fill="#8FA9C4" points="0,400 150,290 290,350 460,230 600,330 760,220 900,310 1080,250 1080,600 0,600"/>
+  <polygon fill="url(#neve-a)" points="0,480 200,360 340,430 560,300 740,430 900,360 1080,450 1080,600 0,600"/>
+  <polygon fill="#5E7890" opacity=".35" points="560,300 610,350 590,390 640,450 560,420 520,350"/>
+  <polygon fill="#2E4A63" points="0,540 140,500 260,530 420,490 600,540 800,500 1080,545 1080,600 0,600"/>
+  <polygon fill="#fff" points="0,585 1080,560 1080,600 0,600"/></svg>`;
+const FIGURA = `<svg class="figura" viewBox="0 0 230 240" aria-hidden="true"><rect x="18" y="214" width="200" height="18" rx="9" fill="#FCCF02"/>
+  <g stroke="#084C8D" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M120 70 L84 136"/><path d="M114 82 L192 92"/>
+  <path d="M84 136 L154 142 L140 206 L172 206"/></g><circle cx="134" cy="38" r="25" fill="#084C8D"/></svg>`;
+
+/* Il biglietto: in alto la foto con il logo e il bollo, il taglio, il testo, le iscrizioni. */
+function biglietto(C, story, scena, bollo, testo, contatti) {
+  return `<div class="cv nuovo sa${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px;background:${C.c}">
+    ${fiocchi(1080, story ? 1920 : 1350, C.c === GIALLO ? .5 : .3)}
+    <div class="biglietto" data-adatta=".6">
+      <div class="scena">${scena}${logoNuovo()}<div class="bollo">${bollo}</div></div>
+      <div class="taglio"><i></i></div>
+      <div class="testo">${testo}</div>
+      ${iscrizioni(contatti)}
+    </div>
+    <div class="luna" style="left:30px;background:${C.c}"></div><div class="luna" style="right:30px;background:${C.c}"></div>
+    ${story ? `<div class="firma" style="color:${C.ink}">SCI CLUB DON BOSCO</div>` : ""}
+  </div>`;
+}
+
+/** A · Biglietto: il biglietto bianco sul colore del post, la foto in alto e il bollo con la data. */
+function postBiglietto(s) {
+  const C = coloreNuovo(s.cat), g = giornoDi(s.iso), gita = s.kind === "gita";
+  const bollo = g ? `<div class="g">${maiuscola(GIORNI[g.getDay()])}</div><div class="n">${dataCorta(s.iso)}</div>`
+    : `<div class="g">${escS(categoria(s.cat).label)}</div>`;
+  const quota = s.prices.map(([n, v]) => (n ? `${escS(n)} <b>${escS(v)}</b>` : `<b>${escS(v)}</b>`)).join(" · ");
+  const righe = gita ? [
+    ["Partenze", partenze(s).map(([t, l]) => `${t ? `<b>ore ${escS(t)}</b> ` : ""}${escS(l)}`).join("<br>")],
+    ["Quota", quota],
+    ["Iscrizioni", s.scadenza && `entro <b>${escS(s.scadenza)}</b>`],
+    ["Corso", s.corso && "nello stesso giorno"],
+  ] : [...s.facts.map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]];
+  // La quota prima delle iscrizioni, come nella proposta.
+  const iscr = righe.findIndex(([n]) => /^iscrizion/i.test(n));
+  if (!gita && iscr >= 0) righe.splice(iscr, 0, righe.pop());
+  const sub = gita ? "" : String(s.sub || "").trim();
+  const testo = `<div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${escS(sub)}</small>` : ""}</div>
+    ${righe.some(([, v]) => v) ? `<dl class="fatti">${righe.filter(([, v]) => v).map(([n, v]) => `<dt>${n}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}`;
+  const scena = s.photo ? `<img class="foto" src="${escS(s.photo)}" alt="">` : PAESAGGIO + (s.cat === "corso" ? FIGURA : "");
+  return biglietto(C, s.fmt === "story", scena, bollo, testo, s.contatti);
+}
+
+/** Calendario del mese in A: il bollo con mese e anno, le gite in righe nel biglietto. */
+function meseBiglietto(titolo, righe, mese) {
+  const [anno, m] = String(mese || "").split("-");
+  const bollo = m ? `<div class="g">${maiuscola(MESI[m - 1])}</div><div class="n">${escS(anno)}</div>` : '<div class="g">Calendario</div>';
+  const testo = `<div class="tit"><div data-righe="2">${escS(titolo)}</div></div>
+    <div class="righe">${righeMese(righe, false, `<span class="corso">${sciatore()}Corso</span>`)}</div>`;
+  return biglietto(coloreNuovo("cal"), false, PAESAGGIO, bollo, testo, []);
+}
+
+// --- B · Calendario ----------------------------------------------------------
+
+/* Montagne di sera in bianco trasparente sul blu (un solo blu). */
+const MONTI_B = `<svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <polygon fill="#fff" fill-opacity=".07" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
+  <polygon fill="#fff" fill-opacity=".11" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
+  <polygon fill="#fff" fill-opacity=".16" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/></svg>`;
+
+const fondoB = (story, corpo) => `<div class="cv nuovo sb${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px">
+    ${fiocchi(1080, story ? 1920 : 1350, .18)}${MONTI_B}
+    <div class="col" data-adatta=".6"><div class="testa">${logoNuovo()}</div>${corpo}</div></div>`;
+
+/**
+ * B · Calendario: sempre il blu del club; il foglio a strappo porta la data,
+ * con la testata nel colore del post (il giallo al posto del blu, che sul
+ * fondo blu non si vedrebbe). Accanto le informazioni; sotto, in un riquadro
+ * giallo, la scadenza delle iscrizioni. Negli eventi l'"Orario" va nel foglio
+ * e "Iscrizioni" nel riquadro giallo; senza data il foglio non c'è.
+ */
+function postCalendario(s) {
+  const g = giornoDi(s.iso), gita = s.kind === "gita", c = coloreNuovo(s.cat).c, testa = c === BLU ? GIALLO : c;
+  const fatti = gita ? [] : s.facts.filter(([, v]) => String(v || "").trim());
+  const ora = g && fatti.find(([n]) => /^(ora|orario|ore)$/i.test(String(n || "").trim()));
+  const iscr = fatti.find(([n]) => /^iscrizion/i.test(String(n || "").trim()));
+  const evid = gita ? s.scadenza && `Iscrizioni entro ${s.scadenza}` : iscr && `Iscrizioni ${iscr[1]}`;
+  const quota = s.prices.map(([n, v]) => `<b>${escS(v)}</b>${n ? ` <small>${escS(n)}</small>` : ""}`).join("<br>");
+  const dati = (gita ? [
+    ["Partenze", partenze(s).map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join("<br>")],
+    ["Quota", quota],
+    ["Corso", s.corso && "nello stesso giorno"],
+  ] : [...fatti.filter((f) => f !== ora && f !== iscr).map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]]).filter(([, v]) => v);
+  const foglio = g ? `<div class="foglio"><i class="anello" style="left:26%"></i><i class="anello" style="right:26%"></i>
+      <div class="mese" style="background:${testa};color:${scrittaSu(testa)}">${maiuscola(MESI[g.getMonth()])}</div>
+      <div class="giorno">${maiuscola(GIORNI[g.getDay()])}</div>
+      <div class="num" style="color:${testa === GIALLO ? BLU : suBianco(testa)}">${g.getDate()}</div>
+      <div class="ora">${ora ? escS(ora[1]) : "&nbsp;"}</div></div>` : "";
+  const sub = gita ? "" : String(s.sub || "").trim();
+  return fondoB(s.fmt === "story", `
+    <div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${escS(sub)}</small>` : ""}</div>
+    ${foglio || dati.length ? `<div class="centro">${foglio}<div class="dati">${dati.map(([n, v]) => `<div class="et">${n}</div><div class="v">${v}</div>`).join("")}</div></div>` : ""}
+    ${evid ? `<div class="evid">${escS(evid)}</div>` : ""}
+    ${iscrizioni(s.contatti)}`);
+}
+
+/** Calendario del mese in B: le gite in righe dentro il foglio, con la testata del mese (senza la griglia dei giorni). */
+function meseCalendario(titolo, righe, mese) {
+  const [anno, m] = String(mese || "").split("-");
+  return fondoB(false, `
+    <div class="tit"><div data-righe="2">${escS(titolo)}</div></div>
+    <div class="mese-intero"><i class="anello" style="left:22%"></i><i class="anello" style="right:22%"></i>
+      <div class="mese">${m ? `${maiuscola(MESI[m - 1])} ${escS(anno)}` : "Le gite del mese"}</div>
+      <div class="righe">${righeMese(righe, false, '<span class="corso">Corso</span>')}</div></div>
+    ${iscrizioni()}`);
+}
+
+// --- C · Divano --------------------------------------------------------------
+
+/* Fondo di C: fiocchi e montagne stilizzate in bianco trasparente, più opache
+ * sul giallo, dove il bianco si vede meno. */
+const montiC = (giallo) => `<svg class="monti" viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
+  <polygon fill="#fff" fill-opacity="${giallo ? .34 : .16}" points="0,250 150,140 270,200 430,60 570,180 710,100 870,210 1080,110 1080,400 0,400"/>
+  <polygon fill="#fff" fill-opacity="${giallo ? .5 : .24}" points="0,330 180,225 330,295 520,180 700,295 880,230 1080,305 1080,400 0,400"/></svg>`;
+
+/* I disegni sopra la fascia, uno per tipo di post. Il divano vuoto con il
+ * telecomando e gli sci (il corso, sempre sul giallo). */
+const DIVANO = `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <ellipse cx="350" cy="352" rx="330" ry="14" fill="#084C8D" opacity=".18"/>
+  <rect x="72" y="300" width="28" height="48" rx="6" fill="#14202E"/><rect x="560" y="300" width="28" height="48" rx="6" fill="#14202E"/>
+  <rect x="80" y="56" width="500" height="196" rx="50" fill="#084C8D"/>
+  <rect x="118" y="86" width="206" height="118" rx="38" fill="#fff" fill-opacity=".16"/><rect x="336" y="86" width="206" height="118" rx="38" fill="#fff" fill-opacity=".16"/>
+  <rect x="40" y="222" width="580" height="92" rx="28" fill="#084C8D"/>
+  <rect x="112" y="186" width="214" height="70" rx="26" fill="#fff" fill-opacity=".28"/><rect x="334" y="186" width="214" height="70" rx="26" fill="#fff" fill-opacity=".28"/>
+  <rect x="18" y="138" width="104" height="176" rx="48" fill="#084C8D"/><rect x="538" y="138" width="104" height="176" rx="48" fill="#084C8D"/>
+  <g transform="rotate(-10 215 205)"><rect x="160" y="190" width="110" height="30" rx="12" fill="#14202E"/>
+    <circle cx="182" cy="205" r="7" fill="#B3261E"/><circle cx="208" cy="205" r="5" fill="#fff"/><circle cx="228" cy="205" r="5" fill="#fff"/><circle cx="248" cy="205" r="5" fill="#fff"/></g>
+  <g transform="rotate(-9 700 350)">
+    <line x1="752" y1="350" x2="752" y2="40" stroke="#14202E" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="752" cy="318" r="15" fill="none" stroke="#14202E" stroke-width="6"/><rect x="743" y="30" width="18" height="46" rx="8" fill="#14202E"/>
+    <rect x="650" y="16" width="36" height="336" rx="18" fill="#B3261E"/><rect x="694" y="8" width="36" height="344" rx="18" fill="#B3261E"/>
+    <rect x="650" y="16" width="36" height="46" rx="18" fill="#fff"/><rect x="694" y="8" width="36" height="46" rx="18" fill="#fff"/>
+    <rect x="646" y="190" width="44" height="34" rx="8" fill="#14202E"/><rect x="690" y="186" width="44" height="34" rx="8" fill="#14202E"/></g></svg>`;
+/* Il pullman della gita con gli sci sul tetto: blu sul giallo, bianco sugli altri colori (vetri nel colore del fondo). */
+const pullman = (corpo, vetri) => `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <ellipse cx="390" cy="352" rx="350" ry="14" fill="#14202E" opacity=".15"/>
+  <rect x="150" y="66" width="440" height="14" rx="7" fill="#14202E"/>
+  <rect x="170" y="40" width="400" height="24" rx="12" fill="#14202E"/><rect x="170" y="40" width="44" height="24" rx="12" fill="#fff"/>
+  <rect x="190" y="14" width="400" height="24" rx="12" fill="${corpo}"/><rect x="190" y="14" width="44" height="24" rx="12" fill="${vetri}"/>
+  <rect x="60" y="86" width="660" height="236" rx="40" fill="${corpo}"/>
+  <rect x="96" y="118" width="96" height="92" rx="16" fill="${vetri}"/><rect x="210" y="118" width="96" height="92" rx="16" fill="${vetri}"/>
+  <rect x="324" y="118" width="96" height="92" rx="16" fill="${vetri}"/><rect x="438" y="118" width="96" height="92" rx="16" fill="${vetri}"/>
+  <path d="M560 118 H664 Q690 118 694 146 L700 210 H560 Z" fill="${vetri}"/>
+  <rect x="60" y="234" width="660" height="20" fill="#FCCF02"/><rect x="680" y="262" width="40" height="22" rx="8" fill="#FCCF02"/>
+  <circle cx="200" cy="322" r="44" fill="#14202E"/><circle cx="200" cy="322" r="18" fill="#D5DAE1"/>
+  <circle cx="590" cy="322" r="44" fill="#14202E"/><circle cx="590" cy="322" r="18" fill="#D5DAE1"/></svg>`;
+/* Due calici che brindano (cene e feste, sul blu). */
+const CALICI = `<svg viewBox="250 -10 280 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <g transform="rotate(14 330 300)"><path d="M275 60 C275 150 295 176 330 179 C365 176 385 150 385 60 Z" fill="#fff"/>
+    <path d="M279 112 C283 160 300 173 330 175 C360 173 377 160 381 112 Z" fill="#FCCF02"/>
+    <rect x="325" y="178" width="10" height="96" fill="#fff"/><ellipse cx="330" cy="276" rx="46" ry="10" fill="#fff"/></g>
+  <g transform="rotate(-14 450 300)"><path d="M395 60 C395 150 415 176 450 179 C485 176 505 150 505 60 Z" fill="#fff"/>
+    <path d="M399 112 C403 160 420 173 450 175 C480 173 497 160 501 112 Z" fill="#FCCF02"/>
+    <rect x="445" y="178" width="10" height="96" fill="#fff"/><ellipse cx="450" cy="276" rx="46" ry="10" fill="#fff"/></g>
+  <g fill="#fff"><polygon points="390,0 400,26 426,30 404,44 410,70 390,56 370,70 376,44 354,30 380,26"/>
+    <circle cx="320" cy="20" r="8"/><circle cx="462" cy="18" r="8"/><circle cx="292" cy="58" r="6"/><circle cx="490" cy="56" r="6"/></g></svg>`;
+/* Due porte da slalom (la gara, sul blu). */
+const PALETTI = `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+  <ellipse cx="390" cy="352" rx="300" ry="14" fill="#14202E" opacity=".15"/>
+  <rect x="236" y="40" width="16" height="312" rx="8" fill="#fff"/><path d="M252 52 L392 100 L252 148 Z" fill="#FCCF02"/>
+  <rect x="508" y="80" width="16" height="272" rx="8" fill="#fff"/><path d="M524 92 L664 140 L524 188 Z" fill="#fff"/></svg>`;
+
+function disegnoDivano(s, C) {
+  if (s.kind === "gita") return C.c === GIALLO ? pullman(BLU, "#fff") : pullman("#fff", C.c);
+  return { corso: DIVANO, cena: CALICI, gara: PALETTI }[s.cat] || "";
+}
+
+/* Il fondo di C: il colore del post, in alto il nome grande, poi il disegno
+ * (scena), la fascia e il riquadro bianco con dentro le iscrizioni. Sul blu
+ * il nome e la fascia sono gialli, sul giallo e sugli altri colori blu. */
+function manifesto(C, story, nome, scena, fascia, dentro) {
+  const giallo = C.c === GIALLO, blu = C.c === BLU;
+  return `<div class="cv nuovo sc${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px;background:${C.c};color:${C.ink}">
+    ${fiocchi(1080, story ? 1920 : 1350, giallo ? .7 : .38)}${montiC(giallo)}
+    <div class="col"${story ? ' data-adatta=".6"' : ""}>
+      <div class="testa">${logoNuovo()}</div>
+      <div class="nome" style="color:${blu ? GIALLO : C.ink}"><div data-righe="2">${nome}</div></div>
+      ${scena === null ? "" : `<div class="scena">${scena}</div>`}
+      <div class="nastro${scena === null ? " mese" : ""}" style="background:${blu ? GIALLO : BLU};color:${blu ? BLU : "#fff"}">${escS(fascia)}</div>
+      <div class="scheda"${story ? "" : ' data-adatta=".6"'}>${dentro}</div>
+    </div></div>`;
+}
+
+/**
+ * C · Divano: il manifesto. In alto il nome ("Gita a La Thuile"), nella
+ * fascia la data, sotto in un riquadro bianco il gancio scritto per il post
+ * ("Tutti in pista!", social_events.hook) e i dati; orari, prezzi e scadenze
+ * in un riquadrino blu con la scritta gialla.
+ */
+function postDivano(s) {
+  const C = coloreNuovo(s.cat), gita = s.kind === "gita";
+  const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
+  const p = partenze(s);
+  // Orario e luogo si capiscono da soli: senza etichetta, come nelle proposte.
+  const fatto = ([n, v]) => `${n && !/^(ora|orario|ore|dove|luogo|quando)$/i.test(String(n).trim())
+    ? `${escS(n)}${/^iscrizion/i.test(String(n).trim()) ? " " : ": "}` : ""}${evidenzia(v)}`;
+  // Come nella proposta: l'orario e i prezzi su una riga sola, le iscrizioni in fondo.
+  const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
+  const ora = fatti.find(([n]) => /^(ora|orario|ore)$/i.test(String(n || "").trim()));
+  const iscr = fatti.find(([n]) => /^iscrizion/i.test(String(n || "").trim()));
+  const righe = gita ? [
+    p.length && `<div class="riga">Partenze: ${p.map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join(" · ")}</div>`,
+    quota && `<div class="riga">${quota}</div>`,
+    s.corso && '<div class="poi">Nello stesso giorno c\'è il corso</div>',
+    s.scadenza && `<div class="poi">Iscrizioni entro <b>${escS(s.scadenza)}</b></div>`,
+  ] : [
+    ...fatti.filter((f) => f !== iscr).map((f) => `<div class="riga">${fatto(f)}${f === ora && quota ? ` · ${quota}` : ""}</div>`),
+    !ora && quota && `<div class="riga">${quota}</div>`,
+    String(s.sub || "").trim() && `<div class="poi">${escS(String(s.sub).trim())}</div>`,
+    iscr && `<div class="poi">${fatto(iscr)}</div>`,
+  ];
+  const dentro = `<div class="info">${s.hook ? `<div class="gancio">${escS(s.hook)}</div>` : ""}${righe.filter(Boolean).join("")}</div>${iscrizioni(s.contatti)}`;
+  return manifesto(C, s.fmt === "story", titoloNuovo(s, "<br>"), disegnoDivano(s, C), s.date || categoria(s.cat).label, dentro);
+}
+
+/** Calendario del mese in C: il nome, la fascia "Le gite del mese" e le gite nel riquadro bianco (niente disegno). */
+function meseDivano(titolo, righe) {
+  const dentro = `<div class="righe">${righeMese(righe, true, `<span class="corso">${sciatore()}corso</span>`)}</div>${iscrizioni()}`;
+  return manifesto(coloreNuovo("cal"), false, escS(titolo), null, "Le gite del mese", dentro);
 }
 
 /** Copertina Facebook (820×312). */
@@ -678,5 +1176,6 @@ function testoPost(ev, sp, stagione) {
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
                      contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
-                     impostaStile, stileCorrente: () => STILE, disegnaPost, disegnaCalendario, misureCalendario };
+                     impostaStile, stileCorrente: () => STILE, disegnaPost, disegnaCalendario, misureCalendario, misurePost,
+                     STILI, evidenzia, coloreNuovo, giornoMese };
 }

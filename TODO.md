@@ -18,44 +18,23 @@
 ## Richieste nuove
 
 - [ ] **In corso (11/10): le tre proposte di grafica nel generatore dei post** (Social > Genera
-      post), scelte in Social > Impostazioni accanto a Ritocco e Montagna. Riferimento:
-      `grafica/proposte-post-social/` (tavole, sorgenti HTML/CSS, regole fisse nel README).
-      Piano, in ordine (ripartire dal primo non spuntato):
-  - [ ] `supabase/schema.sql`: `social_settings_style_valid` accetta anche `biglietto`,
-        `calendario`, `divano`; schema in produzione con backup.
-  - [ ] `web/social-templates.js`: `STILI` con i tre nuovi; `disegnaPost` (post 4:5 e story
-        9:16) per gita, eventi (cena, gara, corso, servizi) nei tre stili; calendario del mese
-        (`disegnaCalendario`, `misureCalendario`). Regole fisse: un solo blu `#084C8D` e un solo
-        giallo `#FCCF02`; titolo sempre alto 2 righe; testo dallo stesso punto; orari, prezzi e
-        scadenze in evidenza; iscrizioni grandi.
-  - [ ] `web/social.html`: scelta in Impostazioni con l'esempio per ogni stile.
-  - [ ] `web/test-social.js` aggiornato; `node web/test-social.js` e prova nel browser col
-        client finto (post e story di ogni tipo, A+ e 400 px).
+      post), scelte in Social > Impostazioni accanto a Ritocco e Montagna. Fatto l'11/10: schema in
+      produzione (check dello stile con `biglietto`, `calendario`, `divano`; colonna
+      `social_events.hook` per il gancio del Divano; backup in
+      `supabase/migration/backup-2026-10-11-grafiche/`), `web/social-templates.js` (`postBiglietto`,
+      `postCalendario`, `postDivano`, i calendari del mese, `misurePost()`, `fit()` con
+      `data-righe` e `data-adatta`), `web/social.html` (le cinque grafiche in Impostazioni con
+      l'esempio, campo Gancio solo col Divano, post 4:5), test e prova nel browser col client
+      finto (post e story di ogni tipo, calendario, export PNG, A+ a 400 px). Resta, in ordine:
   - [ ] Commit, push su `2.8-SNAPSHOT` (deploy: `gh run list --workflow deploy-pages.yml`),
         allineare `dev` (non esiste `master`; procedura in `docs/SVILUPPO.md`, niente force).
   - [ ] `/open-code-review:review` del codice nuovo; correggere Alto e Medio; commit, push,
         deploy, riallineare `dev`.
-  - [ ] Spegnere: `~/.local/bin/spegni-tutto` (la presa), poi in background
-        `sleep 60; gnome-session-quit --power-off --no-prompt` (`systemctl poweroff` è
-        bloccato dalla sessione GNOME, `sudo` chiede la password).
-
-  **Per chi riparte da una sessione nuova** (contesto pulito l'11/10):
-  - L'utente ha dato tutte le autorizzazioni per questo lavoro: database di produzione
-    (backup, schema, psql), bash, commit, push, deploy, allineamento di `dev`, spegnimento.
-    Non chiedere: andare avanti fino in fondo. Al limite d'uso il sistema riprende da solo.
-  - Le tre proposte, da rifare uguali nel generatore: `grafica/proposte-post-social/`
-    (tavole `tavola-a/b/c.jpg`, post in `post/`, sorgenti `sorgenti/corso-a.html` ...
-    `calendario-c.html`, stili `a.css`, `b.css`, `c.css`, `comune.css`; regole fisse nel
-    README: misure per proposta, un solo blu e un solo giallo, titolo alto 2 righe, testo
-    dallo stesso punto, evidenze, iscrizioni grandi). Nomi negli stili: A `biglietto`,
-    B `calendario`, C `divano`.
-  - Nel sito: `web/social-templates.js` (`STILI`, `impostaStile`, `modelloPost`,
-    `disegnaPost(s, stile)`, `disegnaMontagna`, `disegnaCalendario`, `misureCalendario`,
-    `fit()`, `SAFE` per le fasce della story), `web/social.html` (Impostazioni: radio dello
-    stile con `esempioRitocco`/`esempioMontagna`, `disegnaEsempiStile()`), test
-    `web/test-social.js`. I post del sito caricano Barlow da Google Fonts (per le prove si
-    può usare `grafica/font/barlow/`). Prova nel browser: copia di `web/` con supabase-js
-    finto, vedi `docs/SVILUPPO.md`, "Provare le pagine senza login".
+  - Alla fine **non spegnere il PC e non togliere la corrente** (niente `spegni-tutto`):
+    l'ha chiesto l'utente l'11/10.
+  - Chi riparte da una sessione nuova: l'utente ha dato tutte le autorizzazioni per questo
+    lavoro (database di produzione, bash, commit, push, deploy, allineamento di `dev`); non
+    chiedere, andare avanti fino in fondo.
 
 ## Versione aperta: 2.8-SNAPSHOT
 
@@ -90,9 +69,11 @@ segnala il socio non trovato; saldo di chiusura non più leggibile senza login.
 
 ## Social
 
-- [ ] Scegliere fra le tre proposte di grafica dei post (`grafica/proposte-post-social/`: una
-      tavola per proposta con corso, gita, evento e calendario). Se va A: i corsi passano al giallo in Genera post (colore della
-      categoria corso in `web/social-templates.js`, accenti blu sul giallo) e logo più grande.
+- [ ] Scegliere la grafica dei post in Social > Impostazioni: oltre a Ritocco e Montagna ci sono
+      Biglietto, Calendario e Divano (le proposte di `grafica/proposte-post-social/`). Con il
+      Divano scrivere il gancio di ogni post. Da decidere con chi pubblica: nelle tre nuove le
+      gite del martedì restano rosse (colore del giorno in Impostazioni > Giorni) e le cene,
+      gare e servizi sono blu.
 - [ ] Provare le grafiche nuove con foto vere e con le campagne sponsor.
 - [ ] Inserire i contatti veri in Social > Impostazioni > Contatti e spuntarli nei post.
 - [ ] Caricare lo sponsor 958 Santero e la sua campagna (loghi in `social/santero/`).

@@ -8,7 +8,8 @@
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
-        impostaStile, stileCorrente, disegnaPost, disegnaCalendario, misureCalendario } = require("./social-templates.js");
+        impostaStile, stileCorrente, disegnaPost, disegnaCalendario, misureCalendario, misurePost,
+        STILI, evidenzia, coloreNuovo, giornoMese } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -153,6 +154,92 @@ assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1080 });
   const solo = disegnaPost(modelloPost({ kind: "servizi", title: "Apertura iscrizioni", contacts: [] }, "post"), "montagna");
   assert.ok(!solo.includes("data-biglietto"), "scheda vuota in un post di solo titolo");
   assert.ok(disegnaCalendario("Gennaio", [["g6", "09/01", "Prato Nevoso", true]], "montagna").includes("height:1350px"));
+}
+
+// --- Grafiche della 2.8: Biglietto, Calendario, Divano ------------------------
+
+for (const st of ["biglietto", "calendario", "divano"]) {
+  impostaStile(st);
+  assert.strictEqual(stileCorrente(), st, `grafica ${st} non accettata`);
+  assert.deepStrictEqual(misurePost(), { w: 1080, h: 1350 }, `${st}: il post non è 4:5`);
+  assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1350 });
+}
+impostaStile("ritocco");
+assert.deepStrictEqual(misurePost(), { w: 1080, h: 1080 }, "il ritocco ha cambiato misura");
+assert.deepStrictEqual(misurePost("montagna"), { w: 1080, h: 1080 });
+assert.deepStrictEqual(STILI, ["ritocco", "montagna", "biglietto", "calendario", "divano"],
+  "STILI diverso da social_settings_style_valid (supabase/schema.sql)");
+
+// Un solo blu e un solo giallo: corsi gialli, eventi e calendario blu, le gite col colore del loro giorno.
+assert.deepStrictEqual(coloreNuovo("corso"), { c: "#FCCF02", ink: "#084C8D" });
+assert.deepStrictEqual(coloreNuovo("cena"), { c: "#084C8D", ink: "#FFFFFF" });
+assert.deepStrictEqual(coloreNuovo("cal"), { c: "#084C8D", ink: "#FFFFFF" });
+assert.deepStrictEqual(coloreNuovo("g0"), { c: "#FCCF02", ink: "#084C8D" });
+assert.deepStrictEqual(coloreNuovo("g2"), { c: "#B3261E", ink: "#FFFFFF" });
+assert.strictEqual(coloreNuovo("gita").c, "#084C8D", "gita in un giorno senza colore");
+
+// Orari, prezzi e date scritti a mano finiscono in evidenza, il resto no.
+assert.strictEqual(evidenzia("ore 20:00"), "<b>ore 20:00</b>");
+assert.strictEqual(evidenzia("soci € 30 · bambini 15 €"), "soci <b>€ 30</b> · bambini <b>15 €</b>");
+assert.strictEqual(evidenzia("entro mercoledì 7 aprile"), "entro <b>mercoledì 7 aprile</b>");
+assert.strictEqual(evidenzia("fino al 13 gennaio, dal 14/01"), "fino al <b>13 gennaio</b>, dal <b>14/01</b>");
+assert.strictEqual(evidenzia("Palestra Way Assauto, Asti"), "Palestra Way Assauto, Asti");
+assert.strictEqual(evidenzia("<i>12.50 €</i>"), "&lt;i&gt;<b>12.50 €</b>&lt;/i&gt;", "il testo non è passato da escS");
+assert.strictEqual(giornoMese("2027-01-14"), "giovedì 14 gennaio");
+assert.strictEqual(giornoMese(null), "");
+{
+  impostaContatti([{ id: 1, name: "Marco", phone: "333 1" }]);
+  const ev = { kind: "gita", title: "La Thuile", event_date: "2027-01-17", stops: [["ore 6:30", "Asti"]], prices: [[null, "€ 52"]],
+    deadline: "2027-01-14", course: true, hook: " Tutti in pista! ", contacts: [1] };
+  const m = modelloPost(ev, "post");
+  assert.strictEqual(m.scadenza, "giovedì 14 gennaio");
+  assert.strictEqual(m.hook, "Tutti in pista!");
+  assert.strictEqual(m.iso, "2027-01-17");
+  for (const st of ["biglietto", "calendario", "divano"]) {
+    for (const fmt of ["post", "story"]) {
+      const html = disegnaPost(modelloPost(ev, fmt), st);
+      assert.ok(html.includes("data-adatta") && html.includes('data-righe="2"'), `${st} ${fmt}: manca l'adattamento del testo`);
+      assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1"), `${st} ${fmt}: mancano le iscrizioni o il telefono`);
+      assert.ok(/Gita a(<br>| )La Thuile/.test(html), `${st} ${fmt}: il titolo non dice che è una gita`);
+      assert.ok(!html.includes("ore ore"), `${st} ${fmt}: "ore" ripetuto nella partenza`);
+      assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`), `${st} ${fmt}: misura sbagliata`);
+      assert.strictEqual(html.includes(" story"), fmt === "story");
+    }
+  }
+  assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && !disegnaPost(m, "biglietto").includes("Tutti in pista!"),
+    "il gancio deve stare solo nel Divano");
+  assert.ok(disegnaPost(m, "biglietto").includes("giovedì 14 gennaio</b>") && disegnaPost(m, "calendario").includes("Iscrizioni entro giovedì 14 gennaio"));
+  // Una meta che dice già "Gita" non diventa "Gita a Gita ...".
+  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "biglietto").includes("Gita a Gita"));
+  // Un titolo con caratteri HTML resta testo.
+  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "<img src=x>" }, "post"), "divano").includes("<img src=x>"), "titolo non passato da escS");
+
+  // Evento in B: l'Orario va nel foglio, le Iscrizioni nel riquadro giallo, il resto accanto.
+  const cena = { kind: "cena", title: "Cena di fine stagione", event_date: "2027-04-10", prices: [["soci", "€ 30"]],
+    facts: [["Orario", "ore 20:00"], ["Dove", "Salone dell'oratorio"], ["Iscrizioni", "entro mercoledì 7 aprile"]] };
+  const b = disegnaPost(modelloPost(cena, "post"), "calendario");
+  assert.match(b, /<div class="ora">ore 20:00<\/div>/);
+  assert.match(b, /<div class="evid">Iscrizioni entro mercoledì 7 aprile<\/div>/);
+  assert.ok(b.includes("Salone dell'oratorio") && !/<div class="et">Orario/.test(b), "l'orario ripetuto accanto al foglio");
+  // In C l'orario e i prezzi stanno su una riga, le iscrizioni in fondo senza i due punti.
+  const c = disegnaPost(modelloPost(cena, "post"), "divano");
+  assert.ok(c.includes("<b>ore 20:00</b> · soci <b>€ 30</b>"), "orario e prezzi non sulla stessa riga");
+  assert.ok(c.includes('<div class="poi">Iscrizioni entro <b>mercoledì 7 aprile</b></div>'));
+  // Senza data: niente foglio in B, il nome del tipo nella fascia di C e nel bollo di A.
+  const corso = modelloPost({ kind: "corso", title: "Corso bambini", facts: [["Età", "5–12 anni"]] }, "post");
+  assert.ok(!disegnaPost(corso, "calendario").includes('class="foglio"'));
+  assert.ok(disegnaPost(corso, "divano").includes(">Corsi</div>") && disegnaPost(corso, "biglietto").includes('<div class="g">Corsi</div>'));
+  // Un post di solo sottotesto prende il nome del tipo come titolo.
+  assert.ok(disegnaPost(modelloPost({ kind: "servizi", title: "", subtitle: "Negozio aperto" }, "post"), "biglietto").includes(">Servizi</div>"));
+
+  // Calendario del mese: intestazione col mese, il giorno corto in C, il corso.
+  const righe = [["g0", "10/01", "Prato Nevoso", true], ["g6", "16/01", "Sestriere", false]];
+  const calA = disegnaCalendario("Calendario di gennaio", righe, "biglietto", "2027-01");
+  assert.ok(calA.includes('<div class="g">Gennaio</div><div class="n">2027</div>') && calA.includes("Dom 10/01") && calA.includes("Corso"));
+  assert.ok(disegnaCalendario("Calendario di gennaio", righe, "calendario", "2027-01").includes("Gennaio 2027"));
+  const calC = disegnaCalendario("Calendario di gennaio", righe, "divano", "2027-01");
+  assert.ok(calC.includes(">Dom 10<") && calC.includes("Le gite del mese") && calC.includes("height:1350px"));
+  impostaContatti([]);
 }
 
 console.log("social: tutti i controlli passati");
