@@ -48,7 +48,9 @@ hanno dati inventati.
   ("Alzati dal divano!", "Tutti in pista!", "Si chiude in festa!") e i dati, in
   un riquadro bianco uguale sul giallo e sul blu, con le iscrizioni in fondo: si
   capisce subito cos'è e quando. Il gancio va scritto post per post: è la
-  grafica che chiede più lavoro a chi pubblica.
+  grafica che chiede più lavoro a chi pubblica. Sullo sfondo fiocchi e
+  montagne stilizzate in bianco trasparente (più opachi sul giallo, dove il
+  bianco si vede meno).
 - **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
   "Calendario di gennaio" per il calendario del mese.
 - **A con la foto:** in alto la foto caricata nel generatore (gita, cena,

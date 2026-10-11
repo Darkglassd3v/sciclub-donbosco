@@ -6,6 +6,8 @@
 <link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <style>
+/* Sul giallo il bianco trasparente si vede meno che sul blu: montagne più opache. */
+html { --monti-1: .34; --monti-2: .5; }
 /* C · Divano. Manifesto: la prima riga della mail ("Alzati dal divano")
  * diventa il titolo, enorme, sul giallo del logo; un divano rimasto vuoto con
  * gli sci appoggiati. Le informazioni sono quelle di A (orario e durata,
@@ -28,6 +30,9 @@ html.story .gancio { font-size: 150px; margin-top: 44px; }
 
 .scena { flex: 1 1 0; min-height: 0; position: relative; z-index: 1; margin-bottom: -14px; }
 html.post .scena { flex: none; height: 150px; }
+/* Montagne stilizzate dietro il disegno e la fascia, come negli altri post di C. */
+.monti { position: absolute; left: 0; top: 380px; width: 1080px; height: 400px; pointer-events: none; }
+html.story .monti { top: 560px; }
 .scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
 .nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; background: var(--blu); color: #fff;
@@ -66,6 +71,13 @@ html.story .iscrizioni svg { width: 70px; height: 70px; }
 </head>
 <body>
 <div class="cv">
+  <!-- Sfondo uguale in tutti i post di C: fiocchi e montagne stilizzate, in bianco
+       trasparente (un solo blu e un solo giallo). -->
+  <div class="neve" data-neve=".7"></div>
+  <svg class="monti" viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
+    <polygon fill="#fff" style="fill-opacity: var(--monti-1, .16)" points="0,250 150,140 270,200 430,60 570,180 710,100 870,210 1080,110 1080,400 0,400"/>
+    <polygon fill="#fff" style="fill-opacity: var(--monti-2, .24)" points="0,330 180,225 330,295 520,180 700,295 880,230 1080,305 1080,400 0,400"/>
+  </svg>
   <div class="contenuto">
     <div class="testa">
       <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
