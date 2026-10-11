@@ -31,7 +31,31 @@
   - [ ] `web/social.html`: scelta in Impostazioni con l'esempio per ogni stile.
   - [ ] `web/test-social.js` aggiornato; `node web/test-social.js` e prova nel browser col
         client finto (post e story di ogni tipo, A+ e 400 px).
-  - [ ] Commit, push su `2.8-SNAPSHOT` (deploy), allineare `dev` (non esiste `master`).
+  - [ ] Commit, push su `2.8-SNAPSHOT` (deploy: `gh run list --workflow deploy-pages.yml`),
+        allineare `dev` (non esiste `master`; procedura in `docs/SVILUPPO.md`, niente force).
+  - [ ] `/open-code-review:review` del codice nuovo; correggere Alto e Medio; commit, push,
+        deploy, riallineare `dev`.
+  - [ ] Spegnere: `~/.local/bin/spegni-tutto` (la presa), poi in background
+        `sleep 60; gnome-session-quit --power-off --no-prompt` (`systemctl poweroff` è
+        bloccato dalla sessione GNOME, `sudo` chiede la password).
+
+  **Per chi riparte da una sessione nuova** (contesto pulito l'11/10):
+  - L'utente ha dato tutte le autorizzazioni per questo lavoro: database di produzione
+    (backup, schema, psql), bash, commit, push, deploy, allineamento di `dev`, spegnimento.
+    Non chiedere: andare avanti fino in fondo. Al limite d'uso il sistema riprende da solo.
+  - Le tre proposte, da rifare uguali nel generatore: `grafica/proposte-post-social/`
+    (tavole `tavola-a/b/c.jpg`, post in `post/`, sorgenti `sorgenti/corso-a.html` ...
+    `calendario-c.html`, stili `a.css`, `b.css`, `c.css`, `comune.css`; regole fisse nel
+    README: misure per proposta, un solo blu e un solo giallo, titolo alto 2 righe, testo
+    dallo stesso punto, evidenze, iscrizioni grandi). Nomi negli stili: A `biglietto`,
+    B `calendario`, C `divano`.
+  - Nel sito: `web/social-templates.js` (`STILI`, `impostaStile`, `modelloPost`,
+    `disegnaPost(s, stile)`, `disegnaMontagna`, `disegnaCalendario`, `misureCalendario`,
+    `fit()`, `SAFE` per le fasce della story), `web/social.html` (Impostazioni: radio dello
+    stile con `esempioRitocco`/`esempioMontagna`, `disegnaEsempiStile()`), test
+    `web/test-social.js`. I post del sito caricano Barlow da Google Fonts (per le prove si
+    può usare `grafica/font/barlow/`). Prova nel browser: copia di `web/` con supabase-js
+    finto, vedi `docs/SVILUPPO.md`, "Provare le pagine senza login".
 
 ## Versione aperta: 2.8-SNAPSHOT
 
