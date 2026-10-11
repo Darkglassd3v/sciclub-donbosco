@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Scritta accanto al QR</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<style>
+/* #scritta: la scritta che accompagna il QR nella scheda, un'immagine a
+ * parte di 47×9 mm del foglio Excel (si stampa all'80%) nello spazio vuoto a
+ * sinistra del QR (../qr-modulo.png), così nessuna delle due copre il modulo.
+ * #riquadro: per la ricevuta, scritta e QR insieme. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #fff; }
+body { font-family: Barlow, system-ui, sans-serif; }
+.scritta { width: 47mm; height: 9mm; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; text-align: right; }
+b { color: #084C8D; font-size: 4.3mm; font-weight: 800; letter-spacing: -.02em; line-height: 1.05; white-space: nowrap; }
+span { color: #4A5361; font-size: 3.2mm; font-weight: 600; line-height: 1.15; white-space: nowrap; }
+/* Ricevuta: tutto in un riquadro bianco di 19×30 mm, dentro la casella azzurra a destra. */
+.riquadro { width: 19mm; height: 30mm; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8mm; }
+.riquadro b { font-size: 3.6mm; text-align: center; line-height: 1; }
+.riquadro img { width: 17mm; height: 17mm; display: block; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="scritta" id="scritta" hidden><b>Seguici su WhatsApp</b><span>inquadra il codice qui accanto</span></div>
+<div class="riquadro" id="riquadro" hidden><b>Canale<br>WhatsApp</b><img src="../qr-modulo.png" alt=""></div>
+<script>document.getElementById(location.hash.slice(1) || "scritta").hidden = false;</script>
+</body>
+</html>

@@ -254,22 +254,15 @@
   const pulsanteElimina = () =>
     `<button type="button" class="button is-small is-light" data-azione="chiedi">Elimina</button>`;
 
-  /** Elimina con conferma nella riga stessa: il primo clic chiede, il secondo cancella. */
-  async function azioneRiga(e) {
+  /** Elimina con la conferma in una finestra sopra la pagina, con i dati del movimento. */
+  function azioneRiga(e) {
     const btn = e.target.closest("button[data-azione]");
     if (!btn) return;
     const cella = btn.closest("td");
-    const azione = btn.dataset.azione;
-    if (azione === "chiedi") {
-      cella.innerHTML = `Eliminare?
-        <button type="button" class="button is-small is-danger" data-azione="elimina">Sì, elimina</button>
-        <button type="button" class="button is-small" data-azione="annulla">No</button>`;
-    } else if (azione === "annulla") {
-      cella.innerHTML = pulsanteElimina();
-    } else if (azione === "elimina") {
-      btn.disabled = true;
-      await scrivi(() => sb.from("ledger_entries").delete().eq("id", cella.dataset.id), "Movimento eliminato.");
-    }
+    const [data, categoria, descrizione, , , importo] = [...cella.closest("tr").children].map((c) => c.textContent.trim());
+    chiedi(cella, "Eliminare questo movimento?", "Sì, elimina",
+      () => scrivi(() => sb.from("ledger_entries").delete().eq("id", cella.dataset.id), "Movimento eliminato."),
+      { dettagli: [["Data", data], ["Categoria", categoria], ...(descrizione ? [["Descrizione", descrizione]] : []), ["Importo", importo]] });
   }
 
   /** Esegue una scrittura, avvisa e ricarica tutto: i totali li calcola il database. */

@@ -57,7 +57,7 @@ Prima si generano i file SQL dal foglio esportato (non sono nel repository perch
 
 ```bash
 pip install openpyxl
-python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx"
+python3 supabase/scripts/generate_migration.py "legacy/new_structure/SOCI 2026.xlsx"
 ```
 
 Vengono creati **14 file numerati** in `supabase/migration/`, da circa 140 KB l'uno:
@@ -75,7 +75,7 @@ Un unico file da 1,2 MB veniva rifiutato dall'editor SQL con *"Query is too larg
 
 Se anche 140 KB risultassero troppi, si rigenerano più piccoli indicando quante righe per file:
 ```bash
-python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx" supabase/migration 250
+python3 supabase/scripts/generate_migration.py "legacy/new_structure/SOCI 2026.xlsx" supabase/migration 250
 ```
 
 **Da riga di comando**, se si ha `psql` (più veloce, un colpo solo):

@@ -449,6 +449,9 @@
           attesaRitentativo = 0;
         } catch (errore) {
           if (ritentabile(errore)) {
+            if (sessioneScaduta(errore)) {
+              messaggio(messaggioErrore(errore) + " Le gite segnate restano sul telefono e partono dopo.", "avviso-errore");
+            }
             programmaRitentativo();
             return;
           }

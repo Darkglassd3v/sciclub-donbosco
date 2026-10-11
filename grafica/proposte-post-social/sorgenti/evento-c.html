@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>Evento · C Manifesto</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<link rel="stylesheet" href="comune.css">
+<link rel="stylesheet" href="c.css">
+<!-- Evento: il blu del club, gancio e nastro gialli come il calendario; si brinda con lo spumante. -->
+<style>
+html { --cat: #084C8D; --cat-ink: #fff; --gancio: #FCCF02; --nastro: #FCCF02; --nastro-ink: #084C8D; }
+.info .quando { font-size: 56px; }
+</style>
+</head>
+<body>
+<div class="cv">
+  <!-- Sfondo uguale in tutti i post di C: fiocchi e montagne stilizzate, in bianco
+       trasparente (un solo blu e un solo giallo). -->
+  <div class="neve" data-neve=".38"></div>
+  <svg class="monti" viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
+    <polygon fill="#fff" style="fill-opacity: var(--monti-1, .16)" points="0,250 150,140 270,200 430,60 570,180 710,100 870,210 1080,110 1080,400 0,400"/>
+    <polygon fill="#fff" style="fill-opacity: var(--monti-2, .24)" points="0,330 180,225 330,295 520,180 700,295 880,230 1080,305 1080,400 0,400"/>
+  </svg>
+  <div class="contenuto">
+    <div class="testa">
+      <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+    </div>
+    <div class="gancio">Cena di fine<br>stagione</div>
+    <div class="scena">
+        <!-- Due calici che brindano, con le scintille. -->
+        <svg viewBox="250 -10 280 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <g transform="rotate(14 330 300)">
+            <path d="M275 60 C275 150 295 176 330 179 C365 176 385 150 385 60 Z" fill="#fff"/>
+            <path d="M279 112 C283 160 300 173 330 175 C360 173 377 160 381 112 Z" fill="#FCCF02"/>
+            <rect x="325" y="178" width="10" height="96" fill="#fff"/>
+            <ellipse cx="330" cy="276" rx="46" ry="10" fill="#fff"/>
+          </g>
+          <g transform="rotate(-14 450 300)">
+            <path d="M395 60 C395 150 415 176 450 179 C485 176 505 150 505 60 Z" fill="#fff"/>
+            <path d="M399 112 C403 160 420 173 450 175 C480 173 497 160 501 112 Z" fill="#FCCF02"/>
+            <rect x="445" y="178" width="10" height="96" fill="#fff"/>
+            <ellipse cx="450" cy="276" rx="46" ry="10" fill="#fff"/>
+          </g>
+          <g fill="#fff">
+            <polygon points="390,0 400,26 426,30 404,44 410,70 390,56 370,70 376,44 354,30 380,26"/>
+            <circle cx="320" cy="20" r="8"/><circle cx="462" cy="18" r="8"/><circle cx="292" cy="58" r="6"/><circle cx="490" cy="56" r="6"/>
+          </g>
+        </svg>
+    </div>
+    <div class="nastro">Sabato 10 aprile</div>
+    <div class="scheda">
+      <div class="info">
+        <div class="quando">Si chiude in festa!</div>
+        <div class="riga">Salone dell'oratorio Don Bosco, Asti</div>
+        <div class="riga"><b>Ore 20:00</b> · soci <b>€ 30</b> · bambini <b>€ 15</b></div>
+        <div class="poi">Con le premiazioni della gara sociale</div>
+        <div class="poi">Iscrizioni entro <b>mercoledì 7 aprile</b></div>
+      </div>
+      <div class="iscrizioni">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+        <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="comune.js"></script>
+</body>
+</html>

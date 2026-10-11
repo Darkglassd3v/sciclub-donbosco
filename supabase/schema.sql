@@ -1632,8 +1632,8 @@ comment on table public.season_accounts is 'Saldo banca a inizio stagione.';
 
 -- Saldo di chiusura dell'ultima stagione chiusa prima di `before`. Security
 -- definer apposta: lo storico lo legge solo il superadmin, ma il saldo da
--- proporre serve anche all'admin che compila il bilancio, e questa funzione
--- restituisce quel numero e nient'altro.
+-- proporre serve anche a chi compila il bilancio, e questa funzione
+-- restituisce quel numero e nient'altro, solo a chi ha il permesso bilancio.
 create or replace function public.previous_bank_closing(before timestamptz)
 returns numeric
 language sql
@@ -1642,10 +1642,16 @@ security definer
 set search_path = public
 as $$
   select h.bank_closing from public.season_history h
-   where h.season < before order by h.season desc limit 1;
+   where public.can('bilancio') and h.season < before order by h.season desc limit 1;
 $$;
 
 revoke all on function public.previous_bank_closing(timestamptz) from public;
+-- Supabase dà l'esecuzione ad anon esplicitamente: togliere a public non basta.
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.previous_bank_closing(timestamptz) from anon;
+  end if;
+end $$;
 grant execute on function public.previous_bank_closing(timestamptz) to authenticated;
 
 -- Il bilancio della stagione corrente, una riga. Senza saldo iniziale scritto
@@ -2171,12 +2177,12 @@ begin
     total_manual = m.total_manual or set_amounts.total is distinct from m.total
    where m.id = set_amounts.member_id
      and m.enrolled_at is not null;
-  -- Il motivo vale per questa modifica sola, non per le altre della transazione.
-  perform set_config('sciclub.motivo', '', true);
-
+  -- Subito dopo l'UPDATE: anche PERFORM imposta FOUND, e lo metterebbe sempre a vero.
   if not found then
     raise exception 'Socio non trovato fra gli iscritti della stagione: ricarica la pagina.';
   end if;
+  -- Il motivo vale per questa modifica sola, non per le altre della transazione.
+  perform set_config('sciclub.motivo', '', true);
 end;
 $$;
 
@@ -2349,8 +2355,41 @@ $$;
 
 drop trigger if exists sync_pass_type on public.member_passes;
 create trigger sync_pass_type
-  after insert or delete on public.member_passes
+  after insert or delete or update of pass_type on public.member_passes
   for each row execute function public.sync_pass_type();
+
+-- Le schede dei soci tengono le voci del listino per nome. Rinominare una voce
+-- da Impostazioni rinomina anche le scelte dei soci: altrimenti il form Soci
+-- non le ritrova e al primo salvataggio le cancella (tessera, corso...), e il
+-- pannello gite non trova più gite e giorno dell'abbonamento. Gli abbonamenti
+-- delle stagioni chiuse restano col nome di allora.
+create or replace function public.rename_price_choices()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  case new.category
+    when 'TESSERA'      then update public.members set card_type       = new.name where card_type       = old.name;
+    when 'FAMIGLIA'     then update public.members set family_discount = new.name where family_discount = old.name;
+    when 'CORSO'        then update public.members set course_type     = new.name where course_type     = old.name;
+    when 'PRESCIISTICA' then update public.members set preski_type     = new.name where preski_type     = old.name;
+    when 'ABBONAMENTO'  then
+      update public.member_passes set pass_type = new.name
+       where pass_type = old.name and season = public.current_season();
+  end case;
+  return null;
+end;
+$$;
+
+revoke all on function public.rename_price_choices() from public;
+
+drop trigger if exists rename_price_choices on public.prices;
+create trigger rename_price_choices
+  after update of name on public.prices
+  for each row when (old.name is distinct from new.name)
+  execute function public.rename_price_choices();
 
 -- ---------------------------------------------------------------------------
 -- Gite usate
@@ -2898,17 +2937,19 @@ comment on table public.trip_days is 'Giorni della settimana delle gite e il lor
 -- Impostazioni della pagina Social, una riga per voce. Per ora solo la
 -- grafica dei post (style): 'ritocco' è il biglietto di sempre con la neve,
 -- 'montagna' la foto a tutta immagine con le informazioni in una scheda
--- bianca. Vale per tutti quelli che pubblicano, da qualunque computer.
+-- bianca; dalla 2.8 le tre proposte di grafica/proposte-post-social/:
+-- 'biglietto' (A), 'calendario' (B), 'divano' (C). Vale per tutti quelli che
+-- pubblicano, da qualunque computer.
 create table if not exists public.social_settings (
   key   text primary key,
   value text not null
 );
 alter table public.social_settings drop constraint if exists social_settings_style_valid;
 alter table public.social_settings add constraint social_settings_style_valid
-  check (key <> 'style' or value in ('ritocco', 'montagna'));
+  check (key <> 'style' or value in ('ritocco', 'montagna', 'biglietto', 'calendario', 'divano'));
 insert into public.social_settings (key, value) values ('style', 'ritocco')
 on conflict (key) do nothing;
-comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco o montagna).';
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco, montagna, biglietto, calendario o divano).';
 
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;
@@ -2936,6 +2977,12 @@ comment on table public.social_contacts is 'Rubrica dei contatti per info e iscr
 -- I contatti del post, nell'ordine in cui compaiono.
 alter table public.social_events add column if not exists contacts uuid[] not null default '{}';
 comment on column public.social_events.contacts is 'Contatti (social_contacts.id) in fondo al post, in ordine.';
+
+-- Il gancio della grafica Divano ("Alzati dal divano!", "Tutti in pista!"):
+-- la prima riga del riquadro bianco, scritta post per post. Le altre grafiche
+-- non lo mostrano.
+alter table public.social_events add column if not exists hook text;
+comment on column public.social_events.hook is 'Gancio del post nella grafica Divano (es. "Tutti in pista!"); vuoto = nessuno.';
 
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()

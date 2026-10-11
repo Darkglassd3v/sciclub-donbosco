@@ -1,0 +1,50 @@
+/* B · Calendario per gite, calendario ed eventi. Sempre il blu del club, di
+ * sera, con la neve e le montagne; il foglio a strappo porta la data, con la
+ * testata nel colore della categoria (--cat, scritta in --cat-ink). Accanto
+ * le informazioni, sotto la frase in evidenza e le iscrizioni. Solo post 4:5. */
+.cv { background: var(--blu); }
+.monti { position: absolute; left: 0; right: 0; bottom: 0; width: 1080px; height: 330px; }
+/* Dall'alto, con spazi fissi: il titolo sta sempre nello stesso punto; le iscrizioni in fondo. */
+.contenuto { position: absolute; left: 60px; right: 60px; top: 56px; bottom: 60px;
+  display: flex; flex-direction: column; gap: 34px; }
+
+.testa { display: flex; justify-content: space-between; align-items: flex-start; }
+.testa .logo-box { border-radius: 22px; padding: 12px 18px; }
+.testa .logo-box img { height: 150px; }
+
+/* Il titolo occupa sempre due righe, anche quando ne basta una (il sottotitolo, se
+ * c'è, sta nella seconda): quello che c'è sotto parte alla stessa altezza in tutti i post. */
+.titolo { color: #fff; font-size: 104px; font-weight: 800; letter-spacing: -.035em; line-height: .95; min-height: calc(2 * .95 * 104px); }
+
+.centro { display: flex; gap: 44px; align-items: center; }
+.foglio { flex: none; width: 430px; background: #fff; border-radius: 28px; text-align: center;
+  position: relative; box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
+.foglio .mese { background: var(--cat); color: var(--cat-ink); font-size: 46px; font-weight: 800;
+  border-radius: 28px 28px 0 0; padding: 30px 0 14px; letter-spacing: -.01em; }
+.foglio .anello { position: absolute; top: -22px; width: 30px; height: 58px;
+  border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
+.foglio .giorno { font-size: 48px; font-weight: 700; margin-top: 18px; }
+.foglio .num { font-size: 250px; font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--cat-txt); margin-top: 6px; }
+.foglio .ora { font-size: 58px; font-weight: 800; padding: 14px 0 28px; }
+/* Senza ora (la gita) il foglio resta lungo uguale. */
+.foglio .ora:empty::before { content: "\a0"; }
+
+.dati { color: #fff; min-width: 0; }
+/* Etichette azzurre e valori bianchi; orari e prezzi in giallo, da trovare al volo. */
+.dati .et { color: #fff; font-size: 38px; font-weight: 600; }
+.dati .v b { color: var(--giallo); }
+.dati .et ~ .et { margin-top: 26px; }
+.dati .v { font-size: 56px; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
+.dati .v small { font-size: 40px; font-weight: 600; color: #fff; letter-spacing: 0; }
+
+/* Il riquadro in evidenza è giallo: un blu più scuro sul blu sarebbe un secondo blu. */
+.evidenza { background: var(--giallo); border-radius: 28px; padding: 28px 40px; color: var(--blu);
+  box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 54px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.evidenza em { font-style: normal; }
+
+/* Iscrizioni in un riquadro bianco, più grandi: si devono vedere. */
+.iscrizioni { margin-top: auto; display: flex; gap: 24px; align-items: center; background: #fff; color: var(--blu);
+  border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+.iscrizioni svg { flex: none; width: 72px; height: 72px; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 48px; font-weight: 800; color: var(--blu); letter-spacing: -.02em; }

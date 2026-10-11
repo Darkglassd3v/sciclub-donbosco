@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-09
+# TODO — aggiornato il 2026-10-10
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -17,33 +17,40 @@
 
 ## Richieste nuove
 
-(nessuna)
+- [ ] **In corso (11/10): le tre proposte di grafica nel generatore dei post** (Social > Genera
+      post), scelte in Social > Impostazioni accanto a Ritocco e Montagna. Fatto l'11/10: schema in
+      produzione (check dello stile con `biglietto`, `calendario`, `divano`; colonna
+      `social_events.hook` per il gancio del Divano; backup in
+      `supabase/migration/backup-2026-10-11-grafiche/`), `web/social-templates.js` (`postBiglietto`,
+      `postCalendario`, `postDivano`, i calendari del mese, `misurePost()`, `fit()` con
+      `data-righe` e `data-adatta`), `web/social.html` (le cinque grafiche in Impostazioni con
+      l'esempio, campo Gancio solo col Divano, post 4:5), test e prova nel browser col client
+      finto (post e story di ogni tipo, calendario, export PNG, A+ a 400 px). Resta, in ordine:
+  - [ ] Commit, push su `2.8-SNAPSHOT` (deploy: `gh run list --workflow deploy-pages.yml`),
+        allineare `dev` (non esiste `master`; procedura in `docs/SVILUPPO.md`, niente force).
+  - [ ] `/open-code-review:review` del codice nuovo; correggere Alto e Medio; commit, push,
+        deploy, riallineare `dev`.
+  - Alla fine **non spegnere il PC e non togliere la corrente** (niente `spegni-tutto`):
+    l'ha chiesto l'utente l'11/10.
+  - Chi riparte da una sessione nuova: l'utente ha dato tutte le autorizzazioni per questo
+    lavoro (database di produzione, bash, commit, push, deploy, allineamento di `dev`); non
+    chiedere, andare avanti fino in fondo.
 
-## Versione 2.7, rilasciata il 09/10/2026
+## Versione aperta: 2.8-SNAPSHOT
 
-Aperta l'08/10/2026 dalla 2.6, chiusa il 09/10 (branch e tag `2.7`); schema in produzione
-l'08/10 (`social_settings`) e il 09/10 (`pending_password_changes`). Contiene:
-
-- Social: grafiche nuove (testo che va a capo, post di solo sottotesto, Sottotesto su più righe)
-- Soci: scheda con sezioni colorate (Anagrafica, Tessera, Gite e corsi, Pagamento), testata con
-  Stampa ed Elimina, "Chiudi scheda" al posto di "Nuovo socio"
-- Soci: Stampa scarica la scheda compilata in PDF (`scheda-COGNOME-NOME.pdf`)
-- Logo vettoriale (`logo_sciclubdonbosco.svg`) in tutte le pagine, nei post e in `ricerca/`
-- Sezioni colorate anche in Riepilogo, Assicurazione e Bilancio (stile comune in `brand.css`):
-  stessi colori della scheda Soci
-- Social: due grafiche, **Ritocco** (il biglietto di sempre con la neve) e **Montagna** (foto grande,
-  scheda bianca, calendario 1080×1350), scelte per tutta la pagina in Social > Impostazioni guardando
-  un post d'esempio (tabella `social_settings`, schema in produzione l'08/10)
-- Soci: le finestre di conferma del salvataggio e dell'eliminazione mostrano i dati in una tabellina
-  (nome e cognome, codice fiscale, luogo e data di nascita), grande e leggibile
-- Account: al primo accesso chi ha un account nuovo deve cambiare la password iniziale (pagina
-  `password.html`: attuale, nuova, conferma); gli account di prima no. In Utenti il superadmin ha
-  **Reimposta password**, che la riporta a `donbosco26!` con l'obbligo di cambiarla (tabella
-  `pending_password_changes`, schema in produzione il 09/10)
+Aperta il 09/10/2026 dalla 2.7 (branch e tag `2.7`, cosa contiene: `git show 2.7` e il TODO del
+tag). Le pagine si pubblicano dal branch `2.8-SNAPSHOT`. Fatto finora (10/10, review del codice
+prima delle iscrizioni): salvataggio Soci che non cancella pagamenti e abbonamenti scritti
+intanto da altri; nomi e dati dal database passati da `esc()` in Soci e Pagamenti; conferma
+dell'incasso col saldo del momento; gite in coda tenute se la sessione scade; Elimina movimento
+del Bilancio in finestra; rinomina delle voci di listino estesa ai soci; `set_amounts()` che
+segnala il socio non trovato; saldo di chiusura non più leggibile senza login.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
+- [ ] Provare sul sito vero due operatori sullo stesso socio: aprire la scheda in Soci, segnare un
+      acconto da Pagamenti, poi Salva in Soci: deve dire "Socio NON salvato" e non toccare niente.
 - [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
       cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al
@@ -62,6 +69,11 @@ l'08/10 (`social_settings`) e il 09/10 (`pending_password_changes`). Contiene:
 
 ## Social
 
+- [ ] Scegliere la grafica dei post in Social > Impostazioni: oltre a Ritocco e Montagna ci sono
+      Biglietto, Calendario e Divano (le proposte di `grafica/proposte-post-social/`). Con il
+      Divano scrivere il gancio di ogni post. Da decidere con chi pubblica: nelle tre nuove le
+      gite del martedì restano rosse (colore del giorno in Impostazioni > Giorni) e le cene,
+      gare e servizi sono blu.
 - [ ] Provare le grafiche nuove con foto vere e con le campagne sponsor.
 - [ ] Inserire i contatti veri in Social > Impostazioni > Contatti e spuntarli nei post.
 - [ ] Caricare lo sponsor 958 Santero e la sua campagna (loghi in `social/santero/`).

@@ -60,7 +60,8 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 - Listino `prices`: categorie `TESSERA`, `FAMIGLIA`, `ABBONAMENTO`, `CORSO`, `PRESCIISTICA`.
   `min_role` solo sulle tessere (es. TESSERA DIRETTIVO = admin); `insurance` dice in che lista
   dell'assicurazione va la tessera. Gli abbonamenti ricavano `trips`/`day` dal nome (trigger
-  `fill_pass_details`).
+  `fill_pass_details`). I soci tengono le voci per nome: rinominare una voce rinomina anche le
+  scelte dei soci e gli abbonamenti della stagione aperta (trigger `rename_price_choices`).
 - `members`: una colonna per categoria (`card_type`, `family_discount`, `pass_type`,
   `preski_type`, `course_type`, `course_day`); partenze `saturday_departure` /
   `sunday_departure` (testo separato da virgole); `total` salvato dalla pagina (o scritto a
@@ -87,6 +88,9 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   andare a capo.
 - Conferme sempre in una finestra sopra la pagina (`chiedi()` in `shared.js` o `<dialog
   class="finestra">`), mai `confirm()`: un browser che blocca le finestre risponde "no" da solo.
+- Pagina Soci: si salva solo se la scheda non è cambiata da quando è aperta (`updated_at`
+  letto all'apertura); se Pagamenti, il pannello gite o l'Assicurazione l'hanno toccata, avviso
+  e niente scritto.
 - Errori (`showToast(..., "is-danger")`) restano finché non si preme Chiudi; le conferme
   spariscono dopo 8 secondi.
 - Sezioni colorate (`.sezione`, `.striscia`, `.corpo` in `brand.css`): il nome in una striscia
@@ -99,10 +103,14 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
 - Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
-- Post social: due grafiche in `web/social-templates.js`, `ritocco` e `montagna`, scelte per tutta
-  la pagina in Social > Impostazioni (`social_settings`, chiave `style`; `impostaStile()`). Niente
-  scelta nel singolo post: si rischierebbe di pubblicarne uno con la grafica sbagliata. Il testo
-  resta grande: post almeno 34 px su 1080, story 44 (misurato).
+- Post social: cinque grafiche in `web/social-templates.js`, `ritocco`, `montagna` e dalla 2.8
+  `biglietto`, `calendario`, `divano` (le proposte A, B, C di `grafica/proposte-post-social/`, post
+  4:5: `misurePost()`), scelte per tutta la pagina in Social > Impostazioni (`social_settings`,
+  chiave `style`; `impostaStile()`). Niente scelta nel singolo post: si rischierebbe di pubblicarne
+  uno con la grafica sbagliata. Il testo resta grande: post almeno 34 px su 1080, story 44
+  (misurato). Nelle tre della 2.8 il titolo è sempre alto due righe e il testo parte dallo stesso
+  punto; se non ci sta, `fit()` abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi.
+  Il gancio del Divano ("Tutti in pista!") è `social_events.hook`, scritto post per post.
 - Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di
   `chiedi()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 
@@ -134,7 +142,7 @@ Test senza browser: `node web/test-social.js`, `node web/test-stampe.js`,
   Soci la casella "già pagato" sulla riga aggiunta somma il prezzo all'acconto.
 - Rimborso: riduce il pagato del socio. Lo possono fare tesoriere e admin, con lo storico delle modifiche.
 - Totale scritto a mano: segnato come manuale, il form non lo ricalcola più.
-- Codici fiscali dai fogli di dati26: si correggono su tutte le righe della persona, anche quelle
+- Codici fiscali dai fogli di dati26 (`legacy/dati26/`): si correggono su tutte le righe della persona, anche quelle
   vecchie. Prima un controllo che non scrive niente, poi il backup, poi la correzione.
   Se il CF dei fogli è diverso da quello del database vince quello dei fogli; i CF dei fogli si
   scrivono tutti anche se il controllo segnala qualcosa, e i dubbi vanno in un file di warning.

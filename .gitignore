@@ -10,10 +10,12 @@
 #
 # I fogli originali vanno tenuti solo in locale o su Drive.
 # I file di migrazione si rigenerano quando servono:
-#   python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx"
+#   python3 supabase/scripts/generate_migration.py "legacy/new_structure/SOCI 2026.xlsx"
 # ---------------------------------------------------------------------------
 original_data/
 new_structure/
+# I fogli 2026 dell'assicurazione e del tesseramento (legacy/dati26/)
+dati26/
 supabase/migration/
 supabase/migration_seed.sql
 *.xlsx

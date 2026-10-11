@@ -142,7 +142,10 @@ assert.strictEqual(messaggioErrore(null), "Errore sconosciuto");
 // dalla coda, altrimenti resterebbe lì a bloccare tutte quelle dietro.
 assert.strictEqual(ritentabile({ code: "P0001", message: "Abbonamento esaurito: non restano gite da scalare." }), false);
 assert.strictEqual(ritentabile({ code: "42501", message: "permission denied" }), false);
-assert.strictEqual(ritentabile({ code: "PGRST301" }), false);
+// Tranne la sessione scaduta: dopo un nuovo accesso la stessa gita passa.
+assert.strictEqual(ritentabile({ code: "PGRST301" }), true);
+assert.strictEqual(ritentabile({ code: "PGRST303", message: "JWT expired" }), true);
+assert.strictEqual(messaggioErrore({ code: "PGRST303" }), "Sessione scaduta: esci e rientra.");
 
 // Se invece non è arrivata risposta è la linea, e quella torna.
 assert.strictEqual(ritentabile({ message: "Failed to fetch" }), true);

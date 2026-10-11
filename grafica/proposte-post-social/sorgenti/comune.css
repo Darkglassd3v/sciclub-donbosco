@@ -1,0 +1,21 @@
+/* Base comune delle tre proposte: Barlow, il font dei post di
+ * web/social-templates.js, e i colori. Regola: un solo blu e un solo giallo
+ * (quelli del logo), più il bianco e il testo scuro; le sfumature si fanno col
+ * bianco trasparente sul blu, non con altri blu. La tela è il post 4:5
+ * (1080×1350); con la classe "story" su <html> diventa 1080×1920. */
+:root {
+  --blu: #084C8D;
+  --giallo: #FCCF02;
+  --testo: #14202E;
+  --testo-soft: #4A5361;
+  --filo: #C7D0DA;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1350px; overflow: hidden; background: #fff; }
+html.story, html.story body { height: 1920px; }
+body { font-family: Barlow, system-ui, sans-serif; color: var(--testo); letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
+.cv { position: relative; width: 1080px; height: 100%; overflow: hidden; }
+.abs { position: absolute; }
+.neve { position: absolute; inset: 0; pointer-events: none; }
+.logo-box { background: #fff; }
+.logo-box img { display: block; }

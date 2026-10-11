@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Tavola di una proposta</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<link rel="stylesheet" href="comune.css">
+<style>
+/* Una tavola per proposta (#a, #b, #c): i quattro post della stessa grafica
+ * affiancati, il corso (la presciistica), una gita, un evento e il
+ * calendario del mese, con i JPEG già resi (rendi.sh li fa prima). */
+html, body { width: 1720px; height: 820px; background: #F5F5F7; }
+.pagina { padding: 50px; }
+h1 { font-size: 66px; font-weight: 800; letter-spacing: -.03em; color: var(--testo); line-height: 1; }
+h1 b { color: var(--blu); }
+.sotto { font-size: 34px; font-weight: 600; color: var(--testo-soft); margin-top: 14px; line-height: 1.25; }
+.colonne { display: grid; grid-template-columns: repeat(4, 380px); gap: 33px; margin-top: 34px; }
+h2 { font-size: 44px; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: var(--blu); margin-bottom: 14px; }
+img { display: block; width: 380px; border-radius: 12px; box-shadow: 0 6px 20px rgba(20,32,46,.15); }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <h1 id="titolo"></h1>
+  <div class="sotto" id="sotto"></div>
+  <div class="colonne" id="colonne"></div>
+</div>
+<script>
+const PROPOSTE = {
+  a: { nome: "Biglietto", idea: "Il biglietto bianco sul colore del post, in alto la foto caricata nel generatore (senza foto, il disegno)." },
+  b: { nome: "Calendario", idea: "Sempre il blu del club; il foglio a strappo porta la data; nel calendario, le gite del mese sul foglio." },
+  c: { nome: "Divano", idea: "Il manifesto: in alto il nome grande, nella fascia la data, sotto in un riquadro bianco il gancio («Alzati dal divano!», «Tutti in pista!»…) e i dati." },
+};
+const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
+document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;
+document.getElementById("sotto").textContent = p.idea + " Post 4:5; gita, evento e calendario con dati inventati.";
+document.getElementById("colonne").innerHTML = [
+  ["Corso (presciistica)", `../post/corso-${chiave}.jpg`],
+  ["Gita", `../post/gita-${chiave}.jpg`],
+  ["Evento", `../post/evento-${chiave}.jpg`],
+  ["Calendario", `../post/calendario-${chiave}.jpg`],
+].map(([titolo, src]) => `<div><h2>${titolo}</h2><img src="${src}" alt=""></div>`).join("");
+</script>
+</body>
+</html>

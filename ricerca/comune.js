@@ -296,14 +296,21 @@ function erroreDiRete(errore) {
  * arrivata risposta: è la linea, e quella prima o poi torna.
  */
 function ritentabile(errore) {
-  if (erroreDiRete(errore)) return true;
+  // La sessione scaduta è l'eccezione: con un nuovo accesso la stessa
+  // richiesta passa, e buttarla perderebbe una gita fatta davvero.
+  if (erroreDiRete(errore) || sessioneScaduta(errore)) return true;
   return !(errore && errore.code);
+}
+
+/** Il token non vale più (scaduto o non valido): serve un nuovo accesso. */
+function sessioneScaduta(errore) {
+  return Boolean(errore) && (errore.status === 401 || /^PGRST30[123]$/.test(errore.code || ""));
 }
 
 /** Messaggio leggibile a partire da un errore Supabase. */
 function messaggioErrore(errore) {
   if (!errore) return "Errore sconosciuto";
-  if (errore.code === "PGRST301" || errore.status === 401) {
+  if (sessioneScaduta(errore)) {
     return "Sessione scaduta: esci e rientra.";
   }
   // "Failed to fetch" non dice niente a chi è sul pullman alle sette. Quello

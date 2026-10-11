@@ -301,6 +301,11 @@
                   <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                 </div>
+                <!-- Solo nella grafica Divano: mostraCampi() lo nasconde con le altre. -->
+                <div class="field campo-largo" data-per="gita evento" id="campoGancio">
+                  <label class="label" for="fGancio">Gancio: la prima riga del riquadro bianco, nella grafica Divano</label>
+                  <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
+                </div>
                 <div class="field campo-largo" data-per="sponsor">
                   <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
                   <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
@@ -411,7 +416,7 @@
     <div class="tre-colonne" id="riassunti">
       <section class="riquadro riassunto stile-pagina" style="--colore:#084C8D" aria-labelledby="rStile">
         <h2 id="rStile">Grafica dei post</h2>
-        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Qui sotto un post d'esempio con l'una e con l'altra.</p>
+        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Sotto ogni grafica lo stesso post d'esempio.</p>
         <fieldset class="scelte-stile">
           <legend class="is-sr-only">Grafica dei post</legend>
           <label class="spunta"><input type="radio" name="stile" value="ritocco" id="stileRitocco">
@@ -420,6 +425,15 @@
           <label class="spunta"><input type="radio" name="stile" value="montagna" id="stileMontagna">
             <span><b>Montagna</b><br><small>Foto grande, informazioni in una scheda bianca</small>
             <span class="esempio" id="esempioMontagna"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="biglietto">
+            <span><b>Biglietto</b><br><small>Il biglietto bianco con la foto in alto, post 4:5</small>
+            <span class="esempio" id="esempioBiglietto"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="calendario">
+            <span><b>Calendario</b><br><small>Sempre blu, il foglio del calendario porta la data, post 4:5</small>
+            <span class="esempio" id="esempioCalendario"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="divano">
+            <span><b>Divano</b><br><small>Il manifesto: nome grande, la data nella fascia e un gancio scritto per ogni post, post 4:5</small>
+            <span class="esempio" id="esempioDivano"></span></span></label>
         </fieldset>
         <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
       </section>
@@ -641,13 +655,13 @@
   }
 
   // -------------------------------------------------------------------------
-  // Grafica dei post (social_settings, chiave "style"): ritocco o montagna.
+  // Grafica dei post (social_settings, chiave "style"): una di STILI.
   // Una sola per tutta la pagina, scelta in Impostazioni guardando un post
   // d'esempio: un interruttore nel singolo post faceva rischiare di
   // pubblicare un post con la grafica sbagliata.
   // -------------------------------------------------------------------------
   let stileSalvato = "ritocco";
-  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna" };
+  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna", biglietto: "Biglietto", calendario: "Calendario", divano: "Divano" };
 
   async function caricaStile() {
     const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
@@ -655,15 +669,22 @@
     mettiStile((data && data.value) || "ritocco");
   }
 
-  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. */
+  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. Arriva anche dopo i post (si caricano insieme): si ridisegna. */
   function mettiStile(stile) {
+    const titoloPrima = titoloMese(el("calMese").value);
     impostaStile(stile);
     stileSalvato = STILE;
-    el(stileSalvato === "montagna" ? "stileMontagna" : "stileRitocco").checked = true;
+    document.querySelector(`input[name="stile"][value="${stileSalvato}"]`).checked = true;
     aggiornaStile();
+    // Il gancio si scrive solo con la grafica Divano.
+    el("campoGancio").hidden = STILE !== "divano" || gruppo(el("fTipo").value) === "sponsor";
+    // Il titolo proposto del calendario cambia con la grafica; uno scritto a mano resta.
+    if (el("calTitolo").value === titoloPrima) el("calTitolo").value = titoloMese(el("calMese").value);
+    if (aperto && !el("editor").hidden) ridisegna();
+    disegnaCalendarioMese();
   }
 
-  const stileScelto = () => (el("stileMontagna").checked ? "montagna" : "ritocco");
+  const stileScelto = () => document.querySelector('input[name="stile"]:checked').value;
 
   function aggiornaStile() {
     const cambiato = stileScelto() !== stileSalvato;
@@ -672,8 +693,7 @@
   }
 
   function collegaStile() {
-    el("stileRitocco").addEventListener("change", aggiornaStile);
-    el("stileMontagna").addEventListener("change", aggiornaStile);
+    document.querySelectorAll('input[name="stile"]').forEach((r) => r.addEventListener("change", aggiornaStile));
     el("btnSalvaStile").addEventListener("click", salvaStile);
   }
 
@@ -684,8 +704,6 @@
       const { error } = await sb.from("social_settings").upsert({ key: "style", value: stile });
       if (error) throw error;
       mettiStile(stile);
-      if (aperto) ridisegna();
-      disegnaCalendarioMese();
       showToast(`Grafica salvata: ${NOMI_STILE[stile]}.`);
     } catch (e) {
       showToast("Grafica non salvata: " + messaggioErrore(e), "is-danger");
@@ -694,17 +712,18 @@
     }
   }
 
-  /** Lo stesso post d'esempio (una gita di sabato) in tutte e due le grafiche, in Impostazioni. */
+  /** Lo stesso post d'esempio (una gita di sabato) in tutte le grafiche, in Impostazioni. */
   function disegnaEsempiStile() {
     const sabato = new Date();
     sabato.setDate(sabato.getDate() + ((6 - sabato.getDay() + 7) % 7 || 7));
     const iso = `${sabato.getFullYear()}-${String(sabato.getMonth() + 1).padStart(2, "0")}-${String(sabato.getDate()).padStart(2, "0")}`;
     const ev = { kind: "gita", title: "Sestriere", event_date: iso, course: true, show_price: true,
       stops: [["6:00", "Asti, piazza Campo del Palio"]], prices: [["Soci", "45 €"], ["Ragazzi", "35 €"]],
-      deadline: iso, contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
-    for (const [st, id] of [["ritocco", "esempioRitocco"], ["montagna", "esempioMontagna"]]) {
-      el(id).innerHTML = "";
-      anteprima(el(id), { html: disegnaPost(modelloPost(ev, "post"), st), w: 1080, h: 1080, nome: "Esempio" }, 260, { pulsante: false });
+      deadline: iso, hook: "Tutti in pista!", contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
+    for (const st of STILI) {
+      const dove = el(`esempio${maiuscola(st)}`);
+      dove.innerHTML = "";
+      anteprima(dove, { html: disegnaPost(modelloPost(ev, "post"), st), ...misurePost(st), nome: "Esempio" }, 260, { pulsante: false });
     }
   }
 
@@ -983,6 +1002,7 @@
     el("fData").value = post.event_date || "";
     el("fTitolo").value = post.title || "";
     el("fSottotitolo").value = post.subtitle || "";
+    el("fGancio").value = post.hook || "";
     el("fTitoloStory").value = post.story_title || "";
     el("fCta").value = post.cta || "";
     if (post.sponsor_id) el("fSponsor").value = post.sponsor_id;
@@ -1015,6 +1035,7 @@
   function mostraCampi() {
     const g = gruppo(el("fTipo").value);
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
+    if (STILE !== "divano") el("campoGancio").hidden = true;
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
@@ -1043,6 +1064,7 @@
       event_date: el("fData").value || null,
       title: el("fTitolo").value.trim(),
       subtitle: g !== "gita" ? el("fSottotitolo").value.trim() || null : null,
+      hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
       prices: g === "sponsor" ? [] : prezzi,
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? righeDi("fFermate") : [],
@@ -1262,7 +1284,7 @@
     if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
     const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
     return [
-      { html: disegnaPost(modelloPost(post, "post")), w: 1080, h: 1080, nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
+      { html: disegnaPost(modelloPost(post, "post")), ...misurePost(), nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
       { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
     ];
   }
@@ -1466,7 +1488,9 @@
   // Calendario del mese e copertina
   // ---------------------------------------------------------------------
 
-  const titoloMese = (mese) => (mese ? `${maiuscola(MESI[Number(mese.slice(5, 7)) - 1])} sulla neve` : "");
+  // Il titolo proposto: le grafiche della 2.8 dicono cos'è ("Calendario di gennaio"), le altre hanno già "Calendario gite".
+  const titoloMese = (mese) => (!mese ? "" : NUOVI.includes(STILE) ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}`
+    : `${maiuscola(MESI[Number(mese.slice(5, 7)) - 1])} sulla neve`);
 
   function riempiMesi() {
     const mesi = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
@@ -1488,7 +1512,7 @@
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
     const { w, h } = misureCalendario();
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, STILE, mese), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
   }
 
   function disegnaCopertinaFb() {

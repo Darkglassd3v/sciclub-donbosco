@@ -532,7 +532,7 @@
 
   function riempiPartenze(contenitore, luoghi) {
     el(contenitore).innerHTML = luoghi
-      .map((luogo) => `<label class="checkbox mr-3"><input type="checkbox" value="${luogo}"> ${luogo}</label>`)
+      .map((luogo) => `<label class="checkbox mr-3"><input type="checkbox" value="${esc(luogo)}"> ${esc(luogo)}</label>`)
       .join("");
   }
 
@@ -845,10 +845,10 @@
     const risultati = await cercaNelDatabase(query, 8);
     box.innerHTML = risultati.length
       ? risultati.map((s) => `
-          <div class="result-item box p-2 mb-1" data-id="${s.id}">
-            <strong>${s.last_name} ${s.first_name}</strong>
-            ${s.tax_code ? `<span class="tag is-light ml-2">${s.tax_code}</span>` : ""}
-            ${s.card_number ? `<span class="tag is-info is-light ml-2">N° ${s.card_number}</span>` : ""}
+          <div class="result-item box p-2 mb-1" data-id="${esc(s.id)}">
+            <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
+            ${s.tax_code ? `<span class="tag is-light ml-2">${esc(s.tax_code)}</span>` : ""}
+            ${s.card_number ? `<span class="tag is-info is-light ml-2">N° ${esc(s.card_number)}</span>` : ""}
           </div>`).join("")
       : '<p class="help">Nessun risultato.</p>';
 
@@ -1044,12 +1044,9 @@
   }
 
   function spuntaPartenze(contenitore, valore) {
-    el(contenitore).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = false));
-    if (!valore) return;
-    valore.split(",").map((v) => v.trim()).forEach((luogo) => {
-      const casella = el(contenitore).querySelector(`input[value="${luogo}"]`);
-      if (casella) casella.checked = true;
-    });
+    // Confronto sui valori e non con un selettore: un luogo con le virgolette lo romperebbe.
+    const scelte = (valore || "").split(",").map((v) => v.trim());
+    el(contenitore).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = scelte.includes(c.value)));
   }
 
   // -------------------------------------------------------------------------
@@ -1085,9 +1082,9 @@
 
     box.style.display = "block";
     box.innerHTML = risultati.map((s) => `
-      <div class="result-item" data-id="${s.id}" data-nome="${s.last_name} ${s.first_name}">
-        <strong>${s.last_name} ${s.first_name}</strong>
-        <span class="tag is-light ml-2">${s.tax_code || "No CF"}</span>
+      <div class="result-item" data-id="${esc(s.id)}" data-nome="${esc(`${s.last_name} ${s.first_name}`)}">
+        <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
+        <span class="tag is-light ml-2">${esc(s.tax_code || "No CF")}</span>
       </div>`).join("");
 
     box.querySelectorAll(".result-item").forEach((riga) => {
@@ -1140,8 +1137,8 @@
         <tbody>
           ${data.map((s) => `
             <tr>
-              <td><strong>${s.last_name} ${s.first_name}</strong></td>
-              <td>${s.card_number || "—"}</td>
+              <td><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong></td>
+              <td>${esc(s.card_number || "—")}</td>
               <td style="text-align:right">${fmt(s.total)}</td>
               <td style="text-align:right;font-weight:bold;color:${s.balance > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(s.balance)}</td>
               <td><button type="button" class="button is-small is-link is-light" data-id="${s.id}">Modifica</button></td>
@@ -1309,8 +1306,20 @@
         }
       }
       if (id) {
-        const { error } = await sb.from("members").update(socio).eq("id", id);
+        // Solo se nessuno l'ha cambiato da quando è aperto: Pagamenti, il
+        // pannello gite e l'Assicurazione scrivono sullo stesso socio, e il
+        // form intero cancellerebbe quello che hanno scritto nel frattempo.
+        let query = sb.from("members").update(socio).eq("id", id);
+        if (socioAperto?.updated_at) query = query.eq("updated_at", socioAperto.updated_at);
+        const { data, error } = await query.select("updated_at");
         if (error) throw error;
+        if (!data.length) {
+          showToast("Socio NON salvato: mentre la scheda era aperta qualcuno l'ha cambiato "
+            + "(un pagamento, un abbonamento dal pullman) o eliminato. Riaprilo dalla ricerca "
+            + "e rifai le modifiche.", "is-danger");
+          return;
+        }
+        socioAperto.updated_at = data[0].updated_at;
       } else {
         const { data, error } = await sb.from("members").insert(socio).select("id").single();
         if (error) throw error;
