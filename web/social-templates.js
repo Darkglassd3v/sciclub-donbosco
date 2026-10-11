@@ -313,8 +313,15 @@ function testoBiglietto(s, accent, k, conTitolo = true) {
  * - [data-righe] (titoli delle grafiche della 2.8): va a capo fino a quelle
  *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a 48 px.
  * - [data-adatta] (la colonna di quelle grafiche): se il contenuto non ci sta,
- *   scende tutto insieme (--s) fino alla scala scritta nell'attributo; i testi
- *   piccoli si fermano al corpo minimo (--min). */
+ *   scende tutto insieme (--s) fino al 92%, che non si nota e lascia tutto al
+ *   suo posto. Se non basta, si torna al 100% e si prende lo spazio che resta
+ *   vuoto ([data-cede], nell'ordine: la seconda riga riservata al titolo
+ *   quando ne usa una, poi il disegno del Divano fino all'altezza
+ *   dell'attributo); poi scende tutto insieme fino alla scala scritta
+ *   nell'attributo, e i testi piccoli si fermano al corpo minimo (--min).
+ *   Così "il testo parte sempre dallo stesso punto" vale per i post che ci
+ *   stanno, e un post pieno non rimpicciolisce il testo per tenere vuoto lo
+ *   spazio in alto. */
 function fit(radice = document) {
   let sborda = false;
   radice.querySelectorAll("[data-fit]").forEach((el) => {
@@ -366,6 +373,20 @@ function fit(radice = document) {
     let s = 1;
     // 6 px di tolleranza: come nelle proposte, l'ultima riga può entrare un poco nel margine in fondo.
     const pieno = () => el.scrollHeight > el.clientHeight + 6;
+    const scala = (v) => el.style.setProperty("--s", s = v);
+    while (pieno() && s > Math.max(min, .92)) scala(Math.round((s - .02) * 100) / 100);
+    if (pieno()) {
+      scala(1);
+      // Lo sfondo che sta dietro la fascia ([data-segue], le montagne del Divano) sale con lei ([data-ancora]).
+      const cv = el.closest(".cv"), ancora = cv.querySelector("[data-ancora]"), prima = ancora && ancora.offsetTop;
+      for (const c of cv.querySelectorAll("[data-cede]")) {
+        if (!pieno()) break;
+        const fino = Number(c.dataset.cede);
+        if (!fino) { c.style.minHeight = "0"; c.style.height = "auto"; continue; }
+        for (let h = c.offsetHeight; pieno() && h > fino;) c.style.height = (h = Math.max(fino, h - 10)) + "px";
+      }
+      if (ancora) cv.querySelectorAll("[data-segue]").forEach((m) => { m.style.transform = `translateY(${ancora.offsetTop - prima}px)`; });
+    }
     while (pieno() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
     if (pieno()) sborda = true;
   });
@@ -853,7 +874,7 @@ function postBiglietto(s) {
   const iscr = righe.findIndex(([n]) => ISCRIZIONI.test(n));
   if (!gita && iscr >= 0) righe.splice(iscr, 0, righe.pop());
   const sub = gita ? "" : String(s.sub || "").trim();
-  const testo = `<div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
+  const testo = `<div class="tit" data-cede><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
     ${righe.some(([, v]) => v) ? `<dl class="fatti">${righe.filter(([, v]) => v).map(([n, v]) => `<dt>${n}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}`;
   const scena = s.photo ? `<img class="foto" src="${escS(s.photo)}" alt="">` : PAESAGGIO + (s.cat === "corso" ? FIGURA : "");
   return biglietto(C, s.fmt === "story", scena, bollo, testo, s.contatti);
@@ -863,7 +884,7 @@ function postBiglietto(s) {
 function meseBiglietto(titolo, righe, mese) {
   const [anno, m] = String(mese || "").split("-");
   const bollo = m ? `<div class="g">${maiuscola(MESI[m - 1])}</div><div class="n">${escS(anno)}</div>` : '<div class="g">Calendario</div>';
-  const testo = `<div class="tit"><div data-righe="2">${escS(titolo)}</div></div>
+  const testo = `<div class="tit" data-cede><div data-righe="2">${escS(titolo)}</div></div>
     <div class="righe">${righeMese(righe, false, `<span class="corso">${sciatore()}Corso</span>`)}</div>`;
   return biglietto(coloreNuovo("cal"), false, PAESAGGIO, bollo, testo, []);
 }
@@ -905,7 +926,7 @@ function postCalendario(s) {
       <div class="ora">${ora ? escS(senzaSegni(ora[1])) : "&nbsp;"}</div></div>` : "";
   const sub = gita ? "" : String(s.sub || "").trim();
   return fondoB(s.fmt === "story", `
-    <div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
+    <div class="tit" data-cede><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
     ${foglio || dati.length ? `<div class="centro">${foglio}<div class="dati">${dati.map(([n, v]) => `<div class="et">${n}</div><div class="v">${v}</div>`).join("")}</div></div>` : ""}
     ${evid ? `<div class="evid">${escS(senzaSegni(evid))}</div>` : ""}
     ${iscrizioni(s.contatti)}`, gita && s.corso);
@@ -915,7 +936,7 @@ function postCalendario(s) {
 function meseCalendario(titolo, righe, mese) {
   const [anno, m] = String(mese || "").split("-");
   return fondoB(false, `
-    <div class="tit"><div data-righe="2">${escS(titolo)}</div></div>
+    <div class="tit" data-cede><div data-righe="2">${escS(titolo)}</div></div>
     <div class="mese-intero"><i class="anello" style="left:22%"></i><i class="anello" style="right:22%"></i>
       <div class="mese">${m ? `${maiuscola(MESI[m - 1])} ${escS(anno)}` : "Le gite del mese"}</div>
       <div class="righe">${righeMese(righe, false, '<span class="corso">Corso</span>')}</div></div>
@@ -926,7 +947,7 @@ function meseCalendario(titolo, righe, mese) {
 
 /* Fondo di C: fiocchi e montagne stilizzate in bianco trasparente, più opache
  * sul giallo, dove il bianco si vede meno. */
-const montiC = (giallo) => `<svg class="monti" viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
+const montiC = (giallo) => `<svg class="monti" data-segue viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
   <polygon fill="#fff" fill-opacity="${giallo ? .34 : .16}" points="0,250 150,140 270,200 430,60 570,180 710,100 870,210 1080,110 1080,400 0,400"/>
   <polygon fill="#fff" fill-opacity="${giallo ? .5 : .24}" points="0,330 180,225 330,295 520,180 700,295 880,230 1080,305 1080,400 0,400"/></svg>`;
 
@@ -991,9 +1012,9 @@ function manifesto(C, story, nome, scena, fascia, dentro, corso = false) {
     ${fiocchi(1080, story ? 1920 : 1350, giallo ? .7 : .38)}${montiC(giallo)}
     <div class="col"${story ? ' data-adatta=".6"' : ""}>
       <div class="testa">${logoNuovo()}</div>
-      <div class="nome" style="color:${blu ? GIALLO : C.ink}"><div data-righe="2">${nome}</div></div>
-      ${scena === null ? "" : `<div class="scena">${scena}</div>`}
-      <div class="nastro${scena === null ? " mese" : ""}" style="background:${blu ? GIALLO : BLU};color:${blu ? BLU : "#fff"}">${escS(fascia)}</div>
+      <div class="nome" data-cede style="color:${blu ? GIALLO : C.ink}"><div data-righe="2">${nome}</div></div>
+      ${scena === null ? "" : `<div class="scena"${story ? "" : ' data-cede="70"'}>${scena}</div>`}
+      <div class="nastro${scena === null ? " mese" : ""}" data-ancora style="background:${blu ? GIALLO : BLU};color:${blu ? BLU : "#fff"}">${escS(fascia)}</div>
       <div class="scheda"${story ? "" : ' data-adatta=".6"'}>${dentro}</div>
     </div>${corso ? stellaNuova(story) : ""}</div>`;
 }
