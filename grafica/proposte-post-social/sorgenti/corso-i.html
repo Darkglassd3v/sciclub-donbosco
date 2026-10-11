@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="it" class="post">
+<head>
+<meta charset="utf-8">
+<title>Corso · I Bento</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<link rel="stylesheet" href="../../font/barlow-condensed/barlow-condensed.css">
+<link rel="stylesheet" href="comune.css">
+<link rel="stylesheet" href="i.css">
+</head>
+<body>
+<div class="cv">
+  <!-- Senza foto: il blu del club con le linee di velocità orizzontali. -->
+  <svg class="sfondo disegno" viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="1080" height="1350" fill="#084C8D"/>
+    <g fill="#fff">
+      <rect opacity=".08" x="0" y="300" width="780" height="16"/>
+      <rect opacity=".05" x="0" y="344" width="540" height="10"/>
+      <rect opacity=".10" x="0" y="410" width="700" height="20"/>
+      <rect opacity=".05" x="0" y="460" width="460" height="10"/>
+      <rect opacity=".07" x="0" y="640" width="860" height="14"/>
+      <rect opacity=".05" x="0" y="690" width="600" height="10"/>
+      <rect opacity=".08" x="0" y="900" width="740" height="16"/>
+      <rect opacity=".05" x="0" y="950" width="520" height="10"/>
+      <rect opacity=".07" x="0" y="1120" width="820" height="14"/>
+    </g>
+  </svg>
+  <svg class="figura" viewBox="0 0 230 240" aria-hidden="true">
+    <rect x="18" y="214" width="200" height="18" fill="#FCCF02"/>
+    <g stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M120 70 L84 136"/><path d="M114 82 L192 92"/><path d="M84 136 L154 142 L140 206 L172 206"/>
+    </g>
+    <circle cx="134" cy="38" r="25" fill="#fff"/>
+  </svg>
+  <!-- Senza foto le tessere blu diventano bianche: sul fondo blu non si vedrebbero. -->
+  <div class="testa"><div class="occhiello">Corso</div><h1>Ginnastica presciistica</h1></div>
+  <div class="griglia" style="grid-template-areas: 'data dove dove' 'data ore fino' 'chi chi logo' 'mail mail logo'">
+    <div class="t giallo data" style="grid-area: data"><span>Mercoledì</span><b>21</b><span>Ottobre</span></div>
+    <div class="t bianco" style="grid-area: dove"><span>Dove</span><p>Palestra Way Assauto, Asti</p></div>
+    <div class="t bianco" style="grid-area: ore"><span>Ore</span><b>19:30</b><small>lezioni di un'ora</small></div>
+    <div class="t bianco" style="grid-area: fino"><span>Fino al</span><b>13.01</b><small>ogni mercoledì</small></div>
+    <div class="t bianco" style="grid-area: chi"><span>Per chi</span><p>soci tesserati e assicurati</p></div>
+    <div class="t bianco logo" style="grid-area: logo"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+    <div class="t giallo mail" style="grid-area: mail"><span>Iscrizioni in negozio o via mail</span><p>sciclubdonboscoasti@gmail.com</p></div>
+  </div>
+</div>
+<script src="comune.js"></script>
+</body>
+</html>

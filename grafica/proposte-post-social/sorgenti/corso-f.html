@@ -10,15 +10,14 @@
 </head>
 <body>
 <div class="cv">
-  <!-- Senza foto: il blu con le montagne a linee bianche, il sole giallo e la
-       figura dell'esercizio (quella di A) in bianco, come in E. -->
-  <svg class="sfondo" viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <!-- Senza foto: il blu con i piani bianchi trasparenti in diagonale, come i
+       piani sovrapposti dei loro post, e la figura dell'esercizio in bianco. -->
+  <svg class="sfondo" viewBox="0 0 1080 1350" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <rect width="1080" height="1350" fill="#084C8D"/>
-    <circle cx="300" cy="520" r="56" fill="#FCCF02"/>
-    <g fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round">
-      <polyline opacity=".4" points="0,760 180,600 300,680 470,520 640,670 780,580 930,680 1080,610"/>
-      <polyline opacity=".7" points="0,840 160,740 320,810 540,660 720,800 880,730 1080,810"/>
-      <polyline opacity=".4" points="470,520 500,580 480,620 520,670"/>
+    <g fill="#fff">
+      <polygon opacity=".07" points="1080,180 1080,1350 160,1350"/>
+      <polygon opacity=".06" points="0,520 760,1350 0,1350"/>
+      <polygon opacity=".05" points="420,0 1080,0 1080,640"/>
     </g>
   </svg>
   <svg class="figura" viewBox="0 0 230 240" aria-hidden="true">
@@ -29,23 +28,21 @@
     <circle cx="134" cy="38" r="25" fill="#fff"/>
   </svg>
   <div class="velo"></div>
-  <div class="angolo"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
-  <div class="testa"><div class="occhiello">Corso</div><h1>Ginnastica presciistica</h1></div>
-  <div class="blocco"></div>
-  <div class="dati">
-    <div class="quando">Mercoledì 21 ottobre</div>
+  <div class="giallo"></div>
+  <div class="bianco"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
+  <div class="iscrizioni"><div>Iscrizioni in negozio o via mail</div><b>sciclubdonboscoasti@gmail.com</b></div>
+  <div class="testa">
+    <div class="occhiello">Corso</div>
+    <h1>Ginnastica presciistica</h1>
+    <div class="quando">Mercoledì 21 ottobre <i>//</i> <span>ore 19:30</span></div>
     <div class="fatti">
-      <p><b>ore 19:30</b> <i>//</i> lezioni di un'ora</p>
       <p>Palestra Way Assauto, Asti</p>
       <p>Ogni mercoledì fino al <b>13 gennaio</b></p>
+      <p>Lezioni di un'ora</p>
       <p>Soci tesserati e assicurati</p>
     </div>
-    <div class="iscrizioni">
-      <svg viewBox="0 0 24 24" fill="#FCCF02" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
-      <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
-    </div>
   </div>
-  <div class="firma" data-decoro>SCI CLUB DON BOSCO</div>
+  <div class="adesivo">Alzati dal divano!</div>
 </div>
 <script src="comune.js"></script>
 </body>

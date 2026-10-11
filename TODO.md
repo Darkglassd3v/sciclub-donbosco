@@ -21,9 +21,30 @@
 
 - [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
       come tavole le proposte **D · Pista** (alla Head), **E · Fascia** (alla Rossignol) e
-      **F · Diagonale** (alla Ski Club of Great Britain) in
+      **F · Diagonale** (alla Ski Club of Great Britain), poi le idee da gara **G · Cronometro**,
+      **H · Eco** e **I · Bento** (foto a tutto schermo e dati in blocchi; solo post, niente story) in
       `grafica/proposte-post-social/` (titoli in Barlow Condensed, `grafica/font/barlow-condensed/`).
       Da scegliere con chi pubblica; quella scelta va poi nel generatore (`web/social-templates.js`).
+      Per svilupparla a fondo, una volta scelta (anche un misto, per esempio il cronometro di G
+      sopra le tessere di I):
+  - [ ] Story del corso (1080×1920, niente nelle fasce coperte: 250 px in alto, 340 in basso),
+        che per G, H e I manca.
+  - [ ] Nel generatore: nuovo valore in `STILI` e funzione `postX` in `web/social-templates.js`,
+        scelta in Social > Impostazioni (check di `social_settings.style` in `supabase/schema.sql`).
+        I font (Barlow Condensed, e il corsivo di Barlow per F) vanno copiati in `web/`: il deploy
+        pubblica solo `web/` e `ricerca/`.
+  - [ ] Foto: G, H e I vivono di foto (meglio con le persone). Provare il velo con foto chiare
+        (neve al sole) e decidere lo sfondo senza foto (oggi il blu con le linee di velocità).
+  - [ ] Testi lunghi: titoli su due righe al massimo (rimpicciolire con `fit()`), dati con un
+        numero massimo di righe; in F l'adesivo non deve toccare i dati.
+  - [ ] Campi: l'etichetta in alto dalla categoria ("Gita sociale", "Serata del club"); l'ora nel
+        cronometro di G; il gancio nell'adesivo di F (`social_events.hook`); in I il conteggio
+        delle gite del mese e la disposizione delle tessere per tipo di post.
+  - [ ] Colori: martedì rosso e cene/gare/servizi come nelle altre grafiche (Impostazioni > Giorni).
+  - [ ] Sponsor: dove va il logo della campagna (piano bianco di F, tessera di I, sottopancia di G).
+  - [ ] Test in `web/test-social.js` e prova con foto vere e con la campagna Santero.
+  - [ ] `sorgenti/rendi.sh` usa Google Chrome: con il solo Chromium lo screenshot da riga di comando
+        taglia il fondo del post, serve playwright.
 
 ## Versione aperta: 2.8-SNAPSHOT
 

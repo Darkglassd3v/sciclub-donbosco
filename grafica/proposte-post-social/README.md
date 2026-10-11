@@ -15,7 +15,7 @@ partito tutto), una gita, un evento (una cena) e il calendario del mese.
 ![C · Divano](tavola-c.jpg)
 
 Dall'11/10 ci sono anche due proposte di stile, ispirate ai marchi dello sci, solo come
-tavole (non ancora nel generatore): **D · Pista** (stile da gara, alla Head) ed
+tavole (non ancora nel generatore): **D · Pista** (stile da gara, alla Head, tutto dritto) ed
 **E · Fascia** (stile classico, alla Rossignol). Stessi colori, stessi testi; vedi
 "Le proposte di stile" in fondo.
 
@@ -26,6 +26,16 @@ tavole (non ancora nel generatore): **D · Pista** (stile da gara, alla Head) ed
 E una terza, **F · Diagonale**, ispirata ai post dello Ski Club of Great Britain.
 
 ![F · Diagonale](tavola-f.jpg)
+
+Poi tre idee più moderne e "da gara", con la foto a tutto schermo un po' scurita, le
+scritte sopra e i dati in blocchi pieni dei colori del club: **G · Cronometro**,
+**H · Eco**, **I · Bento** (vedi "Le idee da gara" in fondo).
+
+![G · Cronometro](tavola-g.jpg)
+
+![H · Eco](tavola-h.jpg)
+
+![I · Bento](tavola-i.jpg)
 
 | Cartella | Cosa |
 |---|---|
@@ -251,8 +261,9 @@ Richiesta dell'11/10: un redesign con i colori del club ma con lo stile dei marc
 famosi dello sci. Solo l'ispirazione: niente loghi, galletti o strisce riconoscibili
 dei marchi veri. Stessi testi e stesse foto di A, B e C, stesse misure (post 4:5 e
 story del corso), stessi controlli di `rendi.sh verifica` (corpi minimi, fasce della
-story). Il titolo è in **Barlow Condensed** (stessa famiglia di Barlow, licenza OFL),
-in locale in `grafica/font/barlow-condensed/`: nel generatore sarebbe un font in più.
+story). Le righe in maiuscolo stretto sono in **Barlow Condensed** (stessa famiglia di
+Barlow, licenza OFL, pesi 700 e 800), in locale in `grafica/font/barlow-condensed/`:
+nel generatore sarebbe un font in più.
 Il maiuscolo stretto è solo per titoli, date ed etichette; i dati restano in Barlow
 dritto, minuscolo e grande, per chi legge con vista debole.
 
@@ -260,18 +271,26 @@ dritto, minuscolo e grande, per chi legge con vista debole.
 
 <img src="post/corso-d.jpg" width="49%"> <img src="post/corso-d-story.jpg" width="49%">
 
-- Sempre il **blu pieno** del club, usato come il nero dei marchi da gara; il giallo
-  solo negli accenti. Angoli vivi, niente fiocchi né riquadri bianchi.
-- La foto in alto tagliata **in diagonale**, con sotto la **doppia striscia gialla**
-  parallela al taglio: è il segno della proposta. Senza foto (il corso), il blu con
-  linee di velocità e la figura dell'esercizio in bianco.
-- La **data** in numeri grandi corsivi (`17.01`) in un parallelogramma blu in alto a
-  destra, col giorno in giallo.
-- Il **titolo** in Barlow Condensed corsivo nero (900), maiuscolo, 124 px, sempre alto
-  due righe. I dati su righe con un filo sottile: etichette gialle maiuscole 36,
-  valori bianchi 48; orari, prezzi e scadenze in giallo.
-- Le **iscrizioni** nella fascia gialla in fondo, col bordo alto in diagonale.
-- Nel calendario i giorni sono etichette inclinate: domenica gialla, sabato bianca.
+Rifatta l'11/10: la prima versione aveva diagonali, riquadri inclinati e titoli in
+corsivo, che nella linea da gara di Head (Worldcup Rebels) non ci sono. Lì le
+scritte sono nere e dritte, e il colore della linea da gara è lo Speed Blue,
+vicino al blu del club.
+
+- Sempre il **blu pieno** del club; il giallo solo negli accenti. **Tutto dritto:**
+  niente diagonali, niente corsivo, angoli vivi.
+- La foto in alto tagliata dritta, chiusa da un **filo giallo** a tutta larghezza.
+  Senza foto (il corso), il blu con linee di velocità orizzontali e la figura
+  dell'esercizio in bianco.
+- Sopra il titolo la riga gialla spaziata che dice cos'è; il **titolo** in Barlow
+  nero (800) maiuscolo, bianco, 104 px, sempre alto due righe.
+- La **scheda**: tre caselle dritte coi dati principali, come la scheda tecnica di
+  uno sci: etichetta gialla in Barlow Condensed 34, numero bianco in Barlow nero 78
+  (giorno e data `17.01`, ora o partenza, quota soci; per il corso la durata).
+- Sotto, il resto dei dati su righe con un filo sottile: etichette maiuscole 34,
+  valori 46; orari, prezzi e scadenze in giallo.
+- Le **iscrizioni** nella fascia gialla dritta in fondo.
+- Nel calendario niente scheda: le gite partono subito sotto il titolo, col giorno
+  nel colore della gita (domenica gialla, sabato bianca).
 
 ### E · Fascia (stile classico, alla Rossignol)
 
@@ -294,25 +313,101 @@ dritto, minuscolo e grande, per chi legge con vista debole.
 
 <img src="post/corso-f.jpg" width="49%"> <img src="post/corso-f-story.jpg" width="49%">
 
-Dagli esempi del loro Instagram: foto a tutta pagina, grandi blocchi di colore in
-diagonale, tre livelli di testo ognuno col suo colore, dati brevi separati da "//".
+Rifatta l'11/10: la prima versione (dati in un grande blocco blu con le etichette)
+sembrava vecchia. Questa segue da vicino gli esempi del loro Instagram.
 
-- La **foto a tutta pagina** (meglio se con le persone della gita). In alto un velo
-  blu che sfuma, con la riga bianca che dice cos'è (Barlow Condensed 42) e il
-  **titolo giallo** in Barlow maiuscolo 98, sempre alto due righe.
-- In basso il **grande blocco blu in diagonale**, che parte sempre dallo stesso
-  punto: la **data in giallo** (Barlow maiuscolo 62), poi i dati in bianco 46 su
-  righe brevi; orari, prezzi e scadenze in giallo; le barre gialle `//` solo fra
-  due dati che stanno sulla stessa riga. In fondo le iscrizioni con la mail gialla.
-- Il **logo nel triangolo bianco** in alto a destra: le regole del marchio lo
-  vogliono su bianco. Lo stesso triangolo, più grande, potrebbe portare gli
-  sponsor (come il blocco bianco dei loro post con gli sponsor).
-- **Diverso da loro:** i dati non vanno mai sulla foto, perché con foto qualsiasi
-  resterebbero illeggibili; solo bianco, giallo e blu al posto dei loro cinque colori.
-  Il velo e il triangolo trasparente sul blocco fanno vedere sfumature di blu sulla
-  foto: è il compromesso con la regola di un solo blu.
-- Nel calendario il blocco non ha la riga della data (il mese è nel titolo).
-- Senza foto (il corso) il blu con le montagne a linee, il sole giallo e la figura.
+- La **foto a tutta pagina** e il **testo scritto sopra, allineato a destra**, su un
+  velo blu che sfuma verso il basso e lascia la foto libera nella parte centrale.
+- **Tre livelli di testo**, come nei loro post: la riga alta e stretta che dice
+  cos'è (Barlow Condensed 68, bianca), il **titolo enorme giallo** (Barlow nero 116,
+  spaziatura stretta, sempre alto due righe), poi data e dati.
+- La **data in giallo** (Barlow maiuscolo 58) con l'ora sulla stessa riga, in bianco
+  dopo le barre: `SABATO 10 APRILE // ORE 20:00`, come il loro
+  `SAVE THE DATE // 21/10/26`.
+- I **dati in righe brevi**, senza etichette in colonna né fili: Barlow 46, normale
+  per le parole e nero per orari, prezzi e scadenze; le barre gialle `//` solo fra
+  due dati che stanno sulla stessa riga. Una riga sola per dato, mai a capo.
+- In basso il **piano bianco in diagonale** col logo (le regole del marchio lo
+  vogliono su bianco) e le iscrizioni con la mail; sotto sporge un **triangolo
+  giallo**, come i piani sovrapposti dei loro post. Il piano bianco può portare
+  anche i loghi degli sponsor, come nel loro post con gli sponsor.
+- L'**adesivo tondo giallo**, inclinato, porta il **gancio** del post (lo stesso di
+  C: "Tutti in pista!", "Si chiude in festa!", "Alzati dal divano!"); senza gancio
+  non c'è. Sta sempre nello stesso punto, sotto il testo.
+- Il corsivo di Barlow (600 e 800, per il sottotitolo e l'adesivo) è in
+  `grafica/font/barlow/`, accanto agli altri pesi.
+- Nel calendario le righe sono allineate a destra: la meta, "+ corso" in giallo e
+  il giorno nel colore della gita.
+- Senza foto (il corso): il blu con piani bianchi trasparenti in diagonale e la
+  figura dell'esercizio.
+- **Da tenere d'occhio:** il testo sta sulla foto, quindi il velo deve essere
+  scuro abbastanza anche con foto chiare (neve al sole); con le prove del
+  generatore va controllato su foto vere. I dati non possono essere più di quattro
+  righe, altrimenti arrivano all'adesivo.
 
-**Da decidere:** quale delle tre (o nessuna) portare nel generatore, accanto a
-Ritocco, Montagna, Biglietto, Calendario e Divano.
+---
+
+## Le idee da gara (G, H, I)
+
+Richiesta dell'11/10: qualcosa di più moderno e "race", con le immagini di sfondo a
+tutto schermo, un po' scurite, le scritte sopra e i contenuti in blocchi dei colori
+del club. Tre idee diverse sulla stessa base, tutte dritte (niente diagonali né
+corsivo), con le scritte in Barlow e Barlow Condensed neri e maiuscoli. Per ora
+solo i post 4:5: la story del corso si fa per l'idea scelta. Stessi testi e foto
+delle altre proposte; `rendi.sh verifica` passa (corpi, tagli, fuori tela).
+
+Senza foto (il corso) lo sfondo è il blu del club con le linee di velocità
+orizzontali; queste idee però rendono con le foto vere, meglio se con le persone.
+
+### G · Cronometro (le grafiche TV della Coppa del Mondo)
+
+<img src="post/gita-g.jpg" width="49%"> <img src="post/calendario-g.jpg" width="49%">
+
+- La foto a tutto schermo **scurita** (e un velo blu più forte in fondo).
+- In alto a sinistra la **data come il cronometro**: blocco bianco col giorno,
+  blocco giallo con la data grande (`17.01`, Barlow nero 104), blocco bianco con
+  l'ora se c'è. In alto a destra il logo su bianco.
+- Da un punto fisso a metà post: l'**etichetta gialla** che dice cos'è, il
+  **titolo nel blocco blu** col filo giallo a sinistra (Barlow Condensed nero 108,
+  spazio sempre alto due righe), poi le **righe come le barre della classifica**:
+  etichetta gialla larga uguale per tutte, valore nel blocco bianco largo quanto il
+  testo (46, orari e prezzi in blu nero). Fra un blocco e l'altro si vede la foto.
+- Il **calendario come la lista di partenza**: giorno nel colore della gita, meta
+  nel blocco bianco, "Corso" nel blocchetto blu.
+- In fondo il **sottopancia** bianco a tutta larghezza con le iscrizioni e la mail,
+  la busta gialla nel blocco blu.
+
+### H · Eco (manifesto sportivo)
+
+<img src="post/gita-h.jpg" width="49%"> <img src="post/evento-h.jpg" width="49%">
+
+- La foto a tutto schermo in **bicromia**: bianco e nero tinto col blu del club,
+  che la scurisce e tiene insieme foto diverse.
+- Il **titolo giallo** pieno (Barlow Condensed nero 132) in mezzo a **copie solo
+  contornate** che fanno da eco, sfalsate e tagliate dal bordo: due righe sopra e,
+  se il titolo sta in una riga, una sotto. Le copie sono solo decorazione.
+- In alto il logo su bianco e l'etichetta gialla.
+- In basso, da un punto fisso, **tre blocchi pieni uno sull'altro**: la scheda
+  bianca coi numeri grandi (data e prezzi, 78), il blocco blu coi dettagli (46,
+  orari e scadenze in giallo), la fascia gialla delle iscrizioni.
+- Nel calendario le gite stanno in righe nel blocco bianco, al posto della scheda.
+
+### I · Bento (griglia di tessere)
+
+<img src="post/gita-i.jpg" width="49%"> <img src="post/calendario-i.jpg" width="49%">
+
+- La foto a tutto schermo con un **velo blu forte in alto**, dove sta il titolo
+  bianco (Barlow nero 106), e leggero sotto.
+- In fondo una **griglia di tessere** dritte, una per dato, coi numeri grandi: la
+  data nella **tessera gialla alta** (il giorno enorme, 230), prezzi e orari nelle
+  bianche (80), i dati con più parole nelle blu (44), il logo nella sua tessera
+  bianca, le iscrizioni nella gialla. Fra una tessera e l'altra si vede la foto.
+- La griglia è appoggiata al fondo; la disposizione delle tessere cambia col tipo
+  di post (`grid-template-areas` nella pagina). Senza foto le tessere blu
+  diventano bianche, se no sul fondo blu non si vedrebbero.
+- Nel calendario una tessera per gita, col giorno nel colore della gita; la
+  tessera gialla conta le gite del mese.
+
+**Da decidere:** quale proposta (D–I, o nessuna) portare nel generatore, accanto a
+Ritocco, Montagna, Biglietto, Calendario e Divano. Per G, H e I servono foto buone:
+sono la metà del post.

@@ -1,7 +1,4 @@
 /* Barlow Condensed (licenza OFL, OFL.txt), la versione stretta di Barlow, in locale e
- * solo latino: i titoli delle proposte D (Pista, il corsivo) ed E (Fascia, il dritto). */
-@font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 600; font-display: block; src: url(barlow-condensed-600.woff2) format("woff2"); }
+ * solo latino: righe in maiuscolo, etichette e titoli delle proposte D, E ed F. */
 @font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 700; font-display: block; src: url(barlow-condensed-700.woff2) format("woff2"); }
 @font-face { font-family: "Barlow Condensed"; font-style: normal; font-weight: 800; font-display: block; src: url(barlow-condensed-800.woff2) format("woff2"); }
-@font-face { font-family: "Barlow Condensed"; font-style: italic; font-weight: 800; font-display: block; src: url(barlow-condensed-800-italic.woff2) format("woff2"); }
-@font-face { font-family: "Barlow Condensed"; font-style: italic; font-weight: 900; font-display: block; src: url(barlow-condensed-900-italic.woff2) format("woff2"); }
