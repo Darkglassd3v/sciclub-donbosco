@@ -225,6 +225,12 @@ assert.strictEqual(giornoMese(null), "");
       assert.strictEqual(html.includes(" story"), fmt === "story");
     }
   }
+  // Lo spazio che può cedere a un testo lungo (fit()): titolo e disegno nel post del Divano, il titolo in A e B.
+  const cedeDiv = disegnaPost(m, "divano"), cedeStory = disegnaPost(modelloPost(ev, "story"), "divano");
+  assert.ok(/class="nome" data-cede/.test(cedeDiv) && cedeDiv.includes('data-cede="70"') && cedeDiv.includes("data-ancora") && cedeDiv.includes("data-segue"));
+  assert.ok(!cedeStory.includes('data-cede="70"'), "nella story il disegno si adatta già da solo");
+  assert.ok(disegnaPost(m, "biglietto").includes('class="tit" data-cede') && disegnaPost(m, "calendario").includes('class="tit" data-cede'));
+  assert.ok(!disegnaPost(m, "ritocco").includes("data-cede"), "il Ritocco non cambia");
   // Il corso nello stesso giorno: la coccarda verde in alto a destra in Calendario e Divano, una riga nel Biglietto.
   for (const st of ["calendario", "divano"]) for (const fmt of ["post", "story"]) {
     assert.ok(disegnaPost(modelloPost(ev, fmt), st).includes('class="stella"'), `${st} ${fmt}: manca la coccarda del corso`);
