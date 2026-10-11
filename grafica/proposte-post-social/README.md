@@ -1,21 +1,59 @@
-# Ginnastica presciistica 2026 · tre proposte
+# Proposte di grafica per i post social
 
-![Le tre proposte affiancate](00-panoramica.jpg)
+Tre grafiche da scegliere per tutti i post del club su Instagram e Facebook:
+**A · Biglietto**, **B · Calendario**, **C · Divano**. Ogni tavola mostra una
+proposta su quattro post: il corso (la ginnastica presciistica, da cui è
+partito tutto), una gita, un evento (una cena) e il calendario del mese.
 
-Tre grafiche per annunciare il corso su Instagram e Facebook. Per ognuna:
-il **post** 4:5 (1080×1350, come Montagna) e la **story** (1080×1920).
+![A · Biglietto](tavola-a.jpg)
 
-**Rivista il 10/10** dopo il primo giro: A sul giallo, che diventa il colore
+![B · Calendario](tavola-b.jpg)
+
+![C · Divano](tavola-c.jpg)
+
+| Cartella | Cosa |
+|---|---|
+| `tavola-a.jpg`, `-b`, `-c` | le tre proposte, una tavola ciascuna |
+| `post/` | i post uno per uno: `corso-a.jpg`, `gita-b.jpg`, `evento-c.jpg`, `calendario-a.jpg`...; il corso anche in story (`corso-a-story.jpg`) e la panoramica del corso (`corso-panoramica.jpg`) |
+| `Mail per Presciistica.docx` | la mail da cui vengono i testi del corso |
+| `sorgenti/` | le pagine HTML e lo script che rifà le immagini |
+
+Tutti i post sono 4:5 (1080×1350, come Montagna); gita, evento e calendario
+hanno dati inventati.
+
+- **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
+  cene): gita di domenica in giallo, evento e calendario in blu; nel
+  calendario c'è un sabato al posto della gita del martedì.
+- **A e C prendono il colore del post**, **B è sempre blu** e il colore sta
+  nella testata del foglio.
+- In ogni post della stessa tavola le informazioni sono quelle che servono a
+  quel post; la proposta cambia solo come sono disegnate.
+- **Giallo dei corsi e domeniche:** sono lo stesso giallo. Nel calendario il
+  corso è un'etichetta contornata, non piena, per non confondersi.
+- **C** è "Divano" per la presciistica; sugli altri post il gancio cambia
+  ("Tutti a La Thuile!", "Si chiude in festa!") e va scritto post per post: è
+  la grafica che chiede più lavoro a chi pubblica. Il gancio dice dove si va,
+  la data sta nel nastro.
+- **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
+  "Calendario di gennaio" per il calendario del mese.
+- **A con la foto:** in alto la foto caricata nel generatore (gita, cena,
+  calendario); senza foto resta il disegno, come nel corso. Foto d'esempio da
+  Wikimedia Commons, libere (CC0): pista San Bernardo e Ponteilles a La Thuile
+  di DimiTalen, la tavola apparecchiata da Unsplash.
+
+---
+
+## Il post del corso (presciistica)
+
+Testi presi dalla mail, con post e story per ogni proposta.
+
+**Rivisto il 10/10** dopo il primo giro: A sul giallo, che diventa il colore
 di tutti i corsi; B senza "Torna il corso di", senza la linea del tempo e la
 pausa di Natale, con la frase "Tutti i mercoledì fino al 13 gennaio"; logo
-più grande in tutte e tre (150 px invece di 96–100).
-
-**Riviste di nuovo il 10/10**: B e C danno le stesse informazioni di A, cambia
-solo lo stile. In tutte e tre: titolo, mercoledì 21 ottobre, ore 19:30 e
-lezioni di un'ora, Palestra Way Assauto ad Asti, ogni mercoledì fino al 13
-gennaio, soci tesserati e assicurati, iscrizioni in negozio o via mail con
-l'indirizzo. Tolta la pastiglia "Riservato ai soci" di B e C: lo dice la riga
-dei soci tesserati e assicurati.
+più grande in tutte e tre (150 px invece di 96–100). Poi B e C con le stesse
+informazioni di A: titolo, mercoledì 21 ottobre, ore 19:30 e lezioni di
+un'ora, Palestra Way Assauto ad Asti, ogni mercoledì fino al 13 gennaio, soci
+tesserati e assicurati, iscrizioni in negozio o via mail con l'indirizzo.
 
 - Testi presi dalla mail `Mail per Presciistica.docx`, niente di aggiunto:
   niente prezzo, niente nome dell'istruttore, niente telefoni.
@@ -29,11 +67,9 @@ iscriversi (le informazioni di A). Il testo del post aggiunge l'invito,
 l'istruttore dello scorso anno e la pausa di Natale. La mail va sempre anche
 nel testo, perché dal testo si può copiare e da un'immagine no.
 
----
+### A · Biglietto
 
-## A · Biglietto
-
-<img src="a-biglietto-post.jpg" width="49%"> <img src="a-biglietto-story.jpg" width="49%">
+<img src="post/corso-a.jpg" width="49%"> <img src="post/corso-a-story.jpg" width="49%">
 
 **Idea.** È Ritocco portato al 4:5: il biglietto bianco sul giallo dei corsi,
 con il bollo blu della data in alto. Il giallo vale per tutti i corsi (in
@@ -70,9 +106,9 @@ Vi aspettiamo numerosi!
 
 ---
 
-## B · Calendario
+### B · Calendario
 
-<img src="b-calendario-post.jpg" width="49%"> <img src="b-calendario-story.jpg" width="49%">
+<img src="post/corso-b.jpg" width="49%"> <img src="post/corso-b-story.jpg" width="49%">
 
 **Idea.** Il messaggio è la data. Un foglio di calendario con il 21 ottobre
 e sotto una frase sola: "Tutti i mercoledì fino al 13 gennaio".
@@ -103,9 +139,9 @@ sciclubdonboscoasti@gmail.com
 
 ---
 
-## C · Divano
+### C · Divano
 
-<img src="c-divano-post.jpg" width="49%"> <img src="c-divano-story.jpg" width="49%">
+<img src="post/corso-c.jpg" width="49%"> <img src="post/corso-c-story.jpg" width="49%">
 
 **Idea.** Un manifesto. La prima riga della mail, «Alzati dal divano!»,
 diventa il titolo, enorme, sul giallo del logo; sotto, un divano vuoto con
@@ -143,51 +179,14 @@ Vi aspettiamo numerosi!
 
 ---
 
-## Ogni proposta su corso, gita, evento e calendario
-
-Per scegliere guardando tutti i post, non solo il corso: una tavola per
-proposta, con il post della presciistica e la stessa grafica applicata a una
-gita, a un evento (una cena) e al calendario del mese. I post da soli sono in
-`tavole/` (`gita-a.jpg`...). Gita, evento e calendario hanno dati inventati;
-solo post 4:5 (niente story).
-
-![A · Biglietto](tavole/tavola-a.jpg)
-
-![B · Calendario](tavole/tavola-b.jpg)
-
-![C · Divano](tavole/tavola-c.jpg)
-
-- **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
-  cene): gita di domenica in giallo, evento e calendario in blu; nel
-  calendario c'è un sabato al posto della gita del martedì.
-- **A e C prendono il colore del post**, **B è sempre blu** e il colore sta
-  nella testata del foglio.
-- In ogni post della stessa tavola le informazioni sono quelle che servono a
-  quel post; la proposta cambia solo come sono disegnate.
-- **Giallo dei corsi e domeniche:** sono lo stesso giallo. Nel calendario il
-  corso è un'etichetta contornata, non piena, per non confondersi.
-- **C** è "Divano" per la presciistica; sugli altri post il gancio cambia
-  ("Tutti a La Thuile!", "Si chiude in festa!") e va scritto post per post: è
-  la grafica che chiede più lavoro a chi pubblica. Il gancio dice dove si va,
-  la data sta nel nastro.
-- **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
-  "Calendario di gennaio" per il calendario del mese.
-- **A con la foto:** in alto la foto caricata nel generatore (gita, cena,
-  calendario); senza foto resta il disegno, come nel corso. Foto d'esempio da
-  Wikimedia Commons, libere (CC0): pista San Bernardo e Ponteilles a La Thuile
-  di DimiTalen, la tavola apparecchiata da Unsplash.
-
----
-
 ## Sorgenti
 
-In `sorgenti/` ci sono le pagine HTML (una per proposta: `#post` o `#story`
-nell'indirizzo sceglie il formato) e `rendi.sh`, che rifà i JPEG con Chrome
-(serve internet per il font Barlow). `./rendi.sh verifica` controlla corpi
-minimi, fasce coperte della story e testo tagliato.
+In `sorgenti/` una pagina HTML per tipo e proposta (`corso-a.html`,
+`gita-b.html`...; `#post` o `#story` nell'indirizzo sceglie il formato, la
+story c'è solo per il corso), i fogli comuni (`comune.css`, `comune.js`, e
+`a.css`, `b.css`, `c.css` per gita, evento e calendario), le foto d'esempio
+in `foto/`, `panoramica.html` e `tavola.html#a`, `#b`, `#c`.
 
-Le tavole: `sorgenti/tavole/`, una pagina per tipo e grafica (`gita-a.html`...,
-fogli di stile comuni `a.css`, `b.css`, `c.css`) e `tavola.html#a`, `#b`, `#c`,
-una per proposta; `sorgenti/tavole/rendi.sh` rifà post e tavole (i post del
-corso li fa `sorgenti/rendi.sh`)
-(`verifica` come sopra).
+`./rendi.sh` rifà tutti i JPEG con Chrome (serve internet per il carattere
+Barlow); `./rendi.sh verifica` controlla corpi minimi, fasce coperte della
+story e testo tagliato.
