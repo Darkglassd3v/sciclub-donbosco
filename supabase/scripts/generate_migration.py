@@ -2,7 +2,7 @@
 """Genera i file SQL di migrazione dal foglio Google esportato.
 
 Uso:
-    python3 supabase/scripts/generate_migration.py "new_structure/SOCI 2026.xlsx"
+    python3 supabase/scripts/generate_migration.py "legacy/new_structure/SOCI 2026.xlsx"
     python3 supabase/scripts/generate_migration.py "SOCI 2026.xlsx" supabase/migration 300
 
 Argomenti: file .xlsx di partenza, cartella di destinazione (default

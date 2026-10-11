@@ -176,7 +176,7 @@
   const el = (id) => document.getElementById(id);
 
   // I tre tipi, con il nome e la colonna dei fogli che l'assicurazione usa
-  // (vedi dati26/): "1 Lista Neve Base.xlsx", colonna "Polizza"; la Global
+  // (vedi legacy/dati26/): "1 Lista Neve Base.xlsx", colonna "Polizza"; la Global
   // Sport ha "Tipo" al posto di "Polizza".
   const TIPI = [
     { kind: "BASE",  nome: "Neve Base",    colonna: "Polizza" },
@@ -348,7 +348,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Excel come i fogli dell'assicurazione (dati26/)
+  // Excel come i fogli dell'assicurazione (legacy/dati26/)
   // -------------------------------------------------------------------------
 
   /** "1980-01-31" → data di Excel (a mezzanotte, ora locale, come la legge SheetJS). */

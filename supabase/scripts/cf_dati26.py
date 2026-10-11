@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Codici fiscali dei fogli dell'assicurazione (dati26/*Lista*.xlsx) contro il database.
+Codici fiscali dei fogli dell'assicurazione (legacy/dati26/*Lista*.xlsx) contro il database.
 
-    python3 supabase/scripts/cf_dati26.py dati26 supabase/migration/cf-AAAA-MM-GG
+    python3 supabase/scripts/cf_dati26.py legacy/dati26 supabase/migration/cf-AAAA-MM-GG
 
 Legge i fogli e i soci (il database solo in lettura) e scrive nella cartella di uscita:
 

@@ -19,9 +19,10 @@ La 1.x resta in `legacy/` come riferimento. Ogni versione rilasciata ha un branc
 web/           il gestionale: iscrizioni, pagamenti, riepilogo, bilancio, social, gestione
 ricerca/       sito separato per telefono: ricerca soci e abbonamenti gite
 supabase/      schema del database, verifiche, script e generatore della migrazione
-grafica/logo/  il logo in alta qualità (SVG, PNG, JPG) e gli strumenti con cui è stato fatto
-social/        materiale delle campagne sponsor (loghi Santero)
-legacy/        la versione 1.x su Apps Script, lasciata come riferimento
+grafica/       la grafica in uso e le proposte: logo (grafica/logo/), post social,
+               cartello e QR del canale WhatsApp, scheda di tesseramento
+legacy/        la versione 1.x su Apps Script, lasciata come riferimento, e i dati
+               storici (original_data/, new_structure/, dati26/: fuori da git)
 docs/          documentazione, incluse le linee guida del marchio
 ```
 
