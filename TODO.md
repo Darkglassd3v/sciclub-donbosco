@@ -1,40 +1,22 @@
-# TODO — aggiornato il 2026-10-10
+# TODO — aggiornato il 2026-10-11
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (09/10/2026)
+## Stato del repository (11/10/2026)
 
-- Rilasciata la **2.7** (branch e tag `2.7`): le pagine online sono quelle del branch `2.7`.
-  `dev` è allineato alla 2.7. Branch di lavoro `2.8-SNAPSHOT`: il suo primo push pubblica le
-  pagine da lì (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`).
-- Database di produzione: schema di `supabase/schema.sql` applicato il 09/10 (cambio della
-  password al primo accesso, tabella `pending_password_changes`). Backup in
-  `supabase/migration/backup-2026-10-09-password/` (fuori da git).
+- Rilasciata la **2.7** (branch e tag `2.7`). Branch di lavoro `2.8-SNAPSHOT`: le pagine online
+  sono le sue (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`) e `dev` è allineato a lui.
+- Database di produzione: schema di `supabase/schema.sql` applicato l'11/10 (grafiche nuove dei
+  post: colonna `social_events.hook`, check di `social_settings.style`). Backup in
+  `supabase/migration/backup-2026-10-11-grafiche/` (fuori da git).
 - Documenti puliti l'08/10: tolti `docs/DOCUMENTAZIONE.md` (la 1.x) e i piani 2.1, 2.3 e social
   già realizzati (restano nella storia di git). Le pagine di prova su claude.ai sono cancellate.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
 
-- [ ] **In corso (11/10): le tre proposte di grafica nel generatore dei post** (Social > Genera
-      post), scelte in Social > Impostazioni accanto a Ritocco e Montagna. Fatto l'11/10: schema in
-      produzione (check dello stile con `biglietto`, `calendario`, `divano`; colonna
-      `social_events.hook` per il gancio del Divano; backup in
-      `supabase/migration/backup-2026-10-11-grafiche/`), `web/social-templates.js` (`postBiglietto`,
-      `postCalendario`, `postDivano`, i calendari del mese, `misurePost()`, `fit()` con
-      `data-righe` e `data-adatta`), `web/social.html` (le cinque grafiche in Impostazioni con
-      l'esempio, campo Gancio solo col Divano, post 4:5), test e prova nel browser col client
-      finto (post e story di ogni tipo, calendario, export PNG, A+ a 400 px). Resta, in ordine:
-  - [ ] Commit, push su `2.8-SNAPSHOT` (deploy: `gh run list --workflow deploy-pages.yml`),
-        allineare `dev` (non esiste `master`; procedura in `docs/SVILUPPO.md`, niente force).
-  - [ ] `/open-code-review:review` del codice nuovo; correggere Alto e Medio; commit, push,
-        deploy, riallineare `dev`.
-  - Alla fine **non spegnere il PC e non togliere la corrente** (niente `spegni-tutto`):
-    l'ha chiesto l'utente l'11/10.
-  - Chi riparte da una sessione nuova: l'utente ha dato tutte le autorizzazioni per questo
-    lavoro (database di produzione, bash, commit, push, deploy, allineamento di `dev`); non
-    chiedere, andare avanti fino in fondo.
+(nessuna)
 
 ## Versione aperta: 2.8-SNAPSHOT
 
@@ -44,7 +26,8 @@ prima delle iscrizioni): salvataggio Soci che non cancella pagamenti e abbonamen
 intanto da altri; nomi e dati dal database passati da `esc()` in Soci e Pagamenti; conferma
 dell'incasso col saldo del momento; gite in coda tenute se la sessione scade; Elimina movimento
 del Bilancio in finestra; rinomina delle voci di listino estesa ai soci; `set_amounts()` che
-segnala il socio non trovato; saldo di chiusura non più leggibile senza login.
+segnala il socio non trovato; saldo di chiusura non più leggibile senza login. L'11/10: le
+grafiche Biglietto, Calendario e Divano nel generatore dei post (Social > Impostazioni).
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 

@@ -555,7 +555,8 @@ const NUOVI = ["biglietto", "calendario", "divano"];
   const stile = document.createElement("style");
   stile.id = "stile-social-nuovi";
   stile.textContent = `
-    .cv.nuovo { --s: 1; --min: 34px; }
+    /* L'interlinea delle proposte: quella di Bulma (1.5) arriverebbe dalla pagina e allungherebbe le righe. */
+    .cv.nuovo { --s: 1; --min: 34px; line-height: normal; }
     .cv.nuovo.story { --min: 44px; }
     .cv.nuovo b { font-weight: 800; }
     .cv.nuovo .logo-box { background: #fff; }
@@ -725,6 +726,11 @@ const titoloGita = (dest, capo = " ") => (/^gita\b/i.test(dest || "") ? escS(des
 const titoloNuovo = (s, capo) => (s.kind === "gita" ? titoloGita(s.dest, capo)
   : escS(String(s.title || "").trim() || categoria(s.cat).label));
 
+/* Le informazioni che hanno un posto loro: l'orario (nel foglio di B, con i
+ * prezzi in C) e le iscrizioni (nel riquadro giallo di B, in fondo in A e C). */
+const ORARIO = /^(ora|orario|ore)$/i, ISCRIZIONI = /^iscrizion/i;
+const fattoDi = (fatti, re) => fatti.find(([n]) => re.test(String(n || "").trim()));
+
 const partenze = (s) => (s.stops || []).filter(([t, l]) => t || l)
   .map(([t, l]) => [String(t || "").replace(/^ore\s*/i, ""), l || ""]);
 
@@ -798,7 +804,7 @@ function postBiglietto(s) {
     ["Corso", s.corso && "nello stesso giorno"],
   ] : [...s.facts.map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]];
   // La quota prima delle iscrizioni, come nella proposta.
-  const iscr = righe.findIndex(([n]) => /^iscrizion/i.test(n));
+  const iscr = righe.findIndex(([n]) => ISCRIZIONI.test(n));
   if (!gita && iscr >= 0) righe.splice(iscr, 0, righe.pop());
   const sub = gita ? "" : String(s.sub || "").trim();
   const testo = `<div class="tit"><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${escS(sub)}</small>` : ""}</div>
@@ -838,8 +844,7 @@ const fondoB = (story, corpo) => `<div class="cv nuovo sb${story ? " story" : ""
 function postCalendario(s) {
   const g = giornoDi(s.iso), gita = s.kind === "gita", c = coloreNuovo(s.cat).c, testa = c === BLU ? GIALLO : c;
   const fatti = gita ? [] : s.facts.filter(([, v]) => String(v || "").trim());
-  const ora = g && fatti.find(([n]) => /^(ora|orario|ore)$/i.test(String(n || "").trim()));
-  const iscr = fatti.find(([n]) => /^iscrizion/i.test(String(n || "").trim()));
+  const ora = g && fattoDi(fatti, ORARIO), iscr = fattoDi(fatti, ISCRIZIONI);
   const evid = gita ? s.scadenza && `Iscrizioni entro ${s.scadenza}` : iscr && `Iscrizioni ${iscr[1]}`;
   const quota = s.prices.map(([n, v]) => `<b>${escS(v)}</b>${n ? ` <small>${escS(n)}</small>` : ""}`).join("<br>");
   const dati = (gita ? [
@@ -958,12 +963,11 @@ function postDivano(s) {
   const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
   const p = partenze(s);
   // Orario e luogo si capiscono da soli: senza etichetta, come nelle proposte.
-  const fatto = ([n, v]) => `${n && !/^(ora|orario|ore|dove|luogo|quando)$/i.test(String(n).trim())
-    ? `${escS(n)}${/^iscrizion/i.test(String(n).trim()) ? " " : ": "}` : ""}${evidenzia(v)}`;
+  const fatto = ([n, v]) => `${n && !ORARIO.test(String(n).trim()) && !/^(dove|luogo|quando)$/i.test(String(n).trim())
+    ? `${escS(n)}${ISCRIZIONI.test(String(n).trim()) ? " " : ": "}` : ""}${evidenzia(v)}`;
   // Come nella proposta: l'orario e i prezzi su una riga sola, le iscrizioni in fondo.
   const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
-  const ora = fatti.find(([n]) => /^(ora|orario|ore)$/i.test(String(n || "").trim()));
-  const iscr = fatti.find(([n]) => /^iscrizion/i.test(String(n || "").trim()));
+  const ora = fattoDi(fatti, ORARIO), iscr = fattoDi(fatti, ISCRIZIONI);
   const righe = gita ? [
     p.length && `<div class="riga">Partenze: ${p.map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join(" · ")}</div>`,
     quota && `<div class="riga">${quota}</div>`,
