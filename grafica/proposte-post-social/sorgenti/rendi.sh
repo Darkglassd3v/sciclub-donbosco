@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rifà i JPEG delle proposte con Chrome headless (serve la rete per Barlow) e
+# Rifà i JPEG delle proposte con Chrome headless (Barlow in ../../font/) e
 # Pillow per il JPEG, a misura esatta:
 #   ../post/        un post per tipo e proposta (corso-a.jpg, gita-b.jpg...);
 #                   il corso anche in story (corso-a-story.jpg) e la panoramica

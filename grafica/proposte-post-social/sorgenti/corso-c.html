@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>C · Divano</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <style>
 /* C · Divano. Manifesto: la prima riga della mail ("Alzati dal divano")
@@ -41,6 +41,8 @@ html.post .info { flex: 1 1 auto; }
 .info .dove { font-size: 46px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
 .info .poi { font-size: 40px; font-weight: 600; margin-top: 10px; line-height: 1.2; }
 .info .poi + .poi { margin-top: 4px; }
+/* Orari e date evidenziati come col pennarello, come negli altri post di C. */
+.info b { font-weight: 800; background: #fff; padding: 0 .16em; border-radius: .14em; }
 /* Iscrizioni e mail, come in fondo al biglietto di A. */
 .iscrizioni { flex: none; display: flex; gap: 20px; align-items: center; margin-top: 26px; padding-top: 22px;
   border-top: 4px dashed rgba(6,57,106,.35); }
@@ -98,9 +100,9 @@ html.story .iscrizioni svg { width: 70px; height: 70px; }
     </div>
     <div class="nastro">Ginnastica presciistica</div>
     <div class="info">
-      <div class="quando">Mercoledì 21 ottobre · ore 19:30</div>
+      <div class="quando">Mercoledì 21 ottobre · <b>ore 19:30</b></div>
       <div class="dove">Palestra Way Assauto, Asti</div>
-      <div class="poi">poi tutti i mercoledì fino al 13 gennaio</div>
+      <div class="poi">poi tutti i mercoledì fino al <b>13 gennaio</b></div>
       <div class="poi">Lezioni di un'ora · soci tesserati e assicurati</div>
     </div>
     <div class="iscrizioni">

@@ -31,6 +31,10 @@ hanno dati inventati.
   stampa le coordinate per controllarlo.
 - **B senza la griglia del mese:** nel calendario le gite sono righe dentro il
   foglio, perché la griglia dei giorni ripeteva le stesse date.
+- **I dettagli importanti si vedono subito:** orari, prezzi e scadenze in blu
+  in A, in giallo in B (con le etichette in azzurro), evidenziati come col
+  pennarello in C. Nella gita di B il foglio non ha più l'ora: contano le
+  partenze, accanto.
 - **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
   cene): gita di domenica in giallo, evento e calendario in blu; nel
   calendario c'è un sabato al posto della gita del martedì.
@@ -197,6 +201,6 @@ story c'è solo per il corso), i fogli comuni (`comune.css`, `comune.js`, e
 `a.css`, `b.css`, `c.css` per gita, evento e calendario), le foto d'esempio
 in `foto/`, `panoramica.html` e `tavola.html#a`, `#b`, `#c`.
 
-`./rendi.sh` rifà tutti i JPEG con Chrome (serve internet per il carattere
-Barlow); `./rendi.sh verifica` controlla corpi minimi, fasce coperte della
+`./rendi.sh` rifà tutti i JPEG con Chrome (il carattere Barlow è in
+`../font/barlow/`, così non dipende dalla rete); `./rendi.sh verifica` controlla corpi minimi, fasce coperte della
 story e testo tagliato.

@@ -3,11 +3,13 @@
 <head>
 <meta charset="utf-8">
 <title>Gita · B Calendario</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <link rel="stylesheet" href="b.css">
 <!-- Gita di domenica: testata gialla, il numero in blu (il giallo su bianco non si legge). -->
-<style>html { --cat: #FCCF02; --cat-ink: #06396A; --cat-txt: #06396A; }</style>
+<style>html { --cat: #FCCF02; --cat-ink: #06396A; --cat-txt: #06396A; }
+/* Senza l'ora: per la gita contano le partenze, accanto. */
+.foglio { padding-bottom: 34px; }</style>
 </head>
 <body>
 <div class="cv">
@@ -28,13 +30,12 @@
         <div class="mese">Gennaio</div>
         <div class="giorno">Domenica</div>
         <div class="num">17</div>
-        <div class="ora">ore 6:30</div>
       </div>
       <div class="dati">
         <div class="et">Partenze</div>
-        <div class="v">6:30 Asti<br>6:45 Moncalvo</div>
+        <div class="v"><b>6:30</b> Asti<br><b>6:45</b> Moncalvo</div>
         <div class="et">Quota</div>
-        <div class="v">€ 52 <small>soci</small><br>€ 60 <small>non soci</small></div>
+        <div class="v"><b>€ 52</b> <small>soci</small><br><b>€ 60</b> <small>non soci</small></div>
       </div>
     </div>
     <div class="evidenza">Iscrizioni <em>entro giovedì 14 gennaio</em></div>

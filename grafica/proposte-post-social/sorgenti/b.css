@@ -28,7 +28,9 @@
 .foglio .ora { font-size: 58px; font-weight: 800; padding: 14px 0 28px; }
 
 .dati { color: #fff; min-width: 0; }
-.dati .et { color: var(--giallo); font-size: 38px; font-weight: 700; }
+/* Etichette azzurre e valori bianchi; orari e prezzi in giallo, da trovare al volo. */
+.dati .et { color: #BFD7EC; font-size: 38px; font-weight: 700; }
+.dati .v b { color: var(--giallo); }
 .dati .et ~ .et { margin-top: 26px; }
 .dati .v { font-size: 50px; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
 .dati .v small { font-size: 40px; font-weight: 600; color: #E7EFF7; letter-spacing: 0; }

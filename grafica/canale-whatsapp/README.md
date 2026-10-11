@@ -27,4 +27,4 @@ Per metterlo altrove: `qr-canale-whatsapp.png` (QR per stampe grandi) e
 ## Sorgenti
 
 In `sorgenti/`: `cartello.html`, i QR in SVG e `rendi.sh`, che rifà PDF e
-anteprima con Chrome (serve internet per il carattere Barlow).
+anteprima con Chrome (il carattere Barlow è in `../font/barlow/`).

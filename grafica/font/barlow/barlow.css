@@ -1,0 +1,7 @@
+/* Barlow (licenza OFL, OFL.txt) in locale, solo il sottoinsieme latino: le pagine
+ * delle grafiche non dipendono più da Google Fonts, che a volte arrivava tardi e
+ * l'immagine usciva col carattere di riserva. */
+@font-face { font-family: Barlow; font-style: normal; font-weight: 500; font-display: block; src: url(barlow-500.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 600; font-display: block; src: url(barlow-600.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 700; font-display: block; src: url(barlow-700.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 800; font-display: block; src: url(barlow-800.woff2) format("woff2"); }

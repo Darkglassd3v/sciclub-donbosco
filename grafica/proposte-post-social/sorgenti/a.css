@@ -38,7 +38,8 @@ h1 { min-height: calc(2 * .98 * 104px + 58px); }
 .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: 14px; align-items: baseline; }
 .fatti dt { font-size: 36px; font-weight: 600; color: var(--testo-soft); }
 .fatti dd { font-size: 50px; font-weight: 700; line-height: 1.12; }
-.fatti .forte { color: var(--accento); font-weight: 800; }
+/* I dettagli da trovare al volo (orari, prezzi, scadenze) in blu. */
+.fatti .forte, .fatti b { color: var(--accento); font-weight: 800; }
 
 .iscrizioni { flex: none; margin: 0 40px; border-top: 4px dashed var(--filo);
   padding: 20px 16px 26px; display: flex; gap: 22px; align-items: center; }

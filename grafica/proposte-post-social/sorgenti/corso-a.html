@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>A · Biglietto</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <style>
 /* A · Biglietto. Evoluzione di Ritocco: il biglietto bianco sul colore della
@@ -48,6 +48,8 @@ html.post h1 { min-height: calc(2 * .98 * 104px + 58px); }
 .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: calc(16px * var(--k)); align-items: baseline; }
 .fatti dt { font-size: calc(36px * var(--k)); font-weight: 600; color: var(--testo-soft); }
 .fatti dd { font-size: calc(50px * var(--k)); font-weight: 700; line-height: 1.12; }
+/* I dettagli da trovare al volo (orari, date) in blu, come negli altri post di A. */
+.fatti b { color: var(--accento); font-weight: 800; }
 .fatti .nota { font-weight: 600; color: var(--testo-soft); font-size: .8em; white-space: nowrap; }
 .fatti .riga { display: block; margin-top: 4px; }
 .fatti .nw { white-space: nowrap; }
@@ -103,9 +105,9 @@ html.story .firma { display: block; position: absolute; left: 0; right: 0; top: 
     <div class="testo">
       <h1>Ginnastica presciistica</h1>
       <dl class="fatti">
-        <dt>Orario</dt><dd>ore 19:30 <span class="nota">· lezioni di un'ora</span></dd>
+        <dt>Orario</dt><dd><b>ore 19:30</b> <span class="nota">· lezioni di un'ora</span></dd>
         <dt>Dove</dt><dd>Palestra Way Assauto, Asti</dd>
-        <dt>Quando</dt><dd>ogni mercoledì <span class="nw">fino al 13 gennaio</span></dd>
+        <dt>Quando</dt><dd>ogni mercoledì <span class="nw">fino al <b>13 gennaio</b></span></dd>
         <dt>Per chi</dt><dd>soci tesserati e assicurati</dd>
       </dl>
     </div>
