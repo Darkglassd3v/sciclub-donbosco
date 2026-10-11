@@ -9,7 +9,7 @@
 <!-- Il calendario del mese: le gite in righe dentro il foglio a strappo, con la testata
      del mese. Senza la griglia dei giorni, che ripeteva le stesse date. -->
 <style>
-html { --cat: #FCCF02; --cat-ink: #06396A; }
+html { --cat: #FCCF02; --cat-ink: #084C8D; }
 .mese-intero { background: #fff; border-radius: 28px; box-shadow: 0 16px 40px rgba(0,0,0,.35); position: relative; padding-bottom: 18px; }
 .mese-intero .mese { background: var(--cat); color: var(--cat-ink); font-size: 50px; font-weight: 800; text-align: center;
   border-radius: 28px 28px 0 0; padding: 26px 0 12px; }
@@ -21,16 +21,16 @@ html { --cat: #FCCF02; --cat-ink: #06396A; }
 .righe .meta { font-size: 52px; font-weight: 700; line-height: 1.1; color: var(--testo); }
 /* Il corso contornato, non pieno: il giallo dei corsi si confonderebbe con la domenica. */
 .righe .corso { margin-left: auto; flex: none; font-size: 34px; font-weight: 800; color: var(--blu); border: 3px solid var(--blu); border-radius: 14px; padding: 2px 14px; }
-.dom { background: #FCCF02; color: #06396A; } .sab { background: #084C8D; color: #fff; }
+.dom { background: #FCCF02; color: #084C8D; } .sab { background: #084C8D; color: #fff; }
 </style>
 </head>
 <body>
 <div class="cv">
   <div class="neve" data-neve=".18"></div>
   <svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <polygon fill="#1D5E9E" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
-    <polygon fill="#0A4279" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
-    <polygon fill="#06396A" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".07" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".11" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".16" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
   </svg>
   <div class="contenuto">
     <div class="testa">

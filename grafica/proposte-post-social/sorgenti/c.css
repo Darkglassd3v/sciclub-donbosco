@@ -16,7 +16,7 @@
 .scena { flex: none; height: 180px; position: relative; z-index: 1; margin-bottom: -14px; }
 .scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-.nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; background: var(--nastro, var(--blu-dark)); color: var(--nastro-ink, #fff);
+.nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; background: var(--nastro, var(--blu)); color: var(--nastro-ink, #fff);
   transform: rotate(-2deg); text-align: center; font-size: 72px; font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px; white-space: nowrap;
   box-shadow: 0 10px 24px rgba(6,57,106,.3); }
 
@@ -24,9 +24,9 @@
 .info .quando { font-size: 58px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
 .info .riga { font-size: 46px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
 .info .poi { font-size: 40px; font-weight: 600; margin-top: 8px; line-height: 1.2; }
-/* Orari, prezzi e scadenze evidenziati come col pennarello: bianco sul giallo,
- * giallo sul blu (--evid-bg, --evid-ink nel singolo post). */
-.info b { font-weight: 800; background: var(--evid-bg, #fff); color: var(--evid-ink, var(--blu-dark)); padding: 0 .16em; border-radius: .14em;
+/* Orari, prezzi e scadenze evidenziati: blu con la scritta gialla sui post gialli,
+ * gialli sui post blu (--evid-bg, --evid-ink nel singolo post). */
+.info b { font-weight: 800; background: var(--evid-bg, var(--blu)); color: var(--evid-ink, var(--giallo)); padding: 0 .16em; border-radius: .14em;
   -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 
 .iscrizioni { flex: none; display: flex; gap: 20px; align-items: center; margin-top: 24px; padding-top: 20px;

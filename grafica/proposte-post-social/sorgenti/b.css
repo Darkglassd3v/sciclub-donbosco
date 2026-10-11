@@ -26,18 +26,21 @@
 .foglio .giorno { font-size: 48px; font-weight: 700; margin-top: 18px; }
 .foglio .num { font-size: 250px; font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--cat-txt); margin-top: 6px; }
 .foglio .ora { font-size: 58px; font-weight: 800; padding: 14px 0 28px; }
+/* Senza ora (la gita) il foglio resta lungo uguale. */
+.foglio .ora:empty::before { content: "\a0"; }
 
 .dati { color: #fff; min-width: 0; }
 /* Etichette azzurre e valori bianchi; orari e prezzi in giallo, da trovare al volo. */
-.dati .et { color: #BFD7EC; font-size: 38px; font-weight: 700; }
+.dati .et { color: #fff; font-size: 38px; font-weight: 600; }
 .dati .v b { color: var(--giallo); }
 .dati .et ~ .et { margin-top: 26px; }
-.dati .v { font-size: 50px; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
-.dati .v small { font-size: 40px; font-weight: 600; color: #E7EFF7; letter-spacing: 0; }
+.dati .v { font-size: 56px; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
+.dati .v small { font-size: 40px; font-weight: 600; color: #fff; letter-spacing: 0; }
 
-.evidenza { background: var(--blu-dark); border-radius: 28px; padding: 28px 40px; color: #fff;
-  box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 52px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-.evidenza em { font-style: normal; color: var(--giallo); }
+/* Il riquadro in evidenza è giallo: un blu più scuro sul blu sarebbe un secondo blu. */
+.evidenza { background: var(--giallo); border-radius: 28px; padding: 28px 40px; color: var(--blu);
+  box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 54px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.evidenza em { font-style: normal; }
 
 .iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
 .iscrizioni svg { flex: none; width: 64px; height: 64px; }

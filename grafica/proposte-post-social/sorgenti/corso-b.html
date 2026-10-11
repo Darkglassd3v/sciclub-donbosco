@@ -37,28 +37,28 @@ html.story .iscrizioni b { font-size: 46px; }
 html.post .titolo { font-size: 104px; min-height: calc(2 * .95 * 104px); }
 
 .centro { display: flex; gap: calc(44px * var(--k)); align-items: center; }
-/* Il foglio: testata verde (il colore dei corsi), due anelli, il giorno grande. */
+/* Il foglio: testata gialla (il colore dei corsi), due anelli, il giorno grande. */
 .foglio { flex: none; width: calc(430px * var(--k)); background: #fff; border-radius: 28px; text-align: center;
   position: relative; box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
-.foglio .mese { background: var(--verde); color: #fff; font-size: calc(46px * var(--k)); font-weight: 800;
+.foglio .mese { background: var(--giallo); color: var(--blu); font-size: calc(46px * var(--k)); font-weight: 800;
   border-radius: 28px 28px 0 0; padding: calc(30px * var(--k)) 0 calc(14px * var(--k)); letter-spacing: -.01em; }
 .foglio .anello { position: absolute; top: calc(-22px * var(--k)); width: calc(30px * var(--k)); height: calc(58px * var(--k));
   border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
 .foglio .giorno { font-size: calc(48px * var(--k)); font-weight: 700; margin-top: calc(18px * var(--k)); }
-.foglio .num { font-size: calc(250px * var(--k)); font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--verde); margin-top: calc(6px * var(--k)); }
+.foglio .num { font-size: calc(250px * var(--k)); font-weight: 800; line-height: .82; letter-spacing: -.05em; color: var(--blu); margin-top: calc(6px * var(--k)); }
 .foglio .ora { font-size: calc(58px * var(--k)); font-weight: 800; padding: calc(14px * var(--k)) 0 calc(28px * var(--k)); }
 .dove { color: #fff; min-width: 0; }
-.dove .et { color: #BFD7EC; font-size: calc(38px * var(--k)); font-weight: 700; }
-.dove .luogo { font-size: calc(64px * var(--k)); font-weight: 800; line-height: 1; letter-spacing: -.025em; margin-top: 8px; }
-.dove .nota { font-size: calc(40px * var(--k)); font-weight: 600; margin-top: 8px; line-height: 1.2; color: #E7EFF7; }
-.dove .chi { font-size: calc(46px * var(--k)); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; margin-top: 8px; }
+.dove .et { color: #fff; font-size: calc(38px * var(--k)); font-weight: 600; }
+.dove .luogo { font-size: calc(56px * var(--k)); font-weight: 800; line-height: 1; letter-spacing: -.025em; margin-top: 8px; }
+.dove .nota { font-size: calc(40px * var(--k)); font-weight: 600; margin-top: 8px; line-height: 1.2; color: #fff; }
+.dove .chi { font-size: calc(56px * var(--k)); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; margin-top: 8px; }
 .dove .et + .et, .dove .nota + .et { margin-top: calc(26px * var(--k)); }
 
 /* Fino a quando dura: una frase sola, senza date di pausa. */
-.durata { background: var(--blu-dark); border-radius: 28px; padding: calc(30px * var(--k)) 40px; color: #fff;
+.durata { background: var(--giallo); border-radius: 28px; padding: calc(30px * var(--k)) 40px; color: var(--blu);
   box-shadow: 0 12px 30px rgba(0,0,0,.3); }
-.durata .frase { font-size: calc(58px * var(--k)); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-.durata .frase em { font-style: normal; color: var(--giallo); }
+.durata .frase { font-size: calc(54px * var(--k)); font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.durata .frase em { font-style: normal; }
 
 /* Iscrizioni e mail, come in fondo al biglietto di A. */
 .iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
@@ -72,9 +72,9 @@ html.post .titolo { font-size: 104px; min-height: calc(2 * .95 * 104px); }
   <div class="neve" data-neve=".18"></div>
   <!-- Montagne di sera, dal paesaggio di Montagna. -->
   <svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <polygon fill="#1D5E9E" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
-    <polygon fill="#0A4279" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
-    <polygon fill="#06396A" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".07" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".11" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
+    <polygon fill="#fff" fill-opacity=".16" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/>
   </svg>
   <div class="contenuto">
     <div class="testa">

@@ -32,9 +32,8 @@ hanno dati inventati.
 - **B senza la griglia del mese:** nel calendario le gite sono righe dentro il
   foglio, perché la griglia dei giorni ripeteva le stesse date.
 - **I dettagli importanti si vedono subito:** orari, prezzi e scadenze in blu
-  in A, in giallo in B (con le etichette in azzurro), evidenziati come col
-  pennarello in C. Nella gita di B il foglio non ha più l'ora: contano le
-  partenze, accanto.
+  in A, in giallo in B, evidenziati in C. Nella gita di B il foglio non porta
+  l'ora (contano le partenze, accanto) ma resta lungo come gli altri.
 - **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
   cene): gita di domenica in giallo, evento e calendario in blu; nel
   calendario c'è un sabato al posto della gita del martedì.
@@ -54,6 +53,25 @@ hanno dati inventati.
   calendario); senza foto resta il disegno, come nel corso. Foto d'esempio da
   Wikimedia Commons, libere (CC0): pista San Bernardo e Ponteilles a La Thuile
   di DimiTalen, la tavola apparecchiata da Unsplash.
+
+## Regole fisse
+
+**Colori, in tutte le proposte:** un solo blu `#084C8D` e un solo giallo
+`#FCCF02` (quelli del logo), più il bianco e il testo scuro `#14202E`. Niente
+blu più scuri o più chiari: le sfumature (montagne di B, cuscini del divano)
+sono bianco trasparente sul blu; i riquadri in evidenza sono gialli.
+
+**Misure, uguali in tutti i post della stessa proposta (px su 1080):**
+
+| | A · Biglietto | B · Calendario | C · Divano |
+|---|---|---|---|
+| Titolo / gancio | 104, sempre alto 2 righe (+ sottotitolo 40) | 104, sempre alto 2 righe | gancio 150 su 2 righe, fascia 72 |
+| Dati | etichette 36, valori 50 | etichette 38, valori 56, note 40 | data 58, righe 46, note 40 |
+| In evidenza | orari, prezzi, scadenze in blu | orari e prezzi in giallo; riquadro giallo 54 | orari, prezzi, scadenze evidenziati (blu e giallo) |
+| Iscrizioni | 36 / 40 | 36 / 42 | 36 / 42 |
+
+Nel foglio di B mese 46, giorno 48, numero 250 e ora 58: il foglio è lungo
+uguale anche quando l'ora non c'è (la gita).
 
 ---
 
