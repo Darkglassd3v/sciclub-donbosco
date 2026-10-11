@@ -167,8 +167,15 @@ solo post 4:5 (niente story).
 - **Giallo dei corsi e domeniche:** sono lo stesso giallo. Nel calendario il
   corso è un'etichetta contornata, non piena, per non confondersi.
 - **C** è "Divano" per la presciistica; sugli altri post il gancio cambia
-  ("Tutti in pista!", "Si chiude in festa!") e va scritto post per post: è la
-  grafica che chiede più lavoro a chi pubblica.
+  ("Tutti a La Thuile!", "Si chiude in festa!") e va scritto post per post: è
+  la grafica che chiede più lavoro a chi pubblica. Il gancio dice dove si va,
+  la data sta nel nastro.
+- **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
+  "Calendario di gennaio" per il calendario del mese.
+- **A con la foto:** in alto la foto caricata nel generatore (gita, cena,
+  calendario); senza foto resta il disegno, come nel corso. Foto d'esempio da
+  Wikimedia Commons, libere (CC0): pista San Bernardo e Ponteilles a La Thuile
+  di DimiTalen, la tavola apparecchiata da Unsplash.
 
 ---
 

@@ -11,6 +11,8 @@ html { --m: 60px; --scena: 330px; --accento: var(--blu); }
 
 .scena { position: relative; flex: 0 0 var(--scena); }
 .scena > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* La foto della meta, quella caricata nel generatore dei post. */
+.scena .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .scena .figura { position: absolute; top: auto; right: auto; left: 400px; bottom: 14px; width: auto; height: calc(var(--scena) * .62); }
 .scena .logo-box { position: absolute; left: 0; top: 0; padding: 18px 26px; border-radius: 0 0 28px 0; }
 .scena .logo-box img { height: 150px; }

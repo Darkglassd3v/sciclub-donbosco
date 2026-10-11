@@ -27,9 +27,9 @@ img { display: block; width: 380px; border-radius: 12px; box-shadow: 0 6px 20px 
 </div>
 <script>
 const PROPOSTE = {
-  a: { nome: "Biglietto", corso: "a-biglietto", idea: "Il biglietto bianco sul colore del post: giallo il corso e la gita della domenica, blu l'evento e il calendario." },
+  a: { nome: "Biglietto", corso: "a-biglietto", idea: "Il biglietto bianco sul colore del post, in alto la foto caricata nel generatore (senza foto, il disegno)." },
   b: { nome: "Calendario", corso: "b-calendario", idea: "Sempre il blu del club; il foglio a strappo porta la data, il calendario diventa il mese intero." },
-  c: { nome: "Divano", corso: "c-divano", idea: "Il manifesto: un gancio grande scritto per ogni post («Alzati dal divano!», «Tutti in pista!»…) e un disegno." },
+  c: { nome: "Divano", corso: "c-divano", idea: "Il manifesto: un gancio grande scritto per ogni post («Alzati dal divano!», «Tutti a La Thuile!»…) e un disegno." },
 };
 const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
 document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;
