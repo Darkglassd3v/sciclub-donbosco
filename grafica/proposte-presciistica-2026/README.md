@@ -143,31 +143,32 @@ Vi aspettiamo numerosi!
 
 ---
 
-## Le tre grafiche su gite, calendario ed eventi
+## Ogni proposta su corso, gita, evento e calendario
 
-Per scegliere guardando anche gli altri post, non solo il corso: le stesse tre
-grafiche applicate a una gita, al calendario del mese e a una cena. Una
-tavola per tipo, in `tavole/`; ogni post da solo è accanto (`gita-a.jpg`...).
-Dati inventati, solo post 4:5 (niente story).
+Per scegliere guardando tutti i post, non solo il corso: una tavola per
+proposta, con il post della presciistica e la stessa grafica applicata a una
+gita, a un evento (una cena) e al calendario del mese. I post da soli sono in
+`tavole/` (`gita-a.jpg`...). Gita, evento e calendario hanno dati inventati;
+solo post 4:5 (niente story).
 
-![Gita](tavole/tavola-gita.jpg)
+![A · Biglietto](tavole/tavola-a.jpg)
 
-![Calendario del mese](tavole/tavola-calendario.jpg)
+![B · Calendario](tavole/tavola-b.jpg)
 
-![Eventi](tavole/tavola-evento.jpg)
+![C · Divano](tavole/tavola-c.jpg)
 
-- **A e C prendono il colore della categoria** (il giorno della gita, il blu
-  del calendario, l'arancio delle cene), come oggi Genera post; **B è sempre
-  blu** e il colore sta nella testata del foglio.
-- In ogni tavola le tre danno le stesse informazioni; cambia solo come sono
-  disegnate.
-- **Da decidere col giallo dei corsi:** la domenica è già gialla (colore del
-  giorno in Impostazioni). Nel calendario il corso qui è un'etichetta
-  contornata, non piena, per non confondersi con le domeniche; se i corsi
-  passano al giallo, Genera post dovrà fare lo stesso.
-- C per il corso era "Divano"; su gite ed eventi il gancio cambia ("Tutti in
-  pista!", "Si chiude in festa!") e va scritto post per post: è la grafica
-  che chiede più lavoro a chi pubblica.
+- **Per ora solo giallo e blu** (niente rosso del martedì né arancio delle
+  cene): gita di domenica in giallo, evento e calendario in blu; nel
+  calendario c'è un sabato al posto della gita del martedì.
+- **A e C prendono il colore del post**, **B è sempre blu** e il colore sta
+  nella testata del foglio.
+- In ogni post della stessa tavola le informazioni sono quelle che servono a
+  quel post; la proposta cambia solo come sono disegnate.
+- **Giallo dei corsi e domeniche:** sono lo stesso giallo. Nel calendario il
+  corso è un'etichetta contornata, non piena, per non confondersi.
+- **C** è "Divano" per la presciistica; sugli altri post il gancio cambia
+  ("Tutti in pista!", "Si chiude in festa!") e va scritto post per post: è la
+  grafica che chiede più lavoro a chi pubblica.
 
 ---
 
@@ -179,6 +180,7 @@ nell'indirizzo sceglie il formato) e `rendi.sh`, che rifà i JPEG con Chrome
 minimi, fasce coperte della story e testo tagliato.
 
 Le tavole: `sorgenti/tavole/`, una pagina per tipo e grafica (`gita-a.html`...,
-fogli di stile comuni `a.css`, `b.css`, `c.css`) e `tavola.html#gita`,
-`#calendario`, `#evento`; `sorgenti/tavole/rendi.sh` rifà post e tavole
+fogli di stile comuni `a.css`, `b.css`, `c.css`) e `tavola.html#a`, `#b`, `#c`,
+una per proposta; `sorgenti/tavole/rendi.sh` rifà post e tavole (i post del
+corso li fa `sorgenti/rendi.sh`)
 (`verifica` come sopra).

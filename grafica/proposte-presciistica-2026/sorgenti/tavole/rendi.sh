@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rende i post delle tavole di confronto (gita, calendario, evento × A, B, C)
-# e le tre tavole in ../../tavole/, con Chrome headless come ../rendi.sh.
+# Rende i post delle tavole (gita, calendario, evento × A, B, C) e le tre
+# tavole, una per proposta, in ../../tavole/, con Chrome headless come ../rendi.sh.
 #   ./rendi.sh            tutte le immagini
 #   ./rendi.sh verifica   solo i controlli di comune.js (corpi, tagli)
 set -euo pipefail
@@ -26,6 +26,6 @@ foto() {
 }
 for t in $TIPI; do
   for s in a b c; do [[ -f $t-$s.html ]] && foto "$t-$s.html#post" 1080 1350 "$t-$s.jpg"; done
-  [[ -f tavola.html && -f $OUT/$t-c.jpg ]] && foto "tavola.html#$t" 1720 1084 "tavola-$t.jpg"
 done
-true
+# Una tavola per proposta: il corso (dai JPEG di ../rendi.sh), la gita, l'evento e il calendario.
+for s in a b c; do foto "tavola.html#$s" 1720 820 "tavola-$s.jpg"; done

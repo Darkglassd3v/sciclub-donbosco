@@ -2,22 +2,21 @@
 <html lang="it">
 <head>
 <meta charset="utf-8">
-<title>Tavola di confronto</title>
+<title>Tavola di una proposta</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=block">
 <link rel="stylesheet" href="../comune.css">
 <style>
-/* Una tavola per tipo di post (#gita, #calendario, #evento): le tre grafiche
- * affiancate con i JPEG già resi (rendi.sh li fa prima). */
-html, body { width: 1720px; height: 1084px; background: #F5F5F7; }
+/* Una tavola per proposta (#a, #b, #c): i quattro post della stessa grafica
+ * affiancati, il corso (la presciistica), una gita, un evento e il
+ * calendario del mese, con i JPEG già resi (rendi.sh li fa prima). */
+html, body { width: 1720px; height: 820px; background: #F5F5F7; }
 .pagina { padding: 50px; }
-h1 { font-size: 66px; font-weight: 800; letter-spacing: -.03em; color: var(--blu); line-height: 1; }
+h1 { font-size: 66px; font-weight: 800; letter-spacing: -.03em; color: var(--testo); line-height: 1; }
+h1 b { color: var(--blu); }
 .sotto { font-size: 34px; font-weight: 600; color: var(--testo-soft); margin-top: 14px; line-height: 1.25; }
-.sotto b { color: var(--testo); }
-.colonne { display: grid; grid-template-columns: repeat(3, 500px); gap: 60px; margin-top: 36px; }
-h2 { font-size: 56px; font-weight: 800; letter-spacing: -.03em; line-height: 1; color: var(--testo); }
-h2 b { color: var(--blu); }
-.idea { font-size: 32px; font-weight: 600; color: var(--testo-soft); line-height: 1.15; margin: 10px 0 18px; height: 74px; }
-img { display: block; width: 500px; border-radius: 14px; box-shadow: 0 6px 20px rgba(20,32,46,.15); }
+.colonne { display: grid; grid-template-columns: repeat(4, 380px); gap: 33px; margin-top: 34px; }
+h2 { font-size: 44px; font-weight: 800; letter-spacing: -.02em; line-height: 1; color: var(--blu); margin-bottom: 14px; }
+img { display: block; width: 380px; border-radius: 12px; box-shadow: 0 6px 20px rgba(20,32,46,.15); }
 </style>
 </head>
 <body>
@@ -27,31 +26,20 @@ img { display: block; width: 500px; border-radius: 14px; box-shadow: 0 6px 20px 
   <div class="colonne" id="colonne"></div>
 </div>
 <script>
-const TAVOLE = {
-  gita: {
-    titolo: "Gita · le tre grafiche a confronto",
-    info: "meta, giorno, partenze con gli orari, quota soci e non soci, scadenza, iscrizioni e mail",
-    idee: ["Il biglietto sul colore del giorno della gita", "Il foglio del giorno, partenze e quota accanto",
-           "«Tutti in pista!» e il pullman, sul colore del giorno"],
-  },
-  calendario: {
-    titolo: "Calendario del mese · le tre grafiche a confronto",
-    info: "titolo del mese, le gite con giorno, data e meta, quali hanno il corso, iscrizioni e mail",
-    idee: ["Il biglietto blu con le righe del calendario di oggi", "Il mese intero sul foglio, le mete sotto",
-           "Il gancio e le righe grandi, senza disegno"],
-  },
-  evento: {
-    titolo: "Eventi (cena) · le tre grafiche a confronto",
-    info: "titolo e sottotesto, giorno e ora, luogo, quota, scadenza, iscrizioni e mail",
-    idee: ["Il biglietto arancio delle cene, di sera con le lucine", "Il foglio del giorno con la testata arancio",
-           "«Si chiude in festa!» e i calici, sull'arancio"],
-  },
+const PROPOSTE = {
+  a: { nome: "Biglietto", corso: "a-biglietto", idea: "Il biglietto bianco sul colore del post: giallo il corso e la gita della domenica, blu l'evento e il calendario." },
+  b: { nome: "Calendario", corso: "b-calendario", idea: "Sempre il blu del club; il foglio a strappo porta la data, il calendario diventa il mese intero." },
+  c: { nome: "Divano", corso: "c-divano", idea: "Il manifesto: un gancio grande scritto per ogni post («Alzati dal divano!», «Tutti in pista!»…) e un disegno." },
 };
-const tipo = location.hash.slice(1) in TAVOLE ? location.hash.slice(1) : "gita", t = TAVOLE[tipo];
-document.getElementById("titolo").textContent = t.titolo;
-document.getElementById("sotto").innerHTML = `Post 4:5, esempio con dati inventati. Tutte e tre danno le stesse informazioni: <b>${t.info}</b>.`;
-document.getElementById("colonne").innerHTML = [["A", "Biglietto"], ["B", "Calendario"], ["C", "Manifesto"]].map(([l, nome], i) =>
-  `<div><h2><b>${l}</b> · ${nome}</h2><div class="idea">${t.idee[i]}</div><img src="../../tavole/${tipo}-${l.toLowerCase()}.jpg" alt=""></div>`).join("");
+const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
+document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;
+document.getElementById("sotto").textContent = p.idea + " Post 4:5; gita, evento e calendario con dati inventati.";
+document.getElementById("colonne").innerHTML = [
+  ["Corso (presciistica)", `../../${p.corso}-post.jpg`],
+  ["Gita", `../../tavole/gita-${chiave}.jpg`],
+  ["Evento", `../../tavole/evento-${chiave}.jpg`],
+  ["Calendario", `../../tavole/calendario-${chiave}.jpg`],
+].map(([titolo, src]) => `<div><h2>${titolo}</h2><img src="${src}" alt=""></div>`).join("");
 </script>
 </body>
 </html>
