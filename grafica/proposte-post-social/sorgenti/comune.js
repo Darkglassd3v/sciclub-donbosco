@@ -39,7 +39,7 @@ if (verifica) document.fonts.ready.then(() => {
   // Dove partono titolo, fascia e testo: fra i post della stessa proposta
   // devono coincidere (il testo lungo può solo scendere più in basso).
   const pos = {};
-  for (const sel of ["h1", ".titolo", ".gancio", ".nastro", ".info", ".fatti", ".righe"]) {
+  for (const sel of ["h1", ".titolo", ".gancio", ".nastro", ".info", ".fatti", ".righe", ".centro", ".mese-intero"]) {
     const el = document.querySelector(sel);
     if (el) pos[sel] = Math.round(el.getBoundingClientRect().top);
   }

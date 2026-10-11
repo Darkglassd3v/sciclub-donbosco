@@ -32,6 +32,9 @@ html { --m: 60px; --scena: 330px; --accento: var(--blu); }
 .testo { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; gap: 22px; padding: 34px 56px 12px; }
 h1 { font-size: 104px; font-weight: 800; letter-spacing: -.035em; line-height: .98; }
 h1 small { display: block; font-size: 40px; font-weight: 700; letter-spacing: -.01em; color: var(--testo-soft); margin-top: 12px; line-height: 1.15; }
+/* Il blocco del titolo è sempre alto due righe più quella del sottotitolo, anche
+ * quando sono vuote: i dati sotto partono alla stessa altezza in tutti i post. */
+h1 { min-height: calc(2 * .98 * 104px + 58px); }
 .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: 14px; align-items: baseline; }
 .fatti dt { font-size: 36px; font-weight: 600; color: var(--testo-soft); }
 .fatti dd { font-size: 50px; font-weight: 700; line-height: 1.12; }

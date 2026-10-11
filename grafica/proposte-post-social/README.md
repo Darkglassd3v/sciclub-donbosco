@@ -23,7 +23,9 @@ hanno dati inventati.
 
 - **Il testo non si sposta:** in ogni proposta titolo, fascia e testo partono
   sempre dallo stesso punto, in tutti i post; un testo più lungo scende più in
-  basso. In A la foto (o il disegno) in alto è alta uguale per tutti; in C
+  basso. Il titolo occupa sempre due righe anche quando ne basta una (in A
+  più la riga del sottotitolo, anche vuota), così i dati sotto partono alla
+  stessa altezza. In A la foto (o il disegno) in alto è alta uguale per tutti; in C
   gancio e disegno hanno altezza fissa, così la fascia centrale sta sempre lì
   (tranne nel calendario, che non ha disegno). `./sorgenti/rendi.sh verifica`
   stampa le coordinate per controllarlo.

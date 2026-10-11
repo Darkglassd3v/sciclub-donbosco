@@ -43,6 +43,8 @@ html.story .scena .logo-box { border-top-right-radius: 28px; }
 .testo { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start;
   gap: calc(22px * var(--k)); padding: calc(34px * var(--k)) 56px calc(16px * var(--k)); }
 h1 { font-size: 104px; font-weight: 800; letter-spacing: -.035em; line-height: .98; }
+/* Come negli altri post di A: titolo su due righe più la riga del sottotitolo. */
+html.post h1 { min-height: calc(2 * .98 * 104px + 58px); }
 .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: calc(16px * var(--k)); align-items: baseline; }
 .fatti dt { font-size: calc(36px * var(--k)); font-weight: 600; color: var(--testo-soft); }
 .fatti dd { font-size: calc(50px * var(--k)); font-weight: 700; line-height: 1.12; }

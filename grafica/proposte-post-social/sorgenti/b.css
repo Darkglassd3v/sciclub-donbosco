@@ -12,7 +12,9 @@
 .testa .logo-box { border-radius: 22px; padding: 12px 18px; }
 .testa .logo-box img { height: 150px; }
 
-.titolo { color: #fff; font-size: 108px; font-weight: 800; letter-spacing: -.035em; line-height: .95; }
+/* Il titolo occupa sempre due righe, anche quando ne basta una (il sottotitolo, se
+ * c'è, sta nella seconda): quello che c'è sotto parte alla stessa altezza in tutti i post. */
+.titolo { color: #fff; font-size: 104px; font-weight: 800; letter-spacing: -.035em; line-height: .95; min-height: calc(2 * .95 * 104px); }
 
 .centro { display: flex; gap: 44px; align-items: center; }
 .foglio { flex: none; width: 430px; background: #fff; border-radius: 28px; text-align: center;
