@@ -14,6 +14,15 @@ partito tutto), una gita, un evento (una cena) e il calendario del mese.
 
 ![C · Divano](tavola-c.jpg)
 
+Dall'11/10 ci sono anche due proposte di stile, ispirate ai marchi dello sci, solo come
+tavole (non ancora nel generatore): **D · Pista** (stile da gara, alla Head) ed
+**E · Fascia** (stile classico, alla Rossignol). Stessi colori, stessi testi; vedi
+"Le proposte di stile" in fondo.
+
+![D · Pista](tavola-d.jpg)
+
+![E · Fascia](tavola-e.jpg)
+
 | Cartella | Cosa |
 |---|---|
 | `tavola-a.jpg`, `-b`, `-c` | le tre proposte, una tavola ciascuna |
@@ -229,3 +238,53 @@ in `foto/`, `panoramica.html` e `tavola.html#a`, `#b`, `#c`.
 `./rendi.sh` rifà tutti i JPEG con Chrome (il carattere Barlow è in
 `../font/barlow/`, così non dipende dalla rete); `./rendi.sh verifica` controlla corpi minimi, fasce coperte della
 story e testo tagliato.
+
+---
+
+## Le proposte di stile (D ed E)
+
+Richiesta dell'11/10: un redesign con i colori del club ma con lo stile dei marchi
+famosi dello sci. Solo l'ispirazione: niente loghi, galletti o strisce riconoscibili
+dei marchi veri. Stessi testi e stesse foto di A, B e C, stesse misure (post 4:5 e
+story del corso), stessi controlli di `rendi.sh verifica` (corpi minimi, fasce della
+story). Il titolo è in **Barlow Condensed** (stessa famiglia di Barlow, licenza OFL),
+in locale in `grafica/font/barlow-condensed/`: nel generatore sarebbe un font in più.
+Il maiuscolo stretto è solo per titoli, date ed etichette; i dati restano in Barlow
+dritto, minuscolo e grande, per chi legge con vista debole.
+
+### D · Pista (stile da gara, alla Head)
+
+<img src="post/corso-d.jpg" width="49%"> <img src="post/corso-d-story.jpg" width="49%">
+
+- Sempre il **blu pieno** del club, usato come il nero dei marchi da gara; il giallo
+  solo negli accenti. Angoli vivi, niente fiocchi né riquadri bianchi.
+- La foto in alto tagliata **in diagonale**, con sotto la **doppia striscia gialla**
+  parallela al taglio: è il segno della proposta. Senza foto (il corso), il blu con
+  linee di velocità e la figura dell'esercizio in bianco.
+- La **data** in numeri grandi corsivi (`17.01`) in un parallelogramma blu in alto a
+  destra, col giorno in giallo.
+- Il **titolo** in Barlow Condensed corsivo nero (900), maiuscolo, 124 px, sempre alto
+  due righe. I dati su righe con un filo sottile: etichette gialle maiuscole 36,
+  valori bianchi 48; orari, prezzi e scadenze in giallo.
+- Le **iscrizioni** nella fascia gialla in fondo, col bordo alto in diagonale.
+- Nel calendario i giorni sono etichette inclinate: domenica gialla, sabato bianca.
+
+### E · Fascia (stile classico, alla Rossignol)
+
+<img src="post/corso-e.jpg" width="49%"> <img src="post/corso-e-story.jpg" width="49%">
+
+- Il **bianco** come fondo e tanto spazio vuoto; la foto grande ad angoli vivi e
+  sotto la **doppia fascia** blu (spessa) e gialla (sottile), a tutta larghezza.
+- La **data** in un riquadro bianco appoggiato sul bordo della foto: giorno, numero
+  grande, mese.
+- Sopra il titolo una **riga spaziata** che dice cos'è ("Corso", "Gita sociale",
+  "Serata del club", "Le gite del mese"): nel generatore andrebbe presa dalla categoria.
+- Il **titolo** in Barlow Condensed dritto (800), maiuscolo, blu, 112 px, sempre alto
+  due righe. Dati con fili sottili: etichette grigie maiuscole 34, valori 46;
+  orari, prezzi e scadenze in blu.
+- Le **iscrizioni** nella fascia blu in fondo, la mail in giallo (contrasto 5,8:1).
+- Senza foto (il corso), montagne disegnate a linee bianche sul blu, il sole giallo
+  e la figura dell'esercizio.
+
+**Da decidere:** quale delle due (o nessuna) portare nel generatore come sesta e
+settima grafica, accanto a Ritocco, Montagna, Biglietto, Calendario e Divano.

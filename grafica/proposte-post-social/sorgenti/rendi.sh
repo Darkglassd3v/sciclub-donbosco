@@ -15,7 +15,7 @@ formati() { [[ $1 == corso ]] && echo "post story" || echo post; }
 altezza() { [[ $1 == post ]] && echo 1350 || echo 1920; }
 
 if [[ "${1:-}" == verifica ]]; then
-  for t in $TIPI; do for s in a b c; do for f in $(formati $t); do
+  for t in $TIPI; do for s in a b c d e; do for f in $(formati $t); do
     echo "$t-$s $f: $(chrome --window-size=1080,$(altezza $f) --dump-dom "file://$PWD/$t-$s.html#$f-verifica" | grep -o 'VERIFICA[^<]*')"
   done; done; done
   exit
@@ -28,8 +28,8 @@ foto() {
   rm "$4.png"
   echo "$4"
 }
-for t in $TIPI; do for s in a b c; do for f in $(formati $t); do
+for t in $TIPI; do for s in a b c d e; do for f in $(formati $t); do
   foto "$t-$s.html#$f" 1080 "$(altezza $f)" "../post/$t-$s$([[ $f == story ]] && echo -story).jpg"
 done; done; done
 foto panoramica.html 1720 1980 ../post/corso-panoramica.jpg
-for s in a b c; do foto "tavola.html#$s" 1720 820 "../tavola-$s.jpg"; done
+for s in a b c d e; do foto "tavola.html#$s" 1720 820 "../tavola-$s.jpg"; done

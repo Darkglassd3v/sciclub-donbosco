@@ -19,7 +19,10 @@
 
 ## Richieste nuove
 
-(nessuna)
+- [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
+      come tavole le proposte **D · Pista** (alla Head) ed **E · Fascia** (alla Rossignol) in
+      `grafica/proposte-post-social/` (titoli in Barlow Condensed, `grafica/font/barlow-condensed/`).
+      Da scegliere con chi pubblica; quella scelta va poi nel generatore (`web/social-templates.js`).
 
 ## Versione aperta: 2.8-SNAPSHOT
 

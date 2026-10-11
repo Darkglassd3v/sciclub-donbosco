@@ -1,0 +1,65 @@
+/* E · Fascia, ispirata ai marchi storici dello sci (Rossignol): il bianco
+ * come fondo, tanto spazio vuoto, la foto grande ad angoli vivi e sotto la
+ * doppia fascia blu e gialla, che è il segno della proposta. La data in un
+ * riquadro bianco appoggiato sul bordo della foto, il titolo in Barlow
+ * Condensed dritto e maiuscolo, blu; sopra il titolo una riga spaziata che
+ * dice cos'è (corso, gita, cena, calendario). I dati in Barlow dritto e
+ * minuscolo, separati da fili sottili; orari, prezzi e scadenze in blu.
+ * Le iscrizioni nella fascia blu in fondo, la mail in giallo.
+ * In alto la foto caricata nel generatore (senza foto, il disegno a linee).
+ * Con la classe "story" su <html> la tela è 1080×1920 (fasce coperte 250 e 340). */
+html { --k: 1; --su: 0px; --foto: 480px; --giu: 0px; }
+html.story { --k: 1.1; --su: 230px; --foto: 440px; --giu: 340px; }
+.cv { background: #fff; display: flex; flex-direction: column; }
+html.story .cv { background: var(--blu); }
+html.story .pagina { background: #fff; }
+.pagina { flex: 1 1 auto; display: flex; flex-direction: column; margin: var(--su) 0 var(--giu); min-height: 0; }
+
+.scena { position: relative; flex: 0 0 var(--foto); }
+.scena .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.logo-box { position: absolute; left: 60px; top: 0; padding: calc(16px * var(--k)) calc(24px * var(--k)); }
+.logo-box img { height: calc(120px * var(--k)); }
+/* La data: riquadro bianco appoggiato sul bordo basso della foto, a destra. */
+.data { position: absolute; right: 60px; bottom: 0; background: #fff; color: var(--blu); text-align: center;
+  padding: calc(18px * var(--k)) calc(34px * var(--k)) calc(6px * var(--k)); min-width: calc(240px * var(--k)); }
+.data .g { font: 700 calc(34px * var(--k)) / 1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .16em; color: var(--testo-soft); }
+.data .n { font: 800 calc(120px * var(--k)) / .95 "Barlow Condensed", sans-serif; letter-spacing: .01em; }
+.data .m { font: 700 calc(40px * var(--k)) / 1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .16em; padding-bottom: 8px; }
+/* La doppia fascia: blu spessa, gialla sottile, a tutta larghezza. */
+.fasce { flex: none; height: calc(18px * var(--k)); background: var(--blu); box-shadow: 0 calc(12px * var(--k)) 0 var(--giallo); margin-bottom: calc(12px * var(--k)); }
+
+.testo { flex: 1 1 auto; display: flex; flex-direction: column; gap: calc(22px * var(--k)); padding: calc(38px * var(--k)) 60px 0; }
+.occhiello { font: 700 calc(36px * var(--k)) / 1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .22em; color: var(--testo-soft); }
+h1 { font: 800 calc(112px * var(--k)) / .92 "Barlow Condensed", sans-serif; text-transform: uppercase; color: var(--blu); letter-spacing: .005em;
+  min-height: calc(2 * .92 * 112px * var(--k)); margin-top: calc(-8px * var(--k)); }
+h1 small { display: block; font: 600 calc(38px * var(--k)) / 1.15 Barlow, sans-serif; text-transform: none; color: var(--testo-soft); letter-spacing: 0; margin-top: 10px; }
+/* Le celle si allungano a tutta la riga, così il filo sopra etichetta e valore è dritto. */
+.fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 34px; align-items: stretch; }
+.fatti dt, .fatti dd { border-top: 2px solid var(--filo); padding: calc(10px * var(--k)) 0; }
+.fatti dt { font: 700 calc(34px * var(--k)) / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .14em; color: var(--testo-soft); padding-top: calc(16px * var(--k)); }
+.fatti dd { font-size: calc(46px * var(--k)); font-weight: 600; line-height: 1.14; }
+.fatti b { color: var(--blu); font-weight: 800; }
+.fatti .nota { font-size: .78em; color: var(--testo-soft); }
+.nw { white-space: nowrap; }
+
+.iscrizioni { flex: none; background: var(--blu); color: #fff; padding: calc(26px * var(--k)) 60px calc(30px * var(--k));
+  display: flex; gap: 24px; align-items: center; }
+.iscrizioni svg { flex: none; width: calc(62px * var(--k)); height: calc(62px * var(--k)); }
+.iscrizioni div { font: 700 calc(34px * var(--k)) / 1.25 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .14em; }
+.iscrizioni b { display: block; font: 800 calc(46px * var(--k)) / 1.15 Barlow, sans-serif; text-transform: none; letter-spacing: -.01em; color: var(--giallo); }
+html.story .fatti dt, html.story .iscrizioni div, html.story .occhiello, html.story .data .g, html.story .fatti .nota { font-size: 44px; }
+.firma { display: none; position: absolute; left: 0; right: 0; bottom: 150px; text-align: center;
+  font: 800 46px / 1 "Barlow Condensed", sans-serif; letter-spacing: .3em; color: #fff; }
+html.story .firma { display: block; }
+html.story .iscrizioni { border-top: 2px solid rgba(255,255,255,.3); }
+
+/* Il calendario: righe con il giorno nel colore della gita. */
+.righe { display: flex; flex-direction: column; }
+.righe > div { display: flex; align-items: center; gap: 26px; padding: 3px 0; border-top: 2px solid var(--filo); }
+.giorno { flex: none; width: 200px; text-align: center; font: 700 38px / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .1em; }
+.dom { background: var(--giallo); color: var(--blu); } .sab { background: var(--blu); color: #fff; }
+.meta { font-size: 46px; font-weight: 600; line-height: 1.1; }
+.corso { margin-left: auto; flex: none; font: 700 34px / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .14em; color: var(--blu); border: 2px solid var(--blu); padding: 0 14px; }
+
+/* La scena del corso, senza foto: montagne a linee bianche sul blu e la figura. */
+.scena .figura { position: absolute; left: 110px; bottom: 40px; height: calc(var(--foto) * .46); }
