@@ -17,7 +17,21 @@
 
 ## Richieste nuove
 
-(nessuna)
+- [ ] **In corso (11/10): le tre proposte di grafica nel generatore dei post** (Social > Genera
+      post), scelte in Social > Impostazioni accanto a Ritocco e Montagna. Riferimento:
+      `grafica/proposte-post-social/` (tavole, sorgenti HTML/CSS, regole fisse nel README).
+      Piano, in ordine (ripartire dal primo non spuntato):
+  - [ ] `supabase/schema.sql`: `social_settings_style_valid` accetta anche `biglietto`,
+        `calendario`, `divano`; schema in produzione con backup.
+  - [ ] `web/social-templates.js`: `STILI` con i tre nuovi; `disegnaPost` (post 4:5 e story
+        9:16) per gita, eventi (cena, gara, corso, servizi) nei tre stili; calendario del mese
+        (`disegnaCalendario`, `misureCalendario`). Regole fisse: un solo blu `#084C8D` e un solo
+        giallo `#FCCF02`; titolo sempre alto 2 righe; testo dallo stesso punto; orari, prezzi e
+        scadenze in evidenza; iscrizioni grandi.
+  - [ ] `web/social.html`: scelta in Impostazioni con l'esempio per ogni stile.
+  - [ ] `web/test-social.js` aggiornato; `node web/test-social.js` e prova nel browser col
+        client finto (post e story di ogni tipo, A+ e 400 px).
+  - [ ] Commit, push su `2.8-SNAPSHOT` (deploy), allineare `dev` (non esiste `master`).
 
 ## Versione aperta: 2.8-SNAPSHOT
 
