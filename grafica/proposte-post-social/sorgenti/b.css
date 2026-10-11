@@ -42,7 +42,9 @@
   box-shadow: 0 12px 30px rgba(0,0,0,.3); font-size: 54px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
 .evidenza em { font-style: normal; }
 
-.iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
-.iscrizioni svg { flex: none; width: 64px; height: 64px; }
-.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: 42px; font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }
+/* Iscrizioni in un riquadro bianco, più grandi: si devono vedere. */
+.iscrizioni { margin-top: auto; display: flex; gap: 24px; align-items: center; background: #fff; color: var(--blu);
+  border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+.iscrizioni svg { flex: none; width: 72px; height: 72px; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 48px; font-weight: 800; color: var(--blu); letter-spacing: -.02em; }

@@ -8,12 +8,8 @@
 <link rel="stylesheet" href="c.css">
 <!-- Evento: il blu del club, gancio e nastro gialli come il calendario; si brinda con lo spumante. -->
 <style>
-html { --cat: #084C8D; --cat-ink: #fff; --gancio: #FCCF02; --nastro: #FCCF02; --nastro-ink: #084C8D; --evid-bg: transparent; --evid-ink: #FCCF02; }
+html { --cat: #084C8D; --cat-ink: #fff; --gancio: #FCCF02; --nastro: #FCCF02; --nastro-ink: #084C8D; }
 .info .quando { font-size: 56px; }
-/* Il disegno accanto al gancio: sotto, i dati sono tanti e non gli lascerebbero posto. */
-.su { flex: none; display: flex; gap: 10px; margin-top: 28px; height: 450px; margin-bottom: -14px; }
-.su .gancio { margin-top: 0; }
-.su svg { flex: 1 1 auto; height: 100%; }
 </style>
 </head>
 <body>
@@ -22,33 +18,33 @@ html { --cat: #084C8D; --cat-ink: #fff; --gancio: #FCCF02; --nastro: #FCCF02; --
     <div class="testa">
       <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
     </div>
-    <div class="su">
-      <div class="gancio">Si chiude<br>in festa!</div>
-      <!-- Due calici che brindano, con le scintille. -->
-      <svg viewBox="250 -10 280 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-        <g transform="rotate(14 330 300)">
-          <path d="M275 60 C275 150 295 176 330 179 C365 176 385 150 385 60 Z" fill="#fff"/>
-          <path d="M279 112 C283 160 300 173 330 175 C360 173 377 160 381 112 Z" fill="#FCCF02"/>
-          <rect x="325" y="178" width="10" height="96" fill="#fff"/>
-          <ellipse cx="330" cy="276" rx="46" ry="10" fill="#fff"/>
-        </g>
-        <g transform="rotate(-14 450 300)">
-          <path d="M395 60 C395 150 415 176 450 179 C485 176 505 150 505 60 Z" fill="#fff"/>
-          <path d="M399 112 C403 160 420 173 450 175 C480 173 497 160 501 112 Z" fill="#FCCF02"/>
-          <rect x="445" y="178" width="10" height="96" fill="#fff"/>
-          <ellipse cx="450" cy="276" rx="46" ry="10" fill="#fff"/>
-        </g>
-        <g fill="#fff">
-          <polygon points="390,0 400,26 426,30 404,44 410,70 390,56 370,70 376,44 354,30 380,26"/>
-          <circle cx="320" cy="20" r="8"/><circle cx="462" cy="18" r="8"/><circle cx="292" cy="58" r="6"/><circle cx="490" cy="56" r="6"/>
-        </g>
-      </svg>
+    <div class="gancio">Cena di fine<br>stagione</div>
+    <div class="scena">
+        <!-- Due calici che brindano, con le scintille. -->
+        <svg viewBox="250 -10 280 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <g transform="rotate(14 330 300)">
+            <path d="M275 60 C275 150 295 176 330 179 C365 176 385 150 385 60 Z" fill="#fff"/>
+            <path d="M279 112 C283 160 300 173 330 175 C360 173 377 160 381 112 Z" fill="#FCCF02"/>
+            <rect x="325" y="178" width="10" height="96" fill="#fff"/>
+            <ellipse cx="330" cy="276" rx="46" ry="10" fill="#fff"/>
+          </g>
+          <g transform="rotate(-14 450 300)">
+            <path d="M395 60 C395 150 415 176 450 179 C485 176 505 150 505 60 Z" fill="#fff"/>
+            <path d="M399 112 C403 160 420 173 450 175 C480 173 497 160 501 112 Z" fill="#FCCF02"/>
+            <rect x="445" y="178" width="10" height="96" fill="#fff"/>
+            <ellipse cx="450" cy="276" rx="46" ry="10" fill="#fff"/>
+          </g>
+          <g fill="#fff">
+            <polygon points="390,0 400,26 426,30 404,44 410,70 390,56 370,70 376,44 354,30 380,26"/>
+            <circle cx="320" cy="20" r="8"/><circle cx="462" cy="18" r="8"/><circle cx="292" cy="58" r="6"/><circle cx="490" cy="56" r="6"/>
+          </g>
+        </svg>
     </div>
-    <div class="nastro">Cena di fine stagione</div>
+    <div class="nastro">Sabato 10 aprile</div>
     <div class="info">
-      <div class="quando">Sabato 10 aprile · <b>ore 20:00</b></div>
+      <div class="quando">Si chiude in festa!</div>
       <div class="riga">Salone dell'oratorio Don Bosco, Asti</div>
-      <div class="riga">Soci <b>€ 30</b> · bambini <b>€ 15</b></div>
+      <div class="riga"><b>Ore 20:00</b> · soci <b>€ 30</b> · bambini <b>€ 15</b></div>
       <div class="poi">Con le premiazioni della gara sociale</div>
       <div class="poi">Iscrizioni entro <b>mercoledì 7 aprile</b></div>
     </div>

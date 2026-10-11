@@ -43,10 +43,11 @@ hanno dati inventati.
   quel post; la proposta cambia solo come sono disegnate.
 - **Giallo dei corsi e domeniche:** sono lo stesso giallo. Nel calendario il
   corso è un'etichetta contornata, non piena, per non confondersi.
-- **C** è "Divano" per la presciistica; sugli altri post il gancio cambia
-  ("Tutti a La Thuile!", "Si chiude in festa!") e va scritto post per post: è
-  la grafica che chiede più lavoro a chi pubblica. Il gancio dice dove si va,
-  la data sta nel nastro.
+- **C** è "Divano" per la presciistica. In alto il nome ("Ginnastica
+  presciistica", "Gita a La Thuile"), nella fascia la data, sotto il gancio
+  ("Alzati dal divano!", "Tutti in pista!", "Si chiude in festa!") e i dati: si
+  capisce subito cos'è e quando. Il gancio va scritto post per post: è la
+  grafica che chiede più lavoro a chi pubblica.
 - **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
   "Calendario di gennaio" per il calendario del mese.
 - **A con la foto:** in alto la foto caricata nel generatore (gita, cena,
@@ -65,10 +66,10 @@ sono bianco trasparente sul blu; i riquadri in evidenza sono gialli.
 
 | | A · Biglietto | B · Calendario | C · Divano |
 |---|---|---|---|
-| Titolo / gancio | 104, sempre alto 2 righe (+ sottotitolo 40) | 104, sempre alto 2 righe | gancio 150 su 2 righe, fascia 72 |
-| Dati | etichette 36, valori 50 | etichette 38, valori 56, note 40 | data 58, righe 46, note 40 |
-| In evidenza | orari, prezzi, scadenze in blu | orari e prezzi in giallo; riquadro giallo 54 | orari, prezzi, scadenze evidenziati (blu e giallo) |
-| Iscrizioni | 36 / 40 | 36 / 42 | 36 / 42 |
+| Titolo | 104, sempre alto 2 righe (+ sottotitolo 40) | 104, sempre alto 2 righe | nome 150 su 2 righe; fascia con la data 72 |
+| Dati | etichette 36, valori 50 | etichette 38, valori 56, note 40 | gancio 58 ("Alzati dal divano!"), righe 46, note 40 |
+| In evidenza | orari, prezzi, scadenze in blu | orari e prezzi in giallo; riquadro giallo 54 | orari, prezzi, scadenze in un riquadro bianco con la scritta blu, uguale su giallo e su blu |
+| Iscrizioni | 40 / 46, nel biglietto | 40 / 48, in un riquadro bianco | 40 / 48, in un riquadro bianco |
 
 Nel foglio di B mese 46, giorno 48, numero 250 e ora 58: il foglio è lungo
 uguale anche quando l'ora non c'è (la gita).

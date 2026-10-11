@@ -61,10 +61,12 @@ html.post .titolo { font-size: 104px; min-height: calc(2 * .95 * 104px); }
 .durata .frase em { font-style: normal; }
 
 /* Iscrizioni e mail, come in fondo al biglietto di A. */
-.iscrizioni { margin-top: auto; display: flex; gap: 22px; align-items: center; color: #fff; padding: 0 8px; }
-.iscrizioni svg { flex: none; width: calc(64px * var(--k)); height: calc(64px * var(--k)); }
-.iscrizioni div { font-size: calc(36px * var(--k)); font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: calc(42px * var(--k)); font-weight: 800; color: var(--giallo); letter-spacing: -.02em; }
+/* Iscrizioni in un riquadro bianco, più grandi: si devono vedere. */
+.iscrizioni { margin-top: auto; display: flex; gap: 24px; align-items: center; background: #fff; color: var(--blu);
+  border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
+.iscrizioni svg { flex: none; width: 72px; height: 72px; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 48px; font-weight: 800; color: var(--blu); letter-spacing: -.02em; }
 </style>
 </head>
 <body>
@@ -102,7 +104,7 @@ html.post .titolo { font-size: 104px; min-height: calc(2 * .95 * 104px); }
       <div class="frase">Tutti i <em>mercoledì</em> <span style="white-space:nowrap">fino al 13 gennaio</span></div>
     </div>
     <div class="iscrizioni">
-      <svg viewBox="0 0 24 24" fill="#FCCF02" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
+      <svg viewBox="0 0 24 24" fill="#084C8D" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>
       <div>Iscrizioni in negozio o via mail<b>sciclubdonboscoasti@gmail.com</b></div>
     </div>
   </div>

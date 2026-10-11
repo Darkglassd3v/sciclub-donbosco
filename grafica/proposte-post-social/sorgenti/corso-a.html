@@ -55,14 +55,16 @@ html.post h1 { min-height: calc(2 * .98 * 104px + 58px); }
 .fatti .nw { white-space: nowrap; }
 /* Story: corpi fissi, non scalati, per stare nel biglietto senza scendere sotto i 44 px. */
 html.story h1 { font-size: 134px; }
+html.story .iscrizioni div { font-size: 44px; }
+html.story .iscrizioni b { font-size: 46px; }
 html.story .fatti dt { font-size: 44px; }
 html.story .fatti dd { font-size: 56px; }
 
 .iscrizioni { flex: none; margin: 0 40px; border-top: 4px dashed var(--filo);
   padding: calc(20px * var(--k)) 16px calc(26px * var(--k)); display: flex; gap: 22px; align-items: center; }
-.iscrizioni svg { flex: none; width: calc(64px * var(--k)); height: calc(64px * var(--k)); }
-.iscrizioni div { font-size: calc(36px * var(--k)); font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: calc(40px * var(--k)); font-weight: 800; color: var(--accento); letter-spacing: -.02em; }
+.iscrizioni svg { flex: none; width: calc(70px * var(--k)); height: calc(70px * var(--k)); }
+.iscrizioni div { font-size: calc(40px * var(--k)); font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: calc(46px * var(--k)); font-weight: 800; color: var(--accento); letter-spacing: -.02em; }
 
 .firma { display: none; }
 html.story .firma { display: block; position: absolute; left: 0; right: 0; top: 1640px; text-align: center;

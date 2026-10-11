@@ -43,6 +43,6 @@ h1 { min-height: calc(2 * .98 * 104px + 58px); }
 
 .iscrizioni { flex: none; margin: 0 40px; border-top: 4px dashed var(--filo);
   padding: 20px 16px 26px; display: flex; gap: 22px; align-items: center; }
-.iscrizioni svg { flex: none; width: 64px; height: 64px; }
-.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: 40px; font-weight: 800; color: var(--accento); letter-spacing: -.02em; }
+.iscrizioni svg { flex: none; width: 70px; height: 70px; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 46px; font-weight: 800; color: var(--accento); letter-spacing: -.02em; }

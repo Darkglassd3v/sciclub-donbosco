@@ -1,7 +1,8 @@
 /* C · Manifesto (era "Divano") per gite, calendario ed eventi. Il fondo è il
  * colore della categoria (--cat) e si scrive nel suo inchiostro (--cat-ink):
- * sul giallo solo blu scuro (brand-guidelines §1). Un gancio enorme, un
- * disegno, il nastro col nome, sotto i dati e le iscrizioni. Solo post 4:5. */
+ * sul giallo solo blu (brand-guidelines §1). In alto il nome, enorme (classe
+ * .gancio), un disegno, nella fascia la data; sotto il gancio ("Tutti in
+ * pista!"), i dati e le iscrizioni. Solo post 4:5. */
 .cv { background: var(--cat); color: var(--cat-ink); }
 .contenuto { position: absolute; left: 64px; right: 64px; top: 56px; bottom: 56px; display: flex; flex-direction: column; }
 
@@ -24,13 +25,14 @@
 .info .quando { font-size: 58px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
 .info .riga { font-size: 46px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
 .info .poi { font-size: 40px; font-weight: 600; margin-top: 8px; line-height: 1.2; }
-/* Orari, prezzi e scadenze evidenziati: blu con la scritta gialla sui post gialli,
- * gialli sui post blu (--evid-bg, --evid-ink nel singolo post). */
-.info b { font-weight: 800; background: var(--evid-bg, var(--blu)); color: var(--evid-ink, var(--giallo)); padding: 0 .16em; border-radius: .14em;
+/* Orari, prezzi e scadenze: riquadro bianco con la scritta blu, uguale sul giallo
+ * e sul blu (contrasto 8,7:1). Lo stesso bianco delle iscrizioni qui sotto. */
+.info b { font-weight: 800; background: #fff; color: var(--blu); padding: 0 .16em; border-radius: .14em;
   -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 
-.iscrizioni { flex: none; display: flex; gap: 20px; align-items: center; margin-top: 24px; padding-top: 20px;
-  border-top: 4px dashed currentColor; }
-.iscrizioni svg { flex: none; width: 60px; height: 60px; fill: currentColor; }
-.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: 42px; font-weight: 800; letter-spacing: -.02em; }
+/* Iscrizioni in un riquadro bianco, più grandi: si devono vedere in tutti i post. */
+.iscrizioni { flex: none; display: flex; gap: 24px; align-items: center; margin-top: 20px; padding: 18px 30px;
+  background: #fff; color: var(--blu); border-radius: 24px; }
+.iscrizioni svg { flex: none; width: 72px; height: 72px; fill: currentColor; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 48px; font-weight: 800; letter-spacing: -.02em; }

@@ -24,7 +24,7 @@ html.story .contenuto { top: 262px; bottom: 352px; }
  * sempre nello stesso punto. */
 .gancio { flex: none; height: 270px; font-size: 150px; font-weight: 800; letter-spacing: -.045em; line-height: .9; margin-top: 28px; }
 html.story .gancio { height: auto; }
-html.story .gancio { font-size: 176px; margin-top: 44px; }
+html.story .gancio { font-size: 150px; margin-top: 44px; }
 
 .scena { flex: 1 1 0; min-height: 0; position: relative; z-index: 1; margin-bottom: -14px; }
 html.post .scena { flex: none; height: 180px; }
@@ -41,13 +41,14 @@ html.post .info { flex: 1 1 auto; }
 .info .dove { font-size: 46px; font-weight: 700; margin-top: 8px; line-height: 1.15; }
 .info .poi { font-size: 40px; font-weight: 600; margin-top: 8px; line-height: 1.2; }
 /* Orari e date evidenziati come col pennarello, come negli altri post di C. */
-.info b { font-weight: 800; background: var(--blu); color: var(--giallo); padding: 0 .16em; border-radius: .14em; }
+.info b { font-weight: 800; background: #fff; color: var(--blu); padding: 0 .16em; border-radius: .14em; }
 /* Iscrizioni e mail, come in fondo al biglietto di A. */
-.iscrizioni { flex: none; display: flex; gap: 20px; align-items: center; margin-top: 26px; padding-top: 22px;
-  border-top: 4px dashed rgba(6,57,106,.35); }
-.iscrizioni svg { flex: none; width: 60px; height: 60px; }
-.iscrizioni div { font-size: 36px; font-weight: 600; line-height: 1.2; }
-.iscrizioni b { display: block; font-size: 42px; font-weight: 800; letter-spacing: -.02em; }
+/* Iscrizioni in un riquadro bianco, come negli altri post di C. */
+.iscrizioni { flex: none; display: flex; gap: 24px; align-items: center; margin-top: 20px; padding: 18px 30px;
+  background: #fff; color: var(--blu); border-radius: 24px; }
+.iscrizioni svg { flex: none; width: 72px; height: 72px; }
+.iscrizioni div { font-size: 40px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 48px; font-weight: 800; letter-spacing: -.02em; }
 html.story .info { margin-top: 44px; }
 html.story .info .quando { font-size: 66px; }
 html.story .info .dove { font-size: 56px; }
@@ -63,7 +64,7 @@ html.story .iscrizioni svg { width: 70px; height: 70px; }
     <div class="testa">
       <div class="logo-box"><img src="../../logo/logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco"></div>
     </div>
-    <div class="gancio">Alzati<br>dal divano!</div>
+    <div class="gancio">Ginnastica<br>presciistica</div>
     <div class="scena">
       <!-- Il divano vuoto e gli sci appoggiati. -->
       <svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
@@ -97,11 +98,11 @@ html.story .iscrizioni svg { width: 70px; height: 70px; }
         </g>
       </svg>
     </div>
-    <div class="nastro">Ginnastica presciistica</div>
+    <div class="nastro">Mercoledì 21 ottobre</div>
     <div class="info">
-      <div class="quando">Mercoledì 21 ottobre · <b>ore 19:30</b></div>
-      <div class="dove">Palestra Way Assauto, Asti</div>
-      <div class="poi">poi tutti i mercoledì fino al <b>13 gennaio</b></div>
+      <div class="quando">Alzati dal divano!</div>
+      <div class="dove"><b>Ore 19:30</b> · Palestra Way Assauto, Asti</div>
+      <div class="poi">Poi tutti i mercoledì fino al <b>13 gennaio</b></div>
       <div class="poi">Lezioni di un'ora · soci tesserati e assicurati</div>
     </div>
     <div class="iscrizioni">
