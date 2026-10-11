@@ -33,6 +33,10 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
 4. Allineare `dev` (dove gira il backup del database): in una worktree, `git merge
    refs/tags/X.Y` su `origin/dev`, controllare che l'albero sia uguale al tag, push su `dev`
    (niente force push).
+5. Quando le pagine pubblicano dal nuovo SNAPSHOT, il branch `X.Y` e il vecchio
+   `X.Y-SNAPSHOT` non servono più: la versione resta nel tag `X.Y`. Si tolgono con
+   `git push origin --delete refs/heads/X.Y refs/heads/X.Y-SNAPSHOT` (dopo aver controllato con
+   `git tag --contains` che il tag li contenga). Su GitHub restano solo `dev` e lo SNAPSHOT aperto.
 
 La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 

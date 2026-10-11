@@ -5,8 +5,11 @@
 
 ## Stato del repository (11/10/2026)
 
-- Rilasciata la **2.7** (branch e tag `2.7`). Branch di lavoro `2.8-SNAPSHOT`: le pagine online
-  sono le sue (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`) e `dev` è allineato a lui.
+- Rilasciata la **2.7** (tag `2.7`). Branch di lavoro `2.8-SNAPSHOT`: le pagine online sono le
+  sue (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`) e `dev` è allineato a lui. L'11/10 tolti i
+  branch vecchi (versioni 1.x-2.7, i loro SNAPSHOT, `claude/*`), tutti già contenuti nei tag e in
+  `2.8-SNAPSHOT`: restano solo `dev` e `2.8-SNAPSHOT`. Gli SHA per ricrearli sono in
+  `.git/branch-cancellati-2026-10-11.txt` (solo su questo PC).
 - Database di produzione: schema di `supabase/schema.sql` applicato l'11/10 (grafiche nuove dei
   post: colonne `social_events.hook`, `event_time` e `place`, check di `social_settings.style`).
   Backup in `supabase/migration/backup-2026-10-11-ora-luogo/` (fuori da git).
