@@ -11,9 +11,11 @@ foto fatta col telefono).
 
 <img src="cartello-canale-whatsapp.jpg" width="49%">
 
-QR di 98 mm nero su bianco, il colore più leggibile; verde WhatsApp solo nella
-cornice (come scritta sul bianco non si leggerebbe). Sotto, i tre passi e
-l'indirizzo per chi non riesce a inquadrarlo.
+QR di 86 mm nero su bianco, il colore più leggibile; verde WhatsApp solo nella
+cornice (come scritta sul bianco non si leggerebbe). Sotto, i passi per
+seguire il canale e, in giallo, il quarto: **attivare le notifiche** con la
+campanella, perché i canali arrivano senza e gli avvisi dell'ultimo minuto non
+si vedrebbero. In fondo l'indirizzo per chi non riesce a inquadrare il codice.
 
 ## QR nella scheda di tesseramento
 
