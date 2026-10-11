@@ -223,7 +223,7 @@ assert.strictEqual(giornoMese(null), "");
   assert.ok(b.includes("Salone dell'oratorio") && !/<div class="et">Orario/.test(b), "l'orario ripetuto accanto al foglio");
   // In C l'orario e i prezzi stanno su una riga, le iscrizioni in fondo senza i due punti.
   const c = disegnaPost(modelloPost(cena, "post"), "divano");
-  assert.ok(c.includes("<b>ore 20:00</b> · soci <b>€ 30</b>"), "orario e prezzi non sulla stessa riga");
+  assert.ok(c.includes("<b>Ore 20:00</b> · soci <b>€ 30</b>"), "orario e prezzi non sulla stessa riga");
   assert.ok(c.includes('<div class="poi">Iscrizioni entro <b>mercoledì 7 aprile</b></div>'));
   // Senza data: niente foglio in B, il nome del tipo nella fascia di C e nel bollo di A.
   const corso = modelloPost({ kind: "corso", title: "Corso bambini", facts: [["Età", "5–12 anni"]] }, "post");
@@ -239,6 +239,27 @@ assert.strictEqual(giornoMese(null), "");
   assert.ok(disegnaCalendario("Calendario di gennaio", righe, "calendario", "2027-01").includes("Gennaio 2027"));
   const calC = disegnaCalendario("Calendario di gennaio", righe, "divano", "2027-01");
   assert.ok(calC.includes(">Dom 10<") && calC.includes("Le gite del mese") && calC.includes("height:1350px"));
+  // Ora, luogo e scadenza di un evento hanno un campo loro e diventano le informazioni che le grafiche conoscono.
+  const presci = { kind: "corso", title: "Ginnastica presciistica", event_date: "2026-10-21", event_time: "ore 19:30",
+    place: "Palestra Way Assauto, Asti", deadline: "2026-10-19",
+    facts: [["Orario", "19:00"], ["Dove", "vecchio"], ["Quando", "ogni mercoledì"], ["Iscrizioni", "in negozio"]] };
+  assert.deepStrictEqual(modelloPost(presci, "post").facts, [["Orario", "ore 19:30"], ["Dove", "Palestra Way Assauto, Asti"],
+    ["Quando", "ogni mercoledì"], ["Iscrizioni", "entro lunedì 19 ottobre"]], "campi nuovi o doppioni delle informazioni scritte a mano");
+  assert.deepStrictEqual(modelloPost({ ...presci, event_time: "", place: null, deadline: null }, "post").facts, presci.facts,
+    "senza i campi nuovi le informazioni scritte a mano devono restare tutte");
+  assert.deepStrictEqual(modelloPost({ ...presci, event_time: "dalle 18 alle 20" }, "post").facts[0], ["Orario", "dalle 18 alle 20"]);
+  assert.match(testoPost(presci), /Orario: ore 19:30\nDove: Palestra Way Assauto, Asti\nQuando: ogni mercoledì\nIscrizioni: entro lunedì 19 ottobre/);
+  assert.match(disegnaPost(modelloPost(presci, "post"), "calendario"), /<div class="ora">ore 19:30<\/div>/);
+  assert.ok(disegnaPost(modelloPost(presci, "post"), "divano").includes("<b>Ore 19:30</b> · Palestra Way Assauto, Asti"),
+    "nel Divano ora e luogo vanno sulla stessa riga");
+  // I telefoni stanno in una riga sola (un elemento), e la frase dice che si può anche telefonare.
+  impostaContatti([{ id: 3, name: "Cesare", phone: "3485171707" }, { id: 4, name: "Irene", phone: "3487324789" }]);
+  for (const st of ["biglietto", "calendario", "divano"]) {
+    const html = disegnaPost(modelloPost({ ...presci, contacts: [3, 4] }, "post"), st);
+    assert.strictEqual((html.match(/class="tel"/g) || []).length, 1, `${st}: un telefono per riga`);
+    assert.ok(html.includes("Iscrizioni in negozio, via mail o al telefono") && html.includes("<b>3487324789</b>"));
+    assert.ok(disegnaPost(modelloPost(presci, "post"), st).includes("Iscrizioni in negozio o via mail"));
+  }
   impostaContatti([]);
 }
 

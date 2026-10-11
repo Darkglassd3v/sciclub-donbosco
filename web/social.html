@@ -257,11 +257,19 @@
                   <label class="label" for="fData">Data</label>
                   <input class="input" type="date" id="fData">
                 </div>
+                <div class="field" data-per="evento">
+                  <label class="label" for="fOra">Ora</label>
+                  <input class="input" id="fOra" placeholder="Es. 19:30">
+                </div>
+                <div class="field campo-largo" data-per="evento">
+                  <label class="label" for="fDove">Dove</label>
+                  <input class="input" id="fDove" placeholder="Es. Palestra Way Assauto, Asti">
+                </div>
                 <div class="field campo-largo" data-per="gita">
                   <span class="label" id="lCalGita">Giorno della gita</span>
                   <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
                 </div>
-                <div class="field" data-per="gita">
+                <div class="field" data-per="gita evento">
                   <label class="label" for="fScadenza">Iscrizioni entro</label>
                   <input class="input" type="date" id="fScadenza">
                 </div>
@@ -1007,6 +1015,8 @@
     el("fCta").value = post.cta || "";
     if (post.sponsor_id) el("fSponsor").value = post.sponsor_id;
     el("fScadenza").value = post.deadline || "";
+    el("fOra").value = post.event_time || "";
+    el("fDove").value = post.place || "";
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
     foto = post.photo || null;
@@ -1069,7 +1079,9 @@
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? righeDi("fFermate") : [],
       facts: g === "evento" ? righeDi("fInfo") : [],
-      deadline: g === "gita" ? el("fScadenza").value || null : null,
+      deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
+      event_time: g === "evento" ? el("fOra").value.trim() || null : null,
+      place: g === "evento" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
       photo: g === "sponsor" ? null : foto,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,

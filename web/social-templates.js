@@ -22,6 +22,7 @@ const SOCIAL = {
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
   // In fondo ai post delle grafiche della 2.8, sopra i telefoni scelti.
   iscrizioni: "Iscrizioni in negozio o via mail",
+  iscrizioniTel: "Iscrizioni in negozio, via mail o al telefono",
   mail: "sciclubdonboscoasti@gmail.com",
 };
 
@@ -175,8 +176,25 @@ function modelloPost(ev, fmt) {
   }
   return {
     ...base, kind: "evento", title: ev.title, sub: ev.subtitle || "",
-    date: dataLunga(ev.event_date), facts: ev.facts || [],
+    date: dataLunga(ev.event_date), facts: fattiEvento(ev),
   };
+}
+
+/* Le informazioni di un evento come le disegnano tutte le grafiche. Ora,
+ * luogo e scadenza hanno un campo loro nel form (prima l'ora finiva nei
+ * prezzi): diventano le informazioni "Orario", "Dove" e "Iscrizioni", che le
+ * grafiche della 2.8 sanno dove mettere (il foglio di B, la riga dei prezzi in
+ * C, il riquadro giallo...). */
+function fattiEvento(ev) {
+  const ora = String(ev.event_time || "").trim().replace(/^ore\s*/i, ""), dove = String(ev.place || "").trim();
+  // Un'informazione scritta a mano con lo stesso nome di un campo pieno (i post di prima) non si ripete.
+  const resto = (ev.facts || []).filter(([n]) => {
+    const t = String(n || "").trim();
+    return !(ora && ORARIO.test(t)) && !(dove && /^dove$/i.test(t)) && !(ev.deadline && ISCRIZIONI.test(t));
+  });
+  // "ore" solo davanti a un orario: "dalle 18 alle 20" resta com'è.
+  return [ora && ["Orario", /^\d/.test(ora) ? `ore ${ora}` : ora], dove && ["Dove", dove], ...resto,
+    ev.deadline && ["Iscrizioni", `entro ${giornoMese(ev.deadline)}`]].filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -563,8 +581,12 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .cv.nuovo .logo-box img { display: block; height: 150px; }
     .cv.nuovo .col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
     .cv.nuovo [data-righe] { font-size: calc(var(--t) * var(--s)); }
-    .cv.nuovo .isc .tel { display: block; font-weight: 700; }
-    .cv.nuovo .isc .tel span { font-weight: 500; }
+    /* I telefoni su una riga sola, larga quanto il riquadro (nella story a 44 px due contatti ci stanno
+     * solo così), a capo solo fra un contatto e l'altro: uno sotto l'altro confondevano. */
+    .cv.nuovo .isc { flex-wrap: wrap; row-gap: 6px; }
+    .cv.nuovo .isc .tel { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; column-gap: .75em; font-size: ${z(36)}; font-weight: 500; }
+    .cv.nuovo .isc .tel span { white-space: nowrap; }
+    .cv.nuovo .isc .tel b { font-weight: 800; }
 
     .sa .biglietto { position: absolute; left: 60px; right: 60px; top: 60px; bottom: 60px; background: #fff; border-radius: 40px;
       overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 14px 40px rgba(0,0,0,.25); }
@@ -601,7 +623,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sa .fatti dd { font-size: ${z(50)}; font-weight: 700; line-height: 1.12; }
     .sa.story .fatti dd { font-size: ${z(56)}; }
     .sa .fatti b { color: #084C8D; }
-    .sa .isc { flex: none; margin: 0 40px; border-top: 4px dashed #C7D0DA; padding: 20px 16px 26px; display: flex; gap: 22px; align-items: center; }
+    .sa .isc { flex: none; margin: 0 40px; border-top: 4px dashed #C7D0DA; padding: 20px 16px 26px; display: flex; column-gap: 22px; align-items: center; }
     .sa.story .isc { padding: 26px 16px 34px; }
     .sa .isc > svg { flex: none; width: 70px; height: 70px; fill: #084C8D; }
     .sa.story .isc > svg { width: 91px; height: 91px; }
@@ -633,7 +655,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sb.story .centro { padding-top: 22px; }
     .sb .foglio { flex: none; width: ${q(430)}; background: #fff; border-radius: 28px; text-align: center; position: relative;
       box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
-    .sb .foglio .mese { font-size: ${q(46)}; font-weight: 800; border-radius: 28px 28px 0 0; padding: ${q(30)} 0 ${q(14)}; letter-spacing: -.01em; }
+    .sb .foglio .mese { font-size: ${z(46)}; font-weight: 800; border-radius: 28px 28px 0 0; padding: ${q(30)} 0 ${q(14)}; letter-spacing: -.01em; }
     .sb .anello { position: absolute; top: -22px; width: 30px; height: 58px; border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
     .sb .foglio .giorno { font-size: ${z(48)}; font-weight: 700; margin-top: ${q(18)}; }
     .sb .foglio .num { font-size: ${q(250)}; font-weight: 800; line-height: .82; letter-spacing: -.05em; margin-top: ${q(6)}; }
@@ -649,7 +671,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sb.story .dati small { font-size: ${z(44)}; }
     .sb .evid { flex: none; background: #FCCF02; border-radius: 28px; padding: ${q(28)} 40px; color: #084C8D; box-shadow: 0 12px 30px rgba(0,0,0,.3);
       font-size: ${z(54)}; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-    .sb .isc { flex: none; margin-top: auto; display: flex; gap: 24px; align-items: center; background: #fff; color: #084C8D;
+    .sb .isc { flex: none; margin-top: auto; display: flex; column-gap: 24px; align-items: center; background: #fff; color: #084C8D;
       border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
     .sb .isc > svg, .sc .isc > svg { flex: none; width: 72px; height: 72px; fill: currentColor; }
     .sb .isc > div, .sc .isc > div { font-size: ${z(40)}; font-weight: 600; line-height: 1.2; }
@@ -692,7 +714,7 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sc .poi { font-size: ${z(40)}; font-weight: 600; margin-top: 8px; line-height: 1.2; white-space: pre-line; }
     .sc.story .poi { font-size: ${z(46)}; }
     .sc .info b { background: #084C8D; color: #FCCF02; padding: 0 .16em; border-radius: .14em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-    .sc .isc { flex: none; display: flex; gap: 24px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 3px solid #C7D0DA; }
+    .sc .isc { flex: none; display: flex; column-gap: 24px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 3px solid #C7D0DA; }
     .sc.story .isc > svg { width: 70px; height: 70px; }
     .sc .righe { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
     .sc .righe > div { display: flex; align-items: center; gap: 20px; }
@@ -736,11 +758,11 @@ const partenze = (s) => (s.stops || []).filter(([t, l]) => t || l)
 
 const icoMail = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>';
 
-/** In fondo a ogni post: come ci si iscrive (in negozio o via mail) e i telefoni scelti per il post. */
+/** In fondo a ogni post: come ci si iscrive (in negozio, via mail) e i telefoni scelti per il post, su una riga. */
 function iscrizioni(contatti = []) {
-  const tel = contatti.map((c) => `<span class="tel">${icoTel("1em", "currentColor")} <span>${escS(c.name)}</span> ${escS(c.phone)}${c.hours
-    ? ` <span>${escS(c.hours)}</span>` : ""}</span>`).join("");
-  return `<div class="isc">${icoMail}<div>${escS(SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b>${tel}</div></div>`;
+  const tel = contatti.length ? `<span class="tel">${icoTel("1em", "currentColor")}${contatti.map((c) =>
+    `<span>${escS(c.name)} <b>${escS(c.phone)}</b>${c.hours ? ` ${escS(c.hours)}` : ""}</span>`).join("")}</span>` : "";
+  return `<div class="isc">${icoMail}<div>${escS(contatti.length ? SOCIAL.iscrizioniTel : SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b></div>${tel}</div>`;
 }
 
 const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt=""></div>`;
@@ -967,15 +989,18 @@ function postDivano(s) {
     ? `${escS(n)}${ISCRIZIONI.test(String(n).trim()) ? " " : ": "}` : ""}${evidenzia(v)}`;
   // Come nella proposta: l'orario e i prezzi su una riga sola, le iscrizioni in fondo.
   const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
-  const ora = fattoDi(fatti, ORARIO), iscr = fattoDi(fatti, ISCRIZIONI);
+  const ora = fattoDi(fatti, ORARIO), dove = fattoDi(fatti, /^dove$/i), iscr = fattoDi(fatti, ISCRIZIONI);
   const righe = gita ? [
     p.length && `<div class="riga">Partenze: ${p.map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join(" · ")}</div>`,
     quota && `<div class="riga">${quota}</div>`,
     s.corso && '<div class="poi">Nello stesso giorno c\'è il corso</div>',
     s.scadenza && `<div class="poi">Iscrizioni entro <b>${escS(s.scadenza)}</b></div>`,
   ] : [
-    ...fatti.filter((f) => f !== iscr).map((f) => `<div class="riga">${fatto(f)}${f === ora && quota ? ` · ${quota}` : ""}</div>`),
+    // In grande l'ora con i prezzi (o con il luogo) e il luogo; il resto sotto, più piccolo.
+    ora && `<div class="riga">${evidenzia(maiuscola(String(ora[1])))}${quota ? ` · ${quota}` : dove ? ` · ${evidenzia(dove[1])}` : ""}</div>`,
+    dove && (!ora || quota) && `<div class="riga">${evidenzia(dove[1])}</div>`,
     !ora && quota && `<div class="riga">${quota}</div>`,
+    ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map((f) => `<div class="poi">${fatto(f)}</div>`),
     String(s.sub || "").trim() && `<div class="poi">${escS(String(s.sub).trim())}</div>`,
     iscr && `<div class="poi">${fatto(iscr)}</div>`,
   ];
@@ -1169,7 +1194,7 @@ function testoPost(ev, sp, stagione) {
     righe.push(`${ev.title}${ev.event_date ? ` · ${dataLunga(ev.event_date)}` : ""}`);
     if (ev.subtitle) righe.push(ev.subtitle);
     if (quote) righe.push("", quote);
-    for (const [k, v] of ev.facts || []) righe.push(`${k}: ${v}`);
+    for (const [k, v] of fattiEvento(ev)) righe.push(`${k}: ${v}`);
   }
   if (tel) righe.push("", `Info e iscrizioni: ${tel}`);
   righe.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${semplice(ev.title)}` : ""}`);
