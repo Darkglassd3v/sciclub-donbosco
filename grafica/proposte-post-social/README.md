@@ -45,7 +45,8 @@ hanno dati inventati.
   corso è un'etichetta contornata, non piena, per non confondersi.
 - **C** è "Divano" per la presciistica. In alto il nome ("Ginnastica
   presciistica", "Gita a La Thuile"), nella fascia la data, sotto il gancio
-  ("Alzati dal divano!", "Tutti in pista!", "Si chiude in festa!") e i dati: si
+  ("Alzati dal divano!", "Tutti in pista!", "Si chiude in festa!") e i dati, in
+  un riquadro bianco uguale sul giallo e sul blu, con le iscrizioni in fondo: si
   capisce subito cos'è e quando. Il gancio va scritto post per post: è la
   grafica che chiede più lavoro a chi pubblica.
 - **Titoli che dicono cos'è:** "Gita a La Thuile", non solo il posto;
@@ -68,8 +69,8 @@ sono bianco trasparente sul blu; i riquadri in evidenza sono gialli.
 |---|---|---|---|
 | Titolo | 104, sempre alto 2 righe (+ sottotitolo 40) | 104, sempre alto 2 righe | nome 150 su 2 righe; fascia con la data 72 |
 | Dati | etichette 36, valori 50 | etichette 38, valori 56, note 40 | gancio 58 ("Alzati dal divano!"), righe 46, note 40 |
-| In evidenza | orari, prezzi, scadenze in blu | orari e prezzi in giallo; riquadro giallo 54 | orari, prezzi, scadenze in un riquadro bianco con la scritta blu, uguale su giallo e su blu |
-| Iscrizioni | 40 / 46, nel biglietto | 40 / 48, in un riquadro bianco | 40 / 48, in un riquadro bianco |
+| In evidenza | orari, prezzi, scadenze in blu | orari e prezzi in giallo; riquadro giallo 54 | sotto la fascia un riquadro bianco uguale in tutti i post, testo blu; orari, prezzi e scadenze in un riquadrino blu con la scritta gialla |
+| Iscrizioni | 40 / 46, nel biglietto | 40 / 48, in un riquadro bianco | 40 / 48, in fondo al riquadro bianco, dopo un filo |
 
 Nel foglio di B mese 46, giorno 48, numero 250 e ora 58: il foglio è lungo
 uguale anche quando l'ora non c'è (la gita).
