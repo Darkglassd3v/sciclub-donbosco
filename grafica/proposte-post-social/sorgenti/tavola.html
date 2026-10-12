@@ -36,6 +36,7 @@ const PROPOSTE = {
   g: { nome: "Cronometro", idea: "Come le grafiche TV della Coppa del Mondo: foto scurita a tutto schermo, data come il cronometro, dati in barre gialle e bianche, sottopancia delle iscrizioni." },
   h: { nome: "Eco", idea: "Manifesto sportivo: foto in bianco e nero tinta di blu, titolo giallo tra copie contornate, dati in tre blocchi pieni (bianco, blu, giallo)." },
   i: { nome: "Bento", idea: "Griglia di tessere sulla foto: una tessera per dato coi numeri grandi, la data nella gialla alta, il logo nella sua tessera bianca." },
+  k: { nome: "Piani", idea: "Come lo Ski Club of Great Britain: la foto a tutta pagina, scurita sotto il testo; piani a 45° semitrasparenti; la tessera gialla del «quando» con l'ora." },
 };
 const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
 document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;

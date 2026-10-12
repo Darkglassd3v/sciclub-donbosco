@@ -19,6 +19,18 @@
 
 ## Richieste nuove
 
+- [ ] 12/10: proposte di grafica dai sei post dello Ski Club of Great Britain in `inspiration/`.
+      Fra tre abbozzi (K · Piani, L · Pendio, M · Album) scelta **K · Piani**, fatta come tavola
+      con i quattro post e la story del corso in `grafica/proposte-post-social/` (L e M
+      cancellate). Se va nel generatore:
+  - [ ] Nuovo valore in `STILI` e funzione in `web/social-templates.js`, scelta in Impostazioni
+        (check di `social_settings.style`). Usa solo Barlow: il corsivo 800 del gancio va copiato
+        in `web/`.
+  - [ ] Senza foto: cosa mettere come fondo, ora che la foto è a tutta pagina (l'omino al centro
+        non piace).
+  - [ ] Finestra: oggi la stessa foto tinta di blu; un'altra immagine vorrebbe un secondo
+        caricamento.
+  - [ ] Righe dei dati lunghe: non devono arrivare alla finestra (accorciare o rimpicciolire).
 - [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
       come tavole le proposte **D · Pista** (alla Head), **E · Fascia** (alla Rossignol) e
       **F · Diagonale** (alla Ski Club of Great Britain), poi le idee da gara **G · Cronometro**,

@@ -37,6 +37,12 @@ scritte sopra e i dati in blocchi pieni dei colori del club: **G · Cronometro**
 
 ![I · Bento](tavola-i.jpg)
 
+Dal 12/10 c'è **K · Piani**, presa dai post dello Ski Club of Great Britain raccolti in
+`inspiration/`: fra tre abbozzi (K, L, M) è quella scelta, sviluppata con la story del corso
+(vedi "K · Piani" in fondo).
+
+![K · Piani](tavola-k.jpg)
+
 | Cartella | Cosa |
 |---|---|
 | `tavola-a.jpg`, `-b`, `-c` | le tre proposte, una tavola ciascuna |
@@ -408,6 +414,49 @@ orizzontali; queste idee però rendono con le foto vere, meglio se con le person
 - Nel calendario una tessera per gita, col giorno nel colore della gita; la
   tessera gialla conta le gite del mese.
 
-**Da decidere:** quale proposta (D–I, o nessuna) portare nel generatore, accanto a
-Ritocco, Montagna, Biglietto, Calendario e Divano. Per G, H e I servono foto buone:
+---
+
+## K · Piani (dalle immagini dello Ski Club of Great Britain)
+
+<img src="post/corso-k.jpg" width="49%"> <img src="post/corso-k-story.jpg" width="49%">
+
+Richiesta del 12/10: proposte dai sei post dello Ski Club of Great Britain in
+`inspiration/`. Dei tre abbozzi (K · Piani, L · Pendio, M · Album) è stata scelta K e
+sviluppata come chiesto: più rilievo a ora e giorno, piani semitrasparenti per far vedere le
+immagini, niente omino al centro; poi meno blu, col testo direttamente sulla foto scurita. Post
+4:5 e story del corso; usa solo Barlow.
+
+- La **foto a tutta pagina**, scurita dal blu notte (il colore del testo, `#14202E`) sempre di
+  più verso il basso: in alto resta viva, sotto il testo sta senza fondo, con un'ombra morbida.
+- Sopra, **quattro piani a 45° appoggiati ai bordi**, come i loro "Snow Show London" e "WIN!":
+  il blu notte col logo in alto a sinistra, il cuneo blu in alto a destra, la finestra a destra,
+  l'ombra in basso a sinistra.
+- **Semitrasparenze per le immagini.** Il blu notte e il cuneo blu lasciano vedere la foto. Nella
+  **finestra** la foto, allineata, torna in bianco e nero tinta di blu
+  (`background-blend-mode: color`): lì può andare anche un'altra immagine (la variabile
+  `--immagine` sul `.cv`; nel calendario, per prova, c'è La Thuile sopra la montagna). Nella
+  story una seconda finestra riempie la fascia coperta in fondo.
+- La **tessera gialla del "quando"**, appesa al bordo alto con l'angolo tagliato (come il
+  riquadro giallo del loro "WIN!"): giorno della settimana, numero enorme (Barlow nero 210),
+  mese e, nella **fascia blu, l'ora** in bianco (`ore 19:30`; nella gita la prima partenza).
+- Sulla foto scurita, da un punto fisso: il **gancio** in giallo corsivo, il **titolo bianco in
+  minuscolo** (Barlow nero 116, sempre alto due righe), poi i dati in righe brevi (46), con
+  **orari, prezzi e scadenze nei riquadrini gialli**, come in C.
+- Il **logo** nel riquadro bianco sul blu notte; le iscrizioni con la mail in fondo, in bianco.
+- **Il corso ha la foto**, al posto del disegno: per prova una foto di pubblico dominio di un
+  corso di ginnastica (Bill Branson, National Cancer Institute, 1988, da Wikimedia Commons).
+  Con le foto del corso dell'anno scorso verrebbe meglio.
+- **Calendario:** sei righe non stanno sotto il titolo se parte all'altezza degli altri post,
+  quindi lì titolo e righe partono più in alto (`--fine: 470px`, e il velo scuro con loro). La tessera, senza ora,
+  conta le gite del mese; il giorno nel colore della gita (domenica gialla, sabato bianca), il
+  corso in un'etichetta contornata, come in C.
+- **Da tenere d'occhio:** le righe dei dati non devono arrivare alla finestra (la punta è a
+  890 px): le più lunghe vanno dopo la prima riga, o si accorciano. Il velo sotto il testo deve
+  restare scuro abbastanza anche con foto chiare (neve al sole). Le foto orizzontali, a tutta
+  pagina, vengono ingrandite quasi del doppio: meglio foto grandi o verticali. Senza foto il
+  fondo è da decidere. Una seconda immagine nella finestra, nel generatore, vorrebbe un secondo
+  caricamento.
+
+**Da decidere:** quale proposta (D–I, K, o nessuna) portare nel generatore, accanto a
+Ritocco, Montagna, Biglietto, Calendario e Divano. Per G, H, I e K servono foto buone:
 sono la metà del post.

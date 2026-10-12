@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 chrome() { google-chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 --virtual-time-budget=8000 "$@" 2>/dev/null; }
 TIPI="corso gita evento calendario"
-PROPOSTE="a b c d e f g h i"
+PROPOSTE="a b c d e f g h i k"
 # La story c'è solo per il corso, e non nelle idee G, H, I (solo post finché non se ne sceglie una).
 formati() { [[ $1 == corso && $2 != [ghi] ]] && echo "post story" || echo post; }
 altezza() { [[ $1 == post ]] && echo 1350 || echo 1920; }
