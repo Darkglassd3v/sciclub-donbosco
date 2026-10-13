@@ -436,6 +436,14 @@ immagini, niente omino al centro; poi meno blu, col testo direttamente sulla fot
   (`background-blend-mode: color`): lì può andare anche un'altra immagine (la variabile
   `--immagine` sul `.cv`; nel calendario, per prova, c'è La Thuile sopra la montagna). Nella
   story una seconda finestra riempie la fascia coperta in fondo.
+- **Due colori, dal colore del post** (come A e C e `coloreNuovo` nel generatore): corsi e gite
+  di domenica in **giallo e nero**, evento, calendario e il resto in **blu e nero**. Nel giallo
+  e nero (classe `giallo` sul `.cv`, richiesta del 13/10) i piani scuri sono in nero neutro
+  (`--notte`), il cuneo dietro la tessera resta scuro, l'angolo in alto a sinistra e la finestra
+  a destra sono gialli e semitrasparenti (`--velo-giallo`, 0,7): la foto in grigi schiariti col
+  giallo in multiply, così il nero resta nero e il bianco diventa giallo, e sotto si vede ancora
+  la foto vera. Tessera, fascia dell'ora e riquadrini restano blu. Il giallo steso a velo sulla
+  foto a colori non va: col cielo blu e i grigi medi diventa verde oliva.
 - La **tessera gialla del "quando"**, appesa al bordo alto con l'angolo tagliato (come il
   riquadro giallo del loro "WIN!"): giorno della settimana, numero enorme (Barlow nero 210),
   mese e, nella **fascia blu, l'ora** in bianco (`ore 19:30`; nella gita la prima partenza).

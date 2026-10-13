@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-11
+# TODO — aggiornato il 2026-10-13
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -31,6 +31,9 @@
   - [ ] Finestra: oggi la stessa foto tinta di blu; un'altra immagine vorrebbe un secondo
         caricamento.
   - [ ] Righe dei dati lunghe: non devono arrivare alla finestra (accorciare o rimpicciolire).
+  - [ ] Due colori (13/10): giallo e nero per corsi e gite di domenica (classe `giallo` in
+        `sorgenti/k.css`), blu e nero per il resto; nel generatore la variante viene da
+        `coloreNuovo`.
 - [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
       come tavole le proposte **D · Pista** (alla Head), **E · Fascia** (alla Rossignol) e
       **F · Diagonale** (alla Ski Club of Great Britain), poi le idee da gara **G · Cronometro**,
