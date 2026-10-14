@@ -428,10 +428,18 @@ immagini, niente omino al centro; poi meno blu, col testo direttamente sulla fot
 
 - La **foto a tutta pagina**, scurita dal blu notte (il colore del testo, `#14202E`) sempre di
   più verso il basso: in alto resta viva, sotto il testo sta senza fondo, con un'ombra morbida.
+  Dal 14/10 il velo è un po' più leggero ("forse è un po' scura"): 0,66-0,76 sotto il testo,
+  fra lo 0,72-0,8 di prima e lo 0,55-0,65 provato e scartato perché si leggeva poco. Contrasto
+  del testo bianco sul fondo più chiaro dietro di lui, misurato sui post resi: corso 9,9, gita
+  8,2, evento 6,8, calendario 7,4, story del corso 10,3 (minimo 4,5).
+- **Gite: la meta grande.** «Gita a» in piccolo sopra e la meta in grande (Barlow nero 150,
+  fino a 860 px di larghezza), alto quanto il titolo su due righe degli altri post: i dati
+  partono dallo stesso punto. Nel generatore la meta va presa a parte dal titolo.
 - Sopra, **quattro piani a 45° appoggiati ai bordi**, come i loro "Snow Show London" e "WIN!":
-  il blu notte col logo in alto a sinistra, il cuneo blu in alto a destra, la finestra a destra,
-  l'ombra in basso a sinistra.
-- **Semitrasparenze per le immagini.** Il blu notte e il cuneo blu lasciano vedere la foto. Nella
+  il blu col logo in alto a sinistra, il cuneo blu notte dietro la tessera in alto a destra (dal
+  14/10, come nel giallo e nero: prima erano al contrario), la finestra a destra, l'ombra in basso
+  a sinistra.
+- **Semitrasparenze per le immagini.** Il blu e il cuneo blu notte lasciano vedere la foto. Nella
   **finestra** la foto, allineata, torna in bianco e nero tinta di blu
   (`background-blend-mode: color`): lì può andare anche un'altra immagine (la variabile
   `--immagine` sul `.cv`; nel calendario, per prova, c'è La Thuile sopra la montagna). Nella
