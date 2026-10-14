@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bilancio — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="brand.css?v=20261015b">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
@@ -173,8 +173,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js"></script>
-<script src="shared.js"></script>
+<script src="config.js?v=20261015b"></script>
+<script src="shared.js?v=20261015b"></script>
 <script>
   const el = (id) => document.getElementById(id);
   const oggi = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ruoli e vedi come — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css">
+  <link rel="stylesheet" href="brand.css?v=20261015b">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .riga-vedi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
@@ -127,8 +127,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js"></script>
-<script src="shared.js"></script>
+<script src="config.js?v=20261015b"></script>
+<script src="shared.js?v=20261015b"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -151,7 +151,10 @@
     ["social", "Social", "Post, sponsor e contatti per i social.", false],
   ];
   // Il nome a schermo: quello scelto per la barra, se c'è (la voce Stagioni chiuse non è nella barra).
-  const nomeSezione = (p, nome) => NOMI_BARRA[p] || nome;
+  // Con un shared.js vecchio ancora nella cache del browser NOMI_BARRA e
+  // nomiBarra() non ci sono: la pagina va lo stesso, coi nomi di sempre.
+  const nomiScelti = () => (typeof NOMI_BARRA === "object" && NOMI_BARRA) || {};
+  const nomeSezione = (p, nome) => nomiScelti()[p] || nome;
   const NOME_PERMESSO = new Proxy({}, { get: (_, p) => {
     const voce = PERMESSI.find((x) => x[0] === p);
     return voce ? nomeSezione(p, voce[1]) : undefined;
@@ -174,7 +177,7 @@
     el("btnSalvaPermessi").addEventListener("click", chiediSalvataggio);
     el("btnSalvaNomi").addEventListener("click", salvaNomi);
     try {
-      await nomiBarra();
+      if (typeof nomiBarra === "function") await nomiBarra().catch(() => {});
       disegnaNomi();
       await caricaPermessi();
     } catch (error) {
@@ -294,7 +297,7 @@
     el("tabellaNomi").innerHTML = VOCI_BARRA.map(([chiave, sempre]) => `<tr>
       <th scope="row"><label for="nome_${chiave}">${esc(sempre)}</label></th>
       <td><input class="input" id="nome_${chiave}" data-chiave="${chiave}" maxlength="20"
-        placeholder="${esc(sempre)}" value="${esc(NOMI_BARRA[chiave] || "")}"></td></tr>`).join("");
+        placeholder="${esc(sempre)}" value="${esc(nomiScelti()[chiave] || "")}"></td></tr>`).join("");
   }
 
   async function salvaNomi() {
@@ -312,7 +315,7 @@
         const { error } = await sb.from("nav_labels").upsert(pieni);
         if (error) throw error;
       }
-      await nomiBarra();
+      if (typeof nomiBarra === "function") await nomiBarra();
       disegnaNomi();
       // Con spunte non ancora salvate la matrice resta com'è: i nomi nuovi si vedono al prossimo disegno.
       if (!differenze().length) disegnaMatrice();
