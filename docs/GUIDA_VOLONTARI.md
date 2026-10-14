@@ -19,7 +19,11 @@ il testo.
    nuovo**. Se avevi aperto un altro socio, premi **Chiudi scheda** accanto al
    suo nome.
 3. Scrivi almeno **Cognome, Nome, Telefono**. Il **codice fiscale** serve
-   per l'assicurazione: senza, il socio non è assicurato.
+   per l'assicurazione: senza, il socio non è assicurato. Se scrivi città di
+   nascita, data di nascita e premi **M** o **F**, il modulo propone il codice:
+   controllalo sulla tessera sanitaria e premi **Usa il codice proposto**. Per
+   una città da cui non è mai arrivato nessun socio non lo propone: scrivilo a
+   mano.
 4. Se compare il riquadro rosso **"Questa persona forse è già in archivio"**, fermati: apri la
    scheda che c'è già invece di crearne una nuova.
 

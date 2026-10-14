@@ -12,9 +12,16 @@
 // nell'anagrafica invece che nel codice) quello giusto non coincide con il
 // calcolo. Chi ha il documento davanti ha l'ultima parola.
 //
-// Il comune di nascita non si controlla: servirebbe l'elenco dei codici
-// catastali di tutti i comuni e degli stati esteri. Se ne guarda solo la forma
-// (una lettera e tre cifre) e nel codice proposto resta quello scritto.
+// Per il comune di nascita non c'è l'elenco dei codici catastali di tutti i
+// comuni e degli stati esteri: lo si ricava dai codici fiscali dei soci nati
+// nello stesso posto (comuneDaiCF), e solo se ce ne sono abbastanza si dice
+// che quello scritto è sbagliato. Altrimenti se ne guarda solo la forma (una
+// lettera e tre cifre) e nel codice proposto resta quello scritto.
+//
+// Per un socio nuovo, a campo vuoto, il codice si propone intero (calcolaCF):
+// il sesso lo indica chi compila, il comune si ricava dai codici fiscali dei
+// soci nati nello stesso posto (comuneDaiCF). Per un posto mai visto non si
+// propone niente.
 //
 // Funzioni pure, senza pagina: le prova web/test-codicefiscale.js.
 
@@ -96,6 +103,48 @@ function leggiData(data) {
   return { anno: Number(m[1]), mese: Number(m[2]), giorno: Number(m[3]) };
 }
 
+/** I cinque caratteri della data (anno, lettera del mese, giorno): per le donne il giorno è aumentato di 40. */
+function codiceData(data, femmina) {
+  return String(data.anno % 100).padStart(2, "0") + CF_MESI[data.mese - 1]
+    + String(data.giorno + (femmina ? 40 : 0)).padStart(2, "0");
+}
+
+/**
+ * Il codice fiscale calcolato dall'anagrafica { cognome, nome, dataNascita,
+ * sesso: "M" o "F", comune: codice catastale come "A479" }, o null se manca
+ * qualcosa. Non conosce l'omocodia: è una proposta, chi ha la tessera davanti
+ * controlla.
+ */
+function calcolaCF({ cognome, nome, dataNascita, sesso, comune } = {}) {
+  const data = leggiData(dataNascita);
+  if (!soloLettere(cognome) || !soloLettere(nome) || !data || data.mese < 1 || data.mese > 12
+    || !/^[MF]$/.test(sesso ?? "") || !/^[A-Z]\d{3}$/.test(comune ?? "")) return null;
+  const primi15 = codiceCognome(cognome) + codiceNome(nome) + codiceData(data, sesso === "F") + comune;
+  return primi15 + carattereControllo(primi15);
+}
+
+/**
+ * Il codice catastale del comune ricavato dai codici fiscali dei soci nati lì
+ * ("ASTI" → A479). Contano solo i codici col carattere finale giusto, e vince
+ * quello che compare in più della metà: un codice scritto male, o due comuni
+ * con lo stesso nome, non bastano a dare un comune sbagliato. Null se non c'è
+ * una maggioranza o se i codici buoni sono meno di `minimo`: per proporre un
+ * codice ne basta uno, per dire che uno scritto è sbagliato ne servono di più.
+ * Ogni codice conta una volta: le schede doppie della stessa persona non sono
+ * più soci.
+ */
+function comuneDaiCF(codici, minimo = 1) {
+  const conti = {};
+  for (const cf of new Set(codici.map(normalizzaCF))) {
+    if (cf.length !== 16 || carattereControllo(cf.slice(0, 15)) !== cf[15]) continue;
+    const comune = senzaOmocodia(cf).slice(11, 15);
+    if (/^[A-Z]\d{3}$/.test(comune)) conti[comune] = (conti[comune] || 0) + 1;
+  }
+  const totale = Object.values(conti).reduce((a, b) => a + b, 0);
+  const [comune, volte] = Object.entries(conti).sort((a, b) => b[1] - a[1])[0] || [];
+  return totale >= minimo && volte > totale / 2 ? comune : null;
+}
+
 /**
  * Confronta un codice fiscale con l'anagrafica.
  *
@@ -107,6 +156,13 @@ function leggiData(data) {
  *
  * Senza cognome, nome o data si controlla quello che si può: la forma e il
  * carattere finale.
+ *
+ * Nell'anagrafica possono esserci anche:
+ *   - comune: il codice catastale atteso (da comuneDaiCF), con luogo, il nome
+ *     del posto da scrivere nell'avviso. Un comune diverso si segnala e si
+ *     corregge nella proposta;
+ *   - sesso: "M" o "F", indicato da chi compila. Serve quando il giorno nel
+ *     codice è illeggibile: con la data della scheda la data si rifà.
  */
 function verificaCF(codice, anagrafica = {}) {
   const cf = normalizzaCF(codice);
@@ -173,21 +229,30 @@ function verificaCF(codice, anagrafica = {}) {
 
   const data = leggiData(anagrafica.dataNascita);
   if (data && giornoValido) {
-    const attesa = String(data.anno % 100).padStart(2, "0")
-      + CF_MESI[data.mese - 1]
-      + String(data.giorno + (femmina ? 40 : 0)).padStart(2, "0");
+    const attesa = codiceData(data, femmina);
     if (parti.anno + parti.mese + parti.giorno !== attesa) {
       problemi.push(`La data di nascita non torna con quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
       corretto.data = attesa;
     }
   } else if (!formaData) {
-    // Senza un giorno leggibile non si sa se è un uomo o una donna, quindi
-    // nemmeno con la data della scheda si può riscrivere questa parte.
     problemi.push("La data di nascita nel codice (caratteri dal 7° all'11°) non è valida.");
-    ricostruibile = false;
+    // Senza un giorno leggibile non si sa se è un uomo o una donna: la data
+    // della scheda basta solo se il sesso l'ha indicato chi compila.
+    if (data && /^[MF]$/.test(anagrafica.sesso ?? "")) corretto.data = codiceData(data, anagrafica.sesso === "F");
+    else ricostruibile = false;
   }
 
-  if (!/^[A-Z]\d{3}$/.test(parti.comune)) {
+  const comuneAtteso = /^[A-Z]\d{3}$/.test(anagrafica.comune ?? "") ? anagrafica.comune : null;
+  const luogo = String(anagrafica.luogo ?? "").trim().toUpperCase() || "il luogo di nascita della scheda";
+  if (comuneAtteso && parti.comune !== comuneAtteso && cf.length === 16 && carattereControllo(cf.slice(0, 15)) === cf[15]) {
+    // Un codice che torna col suo carattere finale è quasi sempre copiato giusto:
+    // sarà sbagliato il luogo della scheda, o la persona è nata altrove. Si
+    // avvisa, ma il comune non si tocca.
+    problemi.push(`Il comune nel codice (${parti.comune}) non è quello dei soci nati a ${luogo} (${comuneAtteso}): controlla il luogo di nascita sulla tessera sanitaria.`);
+  } else if (comuneAtteso && parti.comune !== comuneAtteso) {
+    problemi.push(`Il comune di nascita nel codice non torna: per ${luogo} i codici dei soci nati lì hanno ${comuneAtteso}.`);
+    corretto.comune = comuneAtteso;
+  } else if (!/^[A-Z]\d{3}$/.test(parti.comune)) {
     problemi.push("Il codice del comune di nascita (caratteri dal 12° al 15°) non è valido.");
     ricostruibile = false;
   }
@@ -206,5 +271,26 @@ function verificaCF(codice, anagrafica = {}) {
     problemi.push(`L'ultimo carattere è sbagliato: dovrebbe essere ${controllo}.`);
   }
 
-  return { ok: problemi.length === 0, problemi, suggerito: problemi.length ? suggerito : null };
+  // Uguale a quello scritto (solo un avviso sul luogo): niente da proporre.
+  return { ok: problemi.length === 0, problemi, suggerito: problemi.length && suggerito !== cf ? suggerito : null };
+}
+
+/**
+ * Il sesso ricavato dai codici fiscali dei soci con lo stesso nome ("M" o
+ * "F"), o null: come comuneDaiCF, contano solo i codici buoni, una volta
+ * ciascuno, e vince chi ha più della metà. Serve quando il giorno nel codice
+ * è illeggibile e chi compila non ha indicato il sesso.
+ */
+function sessoDaiCF(codici, minimo = 2) {
+  const conti = { M: 0, F: 0 };
+  for (const cf of new Set(codici.map(normalizzaCF))) {
+    if (cf.length !== 16 || carattereControllo(cf.slice(0, 15)) !== cf[15]) continue;
+    const giorno = Number(senzaOmocodia(cf).slice(9, 11));
+    if (giorno >= 1 && giorno <= 31) conti.M++;
+    else if (giorno >= 41 && giorno <= 71) conti.F++;
+  }
+  const totale = conti.M + conti.F;
+  if (totale < minimo) return null;
+  if (conti.M > totale / 2) return "M";
+  return conti.F > totale / 2 ? "F" : null;
 }

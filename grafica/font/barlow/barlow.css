@@ -5,3 +5,6 @@
 @font-face { font-family: Barlow; font-style: normal; font-weight: 600; font-display: block; src: url(barlow-600.woff2) format("woff2"); }
 @font-face { font-family: Barlow; font-style: normal; font-weight: 700; font-display: block; src: url(barlow-700.woff2) format("woff2"); }
 @font-face { font-family: Barlow; font-style: normal; font-weight: 800; font-display: block; src: url(barlow-800.woff2) format("woff2"); }
+/* Il corsivo, per sottotitoli e adesivi della proposta F (Diagonale). */
+@font-face { font-family: Barlow; font-style: italic; font-weight: 600; font-display: block; src: url(barlow-600-italic.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-style: italic; font-weight: 800; font-display: block; src: url(barlow-800-italic.woff2) format("woff2"); }

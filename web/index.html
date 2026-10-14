@@ -38,6 +38,8 @@
     /* Una scelta legata a un giorno (corso di sabato o di domenica) prende il suo colore. */
     .scelta[data-giorno]:has(input:checked) { border-color: var(--giorno); background: var(--giorno-chiaro); }
     .scelta[data-giorno] input { accent-color: var(--giorno); }
+    .sesso { display: flex; gap: 8px; }
+    .sesso .scelta { flex: 1; font-weight: 700; }
     /* Tessera riservata a un ruolo più alto: compare solo se il socio ce l'ha già. */
     .scelta.riservata:not(:has(input:checked)) { display: none; }
 
@@ -200,6 +202,14 @@
         <div id="avvisoCF" class="avviso-cf" role="status" hidden></div>
       </div>
       <div class="column is-4"><label class="label" for="f_data_nascita">Data di nascita</label><input class="input" type="date" id="f_data_nascita"></div>
+      <!-- Il sesso serve solo al codice fiscale (proporlo, o rifarne la data illeggibile): non si salva. -->
+      <div class="column is-4">
+        <span class="label" id="l_sesso">Sesso <small>(per proporre o correggere il codice fiscale)</small></span>
+        <div class="sesso" role="radiogroup" aria-labelledby="l_sesso">
+          <label class="scelta"><input type="radio" name="sessoCF" value="M"><span>M</span></label>
+          <label class="scelta"><input type="radio" name="sessoCF" value="F"><span>F</span></label>
+        </div>
+      </div>
       <div class="column is-4"><label class="label" for="f_telefono">Telefono*</label><input class="input" id="f_telefono" required></div>
       <div class="column is-8"><label class="label" for="f_indirizzo">Indirizzo di residenza</label><input class="input" id="f_indirizzo"></div>
       <div class="column is-6"><label class="label" for="f_citta">Città di residenza</label><input class="input" id="f_citta"></div>
@@ -446,6 +456,9 @@
         el(id).addEventListener("change", controllaCF);
         el(id).addEventListener("change", controllaDoppioni);
       });
+      // Luogo e sesso servono al codice fiscale: il comune atteso e la data da rifare.
+      ["f_luogo_nascita", "f_provincia_nascita"].forEach((id) => el(id).addEventListener("change", controllaCF));
+      document.querySelectorAll("input[name=sessoCF]").forEach((r) => r.addEventListener("change", controllaCF));
       // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
       el("f_cognome").addEventListener("input", aggiornaFascia);
       el("f_nome").addEventListener("input", aggiornaFascia);
@@ -673,14 +686,81 @@
   // Codice fiscale e numero tessera
   // -------------------------------------------------------------------------
 
-  /** Confronta il codice fiscale con cognome, nome e data (codicefiscale.js). */
-  function controllaCF() {
-    const esito = verificaCF(el("f_codice_fiscale").value, {
+  /**
+   * Confronta il codice fiscale con l'anagrafica (codicefiscale.js), anche col
+   * comune dei soci nati nello stesso posto; se il campo è vuoto, propone il
+   * codice calcolato.
+   */
+  let turnoCF = 0;
+  async function controllaCF() {
+    const turno = ++turnoCF;
+    const anagrafica = {
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
       dataNascita: el("f_data_nascita").value,
-    });
-    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito);
+      luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
+      // Il sesso lo indica chi compila e non si salva.
+      sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
+    };
+    const scritto = el("f_codice_fiscale").value.trim();
+    // Per dire che il comune di un codice scritto è sbagliato servono almeno tre
+    // soci nati lì; per proporre un codice a campo vuoto basta uno.
+    const comune = scritto || anagrafica.sesso ? await comuneDelLuogo(anagrafica.luogo, scritto ? 3 : 1) : null;
+    // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
+    // controllo più nuovo (vince quello): questa risposta non serve più.
+    if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
+    if (scritto) {
+      let esito = verificaCF(scritto, { ...anagrafica, comune });
+      // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
+      // con lo stesso nome, dicendolo nell'avviso.
+      const nome = anagrafica.nome.trim().toUpperCase();
+      if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome) {
+        const sesso = await sessoDelNome(nome);
+        if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
+        const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sesso });
+        if (conSesso?.suggerito) {
+          conSesso.problemi.push(`Sesso preso dai soci che si chiamano ${nome} (${sesso}): se non è giusto, sceglilo qui sotto.`);
+          esito = conSesso;
+        }
+      }
+      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito);
+      return;
+    }
+    // Per un posto mai visto non si propone niente.
+    const proposto = comune && calcolaCF({ ...anagrafica, comune });
+    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), proposto && {
+      ok: false,
+      problemi: ["Codice fiscale calcolato dai dati della scheda: controllalo sulla tessera sanitaria."],
+      suggerito: proposto,
+    }, controllaDoppioni);
+  }
+
+  /**
+   * Il codice catastale del luogo di nascita, ricavato dai codici fiscali dei
+   * soci nati lì (comuneDaiCF), o null. Il socio aperto non conta: il suo
+   * codice è quello da controllare.
+   */
+  async function comuneDelLuogo(luogo, minimo) {
+    if (!luogo) return null;
+    // Solo lettere: la provincia finisce nel filtro or() di PostgREST.
+    const provincia = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
+    // Il luogo si salva in maiuscolo e senza spazi ai lati: basta l'uguaglianza.
+    let richiesta = sb.from("members").select("tax_code").eq("birth_place", luogo).not("tax_code", "is", null).limit(50);
+    // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
+    if (provincia) richiesta = richiesta.or(`birth_province.eq.${provincia},birth_province.is.null`);
+    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
+    const { data, error } = await richiesta;
+    if (error) return null;
+    return comuneDaiCF((data || []).map((r) => r.tax_code), minimo);
+  }
+
+  /** Il sesso ricavato dai codici dei soci con lo stesso nome (sessoDaiCF), o null. */
+  async function sessoDelNome(nome) {
+    let richiesta = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
+    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
+    const { data, error } = await richiesta;
+    if (error) return null;
+    return sessoDaiCF((data || []).map((r) => r.tax_code));
   }
 
   /**
@@ -812,7 +892,8 @@
    * dopo l'apertura e non l'ha scritto nessuno.
    */
   function firma() {
-    const campi = [...el("memberForm").elements].map((c) =>
+    // Il sesso (bottoni M/F) non si salva: serve solo alla proposta del codice fiscale.
+    const campi = [...el("memberForm").elements].filter((c) => c.name !== "sessoCF").map((c) =>
       c.type === "radio" || c.type === "checkbox" ? c.checked
         : c.id === "f_numero_tessera" && c.value === numeroProposto ? "" : c.value);
     return JSON.stringify([campi, abbonamentiNuovi.length, [...abbonamentiDaTogliere]]);
@@ -1014,6 +1095,8 @@
       el("zonaTogli").hidden = !(socio.enrolled_at && accesso.permissions.includes("gestione"));
       ripristinaTogli();
 
+      // Il sesso non si salva: aperto un altro socio, non deve restare quello di prima.
+      document.querySelectorAll("input[name=sessoCF]").forEach((r) => { r.checked = false; });
       controllaCF();
       numeroProposto = null;
       el("notaTessera").hidden = true;

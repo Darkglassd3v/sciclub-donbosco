@@ -10,12 +10,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 chrome() { google-chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 --virtual-time-budget=8000 "$@" 2>/dev/null; }
 TIPI="corso gita evento calendario"
-# La story c'è solo per il corso.
-formati() { [[ $1 == corso ]] && echo "post story" || echo post; }
+PROPOSTE="a b c d e f g h i k"
+# La story c'è solo per il corso, e non nelle idee G, H, I (solo post finché non se ne sceglie una).
+formati() { [[ $1 == corso && $2 != [ghi] ]] && echo "post story" || echo post; }
 altezza() { [[ $1 == post ]] && echo 1350 || echo 1920; }
 
 if [[ "${1:-}" == verifica ]]; then
-  for t in $TIPI; do for s in a b c; do for f in $(formati $t); do
+  for t in $TIPI; do for s in $PROPOSTE; do for f in $(formati $t $s); do
     echo "$t-$s $f: $(chrome --window-size=1080,$(altezza $f) --dump-dom "file://$PWD/$t-$s.html#$f-verifica" | grep -o 'VERIFICA[^<]*')"
   done; done; done
   exit
@@ -28,8 +29,8 @@ foto() {
   rm "$4.png"
   echo "$4"
 }
-for t in $TIPI; do for s in a b c; do for f in $(formati $t); do
+for t in $TIPI; do for s in $PROPOSTE; do for f in $(formati $t $s); do
   foto "$t-$s.html#$f" 1080 "$(altezza $f)" "../post/$t-$s$([[ $f == story ]] && echo -story).jpg"
 done; done; done
 foto panoramica.html 1720 1980 ../post/corso-panoramica.jpg
-for s in a b c; do foto "tavola.html#$s" 1720 820 "../tavola-$s.jpg"; done
+for s in $PROPOSTE; do foto "tavola.html#$s" 1720 820 "../tavola-$s.jpg"; done

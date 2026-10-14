@@ -1,0 +1,70 @@
+/* F · Diagonale, ispirata ai post dello Ski Club of Great Britain: la foto a
+ * tutta pagina e il testo scritto sopra, allineato a destra, su un velo blu che
+ * sfuma verso il basso. Tre livelli di testo come nei loro post: la riga alta e
+ * stretta che dice cos'è (Barlow Condensed), il titolo enorme in giallo (Barlow
+ * nero, stretto di spaziatura), poi data e dati in bianco, con le barre "//"
+ * gialle. Niente etichette in colonna né fili: i dati sono righe brevi, il
+ * grassetto fa vedere orari, prezzi e scadenze. In basso a destra il piano bianco
+ * in diagonale col logo (le regole del marchio lo vogliono su bianco) e le
+ * iscrizioni; sotto, un triangolo giallo che sporge, come i piani sovrapposti dei
+ * loro post. L'adesivo giallo tondo porta il gancio del post (quello di C), se c'è.
+ * Con la classe "story" su <html> la tela è 1080×1920 (fasce coperte 250 e 340). */
+html { --k: 1; --su: 0px; --sx: 1190px; --dx: 990px; --giu: 0px; --adesivo: 762px; }
+html.story { --k: 1; --su: 260px; --sx: 1460px; --dx: 1270px; --giu: 340px; --adesivo: 1030px; }
+html.story .iscrizioni div { font-size: 44px; }
+html.story .adesivo { width: 250px; height: 250px; font-size: 46px; }
+.cv { background: var(--blu); color: #fff; }
+
+.sfondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* Il velo: blu pieno dietro al testo, poi sfuma e lascia vedere la foto. */
+.velo { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--su) + 900px);
+  background: linear-gradient(180deg, rgba(8,76,141,.9) 0, rgba(8,76,141,.84) 58%, rgba(8,76,141,0) 100%); }
+
+/* I due piani in basso: il triangolo giallo e, sopra, il piano bianco. */
+.giallo { position: absolute; inset: 0; background: var(--giallo);
+  clip-path: polygon(0 calc(var(--sx) - 270px), 720px 100%, 0 100%); }
+.bianco { position: absolute; inset: 0; background: #fff;
+  clip-path: polygon(0 var(--sx), 100% var(--dx), 100% 100%, 0 100%); }
+.bianco img { position: absolute; right: 56px; top: calc(var(--dx) + 46px); height: calc(140px * var(--k)); }
+.iscrizioni { position: absolute; left: 60px; bottom: calc(var(--giu) + 34px); color: var(--blu); }
+.iscrizioni div { font: 700 calc(36px * var(--k)) / 1.15 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .08em; }
+.iscrizioni b { display: block; font: 800 calc(46px * var(--k)) / 1.15 Barlow, sans-serif; letter-spacing: -.015em; }
+
+/* Il testo, allineato a destra come nei loro post. */
+.testa { position: absolute; left: 60px; right: 60px; top: calc(var(--su) + 76px); text-align: right;
+  text-shadow: 0 2px 14px rgba(8,76,141,.45); }
+.occhiello { font: 700 calc(68px * var(--k)) / 1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .01em; }
+/* Titolo sempre alto due righe: i dati sotto partono allo stesso punto in tutti i post. */
+h1 { font: 800 calc(116px * var(--k)) / .9 Barlow, sans-serif; text-transform: uppercase; color: var(--giallo);
+  letter-spacing: -.045em; margin-top: calc(14px * var(--k)); min-height: calc(2 * .9 * 116px * var(--k)); }
+.con { font: italic 600 calc(44px * var(--k)) / 1.15 Barlow, sans-serif; margin-top: calc(14px * var(--k)); }
+.quando { font: 800 calc(58px * var(--k)) / 1 Barlow, sans-serif; text-transform: uppercase; color: var(--giallo);
+  letter-spacing: -.02em; margin-top: calc(34px * var(--k)); }
+/* L'ora, quando c'è, sta sulla riga della data: in bianco dopo le barre gialle. */
+.quando i { font-style: normal; padding: 0 .12em; }
+.quando span { color: #fff; }
+.fatti { margin-top: calc(14px * var(--k)); display: flex; flex-direction: column; gap: calc(6px * var(--k)); }
+.fatti p { font-size: calc(46px * var(--k)); font-weight: 500; line-height: 1.18; }
+/* Orari, prezzi e scadenze in grassetto; le barre fra due dati in giallo. */
+.fatti b { font-weight: 800; }
+.fatti i { font-style: normal; font-weight: 800; color: var(--giallo); padding: 0 .18em; }
+.nw { white-space: nowrap; }
+
+/* L'adesivo col gancio: giallo, tondo, inclinato. */
+.adesivo { position: absolute; right: 90px; top: var(--adesivo); width: calc(232px * var(--k)); height: calc(232px * var(--k));
+  border-radius: 50%; background: var(--giallo); color: var(--blu); transform: rotate(-9deg);
+  display: flex; align-items: center; justify-content: center; text-align: center; padding: 26px;
+  font: italic 800 calc(43px * var(--k)) / .98 Barlow, sans-serif; text-transform: uppercase; letter-spacing: -.02em;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+
+/* Il calendario: righe allineate a destra, la meta e poi il giorno nel colore della gita. */
+.righe { margin-top: calc(30px * var(--k)); display: flex; flex-direction: column; gap: 10px; }
+.righe > div { display: flex; justify-content: flex-end; align-items: center; gap: 20px; }
+.meta { font-size: 48px; font-weight: 700; line-height: 1.1; }
+.corso { font: italic 600 36px / 1 Barlow, sans-serif; color: var(--giallo); }
+.giorno { flex: none; width: 196px; text-align: center; font: 700 40px / 1.3 "Barlow Condensed", sans-serif; text-transform: uppercase;
+  letter-spacing: .06em; border-radius: 999px; text-shadow: none; }
+.dom { background: var(--giallo); color: var(--blu); } .sab { background: #fff; color: var(--blu); }
+
+/* La scena del corso, senza foto: piani bianchi trasparenti sul blu e la figura. */
+.figura { position: absolute; left: 200px; top: calc(var(--adesivo) - 60px); height: calc(290px * var(--k)); }

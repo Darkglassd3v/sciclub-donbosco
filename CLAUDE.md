@@ -1,19 +1,21 @@
 ## Come si lavora qui
 
-- Prima di tutto leggere `PROJECT-CONTEXT.md` (in breve) e `TODO.md` (cosa c'è da fare);
-  le regole, il rilascio e il database sono in `docs/SVILUPPO.md`.
-- **Niente commit senza un sì esplicito** di chi segue il progetto.
-- Le richieste nuove si scrivono **in cima** a `TODO.md`, in "Richieste nuove", non in fondo.
-- Interfaccia, commenti e variabili JS in italiano; nomi del database in inglese.
+- Prima leggere `PROJECT-CONTEXT.md` (breve) e `TODO.md` (cosa fare);
+  regole, rilascio e database in `docs/SVILUPPO.md`.
+- **Niente commit senza sì esplicito** da chi segue progetto.
+- Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
+- "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
+  nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
+  di cosa è fatto e cosa no): la sola lettura non chiude il turno. Commit sempre solo col sì.
+- Interfaccia, commenti e variabili JS in italiano; nomi database in inglese.
 
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+Progetto ha knowledge graph in graphify-out/ con god nodes, struttura community e relazioni cross-file.
 
 Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
-- graphify non vede le funzioni scritte dentro gli script delle pagine HTML (per esempio
-  `web/index.html`, `web/social.html`): per quelle si cerca direttamente nei file.
+- Per domande codebase, prima `graphify query "<question>"` se graphify-out/graph.json esiste. Usa `graphify path "<A>" "<B>"` per relazioni e `graphify explain "<concept>"` per concetti specifici. Restituiscono subgraph mirato, molto più piccolo di GRAPH_REPORT.md o grep grezzo.
+- Se graphify-out/wiki/index.md esiste, usarlo per navigazione ampia invece di browsing sorgente diretto.
+- Leggi graphify-out/GRAPH_REPORT.md solo per review architettura ampia o quando query/path/explain non bastano.
+- Dopo modifiche codice, `graphify update .` per aggiornare graph (solo AST, zero costo API).
+- graphify non vede funzioni scritte dentro script pagine HTML (es. `web/index.html`, `web/social.html`): cercare direttamente nei file.

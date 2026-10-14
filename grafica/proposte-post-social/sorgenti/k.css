@@ -1,0 +1,92 @@
+/* K · Piani, dai post dello Ski Club of Great Britain "Snow Show London" e
+ * "WIN!": la foto a tutta pagina, scurita col blu notte (il colore del testo,
+ * #14202E) sempre di più verso il basso, e sopra quattro piani a 45° appoggiati
+ * ai bordi: il blu col logo in alto a sinistra, il cuneo blu notte dietro la
+ * tessera in alto a destra (dal 14/10; prima erano al contrario), la "finestra" a
+ * destra, dove la foto torna tinta di blu (lì può andare anche un'altra immagine:
+ * --immagine sul .cv), e l'ombra in basso a sinistra.
+ * La tessera gialla appesa al bordo è il "quando": giorno, numero, mese e, nella
+ * fascia blu, l'ora. Il testo sta sulla foto scurita, senza fondo: il gancio in
+ * giallo, il titolo bianco in minuscolo e i dati, con orari, prezzi e scadenze
+ * nei riquadrini gialli (come in C).
+ * Con la classe "story" su <html> la tela è 1080×1920 (fasce coperte 250 e 340). */
+/* --notte: il blu notte dei piani e del velo (nelle varianti gialle un nero neutro). */
+html { --notte: 20,32,46; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; }
+html.story { --fine: 850px; --angolo: 760px; --cuneo: 780px; --su: 250px; --giu: 340px; }
+.cv { background: var(--testo); color: #fff; }
+
+/* La foto a tutta pagina e il velo che la scurisce dove sta il testo (da --fine).
+ * Velo (14/10, "forse è un po' scura"): 0,66-0,76 sotto il testo, fra lo 0,72-0,8
+ * di prima e lo 0,55-0,65 provato e scartato perché si leggeva poco; foto pulita
+ * fino a 200 px sopra il testo. */
+.foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--fuoco, center 45%); }
+.piano { position: absolute; inset: 0; }
+.scuro { background: linear-gradient(180deg, rgba(var(--notte),0) 0, rgba(var(--notte),0) calc(var(--fine) - 200px),
+  rgba(var(--notte),.66) calc(var(--fine) + 10px), rgba(var(--notte),.76) 100%); }
+/* I piani, tutti tagliati a 45°. */
+.angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
+.cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
+/* La finestra: la stessa foto, allineata, in bianco e nero tinta di blu (fusione "color"). */
+.finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(var(--blu), var(--blu)), var(--immagine) var(--fuoco, center 45%) / cover;
+  background-blend-mode: normal, color, normal;
+  clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
+.finestra.fondo { display: none; clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
+html.story .finestra.fondo { display: block; }
+.ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
+
+.logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
+.logo-box img { height: 140px; }
+
+/* La tessera del "quando": gialla, appesa al bordo alto, angolo tagliato a 45°. */
+.tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px);
+  background: var(--giallo); color: var(--blu); clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px);
+  display: flex; flex-direction: column; justify-content: flex-end; }
+.tessera span, .tessera b { padding: 0 34px; }
+.tessera span { font: 700 54px / 1 Barlow, sans-serif; letter-spacing: -.01em; }
+.tessera b { font: 800 210px / .8 Barlow, sans-serif; letter-spacing: -.05em; margin: 20px 0 16px -6px; }
+.tessera b + span { font-weight: 800; font-size: 66px; letter-spacing: -.02em; }
+.tessera b + span:last-child { margin-bottom: 34px; }
+/* L'ora nella fascia blu in fondo alla tessera. */
+.tessera em { font: normal 800 58px / 1 Barlow, sans-serif; letter-spacing: -.015em; background: var(--blu); color: #fff; padding: 20px 34px 22px; margin-top: 28px; }
+
+/* Il testo sulla foto scurita, da un punto fisso: titolo sempre alto due righe.
+ * L'ombra morbida lo stacca dai chiari della foto; i riquadri non ce l'hanno. */
+.testo { position: absolute; left: 60px; right: 60px; top: calc(var(--fine) + 28px); }
+.testo, .iscrizioni { text-shadow: 0 2px 14px rgba(var(--notte),.6); }
+.fatti b, .giorno, .corso { text-shadow: none; }
+.gancio { font: italic 800 54px / 1 Barlow, sans-serif; color: var(--giallo); letter-spacing: -.01em; }
+h1 { font: 800 116px / .92 Barlow, sans-serif; letter-spacing: -.035em; max-width: 640px; margin-top: 12px; min-height: calc(2 * .92 * 116px); }
+/* Gite: «Gita a» piccolo sopra, la meta grande (14/10). Stessa altezza del titolo
+ * su due righe, così i dati sotto partono dallo stesso punto; la meta può andare
+ * più a destra (fino a 920 px, la finestra comincia più in basso). */
+h1.gita { font-size: 150px; line-height: .9; max-width: 860px; }
+h1.gita small { display: block; font-size: 54px; line-height: 1.05; letter-spacing: -.01em; margin-bottom: 4px; }
+.fatti { margin-top: 24px; display: flex; flex-direction: column; gap: 4px; }
+.fatti p { font-size: 46px; font-weight: 500; line-height: 1.16; white-space: nowrap; }
+/* Orari, prezzi e scadenze nei riquadrini gialli, come in C. */
+.fatti b { display: inline-block; font-weight: 800; line-height: 1.1; background: var(--giallo); color: var(--blu); padding: 0 .2em; border-radius: 10px; }
+.iscrizioni { position: absolute; left: 60px; bottom: calc(var(--giu) + 44px); font-size: 38px; font-weight: 600; line-height: 1.2; }
+.iscrizioni b { display: block; font-size: 46px; font-weight: 800; letter-spacing: -.01em; }
+html.story .iscrizioni { bottom: 360px; font-size: 44px; }
+
+/* Il calendario: una riga per gita, il giorno nel colore della gita, il corso contornato. */
+.righe { margin-top: 24px; display: flex; flex-direction: column; gap: 8px; }
+.righe div { display: flex; align-items: center; gap: 22px; }
+.giorno { flex: none; width: 196px; text-align: center; border-radius: 12px; font: 800 42px / 1.3 Barlow, sans-serif; color: var(--blu); }
+.dom { background: var(--giallo); } .sab { background: #fff; }
+.meta { font-size: 48px; font-weight: 700; letter-spacing: -.01em; }
+.corso { font: 700 36px / 1 Barlow, sans-serif; color: var(--giallo); border: 3px solid var(--giallo); border-radius: 999px; padding: 6px 16px; }
+
+/* K in giallo e nero, per i post gialli (corsi e gite di domenica, come coloreNuovo nel
+ * generatore); evento e calendario restano blu. Piani scuri in nero neutro; il cuneo dietro la
+ * tessera resta scuro, se no la tessera sparisce; i dettagli (tessera, ora, riquadrini) restano
+ * blu. L'angolo in alto a sinistra e la finestra a destra sono gialli e semitrasparenti: la foto
+ * in grigi col giallo in multiply (il nero resta nero, il bianco diventa giallo; la clip-path
+ * isola il gruppo, quindi il giallo moltiplica solo la foto), e sotto si vede ancora la foto vera.
+ * Il giallo non va steso a velo sulla foto a colori: col cielo blu diventa verde oliva. */
+.cv.giallo { --notte: 18,18,18; }
+.cv.giallo :is(.angolo, .finestra) { background: none; opacity: var(--velo-giallo, .7); }
+.cv.giallo :is(.angolo, .finestra)::before, .cv.giallo :is(.angolo, .finestra)::after { content: ""; position: absolute; inset: 0; }
+.cv.giallo :is(.angolo, .finestra)::before { background: var(--immagine) var(--fuoco, center 45%) / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+.cv.giallo :is(.angolo, .finestra)::after { background: var(--giallo); mix-blend-mode: multiply; }
+

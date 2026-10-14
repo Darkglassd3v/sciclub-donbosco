@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="../../font/barlow/barlow.css">
 <link rel="stylesheet" href="comune.css">
 <style>
-/* Una tavola per proposta (#a, #b, #c): i quattro post della stessa grafica
+/* Una tavola per proposta (#a … #i): i quattro post della stessa grafica
  * affiancati, il corso (la presciistica), una gita, un evento e il
  * calendario del mese, con i JPEG già resi (rendi.sh li fa prima). */
 html, body { width: 1720px; height: 820px; background: #F5F5F7; }
@@ -30,6 +30,13 @@ const PROPOSTE = {
   a: { nome: "Biglietto", idea: "Il biglietto bianco sul colore del post, in alto la foto caricata nel generatore (senza foto, il disegno)." },
   b: { nome: "Calendario", idea: "Sempre il blu del club; il foglio a strappo porta la data; nel calendario, le gite del mese sul foglio." },
   c: { nome: "Divano", idea: "Il manifesto: in alto il nome grande, nella fascia la data, sotto in un riquadro bianco il gancio («Alzati dal divano!», «Tutti in pista!»…) e i dati." },
+  d: { nome: "Pista", idea: "Come la linea da gara di Head: blu pieno, tutto dritto, scritte nere maiuscole, i dati principali in una scheda a tre caselle, iscrizioni nella fascia gialla." },
+  e: { nome: "Fascia", idea: "Stile classico (Rossignol): fondo bianco e spazio vuoto, foto grande con la doppia fascia blu e gialla, data nel riquadro bianco, iscrizioni nella fascia blu." },
+  f: { nome: "Diagonale", idea: "Come lo Ski Club of Great Britain: testo sulla foto allineato a destra, titolo giallo, date con le barre //, piano bianco in diagonale col logo, adesivo col gancio." },
+  g: { nome: "Cronometro", idea: "Come le grafiche TV della Coppa del Mondo: foto scurita a tutto schermo, data come il cronometro, dati in barre gialle e bianche, sottopancia delle iscrizioni." },
+  h: { nome: "Eco", idea: "Manifesto sportivo: foto in bianco e nero tinta di blu, titolo giallo tra copie contornate, dati in tre blocchi pieni (bianco, blu, giallo)." },
+  i: { nome: "Bento", idea: "Griglia di tessere sulla foto: una tessera per dato coi numeri grandi, la data nella gialla alta, il logo nella sua tessera bianca." },
+  k: { nome: "Piani", idea: "Come lo Ski Club of Great Britain: la foto a tutta pagina, scurita sotto il testo; piani a 45° semitrasparenti; la tessera gialla del «quando» con l'ora." },
 };
 const chiave = location.hash.slice(1) in PROPOSTE ? location.hash.slice(1) : "a", p = PROPOSTE[chiave];
 document.getElementById("titolo").innerHTML = `<b>${chiave.toUpperCase()}</b> · ${p.nome}: corso, gita, evento e calendario`;
