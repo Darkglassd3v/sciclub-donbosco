@@ -202,9 +202,9 @@
         <div id="avvisoCF" class="avviso-cf" role="status" hidden></div>
       </div>
       <div class="column is-4"><label class="label" for="f_data_nascita">Data di nascita</label><input class="input" type="date" id="f_data_nascita"></div>
-      <!-- Il sesso serve solo a calcolare il codice fiscale da proporre: non si salva. -->
+      <!-- Il sesso serve solo al codice fiscale (proporlo, o rifarne la data illeggibile): non si salva. -->
       <div class="column is-4">
-        <span class="label" id="l_sesso">Sesso <small>(per proporre il codice fiscale)</small></span>
+        <span class="label" id="l_sesso">Sesso <small>(per proporre o correggere il codice fiscale)</small></span>
         <div class="sesso" role="radiogroup" aria-labelledby="l_sesso">
           <label class="scelta"><input type="radio" name="sessoCF" value="M"><span>M</span></label>
           <label class="scelta"><input type="radio" name="sessoCF" value="F"><span>F</span></label>
@@ -456,7 +456,7 @@
         el(id).addEventListener("change", controllaCF);
         el(id).addEventListener("change", controllaDoppioni);
       });
-      // Luogo e sesso servono solo alla proposta del codice fiscale a campo vuoto.
+      // Luogo e sesso servono al codice fiscale: il comune atteso e la data da rifare.
       ["f_luogo_nascita", "f_provincia_nascita"].forEach((id) => el(id).addEventListener("change", controllaCF));
       document.querySelectorAll("input[name=sessoCF]").forEach((r) => r.addEventListener("change", controllaCF));
       // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
@@ -687,8 +687,9 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Confronta il codice fiscale con cognome, nome e data (codicefiscale.js);
-   * se il campo è vuoto, propone il codice calcolato.
+   * Confronta il codice fiscale con l'anagrafica (codicefiscale.js), anche col
+   * comune dei soci nati nello stesso posto; se il campo è vuoto, propone il
+   * codice calcolato.
    */
   let turnoCF = 0;
   async function controllaCF() {
@@ -697,15 +698,36 @@
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
       dataNascita: el("f_data_nascita").value,
+      luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
+      // Il sesso lo indica chi compila e non si salva.
+      sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
     };
-    if (el("f_codice_fiscale").value.trim()) {
-      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), verificaCF(el("f_codice_fiscale").value, anagrafica));
+    const scritto = el("f_codice_fiscale").value.trim();
+    // Per dire che il comune di un codice scritto è sbagliato servono almeno tre
+    // soci nati lì; per proporre un codice a campo vuoto basta uno.
+    const comune = scritto || anagrafica.sesso ? await comuneDelLuogo(anagrafica.luogo, scritto ? 3 : 1) : null;
+    // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
+    // controllo più nuovo (vince quello): questa risposta non serve più.
+    if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
+    if (scritto) {
+      let esito = verificaCF(scritto, { ...anagrafica, comune });
+      // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
+      // con lo stesso nome, dicendolo nell'avviso.
+      const nome = anagrafica.nome.trim().toUpperCase();
+      if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome) {
+        const sesso = await sessoDelNome(nome);
+        if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
+        const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sesso });
+        if (conSesso?.suggerito) {
+          conSesso.problemi.push(`Sesso preso dai soci che si chiamano ${nome} (${sesso}): se non è giusto, sceglilo qui sotto.`);
+          esito = conSesso;
+        }
+      }
+      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito);
       return;
     }
-    const proposto = await codiceProposto(anagrafica);
-    // Nel frattempo il codice potrebbe essere stato scritto a mano (quello vince), o
-    // partita una proposta più nuova (vince quella): questa risposta non serve più.
-    if (turno !== turnoCF || el("f_codice_fiscale").value.trim()) return;
+    // Per un posto mai visto non si propone niente.
+    const proposto = comune && calcolaCF({ ...anagrafica, comune });
     mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), proposto && {
       ok: false,
       problemi: ["Codice fiscale calcolato dai dati della scheda: controllalo sulla tessera sanitaria."],
@@ -714,22 +736,31 @@
   }
 
   /**
-   * Il codice fiscale da proporre a campo vuoto, o null. Il sesso lo indica chi
-   * compila (non si salva); il comune si ricava dai codici dei soci nati nello
-   * stesso posto (comuneDaiCF): per un posto mai visto non si propone niente.
+   * Il codice catastale del luogo di nascita, ricavato dai codici fiscali dei
+   * soci nati lì (comuneDaiCF), o null. Il socio aperto non conta: il suo
+   * codice è quello da controllare.
    */
-  async function codiceProposto(anagrafica) {
-    const sesso = document.querySelector("input[name=sessoCF]:checked")?.value;
-    const luogo = el("f_luogo_nascita").value.trim().toUpperCase();
-    const provincia = el("f_provincia_nascita").value.trim().toUpperCase();
-    if (!sesso || !luogo || !anagrafica.cognome.trim() || !anagrafica.nome.trim() || !anagrafica.dataNascita) return null;
+  async function comuneDelLuogo(luogo, minimo) {
+    if (!luogo) return null;
+    // Solo lettere: la provincia finisce nel filtro or() di PostgREST.
+    const provincia = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
     // Il luogo si salva in maiuscolo e senza spazi ai lati: basta l'uguaglianza.
     let richiesta = sb.from("members").select("tax_code").eq("birth_place", luogo).not("tax_code", "is", null).limit(50);
-    if (provincia) richiesta = richiesta.eq("birth_province", provincia);
+    // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
+    if (provincia) richiesta = richiesta.or(`birth_province.eq.${provincia},birth_province.is.null`);
+    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
     const { data, error } = await richiesta;
     if (error) return null;
-    const comune = comuneDaiCF((data || []).map((r) => r.tax_code));
-    return comune && calcolaCF({ ...anagrafica, sesso, comune });
+    return comuneDaiCF((data || []).map((r) => r.tax_code), minimo);
+  }
+
+  /** Il sesso ricavato dai codici dei soci con lo stesso nome (sessoDaiCF), o null. */
+  async function sessoDelNome(nome) {
+    let richiesta = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
+    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
+    const { data, error } = await richiesta;
+    if (error) return null;
+    return sessoDaiCF((data || []).map((r) => r.tax_code));
   }
 
   /**
