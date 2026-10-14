@@ -305,4 +305,17 @@ assert.strictEqual(giornoMese(null), "");
   impostaContatti([]);
 }
 
+// Ogni grafica ha in social.html il nome e l'ordine dei campi del form: la K
+// li aveva senza ORDINE_CAMPI, e salvarla dava "Cannot read properties of
+// undefined (reading 'gita')".
+{
+  const pagina = require("fs").readFileSync(require("path").join(__dirname, "social.html"), "utf8");
+  const leggi = (nome) => (0, eval)(`(${pagina.match(new RegExp(`const ${nome} = (\\{[^\\n]*\\}|\\{[\\s\\S]*?\\n  \\});`))[1]})`);
+  const ordine = leggi("ORDINE_CAMPI"), nomi = leggi("NOMI_STILE");
+  for (const stile of STILI) {
+    assert.ok(nomi[stile], `${stile}: manca in NOMI_STILE`);
+    for (const g of ["gita", "evento"]) assert.ok(Array.isArray(ordine[stile]?.[g]), `${stile}: manca ORDINE_CAMPI.${g}`);
+  }
+}
+
 console.log("social: tutti i controlli passati");
