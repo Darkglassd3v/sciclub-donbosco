@@ -4,6 +4,9 @@
   regole, rilascio e database in `docs/SVILUPPO.md`.
 - **Niente commit senza sì esplicito** da chi segue progetto.
 - Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
+- "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
+  nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
+  di cosa è fatto e cosa no): la sola lettura non chiude il turno. Commit sempre solo col sì.
 - Interfaccia, commenti e variabili JS in italiano; nomi database in inglese.
 
 ## graphify
