@@ -1645,4 +1645,46 @@ reset role;
 delete from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000ac';
 SQL
 
+# ---------------------------------------------------------------------------
+# 15/10/2026: incassare un nucleo con un credito dentro. Il capofamiglia deve
+# 100, il figlio ha versato 30 di troppo: la pagina chiede 70, e il database
+# deve registrare 70, non 100 lasciando i 30 "da restituire".
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+insert into public.members (id, last_name, first_name, enrolled_at, total, paid) values
+  ('aaaaaaaa-0000-0000-0000-0000000000ad', 'NUCLEO', 'PADRE', now(), 100, 0),
+  ('aaaaaaaa-0000-0000-0000-0000000000af', 'CREDITO', 'SOLO', now(), 10, 25);
+insert into public.members (id, last_name, first_name, enrolled_at, total, paid, payer_id) values
+  ('aaaaaaaa-0000-0000-0000-0000000000ae', 'NUCLEO', 'FIGLIO', now(), 0, 30, 'aaaaaaaa-0000-0000-0000-0000000000ad');
+set role authenticated;
+do $$
+declare
+  padre constant uuid := 'aaaaaaaa-0000-0000-0000-0000000000ad';
+  figlio constant uuid := 'aaaaaaaa-0000-0000-0000-0000000000ae';
+  solo constant uuid := 'aaaaaaaa-0000-0000-0000-0000000000af';
+  esito record;
+  errore text;
+begin
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);  -- tesoriere
+  assert (select sum(balance) from public.members where id = padre or payer_id = padre) = 70, 'nucleo: saldo atteso 70';
+  begin
+    perform public.settle_household(padre, 100);
+  exception when others then errore := sqlerrm;
+  end;
+  assert errore like 'Il saldo del nucleo è cambiato%', 'incassata una cifra diversa da quella confermata: ' || coalesce(errore, 'riuscito');
+  select * into esito from public.settle_household(padre, 70);
+  assert esito.amount = 70 and esito.members_settled = 2, 'incasso: attesi 70 € e due soci, ' || esito.amount || ' e ' || esito.members_settled;
+  assert (select sum(balance) from public.members where id = padre or payer_id = padre) = 0, 'il nucleo non è a zero dopo l''incasso';
+  assert (select paid from public.members where id = figlio) = 0, 'il credito del figlio non è stato usato';
+  -- Solo a credito: niente da incassare, e il credito resta (si restituisce con set_amounts).
+  select * into esito from public.settle_household(solo);
+  assert esito.amount = 0 and esito.members_settled = 0, 'incassato un nucleo a credito';
+  assert (select paid from public.members where id = solo) = 25, 'il credito è sparito senza essere restituito';
+  perform set_config('test.uid', '', false);
+end $$;
+reset role;
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000ae');
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000ad', 'aaaaaaaa-0000-0000-0000-0000000000af');
+SQL
+
 echo "test ruoli: tutto a posto"

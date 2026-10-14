@@ -2210,7 +2210,12 @@ create policy season_accounts_update on public.season_accounts
 -- permesso pagamenti e scrive soltanto l'acconto.
 -- ---------------------------------------------------------------------------
 
-create or replace function public.settle_household(head_id uuid)
+-- Fino al 15/10/2026 senza la cifra confermata, e incassava solo i saldi
+-- sopra zero: con un familiare a credito registrava più di quanto la pagina
+-- aveva fatto incassare (100 invece di 70), e il credito restava da
+-- "restituire". Ora si incassa il saldo del nucleo, quello che la pagina mostra.
+drop function if exists public.settle_household(uuid);
+create or replace function public.settle_household(head_id uuid, expected numeric default null)
 returns table (members_settled bigint, amount numeric)
 language plpgsql
 security definer
@@ -2224,15 +2229,21 @@ begin
     raise exception 'Non hai il permesso di registrare gli incassi.';
   end if;
 
-  select count(*), coalesce(sum(m.balance), 0)
+  -- Le stesse righe della vista households: il capofamiglia e chi lo indica come pagante.
+  select count(*) filter (where m.balance <> 0), coalesce(sum(m.balance), 0)
     into how_many, how_much
     from public.members m
-   where (m.id = head_id or m.payer_id = head_id)
-     and m.balance > 0;
+   where m.id = head_id or m.payer_id = head_id;
 
-  if how_many = 0 then
+  -- Niente da incassare (saldato, o a credito: il credito si restituisce con set_amounts).
+  if how_much <= 0 then
     return query select 0::bigint, 0::numeric;
     return;
+  end if;
+  -- La cifra della domanda "Hai riscosso X?": se nel frattempo un altro
+  -- operatore ha cambiato qualcosa, non si incassa una cifra diversa.
+  if settle_household.expected is not null and how_much <> settle_household.expected then
+    raise exception 'Il saldo del nucleo è cambiato (ora % €): ricarica la pagina e ricontrolla prima di incassare.', how_much;
   end if;
 
   -- Il motivo lo legge log_amount_change() per lo storico degli importi.
@@ -2241,13 +2252,20 @@ begin
      set paid = m.total
    where (m.id = head_id or m.payer_id = head_id)
      and m.balance > 0;
+  -- Il credito di un familiare ha coperto parte del debito degli altri: si è
+  -- incassata solo la differenza, quindi anche lui torna a zero.
+  perform set_config('sciclub.motivo', 'Credito usato nell''incasso del nucleo', true);
+  update public.members m
+     set paid = m.total
+   where (m.id = head_id or m.payer_id = head_id)
+     and m.balance < 0;
   perform set_config('sciclub.motivo', '', true);
 
   return query select how_many, how_much;
 end;
 $$;
 
-comment on function public.settle_household is 'Porta a zero il saldo del capofamiglia e dei suoi familiari a carico. Restituisce quante righe e quanto è stato incassato.';
+comment on function public.settle_household is 'Incassa il saldo del nucleo (capofamiglia e familiari a carico, crediti compresi) e lo porta a zero; con expected rifiuta se il saldo non è più quello confermato.';
 
 -- ---------------------------------------------------------------------------
 -- Importi scritti a mano, rimborsi e storico
