@@ -15,6 +15,16 @@
 
 ## Richieste nuove
 
+- [ ] 15/10: **Story della K da sistemare** (foto dell'utente: Corso presciistica). Il logo sta a metà
+      schermo; la tessera della data è lunga ma il testo dentro non la riempie; nella story il
+      testo può essere più grande e dire di più; il luogo degli eventi (non delle gite) è troppo
+      piccolo. Le dimensioni regolabili campo per campo: **scartate** (l'utente: i testi devono
+      restare coerenti fra i post); si correggono le misure della grafica. Nelle gite **partenze e
+      orari sono confusi**: metterli in riquadri. Prima un abbozzo prima/dopo da approvare.
+- [ ] 15/10, dalla review: **Incasso di un nucleo con un credito dentro** (Alta). Pagamenti mostra il
+      saldo netto (es. 100 da pagare − 30 a credito = 70) ma `settle_household` incassava solo i
+      saldi positivi (100) e lasciava il credito: il cassiere poi lo "restituiva". Da fare: la
+      funzione incassa il netto e azzera anche il credito, con la cifra confermata (`expected`).
 - [ ] 15/10: **Un permesso per ogni voce della barra** fatto: `cerca`, `gite`, `stampe` (chi aveva
       `gite` le ha tutte e tre), nomi della barra in Gestione > Ruoli (`nav_labels`). In produzione
       il 15/10 solo le istruzioni nuove (lo schema intero teneva fermo il sito), backup in

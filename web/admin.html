@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pannello Pagamenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261015c">
+  <link rel="stylesheet" href="brand.css?v=20261015d">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -124,8 +124,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261015c"></script>
-<script src="shared.js?v=20261015c"></script>
+<script src="config.js?v=20261015d"></script>
+<script src="shared.js?v=20261015d"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -432,19 +432,21 @@
     barra.querySelector(".da-pagare").textContent = `Da incassare: ${fmt(saldo)}`;
     const nome = barra.dataset.nome;
     chiedi(barra.querySelector(".azioni"), `Hai riscosso ${fmt(saldo)}${nome ? ` da ${nome}` : ""}?`,
-      "Sì, incassato", () => salda(idPagante), { pericolo: false });
+      "Sì, incassato", () => salda(idPagante, saldo), { pericolo: false });
   }
 
   /**
-   * Porta a zero il saldo di tutta la famiglia. Il calcolo sta in
+   * Incassa il saldo della famiglia (il credito di un familiare compreso: si
+   * incassa la differenza) e lo porta a zero. Il calcolo sta in
    * settle_household() sul database: le righe del nucleo cambiano tutte
    * insieme, e non esiste il caso "metà famiglia risulta pagata" per una
    * connessione caduta a metà elenco.
    */
-  async function salda(idPagante) {
+  async function salda(idPagante, confermato) {
     setLoading(true);
     try {
-      const { data, error } = await sb.rpc("settle_household", { head_id: idPagante });
+      // La cifra della domanda: se intanto il saldo è cambiato, il database non incassa.
+      const { data, error } = await sb.rpc("settle_household", { head_id: idPagante, expected: confermato });
       if (error) throw error;
 
       const esito = Array.isArray(data) ? data[0] : data;
