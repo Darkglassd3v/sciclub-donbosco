@@ -24,11 +24,12 @@
 - [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
       assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
       le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).
-      **Ripresa:** il codice fiscale, qui sotto. Da sistemare, nell'ordine:
-  - [ ] Codice fiscale: sesso scelto ignorato col giorno leggibile; comune deciso col finale del
-        codice non ancora corretto; cifra/lettera A-J nel comune; proposta senza comune che
-        peggiora il finale (e il test che la dà per buona); `turnoCF` in `resetForm`; query
-        inutili; maiuscole del luogo e del nome nell'archivio.
+      Il 15/10 anche il codice fiscale (sesso scelto, A-J nel comune, finale senza comune,
+      richieste, maiuscole; in produzione corretti i nomi `tOMMASO` e `AòESSANDRA`, backup in
+      `supabase/migration/backup-2026-10-15-nomi/`). La regola della review "comune rifatto se il
+      nome non torna" **non** è stata messa: sull'archivio smentita da un nato in Cina (Z210)
+      con la scheda che dice ASTI. Un codice coerente col suo finale ora ha solo l'avviso, senza
+      proposta (81 delle 196 proposte sull'archivio erano così). **Ripresa:** Soci, qui sotto.
   - [ ] Soci: saldo negativo "a credito" anche nella tabella dei familiari e nel PDF.
   - [ ] test-social: i nomi di ORDINE_CAMPI devono esistere come `data-campo`.
 - [ ] 15/10, **ultime come priorità**: Bilancio, il selettore della data sparisce (bug grafico); e
@@ -109,6 +110,11 @@ della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ord
       quale è giusto prima di toccarlo.
 
 ## Da decidere
+
+- Codice fiscale: un elenco dei codici dei comuni (JSON statico nel repository, niente libreria:
+  il progetto non ha dipendenze né build) darebbe il comune atteso anche per chi è nato in un
+  posto raro; oggi si ricava dai soci nati lì (almeno 3). Il nodo è la corrispondenza coi luoghi
+  scritti a mano nell'archivio ("S. DAMIANO", "SAN DAMIANO D'ASTI"). Chiesto dall'utente il 15/10.
 
 - Pubblicare su Facebook e Instagram dal sito invece che a mano: piano in
   `docs/PIANO_PUBBLICAZIONE_META.md`. Prima domanda: serve, o basta Meta Business Suite?

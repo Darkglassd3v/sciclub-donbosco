@@ -158,6 +158,11 @@ def read_soci(worksheet):
 
         record = {field: cell(field) for field in TEXT_FIELDS}
         record["telefono"] = clean_phone(record["telefono"])
+        # In maiuscolo come li salva la pagina Soci: il comune e il sesso per il
+        # codice fiscale si cercano fra i soci con lo stesso luogo o nome, per uguaglianza.
+        for campo in ("cognome", "nome", "luogo_nascita", "provincia_nascita"):
+            if record[campo] is not None:
+                record[campo] = str(record[campo]).upper()
         record["data_nascita"] = parse_date(cell("data_nascita"))
         record["totale"] = cell("totale")
         record["acconto"] = cell("acconto")

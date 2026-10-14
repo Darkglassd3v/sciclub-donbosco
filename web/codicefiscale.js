@@ -7,6 +7,9 @@
 // nascita già scritti nella scheda e, se qualcosa non torna, propongono il
 // codice che ne verrebbe fuori.
 //
+// Un codice che torna col suo carattere finale non si propone di cambiarlo:
+// quasi sempre è copiato giusto, e lo sbaglio è nella scheda. Si avvisa e basta.
+//
 // È un avviso, non un blocco: il codice lo assegna l'Agenzia delle Entrate e
 // in casi rari (omocodia, nomi stranieri trascritti in modi diversi, errori
 // nell'anagrafica invece che nel codice) quello giusto non coincide con il
@@ -161,8 +164,12 @@ function comuneDaiCF(codici, minimo = 1) {
  *   - comune: il codice catastale atteso (da comuneDaiCF), con luogo, il nome
  *     del posto da scrivere nell'avviso. Un comune diverso si segnala e si
  *     corregge nella proposta;
- *   - sesso: "M" o "F", indicato da chi compila. Serve quando il giorno nel
- *     codice è illeggibile: con la data della scheda la data si rifà.
+ *   - sesso: "M" o "F", indicato da chi compila. Vale più del giorno scritto
+ *     (T42 per un uomo nato il 12 è una cifra sbagliata, non una donna), e
+ *     quando il giorno è illeggibile la data si rifà con quella della scheda;
+ *   - sessoProbabile: "M" o "F" ricavato dai soci con lo stesso nome
+ *     (sessoDaiCF). Serve solo a rifare un giorno illeggibile: uno leggibile
+ *     dice il sesso meglio di una statistica sui nomi.
  */
 function verificaCF(codice, anagrafica = {}) {
   const cf = normalizzaCF(codice);
@@ -223,41 +230,61 @@ function verificaCF(codice, anagrafica = {}) {
 
   // Data e sesso: il giorno delle donne è aumentato di 40.
   const giornoCF = /^\d{2}$/.test(parti.giorno) ? Number(parti.giorno) : NaN;
-  const femmina = giornoCF > 40;
+  const sessoScelto = /^[MF]$/.test(anagrafica.sesso ?? "") ? anagrafica.sesso : null;
+  const femminaNelCodice = giornoCF > 40;
+  const femmina = sessoScelto ? sessoScelto === "F" : femminaNelCodice;
   const giornoValido = (giornoCF >= 1 && giornoCF <= 31) || (giornoCF >= 41 && giornoCF <= 71);
   const formaData = /^\d{2}$/.test(parti.anno) && CF_MESI.includes(parti.mese) && giornoValido;
 
   const data = leggiData(anagrafica.dataNascita);
   if (data && giornoValido) {
     const attesa = codiceData(data, femmina);
-    if (parti.anno + parti.mese + parti.giorno !== attesa) {
-      problemi.push(`La data di nascita non torna con quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
+    const scritta = parti.anno + parti.mese + parti.giorno;
+    if (scritta !== attesa) {
+      // Data giusta ma col sesso opposto a quello scelto: lo si dice, se no
+      // "la data non torna" con la data giusta sotto gli occhi non si capisce.
+      problemi.push(codiceData(data, femminaNelCodice) === scritta
+        ? `Nel codice il giorno (${parti.giorno}) è quello ${femminaNelCodice ? "di una donna (il giorno più 40)" : "di un uomo"}, ma il sesso scelto è ${sessoScelto}: controlla sulla tessera sanitaria.`
+        : `La data di nascita non torna con quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
       corretto.data = attesa;
     }
   } else if (!formaData) {
     problemi.push("La data di nascita nel codice (caratteri dal 7° all'11°) non è valida.");
     // Senza un giorno leggibile non si sa se è un uomo o una donna: la data
     // della scheda basta solo se il sesso l'ha indicato chi compila.
-    if (data && /^[MF]$/.test(anagrafica.sesso ?? "")) corretto.data = codiceData(data, anagrafica.sesso === "F");
+    const sesso = sessoScelto || (/^[MF]$/.test(anagrafica.sessoProbabile ?? "") ? anagrafica.sessoProbabile : null);
+    if (data && sesso) corretto.data = codiceData(data, sesso === "F");
     else ricostruibile = false;
   }
 
   const comuneAtteso = /^[A-Z]\d{3}$/.test(anagrafica.comune ?? "") ? anagrafica.comune : null;
   const luogo = String(anagrafica.luogo ?? "").trim().toUpperCase() || "il luogo di nascita della scheda";
-  if (comuneAtteso && parti.comune !== comuneAtteso && cf.length === 16 && carattereControllo(cf.slice(0, 15)) === cf[15]) {
-    // Un codice che torna col suo carattere finale è quasi sempre copiato giusto:
-    // sarà sbagliato il luogo della scheda, o la persona è nata altrove. Si
-    // avvisa, ma il comune non si tocca.
+  const formaComune = /^[A-Z]\d{3}$/.test(parti.comune);
+  // Coerente: ogni parte ha la sua forma e il carattere finale torna. Un codice
+  // così è quasi sempre copiato giusto da una tessera, e se non torna con la
+  // scheda è la scheda a dire un'altra cosa (data battuta male, secondo nome,
+  // nato all'estero): rifarlo dalla scheda ci porterebbe dentro i suoi sbagli.
+  // Sull'archivio (15/10/2026) erano 81 delle 196 proposte. La forma serve: una
+  // lettera dalla A alla J al posto della cifra corrispondente (G per 6) dà lo
+  // stesso carattere finale.
+  const coerente = cf.length === 16 && carattereControllo(cf.slice(0, 15)) === cf[15]
+    && /^[A-Z]{6}$/.test(cf.slice(0, 6)) && formaData && formaComune;
+  const problemiDellaScheda = problemi.length;
+  if (comuneAtteso && parti.comune !== comuneAtteso && coerente) {
     problemi.push(`Il comune nel codice (${parti.comune}) non è quello dei soci nati a ${luogo} (${comuneAtteso}): controlla il luogo di nascita sulla tessera sanitaria.`);
   } else if (comuneAtteso && parti.comune !== comuneAtteso) {
     problemi.push(`Il comune di nascita nel codice non torna: per ${luogo} i codici dei soci nati lì hanno ${comuneAtteso}.`);
     corretto.comune = comuneAtteso;
-  } else if (!/^[A-Z]\d{3}$/.test(parti.comune)) {
+  } else if (!formaComune) {
     problemi.push("Il codice del comune di nascita (caratteri dal 12° al 15°) non è valido.");
     ricostruibile = false;
   }
 
   if (!ricostruibile) return { ok: false, problemi, suggerito: null };
+  if (coerente && problemi.length) {
+    if (problemiDellaScheda) problemi.push("Il codice però torna col suo carattere finale: di solito è giusto, ed è la scheda a dire un'altra cosa. Controlla sulla tessera sanitaria prima di cambiarlo.");
+    return { ok: false, problemi, suggerito: null };
+  }
 
   const primi15 = corretto.cognome + corretto.nome + corretto.data + corretto.comune;
   const controllo = carattereControllo(primi15);
@@ -268,6 +295,12 @@ function verificaCF(codice, anagrafica = {}) {
   } else if (!problemi.length && cf[15] !== controllo) {
     // Solo se il resto è giusto: altrimenti il carattere finale è sbagliato
     // per forza, e dirlo sarebbe una riga in più da leggere per niente.
+    if (!comuneAtteso) {
+      // Senza il comune dei soci nati lì, lo sbaglio può essere nel comune e
+      // non nel finale: proporre un finale nuovo rovinerebbe un finale giusto.
+      problemi.push(`L'ultimo carattere non torna col resto del codice: o è sbagliato lui (dovrebbe essere ${controllo}) o un altro carattere, di solito del comune (dal 12° al 15°). Controlla sulla tessera sanitaria.`);
+      return { ok: false, problemi, suggerito: null };
+    }
     problemi.push(`L'ultimo carattere è sbagliato: dovrebbe essere ${controllo}.`);
   }
 

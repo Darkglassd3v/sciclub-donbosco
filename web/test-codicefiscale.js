@@ -48,33 +48,52 @@ assert.ok(verificaCF(omocodico, rossi).ok, "omocodia non riconosciuta");
 
 // --- Codici sbagliati -------------------------------------------------------
 
-// Carattere finale sbagliato: si propone quello giusto.
-let esito = verificaCF("RSSMRA85T10A562X", rossi);
+// Carattere finale sbagliato: col comune dei soci nati lì si propone quello giusto.
+let esito = verificaCF("RSSMRA85T10A562X", { ...rossi, comune: "A562" });
 assert.strictEqual(esito.ok, false);
 assert.strictEqual(esito.suggerito, "RSSMRA85T10A562S");
 assert.match(esito.problemi[0], /ultimo carattere/);
 
+// Senza il comune lo sbaglio può essere nel comune: si dice dove guardare, ma
+// non si propone un finale nuovo (rovinerebbe quello giusto).
+esito = verificaCF("RSSMRA85T10A562X", rossi);
+assert.strictEqual(esito.ok, false);
+assert.strictEqual(esito.suggerito, null);
+assert.match(esito.problemi[0], /ultimo carattere.*comune/);
 // Anche senza anagrafica si controlla il carattere finale.
-assert.strictEqual(verificaCF("RSSMRA85T10A562X").suggerito, "RSSMRA85T10A562S");
+assert.match(verificaCF("RSSMRA85T10A562X").problemi[0], /ultimo carattere/);
 
 // Ultimo carattere dimenticato.
 esito = verificaCF("RSSMRA85T10A562", rossi);
 assert.strictEqual(esito.suggerito, "RSSMRA85T10A562S");
 assert.match(esito.problemi[0], /Manca l'ultimo carattere: dovrebbe essere S/);
 
-// Cognome che non torna: si rifanno le tre lettere e il carattere finale.
-esito = verificaCF("RSSMRA85T10A562S", { ...rossi, cognome: "Bianchi" });
+// Cognome che non torna (e finale sbagliato): si rifanno le tre lettere e il carattere finale.
+esito = verificaCF("RSSMRA85T10A562X", { ...rossi, cognome: "Bianchi" });
 assert.strictEqual(esito.ok, false);
 assert.strictEqual(esito.suggerito, "BNCMRA85T10A562" + carattereControllo("BNCMRA85T10A562"));
 assert.strictEqual(esito.problemi.length, 1, "il carattere finale non va segnalato a parte");
 
-// Data sbagliata di una donna: il +40 resta.
-esito = verificaCF(bianchi, { cognome: "Bianchi", nome: "Maria", dataNascita: "1980-01-02" });
+// Codice coerente col suo finale che non torna con la scheda: sarà la scheda
+// (data battuta male, secondo nome). Si avvisa, ma non si propone di cambiarlo.
+esito = verificaCF("RSSMRA85T10A562S", { ...rossi, cognome: "Bianchi" });
+assert.strictEqual(esito.ok, false);
+assert.strictEqual(esito.suggerito, null);
+assert.match(esito.problemi[0], /cognome/);
+assert.match(esito.problemi[1], /torna col suo carattere finale.*tessera sanitaria/);
+
+// Data sbagliata di una donna (e finale sbagliato): il +40 resta.
+const bianchiStorto = bianchi15 + (bianchi.endsWith("A") ? "B" : "A");
+esito = verificaCF(bianchiStorto, { cognome: "Bianchi", nome: "Maria", dataNascita: "1980-01-02" });
 assert.strictEqual(esito.suggerito.slice(6, 11), "80A42");
+assert.match(esito.problemi[0], /data di nascita/);
+// Lo stesso col finale giusto: la data della scheda può essere sbagliata, niente proposta.
+esito = verificaCF(bianchi, { cognome: "Bianchi", nome: "Maria", dataNascita: "1980-01-02" });
+assert.strictEqual(esito.suggerito, null);
 assert.match(esito.problemi[0], /data di nascita/);
 
 // Omocodico con carattere finale sbagliato: la N del comune non si tocca.
-esito = verificaCF(omocodico15 + (omocodico.endsWith("A") ? "B" : "A"), rossi);
+esito = verificaCF(omocodico15 + (omocodico.endsWith("A") ? "B" : "A"), { ...rossi, comune: "A562" });
 assert.strictEqual(esito.suggerito, omocodico);
 
 // Troppo corto o comune illeggibile: si segnala, ma non si può proporre niente.
@@ -95,10 +114,10 @@ assert.ok(esito.problemi.some((p) => /data di nascita/.test(p)));
 
 // Comune sbagliato che sembra omocodia: la P al posto del 2 si legge come 3
 // (A563), e il carattere finale è quello del codice giusto. Senza il comune
-// atteso si propone solo un altro carattere finale (sbagliato), col comune dei
-// soci nati lì si rifà il comune e il finale torna quello di prima.
+// atteso non si propone niente (un finale nuovo sarebbe sbagliato), col comune
+// dei soci nati lì si rifà il comune e il finale torna quello di prima.
 const comuneSbagliato = "RSSMRA85T10A56PS";
-assert.strictEqual(verificaCF(comuneSbagliato, rossi).suggerito.slice(0, 15), "RSSMRA85T10A56P");
+assert.strictEqual(verificaCF(comuneSbagliato, rossi).suggerito, null);
 esito = verificaCF(comuneSbagliato, { ...rossi, comune: "A562", luogo: "napoli" });
 assert.strictEqual(esito.ok, false);
 assert.strictEqual(esito.suggerito, "RSSMRA85T10A562S");
@@ -113,6 +132,32 @@ assert.strictEqual(esito.ok, false);
 assert.strictEqual(esito.suggerito, null);
 assert.match(esito.problemi[0], /F205.*NAPOLI.*A562.*luogo di nascita/);
 
+// Il finale torna ma il cognome e il comune no: è un codice vero di qualcuno
+// (sull'archivio, un nato in Cina con la scheda che dice ASTI). Si avvisa di
+// tutti e due, e il codice non si riscrive.
+const rsx15 = "RSXMRA85T10F205";
+esito = verificaCF(rsx15 + carattereControllo(rsx15), { ...rossi, comune: "A562", luogo: "NAPOLI" });
+assert.strictEqual(esito.suggerito, null);
+assert.match(esito.problemi[0], /cognome/);
+assert.match(esito.problemi[1], /F205.*NAPOLI.*A562/);
+assert.strictEqual(esito.problemi.length, 3);
+// Col finale sbagliato invece è un codice copiato male: si rifanno cognome e comune.
+esito = verificaCF(rsx15 + (carattereControllo(rsx15) === "A" ? "B" : "A"), { ...rossi, comune: "A562", luogo: "NAPOLI" });
+assert.strictEqual(esito.suggerito, "RSSMRA85T10A562S");
+assert.strictEqual(esito.problemi.length, 2);
+
+// G al posto del 6 nel comune: per il carattere finale valgono uguale, ma il
+// comune così non esiste. Si rifà col comune atteso.
+assert.strictEqual(carattereControllo("RSSMRA85T10D9G9"), carattereControllo("RSSMRA85T10D969"));
+const genova = "RSSMRA85T10D969" + carattereControllo("RSSMRA85T10D969");
+esito = verificaCF("RSSMRA85T10D9G9" + genova[15], { ...rossi, comune: "D969", luogo: "GENOVA" });
+assert.strictEqual(esito.suggerito, genova);
+assert.match(esito.problemi[0], /comune di nascita.*GENOVA.*D969/);
+// Senza comune atteso: comune non valido, niente proposta.
+esito = verificaCF("RSSMRA85T10D9G9" + genova[15], rossi);
+assert.strictEqual(esito.suggerito, null);
+assert.ok(esito.problemi.some((p) => /comune/.test(p)));
+
 // L'omocodia vera resta valida anche col comune atteso.
 assert.ok(verificaCF(omocodico, { ...rossi, comune: "A562" }).ok);
 
@@ -126,6 +171,22 @@ assert.strictEqual(esito.suggerito, null);
 assert.ok(esito.problemi.some((p) => /data di nascita/.test(p)));
 assert.strictEqual(verificaCF("RSSMRA85TC0A562S", { ...rossi, sesso: "M" }).suggerito, "RSSMRA85T10A562S");
 assert.strictEqual(verificaCF("RSSMRA85TC0A562S", { ...rossi, sesso: "F" }).suggerito.slice(6, 11), "85T50");
+// Il sesso scelto vale più del giorno leggibile: 50 (donna, il 10) per un uomo.
+const donna15 = "RSSMRA85T50A562";
+esito = verificaCF(donna15 + (carattereControllo(donna15) === "A" ? "B" : "A"), { ...rossi, sesso: "M", comune: "A562" });
+assert.strictEqual(esito.suggerito, "RSSMRA85T10A562S");
+assert.match(esito.problemi[0], /giorno \(50\).*donna.*sesso scelto è M/);
+// Col finale giusto è un codice da donna vero: si avvisa, senza proposta.
+esito = verificaCF(donna15 + carattereControllo(donna15), { ...rossi, sesso: "M", comune: "A562" });
+assert.strictEqual(esito.suggerito, null);
+assert.match(esito.problemi[0], /sesso scelto è M/);
+// Data sbagliata davvero, col sesso scelto: si dice la data.
+esito = verificaCF("RSSMRA85T11A562" + carattereControllo("RSSMRA85T11A562"), { ...rossi, sesso: "M", comune: "A562" });
+assert.match(esito.problemi[0], /data di nascita non torna/);
+// Il sesso dei soci con lo stesso nome non cambia un giorno leggibile...
+assert.ok(verificaCF(bianchi, { cognome: "Bianchi", nome: "Maria", dataNascita: "1980-01-01", sessoProbabile: "M" }).ok);
+// ...ma rifà quello illeggibile.
+assert.strictEqual(verificaCF("RSSMRA85TC0A562S", { ...rossi, sessoProbabile: "M" }).suggerito, "RSSMRA85T10A562S");
 // Senza data nella scheda il sesso non basta.
 assert.strictEqual(verificaCF("RSSMRA85TC0A562S", { ...rossi, dataNascita: "", sesso: "M" }).suggerito, null);
 
