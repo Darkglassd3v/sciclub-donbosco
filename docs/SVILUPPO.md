@@ -60,6 +60,9 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   if exists` + `add constraint`, gli spostamenti di dati sono UPDATE rieseguibili.
 - Dopo un caricamento da Excel (`supabase/scripts/generate_migration.py`) rilanciare
   `schema.sql`: crea le righe di `member_passes` dagli abbonamenti scritti nella colonna del socio.
+  Le tessere già nel listino restano come sono; una tessera nuova del foglio entra col prezzo
+  pieno (assicurazione dentro) e senza assicurazione: in Impostazioni sceglierla e abbassare la
+  quota. I prezzi sono in euro interi (il database rifiuta i centesimi).
 - Backup automatico: `.github/workflows/backup-db.yml` su `dev`, martedì, giovedì e sabato
   (frase in `supabase/.backup_passphrase`).
 - Test: `./supabase/test_ruoli.sh` (ruoli, RLS e trigger in Postgres su docker).

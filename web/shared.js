@@ -615,7 +615,7 @@ async function caricaPrezzi() {
     .eq("active", true)
     .order("category")
     .order("position", { nullsFirst: false })
-    .order("price")
+    .order("card_price")
     .order("name");
   if (error) throw error;
 

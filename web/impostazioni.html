@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261015d">
+  <link rel="stylesheet" href="brand.css?v=20261015e">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
@@ -96,7 +96,7 @@
             </td>
             <td></td>
             <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
-            <td><input type="number" id="nuovoPrezzo" step="0.01" min="0" placeholder="0.00"></td>
+            <td><input type="number" id="nuovoPrezzo" step="1" min="0" placeholder="0"></td>
             <td>
               <select id="nuovoMinRole">
                 <option value="utente">utente</option>
@@ -126,7 +126,7 @@
           <tbody id="tabellaAssicurazioni"><tr><td colspan="3" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
             <td><input type="text" id="nuovaAssNome" placeholder="Nome"></td>
-            <td><input type="number" id="nuovaAssPrezzo" step="0.01" min="0" placeholder="0.00"></td>
+            <td><input type="number" id="nuovaAssPrezzo" step="1" min="0" placeholder="0"></td>
             <td><button type="button" class="button is-small is-link" id="btnAggiungiAss">+ Aggiungi</button></td>
           </tr></tfoot>
         </table>
@@ -158,8 +158,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261015d"></script>
-<script src="shared.js?v=20261015d"></script>
+<script src="config.js?v=20261015e"></script>
+<script src="shared.js?v=20261015e"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -196,14 +196,25 @@
     bottone.textContent = modificata ? "Salva modifiche" : "Salva";
   }
 
+  /** Fotografa i valori salvati della riga e la accende quando cambiano. */
+  function sorvegliaRiga(riga) {
+    riga.dataset.salvato = valoriRiga(riga);
+    riga.addEventListener("input", () => aggiornaStatoRiga(riga));
+    riga.addEventListener("change", () => aggiornaStatoRiga(riga));
+  }
+
   /** Dopo aver disegnato una tabella: fotografa i valori salvati di ogni riga. */
   function sorvegliaRighe(tabella) {
-    tabella.querySelectorAll("tr[data-id]").forEach((riga) => {
-      riga.dataset.salvato = valoriRiga(riga);
-      riga.addEventListener("input", () => aggiornaStatoRiga(riga));
-      riga.addEventListener("change", () => aggiornaStatoRiga(riga));
-    });
+    tabella.querySelectorAll("tr[data-id]").forEach(sorvegliaRiga);
   }
+
+  /** Prezzo in euro interi, anche 0; null se il campo è vuoto, negativo o coi centesimi. */
+  function leggiEuro(campo) {
+    const testo = campo.value.trim();
+    const euro = Number(testo);
+    return testo !== "" && Number.isInteger(euro) && euro >= 0 ? euro : null;
+  }
+  const AVVISO_EURO = "Scrivi il prezzo in euro, senza centesimi (anche 0).";
 
   /** Salvataggio riuscito: quello che c'è a schermo è ora quello salvato. */
   function segnaSalvata(riga) {
@@ -258,7 +269,7 @@
         <td>${p.category}</td>
         <td><input type="number" class="ordine" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
         <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
-        <td><input type="number" data-prezzo step="0.01" min="0" value="${p.price}"></td>
+        <td><input type="number" data-prezzo step="1" min="0" value="${p.price}" aria-label="Prezzo in euro"></td>
         <td>${selettoreRuolo}</td>
         <td>${p.category === "TESSERA"
           ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>
@@ -305,9 +316,11 @@
     const id = riga.dataset.id;
     const bottone = riga.querySelector("[data-salva]");
     const selettoreRuolo = riga.querySelector("[data-min-role]");
+    const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
+    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
     const patch = {
       name: riga.querySelector("[data-nome]").value.trim(),
-      price: parseFloat(riga.querySelector("[data-prezzo]").value) || 0,
+      price: prezzo,
       active: riga.querySelector("[data-attivo]").checked,
       position: parseInt(riga.querySelector("[data-posizione]").value, 10) || null,
     };
@@ -337,6 +350,8 @@
       showToast("Inserisci un nome.", "is-warning");
       return;
     }
+    const prezzo = leggiEuro(el("nuovoPrezzo"));
+    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
     const bottone = el("btnAggiungiPrezzo");
     bottone.disabled = true;
     try {
@@ -344,7 +359,7 @@
       const { error } = await sb.from("prices").insert({
         category: categoria,
         name: nome,
-        price: parseFloat(el("nuovoPrezzo").value) || 0,
+        price: prezzo,
         min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
         insurance: categoria === "TESSERA" ? el("nuovoAssicurazione").value || null : null,
         // In fondo alla sua categoria: l'ordine si cambia poi nella colonna Ordine.
@@ -373,7 +388,7 @@
     return `
       <tr data-id="${esc(a.code)}">
         <td><input type="text" data-nome value="${esc(a.name)}" aria-label="Nome"></td>
-        <td><input type="number" data-prezzo step="0.01" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
+        <td><input type="number" data-prezzo step="1" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
         <td><div class="buttons">
           <button type="button" class="button is-small" data-salva>Salva</button>
           <button type="button" class="button is-small is-danger is-outlined" data-togli>Togli</button>
@@ -381,43 +396,66 @@
       </tr>`;
   }
 
+  const RIGA_NESSUNA_ASS = '<tr><td colspan="3" class="vuota">Nessuna assicurazione.</td></tr>';
+
+  /** Una riga della tabella: i pulsanti e la sorveglianza delle modifiche. */
+  function attivaRigaAssicurazione(riga) {
+    riga.querySelector("[data-salva]").addEventListener("click", () => salvaAssicurazione(riga));
+    riga.querySelector("[data-togli]").addEventListener("click", () => chiediTogliAssicurazione(riga));
+    sorvegliaRiga(riga);
+  }
+
+  /** All'apertura: elenco e tabella. Dopo, la tabella si cambia riga per riga (vedi dopoAssicurazioni). */
   async function caricaAssicurazioni() {
     try {
-      const { data, error } = await sb.from("insurances").select("code, name, price").order("price").order("name");
-      if (error) throw error;
-      ASSICURAZIONI = data;
+      await leggiAssicurazioni();
       el("nuovoAssicurazione").innerHTML = opzioniAssicurazione("");
-      el("tabellaAssicurazioni").innerHTML = data.length
-        ? data.map(rigaAssicurazione).join("")
-        : '<tr><td colspan="3" class="vuota">Nessuna assicurazione.</td></tr>';
-      el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach((riga) => {
-        riga.querySelector("[data-salva]").addEventListener("click", () => salvaAssicurazione(riga));
-        riga.querySelector("[data-togli]").addEventListener("click", () => chiediTogliAssicurazione(riga));
-      });
-      sorvegliaRighe(el("tabellaAssicurazioni"));
+      el("tabellaAssicurazioni").innerHTML = ASSICURAZIONI.length
+        ? ASSICURAZIONI.map(rigaAssicurazione).join("")
+        : RIGA_NESSUNA_ASS;
+      el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach(attivaRigaAssicurazione);
     } catch (error) {
       showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
     }
   }
 
-  /** Nomi e prezzi cambiati: il listino li mostra, si ridisegna (se non ha righe da salvare). */
+  async function leggiAssicurazioni() {
+    const { data, error } = await sb.from("insurances").select("code, name, price").order("price").order("name");
+    if (error) throw error;
+    ASSICURAZIONI = data;
+  }
+
+  /**
+   * Nomi e prezzi cambiati: le scelte del listino e della tessera nuova li
+   * prendono senza ridisegnare niente, così le righe gialle non salvate e la
+   * scelta già fatta restano come sono.
+   */
   async function dopoAssicurazioni() {
-    await caricaAssicurazioni();
-    if (el("tabellaPrezzi").querySelector("tr.modificata")) {
-      showToast("Il listino ha righe non salvate: salvale e ricarica la pagina per vedere i prezzi nuovi.", "is-warning");
+    try {
+      await leggiAssicurazioni();
+    } catch (error) {
+      showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
       return;
     }
-    await caricaPrezziTutti();
+    document.querySelectorAll("#nuovoAssicurazione, #tabellaPrezzi [data-assicurazione]").forEach((scelta) => {
+      scelta.innerHTML = opzioniAssicurazione(scelta.value);
+    });
+    el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((riga) => {
+      aggiornaPagaSocio(riga);
+      if (riga.dataset.salvato) aggiornaStatoRiga(riga);
+    });
   }
 
   async function salvaAssicurazione(riga) {
     const nome = riga.querySelector("[data-nome]").value.trim();
     if (!nome) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
+    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
     const bottone = riga.querySelector("[data-salva]");
     bottone.disabled = true;
     try {
       const { error } = await sb.from("insurances")
-        .update({ name: nome, price: parseFloat(riga.querySelector("[data-prezzo]").value) || 0 })
+        .update({ name: nome, price: prezzo })
         .eq("code", riga.dataset.id);
       if (error) throw error;
       segnaSalvata(riga);
@@ -447,6 +485,8 @@
     try {
       const { error } = await sb.from("insurances").delete().eq("code", riga.dataset.id);
       if (error) throw error;
+      riga.remove();
+      if (!el("tabellaAssicurazioni").querySelector("tr")) el("tabellaAssicurazioni").innerHTML = RIGA_NESSUNA_ASS;
       showToast("Assicurazione tolta.");
       await dopoAssicurazioni();
     } catch (error) {
@@ -460,17 +500,25 @@
   async function aggiungiAssicurazione() {
     const nome = el("nuovaAssNome").value.trim();
     // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
-    const codice = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+    const base = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       .replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!codice) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    if (!base) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    // "Global Neve-Sport" dà lo stesso codice di "Global Neve Sport": il secondo diventa _2.
+    let codice = base;
+    for (let n = 2; ASSICURAZIONI.some((a) => a.code === codice); n++) codice = `${base}_${n}`;
+    const prezzo = leggiEuro(el("nuovaAssPrezzo"));
+    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
     const bottone = el("btnAggiungiAss");
     bottone.disabled = true;
     try {
       const { error } = await sb.from("insurances")
-        .insert({ code: codice, name: nome, price: parseFloat(el("nuovaAssPrezzo").value) || 0 });
+        .insert({ code: codice, name: nome, price: prezzo });
       if (error) throw error;
       el("nuovaAssNome").value = "";
       el("nuovaAssPrezzo").value = "";
+      el("tabellaAssicurazioni").querySelector("td.vuota")?.closest("tr").remove();
+      el("tabellaAssicurazioni").insertAdjacentHTML("beforeend", rigaAssicurazione({ code: codice, name: nome, price: prezzo }));
+      attivaRigaAssicurazione(el("tabellaAssicurazioni").lastElementChild);
       showToast("Assicurazione aggiunta: ora si può scegliere per le tessere.");
       await dopoAssicurazioni();
     } catch (error) {

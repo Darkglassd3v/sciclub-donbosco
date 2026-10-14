@@ -21,10 +21,19 @@
       piccolo. Le dimensioni regolabili campo per campo: **scartate** (l'utente: i testi devono
       restare coerenti fra i post); si correggono le misure della grafica. Nelle gite **partenze e
       orari sono confusi**: metterli in riquadri. Prima un abbozzo prima/dopo da approvare.
-- [ ] 15/10, dalla review: **Incasso di un nucleo con un credito dentro** (Alta). Pagamenti mostra il
-      saldo netto (es. 100 da pagare − 30 a credito = 70) ma `settle_household` incassava solo i
-      saldi positivi (100) e lasciava il credito: il cassiere poi lo "restituiva". Da fare: la
-      funzione incassa il netto e azzera anche il credito, con la cifra confermata (`expected`).
+- [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
+      assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
+      le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).
+      **Ripresa:** il codice fiscale, qui sotto. Da sistemare, nell'ordine:
+  - [ ] Codice fiscale: sesso scelto ignorato col giorno leggibile; comune deciso col finale del
+        codice non ancora corretto; cifra/lettera A-J nel comune; proposta senza comune che
+        peggiora il finale (e il test che la dà per buona); `turnoCF` in `resetForm`; query
+        inutili; maiuscole del luogo e del nome nell'archivio.
+  - [ ] Soci: saldo negativo "a credito" anche nella tabella dei familiari e nel PDF.
+  - [ ] test-social: i nomi di ORDINE_CAMPI devono esistere come `data-campo`.
+- [ ] 15/10, **ultime come priorità**: Bilancio, il selettore della data sparisce (bug grafico); e
+      il menù delle voci si apre come una lista strana invece di un menù a tendina; e una voce
+      **Sponsor** per segnare a bilancio uno sponsor che ha pagato.
 - [ ] 15/10: **Un permesso per ogni voce della barra** fatto: `cerca`, `gite`, `stampe` (chi aveva
       `gite` le ha tutte e tre), nomi della barra in Gestione > Ruoli (`nav_labels`). In produzione
       il 15/10 solo le istruzioni nuove (lo schema intero teneva fermo il sito), backup in
