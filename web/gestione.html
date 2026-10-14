@@ -14,6 +14,10 @@
     /* Matrice dei permessi: una riga per sezione, una colonna per ruolo. La
      * spunta è dentro una cella cliccabile tutta (48px), non solo il quadratino. */
     .tabella-permessi { width: 100%; min-width: 46rem; border-collapse: collapse; }
+    .tabella-nomi { border-collapse: collapse; }
+    .tabella-nomi th { text-align: left; padding: 8px 16px 8px 0; font-weight: 600; white-space: nowrap; }
+    .tabella-nomi td { padding: 6px 0; }
+    .tabella-nomi input { width: 16rem; max-width: 100%; }
     .tabella-permessi th, .tabella-permessi td { padding: 10px 8px; border-top: 1px solid var(--filo); vertical-align: middle; }
     .tabella-permessi thead th { border-top: 0; border-bottom: 1px solid var(--filo); color: var(--testo-soft);
                                  font-weight: 600; text-align: center; }
@@ -48,9 +52,9 @@
       <a href="index.html" data-permesso="soci" hidden>Soci</a>
       <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
       <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
-      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="cerca" hidden>Cerca socio</a>
       <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
-      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="stampe.html" data-permesso="stampe" hidden>Stampe</a>
       <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
       <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
       <a href="social.html" data-permesso="social" hidden>Social</a>
@@ -106,6 +110,20 @@
     <h3>Ultime modifiche</h3>
     <ul class="storico-permessi" id="storicoPermessi"></ul>
   </div>
+
+  <div class="riquadro">
+    <h2>Nomi della barra</h2>
+    <p class="occhiello">
+      Come si chiamano le voci della barra in cima a ogni pagina, per tutti. Al massimo 20 lettere,
+      perché la barra deve stare anche sul telefono. Vuoto = il nome di sempre, scritto in grigio.
+    </p>
+    <div class="tabella-scorrevole">
+      <table class="tabella-nomi"><tbody id="tabellaNomi"></tbody></table>
+    </div>
+    <div class="azioni" id="azioniNomi">
+      <button type="button" class="button is-link" id="btnSalvaNomi">Salva i nomi</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -114,21 +132,30 @@
 <script>
   const el = (id) => document.getElementById(id);
 
-  // Le sezioni che il superadmin può dare, nell'ordine della barra. L'ultimo
-  // valore dice se apre l'anagrafica dei soci: con soci, pagamenti, riepilogo
-  // e gite si legge members, con polizze i codici fiscali dei tesserati
-  // (policy e funzioni insurance_* in supabase/schema.sql).
+  // Le sezioni che il superadmin può dare, nell'ordine della barra: una per
+  // voce (dalla 2.8 Cerca socio, Gite e Stampe sono tre, prima erano una sola,
+  // "gite"). L'ultimo valore dice se apre l'anagrafica dei soci: con soci,
+  // pagamenti, riepilogo, cerca, gite e stampe si legge members, con polizze i
+  // codici fiscali dei tesserati (policy e funzioni insurance_* in
+  // supabase/schema.sql). Il nome è quello della barra (nomiBarra() in shared.js).
   const PERMESSI = [
     ["soci", "Soci", "Iscrivere e modificare i soci, vendere abbonamenti dal modulo.", true],
     ["pagamenti", "Pagamenti", "Incassare dalle famiglie, modificare gli importi (rimborsi e sconti).", true],
     ["riepilogo", "Riepilogo", "I numeri della stagione e l'Excel di tutti i tesserati.", true],
     ["storico", "Stagioni chiuse", "Le stagioni passate, dentro il Riepilogo: serve anche Riepilogo.", false],
-    ["bilancio", "Bilancio", "Movimenti e saldo della banca.", false],
-    ["gite", "Gite", "Dal telefono: cercare un socio, segnare le gite, vendere un abbonamento. Fogli di Stampe.", true],
+    ["cerca", "Cerca socio", "Dal telefono: cercare un socio e vedere la sua scheda.", true],
+    ["gite", "Gite", "Dal telefono: segnare le gite, vendere un abbonamento.", true],
+    ["stampe", "Stampe", "I fogli Excel di corsisti e abbonati, divisi per partenza.", true],
     ["polizze", "Assicurazione", "Liste da mandare all'assicurazione, con codice fiscale e data di nascita.", true],
+    ["bilancio", "Bilancio", "Movimenti e saldo della banca.", false],
     ["social", "Social", "Post, sponsor e contatti per i social.", false],
   ];
-  const NOME_PERMESSO = Object.fromEntries(PERMESSI.map(([p, nome]) => [p, nome]));
+  // Il nome a schermo: quello scelto per la barra, se c'è (la voce Stagioni chiuse non è nella barra).
+  const nomeSezione = (p, nome) => NOMI_BARRA[p] || nome;
+  const NOME_PERMESSO = new Proxy({}, { get: (_, p) => {
+    const voce = PERMESSI.find((x) => x[0] === p);
+    return voce ? nomeSezione(p, voce[1]) : undefined;
+  } });
   const DATI_PERSONALI = new Set(PERMESSI.filter((p) => p[3]).map((p) => p[0]));
 
   // [{ role, permissions, defaults }] dal database, e per ruolo i permessi salvati.
@@ -145,7 +172,10 @@
     el("btnAnnullaPermessi").addEventListener("click", disegnaMatrice);
     el("btnRipristina").addEventListener("click", ripristina);
     el("btnSalvaPermessi").addEventListener("click", chiediSalvataggio);
+    el("btnSalvaNomi").addEventListener("click", salvaNomi);
     try {
+      await nomiBarra();
+      disegnaNomi();
       await caricaPermessi();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -165,11 +195,11 @@
   function disegnaMatrice() {
     el("tabellaPermessi").innerHTML = `
       <thead><tr><th>Sezione</th>${matrice.map((r) => `<th>${esc(NOMI_RUOLI[r.role])}</th>`).join("")}</tr></thead>
-      <tbody>${PERMESSI.map(([p, nome, descr, dati]) => `<tr>
+      <tbody>${PERMESSI.map(([p, nome0, descr, dati]) => { const nome = nomeSezione(p, nome0); return `<tr>
         <th scope="row">${esc(nome)}${dati ? ' <span class="tag-dati">dati personali</span>' : ""}<span class="descr">${esc(descr)}</span></th>
         ${matrice.map((r) => `<td><label class="cella"><input type="checkbox" data-ruolo="${r.role}" data-permesso="${p}"
             aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}></label></td>`).join("")}
-      </tr>`).join("")}
+      </tr>`; }).join("")}
       <tr><th scope="row">Gestione<span class="descr">Amministrazione, Utenti, Impostazioni e questa pagina.</span></th>
         <td colspan="${matrice.length}" class="solo-super">Solo il superadmin</td></tr>
       </tbody>`;
@@ -244,6 +274,51 @@
       showToast("Permessi salvati: valgono dalla prossima pagina che ognuno apre.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Nomi della barra (tabella nav_labels): una riga per voce, col nome di
+  // sempre (quello scritto nelle pagine) in grigio quando è vuoto.
+  // ---------------------------------------------------------------------
+
+  const VOCI_BARRA = [
+    ["soci", "Soci"], ["pagamenti", "Pagamenti"], ["riepilogo", "Riepilogo"], ["cerca", "Cerca socio"],
+    ["gite", "Gite"], ["stampe", "Stampe"], ["polizze", "Assicurazione"], ["bilancio", "Bilancio"],
+    ["social", "Social"], ["gestione", "Gestione"],
+  ];
+
+  function disegnaNomi() {
+    el("tabellaNomi").innerHTML = VOCI_BARRA.map(([chiave, sempre]) => `<tr>
+      <th scope="row"><label for="nome_${chiave}">${esc(sempre)}</label></th>
+      <td><input class="input" id="nome_${chiave}" data-chiave="${chiave}" maxlength="20"
+        placeholder="${esc(sempre)}" value="${esc(NOMI_BARRA[chiave] || "")}"></td></tr>`).join("");
+  }
+
+  async function salvaNomi() {
+    const campi = [...el("tabellaNomi").querySelectorAll("input[data-chiave]")];
+    const scritti = campi.map((c) => ({ key: c.dataset.chiave, label: c.value.trim() }));
+    setLoading(true);
+    try {
+      const vuoti = scritti.filter((n) => !n.label).map((n) => n.key);
+      if (vuoti.length) {
+        const { error } = await sb.from("nav_labels").delete().in("key", vuoti);
+        if (error) throw error;
+      }
+      const pieni = scritti.filter((n) => n.label);
+      if (pieni.length) {
+        const { error } = await sb.from("nav_labels").upsert(pieni);
+        if (error) throw error;
+      }
+      await nomiBarra();
+      disegnaNomi();
+      // Con spunte non ancora salvate la matrice resta com'è: i nomi nuovi si vedono al prossimo disegno.
+      if (!differenze().length) disegnaMatrice();
+      showToast("Nomi salvati: li vede chi apre una pagina da adesso.");
+    } catch (error) {
+      showToast("Nomi non salvati: " + messaggioErrore(error), "is-danger");
     } finally {
       setLoading(false);
     }

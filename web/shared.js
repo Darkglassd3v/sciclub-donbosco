@@ -28,7 +28,9 @@ const PAGINE_DI_ARRIVO = [
   ["riepilogo", "riepilogo.html"],
   ["polizze", "assicurazione.html"],
   ["social", "social.html"],
-  ["gite", "ricerca/index.html"],
+  ["cerca", "ricerca/index.html"],
+  ["gite", "ricerca/gite.html"],
+  ["stampe", "stampe.html"],
 ];
 
 /** Blocca la pagina se non c'è una sessione valida. Da chiamare per prima. */
@@ -278,12 +280,43 @@ function setLoading(attivo) {
 document.addEventListener("DOMContentLoaded", async () => {
   const voci = document.querySelectorAll(".barra-voci [data-permesso]");
   if (!voci.length) return;
+  scriviNomiBarra();
   const accesso = await getProfile().catch(() => null);
   for (const voce of voci) {
     voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
   }
   mostraVediCome(accesso);
+  if (accesso) nomiBarra().catch(() => {});
 });
+
+/**
+ * I nomi delle voci della barra scelti in Gestione > Ruoli (tabella
+ * nav_labels), per chiave di permesso: { cerca: "Ricerca", ... }. Una voce
+ * senza nome tiene quello scritto nella pagina. Si ricordano nel browser, così
+ * la pagina dopo li scrive subito invece di mostrare per un attimo quelli di
+ * sempre. Gli stessi in ricerca/comune.js (i due siti non condividono file).
+ */
+let NOMI_BARRA = (() => {
+  try { return JSON.parse(localStorage.getItem("sciclub-voci")) || {}; } catch (e) { return {}; }
+})();
+
+/** Scrive i nomi nella barra; il nome di sempre resta in data-nome per tornarci. */
+function scriviNomiBarra() {
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
+    if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
+    voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+  });
+}
+
+/** Rilegge i nomi dal database, li ricorda e li scrive nella barra. */
+async function nomiBarra() {
+  const { data, error } = await sb.from("nav_labels").select("key, label");
+  if (error) throw error;
+  NOMI_BARRA = Object.fromEntries(data.map((r) => [r.key, r.label]));
+  try { localStorage.setItem("sciclub-voci", JSON.stringify(NOMI_BARRA)); } catch (e) { /* storage negato */ }
+  scriviNomiBarra();
+  return NOMI_BARRA;
+}
 
 /**
  * "Vedi come": mentre il superadmin guarda il sito come un altro ruolo, una

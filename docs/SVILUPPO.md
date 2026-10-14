@@ -82,7 +82,11 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   `season_breakdown` e azzera i dati di stagione dei soci.
 - Ruoli: `superadmin`, `admin`, `tesoriere`, `assicurazione`, `gite` ("Utente"), `social`;
   permessi in `role_permissions()` e nella matrice di Gestione > Ruoli (`role_grants`); le
-  pagine li controllano con `requirePermesso()`. Dettagli in `docs/ACCOUNT.md`.
+  pagine li controllano con `requirePermesso()`. Dettagli in `docs/ACCOUNT.md`. Dalla 2.8 una
+  voce della barra = un permesso: `cerca` (Cerca socio), `gite` (pannello gite: solo lui segna le
+  gite e vende abbonamenti dal telefono), `stampe`; prima `gite` le apriva tutte e tre. I nomi
+  delle voci si cambiano in Gestione > Ruoli (`nav_labels`, `nomiBarra()` in `shared.js` e
+  `ricerca/comune.js`); senza nome vale quello scritto nelle pagine.
 - Password iniziale da cambiare: riga in `pending_password_changes` (la mettono i trigger su
   `auth.users` e `reset_password()`, la toglie il cambio vero della password); `my_access()` la
   restituisce come `change_password` e le guardie delle pagine mandano a `password.html`.

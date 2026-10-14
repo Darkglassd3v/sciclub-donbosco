@@ -198,7 +198,7 @@ superadmin vede sempre tutto e Gestione non si assegna. La tabella qui sotto è 
 | `admin` | chi iscrive e incassa | Soci | iscrivere e modificare i soci, incassare, Riepilogo della **stagione in corso**, pannello gite, tessere riservate (oggi **TESSERA DIRETTIVO**). Non vede Bilancio, stagioni chiuse e Gestione |
 | `tesoriere` | chi tiene i conti | Riepilogo | incassare (pagina Pagamenti), Riepilogo anche delle **stagioni chiuse**, **Bilancio**. I soci li legge ma non li modifica |
 | `assicurazione` | chi manda i soci all'assicurazione | Assicurazione | **solo** la pagina Assicurazione: le liste da mandare per tipo (Base, Plus, Sport), l'Excel, "Segna come assicurati", le liste già mandate e la correzione dei codici fiscali (ricerca, al massimo 20 risultati). Non vede soci, quote, abbonamenti né il sito di ricerca |
-| `gite` (a schermo "Utente") | chi è sul pullman | `ricerca/` | dal telefono: cercare un socio, segnare le gite, vendere un abbonamento |
+| `gite` (a schermo "Utente") | chi è sul pullman | `ricerca/` | dal telefono: cercare un socio (`cerca`), segnare le gite e vendere un abbonamento (`gite`), i fogli di Stampe (`stampe`): dalla 2.8 tre permessi separati in Gestione > Ruoli |
 | `social` | chi pubblica i post | Social | **solo** la pagina Social: post, campagne degli sponsor e sponsor |
 
 Chi apre una pagina che il suo ruolo non può vedere viene riportato alla sua pagina di arrivo.

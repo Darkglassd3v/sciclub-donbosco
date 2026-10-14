@@ -1285,10 +1285,10 @@ begin
   -- Dare "soci" al ruolo gite apre davvero l'iscrizione nel database.
   assert not public.test_prova(gite, 'scrivi', iscrivi), 'gite iscrive un socio senza il permesso soci';
   perform set_config('test.uid', super::text, false);
-  perform public.set_role_grants('{"gite": ["gite", "soci"], "social": ["social"]}');
+  perform public.set_role_grants('{"gite": ["cerca", "gite", "stampe", "soci"], "social": ["social"]}');
   assert public.test_prova(gite, 'scrivi', iscrivi), 'gite con il permesso soci non iscrive';
   perform set_config('test.uid', gite::text, false);
-  assert (select permissions from public.my_access()) = array['soci', 'gite'], 'my_access: permessi nuovi di gite sbagliati';
+  assert (select permissions from public.my_access()) = array['soci', 'cerca', 'gite', 'stampe'], 'my_access: permessi nuovi di gite sbagliati';
 
   -- Registro: solo il ruolo cambiato (social era già così), con chi e cosa.
   perform set_config('test.uid', super::text, false);
@@ -1296,7 +1296,8 @@ begin
   assert (select h.role = 'gite' and h.added = array['soci'] and h.removed = '{}' and h.changed_by = 'super@test'
             from public.role_grant_history() h), 'registro: riga sbagliata';
 
-  -- Togliere richiude.
+  -- Togliere richiude. Al ruolo gite resta solo "gite": riapplicare lo schema
+  -- (sotto) non deve ridargli cerca e stampe.
   perform public.set_role_grants('{"gite": ["gite"], "admin": ["soci", "pagamenti", "riepilogo"]}');
   assert not public.test_prova(gite, 'scrivi', iscrivi), 'tolto soci, gite iscrive ancora';
   perform set_config('test.uid', super::text, false);
@@ -1312,6 +1313,8 @@ psql_ <<'SQL'
 do $$ begin
   assert public.role_permissions('admin') = array['soci', 'pagamenti', 'riepilogo'],
          'riapplicare lo schema ha cambiato i permessi scelti dal superadmin';
+  assert public.role_permissions('gite') = array['gite'],
+         'riapplicare lo schema ha ridato cerca e stampe al ruolo gite';
 end $$;
 -- "Ripristina" della pagina: rimanda i permessi di partenza.
 set role authenticated;
@@ -1552,6 +1555,94 @@ do $$ begin
   exception when foreign_key_violation then null;
   end;
 end $$;
+SQL
+
+# ---------------------------------------------------------------------------
+# 2.8: una voce della barra, un permesso. Il passaggio da "gite" (che apriva
+# Cerca socio, Gite e Stampe) a cerca, gite e stampe, rifatto come era la
+# produzione: col check vecchio e senza le due righe nuove.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+alter table public.role_grants drop constraint role_grants_permission_valid;
+delete from public.role_grants where permission in ('cerca', 'stampe');
+alter table public.role_grants add constraint role_grants_permission_check
+  check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social'));
+do $$ begin
+  assert public.role_permissions('gite') = array['gite'], 'preparazione: il ruolo gite doveva avere solo gite';
+end $$;
+SQL
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ <<'SQL'
+insert into public.members (id, last_name, first_name, enrolled_at)
+values ('aaaaaaaa-0000-0000-0000-0000000000ac', 'ROSSI', 'PERMESSI', now());
+set role authenticated;
+do $$
+declare
+  super constant uuid := '22222222-2222-2222-2222-222222222222';
+  gite  constant uuid := '11111111-1111-1111-1111-111111111111';
+  chi   constant uuid := 'aaaaaaaa-0000-0000-0000-0000000000ac';
+  errore text;
+begin
+  assert public.role_permissions('gite') = array['cerca', 'gite', 'stampe'], 'passaggio: il ruolo gite non ha le tre voci';
+  assert public.role_permissions('admin') @> array['soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe'],
+         'passaggio: l''admin ha perso qualcosa';
+  assert public.role_permissions('tesoriere') = public.default_role_permissions('tesoriere'), 'passaggio: tesoriere cambiato';
+
+  -- Ogni voce da sola: Cerca socio e Stampe leggono i soci ma non segnano le
+  -- gite né vendono abbonamenti; Gite sì.
+  perform set_config('test.uid', super::text, false);
+  perform public.set_role_grants('{"gite": ["cerca"]}');
+  perform set_config('test.uid', gite::text, false);
+  assert (select count(*) from public.members where id = chi) = 1, 'solo cerca: non legge i soci';
+  begin
+    perform public.use_trip(chi, gen_random_uuid(), null);
+  exception when others then errore := sqlerrm;
+  end;
+  assert errore = 'Non hai il permesso di segnare le gite.', 'solo cerca: segna una gita (' || coalesce(errore, 'riuscito') || ')';
+
+  perform set_config('test.uid', super::text, false);
+  perform public.set_role_grants('{"gite": ["stampe"]}');
+  perform set_config('test.uid', gite::text, false);
+  assert (select count(*) from public.members where id = chi) = 1, 'solo stampe: non legge i soci';
+  errore := null;
+  begin
+    perform public.add_pass(chi, 'PROVA 10 VIAGGI SABATO', false, gen_random_uuid());
+  exception when others then errore := sqlerrm;
+  end;
+  assert errore = 'Non hai il permesso di vendere abbonamenti.', 'solo stampe: vende un abbonamento (' || coalesce(errore, 'riuscito') || ')';
+
+  perform set_config('test.uid', super::text, false);
+  perform public.set_role_grants('{"gite": ["gite"]}');
+  perform set_config('test.uid', gite::text, false);
+  errore := null;
+  begin
+    perform public.use_trip(chi, gen_random_uuid(), null);
+  exception when others then errore := sqlerrm;
+  end;
+  assert errore is distinct from 'Non hai il permesso di segnare le gite.', 'solo gite: non può segnare le gite';
+
+  -- Nomi della barra: li scrive solo il superadmin, li leggono tutti.
+  perform set_config('test.uid', super::text, false);
+  insert into public.nav_labels (key, label) values ('cerca', 'Ricerca');
+  perform set_config('test.uid', gite::text, false);
+  assert (select label from public.nav_labels where key = 'cerca') = 'Ricerca', 'nomi della barra: gite non li legge';
+  begin
+    update public.nav_labels set label = 'Altro' where key = 'cerca';
+  exception when others then null;
+  end;
+  perform set_config('test.uid', super::text, false);
+  assert (select label from public.nav_labels where key = 'cerca') = 'Ricerca', 'nomi della barra: gite li cambia';
+  begin
+    insert into public.nav_labels (key, label) values ('gite', 'Un nome troppo lungo per la barra');
+    raise exception 'ASSERZIONE: nome di più di 20 lettere accettato';
+  exception when check_violation then null;
+  end;
+  delete from public.nav_labels;
+  perform public.set_role_grants('{"gite": ["cerca", "gite", "stampe"]}');
+  perform set_config('test.uid', '', false);
+end $$;
+reset role;
+delete from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000ac';
 SQL
 
 echo "test ruoli: tutto a posto"

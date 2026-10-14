@@ -29,9 +29,9 @@
       <a href="index.html" data-permesso="soci" hidden>Soci</a>
       <a href="admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
       <a href="riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
-      <a class="voce-cerca" href="ricerca/index.html" data-permesso="gite" hidden>Cerca socio</a>
+      <a class="voce-cerca" href="ricerca/index.html" data-permesso="cerca" hidden>Cerca socio</a>
       <a href="ricerca/gite.html" data-permesso="gite" hidden>Gite</a>
-      <a href="stampe.html" data-permesso="gite" hidden>Stampe</a>
+      <a href="stampe.html" data-permesso="stampe" hidden>Stampe</a>
       <a href="assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
       <a href="bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
       <a href="social.html" data-permesso="social" hidden>Social</a>
@@ -75,7 +75,7 @@
   const el = (id) => document.getElementById(id);
 
   (async function init() {
-    if (!(await requirePermesso("gite"))) return;
+    if (!(await requirePermesso("stampe"))) return;
     document.querySelectorAll(".giorni-stampa [data-giorno]").forEach((b) =>
       b.addEventListener("click", () => scarica(b.dataset.giorno, b)));
   })();

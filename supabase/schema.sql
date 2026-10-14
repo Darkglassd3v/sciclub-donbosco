@@ -520,10 +520,10 @@ language sql
 immutable
 as $$
   select case role
-    when 'admin'         then array['soci', 'pagamenti', 'riepilogo', 'gite']
+    when 'admin'         then array['soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe']
     when 'tesoriere'     then array['pagamenti', 'riepilogo', 'storico', 'bilancio']
     when 'assicurazione' then array['polizze']
-    when 'gite'          then array['gite']
+    when 'gite'          then array['cerca', 'gite', 'stampe']
     when 'social'        then array['social']
     else array[]::text[]
   end;
@@ -544,13 +544,35 @@ begin
     create table public.role_grants (
       role       text not null check (role in ('admin', 'tesoriere', 'assicurazione', 'gite', 'social')),
       permission text not null check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico',
-                                                     'bilancio', 'gite', 'polizze', 'social')),
+                                                     'bilancio', 'cerca', 'gite', 'stampe',
+                                                     'polizze', 'social')),
       primary key (role, permission)
     );
     insert into public.role_grants (role, permission)
     select r, unnest(public.default_role_permissions(r))
       from unnest(array['admin', 'tesoriere', 'assicurazione', 'gite', 'social']) r;
   end if;
+end $$;
+
+-- Dalla 2.8 una voce della barra, un permesso: "gite" apriva Cerca socio, Gite
+-- e Stampe, ora sono cerca, gite e stampe. Una volta sola (parte finché manca
+-- il check col nome nuovo): chi aveva "gite" riceve anche le altre due, così
+-- nessuno perde niente. Riapplicato, lo schema non ridà i permessi che il
+-- superadmin ha tolto dopo.
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'role_grants_permission_valid') then
+    return;
+  end if;
+  alter table public.role_grants drop constraint if exists role_grants_permission_check;
+  alter table public.role_grants add constraint role_grants_permission_valid
+    check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+                          'cerca', 'gite', 'stampe', 'polizze', 'social'));
+  insert into public.role_grants (role, permission)
+  select g.role, nuovo
+    from public.role_grants g, unnest(array['cerca', 'stampe']) nuovo
+   where g.permission = 'gite'
+  on conflict do nothing;
 end $$;
 
 -- Nessuna policy: si legge e si scrive solo con le funzioni qui sotto.
@@ -579,10 +601,10 @@ set search_path = ''
 as $$
   select case
     when role_permissions.role = 'superadmin' then
-      array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social', 'gestione']
+      array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social', 'gestione']
     else coalesce((
       select array_agg(g.permission order by array_position(
-               array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social'],
+               array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social'],
                g.permission))
         from public.role_grants g
        where g.role = role_permissions.role), array[]::text[])
@@ -606,6 +628,26 @@ as $$
 $$;
 
 comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi.';
+
+-- I nomi delle voci della barra (dalla 2.8), scelti dal superadmin in Gestione
+-- > Ruoli: la chiave è il permesso della voce. Una voce senza riga tiene il
+-- nome scritto nelle pagine. Al massimo 20 lettere: la barra deve stare sul
+-- telefono. Li leggono tutti i collegati, perché tutti vedono la barra.
+create table if not exists public.nav_labels (
+  key   text primary key check (key in ('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe',
+                                        'polizze', 'bilancio', 'social', 'gestione')),
+  label text not null check (label = btrim(label) and length(label) between 1 and 20)
+);
+
+comment on table public.nav_labels is 'Nomi delle voci della barra scelti dal superadmin; senza riga vale il nome scritto nelle pagine.';
+
+alter table public.nav_labels enable row level security;
+drop policy if exists nav_labels_select on public.nav_labels;
+drop policy if exists nav_labels_write  on public.nav_labels;
+create policy nav_labels_select on public.nav_labels
+  for select to authenticated using (true);
+create policy nav_labels_write on public.nav_labels
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
 -- Cambio della password al primo accesso (dalla 2.7). Gli account nascono
 -- tutti con la stessa password iniziale (web/utenti.html), quindi chi entra
@@ -904,7 +946,8 @@ begin
     end if;
     nuovi := array(select distinct jsonb_array_elements_text(valore));
     if exists (select 1 from unnest(nuovi) x
-                where x not in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social')) then
+                where x not in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+                                'cerca', 'gite', 'stampe', 'polizze', 'social')) then
       raise exception 'Permesso non assegnabile al ruolo % (Gestione resta del superadmin).', ruolo;
     end if;
 
@@ -1046,7 +1089,7 @@ alter table public.insurances enable row level security;
 drop policy if exists insurances_select on public.insurances;
 drop policy if exists insurances_write  on public.insurances;
 create policy insurances_select on public.insurances
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite', 'polizze')));
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe', 'polizze')));
 create policy insurances_write on public.insurances
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
@@ -1491,7 +1534,7 @@ drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 
 create policy members_select on public.members
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite')));
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
 
 create policy members_insert on public.members
   for insert to authenticated with check ((select public.can('soci')));
@@ -1553,7 +1596,7 @@ drop function if exists public.check_policy_number();
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
 create policy prices_select on public.prices
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite')));
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
 create policy prices_write on public.prices
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
@@ -2863,7 +2906,7 @@ drop policy if exists trip_uses_delete on public.trip_uses;
 -- controllano da sé il permesso gite: nessuna policy di scrittura. Leggono il
 -- form Soci (gite fatte per abbonamento), il pannello gite e il Riepilogo.
 create policy trip_uses_select on public.trip_uses
-  for select to authenticated using ((select public.can('soci', 'gite', 'riepilogo')));
+  for select to authenticated using ((select public.can('soci', 'cerca', 'gite', 'stampe', 'riepilogo')));
 
 -- Abbonamenti dei soci: li scrive il form Soci (permesso soci), il pannello
 -- gite passa da add_pass(). Niente update: un abbonamento sbagliato si toglie
@@ -2875,7 +2918,7 @@ drop policy if exists member_passes_insert on public.member_passes;
 drop policy if exists member_passes_delete on public.member_passes;
 
 create policy member_passes_select on public.member_passes
-  for select to authenticated using ((select public.can('soci', 'gite', 'riepilogo')));
+  for select to authenticated using ((select public.can('soci', 'cerca', 'gite', 'stampe', 'riepilogo')));
 create policy member_passes_insert on public.member_passes
   for insert to authenticated with check ((select public.can('soci')));
 create policy member_passes_delete on public.member_passes
