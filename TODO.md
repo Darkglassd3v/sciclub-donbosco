@@ -18,7 +18,35 @@
 > schema, commit e push ("correggi e fai tutto, pusha"). Ordine: 1) review OCR in delega del
 > codice fiscale, commit, push di `2.8-SNAPSHOT`; 2) allineare `dev`; 3) ordine dei campi;
 > 4) assicurazioni (schema, backup, review, push). Aggiornare questo blocco dopo ogni passo.
-> Fatto finora: codice fiscale (sotto) e COLOMBA corretto in produzione. Niente committato.
+> Fatto: 1) codice fiscale col comune dei soci nati lì (commit 6b81660, pubblicato) e COLOMBA
+> corretto in produzione (backup in `supabase/migration/backup-2026-10-14-cf-colomba/`);
+> 2) `dev` allineato (d22e63f); 3) in parte, non committato: blocchi di `web/index.html`
+> (telefono con l'email, numero tessera in cima, partenze domenica/sabato prima del corso) e PDF.
+> Scritto in `supabase/schema.sql` (non applicato): `prices.position` con l'ordine del modulo,
+> `insurances`, `insurance_paid`, blocco DO, FK, `card_price()`, `card_counts` spostata sotto,
+> `close_season()`. Scritti anche (non provati): `caricaPrezzi()` (position, `price:card_price`) e
+> Impostazioni (riquadro Assicurazioni, colonna Ordine, "la paga il club", "Paga il socio").
+> Scritta anche la pagina Assicurazione (TIPI dalla tabella).
+> `test_ruoli.sh` verde con le prove nuove (matrice insurances, card_price, direttivo, FK).
+> Prova a vuoto in produzione (begin … rollback, schema due volte): quote 20/20/20/10/10/0, paga il
+> socio 40/20/65/30/10/0 come prima. Ci mette qualche minuto (lock): farlo di notte.
+> Provato nel browser col client finto (scratchpad `prova-web`): Soci in ordine del modulo con
+> prezzo pieno, Impostazioni (Paga il socio, direttivo 0, select dalla tabella), Assicurazione con
+> i tipi della tabella. Fatti anche docs/SVILUPPO.md e la review del diff; tolto
+> `docs/ORDINE_CAMPI.md`. Schema applicato in produzione il 15/10 (backup in
+> `supabase/migration/backup-2026-10-15-assicurazioni/`), verificato. Da fare: push, `dev`, TODO.
+> Disegno scelto per 4): tabella `insurances (code pk, name unique, price)`, ordinate per prezzo,
+> senza `active` (si tolgono cancellandole; la chiave esterna lo impedisce se una tessera o una
+> lista le usa). `prices.insurance` → FK su `insurances.code`, `insurance_lists.kind` → FK (via i
+> check BASE/PLUS/SPORT, anche in `insurance_send`). `prices.insurance_paid` (false = la paga il
+> club). Funzione `card_price(prices)` = quota + assicurazione se pagata: colonna calcolata di
+> PostgREST (`price:card_price` in `caricaPrezzi()`), usata in `card_counts` e `close_season()`.
+> Divisione dei prezzi e Neve Plus tolta in un blocco DO che parte una volta (se manca
+> `insurance_paid`). Impostazioni: riquadro Assicurazioni (nome, prezzo, Salva, Togli con
+> `chiedi()`, + Aggiungi; codice dal nome), tessere con select dalla tabella e casella "pagata
+> dal club", colonna Ordine (`position`). Assicurazione: TIPI dalla tabella (colonna Excel "Tipo"
+> solo per SPORT, tracciato provvisorio). Poi `test_ruoli.sh`, docs/SVILUPPO.md, review, backup
+> di `prices` e `insurance_lists`, schema, push.
 
 - [ ] 14/10: **Ordine dei campi come il modulo di carta** (Tesseramento 2026/2027): la pagina Soci
       e la Stampa chiedono le cose nello stesso ordine del modulo, sezioni come blocchi; i prezzi
@@ -36,26 +64,6 @@
       CORSO SCI BABY FINO 10, CORSO SNOWBOARD 4 PARTECIPANTI. Partenze: già in ordine alfabetico =
       modulo. Poi `docs/SVILUPPO.md` ("ordinate per prezzo" → per position) e togliere
       `docs/ORDINE_CAMPI.md`.
-- [ ] **Allineare `dev`** a `2.8-SNAPSHOT`: merge in una worktree (`docs/SVILUPPO.md`, punto 4),
-      push su `dev` senza force. Controllato il 14/10: merge senza conflitti, albero uguale a
-      `origin/2.8-SNAPSHOT`; il push su `dev` non pubblica le pagine. Manca il sì al commit.
-- [ ] **Codice fiscale: il controllo non vede un comune sbagliato.** Esempio: COLOMBA GIANFRANCO
-      (Torino, 29/04/1958), in produzione `CLMGFR58DC9L21PD`, giusto `CLMGFR58D29L219D`.
-  - Fatto il 14/10 (non committato), in `web/codicefiscale.js` e `web/index.html`:
-    `verificaCF` riceve comune atteso, luogo e sesso. Comune diverso con carattere finale
-    sbagliato → corretto nella proposta; con finale giusto → solo avviso "controlla il luogo"
-    (sarà sbagliato il luogo della scheda). Giorno illeggibile → data rifatta col sesso scelto o,
-    se non scelto, con `sessoDaiCF` dei soci con lo stesso nome (detto nell'avviso). Proposta
-    uguale al codice scritto → nessuna proposta. `comuneDelLuogo()` conta anche i soci con
-    provincia di nascita vuota (in produzione sono quasi tutti: per questo prima non trovava
-    Torino), esclude il socio aperto; codici contati una volta (doppioni). Almeno 3 codici per
-    dire che uno scritto è sbagliato, 1 per proporlo. Simulato su tutto l'archivio: 3 segnalati,
-    tutti errori veri (Alessandria A782, Asti 479V, COLOMBA). Test in `web/test-codicefiscale.js`,
-    prova nel browser col client finto (scratchpad, `or`/`neq` aggiunti al finto).
-  - Fatto: COLOMBA corretto in produzione (`CLMGFR58D29L219D`), backup della riga in
-    `supabase/migration/backup-2026-10-14-cf-colomba/`.
-  - [ ] Review in delega OCR del diff (la prima review ha già tolto i doppioni dal conteggio),
-        commit, push.
 - [ ] **Assicurazioni con un menù loro in Impostazioni** (nome e prezzo modificabili, tessera →
       assicurazione). Oggi: codici fissi BASE/PLUS/SPORT in `prices.insurance`, nomi scritti in 8
       punti del codice, prezzo dentro quello della tessera.
