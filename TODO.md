@@ -1,63 +1,97 @@
-# TODO — aggiornato il 2026-10-13
+# TODO — aggiornato il 2026-10-14
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (11/10/2026)
+## Stato del repository (14/10/2026)
 
-- Rilasciata la **2.7** (tag `2.7`). Branch di lavoro `2.8-SNAPSHOT`: le pagine online sono le
-  sue (trigger del workflow `["2.7", "2.8-SNAPSHOT"]`) e `dev` è allineato a lui. L'11/10 tolti i
-  branch vecchi (versioni 1.x-2.7, i loro SNAPSHOT, `claude/*`), tutti già contenuti nei tag e in
-  `2.8-SNAPSHOT`: restano solo `dev` e `2.8-SNAPSHOT`. Gli SHA per ricrearli sono in
+- Branch di lavoro `2.8-SNAPSHOT` (le pagine online sono le sue); `dev` è indietro: da allineare
+  (sotto). Restano solo `dev` e `2.8-SNAPSHOT`; gli SHA dei branch tolti l'11/10 sono in
   `.git/branch-cancellati-2026-10-11.txt` (solo su questo PC).
-- Database di produzione: schema di `supabase/schema.sql` applicato l'11/10 (grafiche nuove dei
-  post: colonne `social_events.hook`, `event_time` e `place`, check di `social_settings.style`).
-  Backup in `supabase/migration/backup-2026-10-11-ora-luogo/` (fuori da git).
-- Documenti puliti l'08/10: tolti `docs/DOCUMENTAZIONE.md` (la 1.x) e i piani 2.1, 2.3 e social
-  già realizzati (restano nella storia di git). Le pagine di prova su claude.ai sono cancellate.
+- Produzione: `supabase/schema.sql` applicato il 14/10 ("k" nel check di `social_settings.style`),
+  backup in `supabase/migration/backup-2026-10-14-stile-k/` (fuori da git).
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
 
-- [ ] 14/10: **K · Piani nel generatore dei post**, fatta il 14/10 (non committata): "k" in `STILI`,
-      `postK()` e `meseK()` in `web/social-templates.js` (CSS con prefisso `.sk`, senza
-      pseudo-elementi), "Piani" in Impostazioni, gancio anche per la K, Barlow corsivo 800 da Google
-      Fonts. Senza foto: fondo blu notte e angolo giallo pieno. Le altre cinque grafiche escono
-      identiche (HTML confrontato prima e dopo); banco nel browser esportato con html-to-image.
-      Resta:
-  - [ ] Schema in produzione: "k" nel check `social_settings_style_valid` (già in
-        `supabase/schema.sql`). Prima backup e review, e prima del push: altrimenti salvare la
-        grafica Piani in Impostazioni fallisce.
-  - [ ] Provare con una foto vera caricata dal generatore (Supabase Storage): la foto finisce
-        anche nello sfondo della finestra, e html-to-image deve poterla scaricare (CORS).
-  - [ ] Finestra: oggi la stessa foto tinta; un'altra immagine vorrebbe un secondo caricamento
-        (rimandata a dopo le iscrizioni di novembre).
-- [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
-      come tavole le proposte **D · Pista** (alla Head), **E · Fascia** (alla Rossignol) e
-      **F · Diagonale** (alla Ski Club of Great Britain), poi le idee da gara **G · Cronometro**,
-      **H · Eco** e **I · Bento** (foto a tutto schermo e dati in blocchi; solo post, niente story) in
-      `grafica/proposte-post-social/` (titoli in Barlow Condensed, `grafica/font/barlow-condensed/`).
-      Da scegliere con chi pubblica; quella scelta va poi nel generatore (`web/social-templates.js`).
-      Per svilupparla a fondo, una volta scelta (anche un misto, per esempio il cronometro di G
-      sopra le tessere di I):
-  - [ ] Story del corso (1080×1920, niente nelle fasce coperte: 250 px in alto, 340 in basso),
-        che per G, H e I manca.
-  - [ ] Nel generatore: nuovo valore in `STILI` e funzione `postX` in `web/social-templates.js`,
-        scelta in Social > Impostazioni (check di `social_settings.style` in `supabase/schema.sql`).
-        I font (Barlow Condensed, e il corsivo di Barlow per F) vanno copiati in `web/`: il deploy
-        pubblica solo `web/` e `ricerca/`.
-  - [ ] Foto: G, H e I vivono di foto (meglio con le persone). Provare il velo con foto chiare
-        (neve al sole) e decidere lo sfondo senza foto (oggi il blu con le linee di velocità).
-  - [ ] Testi lunghi: titoli su due righe al massimo (rimpicciolire con `fit()`), dati con un
-        numero massimo di righe; in F l'adesivo non deve toccare i dati.
-  - [ ] Campi: l'etichetta in alto dalla categoria ("Gita sociale", "Serata del club"); l'ora nel
-        cronometro di G; il gancio nell'adesivo di F (`social_events.hook`); in I il conteggio
-        delle gite del mese e la disposizione delle tessere per tipo di post.
-  - [ ] Colori: martedì rosso e cene/gare/servizi come nelle altre grafiche (Impostazioni > Giorni).
-  - [ ] Sponsor: dove va il logo della campagna (piano bianco di F, tessera di I, sottopancia di G).
-  - [ ] Test in `web/test-social.js` e prova con foto vere e con la campagna Santero.
-  - [ ] `sorgenti/rendi.sh` usa Google Chrome: con il solo Chromium lo screenshot da riga di comando
-        taglia il fondo del post, serve playwright.
+> **Ripresa (14/10 sera, limite d'uso).** Autorizzato dall'utente: tutte le query in produzione,
+> schema, commit e push ("correggi e fai tutto, pusha"). Ordine: 1) review OCR in delega del
+> codice fiscale, commit, push di `2.8-SNAPSHOT`; 2) allineare `dev`; 3) ordine dei campi;
+> 4) assicurazioni (schema, backup, review, push). Aggiornare questo blocco dopo ogni passo.
+> Fatto finora: codice fiscale (sotto) e COLOMBA corretto in produzione. Niente committato.
+
+- [ ] 14/10: **Ordine dei campi come il modulo di carta** (Tesseramento 2026/2027): la pagina Soci
+      e la Stampa chiedono le cose nello stesso ordine del modulo, sezioni come blocchi; i prezzi
+      del modulo non contano. Proposta in `docs/ORDINE_CAMPI.md`, **approvata il 14/10**: giorno
+      del corso resta sotto il corso; numero tessera primo della sezione Tessera; DIRETTIVO resta
+      fra le tessere (in fondo), anche se sul modulo non c'è. Da fare in `web/index.html`:
+      Telefono accanto all'Email; Numero tessera in cima a Tessera; in Gite e corsi partenze
+      domenica e sabato prima del corso; stesso ordine nel PDF (`datiScheda()`). Voci del listino
+      nell'ordine del modulo: colonna `prices.position` (riempita una volta in `schema.sql` per
+      nome, `where position is null`), `caricaPrezzi()` e Impostazioni ordinano per position, poi
+      prezzo. Nomi in produzione: TESSERA ORDINARIA - GLOBAL NEVE BASE 1, SOLO TESSERA - NO
+      ASSICURAZIONE 2, TESSERA ORDINARIA - GLOBAL SPORT 3, TESSERA SCONTATA - NEVE PLUS 4, TESSERA
+      SCONTATA - NO ASSICURAZIONE 5, TESSERA DIRETTIVO 6; famiglia 3/4/5 SENZA poi 3/4/5 CON;
+      Abbonamento 5 viaggi MARTEDÌ, DOMENICA, SABATO, JOLLY; CORSO SCI ADULTI, CORSO SCI 10 - 14,
+      CORSO SCI BABY FINO 10, CORSO SNOWBOARD 4 PARTECIPANTI. Partenze: già in ordine alfabetico =
+      modulo. Poi `docs/SVILUPPO.md` ("ordinate per prezzo" → per position) e togliere
+      `docs/ORDINE_CAMPI.md`.
+- [ ] **Allineare `dev`** a `2.8-SNAPSHOT`: merge in una worktree (`docs/SVILUPPO.md`, punto 4),
+      push su `dev` senza force. Controllato il 14/10: merge senza conflitti, albero uguale a
+      `origin/2.8-SNAPSHOT`; il push su `dev` non pubblica le pagine. Manca il sì al commit.
+- [ ] **Codice fiscale: il controllo non vede un comune sbagliato.** Esempio: COLOMBA GIANFRANCO
+      (Torino, 29/04/1958), in produzione `CLMGFR58DC9L21PD`, giusto `CLMGFR58D29L219D`.
+  - Fatto il 14/10 (non committato), in `web/codicefiscale.js` e `web/index.html`:
+    `verificaCF` riceve comune atteso, luogo e sesso. Comune diverso con carattere finale
+    sbagliato → corretto nella proposta; con finale giusto → solo avviso "controlla il luogo"
+    (sarà sbagliato il luogo della scheda). Giorno illeggibile → data rifatta col sesso scelto o,
+    se non scelto, con `sessoDaiCF` dei soci con lo stesso nome (detto nell'avviso). Proposta
+    uguale al codice scritto → nessuna proposta. `comuneDelLuogo()` conta anche i soci con
+    provincia di nascita vuota (in produzione sono quasi tutti: per questo prima non trovava
+    Torino), esclude il socio aperto; codici contati una volta (doppioni). Almeno 3 codici per
+    dire che uno scritto è sbagliato, 1 per proporlo. Simulato su tutto l'archivio: 3 segnalati,
+    tutti errori veri (Alessandria A782, Asti 479V, COLOMBA). Test in `web/test-codicefiscale.js`,
+    prova nel browser col client finto (scratchpad, `or`/`neq` aggiunti al finto).
+  - Fatto: COLOMBA corretto in produzione (`CLMGFR58D29L219D`), backup della riga in
+    `supabase/migration/backup-2026-10-14-cf-colomba/`.
+  - [ ] Review in delega OCR del diff (la prima review ha già tolto i doppioni dal conteggio),
+        commit, push.
+- [ ] **Assicurazioni con un menù loro in Impostazioni** (nome e prezzo modificabili, tessera →
+      assicurazione). Oggi: codici fissi BASE/PLUS/SPORT in `prices.insurance`, nomi scritti in 8
+      punti del codice, prezzo dentro quello della tessera.
+  - Deciso il 14/10: il prezzo della tessera è a parte da quello dell'assicurazione (due cifre).
+        Le assicurazioni sono due: **Base 20 €** e **Global Neve Sport 45 €**; la Base da 15 €
+        del modulo di carta sparisce (diventa 20) e sparisce la Neve Plus. Le quote tornano tutte:
+        ORDINARIA NEVE BASE 40 = 20 + 20, GLOBAL SPORT 65 = 20 + 45, SCONTATA con Base 30 = 10 +
+        20 (quindi la "TESSERA SCONTATA - NEVE PLUS" con BASE è giusta: il modulo dice Neve Base);
+        SOLO TESSERA 20 e SCONTATA NO ASS. 10 senza assicurazione.
+  - Deciso il 14/10 sera: il DIRETTIVO ha la Global Sport ma non la paga (resta 0 €): serve un
+        segno sulla tessera, es. `prices.insurance_paid boolean default true` (false per il
+        DIRETTIVO; casella "pagata dal club" in Impostazioni). La tessera ORDINARIA - GLOBAL NEVE
+        PLUS sparisce, e l'assicurazione PLUS con lei. In Impostazioni si possono **aggiungere e
+        togliere assicurazioni** (togliere: cancellare se nessuna tessera né lista la usa).
+        Nomi: "Global Neve Base" 20 €, "Global Neve Sport" 45 € (modificabili).
+  - Visto in produzione il 14/10: nessuna lista mandata (`insurance_lists` vuota); soci della
+        stagione con tessera: 10 DIRETTIVO, 3 ORDINARIA - GLOBAL NEVE BASE; nessuno con NEVE PLUS.
+        Codici scritti nel codice: `impostazioni.html` (ASSICURAZIONI, select nuova voce),
+        `assicurazione.html` (TIPI con nome e colonna Excel "Polizza"/"Tipo" della SPORT, CSS per
+        data-kind), check `kind in ('BASE','PLUS','SPORT')` in `insurance_lists` e
+        `insurance_send` e `prices_insurance_valid` in `schema.sql`. Prezzi da dividere una volta
+        sola (in un blocco DO che parte solo se manca la colonna nuova): GLOBAL NEVE BASE 40 → 20,
+        SCONTATA - NEVE PLUS 30 → 10, GLOBAL SPORT 65 → 20; il totale = quota + assicurazione se
+        pagata, in `caricaPrezzi()` (così Soci e le altre pagine non cambiano) e in `card_counts`
+        e nell'archivio di `close_season()`.
+  - [ ] Tabella `public.insurances` (code, name, price, position, active) con chiave esterna da
+        `prices.insurance`; il prezzo dell'assicurazione si somma alla quota della tessera nel
+        totale del socio (`web/index.html`) e nei conti dello schema che usano `p.price` delle
+        tessere: `card_counts` e l'archivio di `close_season()`. I totali già salvati nei soci
+        (`members.total`) non cambiano. Sezione "Assicurazioni" in Impostazioni; nomi dalla
+        tabella in `impostazioni.html`, `assicurazione.html`, `shared.js`; da tre liste a due
+        nella pagina Assicurazione (le liste PLUS già mandate, se ci sono, restano leggibili).
+        Prima di scrivere la migrazione: contare in produzione soci e liste con PLUS. Test ruoli,
+        review, backup, schema.
+- [ ] **K nel generatore**: provare con una foto vera caricata (Supabase Storage; html-to-image deve
+      poterla scaricare, CORS). Seconda immagine nella finestra: dopo novembre.
 
 ## Versione aperta: 2.8-SNAPSHOT
 
@@ -68,7 +102,8 @@ intanto da altri; nomi e dati dal database passati da `esc()` in Soci e Pagament
 dell'incasso col saldo del momento; gite in coda tenute se la sessione scade; Elimina movimento
 del Bilancio in finestra; rinomina delle voci di listino estesa ai soci; `set_amounts()` che
 segnala il socio non trovato; saldo di chiusura non più leggibile senza login. L'11/10: le
-grafiche Biglietto, Calendario e Divano nel generatore dei post (Social > Impostazioni).
+grafiche Biglietto, Calendario e Divano nel generatore dei post (Social > Impostazioni). Il 14/10: la
+grafica K «Piani» nel generatore e la proposta del codice fiscale nella scheda del socio nuovo.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
@@ -93,11 +128,8 @@ grafiche Biglietto, Calendario e Divano nel generatore dei post (Social > Impost
 
 ## Social
 
-- [ ] Scegliere la grafica dei post in Social > Impostazioni: oltre a Ritocco e Montagna ci sono
-      Biglietto, Calendario e Divano (le proposte di `grafica/proposte-post-social/`). Con il
-      Divano scrivere il gancio di ogni post. Da decidere con chi pubblica: nelle tre nuove le
-      gite del martedì restano rosse (colore del giorno in Impostazioni > Giorni) e le cene,
-      gare e servizi sono blu.
+- [ ] In Social > Impostazioni scegliere «Piani» (la K, la grafica decisa il 14/10) e scrivere
+      il gancio dei post.
 - [ ] Provare le grafiche nuove con foto vere e con le campagne sponsor.
 - [ ] Inserire i contatti veri in Social > Impostazioni > Contatti e spuntarli nei post.
 - [ ] Caricare lo sponsor 958 Santero e la sua campagna (loghi in `social/santero/`).
