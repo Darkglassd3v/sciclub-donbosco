@@ -15,6 +15,11 @@
 
 ## Richieste nuove
 
+- [ ] 15/10: **Un permesso per ogni voce della barra** fatto: `cerca`, `gite`, `stampe` (chi aveva
+      `gite` le ha tutte e tre), nomi della barra in Gestione > Ruoli (`nav_labels`). In produzione
+      il 15/10 solo le istruzioni nuove (lo schema intero teneva fermo il sito), backup in
+      `supabase/migration/backup-2026-10-15-permessi/`. Da provare sul sito vero: un nome cambiato
+      in Gestione > Ruoli, e un account del ruolo gite con una voce sola.
 - [ ] Da provare sul sito vero (dopo il 15/10): Impostazioni > Assicurazioni (cambiare un prezzo e
       vedere il totale in Soci, aggiungerne una e toglierla), colonna Ordine del listino, scheda
       Soci nell'ordine del modulo; il controllo del codice fiscale su un socio nato a Torino.

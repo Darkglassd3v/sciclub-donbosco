@@ -245,6 +245,32 @@ function disegnaBarra(accesso) {
   document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
     voce.hidden = !accesso.permissions.includes(voce.dataset.permesso);
   });
+  scriviNomiBarra();
+  nomiBarra().catch(() => {});
+}
+
+/**
+ * I nomi delle voci della barra scelti in Gestione > Ruoli (tabella
+ * nav_labels): come NOMI_BARRA, scriviNomiBarra() e nomiBarra() in
+ * web/shared.js, con la stessa memoria nel browser ("sciclub-voci").
+ */
+let NOMI_BARRA = (() => {
+  try { return JSON.parse(localStorage.getItem("sciclub-voci")) || {}; } catch (e) { return {}; }
+})();
+
+function scriviNomiBarra() {
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
+    if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
+    voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+  });
+}
+
+async function nomiBarra() {
+  const { data, error } = await sb.from("nav_labels").select("key, label");
+  if (error) throw error;
+  NOMI_BARRA = Object.fromEntries(data.map((r) => [r.key, r.label]));
+  try { localStorage.setItem("sciclub-voci", JSON.stringify(NOMI_BARRA)); } catch (e) { /* storage negato */ }
+  scriviNomiBarra();
 }
 
 /** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */
