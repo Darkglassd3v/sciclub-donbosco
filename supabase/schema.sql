@@ -23,6 +23,39 @@ create table if not exists public.prices (
 
 comment on table public.prices is 'Listino: ex foglio PREZZI. Le categorie corrispondono a quelle lette da getPrices() nella 1.x.';
 
+-- Dalla 2.8 le voci si mostrano nell'ordine del modulo di carta del
+-- tesseramento, non per prezzo: chi iscrive lo copia dall'alto in basso. Si
+-- cambia da Impostazioni; una voce senza posizione va in fondo, per prezzo.
+alter table public.prices add column if not exists position smallint;
+
+comment on column public.prices.position is 'Ordine della voce nella sua categoria, come sul modulo di carta; vuoto = in fondo, per prezzo.';
+
+-- L'ordine del modulo 2026/2027, una volta sola: solo le voci ancora senza posizione.
+update public.prices p set position = v.posizione
+  from (values
+    ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 1),
+    ('TESSERA', 'SOLO TESSERA - NO ASSICURAZIONE', 2),
+    ('TESSERA', 'TESSERA ORDINARIA - GLOBAL SPORT', 3),
+    ('TESSERA', 'TESSERA SCONTATA - NEVE PLUS', 4),
+    ('TESSERA', 'TESSERA SCONTATA - NO ASSICURAZIONE', 5),
+    ('TESSERA', 'TESSERA DIRETTIVO', 6),
+    ('FAMIGLIA', '3 PERSONE SENZA ASSICURAZIONE', 1),
+    ('FAMIGLIA', '4 PERSONE SENZA ASSICURAZIONE', 2),
+    ('FAMIGLIA', '5 PERSONE SENZA ASSICURAZIONE', 3),
+    ('FAMIGLIA', '3 PERSONE CON ASSICURAZIONE', 4),
+    ('FAMIGLIA', '4 PERSONE CON ASSICURAZIONE', 5),
+    ('FAMIGLIA', '5 PERSONE CON ASSICURAZIONE', 6),
+    ('ABBONAMENTO', 'Abbonamento 5 viaggi MARTEDÌ', 1),
+    ('ABBONAMENTO', 'Abbonamento 5 viaggi DOMENICA', 2),
+    ('ABBONAMENTO', 'Abbonamento 5 viaggi SABATO', 3),
+    ('ABBONAMENTO', 'Abbonamento 5 viaggi JOLLY', 4),
+    ('CORSO', 'CORSO SCI ADULTI', 1),
+    ('CORSO', 'CORSO SCI 10 - 14', 2),
+    ('CORSO', 'CORSO SCI BABY FINO 10', 3),
+    ('CORSO', 'CORSO SNOWBOARD 4 PARTECIPANTI', 4)
+  ) as v (categoria, nome, posizione)
+ where p.position is null and p.category = v.categoria and p.name = v.nome;
+
 create table if not exists public.departures (
   id          bigint generated always as identity primary key,
   day         text not null check (day in ('SABATO', 'DOMENICA')),
@@ -280,20 +313,8 @@ where enrolled_at is not null;
 
 comment on view public.season_totals is 'KPI della stagione corrente. Sostituisce i totali calcolati in getRiepilogo().';
 
--- Conteggi per tipologia, arricchiti con il prezzo di listino.
-create or replace view public.card_counts as
-select
-  m.card_type                    as name,
-  count(*)                       as count,
-  p.price                        as price,
-  count(*) * coalesce(p.price, 0) as total
-from public.members m
-left join public.prices p
-  on p.category = 'TESSERA' and p.name = m.card_type
-where m.enrolled_at is not null
-  and m.card_type is not null
-  and upper(m.card_type) <> 'NO'
-group by m.card_type, p.price;
+-- card_counts (tessere per tipo) sta più sotto, dopo card_price(): il prezzo
+-- della tessera comprende quello dell'assicurazione.
 
 -- pass_counts sta più sotto, con gli abbonamenti dei soci (member_passes):
 -- dalla 2.4 un socio può averne più di uno, e si contano gli abbonamenti
@@ -1004,28 +1025,122 @@ drop view if exists public.members_kiosk_search;
 -- RLS sceglie le righe, non le colonne.
 -- ---------------------------------------------------------------------------
 
+-- Le assicurazioni, con nome e prezzo (dalla 2.8). Prima erano tre codici
+-- fissi (BASE, PLUS, SPORT), con i nomi scritti nelle pagine e il prezzo
+-- dentro quello della tessera. Ora la tessera ha la sua quota e
+-- l'assicurazione il suo prezzo: il socio paga la somma (card_price()), a meno
+-- che l'assicurazione la paghi il club (prices.insurance_paid, il direttivo).
+-- Si aggiungono e si tolgono da Impostazioni; il codice si ricava dal nome e
+-- non cambia, perché lo usano le liste già mandate. Niente "attiva": una che
+-- non serve più si cancella, e la chiave esterna lo impedisce finché una
+-- tessera o una lista la usa.
+create table if not exists public.insurances (
+  code   text primary key check (code ~ '^[A-Z0-9_]+$'),
+  name   text not null unique,
+  price  numeric(10, 2) not null default 0 check (price >= 0)
+);
+
+comment on table public.insurances is 'Assicurazioni date dalle tessere: nome e prezzo, che si somma alla quota della tessera.';
+
+alter table public.insurances enable row level security;
+drop policy if exists insurances_select on public.insurances;
+drop policy if exists insurances_write  on public.insurances;
+create policy insurances_select on public.insurances
+  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'gite', 'polizze')));
+create policy insurances_write on public.insurances
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+
 -- Il tipo di assicurazione di ogni tessera; vuoto = la tessera non assicura
 -- (SOLO TESSERA, SCONTATA - NO ASSICURAZIONE). La scontata dei nati prima del
 -- 1947 ha la Base, il direttivo la Global Sport, la più completa.
 alter table public.prices add column if not exists insurance text;
+
+comment on column public.prices.insurance is 'Tessere: assicurazione che dà (insurances.code); vuoto = nessuna.';
+
+-- Una volta sola, al passaggio alle assicurazioni a parte (14/10/2026): le due
+-- assicurazioni decise col direttivo, la Neve Plus tolta insieme alla sua
+-- tessera, e le tessere che passano dal prezzo con l'assicurazione dentro alla
+-- sola quota. Parte solo se manca insurance_paid: rieseguito non toglie di
+-- nuovo l'assicurazione dai prezzi.
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'prices' and column_name = 'insurance_paid') then
+    return;
+  end if;
+  alter table public.prices add column insurance_paid boolean not null default true;
+  insert into public.insurances (code, name, price) values
+    ('BASE', 'Global Neve Base', 20), ('SPORT', 'Global Neve Sport', 45)
+  on conflict (code) do nothing;
+  delete from public.prices p
+   where p.category = 'TESSERA' and p.insurance = 'PLUS'
+     and not exists (select 1 from public.members m where m.card_type = p.name);
+  update public.prices set insurance = null, active = false where insurance = 'PLUS';
+  update public.prices p set price = greatest(p.price - i.price, 0)
+    from public.insurances i
+   where p.category = 'TESSERA' and p.insurance = i.code and p.price > 0;
+  -- Il direttivo ha la Global Sport ma non la paga: la sua tessera costa 0.
+  update public.prices set insurance_paid = false
+   where category = 'TESSERA' and insurance is not null and price = 0;
+end $$;
+
+comment on column public.prices.insurance_paid is 'Tessere: false = l''assicurazione la paga il club (il direttivo) e non si somma alla quota.';
+
 alter table public.prices drop constraint if exists prices_insurance_valid;
 alter table public.prices add constraint prices_insurance_valid
-  check (insurance is null or (insurance in ('BASE', 'PLUS', 'SPORT') and category = 'TESSERA'));
-
-comment on column public.prices.insurance is 'Tessere: assicurazione che dà (BASE, PLUS, SPORT); vuoto = nessuna.';
+  check (insurance is null or category = 'TESSERA');
+alter table public.prices drop constraint if exists prices_insurance_fkey;
+alter table public.prices add constraint prices_insurance_fkey
+  foreign key (insurance) references public.insurances (code);
 
 -- Le tessere del listino hanno il tipo nel nome. Solo quelle ancora senza
 -- tipo: uno scritto a mano non si tocca.
-update public.prices set insurance = case
-    when name = 'TESSERA DIRETTIVO'        then 'SPORT'
-    when upper(name) like '%GLOBAL SPORT%' then 'SPORT'
-    when upper(name) like '%NEVE PLUS%'    then 'PLUS'
-    when upper(name) like '%NEVE BASE%'    then 'BASE'
-  end
- where category = 'TESSERA' and insurance is null
-   and upper(name) not like '%NO ASSICURAZIONE%'
-   and (name = 'TESSERA DIRETTIVO'
-        or upper(name) like any (array['%GLOBAL SPORT%', '%NEVE PLUS%', '%NEVE BASE%']));
+-- Solo con un codice che c'è ancora (un'assicurazione si può togliere).
+update public.prices p set insurance = i.code
+  from public.insurances i
+ where p.category = 'TESSERA' and p.insurance is null
+   and upper(p.name) not like '%NO ASSICURAZIONE%'
+   and i.code = case
+         when p.name = 'TESSERA DIRETTIVO' or upper(p.name) like '%GLOBAL SPORT%' then 'SPORT'
+         when upper(p.name) like '%NEVE BASE%' then 'BASE'
+       end;
+
+-- Quello che paga il socio per una voce del listino: il prezzo, più quello
+-- dell'assicurazione se la tessera ne dà una e non la paga il club. Prende la
+-- riga intera: così PostgREST la offre come colonna calcolata
+-- (select=price:card_price), e le pagine non devono rifare la somma.
+create or replace function public.card_price(p public.prices)
+returns numeric(10, 2)
+language sql
+stable
+set search_path = ''
+as $$
+  select (p.price + coalesce((select i.price from public.insurances i
+                               where i.code = p.insurance and p.insurance_paid), 0))::numeric(10, 2);
+$$;
+
+comment on function public.card_price(public.prices) is 'Prezzo che paga il socio: quota più assicurazione, se la paga lui.';
+
+revoke all on function public.card_price(public.prices) from public;
+grant execute on function public.card_price(public.prices) to authenticated;
+
+-- Conteggi per tipologia, col prezzo che paga il socio (quota più assicurazione).
+create or replace view public.card_counts as
+select
+  m.card_type                     as name,
+  count(*)                        as count,
+  c.price                         as price,
+  count(*) * coalesce(c.price, 0) as total
+from public.members m
+left join lateral (
+  select public.card_price(p)::numeric(10, 2) as price
+    from public.prices p
+   where p.category = 'TESSERA' and p.name = m.card_type
+) c on true
+where m.enrolled_at is not null
+  and m.card_type is not null
+  and upper(m.card_type) <> 'NO'
+group by m.card_type, c.price;
 
 -- Una lista mandata all'assicurazione. Il numero lo propone la pagina
 -- (l'ultimo del tipo più uno) ma si può cambiare: i tre tipi vanno avanti
@@ -1034,7 +1149,7 @@ update public.prices set insurance = case
 create table if not exists public.insurance_lists (
   id         uuid primary key default gen_random_uuid(),
   season     timestamptz not null default public.current_season(),
-  kind       text not null check (kind in ('BASE', 'PLUS', 'SPORT')),
+  kind       text not null references public.insurances (code),
   number     int not null check (number > 0),
   starts_on  date not null default current_date,
   sent_at    timestamptz not null default now(),
@@ -1043,6 +1158,13 @@ create table if not exists public.insurance_lists (
 );
 
 comment on table public.insurance_lists is 'Liste mandate all''assicurazione: tipo, numero progressivo per tipo e stagione, decorrenza.';
+
+-- Fino alla 2.8 il tipo aveva un check coi tre codici fissi: ora è una chiave
+-- esterna sulle assicurazioni.
+alter table public.insurance_lists drop constraint if exists insurance_lists_kind_check;
+alter table public.insurance_lists drop constraint if exists insurance_lists_kind_fkey;
+alter table public.insurance_lists add constraint insurance_lists_kind_fkey
+  foreign key (kind) references public.insurances (code);
 
 -- Nessuna policy: si legge e si scrive solo dalle funzioni qui sotto.
 alter table public.insurance_lists enable row level security;
@@ -1202,7 +1324,8 @@ begin
   if not public.can('polizze') then
     raise exception 'Non hai il permesso di mandare le liste dell''assicurazione.';
   end if;
-  if insurance_send.kind is null or insurance_send.kind not in ('BASE', 'PLUS', 'SPORT') then
+  if insurance_send.kind is null
+     or not exists (select 1 from public.insurances i where i.code = insurance_send.kind) then
     raise exception 'Tipo di assicurazione sconosciuto.';
   end if;
   if insurance_send.list_number is null or insurance_send.list_number < 1 then
@@ -1786,12 +1909,17 @@ begin
     -- chiudendo, invece che alla stagione corrente (che tra un istante sarà
     -- vuota).
     insert into public.season_breakdown (season, category, label, day, count, total)
-    select which, 'CARD', m.card_type, '', count(*), count(*) * coalesce(p.price, 0)
+    -- Il prezzo della tessera comprende l'assicurazione (card_price()).
+    select which, 'CARD', m.card_type, '', count(*), count(*) * coalesce(c.price, 0)
     from public.members m
     join da_chiudere t on t.id = m.id
-    left join public.prices p on p.category = 'TESSERA' and p.name = m.card_type
+    left join lateral (
+      select public.card_price(p) as price
+        from public.prices p
+       where p.category = 'TESSERA' and p.name = m.card_type
+    ) c on true
     where m.card_type is not null and upper(m.card_type) <> 'NO'
-    group by m.card_type, p.price
+    group by m.card_type, c.price
     union all
     -- Gli abbonamenti venduti, non i soci che li hanno: dalla 2.4 uno stesso
     -- socio può comprarne più di uno. Le righe di member_passes non si

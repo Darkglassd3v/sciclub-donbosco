@@ -63,7 +63,11 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 
 - Listino `prices`: categorie `TESSERA`, `FAMIGLIA`, `ABBONAMENTO`, `CORSO`, `PRESCIISTICA`.
   `min_role` solo sulle tessere (es. TESSERA DIRETTIVO = admin); `insurance` dice in che lista
-  dell'assicurazione va la tessera. Gli abbonamenti ricavano `trips`/`day` dal nome (trigger
+  dell'assicurazione va la tessera (`insurances.code`). Dalla 2.8 il prezzo di una tessera è la sola
+  quota: il socio paga quota + assicurazione (`card_price()`, letto dalle pagine come
+  `price:card_price`), tranne con `insurance_paid = false` (il direttivo, la paga il club). Le
+  assicurazioni (`insurances`: nome, prezzo) si aggiungono e si tolgono da Impostazioni. `position`
+  è l'ordine della voce come sul modulo di carta (vuoto = in fondo, per prezzo). Gli abbonamenti ricavano `trips`/`day` dal nome (trigger
   `fill_pass_details`). I soci tengono le voci per nome: rinominare una voce rinomina anche le
   scelte dei soci e gli abbonamenti della stagione aperta (trigger `rename_price_choices`).
 - `members`: una colonna per categoria (`card_type`, `family_discount`, `pass_type`,
@@ -103,7 +107,9 @@ La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
   Assicurazione e Bilancio; non servono dove la pagina ha una sola parte o ha già i suoi colori.
 - Pagina Soci: testata con il nome e i pulsanti Stampa (scarica il PDF) ed Elimina; quattro
   sezioni (Anagrafica, Tessera, Gite e corsi, Pagamento). Le voci del listino sono righe radio
-  grandi, ordinate per prezzo.
+  grandi, nell'ordine del modulo di carta del tesseramento (`prices.position`), e così i campi:
+  anagrafica come le righe del modulo, numero tessera in cima alla Tessera, partenze (domenica,
+  sabato) prima del corso; la Stampa nello stesso ordine.
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
 - Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
@@ -141,7 +147,9 @@ Test senza browser: `node web/test-social.js`, `node web/test-stampe.js`,
 
 ## Regole decise con il direttivo (30/09/2026)
 
-- Assicurazioni, in ordine di copertura: Base 35 €, Neve Plus 50 €, Global Sport 65 €.
+- Assicurazioni, in ordine di copertura: Base 35 €, Neve Plus 50 €, Global Sport 65 €. Dal 14/10/2026:
+  Global Neve Base 20 € e Global Neve Sport 45 €, a parte dalla quota della tessera; la Neve Plus
+  non c'è più; il direttivo ha la Sport pagata dal club.
 - Tessera → assicurazione: ORDINARIA NEVE BASE e SCONTATA NEVE BASE (nati prima del 1947) → Base;
   ORDINARIA NEVE PLUS → Plus; ORDINARIA GLOBAL SPORT e DIRETTIVO → Sport;
   SOLO TESSERA / SCONTATA NO ASSICURAZIONE → in nessuna lista.

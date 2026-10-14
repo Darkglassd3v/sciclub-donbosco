@@ -20,7 +20,33 @@
 > 4) assicurazioni (schema, backup, review, push). Aggiornare questo blocco dopo ogni passo.
 > Fatto: 1) codice fiscale col comune dei soci nati lì (commit 6b81660, pubblicato) e COLOMBA
 > corretto in produzione (backup in `supabase/migration/backup-2026-10-14-cf-colomba/`);
-> 2) `dev` allineato (d22e63f). Da fare: 3) e 4).
+> 2) `dev` allineato (d22e63f); 3) in parte, non committato: blocchi di `web/index.html`
+> (telefono con l'email, numero tessera in cima, partenze domenica/sabato prima del corso) e PDF.
+> Scritto in `supabase/schema.sql` (non applicato): `prices.position` con l'ordine del modulo,
+> `insurances`, `insurance_paid`, blocco DO, FK, `card_price()`, `card_counts` spostata sotto,
+> `close_season()`. Scritti anche (non provati): `caricaPrezzi()` (position, `price:card_price`) e
+> Impostazioni (riquadro Assicurazioni, colonna Ordine, "la paga il club", "Paga il socio").
+> Scritta anche la pagina Assicurazione (TIPI dalla tabella).
+> `test_ruoli.sh` verde con le prove nuove (matrice insurances, card_price, direttivo, FK).
+> Prova a vuoto in produzione (begin … rollback, schema due volte): quote 20/20/20/10/10/0, paga il
+> socio 40/20/65/30/10/0 come prima. Ci mette qualche minuto (lock): farlo di notte.
+> Provato nel browser col client finto (scratchpad `prova-web`): Soci in ordine del modulo con
+> prezzo pieno, Impostazioni (Paga il socio, direttivo 0, select dalla tabella), Assicurazione con
+> i tipi della tabella. Fatti anche docs/SVILUPPO.md e la review del diff; tolto
+> `docs/ORDINE_CAMPI.md`. Schema applicato in produzione il 15/10 (backup in
+> `supabase/migration/backup-2026-10-15-assicurazioni/`), verificato. Da fare: push, `dev`, TODO.
+> Disegno scelto per 4): tabella `insurances (code pk, name unique, price)`, ordinate per prezzo,
+> senza `active` (si tolgono cancellandole; la chiave esterna lo impedisce se una tessera o una
+> lista le usa). `prices.insurance` → FK su `insurances.code`, `insurance_lists.kind` → FK (via i
+> check BASE/PLUS/SPORT, anche in `insurance_send`). `prices.insurance_paid` (false = la paga il
+> club). Funzione `card_price(prices)` = quota + assicurazione se pagata: colonna calcolata di
+> PostgREST (`price:card_price` in `caricaPrezzi()`), usata in `card_counts` e `close_season()`.
+> Divisione dei prezzi e Neve Plus tolta in un blocco DO che parte una volta (se manca
+> `insurance_paid`). Impostazioni: riquadro Assicurazioni (nome, prezzo, Salva, Togli con
+> `chiedi()`, + Aggiungi; codice dal nome), tessere con select dalla tabella e casella "pagata
+> dal club", colonna Ordine (`position`). Assicurazione: TIPI dalla tabella (colonna Excel "Tipo"
+> solo per SPORT, tracciato provvisorio). Poi `test_ruoli.sh`, docs/SVILUPPO.md, review, backup
+> di `prices` e `insurance_lists`, schema, push.
 
 - [ ] 14/10: **Ordine dei campi come il modulo di carta** (Tesseramento 2026/2027): la pagina Soci
       e la Stampa chiedono le cose nello stesso ordine del modulo, sezioni come blocchi; i prezzi

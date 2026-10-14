@@ -20,14 +20,15 @@
     #decorrenza { max-width: 14rem; }
     #invio .azioni-lista { margin: 16px 0 8px; }
     .passo { font-weight: 600; color: var(--ok); }
+    /* Le assicurazioni nuove (Impostazioni) prendono il giallo, le due di sempre il loro colore. */
+    [data-kind]         { --colore-tipo: var(--giallo); }
     [data-kind="BASE"]  { --colore-tipo: var(--blu); }
-    [data-kind="PLUS"]  { --colore-tipo: var(--giallo); }
     [data-kind="SPORT"] { --colore-tipo: var(--ok); }
 
     /* Il tipo nella lista: il nome scritto, con il colore della sua scheda. */
     .tipo { display: inline-block; padding: 3px 12px; border-radius: var(--pillola); font-weight: 600; white-space: nowrap; }
+    .tipo[data-kind]         { background: var(--giallo-light); color: var(--giallo-dark); }
     .tipo[data-kind="BASE"]  { background: var(--blu-light);    color: var(--blu-dark); }
-    .tipo[data-kind="PLUS"]  { background: var(--giallo-light); color: var(--giallo-dark); }
     .tipo[data-kind="SPORT"] { background: var(--ok-bg);        color: var(--ok); }
 
     .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -175,17 +176,15 @@
 
   const el = (id) => document.getElementById(id);
 
-  // I tre tipi, con il nome e la colonna dei fogli che l'assicurazione usa
-  // (vedi legacy/dati26/): "1 Lista Neve Base.xlsx", colonna "Polizza"; la Global
-  // Sport ha "Tipo" al posto di "Polizza".
-  const TIPI = [
-    { kind: "BASE",  nome: "Neve Base",    colonna: "Polizza" },
-    { kind: "PLUS",  nome: "Neve Plus",    colonna: "Polizza" },
-    { kind: "SPORT", nome: "Global Sport", colonna: "Tipo" },
-  ];
-  const tipo = (kind) => TIPI.find((t) => t.kind === kind);
+  // I tipi sono le assicurazioni di Impostazioni (tabella insurances), con la
+  // colonna dei fogli che l'assicurazione usa (vedi legacy/dati26/): "1 Lista
+  // Neve Base.xlsx", colonna "Polizza"; la Global Sport ha "Tipo" al posto di
+  // "Polizza". shortcut: tracciato provvisorio, da rifare con le specifiche
+  // dell'assicurazione (TODO).
+  let TIPI = [];
+  const tipo = (kind) => TIPI.find((t) => t.kind === kind) || { kind, nome: kind, colonna: "Polizza" };
 
-  let daAssicurare = [];   // tesserati ancora da assicurare, di tutti e tre i tipi
+  let daAssicurare = [];   // tesserati ancora da assicurare, di tutti i tipi
   let listeMandate = [];   // liste mandate in questa stagione
 
   // Gli ultimi Excel scaricati: { decorrenza, liste: [{ t, numero, soci }] }.
@@ -212,10 +211,13 @@
   async function carica() {
     setLoading(true);
     try {
-      const [soci, inviate] = await Promise.all([
+      const [soci, inviate, assicurazioni] = await Promise.all([
         tutteLeRighe(() => sb.rpc("insurance_members")),
         sb.rpc("insurance_sent_lists").then(({ data, error }) => { if (error) throw error; return data; }),
+        sb.from("insurances").select("code, name").order("price").order("name")
+          .then(({ data, error }) => { if (error) throw error; return data; }),
       ]);
+      TIPI = assicurazioni.map((a) => ({ kind: a.code, nome: a.name, colonna: a.code === "SPORT" ? "Tipo" : "Polizza" }));
       daAssicurare = soci;
       listeMandate = inviate;
       disegna();
@@ -241,7 +243,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Liste da mandare: i tre progressivi, una decorrenza, tutto insieme
+  // Liste da mandare: un progressivo per tipo, una decorrenza, tutto insieme
   // -------------------------------------------------------------------------
 
   const pronti = (t) => daAssicurare.filter((s) => s.insurance === t.kind && conCF(s));

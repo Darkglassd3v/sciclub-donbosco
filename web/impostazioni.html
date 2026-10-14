@@ -27,6 +27,8 @@
     /* Riga cambiata e non ancora salvata: si vede anche tornando alla pagina
      * dopo essersi distratti (vedi sorvegliaRighe). */
     .tabella-costi tr.modificata td { background: var(--giallo-light); }
+    .tabella-costi input.ordine { width: 4.5rem; }
+    .tabella-costi .paga-socio { margin-top: 4px; font-weight: 600; }
 
   </style>
 </head>
@@ -64,7 +66,7 @@
     <a href="gestione.html">Ruoli e vedi come</a>
   </nav>
   <h1 class="title is-4">Impostazioni</h1>
-  <p class="occhiello">Listino prezzi e partenze del pullman: si cambiano poche volte a stagione.</p>
+  <p class="occhiello">Listino prezzi, assicurazioni e partenze del pullman: si cambiano poche volte a stagione.</p>
 
   <div id="contenuto">
     <div class="riquadro">
@@ -72,14 +74,16 @@
       <p class="occhiello">
         Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi), corsi e presciistica.
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
-        Nessuna voce si cancella davvero: si disattiva.
+        Nessuna voce si cancella davvero: si disattiva. "Ordine" è la posizione nella pagina Soci,
+        come sul modulo di carta (vuoto = in fondo). Il prezzo di una tessera è la sola quota:
+        il socio paga anche l'assicurazione, se non la paga il club.
       </p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Assicurazione</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Ordine</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Assicurazione</th><th>Attiva</th><th></th>
           </tr></thead>
-          <tbody id="tabellaPrezzi"><tr><td colspan="7" class="vuota">Caricamento…</td></tr></tbody>
+          <tbody id="tabellaPrezzi"><tr><td colspan="8" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
             <td>
               <select id="nuovoCategoria">
@@ -90,6 +94,7 @@
                 <option value="PRESCIISTICA">PRESCIISTICA</option>
               </select>
             </td>
+            <td></td>
             <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
             <td><input type="number" id="nuovoPrezzo" step="0.01" min="0" placeholder="0.00"></td>
             <td>
@@ -100,15 +105,29 @@
               </select>
             </td>
             <td>
-              <select id="nuovoAssicurazione" aria-label="Assicurazione della tessera nuova">
-                <option value="">nessuna</option>
-                <option value="BASE">Neve Base</option>
-                <option value="PLUS">Neve Plus</option>
-                <option value="SPORT">Global Sport</option>
-              </select>
+              <select id="nuovoAssicurazione" aria-label="Assicurazione della tessera nuova"></select>
             </td>
             <td></td>
             <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="riquadro">
+      <h2>Assicurazioni</h2>
+      <p class="occhiello">
+        Quelle che danno le tessere (si sceglie nel listino qui sopra). Il prezzo si somma alla quota
+        della tessera. Una si toglie solo se nessuna tessera e nessuna lista mandata la usa.
+      </p>
+      <div class="tabella-scorrevole">
+        <table class="tabella-costi">
+          <thead><tr><th>Nome</th><th>Prezzo €</th><th></th></tr></thead>
+          <tbody id="tabellaAssicurazioni"><tr><td colspan="3" class="vuota">Caricamento…</td></tr></tbody>
+          <tfoot><tr class="riga-nuova">
+            <td><input type="text" id="nuovaAssNome" placeholder="Nome"></td>
+            <td><input type="number" id="nuovaAssPrezzo" step="0.01" min="0" placeholder="0.00"></td>
+            <td><button type="button" class="button is-small is-link" id="btnAggiungiAss">+ Aggiungi</button></td>
           </tr></tfoot>
         </table>
       </div>
@@ -148,6 +167,9 @@
     if (!(await requirePermesso("gestione"))) return;
     el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
     el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
+    el("btnAggiungiAss").addEventListener("click", aggiungiAssicurazione);
+    // Il listino usa i nomi e i prezzi delle assicurazioni: prima loro.
+    await caricaAssicurazioni();
     await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte()]);
   })();
 
@@ -202,11 +224,24 @@
   // ---------------------------------------------------------------------
 
   // L'assicurazione che dà una tessera: decide in quale lista della pagina
-  // Assicurazione finisce chi ce l'ha (prices.insurance). Prima si scriveva
-  // solo dal database, e una tessera nuova restava senza.
-  const ASSICURAZIONI = [["", "nessuna"], ["BASE", "Neve Base"], ["PLUS", "Neve Plus"], ["SPORT", "Global Sport"]];
-  const opzioniAssicurazione = (scelta) => ASSICURAZIONI.map(([valore, nome]) =>
-    `<option value="${valore}" ${(scelta || "") === valore ? "selected" : ""}>${nome}</option>`).join("");
+  // Assicurazione finisce chi ce l'ha (prices.insurance) e quanto si somma
+  // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto).
+  let ASSICURAZIONI = [];
+  const opzioniAssicurazione = (scelta) => [{ code: "", name: "nessuna" }, ...ASSICURAZIONI].map((a) =>
+    `<option value="${esc(a.code)}" ${(scelta || "") === a.code ? "selected" : ""}>${esc(a.name)}${
+      a.code ? ` (${fmt(a.price)})` : ""}</option>`).join("");
+
+  /** Quello che paga il socio per la tessera della riga: quota più assicurazione, se non la paga il club. */
+  function aggiornaPagaSocio(riga) {
+    const scritta = riga.querySelector("[data-paga]");
+    if (!scritta) return;
+    const codice = riga.querySelector("[data-assicurazione]").value;
+    const club = riga.querySelector("[data-pagata-club]");
+    club.closest("label").hidden = !codice;
+    const assicurazione = ASSICURAZIONI.find((a) => a.code === codice);
+    const quota = parseFloat(riga.querySelector("[data-prezzo]").value) || 0;
+    scritta.textContent = `Paga il socio: ${fmt(quota + (assicurazione && !club.checked ? num(assicurazione.price) : 0))}`;
+  }
 
   function rigaPrezzo(p) {
     // Il livello di visibilità vale solo per le tessere (vincolo
@@ -221,11 +256,14 @@
     return `
       <tr data-id="${p.id}">
         <td>${p.category}</td>
+        <td><input type="number" class="ordine" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
         <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
         <td><input type="number" data-prezzo step="0.01" min="0" value="${p.price}"></td>
         <td>${selettoreRuolo}</td>
         <td>${p.category === "TESSERA"
-          ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>` : "—"}</td>
+          ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>
+             <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> la paga il club</label>
+             <p class="paga-socio" data-paga></p>` : "—"}</td>
         <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
         <td><button type="button" class="button is-small" data-salva>Salva</button></td>
       </tr>`;
@@ -236,14 +274,21 @@
     try {
       const { data, error } = await sb
         .from("prices")
-        .select("id, category, name, price, active, min_role, insurance")
+        .select("id, category, name, price, active, min_role, insurance, insurance_paid, position")
         .order("category")
+        .order("position", { nullsFirst: false })
+        .order("price")
         .order("name");
       if (error) throw error;
 
       el("tabellaPrezzi").innerHTML = data.length
         ? data.map(rigaPrezzo).join("")
-        : '<tr><td colspan="7" class="vuota">Nessuna voce in listino.</td></tr>';
+        : '<tr><td colspan="8" class="vuota">Nessuna voce in listino.</td></tr>';
+      el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((riga) => {
+        aggiornaPagaSocio(riga);
+        riga.addEventListener("input", () => aggiornaPagaSocio(riga));
+        riga.addEventListener("change", () => aggiornaPagaSocio(riga));
+      });
 
       el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
         bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
@@ -264,10 +309,14 @@
       name: riga.querySelector("[data-nome]").value.trim(),
       price: parseFloat(riga.querySelector("[data-prezzo]").value) || 0,
       active: riga.querySelector("[data-attivo]").checked,
+      position: parseInt(riga.querySelector("[data-posizione]").value, 10) || null,
     };
     if (selettoreRuolo) patch.min_role = selettoreRuolo.value;
     const assicurazione = riga.querySelector("[data-assicurazione]");
-    if (assicurazione) patch.insurance = assicurazione.value || null;
+    if (assicurazione) {
+      patch.insurance = assicurazione.value || null;
+      patch.insurance_paid = !riga.querySelector("[data-pagata-club]").checked;
+    }
 
     bottone.disabled = true;
     try {
@@ -298,6 +347,8 @@
         price: parseFloat(el("nuovoPrezzo").value) || 0,
         min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
         insurance: categoria === "TESSERA" ? el("nuovoAssicurazione").value || null : null,
+        // In fondo alla sua categoria: l'ordine si cambia poi nella colonna Ordine.
+        position: null,
       });
       if (error) throw error;
       el("nuovoNome").value = "";
@@ -306,6 +357,124 @@
       await caricaPrezziTutti();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Assicurazioni
+  //
+  // Il codice (insurances.code) lo usano le tessere e le liste già mandate:
+  // si ricava dal nome alla creazione e poi non cambia, anche rinominandola.
+  // ---------------------------------------------------------------------
+
+  function rigaAssicurazione(a) {
+    return `
+      <tr data-id="${esc(a.code)}">
+        <td><input type="text" data-nome value="${esc(a.name)}" aria-label="Nome"></td>
+        <td><input type="number" data-prezzo step="0.01" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
+        <td><div class="buttons">
+          <button type="button" class="button is-small" data-salva>Salva</button>
+          <button type="button" class="button is-small is-danger is-outlined" data-togli>Togli</button>
+        </div></td>
+      </tr>`;
+  }
+
+  async function caricaAssicurazioni() {
+    try {
+      const { data, error } = await sb.from("insurances").select("code, name, price").order("price").order("name");
+      if (error) throw error;
+      ASSICURAZIONI = data;
+      el("nuovoAssicurazione").innerHTML = opzioniAssicurazione("");
+      el("tabellaAssicurazioni").innerHTML = data.length
+        ? data.map(rigaAssicurazione).join("")
+        : '<tr><td colspan="3" class="vuota">Nessuna assicurazione.</td></tr>';
+      el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach((riga) => {
+        riga.querySelector("[data-salva]").addEventListener("click", () => salvaAssicurazione(riga));
+        riga.querySelector("[data-togli]").addEventListener("click", () => chiediTogliAssicurazione(riga));
+      });
+      sorvegliaRighe(el("tabellaAssicurazioni"));
+    } catch (error) {
+      showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
+    }
+  }
+
+  /** Nomi e prezzi cambiati: il listino li mostra, si ridisegna (se non ha righe da salvare). */
+  async function dopoAssicurazioni() {
+    await caricaAssicurazioni();
+    if (el("tabellaPrezzi").querySelector("tr.modificata")) {
+      showToast("Il listino ha righe non salvate: salvale e ricarica la pagina per vedere i prezzi nuovi.", "is-warning");
+      return;
+    }
+    await caricaPrezziTutti();
+  }
+
+  async function salvaAssicurazione(riga) {
+    const nome = riga.querySelector("[data-nome]").value.trim();
+    if (!nome) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    const bottone = riga.querySelector("[data-salva]");
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("insurances")
+        .update({ name: nome, price: parseFloat(riga.querySelector("[data-prezzo]").value) || 0 })
+        .eq("code", riga.dataset.id);
+      if (error) throw error;
+      segnaSalvata(riga);
+      showToast("Assicurazione aggiornata.");
+      await dopoAssicurazioni();
+    } catch (error) {
+      showToast("Errore: " + (error.code === "23505" ? "c'è già un'assicurazione con questo nome." : messaggioErrore(error)), "is-danger");
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  // Togliere: due finestre, una dopo l'altra, come per eliminare un socio.
+  function chiediTogliAssicurazione(riga) {
+    const nome = ASSICURAZIONI.find((a) => a.code === riga.dataset.id)?.name || riga.dataset.id;
+    const usata = el("tabellaPrezzi").querySelector(`[data-assicurazione] option[value="${CSS.escape(riga.dataset.id)}"]:checked`);
+    if (usata) {
+      showToast(`${nome} la dà ancora una tessera del listino: prima scegli un'altra assicurazione per quella tessera.`, "is-danger");
+      return;
+    }
+    const dove = riga.querySelector(".buttons");
+    chiedi(dove, `Togliere l'assicurazione ${nome}?`, "Sì, vai avanti", () =>
+      chiedi(dove, `Sei sicuro? ${nome} sparisce dalle assicurazioni e non si rimette da qui.`, `Togli ${nome}`, () => togliAssicurazione(riga)));
+  }
+
+  async function togliAssicurazione(riga) {
+    try {
+      const { error } = await sb.from("insurances").delete().eq("code", riga.dataset.id);
+      if (error) throw error;
+      showToast("Assicurazione tolta.");
+      await dopoAssicurazioni();
+    } catch (error) {
+      // 23503: la usa ancora una tessera o una lista già mandata all'assicurazione.
+      showToast("Non tolta: " + (error.code === "23503"
+        ? "la usa ancora una tessera o una lista già mandata all'assicurazione."
+        : messaggioErrore(error)), "is-danger");
+    }
+  }
+
+  async function aggiungiAssicurazione() {
+    const nome = el("nuovaAssNome").value.trim();
+    // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
+    const codice = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+      .replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    if (!codice) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    const bottone = el("btnAggiungiAss");
+    bottone.disabled = true;
+    try {
+      const { error } = await sb.from("insurances")
+        .insert({ code: codice, name: nome, price: parseFloat(el("nuovaAssPrezzo").value) || 0 });
+      if (error) throw error;
+      el("nuovaAssNome").value = "";
+      el("nuovaAssPrezzo").value = "";
+      showToast("Assicurazione aggiunta: ora si può scegliere per le tessere.");
+      await dopoAssicurazioni();
+    } catch (error) {
+      showToast("Errore: " + (error.code === "23505" ? "c'è già un'assicurazione con questo nome." : messaggioErrore(error)), "is-danger");
     } finally {
       bottone.disabled = false;
     }

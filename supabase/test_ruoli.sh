@@ -238,6 +238,8 @@ begin
     ('scrivi', 'insert into public.trip_uses (member_id) values (' || m || ')',   'xxxxxxx'),
     ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price) values (''USCITA'', ''PROVA'', 1, 1)', 'SxSxxxx'),
     ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
+    ('leggi',  'select 1 from public.insurances',                                'SSSSSxx'),
+    ('scrivi', 'update public.insurances set price = price',                      'Sxxxxxx'),
     ('scrivi', 'update public.departures set place = place',                      'Sxxxxxx'),
     ('scrivi', 'insert into public.season_history (season, members) values (''1991-09-01'', 0)', 'Sxxxxxx'),
     ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx'),
@@ -1517,6 +1519,39 @@ end $$;
 reset role;
 delete from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000aa';
 delete from public.prices where name in ('PROVA CORSO NUOVO', 'PROVA 5 VIAGGI DOMENICA BIS');
+
+-- Assicurazioni a parte (2.8): il socio paga la quota della tessera più
+-- l'assicurazione; quella del direttivo la paga il club.
+do $$ begin
+  assert (select count(*) from public.insurances) = 2, 'attese le due assicurazioni, Base e Sport';
+  assert not exists (select 1 from public.insurances where code = 'PLUS'), 'la Neve Plus doveva sparire';
+  -- Le tessere di prova sono scritte dopo il passaggio: le riletture dello
+  -- schema non devono togliere di nuovo l'assicurazione dal prezzo.
+  assert (select price from public.prices where name = 'PROVA TESSERA ORDINARIA') = 35,
+         'schema.sql riletto ha cambiato la quota della tessera';
+  assert (select public.card_price(p) from public.prices p where name = 'PROVA TESSERA ORDINARIA') = 55,
+         'card_price: quota 35 + Base 20';
+  insert into public.members (id, last_name, first_name, enrolled_at, card_type)
+  values ('aaaaaaaa-0000-0000-0000-0000000000ab', 'ROSSI', 'ASSICURATO', now(), 'PROVA TESSERA ORDINARIA');
+  assert (select price from public.card_counts where name = 'PROVA TESSERA ORDINARIA') = 55,
+         'card_counts senza il prezzo dell''assicurazione';
+  delete from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000ab';
+  update public.prices set insurance_paid = false where name = 'PROVA TESSERA DIRETTIVO';
+  assert (select public.card_price(p) from public.prices p where name = 'PROVA TESSERA DIRETTIVO') = 0,
+         'il direttivo paga un''assicurazione che paga il club';
+  assert (select public.card_price(p) from public.prices p where name = 'PROVA 10 VIAGGI SABATO') = 200,
+         'card_price ha cambiato il prezzo di un abbonamento';
+  begin
+    delete from public.insurances where code = 'BASE';
+    raise exception 'tolta un''assicurazione che una tessera usa ancora';
+  exception when foreign_key_violation then null;
+  end;
+  begin
+    update public.prices set insurance = 'NESSUNA' where name = 'PROVA TESSERA ORDINARIA';
+    raise exception 'una tessera ha preso un''assicurazione che non esiste';
+  exception when foreign_key_violation then null;
+  end;
+end $$;
 SQL
 
 echo "test ruoli: tutto a posto"
