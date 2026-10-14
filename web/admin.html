@@ -40,6 +40,10 @@
     .barra-saldo .da-pagare { font-size: 1.35rem; font-weight: 600; letter-spacing: -.022em; }
     .barra-saldo .azioni { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
     .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
+    /* A credito: ha versato più del dovuto. Blu, né rosso (deve) né verde (a posto). */
+    .a-credito { color: var(--blu); font-weight: 700; font-size: 1.15rem; }
+    .kpi-value.credito, td.credito { color: var(--blu); }
+    .credito small { display: block; font-weight: 600; font-size: .8125rem; }
 
     /* Modifica degli importi e storico: si aprono sotto la riga del socio. */
     .azioni-socio { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
@@ -90,13 +94,15 @@
 <div class="container-main">
   <h1 class="title is-4">Pannello Pagamenti</h1>
   <p class="occhiello">
-    Le famiglie con qualcosa da pagare. Quote e numero di tessera si modificano
+    Le famiglie con qualcosa da pagare, e quelle a credito (hanno versato più del dovuto).
+    Quote e numero di tessera si modificano
     dalla pagina <a href="index.html">Soci</a>; un rimborso o uno sconto si
     scrive qui, con <b>Modifica importi</b> sulla riga del socio, e resta nello <b>Storico</b>.
   </p>
 
   <div class="cifre">
     <div class="kpi"><div class="kpi-label">Totale da incassare</div><div class="kpi-value rosso" id="totalInsoluti">—</div></div>
+    <div class="kpi"><div class="kpi-label">A credito</div><div class="kpi-value credito" id="totalCredito">—</div></div>
     <div class="kpi"><div class="kpi-label">Nuclei</div><div class="kpi-value" id="numNuclei">—</div></div>
     <div class="kpi"><div class="kpi-label">Familiari a carico</div><div class="kpi-value" id="numFamiliari">—</div></div>
   </div>
@@ -109,7 +115,7 @@
         <label class="label" for="cercaNucleo">Cerca una famiglia</label>
         <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
       </div>
-      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare</label>
+      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare o è a credito</label>
       <button class="button is-link is-outlined" onclick="caricaDati()">Aggiorna</button>
     </div>
   </div>
@@ -155,7 +161,8 @@
         .gte("enrolled_at", inizioStagione())
         .order("last_name");
 
-      if (el("soloInsoluti").checked) query = query.gt("household_balance", 0);
+      // Anche chi è a credito (saldo sotto zero): è un conto da chiudere, come chi deve pagare.
+      if (el("soloInsoluti").checked) query = query.neq("household_balance", 0);
 
       const { data: nuclei, error } = await query;
       if (error) throw error;
@@ -194,8 +201,10 @@
 
   function render() {
     const [tutti, capofamiglia, familiari] = ultimi;
-    const totale = tutti.reduce((somma, n) => somma + parseFloat(n.household_balance || 0), 0);
-    el("totalInsoluti").textContent = fmt(totale);
+    // Da incassare e a credito separati: sommati, il credito di uno abbasserebbe il debito degli altri.
+    const saldi = tutti.map((n) => parseFloat(n.household_balance || 0));
+    el("totalInsoluti").textContent = fmt(saldi.filter((x) => x > 0).reduce((a, b) => a + b, 0));
+    el("totalCredito").textContent = fmt(-saldi.filter((x) => x < 0).reduce((a, b) => a + b, 0));
 
     // Con centinaia di nuclei si scorreva a mano: una famiglia si trova per
     // il nome di chiunque ne faccia parte, in qualsiasi ordine.
@@ -277,7 +286,9 @@
         </td>
         <td class="num">${fmt(socio.total)}</td>
         <td class="num">${fmt(socio.paid)}</td>
-        <td class="num" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>
+        ${saldo < 0
+          ? `<td class="num credito" style="font-weight:700">${fmt(-saldo)}<small>a credito</small></td>`
+          : `<td class="num" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>`}
       </tr>`;
   }
 
@@ -287,7 +298,13 @@
    * si chiude da sola.
    */
   function barraSaldo(idPagante, saldo, nome) {
-    if (saldo <= 0) {
+    // Ha versato più del dovuto: niente da incassare. Si restituisce con
+    // Modifica importi (Già versato più basso, con il motivo nello storico).
+    if (saldo < 0) {
+      return `<div class="barra-saldo"><span class="a-credito">A credito: ${fmt(-saldo)}</span>
+        <span>Per restituirli: <b>Modifica importi</b> sulla riga del socio, «Già versato» più basso.</span></div>`;
+    }
+    if (saldo === 0) {
       return `<div class="barra-saldo"><span class="nucleo-saldato">Nucleo saldato</span></div>`;
     }
     return `
@@ -408,7 +425,7 @@
     if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
     const saldo = parseFloat(data?.household_balance || 0);
     if (saldo <= 0) {
-      showToast("Questo nucleo è già saldato.");
+      showToast(saldo < 0 ? "Questo nucleo è a credito: non c'è niente da incassare." : "Questo nucleo è già saldato.");
       await caricaDati({ silenzioso: true });
       return;
     }
