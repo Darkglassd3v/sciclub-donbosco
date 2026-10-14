@@ -269,12 +269,18 @@ def build_files(soci, prezzi, partenze, source_name, righe_per_file):
     lines += ["-- Listino", ""]
     for categoria, nome, prezzo in prezzi:
         # Il ruolo minimo vale solo alla nascita della voce: un rilancio
-        # aggiorna il prezzo ma non tocca quello scelto poi da Impostazioni.
+        # aggiorna il prezzo (non delle tessere, sotto) ma non tocca quello
+        # scelto poi da Impostazioni.
         ruolo = TESSERE_RISERVATE.get(nome, "utente") if categoria == "TESSERA" else "utente"
+        # Le tessere del foglio hanno l'assicurazione dentro il prezzo, nel
+        # database la quota è a parte (dalla 2.8): una tessera che c'è già non
+        # si tocca, se no il socio pagherebbe l'assicurazione due volte.
+        conflitto = ("do nothing" if categoria == "TESSERA"
+                     else "do update set price = excluded.price")
         lines.append(
             "insert into public.prices (category, name, price, min_role) values "
             f"({sql_str(categoria)}, {sql_str(nome)}, {sql_num(prezzo)}, {sql_str(ruolo)}) "
-            "on conflict (category, name) do update set price = excluded.price;"
+            f"on conflict (category, name) {conflitto};"
         )
 
     lines += ["", "-- Luoghi di partenza", ""]

@@ -26,35 +26,43 @@ comment on table public.prices is 'Listino: ex foglio PREZZI. Le categorie corri
 -- Dalla 2.8 le voci si mostrano nell'ordine del modulo di carta del
 -- tesseramento, non per prezzo: chi iscrive lo copia dall'alto in basso. Si
 -- cambia da Impostazioni; una voce senza posizione va in fondo, per prezzo.
-alter table public.prices add column if not exists position smallint;
+-- La colonna nasce con l'ordine del modulo 2026/2027, una volta sola: poi
+-- l'ordine lo decide Impostazioni (anche "vuoto = in fondo"), e riapplicare lo
+-- schema non lo rimette.
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'prices' and column_name = 'position') then
+    return;
+  end if;
+  alter table public.prices add column position smallint;
+  update public.prices p set position = v.posizione
+    from (values
+      ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 1),
+      ('TESSERA', 'SOLO TESSERA - NO ASSICURAZIONE', 2),
+      ('TESSERA', 'TESSERA ORDINARIA - GLOBAL SPORT', 3),
+      ('TESSERA', 'TESSERA SCONTATA - NEVE PLUS', 4),
+      ('TESSERA', 'TESSERA SCONTATA - NO ASSICURAZIONE', 5),
+      ('TESSERA', 'TESSERA DIRETTIVO', 6),
+      ('FAMIGLIA', '3 PERSONE SENZA ASSICURAZIONE', 1),
+      ('FAMIGLIA', '4 PERSONE SENZA ASSICURAZIONE', 2),
+      ('FAMIGLIA', '5 PERSONE SENZA ASSICURAZIONE', 3),
+      ('FAMIGLIA', '3 PERSONE CON ASSICURAZIONE', 4),
+      ('FAMIGLIA', '4 PERSONE CON ASSICURAZIONE', 5),
+      ('FAMIGLIA', '5 PERSONE CON ASSICURAZIONE', 6),
+      ('ABBONAMENTO', 'Abbonamento 5 viaggi MARTEDÌ', 1),
+      ('ABBONAMENTO', 'Abbonamento 5 viaggi DOMENICA', 2),
+      ('ABBONAMENTO', 'Abbonamento 5 viaggi SABATO', 3),
+      ('ABBONAMENTO', 'Abbonamento 5 viaggi JOLLY', 4),
+      ('CORSO', 'CORSO SCI ADULTI', 1),
+      ('CORSO', 'CORSO SCI 10 - 14', 2),
+      ('CORSO', 'CORSO SCI BABY FINO 10', 3),
+      ('CORSO', 'CORSO SNOWBOARD 4 PARTECIPANTI', 4)
+    ) as v (categoria, nome, posizione)
+   where p.category = v.categoria and p.name = v.nome;
+end $$;
 
 comment on column public.prices.position is 'Ordine della voce nella sua categoria, come sul modulo di carta; vuoto = in fondo, per prezzo.';
-
--- L'ordine del modulo 2026/2027, una volta sola: solo le voci ancora senza posizione.
-update public.prices p set position = v.posizione
-  from (values
-    ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 1),
-    ('TESSERA', 'SOLO TESSERA - NO ASSICURAZIONE', 2),
-    ('TESSERA', 'TESSERA ORDINARIA - GLOBAL SPORT', 3),
-    ('TESSERA', 'TESSERA SCONTATA - NEVE PLUS', 4),
-    ('TESSERA', 'TESSERA SCONTATA - NO ASSICURAZIONE', 5),
-    ('TESSERA', 'TESSERA DIRETTIVO', 6),
-    ('FAMIGLIA', '3 PERSONE SENZA ASSICURAZIONE', 1),
-    ('FAMIGLIA', '4 PERSONE SENZA ASSICURAZIONE', 2),
-    ('FAMIGLIA', '5 PERSONE SENZA ASSICURAZIONE', 3),
-    ('FAMIGLIA', '3 PERSONE CON ASSICURAZIONE', 4),
-    ('FAMIGLIA', '4 PERSONE CON ASSICURAZIONE', 5),
-    ('FAMIGLIA', '5 PERSONE CON ASSICURAZIONE', 6),
-    ('ABBONAMENTO', 'Abbonamento 5 viaggi MARTEDÌ', 1),
-    ('ABBONAMENTO', 'Abbonamento 5 viaggi DOMENICA', 2),
-    ('ABBONAMENTO', 'Abbonamento 5 viaggi SABATO', 3),
-    ('ABBONAMENTO', 'Abbonamento 5 viaggi JOLLY', 4),
-    ('CORSO', 'CORSO SCI ADULTI', 1),
-    ('CORSO', 'CORSO SCI 10 - 14', 2),
-    ('CORSO', 'CORSO SCI BABY FINO 10', 3),
-    ('CORSO', 'CORSO SNOWBOARD 4 PARTECIPANTI', 4)
-  ) as v (categoria, nome, posizione)
- where p.position is null and p.category = v.categoria and p.name = v.nome;
 
 create table if not exists public.departures (
   id          bigint generated always as identity primary key,
@@ -1115,6 +1123,17 @@ begin
   insert into public.insurances (code, name, price) values
     ('BASE', 'Global Neve Base', 20), ('SPORT', 'Global Neve Sport', 45)
   on conflict (code) do nothing;
+  -- Le tessere del listino hanno il tipo nel nome. Solo quelle ancora senza
+  -- tipo: uno scritto a mano non si tocca. Una volta sola: poi lo decide
+  -- Impostazioni, anche "nessuna".
+  update public.prices p set insurance = i.code
+    from public.insurances i
+   where p.category = 'TESSERA' and p.insurance is null
+     and upper(p.name) not like '%NO ASSICURAZIONE%'
+     and i.code = case
+           when p.name = 'TESSERA DIRETTIVO' or upper(p.name) like '%GLOBAL SPORT%' then 'SPORT'
+           when upper(p.name) like '%NEVE BASE%' then 'BASE'
+         end;
   delete from public.prices p
    where p.category = 'TESSERA' and p.insurance = 'PLUS'
      and not exists (select 1 from public.members m where m.card_type = p.name);
@@ -1136,17 +1155,14 @@ alter table public.prices drop constraint if exists prices_insurance_fkey;
 alter table public.prices add constraint prices_insurance_fkey
   foreign key (insurance) references public.insurances (code);
 
--- Le tessere del listino hanno il tipo nel nome. Solo quelle ancora senza
--- tipo: uno scritto a mano non si tocca.
--- Solo con un codice che c'è ancora (un'assicurazione si può togliere).
-update public.prices p set insurance = i.code
-  from public.insurances i
- where p.category = 'TESSERA' and p.insurance is null
-   and upper(p.name) not like '%NO ASSICURAZIONE%'
-   and i.code = case
-         when p.name = 'TESSERA DIRETTIVO' or upper(p.name) like '%GLOBAL SPORT%' then 'SPORT'
-         when upper(p.name) like '%NEVE BASE%' then 'BASE'
-       end;
+-- Prezzi in euro interi (15/10/2026): nel listino e nelle assicurazioni non
+-- ci sono centesimi, e uno scritto per sbaglio sballerebbe i totali.
+alter table public.prices drop constraint if exists prices_price_valid;
+alter table public.prices add constraint prices_price_valid
+  check (price >= 0 and price = trunc(price));
+alter table public.insurances drop constraint if exists insurances_price_valid;
+alter table public.insurances add constraint insurances_price_valid
+  check (price >= 0 and price = trunc(price));
 
 -- Quello che paga il socio per una voce del listino: il prezzo, più quello
 -- dell'assicurazione se la tessera ne dà una e non la paga il club. Prende la

@@ -21,27 +21,10 @@
       piccolo. Le dimensioni regolabili campo per campo: **scartate** (l'utente: i testi devono
       restare coerenti fra i post); si correggono le misure della grafica. Nelle gite **partenze e
       orari sono confusi**: metterli in riquadri. Prima un abbozzo prima/dopo da approvare.
-- [ ] 15/10, review del 15/10 (l'incasso dei nuclei con un credito è già corretto, `c6a6936`).
-      **Ripresa:** in corso le assicurazioni. Fatto, NON committato e NON provato: in
-      `supabase/schema.sql` la posizione del modulo è ora in un blocco `do` che parte solo quando
-      nasce la colonna `position`. Prossimi passi: (1) spostare l'`update ... set insurance` dal
-      nome (dopo `prices_insurance_fkey`) dentro il blocco `do` delle assicurazioni, prima della
-      divisione dei prezzi, e toglierlo da fuori; (2) check su `prices.price` e `insurances.price`:
-      `>= 0` e interi; (3) `generate_migration.py`: per le TESSERE `on conflict do nothing` (non
-      sovrascrivere la quota) e nota in docs (dopo un caricamento da Excel le tessere nuove hanno il
-      prezzo pieno e nessuna assicurazione: sceglierla in Impostazioni e abbassare la quota);
-      (4) `caricaPrezzi()`: `.order("card_price")` invece di `price`; (5) Impostazioni: prezzi
-      `step="1"` e solo interi, campo vuoto rifiutato, Salva di un'assicurazione che non ridisegna la
-      tabella se altre righe sono gialle e tiene la scelta della tessera nuova, codice doppio con
-      suffisso; poi `test_ruoli.sh`, prova nel browser, review, produzione SOLO con le istruzioni
-      nuove e `lock_timeout` (mai lo schema intero di giorno), `?v=` nuovo, push, `dev`.
-      Da sistemare, nell'ordine:
-  - [ ] Assicurazioni: `generate_migration.py` rimette i prezzi pieni delle tessere (assicurazione
-        contata due volte dopo un caricamento da Excel); Impostazioni perde le modifiche non salvate
-        e la select della tessera nuova quando si salva un'assicurazione; le regole "una volta sola"
-        (assicurazione dal nome, posizione del modulo) ripartono a ogni schema; `order` per prezzo
-        pieno (`card_price`); prezzi negativi o campo vuoto = 0; messaggio sbagliato per il codice
-        dell'assicurazione già usato; **prezzi solo interi** (listino e assicurazioni, pagina e database).
+- [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
+      assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
+      le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).
+      **Ripresa:** il codice fiscale, qui sotto. Da sistemare, nell'ordine:
   - [ ] Codice fiscale: sesso scelto ignorato col giorno leggibile; comune deciso col finale del
         codice non ancora corretto; cifra/lettera A-J nel comune; proposta senza comune che
         peggiora il finale (e il test che la dà per buona); `turnoCF` in `resetForm`; query
