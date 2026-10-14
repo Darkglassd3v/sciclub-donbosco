@@ -16,6 +16,11 @@
 // catastali di tutti i comuni e degli stati esteri. Se ne guarda solo la forma
 // (una lettera e tre cifre) e nel codice proposto resta quello scritto.
 //
+// Per un socio nuovo, a campo vuoto, il codice si propone intero (calcolaCF):
+// il sesso lo indica chi compila, il comune si ricava dai codici fiscali dei
+// soci nati nello stesso posto (comuneDaiCF). Per un posto mai visto non si
+// propone niente.
+//
 // Funzioni pure, senza pagina: le prova web/test-codicefiscale.js.
 
 const CF_MESI = "ABCDEHLMPRST";
@@ -96,6 +101,46 @@ function leggiData(data) {
   return { anno: Number(m[1]), mese: Number(m[2]), giorno: Number(m[3]) };
 }
 
+/** I cinque caratteri della data (anno, lettera del mese, giorno): per le donne il giorno è aumentato di 40. */
+function codiceData(data, femmina) {
+  return String(data.anno % 100).padStart(2, "0") + CF_MESI[data.mese - 1]
+    + String(data.giorno + (femmina ? 40 : 0)).padStart(2, "0");
+}
+
+/**
+ * Il codice fiscale calcolato dall'anagrafica { cognome, nome, dataNascita,
+ * sesso: "M" o "F", comune: codice catastale come "A479" }, o null se manca
+ * qualcosa. Non conosce l'omocodia: è una proposta, chi ha la tessera davanti
+ * controlla.
+ */
+function calcolaCF({ cognome, nome, dataNascita, sesso, comune } = {}) {
+  const data = leggiData(dataNascita);
+  if (!soloLettere(cognome) || !soloLettere(nome) || !data || data.mese < 1 || data.mese > 12
+    || !/^[MF]$/.test(sesso ?? "") || !/^[A-Z]\d{3}$/.test(comune ?? "")) return null;
+  const primi15 = codiceCognome(cognome) + codiceNome(nome) + codiceData(data, sesso === "F") + comune;
+  return primi15 + carattereControllo(primi15);
+}
+
+/**
+ * Il codice catastale del comune ricavato dai codici fiscali dei soci nati lì
+ * ("ASTI" → A479). Contano solo i codici col carattere finale giusto, e vince
+ * quello che compare in più della metà: un codice scritto male, o due comuni
+ * con lo stesso nome, non bastano a dare un comune sbagliato. Null se non c'è
+ * una maggioranza.
+ */
+function comuneDaiCF(codici) {
+  const conti = {};
+  for (const scritto of codici) {
+    const cf = normalizzaCF(scritto);
+    if (cf.length !== 16 || carattereControllo(cf.slice(0, 15)) !== cf[15]) continue;
+    const comune = senzaOmocodia(cf).slice(11, 15);
+    if (/^[A-Z]\d{3}$/.test(comune)) conti[comune] = (conti[comune] || 0) + 1;
+  }
+  const totale = Object.values(conti).reduce((a, b) => a + b, 0);
+  const [comune, volte] = Object.entries(conti).sort((a, b) => b[1] - a[1])[0] || [];
+  return volte > totale / 2 ? comune : null;
+}
+
 /**
  * Confronta un codice fiscale con l'anagrafica.
  *
@@ -173,9 +218,7 @@ function verificaCF(codice, anagrafica = {}) {
 
   const data = leggiData(anagrafica.dataNascita);
   if (data && giornoValido) {
-    const attesa = String(data.anno % 100).padStart(2, "0")
-      + CF_MESI[data.mese - 1]
-      + String(data.giorno + (femmina ? 40 : 0)).padStart(2, "0");
+    const attesa = codiceData(data, femmina);
     if (parti.anno + parti.mese + parti.giorno !== attesa) {
       problemi.push(`La data di nascita non torna con quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
       corretto.data = attesa;

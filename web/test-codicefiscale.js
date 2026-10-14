@@ -10,9 +10,9 @@ const path = require("path");
 
 // codicefiscale.js ha solo funzioni pure: si carica senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "codicefiscale.js"), "utf8");
-const { verificaCF, codiceCognome, codiceNome, carattereControllo, normalizzaCF } =
+const { verificaCF, codiceCognome, codiceNome, carattereControllo, normalizzaCF, calcolaCF, comuneDaiCF } =
   (0, eval)(`(() => { ${sorgente}
-    return { verificaCF, codiceCognome, codiceNome, carattereControllo, normalizzaCF }; })()`);
+    return { verificaCF, codiceCognome, codiceNome, carattereControllo, normalizzaCF, calcolaCF, comuneDaiCF }; })()`);
 
 const rossi = { cognome: "Rossi", nome: "Mario", dataNascita: "1985-12-10" };
 
@@ -90,5 +90,28 @@ assert.ok(esito.problemi.some((p) => /comune/.test(p)));
 esito = verificaCF("RSSMRA85T35A562S", rossi);
 assert.strictEqual(esito.suggerito, null);
 assert.ok(esito.problemi.some((p) => /data di nascita/.test(p)));
+
+// --- Codice proposto a campo vuoto -----------------------------------------
+
+// Il Mario Rossi degli esempi: il codice calcolato è quello noto.
+assert.strictEqual(calcolaCF({ ...rossi, sesso: "M", comune: "A562" }), "RSSMRA85T10A562S");
+// Donna: giorno + 40, e il codice calcolato passa la verifica.
+const maria = { cognome: "Bianchi", nome: "Maria", dataNascita: "1980-01-01" };
+assert.strictEqual(calcolaCF({ ...maria, sesso: "F", comune: "F205" }), bianchi);
+assert.ok(verificaCF(calcolaCF({ ...maria, sesso: "F", comune: "F205" }), maria).ok);
+// Manca qualcosa: niente proposta.
+assert.strictEqual(calcolaCF({ ...rossi, comune: "A562" }), null);           // sesso
+assert.strictEqual(calcolaCF({ ...rossi, sesso: "M" }), null);               // comune
+assert.strictEqual(calcolaCF({ ...rossi, sesso: "M", comune: "ASTI" }), null);
+assert.strictEqual(calcolaCF({ ...rossi, dataNascita: "", sesso: "M", comune: "A562" }), null);
+
+// Il comune dai codici dei soci nati lì: vince chi ha più della metà.
+assert.strictEqual(comuneDaiCF(["RSSMRA85T10A562S", "rssmra85t10a562s"]), "A562");
+assert.strictEqual(comuneDaiCF([omocodico]), "A562");                         // omocodia tolta
+assert.strictEqual(comuneDaiCF(["RSSMRA85T10A562S", "RSSMRA85T10F205X"]), "A562"); // finale sbagliato: non conta
+assert.strictEqual(comuneDaiCF(["RSSMRA85T10A562S", bianchi]), null);         // uno a uno: non si sceglie
+assert.strictEqual(comuneDaiCF(["RSSMRA85T10A562S", "RSSMRA85T10A562S", bianchi]), "A562");
+assert.strictEqual(comuneDaiCF([]), null);
+assert.strictEqual(comuneDaiCF([null, "", "RSSMRA85T1"]), null);
 
 console.log("codicefiscale: tutti i controlli passati");
