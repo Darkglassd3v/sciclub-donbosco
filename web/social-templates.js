@@ -810,7 +810,8 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .tit.meta [data-fit] { display: block; font-weight: 800; line-height: .9; letter-spacing: -.035em; }
     /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
-    .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; }
+    /* pre-line: gli a capo scritti nel sottotesto restano, come nelle altre grafiche. */
+    .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
     .sk .fatti b, .sk .righe .giorno, .sk .righe .corso { text-shadow: none; }
     .sk .fatti b { font-weight: 800; line-height: 1.1; background: #FCCF02; color: #084C8D; padding: 0 .2em; border-radius: 10px; white-space: nowrap;
       -webkit-box-decoration-break: clone; box-decoration-break: clone; }
