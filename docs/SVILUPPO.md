@@ -40,6 +40,11 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
 
 La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 
+GitHub Pages fa tenere i file nella cache del browser per 10 minuti: una pagina nuova con un
+`shared.js` vecchio si rompe ("nomiBarra is not defined", 15/10/2026). Per questo le pagine chiedono
+script e fogli di stile con `?v=AAAAMMGGx`: **cambiato un `.js` o un `.css`, cambiare il numero in
+tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`).
+
 ## Database
 
 - La connessione di produzione sta in `supabase/.postgre_connect` (fuori da git, **non
