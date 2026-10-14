@@ -2946,10 +2946,10 @@ create table if not exists public.social_settings (
 );
 alter table public.social_settings drop constraint if exists social_settings_style_valid;
 alter table public.social_settings add constraint social_settings_style_valid
-  check (key <> 'style' or value in ('ritocco', 'montagna', 'biglietto', 'calendario', 'divano'));
+  check (key <> 'style' or value in ('ritocco', 'montagna', 'biglietto', 'calendario', 'divano', 'k'));
 insert into public.social_settings (key, value) values ('style', 'ritocco')
 on conflict (key) do nothing;
-comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco, montagna, biglietto, calendario o divano).';
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco, montagna, biglietto, calendario, divano o k).';
 
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;

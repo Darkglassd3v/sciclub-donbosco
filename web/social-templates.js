@@ -113,7 +113,7 @@ function impostaColoriGita(colori) { COLORI_GITA = colori; }
  * B e C della 2.8 (grafica/proposte-post-social/). La pagina la carica e la
  * passa a impostaStile(); gli esempi di Impostazioni la scelgono col secondo
  * argomento dei disegni. */
-const STILI = ["ritocco", "montagna", "biglietto", "calendario", "divano"];
+const STILI = ["ritocco", "montagna", "biglietto", "calendario", "divano", "k"];
 let STILE = "ritocco";
 function impostaStile(stile) { STILE = STILI.includes(stile) ? stile : "ritocco"; }
 
@@ -473,6 +473,7 @@ function disegnaPost(s, stile = STILE) {
   if (stile === "biglietto") return postBiglietto(s);
   if (stile === "calendario") return postCalendario(s);
   if (stile === "divano") return postDivano(s);
+  if (stile === "k") return postK(s);
   const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
   const m = 60, k = st ? 1.4 : 1;
   // Story: il biglietto finisce sopra la fascia della risposta di Instagram,
@@ -573,6 +574,7 @@ function disegnaCalendario(titolo, righe, stile = STILE, mese = "") {
   if (stile === "biglietto") return meseBiglietto(titolo, righe, mese);
   if (stile === "calendario") return meseCalendario(titolo, righe, mese);
   if (stile === "divano") return meseDivano(titolo, righe);
+  if (stile === "k") return meseK(titolo, righe, mese);
   const bg = "#084C8D";
   return `<div class="cv" style="width:1080px;height:1080px;background:${bg}">${fiocchi(1080, 1080)}
     <div class="abs" style="left:60px;width:960px;top:60px;height:960px;background:#fff;border-radius:40px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.25)">
@@ -598,7 +600,7 @@ function disegnaCalendario(titolo, righe, stile = STILE, mese = "") {
 // ---------------------------------------------------------------------------
 
 const BLU = "#084C8D", GIALLO = "#FCCF02";
-const NUOVI = ["biglietto", "calendario", "divano"];
+const NUOVI = ["biglietto", "calendario", "divano", "k"];
 
 (function stileNuovi() {
   if (typeof document === "undefined" || document.getElementById("stile-social-nuovi")) return;
@@ -759,7 +761,69 @@ const NUOVI = ["biglietto", "calendario", "divano"];
     .sc .righe > div { display: flex; align-items: center; gap: 20px; }
     .sc .righe .giorno { flex: none; width: ${q(210)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: 4px 0; }
     .sc .righe .meta { font-size: ${q(50)}; font-weight: 800; letter-spacing: -.02em; min-width: 0; }
-    .sc .righe .corso { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: ${q(36)}; font-weight: 800; }`;
+    .sc .righe .corso { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: ${q(36)}; font-weight: 800; }
+
+    /* K · Piani (grafica/proposte-post-social/sorgenti/k.css): la foto a tutta pagina col velo
+     * sotto il testo, i piani a 45°, la tessera gialla del "quando". Le misure sono quelle della
+     * tavola: --fine è dove comincia il testo, --su e --giu le fasce coperte della story. Niente
+     * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
+     * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
+    .cv.sk { --notte: 20,32,46; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
+    .cv.sk.story { --fine: 850px; --angolo: 760px; --cuneo: 780px; --su: 250px; --giu: 340px; }
+    .cv.sk.giallo { --notte: 18,18,18; }
+    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
+    .sk .piano { position: absolute; inset: 0; }
+    .sk .scuro { background: linear-gradient(180deg, rgba(var(--notte),0) 0, rgba(var(--notte),0) calc(var(--fine) - 200px),
+      rgba(var(--notte),.66) calc(var(--fine) + 10px), rgba(var(--notte),.76) 100%); }
+    .sk .angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
+    .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
+    .sk .finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(#084C8D, #084C8D), var(--immagine) center 45% / cover;
+      background-blend-mode: normal, color, normal; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
+    .sk .finestra.fondo { clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
+    .sk .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
+    .sk.giallo .angolo, .sk.giallo .finestra { background: none; opacity: .7; }
+    .sk .grigi, .sk .tinta { position: absolute; inset: 0; }
+    .sk .grigi { background: var(--immagine) center 45% / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+    .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
+    .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
+    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
+    .cv.sk .logo-box img { height: 140px; }
+    .cv.sk .stella { left: 60px; right: auto; top: calc(var(--su) + 250px); }
+    .cv.sk.story .stella { top: calc(var(--su) + 250px); }
+    /* La tessera del "quando", appesa al bordo alto: giorno, numero, mese e l'ora nella fascia blu. */
+    .sk .tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px); background: #FCCF02; color: #084C8D;
+      clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px); display: flex; flex-direction: column; justify-content: flex-end; }
+    .sk .tessera span, .sk .tessera b, .sk .tessera em { display: block; padding: 0 34px; }
+    .sk .tessera span { font-weight: 700; line-height: 1; letter-spacing: -.01em; }
+    .sk .tessera b { font-size: 210px; font-weight: 800; line-height: .8; letter-spacing: -.05em; margin: 20px 0 16px -6px; }
+    .sk .tessera b + span { font-weight: 800; letter-spacing: -.02em; }
+    .sk .tessera b + span:last-child { margin-bottom: 34px; }
+    .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: #084C8D; color: #fff; padding: 20px 34px 22px; margin-top: 28px; }
+    /* Il testo sulla foto scurita, da --fine: gancio, titolo sempre alto due righe, i dati; in fondo le iscrizioni. */
+    .cv.sk .col { inset: auto; left: 60px; right: 60px; top: calc(var(--fine) + 28px); bottom: calc(var(--giu) + 44px); overflow: visible; text-shadow: 0 2px 14px rgba(var(--notte),.6); }
+    .sk .testo { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .sk .gancio { font-size: ${z(54)}; font-weight: 800; font-style: italic; color: #FCCF02; letter-spacing: -.01em; line-height: 1; }
+    .sk .tit { margin-top: ${q(12)}; min-height: ${q(213)}; max-width: 640px; }
+    .sk .tit > [data-righe] { font-weight: 800; line-height: .92; letter-spacing: -.035em; }
+    .sk .tit.meta { max-width: 860px; }
+    .sk .tit.meta small { display: block; font-size: ${z(54)}; font-weight: 800; line-height: 1.05; letter-spacing: -.01em; margin-bottom: ${q(4)}; }
+    .sk .tit.meta [data-fit] { display: block; font-weight: 800; line-height: .9; letter-spacing: -.035em; }
+    /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
+    .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
+    .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; }
+    .sk .fatti b, .sk .righe .giorno, .sk .righe .corso { text-shadow: none; }
+    .sk .fatti b { font-weight: 800; line-height: 1.1; background: #FCCF02; color: #084C8D; padding: 0 .2em; border-radius: 10px; white-space: nowrap;
+      -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    .sk .isc { flex: none; display: flex; column-gap: 20px; align-items: center; margin-top: ${q(14)}; }
+    .sk .isc > svg { flex: none; width: 56px; height: 56px; fill: currentColor; }
+    .sk .isc > div { font-size: ${z(38)}; font-weight: 600; line-height: 1.2; }
+    .sk .isc > div > b { display: block; font-size: ${z(46)}; font-weight: 800; letter-spacing: -.01em; }
+    /* Il calendario: una riga per gita, il giorno nel colore della gita, il corso contornato. */
+    .sk .righe { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(8)}; }
+    .sk .righe > div { display: flex; align-items: center; gap: 22px; }
+    .sk .righe .giorno { flex: none; width: ${q(196)}; text-align: center; border-radius: 12px; font-size: ${q(42)}; font-weight: 800; line-height: 1.3; }
+    .sk .righe .meta { font-size: ${q(48)}; font-weight: 700; letter-spacing: -.01em; min-width: 0; }
+    .sk .righe .corso { font-size: ${q(36)}; font-weight: 700; line-height: 1; color: #FCCF02; border: 3px solid #FCCF02; border-radius: 999px; padding: 6px 16px; }`;
   document.head.append(stile);
 })();
 
@@ -1056,6 +1120,83 @@ function postDivano(s) {
 function meseDivano(titolo, righe) {
   const dentro = `<div class="righe">${righeMese(righe, true, `<span class="corso">${sciatore()}corso</span>`)}</div>${iscrizioni()}`;
   return manifesto(coloreNuovo("cal"), false, escS(titolo), null, "Le gite del mese", dentro);
+}
+
+// --- K · Piani -----------------------------------------------------------------
+
+/* Il fondo della K: la foto (o il blu notte), il velo, i piani, logo, tessera e
+ * la colonna del testo; nel giallo l'angolo e la finestra hanno la foto in grigi
+ * col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
+function fondoK({ giallo, story, foto, fine }, tessera, testo, isc, corso) {
+  const livelli = giallo && foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
+  // Nell'url() del CSS virgolette e barre rovesce chiuderebbero la stringa: si codificano.
+  const url = foto && escS(String(foto).replace(/["\\\n]/g, encodeURIComponent));
+  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;)` : ""}${fine ? `;--fine:${fine}px` : ""}">
+    ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
+    <div class="piano scuro"></div><div class="piano angolo">${livelli}</div><div class="piano cuneo"></div>
+    ${foto ? `<div class="piano finestra">${livelli}</div>${story ? `<div class="piano finestra fondo">${livelli}</div>` : ""}` : ""}
+    <div class="piano ombra"></div>
+    ${logoNuovo()}${tessera}
+    <div class="col">${testo}${isc}</div>${corso ? stellaNuova(story) : ""}</div>`;
+}
+
+/** La tessera del "quando": giorno, numero, mese e l'ora (nella gita la prima partenza). Senza data, niente tessera. */
+function tesseraK(s) {
+  const d = giornoDi(s.iso);
+  if (!d) return "";
+  const p = partenze(s);
+  const ora = s.kind === "gita" ? (p[0] && p[0][0] ? `ore ${p[0][0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
+  return `<div class="tessera"><span data-fit style="font-size:54px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
+    <span data-fit style="font-size:66px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
+}
+
+/**
+ * K · Piani: la foto a tutta pagina, il gancio giallo, il titolo bianco (nelle
+ * gite «Gita a» piccolo e la meta grande, su una riga) e i dati con orari,
+ * prezzi e scadenze nei riquadrini gialli. Corsi e gite di domenica in giallo e
+ * nero, il resto in blu e nero (coloreNuovo).
+ */
+function postK(s) {
+  const C = coloreNuovo(s.cat), gita = s.kind === "gita", story = s.fmt === "story";
+  const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
+  const p = partenze(s);
+  const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
+  const ora = fattoDi(fatti, ORARIO), dove = fattoDi(fatti, /^dove$/i), iscr = fattoDi(fatti, ISCRIZIONI);
+  const fatto = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${evidenzia(v)}`;
+  const entro = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
+  const righe = gita ? [
+    p.length && `Partenze: ${p.map(([t, l]) => `${escS(l)}${t ? ` <b>${escS(t)}</b>` : ""}`).join(", ")}`,
+    quota,
+    s.scadenza && entro(s.scadenza),
+  ] : [
+    String(s.sub || "").trim() && evidenzia(String(s.sub).trim(), false),
+    dove && evidenzia(dove[1]),
+    // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
+    !s.iso && ora && fatto(ora),
+    ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map(fatto),
+    quota,
+    iscr && entro(iscr[1]),
+  ];
+  const dest = String(s.dest || "").trim();
+  const meta = (testo) => `<div data-fit style="font-size:150px">${escS(testo)}</div>`;
+  const tit = gita
+    ? `<div class="tit meta">${/^gita\b/i.test(dest) ? meta(dest) : `<small>Gita a</small>${meta(dest)}`}</div>`
+    : `<div class="tit"><div data-righe="2" style="--t:116px">${titoloNuovo(s)}</div></div>`;
+  // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto.
+  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${escS(s.hook) || "&nbsp;"}</div>${tit}
+    <div class="fatti">${righe.filter(Boolean).map((r) => `<p>${r}</p>`).join("")}</div></div>`;
+  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
+}
+
+/** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
+function meseK(titolo, righe, mese) {
+  const m = Number(String(mese || "").split("-")[1]);
+  const tessera = `<div class="tessera">${m ? `<span data-fit style="font-size:54px">${MESI[m - 1]}</span>` : ""}<b>${righe.length}</b>
+    <span data-fit style="font-size:66px">${righe.length === 1 ? "gita" : "gite"}</span></div>`;
+  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">Le gite del mese</div>
+    <div class="tit"><div data-righe="2" style="--t:116px">${escS(titolo)}</div></div>
+    <div class="righe">${righeMese(righe, true, '<span class="corso">corso</span>')}</div></div>`;
+  return fondoK({ giallo: false, story: false, foto: null, fine: 470 }, tessera, testo, iscrizioni(), false);
 }
 
 /** Copertina Facebook (820×312). */

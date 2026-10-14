@@ -9,7 +9,7 @@
   <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,600;0,700;0,800;1,800&display=swap">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
@@ -314,9 +314,9 @@
                       nuovo e premi Evidenzia.</p>
                   </div>
                 </div>
-                <!-- Solo nella grafica Divano: mostraCampi() lo nasconde con le altre. -->
+                <!-- Solo nelle grafiche Divano e K: mostraCampi() lo nasconde con le altre. -->
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
-                  <label class="label" for="fGancio">Gancio: la prima riga del riquadro bianco, nella grafica Divano</label>
+                  <label class="label" for="fGancio">Gancio: la frase che apre il post (nel Divano la prima riga del riquadro bianco, nella K la riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
                 <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
@@ -447,6 +447,9 @@
           <label class="spunta"><input type="radio" name="stile" value="divano">
             <span><b>Divano</b><br><small>Il manifesto: nome grande, la data nella fascia e un gancio scritto per ogni post, post 4:5</small>
             <span class="esempio" id="esempioDivano"></span></span></label>
+          <label class="spunta"><input type="radio" name="stile" value="k">
+            <span><b>Piani</b><br><small>La foto a tutta pagina, i piani a 45° e la data nella tessera gialla; corsi e gite di domenica in giallo, il resto in blu, post 4:5</small>
+            <span class="esempio" id="esempioK"></span></span></label>
         </fieldset>
         <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
       </section>
@@ -674,7 +677,8 @@
   // pubblicare un post con la grafica sbagliata.
   // -------------------------------------------------------------------------
   let stileSalvato = "ritocco";
-  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna", biglietto: "Biglietto", calendario: "Calendario", divano: "Divano" };
+  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna", biglietto: "Biglietto", calendario: "Calendario", divano: "Divano", k: "Piani" };
+  const CON_GANCIO = ["divano", "k"];
 
   async function caricaStile() {
     const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
@@ -689,8 +693,8 @@
     stileSalvato = STILE;
     document.querySelector(`input[name="stile"][value="${stileSalvato}"]`).checked = true;
     aggiornaStile();
-    // Il gancio si scrive solo con la grafica Divano.
-    el("campoGancio").hidden = STILE !== "divano" || gruppo(el("fTipo").value) === "sponsor";
+    // Il gancio si scrive solo con le grafiche che lo disegnano (Divano e K).
+    el("campoGancio").hidden = !CON_GANCIO.includes(STILE) || gruppo(el("fTipo").value) === "sponsor";
     ordinaCampi();
     // Il titolo proposto del calendario cambia con la grafica; uno scritto a mano resta.
     if (el("calTitolo").value === titoloPrima) el("calTitolo").value = titoloMese(el("calMese").value);
@@ -1105,7 +1109,7 @@
     const g = gruppo(el("fTipo").value);
     ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
-    if (STILE !== "divano") el("campoGancio").hidden = true;
+    if (!CON_GANCIO.includes(STILE)) el("campoGancio").hidden = true;
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.

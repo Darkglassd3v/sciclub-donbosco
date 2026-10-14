@@ -158,7 +158,7 @@ assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1080 });
 
 // --- Grafiche della 2.8: Biglietto, Calendario, Divano ------------------------
 
-for (const st of ["biglietto", "calendario", "divano"]) {
+for (const st of ["biglietto", "calendario", "divano", "k"]) {
   impostaStile(st);
   assert.strictEqual(stileCorrente(), st, `grafica ${st} non accettata`);
   assert.deepStrictEqual(misurePost(), { w: 1080, h: 1350 }, `${st}: il post non è 4:5`);
@@ -167,7 +167,7 @@ for (const st of ["biglietto", "calendario", "divano"]) {
 impostaStile("ritocco");
 assert.deepStrictEqual(misurePost(), { w: 1080, h: 1080 }, "il ritocco ha cambiato misura");
 assert.deepStrictEqual(misurePost("montagna"), { w: 1080, h: 1080 });
-assert.deepStrictEqual(STILI, ["ritocco", "montagna", "biglietto", "calendario", "divano"],
+assert.deepStrictEqual(STILI, ["ritocco", "montagna", "biglietto", "calendario", "divano", "k"],
   "STILI diverso da social_settings_style_valid (supabase/schema.sql)");
 
 // Un solo blu e un solo giallo: corsi gialli, eventi e calendario blu, le gite col colore del loro giorno.
@@ -199,7 +199,7 @@ assert.strictEqual(evidenzia("2 * 3 = 6"), "2 * 3 = 6", "un asterisco solo non �
   const segni = /\*(fino|soci)|(gennaio|soci)\*/;
   assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "ritocco")), "asterischi nel Ritocco");
   assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "montagna")), "asterischi nella Montagna");
-  for (const st of ["biglietto", "calendario", "divano"]) {
+  for (const st of ["biglietto", "calendario", "divano", "k"]) {
     const html = disegnaPost(modelloPost(ev, "post"), st);
     assert.ok(html.includes("<b>fino al 13 gennaio</b>") && !segni.test(html), `${st}: evidenza del sottotesto`);
   }
@@ -232,13 +232,24 @@ assert.strictEqual(giornoMese(null), "");
   assert.ok(disegnaPost(m, "biglietto").includes('class="tit" data-cede') && disegnaPost(m, "calendario").includes('class="tit" data-cede'));
   assert.ok(!disegnaPost(m, "ritocco").includes("data-cede"), "il Ritocco non cambia");
   // Il corso nello stesso giorno: la coccarda verde in alto a destra in Calendario e Divano, una riga nel Biglietto.
-  for (const st of ["calendario", "divano"]) for (const fmt of ["post", "story"]) {
+  for (const st of ["calendario", "divano", "k"]) for (const fmt of ["post", "story"]) {
     assert.ok(disegnaPost(modelloPost(ev, fmt), st).includes('class="stella"'), `${st} ${fmt}: manca la coccarda del corso`);
     assert.ok(!disegnaPost(modelloPost({ ...ev, course: false }, fmt), st).includes('class="stella"'), `${st} ${fmt}: coccarda senza corso`);
   }
   assert.ok(disegnaPost(m, "biglietto").includes("nello stesso giorno"), "il Biglietto ha perso il corso");
-  assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && !disegnaPost(m, "biglietto").includes("Tutti in pista!"),
-    "il gancio deve stare solo nel Divano");
+  assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && disegnaPost(m, "k").includes("Tutti in pista!")
+    && !disegnaPost(m, "biglietto").includes("Tutti in pista!"), "il gancio deve stare solo nel Divano e nella K");
+  // K: «Gita a» piccolo e la meta su una riga, la data nella tessera con la prima partenza, il testo che si adatta.
+  for (const fmt of ["post", "story"]) {
+    const html = disegnaPost(modelloPost(ev, fmt), "k");
+    assert.ok(html.includes("<small>Gita a</small>") && html.includes('data-fit style="font-size:150px">La Thuile'), `k ${fmt}: titolo della gita`);
+    assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:30<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
+    assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1") && html.includes("giovedì 14 gennaio"), `k ${fmt}: iscrizioni, telefono o scadenza`);
+    assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`) && html.includes(" senza-foto"), `k ${fmt}: misura o fondo senza foto`);
+  }
+  const kFoto = disegnaPost(modelloPost({ ...ev, photo: "https://x/foto.jpg" }, "post"), "k");
+  assert.ok(kFoto.includes('class="foto" src="https://x/foto.jpg"') && kFoto.includes("piano finestra") && !kFoto.includes("senza-foto"), "k: la foto");
+  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "k").includes("Gita a</small>"), "k: «Gita a Gita»");
   assert.ok(disegnaPost(m, "biglietto").includes("giovedì 14 gennaio</b>") && disegnaPost(m, "calendario").includes("Iscrizioni entro giovedì 14 gennaio"));
   // Una meta che dice già "Gita" non diventa "Gita a Gita ...".
   assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "biglietto").includes("Gita a Gita"));

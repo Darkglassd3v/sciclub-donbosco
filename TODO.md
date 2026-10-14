@@ -19,21 +19,19 @@
 
 ## Richieste nuove
 
-- [ ] 12/10: proposte di grafica dai sei post dello Ski Club of Great Britain in `inspiration/`.
-      Fra tre abbozzi (K · Piani, L · Pendio, M · Album) scelta **K · Piani**, fatta come tavola
-      con i quattro post e la story del corso in `grafica/proposte-post-social/` (L e M
-      cancellate). Se va nel generatore:
-  - [ ] Nuovo valore in `STILI` e funzione in `web/social-templates.js`, scelta in Impostazioni
-        (check di `social_settings.style`). Usa solo Barlow: il corsivo 800 del gancio va copiato
-        in `web/`.
-  - [ ] Senza foto: cosa mettere come fondo, ora che la foto è a tutta pagina (l'omino al centro
-        non piace).
-  - [ ] Finestra: oggi la stessa foto tinta di blu; un'altra immagine vorrebbe un secondo
-        caricamento.
-  - [ ] Righe dei dati lunghe: non devono arrivare alla finestra (accorciare o rimpicciolire).
-  - [ ] Due colori (13/10): giallo e nero per corsi e gite di domenica (classe `giallo` in
-        `sorgenti/k.css`), blu e nero per il resto; nel generatore la variante viene da
-        `coloreNuovo`.
+- [ ] 14/10: **K · Piani nel generatore dei post**, fatta il 14/10 (non committata): "k" in `STILI`,
+      `postK()` e `meseK()` in `web/social-templates.js` (CSS con prefisso `.sk`, senza
+      pseudo-elementi), "Piani" in Impostazioni, gancio anche per la K, Barlow corsivo 800 da Google
+      Fonts. Senza foto: fondo blu notte e angolo giallo pieno. Le altre cinque grafiche escono
+      identiche (HTML confrontato prima e dopo); banco nel browser esportato con html-to-image.
+      Resta:
+  - [ ] Schema in produzione: "k" nel check `social_settings_style_valid` (già in
+        `supabase/schema.sql`). Prima backup e review, e prima del push: altrimenti salvare la
+        grafica Piani in Impostazioni fallisce.
+  - [ ] Provare con una foto vera caricata dal generatore (Supabase Storage): la foto finisce
+        anche nello sfondo della finestra, e html-to-image deve poterla scaricare (CORS).
+  - [ ] Finestra: oggi la stessa foto tinta; un'altra immagine vorrebbe un secondo caricamento
+        (rimandata a dopo le iscrizioni di novembre).
 - [ ] 11/10: grafiche dei post nello stile dei marchi dello sci, coi colori del club. Fatte
       come tavole le proposte **D · Pista** (alla Head), **E · Fascia** (alla Rossignol) e
       **F · Diagonale** (alla Ski Club of Great Britain), poi le idee da gara **G · Cronometro**,
