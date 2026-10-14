@@ -1,103 +1,24 @@
-# TODO — aggiornato il 2026-10-14
+# TODO — aggiornato il 2026-10-15
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (14/10/2026)
+## Stato del repository (15/10/2026)
 
-- Branch di lavoro `2.8-SNAPSHOT` (le pagine online sono le sue); `dev` è indietro: da allineare
-  (sotto). Restano solo `dev` e `2.8-SNAPSHOT`; gli SHA dei branch tolti l'11/10 sono in
+- Branch di lavoro `2.8-SNAPSHOT` (le pagine online sono le sue), `dev` allineato a lui il 15/10.
+  Restano solo `dev` e `2.8-SNAPSHOT`; gli SHA dei branch tolti l'11/10 sono in
   `.git/branch-cancellati-2026-10-11.txt` (solo su questo PC).
-- Produzione: `supabase/schema.sql` applicato il 14/10 ("k" nel check di `social_settings.style`),
-  backup in `supabase/migration/backup-2026-10-14-stile-k/` (fuori da git).
+- Produzione: `supabase/schema.sql` applicato il 15/10 (assicurazioni a parte, `prices.position`),
+  backup in `supabase/migration/backup-2026-10-15-assicurazioni/` (fuori da git). Lo schema intero
+  ci mette qualche minuto: applicarlo quando nessuno usa il sito.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
 
-> **Ripresa (14/10 sera, limite d'uso).** Autorizzato dall'utente: tutte le query in produzione,
-> schema, commit e push ("correggi e fai tutto, pusha"). Ordine: 1) review OCR in delega del
-> codice fiscale, commit, push di `2.8-SNAPSHOT`; 2) allineare `dev`; 3) ordine dei campi;
-> 4) assicurazioni (schema, backup, review, push). Aggiornare questo blocco dopo ogni passo.
-> Fatto: 1) codice fiscale col comune dei soci nati lì (commit 6b81660, pubblicato) e COLOMBA
-> corretto in produzione (backup in `supabase/migration/backup-2026-10-14-cf-colomba/`);
-> 2) `dev` allineato (d22e63f); 3) in parte, non committato: blocchi di `web/index.html`
-> (telefono con l'email, numero tessera in cima, partenze domenica/sabato prima del corso) e PDF.
-> Scritto in `supabase/schema.sql` (non applicato): `prices.position` con l'ordine del modulo,
-> `insurances`, `insurance_paid`, blocco DO, FK, `card_price()`, `card_counts` spostata sotto,
-> `close_season()`. Scritti anche (non provati): `caricaPrezzi()` (position, `price:card_price`) e
-> Impostazioni (riquadro Assicurazioni, colonna Ordine, "la paga il club", "Paga il socio").
-> Scritta anche la pagina Assicurazione (TIPI dalla tabella).
-> `test_ruoli.sh` verde con le prove nuove (matrice insurances, card_price, direttivo, FK).
-> Prova a vuoto in produzione (begin … rollback, schema due volte): quote 20/20/20/10/10/0, paga il
-> socio 40/20/65/30/10/0 come prima. Ci mette qualche minuto (lock): farlo di notte.
-> Provato nel browser col client finto (scratchpad `prova-web`): Soci in ordine del modulo con
-> prezzo pieno, Impostazioni (Paga il socio, direttivo 0, select dalla tabella), Assicurazione con
-> i tipi della tabella. Fatti anche docs/SVILUPPO.md e la review del diff; tolto
-> `docs/ORDINE_CAMPI.md`. Schema applicato in produzione il 15/10 (backup in
-> `supabase/migration/backup-2026-10-15-assicurazioni/`), verificato. Da fare: push, `dev`, TODO.
-> Disegno scelto per 4): tabella `insurances (code pk, name unique, price)`, ordinate per prezzo,
-> senza `active` (si tolgono cancellandole; la chiave esterna lo impedisce se una tessera o una
-> lista le usa). `prices.insurance` → FK su `insurances.code`, `insurance_lists.kind` → FK (via i
-> check BASE/PLUS/SPORT, anche in `insurance_send`). `prices.insurance_paid` (false = la paga il
-> club). Funzione `card_price(prices)` = quota + assicurazione se pagata: colonna calcolata di
-> PostgREST (`price:card_price` in `caricaPrezzi()`), usata in `card_counts` e `close_season()`.
-> Divisione dei prezzi e Neve Plus tolta in un blocco DO che parte una volta (se manca
-> `insurance_paid`). Impostazioni: riquadro Assicurazioni (nome, prezzo, Salva, Togli con
-> `chiedi()`, + Aggiungi; codice dal nome), tessere con select dalla tabella e casella "pagata
-> dal club", colonna Ordine (`position`). Assicurazione: TIPI dalla tabella (colonna Excel "Tipo"
-> solo per SPORT, tracciato provvisorio). Poi `test_ruoli.sh`, docs/SVILUPPO.md, review, backup
-> di `prices` e `insurance_lists`, schema, push.
-
-- [ ] 14/10: **Ordine dei campi come il modulo di carta** (Tesseramento 2026/2027): la pagina Soci
-      e la Stampa chiedono le cose nello stesso ordine del modulo, sezioni come blocchi; i prezzi
-      del modulo non contano. Proposta in `docs/ORDINE_CAMPI.md`, **approvata il 14/10**: giorno
-      del corso resta sotto il corso; numero tessera primo della sezione Tessera; DIRETTIVO resta
-      fra le tessere (in fondo), anche se sul modulo non c'è. Da fare in `web/index.html`:
-      Telefono accanto all'Email; Numero tessera in cima a Tessera; in Gite e corsi partenze
-      domenica e sabato prima del corso; stesso ordine nel PDF (`datiScheda()`). Voci del listino
-      nell'ordine del modulo: colonna `prices.position` (riempita una volta in `schema.sql` per
-      nome, `where position is null`), `caricaPrezzi()` e Impostazioni ordinano per position, poi
-      prezzo. Nomi in produzione: TESSERA ORDINARIA - GLOBAL NEVE BASE 1, SOLO TESSERA - NO
-      ASSICURAZIONE 2, TESSERA ORDINARIA - GLOBAL SPORT 3, TESSERA SCONTATA - NEVE PLUS 4, TESSERA
-      SCONTATA - NO ASSICURAZIONE 5, TESSERA DIRETTIVO 6; famiglia 3/4/5 SENZA poi 3/4/5 CON;
-      Abbonamento 5 viaggi MARTEDÌ, DOMENICA, SABATO, JOLLY; CORSO SCI ADULTI, CORSO SCI 10 - 14,
-      CORSO SCI BABY FINO 10, CORSO SNOWBOARD 4 PARTECIPANTI. Partenze: già in ordine alfabetico =
-      modulo. Poi `docs/SVILUPPO.md` ("ordinate per prezzo" → per position) e togliere
-      `docs/ORDINE_CAMPI.md`.
-- [ ] **Assicurazioni con un menù loro in Impostazioni** (nome e prezzo modificabili, tessera →
-      assicurazione). Oggi: codici fissi BASE/PLUS/SPORT in `prices.insurance`, nomi scritti in 8
-      punti del codice, prezzo dentro quello della tessera.
-  - Deciso il 14/10: il prezzo della tessera è a parte da quello dell'assicurazione (due cifre).
-        Le assicurazioni sono due: **Base 20 €** e **Global Neve Sport 45 €**; la Base da 15 €
-        del modulo di carta sparisce (diventa 20) e sparisce la Neve Plus. Le quote tornano tutte:
-        ORDINARIA NEVE BASE 40 = 20 + 20, GLOBAL SPORT 65 = 20 + 45, SCONTATA con Base 30 = 10 +
-        20 (quindi la "TESSERA SCONTATA - NEVE PLUS" con BASE è giusta: il modulo dice Neve Base);
-        SOLO TESSERA 20 e SCONTATA NO ASS. 10 senza assicurazione.
-  - Deciso il 14/10 sera: il DIRETTIVO ha la Global Sport ma non la paga (resta 0 €): serve un
-        segno sulla tessera, es. `prices.insurance_paid boolean default true` (false per il
-        DIRETTIVO; casella "pagata dal club" in Impostazioni). La tessera ORDINARIA - GLOBAL NEVE
-        PLUS sparisce, e l'assicurazione PLUS con lei. In Impostazioni si possono **aggiungere e
-        togliere assicurazioni** (togliere: cancellare se nessuna tessera né lista la usa).
-        Nomi: "Global Neve Base" 20 €, "Global Neve Sport" 45 € (modificabili).
-  - Visto in produzione il 14/10: nessuna lista mandata (`insurance_lists` vuota); soci della
-        stagione con tessera: 10 DIRETTIVO, 3 ORDINARIA - GLOBAL NEVE BASE; nessuno con NEVE PLUS.
-        Codici scritti nel codice: `impostazioni.html` (ASSICURAZIONI, select nuova voce),
-        `assicurazione.html` (TIPI con nome e colonna Excel "Polizza"/"Tipo" della SPORT, CSS per
-        data-kind), check `kind in ('BASE','PLUS','SPORT')` in `insurance_lists` e
-        `insurance_send` e `prices_insurance_valid` in `schema.sql`. Prezzi da dividere una volta
-        sola (in un blocco DO che parte solo se manca la colonna nuova): GLOBAL NEVE BASE 40 → 20,
-        SCONTATA - NEVE PLUS 30 → 10, GLOBAL SPORT 65 → 20; il totale = quota + assicurazione se
-        pagata, in `caricaPrezzi()` (così Soci e le altre pagine non cambiano) e in `card_counts`
-        e nell'archivio di `close_season()`.
-  - [ ] Tabella `public.insurances` (code, name, price, position, active) con chiave esterna da
-        `prices.insurance`; il prezzo dell'assicurazione si somma alla quota della tessera nel
-        totale del socio (`web/index.html`) e nei conti dello schema che usano `p.price` delle
-        tessere: `card_counts` e l'archivio di `close_season()`. I totali già salvati nei soci
-        (`members.total`) non cambiano. Sezione "Assicurazioni" in Impostazioni; nomi dalla
-        tabella in `impostazioni.html`, `assicurazione.html`, `shared.js`; da tre liste a due
-        nella pagina Assicurazione (le liste PLUS già mandate, se ci sono, restano leggibili).
-        Prima di scrivere la migrazione: contare in produzione soci e liste con PLUS. Test ruoli,
-        review, backup, schema.
+- [ ] Da provare sul sito vero (dopo il 15/10): Impostazioni > Assicurazioni (cambiare un prezzo e
+      vedere il totale in Soci, aggiungerne una e toglierla), colonna Ordine del listino, scheda
+      Soci nell'ordine del modulo; il controllo del codice fiscale su un socio nato a Torino.
+- [ ] Togliere `tessera bsse.pdf` dalla cartella del repository (dati personali di un socio, non in git).
 - [ ] **K nel generatore**: provare con una foto vera caricata (Supabase Storage; html-to-image deve
       poterla scaricare, CORS). Seconda immagine nella finestra: dopo novembre.
 
@@ -111,7 +32,10 @@ dell'incasso col saldo del momento; gite in coda tenute se la sessione scade; El
 del Bilancio in finestra; rinomina delle voci di listino estesa ai soci; `set_amounts()` che
 segnala il socio non trovato; saldo di chiusura non più leggibile senza login. L'11/10: le
 grafiche Biglietto, Calendario e Divano nel generatore dei post (Social > Impostazioni). Il 14/10: la
-grafica K «Piani» nel generatore e la proposta del codice fiscale nella scheda del socio nuovo.
+grafica K «Piani» nel generatore e la proposta del codice fiscale nella scheda del socio nuovo. Il
+14-15/10: codice fiscale controllato col comune dei soci nati lì (COLOMBA corretto in produzione);
+assicurazioni con un menù loro in Impostazioni (Global Neve Base 20 €, Global Neve Sport 45 €, quota
+della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ordine del modulo di carta.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
