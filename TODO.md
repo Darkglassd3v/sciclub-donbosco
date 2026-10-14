@@ -18,7 +18,6 @@
 - [ ] Da provare sul sito vero (dopo il 15/10): Impostazioni > Assicurazioni (cambiare un prezzo e
       vedere il totale in Soci, aggiungerne una e toglierla), colonna Ordine del listino, scheda
       Soci nell'ordine del modulo; il controllo del codice fiscale su un socio nato a Torino.
-- [ ] Togliere `tessera bsse.pdf` dalla cartella del repository (dati personali di un socio, non in git).
 - [ ] **K nel generatore**: provare con una foto vera caricata (Supabase Storage; html-to-image deve
       poterla scaricare, CORS). Seconda immagine nella finestra: dopo novembre.
 
