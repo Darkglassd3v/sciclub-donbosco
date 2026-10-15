@@ -8,7 +8,8 @@
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
-        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto } = require("./social-templates.js");
+        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto,
+        formatiCampagna, disegnaCopertina, photo } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -300,6 +301,46 @@ assert.strictEqual(zoomFoto({ photo_zoom: 999 }), 3);
   assert.ok(disegnaPost(modelloPost({ ...gita, card_stop: "Altrove" }, "post")).includes("ore 7:00"), "un luogo tolto deve tornare alla prima");
   assert.ok(disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_zoom: 150 }, "post")).includes("--zoom:1.5"));
   assert.ok(!disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo_x: 10 }, "post")).includes("--pos"), "senza foto niente posizione");
+}
+
+
+// --- Formati della campagna sponsor e copertina -------------------------------
+// Nome, livello, logo e testi li scrive a mano chi gestisce gli sponsor: nei disegni
+// devono restare testo, mai HTML (le anteprime vanno in pagina con innerHTML).
+
+{
+  const cattivo = { ...santero, name: '<img src=x onerror=alert(1)>', level: 'Main "x"', logo: '" onerror="alert(1)', logo_dark: null };
+  const c = { kind: "sponsor", title: "Riga 1\n<b>Riga 2</b>", subtitle: "<script>x</script>", cta: "<i>Vai</i>", story_title: null };
+  const f = formatiCampagna(c, cattivo, "2026/27");
+  assert.deepStrictEqual(Object.keys(f), ["collab", "story", "grazie", "cover"]);
+  assert.deepStrictEqual(Object.values(f).map(({ w, h }) => `${w}×${h}`), ["1080×1350", "1080×1920", "1080×1080", "820×312"]);
+  for (const [k, { html, nome, breve }] of Object.entries(f)) {
+    assert.ok(nome && breve, `${k}: manca il nome del formato`);
+    assert.ok(html.includes(`width:${f[k].w}px;height:${f[k].h}px`), `${k}: la tela non ha la sua misura`);
+    assert.ok(!/<script|<img src=x|onerror="|<b>|<i>/.test(html), `${k}: un testo dello sponsor è diventato HTML`);
+    assert.ok(html.includes(SOCIAL.avvertenzaAlcol), `${k}: sponsor alcolico senza avvertenza`);
+  }
+  // Il titolo va a capo riga per riga; nella story l'ultima riga ha il colore d'accento.
+  assert.ok(f.collab.html.includes("Riga 1<br>&lt;b&gt;Riga 2&lt;/b&gt;"));
+  assert.ok(f.story.html.includes(`Riga 1<br><span style="color:${santero.color_accent}">&lt;b&gt;Riga 2&lt;/b&gt;</span>`));
+  assert.ok(f.collab.html.includes("&lt;i&gt;Vai&lt;/i&gt;"), "il pulsante della campagna manca");
+  assert.ok(f.story.html.includes("Main &quot;x&quot;".toLowerCase()), "il livello dello sponsor non è nella story");
+  // Senza logo per fondi scuri, quello normale su un riquadro chiaro; senza logo, il nome.
+  assert.ok(f.story.html.includes(`background:${santero.color_light}`) && f.story.html.includes('src="&quot; onerror=&quot;alert(1)"'));
+  const conScuro = formatiCampagna(c, { ...santero, logo: "a.png", logo_dark: "b.png" }, "2026/27");
+  assert.ok(conScuro.story.html.includes('src="b.png"') && conScuro.collab.html.includes('src="a.png"'));
+  const senzaLogo = formatiCampagna({ ...c, cta: "" }, { ...santero, logo: null, alcohol: false }, "2026/27");
+  assert.ok(senzaLogo.cover.html.includes("958 Santero"), "senza logo deve comparire il nome");
+  assert.ok(!senzaLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
+  for (const { html } of Object.values(senzaLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
+  assert.ok(formatiCampagna({ ...c, story_title: "Solo story" }, santero, "2026/27").story.html.includes("Solo story"));
+}
+{
+  const cop = disegnaCopertina("<b>Stagione</b>", "Gite & corsi");
+  assert.ok(cop.includes("width:820px;height:312px"));
+  assert.ok(cop.includes("&lt;b&gt;Stagione&lt;/b&gt;") && cop.includes("Gite &amp; corsi"), "titolo della copertina non escapato");
+  assert.ok(cop.includes("<svg"), "senza foto la copertina deve avere il paesaggio disegnato");
+  assert.ok(photo(10, 20, 'x" onerror="y').includes('src="x&quot; onerror=&quot;y"'), "la foto esce dall'attributo src");
 }
 
 console.log("social: tutti i controlli passati");

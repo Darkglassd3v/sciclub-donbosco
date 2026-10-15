@@ -822,5 +822,6 @@ function testoPost(ev, sp, stagione) {
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
                      contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
-                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto };
+                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto,
+                     formatiCampagna, disegnaCopertina, photo };
 }
