@@ -456,6 +456,44 @@ function caricaXlsx() {
     "sha384-OUW9euuUyxyHcAhTqbhI+Iyb8LMssXt/cpz0yXhs9UWG2/R/uaWdakx/4cfww7Vb");
 }
 
+/**
+ * Scarica un Excel da stampare: in orizzontale e largo una pagina. SheetJS
+ * scrive solo i margini, non l'impostazione di stampa: la si aggiunge nel
+ * file già scritto (un xlsx è uno zip; XLSX.CFB lo apre). Con i caratteri
+ * grandi sei colonne non stanno più in un A4 in verticale, e la data di
+ * nascita e il telefono finivano su un secondo foglio di carta.
+ */
+function scaricaExcelDaStampare(libro, file) {
+  for (const nome of libro.SheetNames) {
+    libro.Sheets[nome]["!margins"] = { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
+  }
+  const zip = XLSX.CFB.read(new Uint8Array(XLSX.write(libro, { type: "array", bookType: "xlsx" })), { type: "array" });
+  zip.FileIndex.forEach((voce, i) => {
+    if (!/\/xl\/worksheets\/sheet\d+\.xml$/.test(zip.FullPaths[i])) return;
+    const xml = new TextDecoder().decode(voce.content)
+      // sheetPr va per primo dentro worksheet, pageSetup subito dopo pageMargins (ordine dello standard).
+      .replace(/(<worksheet[^>]*>)/, '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>')
+      .replace(/(<pageMargins[^>]*\/>)/, '$1<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
+    voce.content = new TextEncoder().encode(xml);
+    voce.size = voce.content.length;
+  });
+  const dati = XLSX.CFB.write(zip, { fileType: "zip", type: "array" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([dati], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  link.download = file;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+}
+
+/** "1980-01-31" → data di Excel (a mezzanotte, ora locale, come la legge SheetJS); vuoto se manca. */
+function dataExcel(iso) {
+  if (!iso) return "";
+  const [a, m, g] = String(iso).slice(0, 10).split("-").map(Number);
+  return new Date(a, m - 1, g);
+}
+
 /** Lunghezza a schermo di una cella: una data vale "31/12/2026", non il numero di serie di Excel. */
 const lunghezzaCella = (v) => (v instanceof Date ? 10 : String(v ?? "").length);
 

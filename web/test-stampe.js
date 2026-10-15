@@ -9,8 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 const sorgente = fs.readFileSync(path.join(__dirname, "stampe.js"), "utf8");
-const { fogliDelGiorno, nomePartenza, nomeFoglioExcel } =
-  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza, nomeFoglioExcel }; })()`);
+const { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel } =
+  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel }; })()`);
 
 const socio = (id, last_name, extra = {}) => ({ id, last_name, first_name: "A", ...extra });
 const soci = [
@@ -83,6 +83,16 @@ assert.strictEqual(nomeFoglioExcel(""), "Foglio1");
 
 // Il martedì non ha corsi: niente foglio dei corsisti, mai.
 assert.ok(!fogliDelGiorno("MARTEDI", soci, abbonamenti).some((f) => f.titolo === "Corsisti"));
+
+// Il titolo dei fogli scaricati: solo cosa sono, come li chiamano al club.
+assert.strictEqual(titoloExcel("SABATO", "Corsisti"), "CORSI SABATO");
+assert.strictEqual(titoloExcel("DOMENICA", "Abbonamenti 5 gite"), "ABBONAMENTI DOMENICA");
+assert.strictEqual(titoloExcel("MARTEDI", "Abbonamenti 5 gite"), "ABBONAMENTI MARTEDÌ");
+assert.strictEqual(titoloExcel("DOMENICA", "Jolly"), "ABBONAMENTI JOLLY");
+// Ogni foglio del giorno ha il suo titolo.
+for (const ch of ["SABATO", "DOMENICA", "MARTEDI"]) {
+  for (const f of fogliDelGiorno(ch, [], [])) assert.match(titoloExcel(ch, f.titolo), /^(CORSI|ABBONAMENTI) [A-ZÌ]+$/, `${ch} ${f.titolo}`);
+}
 
 // Larghezze delle colonne degli Excel (larghezzeColonne in shared.js): dalla
 // cella più lunga, il titolo sopra le colonne non conta, una data vale 10.

@@ -33,6 +33,17 @@ function nomeFoglioExcel(titolo) {
   return nome || "Foglio1";
 }
 
+/**
+ * Il titolo in cima al foglio scaricato, come lo chiamano al club: "CORSI
+ * SABATO", "ABBONAMENTI DOMENICA", "ABBONAMENTI JOLLY". Prima c'era tutto
+ * (giorno, foglio, nota, partenza) e non si capiva; la partenza resta nel nome
+ * del foglio di lavoro (nomeFoglioExcel).
+ */
+function titoloExcel(chiave, titolo) {
+  if (titolo === "Jolly") return "ABBONAMENTI JOLLY";
+  return `${titolo === "Corsisti" ? "CORSI" : "ABBONAMENTI"} ${GIORNI_STAMPA[chiave].nome.toUpperCase()}`;
+}
+
 const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
 
 /**

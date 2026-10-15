@@ -20,8 +20,11 @@
       la riga. Per gli stili SheetJS è passata a `xlsx-js-style@1.2.0` (la stessa 0.18.5 con gli
       stili; fissata con l'impronta SRI in `caricaXlsx()`). La lista per l'**assicurazione** ha solo
       le larghezze nuove: niente stili finché l'assicurazione non dà il tracciato (stessi valori,
-      tipi e formato delle date: controllato). Da provare sul sito vero: aprire i tre Excel
-      (Riepilogo, Stampe, Assicurazione) in Excel e sul telefono.
+      tipi e formato delle date: controllato). Nei fogli delle Stampe il titolo dice solo cosa sono
+      (CORSI SABATO, ABBONAMENTI DOMENICA, ABBONAMENTI JOLLY; la partenza è nel nome del foglio di
+      lavoro), c'è la data di nascita accanto al luogo, e si stampano in orizzontale larghi una
+      pagina. Da provare sul sito vero: aprire i tre Excel (Riepilogo, Stampe, Assicurazione) in
+      Excel e sul telefono, e stampare un foglio del pullman.
 - [ ] 16/10: **K sistemata** (story: tessera più corta e piena, logo accanto, testo più su e più
       grande; luogo degli eventi su una riga sua col segnaposto; partenze in riquadri blu; telefoni
       con numero e icona in giallo; in fondo 300 px per Instagram invece di 340). Provata sul banco
