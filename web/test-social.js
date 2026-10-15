@@ -343,4 +343,24 @@ assert.strictEqual(zoomFoto({ photo_zoom: 999 }), 3);
   assert.ok(photo(10, 20, 'x" onerror="y').includes('src="x&quot; onerror=&quot;y"'), "la foto esce dall'attributo src");
 }
 
+
+// --- Meta della gita su due righe ---------------------------------------------
+// Una meta lunga va a capo invece di rimpicciolirsi; gli a capo scritti contano, al massimo due righe.
+// Fuori dal titolo del post (calendario, testo, nome nell'elenco) l'a capo diventa uno spazio.
+
+{
+  const gita = { kind: "gita", event_date: "2027-01-17", stops: [["7:00", "Asti"]] };
+  const titolo = (title, fmt = "post") => (disegnaPost(modelloPost({ ...gita, title }, fmt)).match(/<div class="tit meta"[^>]*>([\s\S]*?)<\/div><\/div>/) || [])[1] || "";
+  assert.ok(titolo("Cervinia\nValtournenche").includes('data-righe="2"'), "la meta deve poter andare su due righe");
+  assert.ok(titolo("Cervinia\nValtournenche").includes("Cervinia<br>Valtournenche"), "l'a capo scritto nella meta si perde");
+  assert.ok(titolo("Cervinia\r\n\n  Valtournenche \n\nZermatt").includes("Cervinia<br>Valtournenche Zermatt"), "più di due righe: le altre vanno sulla seconda");
+  assert.ok(titolo("La Thuile").includes(">La Thuile<"), "una meta corta resta su una riga");
+  assert.ok(!titolo("La Thuile").includes("<br>"));
+  assert.ok(titolo("<b>X</b>\nY").includes("&lt;b&gt;X&lt;/b&gt;<br>Y"), "la meta deve restare testo");
+  assert.ok(testoPost({ ...gita, title: "Cervinia\nValtournenche" }, null, "2026/27").includes("gita a Cervinia Valtournenche!"), "a capo nel testo del post");
+  assert.strictEqual(nomePost({ ...gita, title: "Cervinia\nValtournenche" }), "Cervinia Valtournenche");
+  const cal = disegnaCalendario("Calendario", [["g0", "17/01", "Cervinia\nValtournenche", false]], "2027-01");
+  assert.ok(cal.includes("Cervinia Valtournenche") && !/Cervinia\s*<br>/.test(cal), "a capo nel calendario del mese");
+}
+
 console.log("social: tutti i controlli passati");
