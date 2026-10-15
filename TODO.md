@@ -35,7 +35,11 @@
       Fatto nell'abbozzo: «Sci Club» sopra «DON», «ASTI» sotto la «O» finale allineato al fondo
       della «B» (fuori dall'arco), logo al 78% del cerchio perché le scritte stiano dentro il filo;
       `abbozzo-logo-profilo.html#p1` e `#p2` danno già l'immagine 1080×1080 (anteprime
-      `bozze/profilo-p1.png`, `bozze/profilo-p2.png`). Dopo la scelta: il JPG in `grafica/logo/`,
+      `bozze/profilo-p1.png`, `bozze/profilo-p2.png`). L'utente chiede «Sci Club» e «ASTI» un
+      po' più alti: provati 370 e 290 (prima 330 e 260), la «b» di «Club» arriva a ~10 px dall'arco
+      su 1080. L'utente: «prova» una riga sola «SCI CLUB · ASTI» sotto il logo: fatta
+      nell'abbozzo (righe «riga sotto», logo all'82%, immagini `#p1-sotto` e `#p2-sotto`).
+      Dopo la scelta: il JPG in `grafica/logo/`,
       la sorgente in `grafica/logo/strumenti/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
