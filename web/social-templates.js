@@ -769,7 +769,11 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
      * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
      * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
     .cv.sk { --notte: 20,32,46; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
-    .cv.sk.story { --fine: 850px; --angolo: 760px; --cuneo: 780px; --su: 250px; --giu: 340px; }
+    /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena, il logo
+     * le sta accanto in fondo (prima galleggiava a metà) e il testo parte più su, più grande. */
+    /* In fondo 300 px per la risposta di Instagram (prima 340; la zona consigliata è 270): con
+     * due telefoni la story di una gita perdeva la riga della scadenza. */
+    .cv.sk.story { --fine: 726px; --angolo: 660px; --cuneo: 680px; --su: 250px; --giu: 300px; }
     .cv.sk.giallo { --notte: 18,18,18; }
     .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
     .sk .piano { position: absolute; inset: 0; }
@@ -788,8 +792,11 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
     .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
     .cv.sk .logo-box img { height: 140px; }
+    .cv.sk.story .logo-box { top: calc(var(--su) + 270px); }
+    .cv.sk.story .logo-box img { height: 164px; }
     .cv.sk .stella { left: 60px; right: auto; top: calc(var(--su) + 250px); }
-    .cv.sk.story .stella { top: calc(var(--su) + 250px); }
+    /* Nella story il logo è sceso: la coccarda del corso gli sta sopra. */
+    .cv.sk.story .stella { top: calc(var(--su) + 6px); }
     /* La tessera del "quando", appesa al bordo alto: giorno, numero, mese e l'ora nella fascia blu. */
     .sk .tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px); background: #FCCF02; color: #084C8D;
       clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px); display: flex; flex-direction: column; justify-content: flex-end; }
@@ -799,6 +806,10 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .tessera b + span { font-weight: 800; letter-spacing: -.02em; }
     .sk .tessera b + span:last-child { margin-bottom: 34px; }
     .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: #084C8D; color: #fff; padding: 20px 34px 22px; margin-top: 28px; }
+    .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
+    .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
+    .sk.story .tessera b + span:last-child { margin-bottom: 26px; }
+    .sk.story .tessera em { margin-top: 18px; padding: 16px 34px 18px; }
     /* Il testo sulla foto scurita, da --fine: gancio, titolo sempre alto due righe, i dati; in fondo le iscrizioni. */
     .cv.sk .col { inset: auto; left: 60px; right: 60px; top: calc(var(--fine) + 28px); bottom: calc(var(--giu) + 44px); overflow: visible; text-shadow: 0 2px 14px rgba(var(--notte),.6); }
     .sk .testo { flex: 1 1 auto; min-height: 0; overflow: hidden; }
@@ -812,6 +823,32 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
     /* pre-line: gli a capo scritti nel sottotesto restano, come nelle altre grafiche. */
     .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
+    .sk.story .gancio { font-size: ${z(66)}; }
+    .sk.story .tit { min-height: ${q(258)}; }
+    .sk.story .fatti { margin-top: ${q(30)}; gap: ${q(12)}; }
+    .sk.story .fatti p { font-size: ${z(56)}; }
+    .sk.story .isc > div { font-size: ${z(44)}; }
+    .sk.story .isc > div > b { font-size: ${z(54)}; }
+    /* Il luogo dell'evento: una riga sua, grande, col segnaposto (era una riga come le altre). */
+    .sk .fatti p.dove { display: flex; gap: .28em; align-items: center; font-size: ${z(56)}; font-weight: 800; line-height: 1.05; }
+    .sk.story .fatti p.dove { font-size: ${z(64)}; }
+    .sk .fatti p.dove svg { flex: none; width: 1em; height: 1em; fill: #FCCF02; }
+    /* Le partenze della gita: un riquadro blu per fermata, l'ora in giallo (in una riga sola erano confuse). */
+    .sk .partenze { display: flex; flex-wrap: wrap; gap: ${q(16)}; margin: ${q(4)} 0 ${q(6)}; }
+    .sk .partenze .etichetta { flex-basis: 100%; font-size: ${z(44)}; font-weight: 700; color: #FCCF02; margin-bottom: -4px; }
+    .sk .partenze .box { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px;
+      border-radius: 18px; background: #084C8D; text-shadow: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .sk .partenze .box b { font-size: ${z(64)}; font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
+    .sk .partenze .box span { font-size: ${z(46)}; font-weight: 700; line-height: 1.05; }
+    /* Nel post lo spazio è poco: riquadri bassi, ora e fermata affiancate, l'etichetta in fila con loro. */
+    .sk:not(.story) .partenze { align-items: center; }
+    .sk:not(.story) .partenze .etichetta { flex-basis: auto; margin: 0 4px 0 0; color: #fff; font-size: ${z(46)}; font-weight: 500; }
+    .sk:not(.story) .partenze .box { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
+    .sk:not(.story) .partenze .box b { font-size: ${z(46)}; padding: 0 10px; }
+    .sk:not(.story) .partenze .box span { font-size: ${z(44)}; }
+    /* I telefoni: numero e icona in giallo, senza riquadri (costerebbero righe). */
+    .sk .isc .tel > svg { color: #FCCF02; }
+    .sk .isc .tel b { color: #FCCF02; }
     .sk .fatti b, .sk .righe .giorno, .sk .righe .corso { text-shadow: none; }
     .sk .fatti b { font-weight: 800; line-height: 1.1; background: #FCCF02; color: #084C8D; padding: 0 .2em; border-radius: 10px; white-space: nowrap;
       -webkit-box-decoration-break: clone; box-decoration-break: clone; }
@@ -871,6 +908,8 @@ function iscrizioni(contatti = []) {
     `<span>${escS(c.name)} <b>${escS(c.phone)}</b>${c.hours ? ` ${escS(c.hours)}` : ""}</span>`).join("")}</span>` : "";
   return `<div class="isc">${icoMail}<div>${escS(contatti.length ? SOCIAL.iscrizioniTel : SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b></div>${tel}</div>`;
 }
+
+const icoPin = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
 
 const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt=""></div>`;
 
@@ -1147,8 +1186,9 @@ function tesseraK(s) {
   if (!d) return "";
   const p = partenze(s);
   const ora = s.kind === "gita" ? (p[0] && p[0][0] ? `ore ${p[0][0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
-  return `<div class="tessera"><span data-fit style="font-size:54px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
-    <span data-fit style="font-size:66px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
+  const story = s.fmt === "story";
+  return `<div class="tessera"><span data-fit style="font-size:${story ? 62 : 54}px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
+    <span data-fit style="font-size:${story ? 78 : 66}px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
 }
 
 /**
@@ -1165,13 +1205,15 @@ function postK(s) {
   const ora = fattoDi(fatti, ORARIO), dove = fattoDi(fatti, /^dove$/i), iscr = fattoDi(fatti, ISCRIZIONI);
   const fatto = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${evidenzia(v)}`;
   const entro = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
+  // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
   const righe = gita ? [
-    p.length && `Partenze: ${p.map(([t, l]) => `${escS(l)}${t ? ` <b>${escS(t)}</b>` : ""}`).join(", ")}`,
+    p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
+      `<div class="box">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
     s.scadenza && entro(s.scadenza),
   ] : [
     String(s.sub || "").trim() && evidenzia(String(s.sub).trim(), false),
-    dove && evidenzia(dove[1]),
+    dove && { html: `<p class="dove">${icoPin}<span>${evidenzia(dove[1])}</span></p>` },
     // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
     !s.iso && ora && fatto(ora),
     ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map(fatto),
@@ -1179,13 +1221,14 @@ function postK(s) {
     iscr && entro(iscr[1]),
   ];
   const dest = String(s.dest || "").trim();
-  const meta = (testo) => `<div data-fit style="font-size:150px">${escS(testo)}</div>`;
+  const meta = (testo) => `<div data-fit style="font-size:${story ? 168 : 150}px">${escS(testo)}</div>`;
+  // data-cede: se il testo non ci sta, la seconda riga tenuta per il titolo si libera prima di stringere tutto.
   const tit = gita
-    ? `<div class="tit meta">${/^gita\b/i.test(dest) ? meta(dest) : `<small>Gita a</small>${meta(dest)}`}</div>`
-    : `<div class="tit"><div data-righe="2" style="--t:116px">${titoloNuovo(s)}</div></div>`;
+    ? `<div class="tit meta" data-cede>${/^gita\b/i.test(dest) ? meta(dest) : `<small>Gita a</small>${meta(dest)}`}</div>`
+    : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${titoloNuovo(s)}</div></div>`;
   // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto.
   const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${escS(s.hook) || "&nbsp;"}</div>${tit}
-    <div class="fatti">${righe.filter(Boolean).map((r) => `<p>${r}</p>`).join("")}</div></div>`;
+    <div class="fatti">${righe.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
   return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
 }
 

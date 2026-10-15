@@ -15,12 +15,13 @@
 
 ## Richieste nuove
 
-- [ ] 15/10: **Story della K da sistemare** (foto dell'utente: Corso presciistica). Il logo sta a metà
-      schermo; la tessera della data è lunga ma il testo dentro non la riempie; nella story il
-      testo può essere più grande e dire di più; il luogo degli eventi (non delle gite) è troppo
-      piccolo. Le dimensioni regolabili campo per campo: **scartate** (l'utente: i testi devono
-      restare coerenti fra i post); si correggono le misure della grafica. Nelle gite **partenze e
-      orari sono confusi**: metterli in riquadri. Prima un abbozzo prima/dopo da approvare.
+- [ ] 16/10: **K sistemata** (story: tessera più corta e piena, logo accanto, testo più su e più
+      grande; luogo degli eventi su una riga sua col segnaposto; partenze in riquadri blu; telefoni
+      con numero e icona in giallo; in fondo 300 px per Instagram invece di 340). Provata sul banco
+      di tutte le grafiche (6 stili, post e story, evento e gita, 0 e 2 telefoni): le altre cinque
+      uguali a prima; nella K ora ci sta tutto anche con due telefoni (prima la story perdeva la
+      scadenza). Da vedere con chi pubblica, con una foto vera. Già da prima: il **Montagna** post di
+      un evento con due telefoni sborda (non è la grafica scelta).
 - [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
       assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
       le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).

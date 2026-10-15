@@ -242,11 +242,18 @@ assert.strictEqual(giornoMese(null), "");
   // K: «Gita a» piccolo e la meta su una riga, la data nella tessera con la prima partenza, il testo che si adatta.
   for (const fmt of ["post", "story"]) {
     const html = disegnaPost(modelloPost(ev, fmt), "k");
-    assert.ok(html.includes("<small>Gita a</small>") && html.includes('data-fit style="font-size:150px">La Thuile'), `k ${fmt}: titolo della gita`);
+    assert.ok(html.includes("<small>Gita a</small>") && html.includes(`data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
+    // Le partenze in riquadri, una per fermata, con l'ora; il titolo cede la riga vuota se serve.
+    assert.strictEqual((html.match(/class="box"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
+    assert.ok(html.includes("<b>6:30</b>") && !html.includes("Partenze: "), `k ${fmt}: partenze ancora in riga`);
+    assert.ok(html.includes('class="tit meta" data-cede'), `k ${fmt}: il titolo non cede lo spazio`);
     assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:30<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
     assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1") && html.includes("giovedì 14 gennaio"), `k ${fmt}: iscrizioni, telefono o scadenza`);
     assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`) && html.includes(" senza-foto"), `k ${fmt}: misura o fondo senza foto`);
   }
+  // Il luogo dell'evento: una riga sua col segnaposto, una volta sola.
+  const kEv = disegnaPost(modelloPost({ kind: "corso", title: "Presciistica", event_date: "2026-10-21", place: "Palestra Way Assauto, Asti" }, "story"), "k");
+  assert.ok(kEv.includes('<p class="dove"><svg') && (kEv.match(/Palestra Way Assauto/g) || []).length === 1, "k: il luogo dell'evento");
   const kFoto = disegnaPost(modelloPost({ ...ev, photo: "https://x/foto.jpg" }, "post"), "k");
   assert.ok(kFoto.includes('class="foto" src="https://x/foto.jpg"') && kFoto.includes("piano finestra") && !kFoto.includes("senza-foto"), "k: la foto");
   assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "k").includes("Gita a</small>"), "k: «Gita a Gita»");
