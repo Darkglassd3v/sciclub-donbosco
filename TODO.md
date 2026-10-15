@@ -22,6 +22,14 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Immagine del profilo Instagram e Facebook** dal logo vettoriale
+      (`grafica/logo/logo_sciclubdonbosco.svg`), con le **scritte un po' più spesse**, in due
+      proposte da confrontare: (1) sfondo bianco, logo più grande nel cerchio e filo blu e giallo
+      intorno; (2) sfondo blu `#084C8D`, «DON» giallo e «BOSCO» bianco. Oggi a 40 px (feed, anello
+      delle storie) il logo occupa metà del cerchio e il giallo sul bianco quasi sparisce.
+      Abbozzo da scegliere: `bozze/abbozzo-logo-profilo.png` (oggi, 1 e 2 a 180, 110, 56 e 40 px,
+      sui profili chiari e scuri; contorno di 26 unità del logo, solo sulle lettere, l'arco resta
+      com'è). Dopo la scelta: il JPG 1080×1080 in `grafica/logo/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
       1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna; sorgente
