@@ -359,10 +359,11 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     /* --velo: il fondo sotto il testo tende al blu scuro del club (prima nero: la foto usciva cupa). */
     .cv.sk { --notte: 20,32,46; --velo: 6,57,106; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
     /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena e il
-     * testo parte più su, più grande. Logo e coccarda stanno dove sono nel post (15/10). */
+     * testo parte più su, più grande. Logo e coccarda stanno dove sono nel post (15/10); l'angolo
+     * (800, prima 660) tiene dentro il logo, che sta 250 px più in basso che nel post. */
     /* In fondo 300 px per la risposta di Instagram (prima 340; la zona consigliata è 270): con
      * due telefoni la story di una gita perdeva la riga della scadenza. */
-    .cv.sk.story { --fine: 726px; --angolo: 660px; --cuneo: 680px; --su: 250px; --giu: 300px; }
+    .cv.sk.story { --fine: 726px; --angolo: 800px; --cuneo: 680px; --su: 250px; --giu: 300px; }
     .cv.sk.giallo { --notte: 18,18,18; }
     .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
     .sk .piano { position: absolute; inset: 0; }
