@@ -21,6 +21,12 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Gite fatte nei fogli del pullman degli abbonamenti** (es. «Gite fatte: 1/5»).
+      Piano: colonna «Gite fatte» nei fogli ABBONAMENTI (giorno) e ABBONAMENTI JOLLY, non nei CORSI;
+      da `pass_status` (`trips_used`/`trips_total`, già lette per abbonamento); con due abbonamenti
+      dello stesso giorno «5/5, 1/5»; il conto è quello del momento in cui si scarica. Funzione pura
+      `giteFatte()` in `web/stampe.js` con test in `web/test-stampe.js`; poi prova con LibreOffice
+      (sette colonne, sempre una pagina orizzontale), commit, push, `dev`.
 - [ ] 16/10: **Excel leggibili** fatto: colonne larghe quanto il testo (prima fisse), dati in corpo
       14, intestazione in grassetto 15 bianca sul blu, titolo delle Stampe in grassetto 18 su tutta
       la riga. Per gli stili SheetJS è passata a `xlsx-js-style@1.2.0` (la stessa 0.18.5 con gli
