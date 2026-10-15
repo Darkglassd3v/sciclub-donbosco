@@ -426,10 +426,12 @@ const COLONNE_ASSICURAZIONE = [
  * Se il caricamento fallisce si può riprovare.
  */
 const _scriptInArrivo = {};
-function caricaScript(src, cosa) {
+function caricaScript(src, cosa, integrita) {
   _scriptInArrivo[src] ??= new Promise((ok, ko) => {
     const script = document.createElement("script");
     script.src = src;
+    // Con l'impronta il browser rifiuta un file cambiato sul CDN.
+    if (integrita) { script.integrity = integrita; script.crossOrigin = "anonymous"; }
     script.onload = ok;
     script.onerror = () => {
       delete _scriptInArrivo[src];
@@ -441,14 +443,70 @@ function caricaScript(src, cosa) {
   return _scriptInArrivo[src];
 }
 
-// SheetJS si carica solo al primo clic: pesa quasi un mega, e serve due
-// volte a stagione. È la versione pubblicata su npm, usata solo per
-// SCRIVERE: i suoi problemi noti riguardano la lettura di file altrui. Se
-// un giorno si leggerà il file restituito dall'assicurazione, passare alla
-// versione di cdn.sheetjs.com.
+// SheetJS si carica solo al primo clic, e serve due volte a stagione. Usata
+// solo per SCRIVERE: i suoi problemi noti riguardano la lettura di file
+// altrui. Se un giorno si leggerà il file restituito dall'assicurazione,
+// passare alla versione di cdn.sheetjs.com.
+// Dal 16/10/2026 è xlsx-js-style 1.2.0: la stessa SheetJS 0.18.5 (stessa
+// API, XLSX) che in più scrive gli stili delle celle, grassetto e corpo del
+// carattere; la versione Community non li scrive. Fissata con l'impronta.
 function caricaXlsx() {
   if (window.XLSX) return Promise.resolve();
-  return caricaScript("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js", "per l'Excel");
+  return caricaScript("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js", "per l'Excel",
+    "sha384-OUW9euuUyxyHcAhTqbhI+Iyb8LMssXt/cpz0yXhs9UWG2/R/uaWdakx/4cfww7Vb");
+}
+
+/** Lunghezza a schermo di una cella: una data vale "31/12/2026", non il numero di serie di Excel. */
+const lunghezzaCella = (v) => (v instanceof Date ? 10 : String(v ?? "").length);
+
+/**
+ * Le larghezze delle colonne (!cols), dalla cella più lunga di ognuna: prima
+ * erano fisse e i cognomi o i luoghi lunghi restavano tagliati. Le righe
+ * prima di `intestazione` (il titolo delle Stampe) non contano: vanno su
+ * tutta la larghezza. `fattore` allarga per un corpo più grande dell'11,
+ * `fattoreTesta` per l'intestazione (in grassetto e più grande dei dati).
+ */
+function larghezzeColonne(righe, intestazione = 0, fattore = 1, fattoreTesta = fattore) {
+  const [testa = [], ...dati] = righe.slice(intestazione);
+  const colonne = Math.max(0, testa.length, ...dati.map((r) => r.length));
+  return Array.from({ length: colonne }, (_, c) => {
+    const larga = Math.max(lunghezzaCella(testa[c]) * fattoreTesta, ...dati.map((r) => lunghezzaCella(r[c]) * fattore));
+    return { wch: Math.min(50, Math.max(8, Math.ceil(larga) + 3)) };
+  });
+}
+
+/**
+ * Un foglio di Excel leggibile anche da chi ci vede poco: colonne larghe
+ * quanto il testo, dati in corpo 14 (prima 12), intestazione delle colonne in
+ * grassetto 15 bianco sul blu del club, così non si confonde coi dati. Le
+ * righe prima di `intestazione` sono titoli: grassetto 18, unite su tutte le
+ * colonne. `opzioni` passa ad aoa_to_sheet (dateNF).
+ */
+function foglioLeggibile(righe, { intestazione = 0, ...opzioni } = {}) {
+  const foglio = XLSX.utils.aoa_to_sheet(righe, opzioni);
+  const cols = larghezzeColonne(righe, intestazione, 1.3, 1.5);
+  foglio["!cols"] = cols;
+  const font = { name: "Calibri", sz: 14 };
+  const stili = {
+    titolo: { font: { ...font, sz: 18, bold: true, color: { rgb: "084C8D" } }, alignment: { vertical: "center" } },
+    testa: { font: { ...font, sz: 15, bold: true, color: { rgb: "FFFFFF" } }, fill: { patternType: "solid", fgColor: { rgb: "084C8D" } },
+      alignment: { vertical: "center" } },
+    // A sinistra anche date e numeri: a destra una data toccava la colonna dopo.
+    dati: { font, alignment: { vertical: "center", horizontal: "left" } },
+  };
+  for (const [indirizzo, cella] of Object.entries(foglio)) {
+    if (indirizzo[0] === "!") continue;
+    const { r } = XLSX.utils.decode_cell(indirizzo);
+    const stile = stili[r < intestazione ? "titolo" : r === intestazione ? "testa" : "dati"];
+    // Il formato delle date (dateNF) va dentro lo stile, se no lo stile lo cancella.
+    cella.s = cella.z ? { ...stile, numFmt: cella.z } : stile;
+  }
+  // Altezze delle righe per il corpo più grande: Excel non le rifà da solo.
+  foglio["!rows"] = righe.map((_, r) => ({ hpt: r < intestazione ? 30 : r === intestazione ? 26 : 22 }));
+  if (intestazione > 0) {
+    foglio["!merges"] = Array.from({ length: intestazione }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } }));
+  }
+  return foglio;
 }
 
 // jsPDF per la scheda del socio, anche lui solo al primo clic.
@@ -461,11 +519,10 @@ function caricaPdf() {
 async function scaricaExcel(righe, nome) {
   if (!righe.length) { showToast("Non c'è nessun socio da scaricare."); return; }
   await caricaXlsx();
-  const foglio = XLSX.utils.aoa_to_sheet([
+  const foglio = foglioLeggibile([
     COLONNE_ASSICURAZIONE.map(([titolo]) => titolo),
     ...righe.map((s) => COLONNE_ASSICURAZIONE.map(([, valore]) => valore(s) ?? "")),
   ]);
-  foglio["!cols"] = COLONNE_ASSICURAZIONE.map(([titolo]) => ({ wch: Math.max(14, titolo.length + 2) }));
   const libro = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(libro, foglio, "Soci");
   XLSX.writeFile(libro, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);

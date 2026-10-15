@@ -84,4 +84,19 @@ assert.strictEqual(nomeFoglioExcel(""), "Foglio1");
 // Il martedì non ha corsi: niente foglio dei corsisti, mai.
 assert.ok(!fogliDelGiorno("MARTEDI", soci, abbonamenti).some((f) => f.titolo === "Corsisti"));
 
+// Larghezze delle colonne degli Excel (larghezzeColonne in shared.js): dalla
+// cella più lunga, il titolo sopra le colonne non conta, una data vale 10.
+{
+  const shared = fs.readFileSync(path.join(__dirname, "shared.js"), "utf8");
+  const pezzo = (inizio) => shared.slice(shared.indexOf(inizio), shared.indexOf("\n}\n", shared.indexOf(inizio)) + 3);
+  const { larghezzeColonne } = (0, eval)(`(() => { ${shared.match(/const lunghezzaCella = [^\n]*\n/)[0]}
+    ${pezzo("function larghezzeColonne(")}; return { larghezzeColonne }; })()`);
+  const righe = [["Domenica · Corsisti · Partenza da ASTI CENTRO STAZIONE"], ["N.", "Cognome", "Nato il"],
+    ["1", "DELLA VALLE BRUNETTI", new Date(1950, 0, 31)], ["22", "", null]];
+  assert.deepStrictEqual(larghezzeColonne(righe, 1).map((c) => c.wch), [8, 23, 13], "minimo 8, cella più lunga + 3, data 10");
+  assert.deepStrictEqual(larghezzeColonne([["X".repeat(80)]]).map((c) => c.wch), [50], "massimo 50");
+  // L'intestazione in grassetto più grande pesa di più dei dati.
+  assert.strictEqual(larghezzeColonne([["Data di nascita"], ["31/01/1950"]], 0, 1.3, 1.5)[0].wch, Math.ceil(15 * 1.5) + 3);
+}
+
 console.log("test stampe: tutto a posto");
