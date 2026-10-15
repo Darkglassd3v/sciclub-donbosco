@@ -316,6 +316,14 @@ assert.strictEqual(giornoMese(null), "");
     assert.ok(nomi[stile], `${stile}: manca in NOMI_STILE`);
     for (const g of ["gita", "evento"]) assert.ok(Array.isArray(ordine[stile]?.[g]), `${stile}: manca ORDINE_CAMPI.${g}`);
   }
+  // Ogni nome dell'ordine è un campo del form: ordinaCampi() lo cerca per
+  // data-campo, e uno che non c'è finirebbe nel form come la scritta "null".
+  const campi = new Set([...pagina.matchAll(/data-campo="([A-Za-z]+)"/g)].map((m) => m[1]));
+  const sponsor = (0, eval)(pagina.match(/const ORDINE_SPONSOR = (\[[^\]]*\]);/)[1]);
+  for (const [dove, elenco] of [...Object.entries(ordine).flatMap(([st, o]) => Object.entries(o).map(([g, e]) => [`${st}.${g}`, e])),
+                                 ["ORDINE_SPONSOR", sponsor]]) {
+    for (const nome of elenco) assert.ok(campi.has(nome), `${dove}: "${nome}" non è un data-campo di social.html`);
+  }
 }
 
 console.log("social: tutti i controlli passati");

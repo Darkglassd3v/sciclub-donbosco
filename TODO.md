@@ -30,13 +30,11 @@
       nome non torna" **non** è stata messa: sull'archivio smentita da un nato in Cina (Z210)
       con la scheda che dice ASTI. Un codice coerente col suo finale ora ha solo l'avviso, senza
       proposta (81 delle 196 proposte sull'archivio erano così). Fatto anche il saldo "a credito"
-      in Soci (barra, familiari, PDF). **Ripresa:** test-social, qui sotto (ORDINE_CAMPI di
-      social.html righe ~1084-1100 contro i `data-campo` dello stesso file; la K usa anche
-      `titoloStory`, `cta`, `sponsor`), poi `dev` da riallineare.
-  - [ ] test-social: i nomi di ORDINE_CAMPI devono esistere come `data-campo`.
-- [ ] 15/10, **ultime come priorità**: Bilancio, il selettore della data sparisce (bug grafico); e
-      il menù delle voci si apre come una lista strana invece di un menù a tendina; e una voce
-      **Sponsor** per segnare a bilancio uno sponsor che ha pagato.
+      in Soci (barra, familiari, PDF) e il controllo di test-social sui nomi dei campi.
+- [ ] 16/10: Bilancio fatto (data in colonne in rem, voci in una tendina, voce **Sponsor** col nome
+      dello sponsor obbligatorio nella descrizione). Da decidere con l'utente: basta il nome scritto
+      a mano, o serve il legame con l'elenco degli sponsor di Social (colonna nuova nel database;
+      oggi chi ha il bilancio non legge quell'elenco)? Provato solo in Chrome, non in Firefox.
 - [ ] 15/10: **Un permesso per ogni voce della barra** fatto: `cerca`, `gite`, `stampe` (chi aveva
       `gite` le ha tutte e tre), nomi della barra in Gestione > Ruoli (`nav_labels`). In produzione
       il 15/10 solo le istruzioni nuove (lo schema intero teneva fermo il sito), backup in
