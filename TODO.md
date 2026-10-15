@@ -22,18 +22,17 @@
 
 ## Richieste nuove
 
-- [ ] 15/10: **Volantino 2026/2027 rifatto** (l'utente: quello vecchio fatto male dall'IA, logo sbagliato):
-      `grafica/volantino/volantino-2026-2027.pdf` (A5 fronte-retro) e `-tipografia.pdf` (3 mm di
-      abbondanza), sorgente `grafica/volantino/sorgenti/volantino.html`, `rendi.sh`. Copertina con
-      `FOTO COPERTINA.JPG` e il logo tondo; foto CC0 di montagna. Tutte le 47 gite, i 10 eventi, i
-      telefoni controllati sul PDF. Da far controllare: partenze del sabato uguali alla domenica,
-      «Zermat». Da stampare una prova fronte-retro. Il PDF vecchio è ancora nella cartella.
-- [ ] 15/10: **Logo tondo nei post nuovi** (l'utente: come `logo-ufficiale-bianco-tondo.png`, una sola
-      linea gialla al posto della blu e gialla, «da usare ovunque»): `grafica/logo/logo-ufficiale-tondo.svg`
-      (copia in `web/`), `SOCIAL.logoTondo` in `logoNuovo()` per Biglietto, Calendario, Divano e K;
-      il riquadro bianco è diventato il cerchio, più grande perché DON BOSCO non rimpicciolisca.
-      Ritocco e Montagna, la barra del sito e le altre grafiche hanno ancora il logo rettangolare:
-      da decidere se il tondo va anche lì.
+- [ ] 15/10: **Volantino 2026/2027 rifatto**, versione definitiva scelta dall'utente (la C; A e B
+      cancellate). `grafica/volantino/volantino-2026-2027.pdf` (A5 fronte-retro), `-tipografia.pdf`
+      (3 mm di abbondanza), anteprime; sorgente `sorgenti/volantino.html`, `rendi.sh` (lancia `sfuma.py`):
+      vedi il README della cartella. Nessuna trasparenza nel PDF (il lettore dell'utente le disegnava
+      male). Da far controllare: partenze del sabato uguali alla domenica, «Zermat». Da stampare una prova
+      fronte-retro. Nella cartella restano il PDF vecchio dell'IA e `FOTO COPERTINA_mod.JPG`.
+- [x] 15/10: **Logo ufficiale ovunque** (commit `1fc4ec5`, deploy fatto): logo del sito
+      `logo-ufficiale-trasparente-lettere-blu.svg`, tondo nei post nuovi (`logo-ufficiale-tondo.svg`,
+      `SOCIAL.logoTondo`), coccarda del K all'angolo della tessera, `fermata` al posto di `box`
+      (Bulma). Ritocco, Montagna e barra del sito hanno ancora il logo rettangolare: da decidere.
+- [x] 15/10: **K, gita con titolo solo la meta** (commit `1823f8a`, deploy fatto): «Gita a» nel gancio.
 
 - [ ] 15/10: **Scheda di tesseramento coi quadratini a posto** fatta in locale:
       `~/Downloads/1TESSERAMENTO Scheda e Ricevuta - quadratini sistemati.xlsx` (e il PDF), dal
