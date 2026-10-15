@@ -13,8 +13,8 @@
   ci mette qualche minuto: applicarlo quando nessuno usa il sito.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 - **Ripresa (16/10, sera):** tutto fatto, pushato e online fino a `fc4012a` (gite fatte nei fogli
-  del pullman), `dev` allineato. Aspettano l'utente: (1) **canale WhatsApp**: sì sull'abbozzo
-  `bozze/abbozzo-canale.png` e il link del canale, poi un tipo nuovo nel generatore dei post;
+  del pullman), `dev` allineato. Aspettano l'utente: (1) **canale WhatsApp**: story come JPG da
+  caricare (niente generatore), da provare pubblicandola con lo sticker link;
   (2) Sponsor nel Bilancio, nome a mano o legato all'elenco di Social; (3) la partenza nel titolo
   stampato dei fogli del pullman (tolta come chiesto, resta nel nome del foglio di lavoro); (4) le
   prove sul sito vero elencate sotto. Il client Supabase finto per le prove nel browser sta nello
@@ -22,13 +22,12 @@
 
 ## Richieste nuove
 
-- [ ] 16/10: **Story del canale WhatsApp** su Instagram e Facebook, col link che apre il canale.
-      Abbozzo da approvare: `bozze/abbozzo-canale.png` (stile K: titolo, perché seguirlo, al centro
-      una freccia gialla grossa «TOCCA QUI» che punta al riquadro col bordo giallo dove chi pubblica
-      mette lo **sticker link**, sotto «Poi premi Segui e attiva le notifiche» con la campanella,
-      importante per l'utente, e la strada senza link). Il link scritto nell'immagine non si apre: serve lo sticker, messo nell'app quando
-      si pubblica (su Facebook verificarlo sulla pagina del club). Manca il link del canale. Dopo il
-      sì: un tipo «Canale WhatsApp» nel generatore dei post, story (e post con «link in bio»).
+- [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
+      nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
+      1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna; sorgente
+      `sorgenti/story.html`, rifatta da `rendi.sh`. Il riquadro col bordo giallo è vuoto: lì chi
+      pubblica mette lo **sticker link** al canale, i passi sono nel README della cartella. Da provare
+      pubblicandola: su Instagram, e su Facebook se la pagina del club ha lo sticker Link.
 - [ ] 16/10: **Gite fatte nei fogli del pullman** fatto: colonna «Gite fatte» nei fogli ABBONAMENTI
       e ABBONAMENTI JOLLY («1/5», con due abbonamenti «5/5, 1/5»; contate quando si scarica), non nei
       CORSI. Da provare sul sito vero insieme agli altri Excel.

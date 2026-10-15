@@ -31,6 +31,28 @@ dei passi nei quadrati gialli, la scheda del QR tutta bianca, il triangolo
 interno in alto a sinistra in blu notte e il logo nel suo riquadro bianco. Le
 stampanti da ufficio lasciano una cornice bianca di qualche millimetro.
 
+## Story per Instagram e Facebook
+
+`story-canale-whatsapp.jpg` (1080×1920), nello stile K dei post: «Il nostro canale
+WhatsApp», perché seguirlo, la freccia gialla **TOCCA QUI** che punta al riquadro blu col
+bordo giallo, sotto «Poi premi Segui e attiva le notifiche» e la strada senza link
+(WhatsApp › Aggiornamenti). Foto: pista a La Thuile di DimiTalen, Wikimedia Commons, CC0.
+
+<img src="story-canale-whatsapp.jpg" width="30%">
+
+Il riquadro è **vuoto apposta**: un link scritto nell'immagine non si tocca, si apre solo
+lo **sticker link**, che si mette con l'app quando si pubblica. Su Instagram:
+
+1. nuova storia, scegli `story-canale-whatsapp.jpg`;
+2. in alto l'icona degli sticker, poi **Link**;
+3. incolla `https://whatsapp.com/channel/0029Vb98yLKIt5s3Y7pk0V2C`, e in «Personalizza il
+   testo dello sticker» scrivi `CANALE WHATSAPP`;
+4. trascina lo sticker dentro il riquadro blu e allargalo con due dita; toccandolo cambia
+   colore (il bianco si legge meglio sul blu).
+
+Su Facebook la storia della pagina del club ha lo stesso sticker Link: da verificare
+la prima volta che si pubblica.
+
 ## QR nella scheda di tesseramento
 
 Sta in [`../scheda-tesseramento/`](../scheda-tesseramento/).
@@ -40,5 +62,5 @@ Per metterlo altrove: `qr-canale-whatsapp.png` (QR per stampe grandi) e
 
 ## Sorgenti
 
-In `sorgenti/`: `cartello.html` (la scura è `cartello.html#scuro`), i QR in SVG
-e `rendi.sh`, che rifà PDF e anteprime di tutte e due con Chrome (il carattere Barlow è in `../font/barlow/`).
+In `sorgenti/`: `cartello.html` (la scura è `cartello.html#scuro`), `story.html`, i QR in SVG
+e `rendi.sh`, che rifà con Chrome PDF e anteprime del cartello e il JPEG della story (il carattere Barlow è in `../font/barlow/`).
