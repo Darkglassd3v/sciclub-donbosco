@@ -12,7 +12,7 @@
  * WhatsApp» in un riquadro giallo con l'angolo tagliato, poi il QR del canale,
  * grande, nero su bianco (si legge meglio di qualsiasi colore), nella cornice blu
  * con l'angolo tagliato come la tessera dei post. Sotto i passi, in giallo il
- * quarto (le notifiche) e l'indirizzo. Il logo in alto a destra, sul bianco.
+ * quarto (le notifiche) e l'indirizzo. Il logo tondo in alto a destra, sul bianco.
  * Le fasce (lato 64 mm) non toccano scritte e riquadri: il nome parte a 42 mm dal
  * bordo e 36 dal capo, le notifiche finiscono a 24 mm dal bordo e 40 dal fondo. Piatto: niente ombre né sfumature. Misure in mm,
  * stampa a margine zero (rendi.sh fa il PDF con Chrome). */
@@ -31,7 +31,9 @@ body { font-family: Barlow, system-ui, sans-serif; color: var(--notte); -webkit-
 .as.dentro { width: 48mm; height: 48mm; background: var(--blu-dark); }
 .bd.dentro { width: 48mm; height: 48mm; background: var(--giallo); }
 
-.logo { position: absolute; right: 12mm; top: 10mm; height: 20mm; }
+/* Il logo tondo ufficiale: ha già il suo cerchio bianco con l'anello giallo, va bene su entrambi i fondi. */
+.logo { position: absolute; right: 11mm; top: 7mm; width: 27mm; height: 27mm;
+  border-radius: 50%; box-shadow: 0 0 0 .8mm var(--blu); }  /* filo blu: sul bianco il cerchio bianco sparirebbe */
 
 .scritte { position: absolute; left: 10mm; right: 10mm; top: 36mm; text-align: center; }
 .club { color: var(--blu); font-weight: 800; font-size: 16mm; line-height: .92; letter-spacing: -.035em; }
@@ -73,14 +75,13 @@ body { font-family: Barlow, system-ui, sans-serif; color: var(--notte); -webkit-
 /* La versione scura (cartello.html#scuro): stesso cartello su fondo blu scuro.
  * Il triangolo interno in alto a sinistra passa al blu notte (sul fondo blu scuro
  * sparirebbe), scritte bianche, numeri dei passi nei quadrati gialli, la scheda
- * del QR tutta bianca e il logo nel suo riquadro bianco (il blu di «Bosco» sul
- * fondo scuro non si leggerebbe). */
+ * del QR tutta bianca; il logo tondo resta com'è, il suo cerchio è già bianco. */
 html.scuro, html.scuro body, html.scuro .foglio { background: var(--blu-dark); }
 html.scuro .as.dentro { background: var(--notte); }
-html.scuro .logo { background: #fff; border-radius: 3mm; padding: 2.4mm 3.4mm; height: 25mm; }
 html.scuro .club, html.scuro .passi div, html.scuro .piede .link { color: #fff; }
 html.scuro .sotto, html.scuro .piede .se { color: #C7D0DA; }
 html.scuro .scheda { background: #fff; }
+html.scuro .logo { box-shadow: none; }
 html.scuro .num { background: var(--giallo); color: var(--blu-dark); }
 html.scuro .notifiche .num { background: var(--blu-dark); color: #fff; }
 </style>
@@ -91,7 +92,7 @@ html.scuro .notifiche .num { background: var(--blu-dark); color: #fff; }
   <div class="piano as dentro"></div>
   <div class="piano bd fascia"></div>
   <div class="piano bd dentro"></div>
-  <img class="logo" src="../../logo/logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco">
+  <img class="logo" src="../../logo/logo-ufficiale-tondo.svg" alt="Sci Club Don Bosco Asti">
   <div class="scritte">
     <div class="club">Sci Club Don Bosco<br>Asti ASD</div>
     <div class="seguici">Seguici su WhatsApp</div>

@@ -22,9 +22,8 @@
   .scuro { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,32,46,.15) 0, rgba(20,32,46,.55) 520px, rgba(20,32,46,.94) 900px, #14202E 1100px); }
   .angolo { position: absolute; inset: 0; background: rgba(8,76,141,.78); clip-path: polygon(0 0, 640px 0, 0 640px); }
   .cuneo { position: absolute; inset: 0; background: #FCCF02; clip-path: polygon(100% 1640px, 100% 1820px, 900px 1920px, 640px 1920px); opacity: .9; }
-  /* Logo ufficiale (con «Sci Club» e «ASTI»): più alto di prima perché DON BOSCO resti grande. */
-  .logo { position: absolute; left: 60px; top: 250px; background: #fff; border-radius: 20px; padding: 16px 20px; }
-  .logo img { height: 200px; display: block; }
+  /* Logo tondo ufficiale (cerchio bianco con l'anello giallo), sull'angolo blu, sotto la fascia di Instagram. */
+  .logo { position: absolute; left: 60px; top: 250px; width: 220px; height: 220px; border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,.45); }
   .testo { position: absolute; left: 60px; right: 60px; top: 490px; text-shadow: 0 2px 14px rgba(20,32,46,.6); }
   .gancio { font-size: 66px; font-weight: 800; font-style: italic; color: #FCCF02; }
   .tit { font-size: 116px; font-weight: 800; line-height: .92; letter-spacing: -.035em; margin-top: 10px; }
@@ -48,7 +47,7 @@
 <body>
 <div class="cv">
   <div class="foto"></div><div class="scuro"></div><div class="angolo"></div><div class="cuneo"></div>
-  <div class="logo"><img src="../../logo/logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco"></div>
+  <img class="logo" src="../../logo/logo-ufficiale-tondo.svg" alt="Sci Club Don Bosco Asti">
   <div class="testo">
     <div class="gancio">Novità!</div>
     <div class="tit">Il nostro canale WhatsApp</div>
