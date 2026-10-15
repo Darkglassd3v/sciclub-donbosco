@@ -12,9 +12,18 @@
   backup in `supabase/migration/backup-2026-10-15-assicurazioni/` (fuori da git). Lo schema intero
   ci mette qualche minuto: applicarlo quando nessuno usa il sito.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
+- **Ripresa (16/10, sera):** tutto fatto, pushato e online fino a `5268a48`, `dev` allineato.
+  Aspettano l'utente: (1) Sponsor nel Bilancio, nome a mano o legato all'elenco di Social; (2) la
+  partenza nel titolo stampato dei fogli del pullman (tolta come chiesto, resta nel nome del
+  foglio di lavoro); (3) le prove sul sito vero elencate sotto. Il client Supabase finto per le
+  prove nel browser sta nello scratchpad, che un riavvio svuota: va riscritto (vedi i commit del
+  16/10 per come si provano le pagine).
 
 ## Richieste nuove
 
+- [ ] 16/10: **Gite fatte nei fogli del pullman** fatto: colonna «Gite fatte» nei fogli ABBONAMENTI
+      e ABBONAMENTI JOLLY («1/5», con due abbonamenti «5/5, 1/5»; contate quando si scarica), non nei
+      CORSI. Da provare sul sito vero insieme agli altri Excel.
 - [ ] 16/10: **Excel leggibili** fatto: colonne larghe quanto il testo (prima fisse), dati in corpo
       14, intestazione in grassetto 15 bianca sul blu, titolo delle Stampe in grassetto 18 su tutta
       la riga. Per gli stili SheetJS è passata a `xlsx-js-style@1.2.0` (la stessa 0.18.5 con gli

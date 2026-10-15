@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fogli dei soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016c">
+  <link rel="stylesheet" href="brand.css?v=20261016d">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
 
@@ -65,9 +65,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261016c"></script>
-<script src="shared.js?v=20261016c"></script>
-<script src="stampe.js?v=20261016c"></script>
+<script src="config.js?v=20261016d"></script>
+<script src="shared.js?v=20261016d"></script>
+<script src="stampe.js?v=20261016d"></script>
 <script>
   // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
   // abbonamenti della stagione: è quello che serve sul pullman.
@@ -88,7 +88,7 @@
           + "saturday_departure, sunday_departure, course_type, course_day")
         .not("enrolled_at", "is", null)
         .order("id")),
-      tutteLeRighe(() => sb.from("pass_status").select("member_id, day").order("pass_id")),
+      tutteLeRighe(() => sb.from("pass_status").select("member_id, day, trips_used, trips_total").order("pass_id")),
     ]);
     return { soci, abbonamenti };
   }
@@ -106,7 +106,7 @@
         return;
       }
       await caricaXlsx();
-      const scaricati = fogli.map((f) => excelFoglio(chiave, f));
+      const scaricati = fogli.map((f) => excelFoglio(chiave, f, abbonamenti));
       mostraEsito(`Scaricati i fogli di ${nomeGiorno}:`, scaricati);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -121,7 +121,7 @@
    * lavoro per partenza: ogni pullman ha il suo. In cima a ogni foglio il
    * titolo, poi le colonne. Restituisce la riga per l'elenco dei file.
    */
-  function excelFoglio(chiave, foglio) {
+  function excelFoglio(chiave, foglio, abbonamenti) {
     const nomeGiorno = GIORNI_STAMPA[chiave].nome;
     const oggi = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
     const libro = XLSX.utils.book_new();
@@ -129,10 +129,13 @@
     for (const g of foglio.gruppi) {
       quanti += g.soci.length;
       // Luogo e data di nascita: sul pullman servono a essere sicuri della persona (due MARIO ROSSI).
+      // Nei fogli degli abbonamenti anche le gite fatte ("1/5"), contate al momento dello scarico.
+      const gite = foglio.gite ? (s) => [giteFatte(abbonamenti, s.id, foglio.gite)] : () => [];
       const righe = [
         [titoloExcel(chiave, foglio.titolo)],
-        ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Telefono"],
-        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", dataExcel(s.birth_date), s.phone || ""]),
+        ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", ...(foglio.gite ? ["Gite fatte"] : []), "Telefono"],
+        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", dataExcel(s.birth_date),
+          ...gite(s), s.phone || ""]),
       ];
       // Il titolo in grassetto su tutta la riga, poi le colonne: vedi foglioLeggibile().
       const lavoro = foglioLeggibile(righe, { intestazione: 1, dateNF: "dd/mm/yyyy" });
