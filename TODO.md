@@ -29,7 +29,14 @@
       delle storie) il logo occupa metà del cerchio e il giallo sul bianco quasi sparisce.
       Abbozzo da scegliere: `bozze/abbozzo-logo-profilo.png` (oggi, 1 e 2 a 180, 110, 56 e 40 px,
       sui profili chiari e scuri; contorno di 26 unità del logo, solo sulle lettere, l'arco resta
-      com'è). Dopo la scelta: il JPG 1080×1080 in `grafica/logo/` e il README.
+      com'è). L'utente (16/10): su Facebook oggi c'è il logo sul blu con **«Sci Club»** in alto a
+      sinistra e **«ASTI»** in basso a destra (`bozze/profilo-facebook-oggi.png`): aggiungerli a
+      tutte e due le proposte, in Barlow Condensed, dentro il cerchio (Facebook ritaglia tondo).
+      Fatto nell'abbozzo: «Sci Club» sopra «DON», «ASTI» sotto la «O» finale allineato al fondo
+      della «B» (fuori dall'arco), logo al 78% del cerchio perché le scritte stiano dentro il filo;
+      `abbozzo-logo-profilo.html#p1` e `#p2` danno già l'immagine 1080×1080 (anteprime
+      `bozze/profilo-p1.png`, `bozze/profilo-p2.png`). Dopo la scelta: il JPG in `grafica/logo/`,
+      la sorgente in `grafica/logo/strumenti/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
       1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna, senza «Nessuno vede il tuo
