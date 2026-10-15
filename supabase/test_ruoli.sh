@@ -449,6 +449,12 @@ do $$ begin
   exception when check_violation then null;
   end;
   begin
+    insert into public.social_events (kind, title, photo) values ('corso', 'FOTO CSS', 'data:image/gif;base64,AA' || chr(12) || ');outline:9px solid red');
+    raise exception 'ASSERZIONE: foto che non è un data URL accettata';
+  exception when check_violation then null;
+  end;
+  insert into public.social_events (kind, title, photo) values ('corso', 'FOTO BUONA', 'data:image/jpeg;base64,/9j/4AA=');
+  begin
     insert into public.social_events (kind, title, photo_zoom) values ('corso', 'FOTO RIMPICCIOLITA', 90);
     raise exception 'ASSERZIONE: foto più piccola del riquadro accettata';
   exception when check_violation then null;

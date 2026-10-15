@@ -3207,6 +3207,11 @@ alter table public.social_events add constraint social_events_photo_pos_valid
   check (photo_x between 0 and 100 and photo_y between 0 and 100);  -- un valore vuoto passa
 comment on column public.social_events.photo_x is 'Posizione orizzontale della foto nel post, 0-100 (%); vuoto = 50.';
 comment on column public.social_events.photo_y is 'Posizione verticale della foto nel post, 0-100 (%); vuoto = 45.';
+-- La foto è solo un'immagine in data URL (la pagina la riduce e la salva così): niente altro testo,
+-- che dentro lo style del post diventerebbe CSS (security review del 16/10).
+alter table public.social_events drop constraint if exists social_events_photo_valid;
+alter table public.social_events add constraint social_events_photo_valid
+  check (photo ~ '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
 -- Quanto è ingrandita la foto (%): senza ingrandire, una foto orizzontale nel post 4:5 si sposta solo ai lati.
 alter table public.social_events add column if not exists photo_zoom smallint;
 alter table public.social_events drop constraint if exists social_events_photo_zoom_valid;

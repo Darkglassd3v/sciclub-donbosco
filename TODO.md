@@ -22,6 +22,13 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Nota gialla nella gita, quota e scadenza facoltative, foto blindata.** Fatto: nella
+      gita il campo Sottotesto diventa «Nota in giallo sotto la meta» (riga gialla nel post e nel
+      testo); quota e scadenza non fanno più segnare la gita «Da completare»; dalla security review,
+      `photo` accetta solo `data:image/(jpeg|png|webp);base64,…` (check in produzione) e la foto
+      nell'`url()` del CSS è codificata. Con la nota il testo della gita si stringe un po' (una riga
+      in più). Da provare sul sito vero. Ancora da decidere: `web/etichetta…pdf` (dati personali,
+      non in git) da spostare fuori dal repository.
 - [ ] 16/10: **Foto spostabile con le frecce, Duplica, partenza sotto la data** (l'utente: «muoverla
       liberamente», «pulsante sposta con le freccette», «duplica», «scegliere quale partenza è sotto la
       data»). Fatto: pulsante «Sposta la foto» (frecce, Maiuscole, + e −, Invio), colonna `photo_zoom`;

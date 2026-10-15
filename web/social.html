@@ -298,7 +298,7 @@
                   <label class="label" for="fTitolo" id="lTitolo">Meta</label>
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
-                <div data-campo="sottotesto" class="field campo-largo" data-per="evento sponsor">
+                <div data-campo="sottotesto" class="field campo-largo" data-per="gita evento sponsor">
                   <!-- Più righe: gli a capo restano nel post, e un post può essere
                        fatto solo di sottotesto (senza titolo). -->
                   <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
@@ -526,7 +526,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261016sposta"></script>
+<script src="social-templates.js?v=20261016nota"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -1049,7 +1049,7 @@
    * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
    * davvero (non con CSS order), così anche il tasto Tab li segue. */
   const ORDINE_CAMPI = {
-    gita: ["corso", "giorno", "gancio", "titolo", "partenze", "prezzi", "scadenza"],
+    gita: ["corso", "giorno", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
     evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
   const ORDINE_SPONSOR = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
@@ -1069,7 +1069,8 @@
     ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
-    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
+      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
@@ -1095,7 +1096,7 @@
       kind: tipo,
       event_date: el("fData").value || null,
       title: el("fTitolo").value.trim(),
-      subtitle: g !== "gita" ? el("fSottotitolo").value.trim() || null : null,
+      subtitle: el("fSottotitolo").value.trim() || null,
       hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
       prices: g === "sponsor" ? [] : prezzi,
       show_price: el("fMostraPrezzo").checked,

@@ -144,7 +144,10 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   `--pos` e `--zoom` di foto, finestra e grigi. Senza ingrandire, una foto orizzontale nel post si
   sposta solo ai lati (object-fit: cover). La partenza sotto la data è `card_stop` (per luogo;
   vuota = la prima). «Duplica questo post» apre una copia non salvata senza giorno, scadenza, foto,
-  stato «pubblicato» e testo scritto a mano.
+  stato «pubblicato» e testo scritto a mano. La gita può avere una nota in giallo sotto la meta
+  (`subtitle`, es. «Prova gratuita con i maestri»); quota e scadenza della gita sono facoltative
+  (`mancanti()` non le chiede). `photo` accetta solo data URL d'immagine (check nel database) e
+  nell'`url()` del CSS si codifica tutto tranne i caratteri di un data URL.
 - Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.

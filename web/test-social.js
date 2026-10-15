@@ -110,9 +110,9 @@ assert.ok(!testoPost(campagna, { ...santero, alcohol: false }, "2026/27").includ
 // --- Pronto o da completare (elenco e testata del post) ---------------------
 
 assert.deepStrictEqual(mancanti(gita), [], "gita completa segnata da completare");
-assert.deepStrictEqual(mancanti({ ...gita, deadline: null }), ["la scadenza delle iscrizioni"]);
+assert.deepStrictEqual(mancanti({ ...gita, deadline: null, prices: [] }), [], "quota e scadenza della gita sono facoltative");
 assert.deepStrictEqual(mancanti({ kind: "gita", title: " ", stops: [["", ""]], prices: [[null, ""]] }),
-  ["la meta", "il giorno", "le partenze", "la quota", "la scadenza delle iscrizioni"]);
+  ["la meta", "il giorno", "le partenze"]);
 assert.deepStrictEqual(mancanti({ ...senzaPrezzo, prices: [] }), [], "quota chiesta anche se nascosta");
 assert.deepStrictEqual(mancanti({ kind: "cena", title: "Cena sociale" }), ["la data"]);
 assert.deepStrictEqual(mancanti({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
@@ -287,6 +287,14 @@ assert.strictEqual(zoomFoto({ photo_zoom: 999 }), 3);
   assert.ok(html.includes("--pos:10% 80%"), "la posizione non arriva al post");
   assert.ok(html.includes("--zoom:1"), "senza ingrandimento la foto deve restare 1");
   const gita = { kind: "gita", title: "Pila", event_date: "2027-01-17", stops: [["7:00", "Asti"], ["6:45", "Montegrosso"]] };
+  const conNota = disegnaPost(modelloPost({ ...gita, subtitle: "Prova *gratuita* <b>maestri</b>" }, "post"));
+  assert.ok(conNota.includes('<p class="nota">Prova gratuita &lt;b&gt;maestri&lt;/b&gt;</p>'), "la nota gialla della gita manca o non è escapata");
+  assert.ok(!disegnaPost(modelloPost(gita, "post")).includes('class="nota"'), "senza nota niente riga gialla");
+  assert.ok(testoPost({ ...gita, subtitle: "Prova gratuita" }, null, "2026/27").includes("Prova gratuita"), "la nota manca nel testo del post");
+  const brutta = disegnaPost(modelloPost({ ...gita, photo: "data:image/gif;base64,AA\f);outline:77px solid red;--k:" }, "post"));
+  const stile = (brutta.match(/--immagine:url\(&quot;(.*?)&quot;\)/) || [])[1] || "";
+  // Dentro url("…") la stringa CSS si chiude solo con " \ e gli a capo (\n \r \f): nessuno deve restare.
+  assert.ok(stile.includes("%0C") && !/["\\\n\r\f]|&quot;/.test(stile), "la foto esce dall'url() del CSS");
   assert.ok(disegnaPost(modelloPost(gita, "post")).includes("ore 7:00"), "senza scelta va sotto la data la prima partenza");
   assert.ok(disegnaPost(modelloPost({ ...gita, card_stop: "Montegrosso" }, "post")).includes("ore 6:45"), "la partenza scelta non va sotto la data");
   assert.ok(disegnaPost(modelloPost({ ...gita, card_stop: "Altrove" }, "post")).includes("ore 7:00"), "un luogo tolto deve tornare alla prima");

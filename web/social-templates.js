@@ -167,7 +167,7 @@ function modelloPost(ev, fmt) {
   if (ev.kind === "gita") {
     return {
       ...base, kind: "gita", dest: ev.title, date: dataLunga(ev.event_date),
-      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
+      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
     };
   }
   return {
@@ -286,8 +286,7 @@ function mancanti(ev) {
   if (ev.kind === "gita") {
     if (!ev.event_date) manca.push("il giorno");
     if (!(ev.stops || []).some(([t, l]) => t || l)) manca.push("le partenze");
-    if (ev.show_price !== false && !(ev.prices || []).some((p) => p && p[1])) manca.push("la quota");
-    if (!ev.deadline) manca.push("la scadenza delle iscrizioni");
+    // Quota e scadenza sono facoltative (l'utente, 16/10): senza, il post è pronto lo stesso.
   } else if (ev.kind === "cena" || ev.kind === "gara") {
     // Corsi e servizi possono non avere un giorno; una cena o una gara no.
     if (!ev.event_date) manca.push("la data");
@@ -443,6 +442,7 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .fatti p.dove { display: flex; gap: .28em; align-items: center; font-size: ${z(56)}; font-weight: 800; line-height: 1.05; }
     .sk.story .fatti p.dove { font-size: ${z(64)}; }
     .sk .fatti p.dove svg { flex: none; width: 1em; height: 1em; fill: #FCCF02; }
+    .sk .fatti p.nota { color: #FCCF02; font-weight: 800; }
     /* Le partenze della gita: un riquadro blu per fermata, l'ora in giallo (in una riga sola erano confuse). */
     /* Non «box»: nella pagina c'è Bulma, che dà a .box colore grigio scuro e margini (il luogo usciva blu su blu). */
     .sk .partenze { display: flex; flex-wrap: wrap; gap: ${q(16)}; margin: ${q(4)} 0 ${q(6)}; }
@@ -541,8 +541,9 @@ function righeMese(righe, breve, corso) {
 function fondoK({ giallo, story, foto, pos, zoom, fine }, tessera, testo, isc, corso) {
   const livelli = giallo && foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
   const finestra = giallo ? livelli : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
-  // Nell'url() del CSS virgolette e barre rovesce chiuderebbero la stringa: si codificano.
-  const url = foto && escS(String(foto).replace(/["\\\n]/g, encodeURIComponent));
+  // Nell'url() del CSS si codifica tutto tranne i caratteri di un data URL: virgolette, barre rovesce,
+  // \f e \r chiuderebbero la stringa e il resto diventerebbe CSS (security review del 16/10).
+  const url = foto && escS(String(foto).replace(/[^A-Za-z0-9+/=:;,.%_-]/g, encodeURIComponent));
   return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"};--zoom:${zoom || 1}` : ""}${fine ? `;--fine:${fine}px` : ""}">
     ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
     <div class="piano scuro"></div><div class="piano angolo">${livelli}</div><div class="piano cuneo"></div>
@@ -579,6 +580,8 @@ function postK(s) {
   const entro = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
   const righe = gita ? [
+    // La nota facoltativa sotto la meta, in giallo ("Prova gratuita con i maestri").
+    s.nota && { html: `<p class="nota">${escS(senzaSegni(s.nota))}</p>` },
     p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
       `<div class="fermata">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
@@ -799,6 +802,7 @@ function testoPost(ev, sp, stagione) {
   }
   if (ev.kind === "gita") {
     righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${ev.title}!`);
+    if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
     if (ev.course) righe.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) righe.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) righe.push(`Quota soci: ${quote}`);
