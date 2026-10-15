@@ -32,7 +32,8 @@
       com'è). Dopo la scelta: il JPG 1080×1080 in `grafica/logo/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
-      1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna; sorgente
+      1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna, senza «Nessuno vede il tuo
+      numero» (l'utente: solo le informazioni utili); sorgente
       `sorgenti/story.html`, rifatta da `rendi.sh`. Il riquadro col bordo giallo è vuoto: lì chi
       pubblica mette lo **sticker link** al canale, i passi sono nel README della cartella. Da provare
       pubblicandola: su Instagram, e su Facebook se la pagina del club ha lo sticker Link.
