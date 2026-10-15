@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Rifà il cartello (PDF da stampare e JPEG di anteprima) con Chrome headless, in
 # due versioni: chiara (cartello.html) e scura (cartello.html#scuro), e la story (story.html).
-# Il QR nella scheda di tesseramento sta in ../../scheda-tesseramento/.
 set -euo pipefail
 cd "$(dirname "$0")"
 chrome() { google-chrome --headless=new --disable-gpu --hide-scrollbars --virtual-time-budget=8000 "$@" 2>/dev/null; }

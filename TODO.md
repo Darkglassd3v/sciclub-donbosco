@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-15
+# TODO — aggiornato il 2026-10-16
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -22,25 +22,94 @@
 
 ## Richieste nuove
 
-- [ ] 16/10: **Immagine del profilo Instagram e Facebook** dal logo vettoriale
-      (`grafica/logo/logo_sciclubdonbosco.svg`), con le **scritte un po' più spesse**, in due
-      proposte da confrontare: (1) sfondo bianco, logo più grande nel cerchio e filo blu e giallo
-      intorno; (2) sfondo blu `#084C8D`, «DON» giallo e «BOSCO» bianco. Oggi a 40 px (feed, anello
-      delle storie) il logo occupa metà del cerchio e il giallo sul bianco quasi sparisce.
-      Abbozzo da scegliere: `bozze/abbozzo-logo-profilo.png` (oggi, 1 e 2 a 180, 110, 56 e 40 px,
-      sui profili chiari e scuri; contorno di 26 unità del logo, solo sulle lettere, l'arco resta
-      com'è). L'utente (16/10): su Facebook oggi c'è il logo sul blu con **«Sci Club»** in alto a
-      sinistra e **«ASTI»** in basso a destra (`bozze/profilo-facebook-oggi.png`): aggiungerli a
-      tutte e due le proposte, in Barlow Condensed, dentro il cerchio (Facebook ritaglia tondo).
-      Fatto nell'abbozzo: «Sci Club» sopra «DON», «ASTI» sotto la «O» finale allineato al fondo
-      della «B» (fuori dall'arco), logo al 78% del cerchio perché le scritte stiano dentro il filo;
-      `abbozzo-logo-profilo.html#p1` e `#p2` danno già l'immagine 1080×1080 (anteprime
-      `bozze/profilo-p1.png`, `bozze/profilo-p2.png`). L'utente chiede «Sci Club» e «ASTI» un
-      po' più alti: provati 370 e 290 (prima 330 e 260), la «b» di «Club» arriva a ~10 px dall'arco
-      su 1080. L'utente: «prova» una riga sola «SCI CLUB · ASTI» sotto il logo: fatta
-      nell'abbozzo (righe «riga sotto», logo all'82%, immagini `#p1-sotto` e `#p2-sotto`).
-      Dopo la scelta: il JPG in `grafica/logo/`,
-      la sorgente in `grafica/logo/strumenti/` e il README.
+- [ ] 16/10: **Review completa del codice del 15-16/10: fatta e corretta.** Commit del 16/10 in
+      `534ac00`. Commit del 15/10 (`bf605e4~1..a22a5a3~1`): «Sposta la foto» ha le frecce da cliccare
+      (mouse e tablet) e non si spegne cliccando + e −; `settle_household` blocca le righe del nucleo
+      prima di sommare (in produzione il 16/10); `social_settings.style` ammette solo `k`; avviso in
+      testa a `schema.sql` per un database nuovo. Controllato in produzione, nessun problema: nessun
+      socio con tessera PLUS, nessuna lista PLUS, l'unica tessera a 0 è il direttivo. Resta una scelta
+      dell'utente: i fogli del pullman stampati non dicono la partenza (solo il nome del foglio di
+      lavoro). In sospeso fuori dal codice: `web/etichetta…pdf` (dati personali, non in git) da
+      spostare; la bozza `volantino-k` e la «c» in più nel README del canale non in commit.
+- [ ] 16/10: **Nota gialla nella gita, quota e scadenza facoltative, foto blindata.** Fatto: nella
+      gita il campo Sottotesto diventa «Nota in giallo sotto la meta» (riga gialla nel post e nel
+      testo); quota e scadenza non fanno più segnare la gita «Da completare»; dalla security review,
+      `photo` accetta solo `data:image/(jpeg|png|webp);base64,…` (check in produzione) e la foto
+      nell'`url()` del CSS è codificata. Con la nota il testo della gita si stringe un po' (una riga
+      in più). Da provare sul sito vero. Ancora da decidere: `web/etichetta…pdf` (dati personali,
+      non in git) da spostare fuori dal repository.
+- [ ] 16/10: **Foto spostabile con le frecce, Duplica, partenza sotto la data** (l'utente: «muoverla
+      liberamente», «pulsante sposta con le freccette», «duplica», «scegliere quale partenza è sotto la
+      data»). Fatto: pulsante «Sposta la foto» (frecce, Maiuscole, + e −, Invio), colonna `photo_zoom`;
+      «Duplica questo post»; radio «sotto la data» nelle partenze, colonna `card_stop`. Colonne già in
+      produzione (backup `supabase/migration/backup-2026-10-15-foto/`). Da provare sul sito vero.
+- [ ] 15/10: **Volantino con le geometrie della K**, bozza in prova (copia: definitivo e variante QR
+      non toccati): `sorgenti/volantino-k.html` → `volantino-2026-2027-k*.pdf/.jpg` (`rendi.sh` fa le tre).
+      Angoli tagliati a 45°, cunei blu scuro sulle testate delle gite e degli eventi, cuneo sulla fascia
+      di Piazza d'Armi, angolo blu sulla copertina; solo colori pieni (nessuna trasparenza). Da scegliere.
+- [ ] 15/10: **K: logo e coccarda, meta su due righe, foto spostabile** (dev-team fatto). Tutti e tre **fatti**: (1) e (3) il 15/10 (colonne in produzione, backup in
+      `supabase/migration/backup-2026-10-15-foto/`), (2) il 16/10: meta su due righe a 104 (124 nella story). Scelte
+      dell'utente: (1) logo e coccarda **come nel post**
+      anche nella story: logo in alto a sinistra (`top: su + 40px`), coccarda all'angolo basso della
+      tessera della data; una regola sola relativa alla tessera, non numeri doppi post/story
+      (`.cv.sk .stella`, `.cv.sk.story .stella`, `.cv.sk.story .logo-box` in `web/social-templates.js`).
+      Mai la coccarda vicino al logo (due tondi si confondono). (2) **Meta della gita**: oggi `meta()`
+      in `postK` è `data-fit` su una riga e scende fino a 40 px («Cervinia valtournenche» piccola):
+      passare a `data-righe="2"` (una riga a 150/168 px se ci sta, se no due), rispettare gli a capo
+      scritti (`white-space: pre-line`, max 2 righe, `\r\n` e righe vuote ripulite), campo della meta
+      in `social.html` da input a textarea; nel calendario del mese (`righeMese`) e nella didascalia
+      l'a capo diventa uno spazio. Rivedere `.tit min-height` e controllare che partenze, quota,
+      scadenza, telefoni non si rimpiccioliscano (story: 1920 − 250 − 300 utili). (3) **Foto
+      spostabile**, una posizione sola per post e story: due colonne nuove in `social_events`,
+      `photo_x` e `photo_y` `smallint` 0–100, nulle = come oggi (`50% 45%`), con check
+      0–100; in `schema.sql` con `add column if not exists`; in produzione **solo quelle istruzioni**
+      con `set lock_timeout` (schema intero = sito fermo), backup e review **prima del push** (senza
+      colonna il salvataggio fallisce). Nel CSS una variabile `--pos` per `.foto` (object-position),
+      `.finestra` e `.grigi` (oggi `center 45%` in tre punti), valori numerici con clamp in JS, mai
+      testo libero nello style. Nel form due cursori (sinistra-destra, alto-basso) con anteprima viva,
+      niente trascinamento. Prove: banco con meta corta/lunga/con a capo/parola lunga, foto a 0/50/100,
+      post e story con le fasce di Instagram, test node per a capo e clamp.
+- [ ] 15/10: **Pulizia** (l'utente: «c'è troppa roba»). Tolti: `bozze/` (tutte già fatte; salvata
+      solo la pagina dei PNG del logo), `docs/MIGRAZIONE_2.0.md` (il sito parte da zero),
+      `inspiration/`, `grafica/proposte-presciistica-2026/`, `grafica/scheda-tesseramento/`, le
+      proposte di grafica diverse dalla K in `grafica/proposte-post-social/`. Nel sito la **K è
+      l'unica grafica** dei post: tolti Ritocco, Montagna, Biglietto, Calendario, Divano e la scelta
+      della grafica. Tutto nella storia di git tranne `bozze/`. 
+      Fatto e provato (banco K identico al pixel, test node verdi, `social.html` senza errori JS),
+      online dal 15/10; `docs/SVILUPPO.md` e `PROJECT-CONTEXT.md` aggiornati.
+- [ ] 15/10: **Volantino col QR del canale WhatsApp**, variante in prova (copia, il definitivo non è
+      toccato): `sorgenti/volantino-qr.html` → `volantino-2026-2027-qr*.pdf/.jpg` (`rendi.sh` fa entrambe).
+      QR piccolo da 20 mm in cornice verde WhatsApp `#25D366` con «Seguici su WhatsApp», sopra
+      «Informazioni e prenotazioni» a sinistra (copre la rete rossa e le gambe del primo a sinistra).
+      Letto dall'anteprima a 150 dpi. Se l'utente la sceglie: diventa il volantino, si toglie l'altra.
+- [ ] 15/10: **Volantino 2026/2027 rifatto**, versione definitiva scelta dall'utente (la C; A e B
+      cancellate). `grafica/volantino/volantino-2026-2027.pdf` (A5 fronte-retro), `-tipografia.pdf`
+      (3 mm di abbondanza), anteprime; sorgente `sorgenti/volantino.html`, `rendi.sh` (lancia `sfuma.py`):
+      vedi il README della cartella. Nessuna trasparenza nel PDF (il lettore dell'utente le disegnava
+      male). Da far controllare: partenze del sabato uguali alla domenica, «Zermat». Da stampare una prova
+      fronte-retro. Nella cartella restano il PDF vecchio dell'IA e `FOTO COPERTINA_mod.JPG`.
+- [x] 15/10: **Logo ufficiale ovunque** (commit `1fc4ec5`, deploy fatto): logo del sito
+      `logo-ufficiale-trasparente-lettere-blu.svg`, tondo nei post nuovi (`logo-ufficiale-tondo.svg`,
+      `SOCIAL.logoTondo`), coccarda del K all'angolo della tessera, `fermata` al posto di `box`
+      (Bulma). La barra del sito ha ancora il logo rettangolare: da decidere.
+- [x] 15/10: **K, gita con titolo solo la meta** (commit `1823f8a`, deploy fatto): «Gita a» nel gancio.
+
+- [ ] 16/10: **Logo ufficiale ovunque** (l'utente, 15/10: «solo i loghi ufficiali ovunque: post, sito,
+      generatore»). Fatto: il logo è `grafica/logo/logo-ufficiale.JPG` (728×468, col cielo, con «Sci Club»
+      e «ASTI»), ricalcato in vettoriale senza cielo, per fondo chiaro, da
+      `grafica/logo/strumenti/ricalca_ufficiale.py` in `logo-ufficiale-trasparente-lettere-blu.svg`, copiato in `web/` e
+      `ricerca/` (stesso nome: le 14 pagine e `SOCIAL.logo` non cambiano). Tolti: la ricostruzione del
+      07/10 (PNG, JPG, quadrato, `originale_228x170.png`, i loro script); `bozze/` cancellata il 15/10
+      (la pagina dei PNG del logo è ora `grafica/logo/strumenti/profilo.html`). Provato: test node, i sei stili del generatore
+      in post e story, barra, login e canvas del PDF. Da guardare sul sito vero. Ancora col logo
+      vecchio dentro, perché sono JPG già fatti: `grafica/proposte-post-social/`, da rifare solo se
+      servono. Cartelli chiaro e scuro e story di `grafica/canale-whatsapp/` rifatti col logo tondo il
+      15/10 (QR riletto da entrambi i cartelli, commit `930919b`).
+      **Immagine del profilo Instagram e Facebook**: da rifare con il logo ufficiale (bianco e blu a
+      fondo unito, tondo e quadrato; «Sci Club» in alto a sinistra e «ASTI» grande sotto, idea
+      dell'utente). Gli abbozzi e le prove sono stati cancellati: si riparte dall'SVG nuovo. A 40 px
+      (feed, anello delle storie) «Sci Club» e «ASTI» non si leggono.
+      Dopo la scelta: il JPG in `grafica/logo/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
       1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna, senza «Nessuno vede il tuo

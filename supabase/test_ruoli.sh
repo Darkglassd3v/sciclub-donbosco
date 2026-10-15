@@ -219,7 +219,7 @@ begin
     ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
     ('scrivi', 'update public.trip_days set color = ''#147A45'' where weekday = 5', 'SxxxxSx'),
     ('leggi',  'select 1 from public.social_settings',                           'SxxxxSx'),
-    ('scrivi', 'update public.social_settings set value = ''montagna'' where key = ''style''', 'SxxxxSx'),
+    ('scrivi', 'update public.social_settings set value = ''k'' where key = ''style''', 'SxxxxSx'),
     ('leggi',  'select 1 from public.social_contacts',                           'SxxxxSx'),
     ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
@@ -439,6 +439,29 @@ do $$ begin
   begin
     update public.sponsors set color_dark = 'marrone';
     raise exception 'ASSERZIONE: colore non esadecimale accettato';
+  exception when check_violation then null;
+  end;
+  -- La foto si sposta fra 0 e 100 (%); vuota va bene.
+  insert into public.social_events (kind, title, photo_x, photo_y) values ('corso', 'PROVA FOTO', 0, 100), ('corso', 'PROVA FOTO', null, 30);
+  begin
+    insert into public.social_events (kind, title, photo_x) values ('corso', 'FOTO FUORI', 150);
+    raise exception 'ASSERZIONE: foto spostata oltre il 100%% accettata';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.social_events (kind, title, photo) values ('corso', 'FOTO CSS', 'data:image/jpeg;base64,AA' || chr(12) || ');outline:9px solid red');
+    raise exception 'ASSERZIONE: foto con CSS dopo il base64 accettata';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.social_events (kind, title, photo) values ('corso', 'FOTO SVG', 'data:image/svg+xml;base64,PHN2Zy8+');
+    raise exception 'ASSERZIONE: foto SVG accettata';
+  exception when check_violation then null;
+  end;
+  insert into public.social_events (kind, title, photo) values ('corso', 'FOTO BUONA', 'data:image/jpeg;base64,/9j/4AA=');
+  begin
+    insert into public.social_events (kind, title, photo_zoom) values ('corso', 'FOTO RIMPICCIOLITA', 90);
+    raise exception 'ASSERZIONE: foto più piccola del riquadro accettata';
   exception when check_violation then null;
   end;
   -- Un contatto tolto dalla rubrica esce dai post che lo avevano, gli altri restano.

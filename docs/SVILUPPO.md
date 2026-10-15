@@ -124,23 +124,33 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   sabato) prima del corso; la Stampa nello stesso ordine.
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
-- Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
-- Post social: cinque grafiche in `web/social-templates.js`, `ritocco`, `montagna` e dalla 2.8
-  `biglietto`, `calendario`, `divano` (le proposte A, B, C di `grafica/proposte-post-social/`, post
-  4:5: `misurePost()`), scelte per tutta la pagina in Social > Impostazioni (`social_settings`,
-  chiave `style`; `impostaStile()`). Niente scelta nel singolo post: si rischierebbe di pubblicarne
-  uno con la grafica sbagliata. Il testo resta grande: post almeno 34 px su 1080, story 44
-  (misurato). Nelle tre della 2.8 il titolo è sempre alto due righe e il testo parte dallo stesso
-  punto; se non ci sta, `fit()` lo abbassa fino al 92% senza spostare niente, poi prende lo spazio
-  vuoto (`data-cede`: la seconda riga del titolo se non serve, il disegno del Divano, con le montagne
-  che seguono la fascia) e solo dopo abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi.
-  Il gancio del Divano ("Tutti in pista!") è `social_events.hook`, scritto post per post. Gli eventi
-  hanno Ora, Dove e Iscrizioni entro (`event_time`, `place`, `deadline`: `fattiEvento()`); nel
-  sottotesto il pulsante Evidenzia mette le parole fra asterischi (`evidenzia()` le disegna,
-  `senzaSegni()` le toglie nelle altre grafiche e nel testo del post). Il form segue l'ordine del
-  post nella grafica scelta (`ORDINE_CAMPI` in `social.html`). La gita col corso ha la coccarda
-  verde del Ritocco (`stellaCorso()`), in alto a destra in Calendario e Divano.
-- Dopo ogni modifica ai post, controllare tutte le grafiche (post, story, calendario) contro la
+- Logo: `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
+- Post social: una sola grafica, **K · Piani** (`postK`, `meseK` in `web/social-templates.js`; il
+  disegno d'origine in `grafica/proposte-post-social/`), post 4:5 (`misurePost()`) e story. Le altre
+  (Ritocco, Montagna, Biglietto, Calendario, Divano) e la scelta in Impostazioni sono state tolte il
+  15/10/2026: la riga `style` di `social_settings` resta nel database ma non si legge più. Il testo
+  resta grande: post almeno 34 px su 1080, story 44 (misurato). Il titolo è sempre alto due righe e il
+  testo parte dallo stesso punto; se non ci sta, `fit()` lo abbassa fino al 92% senza spostare niente,
+  poi prende lo spazio vuoto (`data-cede`: la seconda riga del titolo se non serve) e solo dopo
+  abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi. Il gancio ("Alzati dal divano!")
+  è `social_events.hook`, scritto post per post. Gli eventi hanno Ora, Dove e Iscrizioni entro
+  (`event_time`, `place`, `deadline`: `fattiEvento()`); nel sottotesto il pulsante Evidenzia mette le
+  parole fra asterischi (`evidenzia()` le disegna, `senzaSegni()` le toglie nel testo del post). Il
+  form segue l'ordine del post (`ORDINE_CAMPI` in `social.html`). Logo in alto a sinistra e coccarda
+  del corso (`stellaCorso()`) all'angolo basso della tessera della data, uguali in post e story.
+  La foto si sposta col pulsante «Sposta la foto» (frecce, + e −: `collegaSpostaFoto()` in
+  `social.html`) in `social_events.photo_x`, `photo_y` (0–100, vuoti = 50% 45%: `posFoto()`) e
+  `photo_zoom` (100–300, vuoto = 100: `zoomFoto()`), uguali per post e story, nelle variabili
+  `--pos` e `--zoom` di foto, finestra e grigi. Senza ingrandire, una foto orizzontale nel post si
+  sposta solo ai lati (object-fit: cover). La partenza sotto la data è `card_stop` (per luogo;
+  vuota = la prima). «Duplica questo post» apre una copia non salvata senza giorno, scadenza, foto,
+  stato «pubblicato» e testo scritto a mano. La gita può avere una nota in giallo sotto la meta
+  (`subtitle`, es. «Prova gratuita con i maestri»); quota e scadenza della gita sono facoltative
+  (`mancanti()` non le chiede). `photo` accetta solo data URL d'immagine (check nel database) e
+  nell'`url()` del CSS si codifica tutto tranne i caratteri di un data URL. La meta della gita va su
+  due righe (a capo scritti o da sola, `righeMeta()`; `data-due` in `fit()`): su una riga 150 (168
+  nella story), su due 104 (124); fuori dal post l'a capo diventa uno spazio (`unaRiga()`).
+- Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.
 - Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di

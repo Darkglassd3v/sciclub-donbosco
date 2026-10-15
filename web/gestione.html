@@ -45,7 +45,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
+      <img src="logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -155,10 +155,10 @@
   // nomiBarra() non ci sono: la pagina va lo stesso, coi nomi di sempre.
   const nomiScelti = () => (typeof NOMI_BARRA === "object" && NOMI_BARRA) || {};
   const nomeSezione = (p, nome) => nomiScelti()[p] || nome;
-  const NOME_PERMESSO = new Proxy({}, { get: (_, p) => {
+  const nomePermesso = (p) => {
     const voce = PERMESSI.find((x) => x[0] === p);
-    return voce ? nomeSezione(p, voce[1]) : undefined;
-  } });
+    return voce ? nomeSezione(p, voce[1]) : p;
+  };
   const DATI_PERSONALI = new Set(PERMESSI.filter((p) => p[3]).map((p) => p[0]));
 
   // [{ role, permissions, defaults }] dal database, e per ruolo i permessi salvati.
@@ -239,7 +239,7 @@
 
   /** "Utente (ricerca e gite) ora vede Soci e non vede più Gite" */
   function frase(ruolo, aggiunti, tolti) {
-    const nomi = (lista) => lista.map((p) => NOME_PERMESSO[p] || p).join(", ");
+    const nomi = (lista) => lista.map(nomePermesso).join(", ");
     const parti = [];
     if (aggiunti.length) parti.push(`ora vede ${nomi(aggiunti)}`);
     if (tolti.length) parti.push(`non vede più ${nomi(tolti)}`);

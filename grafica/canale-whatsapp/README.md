@@ -20,7 +20,7 @@ all'altro e lontana da scritte e riquadri. Al centro, grande, **Sci Club Don
 Bosco Asti ASD**, sotto «Seguici su WhatsApp» in un riquadro giallo con
 l'angolo tagliato, poi il QR di 86 mm nero su bianco, il colore più leggibile,
 in una cornice blu con l'angolo tagliato (il fumetto verde appena fuori, per
-non interromperla); il logo in alto a destra. Sotto, i passi per seguire il
+non interromperla); il logo ufficiale tondo in alto a destra, con un filo blu attorno. Sotto, i passi per seguire il
 canale e, in giallo, il quarto: **attivare le notifiche** con la campanella,
 perché i canali arrivano senza e gli avvisi dell'ultimo minuto non si
 vedrebbero. In basso a sinistra l'indirizzo per chi non riesce a inquadrare il
@@ -28,7 +28,7 @@ codice.
 
 La **scura** è lo stesso cartello su fondo blu scuro: scritte bianche, numeri
 dei passi nei quadrati gialli, la scheda del QR tutta bianca, il triangolo
-interno in alto a sinistra in blu notte e il logo nel suo riquadro bianco. Le
+interno in alto a sinistra in blu notte e il logo tondo senza filo blu. Le
 stampanti da ufficio lasciano una cornice bianca di qualche millimetro.
 
 ## Story per Instagram e Facebook
@@ -53,11 +53,9 @@ lo **sticker link**, che si mette con l'app quando si pubblica. Su Instagram:
 Su Facebook la storia della pagina del club ha lo stesso sticker Link: da verificare
 la prima volta che si pubblica.
 
-## QR nella scheda di tesseramento
+## Il QR da solo
 
-Sta in [`../scheda-tesseramento/`](../scheda-tesseramento/).
-
-Per metterlo altrove: `qr-canale-whatsapp.png` (QR per stampe grandi) e
+Per metterlo altrove (il volantino con il QR lo usa già): `qr-canale-whatsapp.png` (QR per stampe grandi) e
 `qr-canale-whatsapp-piccolo.png` (moduli più grossi, per stampe piccole).
 
 ## Sorgenti

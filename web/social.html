@@ -92,8 +92,12 @@
 
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
+    /* Frecce della foto: col mouse e col dito, senza tastiera. */
+    .pos-foto #btnSposta[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
     .righe-editor .riga input:first-child { max-width: 11rem; }
+    /* Quale partenza va sotto la data, nella tessera del post. */
+    .righe-editor .sotto-data { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 600; }
     /* La gita ha una quota sola: l'etichetta non serve. */
     .righe-editor.una-quota .riga input:first-child { display: none; }
     .spunta { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 2.5em; }
@@ -158,14 +162,6 @@
     .riassunto { display: flex; flex-direction: column; gap: 12px; }
     .riassunto h2 { color: var(--colore); margin-bottom: 0; }
     .riassunto .occhiello { margin-bottom: 0; }
-    .stile-pagina { grid-column: 1 / -1; }
-    .scelte-stile { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 16px; border: 0; padding: 0; margin: 0; }
-    .scelte-stile .esempio { display: block; margin-top: 12px; }
-    .scelte-stile .esempio .anteprima figcaption { display: none; }
-    .scelte-stile .spunta { align-items: flex-start; padding: 10px 14px; border: 2px solid var(--filo); border-radius: 12px; cursor: pointer; }
-    .scelte-stile .spunta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
-    .scelte-stile .spunta input { margin-top: .2em; }
-    .scelte-stile small { font-weight: 500; color: var(--testo-soft); }
     .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
     .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
     .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -181,7 +177,7 @@
 <header class="barra">
   <div class="barra-dentro">
     <a class="barra-marchio" href="index.html">
-      <img src="logo_sciclubdonbosco.svg" alt="Sci Club Don Bosco">
+      <img src="logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
     <nav class="barra-voci">
@@ -252,11 +248,11 @@
 
         <div class="griglia-post">
           <div>
-            <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nella grafica scelta:
+            <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nel post:
                  ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
             <section class="parte" aria-labelledby="pCampi">
               <h3 id="pCampi">Il post, dall'alto in basso</h3>
-              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post, con la grafica scelta in Impostazioni.</p>
+              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post.</p>
               <div class="campi" id="campiPost">
                 <div data-campo="data" class="field" data-per="evento sponsor">
                   <label class="label" for="fData">Data</label>
@@ -302,21 +298,20 @@
                   <label class="label" for="fTitolo" id="lTitolo">Meta</label>
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
-                <div data-campo="sottotesto" class="field campo-largo" data-per="evento sponsor">
+                <div data-campo="sottotesto" class="field campo-largo" data-per="gita evento sponsor">
                   <!-- Più righe: gli a capo restano nel post, e un post può essere
                        fatto solo di sottotesto (senza titolo). -->
                   <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                   <div class="evidenzia" data-per="evento">
                     <button type="button" class="button is-small is-light" id="btnEvidenzia">Evidenzia</button>
-                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nelle grafiche Biglietto, Calendario
-                      e Divano escono evidenziate; qui restano fra due asterischi. Per togliere, selezionale di
+                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nel post escono evidenziate;
+                      qui restano fra due asterischi. Per togliere, selezionale di
                       nuovo e premi Evidenzia.</p>
                   </div>
                 </div>
-                <!-- Solo nelle grafiche Divano e K: mostraCampi() lo nasconde con le altre. -->
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
-                  <label class="label" for="fGancio">Gancio: la frase che apre il post (nel Divano la prima riga del riquadro bianco, nella K la riga gialla sopra il titolo)</label>
+                  <label class="label" for="fGancio">Gancio: la frase che apre il post (la riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
                 <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
@@ -358,6 +353,22 @@
                   <label class="label" for="fFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
                   <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
+                  <!-- Quale parte della foto si vede, uguale in post e story: le frecce (pulsanti, o tastiera con
+                       «Sposta la foto» premuto) la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
+                  <div id="posFoto" class="pos-foto mt-3" hidden>
+                    <div class="buttons mb-1">
+                      <button type="button" class="button is-link is-light" id="btnSposta" aria-pressed="false" aria-describedby="aiutoSposta">Sposta la foto</button>
+                      <button type="button" class="button is-light" id="btnZoomPiu" aria-label="Ingrandisci la foto">+</button>
+                      <button type="button" class="button is-light" id="btnZoomMeno" aria-label="Rimpicciolisci la foto">−</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowLeft" aria-label="Sposta la foto a sinistra">←</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowUp" aria-label="Sposta la foto in su">↑</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowDown" aria-label="Sposta la foto in giù">↓</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowRight" aria-label="Sposta la foto a destra">→</button>
+                      <button type="button" class="button is-small is-light" id="btnFotoCentro">Rimetti com'era</button>
+                    </div>
+                    <p class="help" id="aiutoSposta">Usa le frecce qui sopra, oppure premi «Sposta la foto» e usa le frecce della tastiera (con Maiuscole va più veloce), + e − per ingrandire, Invio quando hai finito. Se non va in su o in giù, ingrandiscila un po'.</p>
+                    <p class="help" id="statoFoto" aria-live="polite"></p>
+                  </div>
                 </div>
               </div>
             </section>
@@ -379,6 +390,7 @@
             </section>
 
             <div class="elimina" id="azioniElimina">
+              <button type="button" class="button is-small is-link is-light" id="btnDuplica" hidden>Duplica questo post</button>
               <button type="button" class="button is-small is-danger is-outlined" id="btnElimina">Elimina questo post</button>
             </div>
           </div>
@@ -427,32 +439,6 @@
   <div data-sezione="impostazioni" hidden>
     <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
     <div class="tre-colonne" id="riassunti">
-      <section class="riquadro riassunto stile-pagina" style="--colore:#084C8D" aria-labelledby="rStile">
-        <h2 id="rStile">Grafica dei post</h2>
-        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Sotto ogni grafica lo stesso post d'esempio.</p>
-        <fieldset class="scelte-stile">
-          <legend class="is-sr-only">Grafica dei post</legend>
-          <label class="spunta"><input type="radio" name="stile" value="ritocco" id="stileRitocco">
-            <span><b>Ritocco</b><br><small>Il biglietto di sempre, con la neve sul fondo</small>
-            <span class="esempio" id="esempioRitocco"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="montagna" id="stileMontagna">
-            <span><b>Montagna</b><br><small>Foto grande, informazioni in una scheda bianca</small>
-            <span class="esempio" id="esempioMontagna"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="biglietto">
-            <span><b>Biglietto</b><br><small>Il biglietto bianco con la foto in alto, post 4:5</small>
-            <span class="esempio" id="esempioBiglietto"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="calendario">
-            <span><b>Calendario</b><br><small>Sempre blu, il foglio del calendario porta la data, post 4:5</small>
-            <span class="esempio" id="esempioCalendario"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="divano">
-            <span><b>Divano</b><br><small>Il manifesto: nome grande, la data nella fascia e un gancio scritto per ogni post, post 4:5</small>
-            <span class="esempio" id="esempioDivano"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="k">
-            <span><b>Piani</b><br><small>La foto a tutta pagina, i piani a 45° e la data nella tessera gialla; corsi e gite di domenica in giallo, il resto in blu, post 4:5</small>
-            <span class="esempio" id="esempioK"></span></span></label>
-        </fieldset>
-        <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
-      </section>
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
         <p class="occhiello">Marchio e colori per le campagne.</p>
@@ -544,7 +530,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261016d"></script>
+<script src="social-templates.js?v=20261016fit"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -554,6 +540,7 @@
   let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
   let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
   let foto = null;       // la foto del post aperto (data URL ridotto)
+  let fotoX = null, fotoY = null, fotoZoom = null;  // photo_x, photo_y, photo_zoom del post aperto; null = come prima
 
   /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
   function stagioneDi(data = new Date()) {
@@ -574,8 +561,7 @@
     collegaRubrica();
     window.addEventListener("hashchange", mostraSezione);
     mostraSezione();
-    collegaStile();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti(), caricaStile()]);
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
     disegnaElenco();
@@ -642,7 +628,6 @@
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
     el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
       || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
-    disegnaEsempiStile();
   }
 
   // ---------------------------------------------------------------------
@@ -668,81 +653,6 @@
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     apriSponsor(el("sScegli").value);
-  }
-
-  // -------------------------------------------------------------------------
-  // Grafica dei post (social_settings, chiave "style"): una di STILI.
-  // Una sola per tutta la pagina, scelta in Impostazioni guardando un post
-  // d'esempio: un interruttore nel singolo post faceva rischiare di
-  // pubblicare un post con la grafica sbagliata.
-  // -------------------------------------------------------------------------
-  let stileSalvato = "ritocco";
-  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna", biglietto: "Biglietto", calendario: "Calendario", divano: "Divano", k: "Piani" };
-  const CON_GANCIO = ["divano", "k"];
-
-  async function caricaStile() {
-    const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
-    if (error) showToast("Grafica dei post non caricata, uso il Ritocco: " + messaggioErrore(error), "is-danger");
-    mettiStile((data && data.value) || "ritocco");
-  }
-
-  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. Arriva anche dopo i post (si caricano insieme): si ridisegna. */
-  function mettiStile(stile) {
-    const titoloPrima = titoloMese(el("calMese").value);
-    impostaStile(stile);
-    stileSalvato = STILE;
-    document.querySelector(`input[name="stile"][value="${stileSalvato}"]`).checked = true;
-    aggiornaStile();
-    // Il gancio si scrive solo con le grafiche che lo disegnano (Divano e K).
-    el("campoGancio").hidden = !CON_GANCIO.includes(STILE) || gruppo(el("fTipo").value) === "sponsor";
-    ordinaCampi();
-    // Il titolo proposto del calendario cambia con la grafica; uno scritto a mano resta.
-    if (el("calTitolo").value === titoloPrima) el("calTitolo").value = titoloMese(el("calMese").value);
-    if (aperto && !el("editor").hidden) ridisegna();
-    disegnaCalendarioMese();
-  }
-
-  const stileScelto = () => document.querySelector('input[name="stile"]:checked').value;
-
-  function aggiornaStile() {
-    const cambiato = stileScelto() !== stileSalvato;
-    el("btnSalvaStile").textContent = cambiato ? "Salva modifiche" : "Salva la grafica";
-    el("btnSalvaStile").classList.toggle("salva-modifiche", cambiato);
-  }
-
-  function collegaStile() {
-    document.querySelectorAll('input[name="stile"]').forEach((r) => r.addEventListener("change", aggiornaStile));
-    el("btnSalvaStile").addEventListener("click", salvaStile);
-  }
-
-  async function salvaStile() {
-    const stile = stileScelto();
-    setLoading(true);
-    try {
-      const { error } = await sb.from("social_settings").upsert({ key: "style", value: stile });
-      if (error) throw error;
-      mettiStile(stile);
-      showToast(`Grafica salvata: ${NOMI_STILE[stile]}.`);
-    } catch (e) {
-      showToast("Grafica non salvata: " + messaggioErrore(e), "is-danger");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  /** Lo stesso post d'esempio (una gita di sabato) in tutte le grafiche, in Impostazioni. */
-  function disegnaEsempiStile() {
-    const sabato = new Date();
-    sabato.setDate(sabato.getDate() + ((6 - sabato.getDay() + 7) % 7 || 7));
-    const iso = `${sabato.getFullYear()}-${String(sabato.getMonth() + 1).padStart(2, "0")}-${String(sabato.getDate()).padStart(2, "0")}`;
-    const ev = { kind: "gita", title: "Sestriere", event_date: iso, course: true, show_price: true,
-      stops: [["6:00", "Asti, piazza Campo del Palio"]], prices: [["Soci", "45 €"], ["Ragazzi", "35 €"]],
-      deadline: iso, hook: "Tutti in pista!", contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
-    for (const st of STILI) {
-      const dove = el(`esempio${maiuscola(st)}`);
-      dove.innerHTML = "";
-      anteprima(dove, { html: disegnaPost(modelloPost(ev, "post"), st), ...misurePost(st), nome: "Esempio" }, 260, { pulsante: false });
-    }
   }
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
@@ -953,12 +863,17 @@
     riga.className = "riga";
     riga.innerHTML = `<input class="input" value="${esc(a ?? "")}" placeholder="${SEGNAPOSTI[id][0]}">
       <input class="input" value="${esc(b ?? "")}" placeholder="${SEGNAPOSTI[id][1]}" ${id === "fFermate" ? 'list="luoghi"' : ""}>
+      ${id === "fFermate" ? `<label class="sotto-data"><input type="radio" name="partenzaTessera"${el(id).children.length ? "" : " checked"}> sotto la data</label>` : ""}
       <button type="button" class="button is-light" aria-label="Togli questa riga">✕</button>`;
     riga.querySelector("button").addEventListener("click", () => { riga.remove(); cambiato(); });
     el(id).append(riga);
   }
+  function partenzaScelta() {
+    const r = el("fFermate").querySelector("input[name=partenzaTessera]:checked");
+    return r ? r.closest(".riga").querySelectorAll("input.input")[1].value.trim() || null : null;
+  }
   function righeDi(id) {
-    return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input")].map((i) => i.value.trim()))
+    return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input.input")].map((i) => i.value.trim()))
       .filter(([a, b]) => a || b);
   }
 
@@ -978,17 +893,25 @@
     el("fFoto").addEventListener("change", async () => {
       const file = el("fFoto").files[0];
       if (!file) return;
-      foto = await riduciImmagine(file, 1080, "image/jpeg");
       el("fFoto").value = "";
+      try {
+        foto = await riduciImmagine(file, 1080, "image/jpeg");
+      } catch (e) {
+        showToast("Questa immagine non si apre: prova con una foto JPEG o PNG.", "is-danger");
+        return;
+      }
+      fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
       cambiato();
     });
-    el("btnTogliFoto").addEventListener("click", () => { foto = null; cambiato(); });
+    el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = fotoZoom = null; cambiato(); });
+    collegaSpostaFoto();
     el("btnEvidenzia").addEventListener("click", evidenziaSelezione);
     el("btnSalva").addEventListener("click", salva);
     el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
     el("btnCopia").addEventListener("click", copiaTesto);
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
+    el("btnDuplica").addEventListener("click", duplica);
     el("calGita").addEventListener("click", sceltaCalGita);
     // La colonna dell'anteprima si ferma sotto la testata del post, che è
     // alta quanto vuole il testo (A+, "Manca: ...").
@@ -1004,7 +927,7 @@
    * riga per riga (un'evidenza non va a capo) e con gli spazi fuori. Se la
    * selezione tocca parole già evidenziate, toglie quelle evidenze per intero:
    * togliere solo l'asterisco selezionato ne lasciava uno spaiato, che nel
-   * post si vedeva. Le grafiche della 2.8 disegnano le evidenze (evidenzia()
+   * post si vedeva. Il post disegna le evidenze (evidenzia()
    * in social-templates.js).
    */
   function evidenziaSelezione() {
@@ -1031,6 +954,62 @@
     el("nessunPost").hidden = si;
   }
 
+  /**
+   * «Sposta la foto»: finché il pulsante è premuto (e ha il fuoco) le frecce spostano la foto
+   * nella direzione della freccia, + e − la ingrandiscono, Invio ed Esc chiudono. Il passo è il 2%,
+   * il 10% con Maiuscole. Spostare a destra la foto vuol dire mostrarne di più la parte sinistra:
+   * per questo la freccia a destra abbassa photo_x.
+   */
+  function collegaSpostaFoto() {
+    const b = el("btnSposta");
+    const attivo = (si) => { b.setAttribute("aria-pressed", String(si)); b.textContent = si ? "Fine spostamento" : "Sposta la foto"; };
+    const limita = (v, min, max) => Math.min(max, Math.max(min, v));
+    const zoom = (d) => { fotoZoom = limita((fotoZoom ?? 100) + d, 100, 300); if (fotoZoom === 100) fotoZoom = null; cambiato(); };
+    const mosse = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+    const muovi = (tasto, passo) => {
+      fotoX = limita((fotoX ?? 50) + mosse[tasto][0] * passo, 0, 100);
+      fotoY = limita((fotoY ?? 45) + mosse[tasto][1] * passo, 0, 100);
+      cambiato();
+    };
+    b.addEventListener("click", () => attivo(b.getAttribute("aria-pressed") !== "true"));
+    // Cliccando +, − o una freccia la modalità resta accesa e la tastiera torna su «Sposta la foto».
+    b.addEventListener("blur", (e) => { if (!el("posFoto").contains(e.relatedTarget)) attivo(false); });
+    const eTorna = (fai) => () => { const acceso = b.getAttribute("aria-pressed") === "true"; fai(); if (acceso) b.focus(); };
+    b.addEventListener("keydown", (e) => {
+      if (b.getAttribute("aria-pressed") !== "true") return;
+      if (mosse[e.key]) muovi(e.key, e.shiftKey ? 10 : 2);
+      else if (e.key === "+" || e.key === "=") zoom(10);
+      else if (e.key === "-") zoom(-10);
+      else if (e.key === "Enter" || e.key === "Escape") attivo(false);
+      else return;
+      e.preventDefault();
+    });
+    el("btnZoomPiu").addEventListener("click", eTorna(() => zoom(10)));
+    el("btnZoomMeno").addEventListener("click", eTorna(() => zoom(-10)));
+    el("posFoto").querySelectorAll("[data-mossa]").forEach((f) =>
+      f.addEventListener("click", eTorna(() => muovi(f.dataset.mossa, 4))));
+    el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = fotoZoom = null; cambiato(); });
+  }
+
+  /**
+   * Un post nuovo, non salvato, coi dati del post salvato aperto: partenze, quota, contatti,
+   * gancio, corso. Restano fuori quelli che cambiano di sicuro e farebbero pubblicare un errore:
+   * giorno e scadenza (il colore della gita viene dal giorno), foto e sua posizione (la meta
+   * cambia), la nota gialla della gita (vale per quella gita), lo stato «pubblicato» e il testo
+   * scritto a mano (si rifà dai dati).
+   */
+  function duplica() {
+    if (!aperto || !aperto.id) return;
+    const { id, created_at, updated_at, ...dati } = aperto;
+    apri({ ...dati, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
+      subtitle: dati.kind === "gita" ? null : dati.subtitle, published_at: null, caption: null });
+    if (aperto.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
+    showToast("Copia pronta: scegli il giorno e controlla la meta, poi salva.");
+    // La gita sceglie il giorno nel calendario: il campo data è nascosto.
+    const giorno = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");
+    if (giorno) giorno.focus();
+  }
+
   function apri(post) {
     if (modificato()) {
       chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
@@ -1054,12 +1033,15 @@
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
     foto = post.photo || null;
+    fotoX = post.photo_x ?? null; fotoY = post.photo_y ?? null; fotoZoom = post.photo_zoom ?? null;
     meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
     for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
     (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
+    const scelta = [...el("fFermate").querySelectorAll(".riga")].find((r) => post.card_stop && r.querySelectorAll("input.input")[1].value.trim() === post.card_stop);
+    if (scelta) scelta.querySelector("input[name=partenzaTessera]").checked = true;
     (post.prices || []).forEach((r) => aggiungiRiga("fPrezzi", r));
     (post.facts || []).forEach((r) => aggiungiRiga("fInfo", r));
-    if (!post.id) aggiungiRiga("fFermate");
+    if (!post.id && !(post.stops || []).length) aggiungiRiga("fFermate");
     // Un post nuovo parte dai contatti proposti nella rubrica.
     disegnaSceltaContatti(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
     formato = 0;
@@ -1076,32 +1058,20 @@
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  /* L'ordine dei campi è quello in cui si leggono nel post, grafica per
-   * grafica (vedi i disegni in social-templates.js): nel Divano il nome viene
-   * prima della data e il gancio subito sotto la fascia, nel Biglietto la data
-   * è nel bollo in alto... Il tipo di evento sta sempre in testa. I campi si
-   * spostano davvero (non con CSS order), così anche il tasto Tab li segue. */
+  /* L'ordine dei campi è quello in cui si leggono nel post (vedi postK() in
+   * social-templates.js): in alto la coccarda del corso a sinistra e la
+   * tessera con data e ora a destra, poi gancio, titolo e i dati nei
+   * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
+   * davvero (non con CSS order), così anche il tasto Tab li segue. */
   const ORDINE_CAMPI = {
-    ritocco: { gita: ["giorno", "corso", "titolo", "prezzi", "partenze", "scadenza"],
-               evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
-    montagna: { gita: ["corso", "titolo", "giorno", "prezzi", "partenze", "scadenza"],
-                evento: ["tipo", "titolo", "data", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
-    biglietto: { gita: ["giorno", "titolo", "partenze", "prezzi", "scadenza", "corso"],
-                 evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "prezzi", "scadenza"] },
-    calendario: { gita: ["corso", "titolo", "giorno", "partenze", "prezzi", "scadenza"],
-                  evento: ["tipo", "titolo", "sottotesto", "data", "ora", "dove", "info", "prezzi", "scadenza"] },
-    divano: { gita: ["corso", "titolo", "giorno", "gancio", "partenze", "prezzi", "scadenza"],
-              evento: ["tipo", "titolo", "data", "gancio", "ora", "prezzi", "dove", "info", "sottotesto", "scadenza"] },
-    // K: in alto la coccarda del corso a sinistra e la tessera con data e ora a
-    // destra, poi gancio, titolo e i dati nei riquadrini.
-    k: { gita: ["corso", "giorno", "gancio", "titolo", "partenze", "prezzi", "scadenza"],
-         evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"] },
+    gita: ["corso", "giorno", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
+    evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
   const ORDINE_SPONSOR = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
 
   function ordinaCampi() {
     const g = gruppo(el("fTipo").value), box = el("campiPost");
-    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[STILE][g];
+    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[g];
     const campi = ordine.map((nome) => box.querySelector(`[data-campo="${nome}"]`));
     // Già in fila: niente da spostare (spostare un campo gli toglie il cursore).
     const ora = [...box.children].filter((c) => campi.includes(c));
@@ -1113,9 +1083,9 @@
     const g = gruppo(el("fTipo").value);
     ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
-    if (!CON_GANCIO.includes(STILE)) el("campoGancio").hidden = true;
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
-    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
+      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
@@ -1141,17 +1111,22 @@
       kind: tipo,
       event_date: el("fData").value || null,
       title: el("fTitolo").value.trim(),
-      subtitle: g !== "gita" ? el("fSottotitolo").value.trim() || null : null,
+      subtitle: el("fSottotitolo").value.trim() || null,
       hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
       prices: g === "sponsor" ? [] : prezzi,
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? righeDi("fFermate") : [],
+      // La partenza scritta sotto la data, per luogo (resta giusta se le righe cambiano ordine); vuota = la prima.
+      card_stop: g === "gita" ? partenzaScelta() : null,
       facts: g === "evento" ? righeDi("fInfo") : [],
       deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,
       place: g === "evento" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
       photo: g === "sponsor" ? null : foto,
+      photo_x: g === "sponsor" || !foto ? null : fotoX,
+      photo_y: g === "sponsor" || !foto ? null : fotoY,
+      photo_zoom: g === "sponsor" || !foto ? null : fotoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
@@ -1316,6 +1291,9 @@
     el("sbordaTutti").hidden = true;
     if (post.kind === "gita") disegnaCalGita();
     el("btnTogliFoto").hidden = !foto;
+    el("btnDuplica").hidden = !(aperto && aperto.id);
+    el("posFoto").hidden = !foto;
+    el("statoFoto").textContent = foto ? `Ingrandita al ${fotoZoom ?? 100}%.` : "";
     aggiornaPubblicato();
     const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
     el("linkUtm").hidden = !sp || !sp.url;
@@ -1406,17 +1384,26 @@
       const lettore = new FileReader();
       lettore.onerror = () => ko(lettore.error);
       lettore.onload = () => {
-        // Un SVG resta com'è: è già leggero e si ingrandisce senza sgranare.
-        if (file.type === "image/svg+xml") { ok(lettore.result); return; }
+        // Il logo SVG resta com'è: è già leggero e si ingrandisce senza sgranare. La foto diventa sempre
+        // JPEG, anche da SVG: il database accetta solo foto jpeg, png e webp.
+        if (file.type === "image/svg+xml" && tipo === "image/png") { ok(lettore.result); return; }
         const img = new Image();
         img.onerror = () => ko(new Error("immagine non leggibile"));
         img.onload = () => {
-          const k = Math.min(1, massimo / Math.max(img.width, img.height));
+          // Un SVG senza misure proprie si apre a 150×150 (0×0 in qualche browser): si ingrandisce senza sgranare,
+          // quindi va al massimo; una foto non si ingrandisce mai.
+          const w = img.naturalWidth || massimo, h = img.naturalHeight || massimo;
+          const k = file.type === "image/svg+xml" ? massimo / Math.max(w, h) : Math.min(1, massimo / Math.max(w, h));
           const c = document.createElement("canvas");
-          c.width = Math.round(img.width * k);
-          c.height = Math.round(img.height * k);
-          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-          ok(c.toDataURL(tipo, .85));
+          c.width = Math.round(w * k);
+          c.height = Math.round(h * k);
+          const g = c.getContext("2d");
+          // Nel JPEG il trasparente diventerebbe nero: sotto va il bianco.
+          if (tipo === "image/jpeg") { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+          g.drawImage(img, 0, 0, c.width, c.height);
+          const url = c.toDataURL(tipo, .85);
+          // Un canvas troppo grande per il browser esce vuoto ("data:,").
+          if (url.startsWith("data:image/")) ok(url); else ko(new Error("immagine troppo grande"));
         };
         img.src = lettore.result;
       };
@@ -1568,9 +1555,8 @@
   // Calendario del mese e copertina
   // ---------------------------------------------------------------------
 
-  // Il titolo proposto: le grafiche della 2.8 dicono cos'è ("Calendario di gennaio"), le altre hanno già "Calendario gite".
-  const titoloMese = (mese) => (!mese ? "" : NUOVI.includes(STILE) ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}`
-    : `${maiuscola(MESI[Number(mese.slice(5, 7)) - 1])} sulla neve`);
+  // Il titolo proposto dice cos'è: "Calendario di gennaio".
+  const titoloMese = (mese) => (mese ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}` : "");
 
   function riempiMesi() {
     const mesi = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
@@ -1591,8 +1577,7 @@
     const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
-    const { w, h } = misureCalendario();
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, STILE, mese), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese), ...misurePost(), nome: "Calendario", file: `calendario-${mese}.png` }, 360);
   }
 
   function disegnaCopertinaFb() {
@@ -1620,8 +1605,13 @@
       el(id).addEventListener("change", async () => {
         const file = el(id).files[0];
         if (!file) return;
-        loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
         el(id).value = "";
+        try {
+          loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
+        } catch (e) {
+          showToast("Questo logo non si apre: prova con un PNG o un SVG.", "is-danger");
+          return;
+        }
         anteprimaSponsor();
       });
     }

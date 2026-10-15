@@ -1,26 +1,29 @@
-// Disegni dei post social: le grafiche scelte in Social > Impostazioni
-// (Ritocco, Montagna e, dalla 2.8, Biglietto, Calendario e Divano) e i
-// formati delle campagne sponsor.
+// Disegni dei post social: la grafica K · Piani (postK(), dalla 2.8 l'unica
+// per gite ed eventi, post 4:5 e story), il calendario del mese, la copertina
+// Facebook e i formati delle campagne sponsor.
 //
 // La usa web/social.html, la pagina che genera i post; le funzioni pure le
-// prova web/test-social.js. I prototipi da cui viene (social/templates.html
-// con le tre proposte A, B, C, social/confronto.html, social/export.sh) sono
-// nella storia di git, fino alla 2.4. Ogni funzione restituisce l'HTML di un canvas a misura reale (post
-// 1080×1080, o 1080×1350 nelle grafiche della 2.8 (misurePost()), story 1080×1920, collab 1080×1350,
-// copertina 820×312); lo stile
-// che serve è tutto qui, così la pagina che lo usa non deve sapere niente.
+// prova web/test-social.js. Le grafiche di prima (Ritocco, Montagna e le
+// proposte Biglietto, Calendario e Divano) e i prototipi (social/templates.html,
+// social/confronto.html, social/export.sh) sono nella storia di git. Ogni
+// funzione restituisce l'HTML di un canvas a misura reale (post e calendario
+// 1080×1350 (misurePost()), story 1080×1920, collab 1080×1350, copertina
+// 820×312); lo stile che serve è tutto qui, così la pagina che lo usa non deve
+// sapere niente.
 // Colori del club da docs/brand-guidelines.md.
 
 const SOCIAL = {
   // Relativo alla pagina che disegna.
-  logo: "logo_sciclubdonbosco.svg",
+  logo: "logo-ufficiale-trasparente-lettere-blu.svg",
+  // Il logo ufficiale nel cerchio bianco con l'anello giallo: quello dei post nuovi (logoNuovo()).
+  logoTondo: "logo-ufficiale-tondo.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
   // che la pagina carica e passa a impostaContatti(). Ogni post sceglie i suoi
   // (ev.contacts, id in ordine): contattiDi().
   // [{ id, name: "Marco", phone: "333 000 0000", hours: "dopo le 18" }, ...]
   contatti: [],
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
-  // In fondo ai post delle grafiche della 2.8, sopra i telefoni scelti.
+  // In fondo ai post, sopra i telefoni scelti.
   iscrizioni: "Iscrizioni in negozio o via mail",
   iscrizioniTel: "Iscrizioni in negozio, via mail o al telefono",
   mail: "sciclubdonboscoasti@gmail.com",
@@ -48,8 +51,8 @@ const SAFE = { top: 250, bottom: 340 };
 const escS = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 
 /* "*fino al 13 gennaio*": fra due asterischi quello che chi pubblica ha
- * evidenziato (pulsante Evidenzia del sottotesto; evidenzia(), grafiche della
- * 2.8). Nelle altre grafiche e nel testo del post gli asterischi si tolgono. */
+ * evidenziato (pulsante Evidenzia del sottotesto; evidenzia(), nella K). Nel
+ * testo del post gli asterischi si tolgono. */
 const senzaSegni = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
 
 // Lo stile dei canvas, messo una volta nella pagina che disegna.
@@ -63,7 +66,6 @@ const senzaSegni = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
     .cv * { box-sizing: border-box; margin: 0; }
     .cv .abs { position: absolute; }
     .cv .logo { display: block; }
-    .cv .pill { display: inline-block; border-radius: 999px; font-weight: 700; }
     .cv .t-dest { font-weight: 800; letter-spacing: -.035em; line-height: .95; }`;
   document.head.append(stile);
 })();
@@ -87,7 +89,7 @@ function entro(iso) {
   return d ? `entro ${GIORNI[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}` : "";
 }
 
-/** "giovedì 14 gennaio": la scadenza scritta per esteso, nelle grafiche della 2.8. */
+/** "giovedì 14 gennaio": la scadenza scritta per esteso, nella K. */
 function giornoMese(iso) {
   const d = giornoDi(iso);
   return d ? `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}` : "";
@@ -106,30 +108,6 @@ function dataCorta(iso) {
 let COLORI_GITA = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
 function impostaColoriGita(colori) { COLORI_GITA = colori; }
 
-/* La grafica dei post, scelta in Social > Impostazioni (tabella
- * social_settings, chiave "style"): "ritocco" è il biglietto di sempre con la
- * neve sul fondo, "montagna" la foto a tutta immagine con le informazioni in
- * una scheda bianca; "biglietto", "calendario" e "divano" sono le proposte A,
- * B e C della 2.8 (grafica/proposte-post-social/). La pagina la carica e la
- * passa a impostaStile(); gli esempi di Impostazioni la scelgono col secondo
- * argomento dei disegni. */
-const STILI = ["ritocco", "montagna", "biglietto", "calendario", "divano", "k"];
-let STILE = "ritocco";
-function impostaStile(stile) { STILE = STILI.includes(stile) ? stile : "ritocco"; }
-
-/* Fiocchi di neve sparsi su w×h. Generatore a seme fisso: sempre gli stessi
- * fiocchi negli stessi punti, così anteprima e immagine scaricata coincidono. */
-const FIOCCO = '<path d="M11 2h2v4l2-2 1.4 1.4L13 8.8V11h2.2l3.4-3.4L20 9l-2 2h4v2h-4l2 2-1.4 1.4-3.4-3.4H13v2.2l3.4 3.4L15 20l-2-2v4h-2v-4l-2 2-1.4-1.4 3.4-3.4V13H8.8l-3.4 3.4L4 15l2-2H2v-2h4L4 9l1.4-1.4L8.8 11H11V8.8L7.6 5.4 9 4l2 2V2Z"/>';
-function fiocchi(w, h, opacita = .32, seme = 7) {
-  let x = seme, out = "";
-  const caso = () => (x = (x * 9301 + 49297) % 233280) / 233280;
-  for (let i = Math.round(w * h / 42000); i > 0; i--) {
-    const px = Math.round(30 + caso() * 60);
-    out += `<svg class="abs" style="left:${Math.round(caso() * w)}px;top:${Math.round(caso() * h)}px;opacity:${(opacita * (.5 + caso() / 2)).toFixed(2)};transform:rotate(${Math.round(caso() * 60)}deg)" width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff">${FIOCCO}</svg>`;
-  }
-  return `<div class="abs" style="inset:0;pointer-events:none">${out}</div>`;
-}
-
 /** Il colore di una gita viene dal giorno: "g2" se il martedì è un giorno di gita. */
 function categoriaGita(iso) {
   const d = giornoDi(iso);
@@ -140,8 +118,8 @@ function categoriaGita(iso) {
  * giallo il blu scuro, come nel resto del gestionale). */
 const inchiostro = (c) => (contrasto(c, "#FFFFFF") >= contrasto(c, "#06396A") ? "#FFFFFF" : "#06396A");
 
-/* Il colore scurito quanto basta per leggersi su bianco (4.5:1): prezzi e
- * scadenza stanno nel biglietto bianco, e il giallo lì non si leggerebbe. */
+/* Il colore scurito quanto basta per leggersi su bianco (4.5:1): il `txt`
+ * delle categorie, perché il giallo su bianco non si leggerebbe. */
 function suBianco(c) {
   if (contrasto(c, "#FFFFFF") >= 4.5) return c;
   const n = parseInt(c.slice(1), 16), rgb = [n >> 16, (n >> 8) & 255, n & 255];
@@ -165,18 +143,31 @@ function categoriaDi(ev) {
   return ev.kind === "gita" ? categoriaGita(ev.event_date) : ev.kind;
 }
 
+/** La parte della foto che si vede (photo_x, photo_y: 0–100, da sinistra e dall'alto), per object-position:
+ *  vuote = "50% 45%", come prima che si potesse spostare. Solo numeri: finisce in uno style. */
+function posFoto(ev) {
+  const n = (v, d) => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? d : Math.min(100, Math.max(0, Math.round(Number(v)))));
+  return `${n(ev.photo_x, 50)}% ${n(ev.photo_y, 45)}%`;
+}
+
+/** Quanto è ingrandita la foto (photo_zoom, 100–300 %): vuoto = 1, la foto copre il riquadro e basta. */
+function zoomFoto(ev) {
+  const v = ev.photo_zoom;
+  return v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? 1 : Math.min(300, Math.max(100, Math.round(Number(v)))) / 100;
+}
+
 /** Dalla riga di social_events al modello dei disegni, nel formato chiesto. */
 function modelloPost(ev, fmt) {
   const prezzi = (ev.prices || []).filter((p) => p && p[1]);
   const base = {
-    fmt, photo: ev.photo || null, cat: categoriaDi(ev), iso: ev.event_date || null,
+    fmt, photo: ev.photo || null, pos: posFoto(ev), zoom: zoomFoto(ev), cat: categoriaDi(ev), iso: ev.event_date || null,
     hook: String(ev.hook || "").trim(),
     prices: ev.show_price === false ? [] : prezzi, contatti: contattiDi(ev),
   };
   if (ev.kind === "gita") {
     return {
       ...base, kind: "gita", dest: ev.title, date: dataLunga(ev.event_date),
-      stops: ev.stops || [], corso: !!ev.course, deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
+      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
     };
   }
   return {
@@ -185,11 +176,10 @@ function modelloPost(ev, fmt) {
   };
 }
 
-/* Le informazioni di un evento come le disegnano tutte le grafiche. Ora,
- * luogo e scadenza hanno un campo loro nel form (prima l'ora finiva nei
- * prezzi): diventano le informazioni "Orario", "Dove" e "Iscrizioni", che le
- * grafiche della 2.8 sanno dove mettere (il foglio di B, la riga dei prezzi in
- * C, il riquadro giallo...). */
+/* Le informazioni di un evento come le disegna la K. Ora, luogo e scadenza
+ * hanno un campo loro nel form (prima l'ora finiva nei prezzi): diventano le
+ * informazioni "Orario", "Dove" e "Iscrizioni", che la K sa dove mettere
+ * (l'ora nella tessera, il luogo col segnaposto, le iscrizioni in fondo). */
 function fattiEvento(ev) {
   const ora = String(ev.event_time || "").trim().replace(/^ore\s*/i, ""), dove = String(ev.place || "").trim();
   // Un'informazione scritta a mano con lo stesso nome di un campo pieno (i post di prima) non si ripete.
@@ -206,12 +196,11 @@ function fattiEvento(ev) {
 // Pezzi comuni
 // ---------------------------------------------------------------------------
 
-/* Sciatore: segno del corso, uguale nel bollo della gita e nel calendario. */
+/* Sciatore: segno del corso, nella coccarda (stellaCorso()). */
 const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff"><circle cx="16" cy="4" r="2.2"/><path d="M4 21.5l17-5.2-.5-1.4-4 1.2-1.9-4.8 2.6-2.2-2.7-3.4-5.4 2.6.8 1.6 3.6-1.7 1.1 1.4-3.4 2.9 2.2 5.5-9.6 2.9z"/></svg>`;
 
 /* La coccarda verde del corso, una stella con lo sciatore, larga 210·k: il
- * contenuto (la stella e la scritta), il contenitore lo mette chi la usa. La
- * usano il bollo del Ritocco e, in alto a destra, Calendario e Divano. */
+ * contenuto (la stella e la scritta), il contenitore lo mette stellaNuova(). */
 function stellaCorso(k = 1) {
   const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
     const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
@@ -223,102 +212,23 @@ function stellaCorso(k = 1) {
         ${skier(62 * k)}<div style="font-size:${36 * k}px;font-weight:800;line-height:1">Corso</div></div>`;
 }
 
-/* Bollo data nel colore della categoria: giorno e DD/MM, che si legge a colpo
- * d'occhio anche postando con settimane d'anticipo. Con il corso nello stesso
- * giorno, una coccarda verde a stella sovrapposta come un adesivo. */
-function badge(s, k = 1) {
-  const C = categoria(s.cat), [day, n, month] = s.date.split(" ");
-  const big = `${n.padStart(2, "0")}/${String(MESI.indexOf(month.toLowerCase()) + 1).padStart(2, "0")}`;
-  const box = `border-radius:${28 * k}px;text-align:center;padding:${16 * k}px ${24 * k}px`;
-  const d = 210 * k;
-  // Margini verticali di -d/2: la coccarda non occupa altezza, così il
-  // riquadro della data resta alto uguale con e senza corso, e lei gli sta
-  // centrata sopra.
-  const corso = s.corso ? `<div style="position:relative;z-index:2;width:${d}px;height:${d}px;margin:${-d / 2}px ${-8 * k}px ${-d / 2}px 0;align-self:center;transform:rotate(-12deg)">${stellaCorso(k)}</div>` : "";
-  return `<div style="display:flex;align-items:flex-start">${corso}
-    <div style="${box};position:relative;background:${C.c};color:${C.ink};min-width:${190 * k}px">
-    <div style="font-size:${34 * k}px;font-weight:700">${escS(day)}</div>
-    <div style="font-size:${100 * k}px;font-weight:800;line-height:.95;letter-spacing:-.03em;padding-bottom:${10 * k}px">${escS(big)}</div></div></div>`;
-}
-
-/* Etichetta di categoria per ciò che non ha data: stesso riquadro e corpo del bollo. */
-
-function fotoPiena(src) {
-  return photo(1, 1, src).replace('width="1" height="1"', 'width="100%" height="100%"')
-    .replace("width:1px;height:1px", "width:100%;height:100%");
-}
-
-// Corpi di partenza in base a quanto testo c'è (post; la story li moltiplica per k).
-const corpoTitolo = (n) => (n <= 14 ? 150 : n <= 24 ? 128 : n <= 45 ? 112 : n <= 80 ? 100 : 88);
-// Sottotesto: più grande quando è l'unico testo, poi scende con la lunghezza.
-const corpoTesto = (n, solo) => (solo ? (n <= 80 ? 72 : n <= 200 ? 58 : 50) : n <= 160 ? 46 : 42);
-
-// Etichetta di categoria per ciò che non ha data: una pastiglia, non un riquadro alto come il bollo.
-const pastiglia = (C, k) => `<div style="background:${C.c};color:${C.ink};border-radius:${20 * k}px;padding:${14 * k}px ${30 * k}px;font-size:${44 * k}px;font-weight:800;white-space:nowrap">${escS(C.label)}</div>`;
-
 const icoTel = (px, col) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="${col}" style="vertical-align:-.12em"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg>`;
-
-/* Telefoni dentro il biglietto, scuri su bianco; due contatti che non stanno
- * su una riga vanno a capo invece di rimpicciolirsi. */
-function telefoni(lista, k) {
-  if (!lista.length) return "";
-  return `<div data-fittel style="flex:0 0 auto;margin:0 40px;border-top:4px dashed #C7D0DA;padding:${22 * k}px 16px ${28 * k}px;
-      display:flex;flex-wrap:wrap;gap:${4 * k}px ${44 * k}px;font-size:${40 * k}px;font-weight:700;line-height:1.25;color:#14202E">
-    ${lista.map((c) => `<span style="white-space:nowrap">${icoTel(Math.round(40 * k), "#14202E")} <span style="font-weight:500">${escS(c.name)}</span> ${escS(c.phone)}${c.hours
-      ? ` <span style="font-weight:500;font-size:.85em;color:#4A5361">${escS(c.hours)}</span>` : ""}</span>`).join("")}</div>`;
-}
-
-// Orari e intervalli ("18-20", "6-14") non vanno a capo sul trattino.
-const intero = (v) => escS(v).replace(/\d+[-–]\d+/g, (x) => `<span style="white-space:nowrap">${x}</span>`);
-
-/* Il testo del biglietto. I corpi sono tre variabili sul contenitore: --t
- * titolo, --b testo (sottotesto, informazioni, partenze, scadenza), --p
- * prezzi; fit() le abbassa se il biglietto non basta. */
-function testoBiglietto(s, accent, k, conTitolo = true) {
-  const gita = s.kind === "gita", titoloVero = String((gita ? s.dest : s.title) || "").trim();
-  const titolo = conTitolo ? titoloVero : "";
-  const sub = gita ? "" : String(s.sub || "").trim();
-  const prices = s.prices || [], facts = s.facts || [], stops = gita ? s.stops || [] : [];
-  const solo = !titoloVero && !facts.length && !prices.length;
-  const T = corpoTitolo(titolo.length) * k, B = corpoTesto(sub.length, solo) * k * (s.fmt === "story" ? .9 : 1), P = 116 * k;
-  const testa = titolo || sub ? `<div>
-      ${titolo ? `<div class="t-dest" data-titolo style="font-size:var(--t);line-height:1.02;color:#14202E;text-wrap:balance">${escS(titolo)}</div>` : ""}
-      ${sub ? `<div style="font-size:var(--b);font-weight:600;line-height:1.25;color:#2E3A48;white-space:pre-line;text-wrap:pretty;${titolo ? `margin-top:calc(var(--b) * .35)` : ""}">${escS(senzaSegni(sub))}</div>` : ""}</div>` : "";
-  const prezzi = prices.length ? `<div style="display:flex;flex-wrap:wrap;gap:calc(var(--b) * .4) calc(var(--p) * .55)">${prices.map(([n, v]) => `<div>
-      <div class="t-dest" style="font-size:var(--p);color:${accent};white-space:nowrap">${escS(v)}</div>
-      ${n ? `<div style="font-size:calc(var(--b) * .9);font-weight:700;margin-top:${6 * k}px;color:#14202E">${escS(n)}</div>` : ""}</div>`).join("")}</div>` : "";
-  const fatti = facts.length ? `<div style="display:grid;grid-template-columns:repeat(${facts.length > 1 ? 2 : 1},minmax(0,1fr));gap:calc(var(--b) * .45) calc(var(--b) * .95)">
-      ${facts.map(([n, v]) => `<div><div style="font-size:calc(var(--b) * .72);font-weight:600;color:#4A5361">${escS(n)}</div>
-        <div style="font-size:var(--b);font-weight:700;line-height:1.15;color:#14202E">${intero(senzaSegni(v))}</div></div>`).join("")}</div>` : "";
-  const partenze = stops.length ? `<div style="font-size:calc(var(--b) * 1.15);font-weight:700;line-height:1.18;color:#14202E">
-      ${stops.map(([t, l]) => `<div><span style="color:${accent};white-space:nowrap">ore ${escS(t)}</span> · ${escS(l)}</div>`).join("")}</div>` : "";
-  const scadenza = gita && s.deadline ? `<div style="font-size:var(--b);font-weight:800;color:${accent}">Iscrizioni ${escS(s.deadline)}</div>` : "";
-  const pezzi = gita ? [testa, prezzi, partenze, scadenza] : [testa, fatti, prezzi];
-  return { html: pezzi.filter(Boolean).join(""), T, B, P };
-}
 
 /* Adatta il testo alla tela. Va chiamata dopo che il canvas è nella pagina e
  * i font sono caricati; restituisce true se qualcosa resta troppo lungo anche
  * al corpo minimo, e la pagina lo segnala prima dell'export.
- * - [data-fit] (titolo del calendario): su una riga, il corpo scende fino a 40 px.
- * - [data-fittel] (telefoni): una riga per contatto; un contatto più largo
- *   della riga scende fino a 26 px.
- * - [data-biglietto] (post e story): prima una parola più larga della riga
- *   (il titolo va a capo, ma una parola sola non si spezza); poi, finché il
- *   biglietto è pieno con la foto già alla misura minima, scende il titolo
- *   fino a 2,2 volte il testo, poi titolo, testo e prezzi insieme, fino a un
- *   testo di 32 px (36 nella story). Oltre, c'è davvero troppo da dire.
- *   Prima il testo era appeso alla riga del prezzo e non si riduceva: nelle
- *   story finiva sopra i telefoni, e un titolo lungo usciva dal biglietto.
- * - [data-righe] (titoli delle grafiche della 2.8): va a capo fino a quelle
- *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a 48 px.
- * - [data-adatta] (la colonna di quelle grafiche): se il contenuto non ci sta,
+ * - [data-fit] (le righe della tessera): su una riga, il corpo scende fino a
+ *   40 px.
+ * - [data-righe] (il titolo e la meta della gita): va a capo fino a quelle
+ *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a
+ *   48 px. Con data-due (la meta) prima stringe su una riga fino a quel corpo,
+ *   poi va a capo.
+ * - [data-adatta] (la colonna del testo): se il contenuto non ci sta,
  *   scende tutto insieme (--s) fino al 92%, che non si nota e lascia tutto al
  *   suo posto. Se non basta, si torna al 100% e si prende lo spazio che resta
- *   vuoto ([data-cede], nell'ordine: la seconda riga riservata al titolo
- *   quando ne usa una, poi il disegno del Divano fino all'altezza
- *   dell'attributo); poi scende tutto insieme fino alla scala scritta
- *   nell'attributo, e i testi piccoli si fermano al corpo minimo (--min).
+ *   vuoto ([data-cede]: la seconda riga riservata al titolo quando ne usa
+ *   una); poi scende tutto insieme fino alla scala scritta nell'attributo, e
+ *   i testi piccoli si fermano al corpo minimo (--min).
  *   Così "il testo parte sempre dallo stesso punto" vale per i post che ci
  *   stanno, e un post pieno non rimpicciolisce il testo per tenere vuoto lo
  *   spazio in alto. */
@@ -330,39 +240,13 @@ function fit(radice = document) {
     while (el.scrollWidth > el.clientWidth && f > 40) el.style.fontSize = (f -= 2) + "px";
     if (el.scrollWidth > el.clientWidth) sborda = true;
   });
-  radice.querySelectorAll("[data-fittel]").forEach((el) => {
-    let f = parseFloat(el.style.fontSize);
-    while (el.scrollWidth > el.clientWidth && f > 26) el.style.fontSize = (f -= 1) + "px";
-    if (el.scrollWidth > el.clientWidth) sborda = true;
-  });
-  // Montagna: il titolo bianco sulla foto va a capo fino a data-titolofoto
-  // righe; oltre, o con una parola più larga della riga, scende fino a 56 px.
-  radice.querySelectorAll("[data-titolofoto]").forEach((el) => {
-    const righe = Number(el.dataset.titolofoto);
-    let f = parseFloat(el.style.fontSize);
-    const troppo = () => el.scrollWidth > el.clientWidth || el.offsetHeight > f * .95 * righe + 4;
-    while (troppo() && f > 56) el.style.fontSize = (f -= 2) + "px";
-    if (troppo()) sborda = true;
-  });
-  radice.querySelectorAll("[data-biglietto]").forEach((card) => {
-    const box = card.querySelector("[data-testo]"), tit = box.querySelector("[data-titolo]"), k = Number(box.dataset.k);
-    const v = (n) => parseFloat(box.style.getPropertyValue(n));
-    let T = v("--t"), B = v("--b"), P = v("--p");
-    const metti = () => { box.style.setProperty("--t", T + "px"); box.style.setProperty("--b", B + "px"); box.style.setProperty("--p", P + "px"); };
-    const pieno = () => card.scrollHeight > card.clientHeight + 1;
-    const minB = k > 1 ? 36 : 32;
-    while (tit && tit.scrollWidth > tit.clientWidth && T > 40) { T -= 2; metti(); }
-    while (pieno()) {
-      if (T > Math.max(B * 2.2, 64 * k)) T -= 3;
-      else if (B > minB) { B -= 1; T = Math.max(T - 2.2, 48 * k); P = Math.max(P - 2.5, 64 * k); }
-      else break;
-      metti();
-    }
-    if (pieno()) sborda = true;
-  });
   radice.querySelectorAll("[data-righe]").forEach((el) => {
     const righe = Number(el.dataset.righe);
     let t = parseFloat(getComputedStyle(el).getPropertyValue("--t"));
+    // La meta della gita che va a capo da sola prima stringe su una riga fino al corpo di due righe (data-due):
+    // solo se neanche lì ci sta va a capo, a quel corpo, prima di stringere oltre.
+    const aCapo = () => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5;
+    if (el.dataset.due) while (aCapo() && t > Number(el.dataset.due)) el.style.setProperty("--t", (t = Math.max(t - 2, Number(el.dataset.due))) + "px");
     const troppo = () => el.scrollWidth > el.clientWidth + 1
       || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * righe + 2;
     while (troppo() && t > 48) el.style.setProperty("--t", (t -= 2) + "px");
@@ -377,15 +261,10 @@ function fit(radice = document) {
     while (pieno() && s > Math.max(min, .92)) scala(Math.round((s - .02) * 100) / 100);
     if (pieno()) {
       scala(1);
-      // Lo sfondo che sta dietro la fascia ([data-segue], le montagne del Divano) sale con lei ([data-ancora]).
-      const cv = el.closest(".cv"), ancora = cv.querySelector("[data-ancora]"), prima = ancora && ancora.offsetTop;
-      for (const c of cv.querySelectorAll("[data-cede]")) {
+      for (const c of el.closest(".cv").querySelectorAll("[data-cede]")) {
         if (!pieno()) break;
-        const fino = Number(c.dataset.cede);
-        if (!fino) { c.style.minHeight = "0"; c.style.height = "auto"; continue; }
-        for (let h = c.offsetHeight; pieno() && h > fino;) c.style.height = (h = Math.max(fino, h - 10)) + "px";
+        c.style.minHeight = "0"; c.style.height = "auto";
       }
-      if (ancora) cv.querySelectorAll("[data-segue]").forEach((m) => { m.style.transform = `translateY(${ancora.offsetTop - prima}px)`; });
     }
     while (pieno() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
     if (pieno()) sborda = true;
@@ -395,14 +274,25 @@ function fit(radice = document) {
 
 /**
  * Cosa manca a un post per essere pronto da pubblicare, a parole ("la
- * quota"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
+ * meta"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
  * testata del post aperto, così dicono la stessa cosa. Salvare si può lo
  * stesso: salva() blocca solo meta, giorno della gita e sponsor.
  */
-/** Come chiamare un post nell'elenco e nei nomi dei file: la prima riga del titolo, o del sottotesto se non ha titolo. */
+/** Come chiamare un post nell'elenco e nei nomi dei file: la meta della gita su una riga; per gli altri la prima riga
+ *  del titolo, o del sottotesto se non ha titolo. */
 function nomePost(ev) {
+  if (ev.kind === "gita") return unaRiga(ev.title);
   return (String(ev.title || "").trim() || String(ev.subtitle || "").trim()).split("\n")[0].trim();
 }
+
+/** La meta della gita come la scrive chi pubblica, al massimo in due righe: righe vuote e spazi via, dalla terza in poi
+ *  sulla seconda. */
+function righeMeta(testo) {
+  const righe = String(testo || "").split(/\r?\n/).map((r) => r.trim().replace(/\s+/g, " ")).filter(Boolean);
+  return righe.length > 2 ? [righe[0], righe.slice(1).join(" ")] : righe;
+}
+/** La meta su una riga sola: calendario del mese, testo del post, nome nell'elenco. */
+const unaRiga = (testo) => righeMeta(testo).join(" ");
 
 function mancanti(ev) {
   const manca = [];
@@ -413,8 +303,7 @@ function mancanti(ev) {
   if (ev.kind === "gita") {
     if (!ev.event_date) manca.push("il giorno");
     if (!(ev.stops || []).some(([t, l]) => t || l)) manca.push("le partenze");
-    if (ev.show_price !== false && !(ev.prices || []).some((p) => p && p[1])) manca.push("la quota");
-    if (!ev.deadline) manca.push("la scadenza delle iscrizioni");
+    // Quota e scadenza sono facoltative (l'utente, 16/10): senza, il post è pronto lo stesso.
   } else if (ev.kind === "cena" || ev.kind === "gara") {
     // Corsi e servizi possono non avere un giorno; una cena o una gara no.
     if (!ev.event_date) manca.push("la data");
@@ -435,8 +324,7 @@ function contattiDi(ev) {
   return (ev.contacts || []).map((id) => SOCIAL.contatti.find((c) => c.id === id)).filter(Boolean);
 }
 
-/* Foto della meta; senza, un paesaggio disegnato (la C perdona foto mediocri,
- * e anche nessuna foto). */
+/* Foto; senza, un paesaggio disegnato (quello della copertina Facebook). */
 function photo(w, h, src) {
   if (src) return `<img class="abs" src="${escS(src)}" style="left:0;top:0;width:${w}px;height:${h}px;object-fit:cover">`;
   return `<svg class="abs" style="left:0;top:0" width="${w}" height="${h}" viewBox="0 0 1080 1080" preserveAspectRatio="xMidYMid slice">
@@ -450,146 +338,10 @@ function photo(w, h, src) {
     <polygon fill="#fff" points="0,960 1080,900 1080,1080 0,1080"/></svg>`;
 }
 
-/* Righe del calendario: [categoria, "DD/MM", meta, corso]. */
-function calRows(rows) {
-  return rows.map(([k, d, dest, corso]) => { const C = categoria(k);
-    return `<div style="display:flex;align-items:center;gap:22px;padding:14px 0;border-bottom:2px solid #E4E6EB">
-      <span class="pill" style="background:${C.c};color:${C.ink};font-size:36px;padding:8px 0;width:250px;flex:none;text-align:center">${escS(C.day)} ${escS(d)}</span>
-      <span style="font-size:56px;font-weight:700;line-height:1.1;color:#14202E">${escS(dest)}</span>
-      ${corso ? `<span style="margin-left:auto;flex:none;background:${CAT.corso.c};color:#fff;border-radius:14px;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:34px;font-weight:800">${skier(42)}Corso</span>` : ""}</div>`; }).join("");
-}
-
 // ---------------------------------------------------------------------------
-// C · Skipass
-// ---------------------------------------------------------------------------
-
-/**
- * Post o story di una gita o di un evento (modello da modelloPost()). Il
- * biglietto è una colonna: foto, testo, telefoni. Con poco testo la foto si
- * allunga invece di lasciare bianco in fondo; con tanto, fit() riduce il testo.
- */
-function disegnaPost(s, stile = STILE) {
-  if (stile === "montagna") return disegnaMontagna(s);
-  if (stile === "biglietto") return postBiglietto(s);
-  if (stile === "calendario") return postCalendario(s);
-  if (stile === "divano") return postDivano(s);
-  if (stile === "k") return postK(s);
-  const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
-  const m = 60, k = st ? 1.4 : 1;
-  // Story: il biglietto finisce sopra la fascia della risposta di Instagram,
-  // logo e bollo scendono sotto quella del profilo.
-  const cardH = st ? H - m - SAFE.bottom : H - m * 2, su = st ? SAFE.top - m : 0;
-  // La foto non scende sotto il bollo della data (la pastiglia è più bassa).
-  const fotoMin = st ? (s.date ? 480 : 380) : (s.date ? 225 : 150);
-  const t = testoBiglietto(s, C.txt, k);
-  const notch = `<div style="position:relative;height:0;flex:0 0 auto">
-      <div class="abs" style="left:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
-      <div class="abs" style="right:-30px;top:-30px;width:60px;height:60px;border-radius:50%;background:${C.c}"></div>
-      <div class="abs" style="left:40px;right:40px;top:-2px;border-top:4px dashed #C7D0DA"></div></div>`;
-  return `<div class="cv" style="width:${W}px;height:${H}px;background:${C.c}">${fiocchi(W, H)}
-    <div class="abs" data-biglietto style="left:${m}px;right:${m}px;top:${m}px;height:${cardH}px;background:#fff;border-radius:40px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.25)">
-      <div style="position:relative;flex:3 1 0;min-height:${fotoMin}px;max-height:${st ? 820 : 460}px">
-        ${fotoPiena(s.photo)}
-        <div class="abs" style="left:0;top:${su}px;background:#fff;padding:18px 26px;border-radius:0 0 28px 0${su ? ";border-top-right-radius:28px" : ""}">
-          <img class="logo" src="${SOCIAL.logo}" style="height:${100 * (st ? 1.2 : 1)}px"></div>
-        <div class="abs" style="right:40px;top:${su + 36}px">${s.date ? badge(s, st ? 1.3 : 1) : pastiglia(C, k)}</div>
-      </div>
-      ${notch}
-      <div data-testo data-k="${k}" style="--t:${t.T}px;--b:${t.B}px;--p:${t.P}px;flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--b) * .6);padding:${36 * k}px 56px ${30 * k}px">
-        ${t.html}</div>
-      ${telefoni(s.contatti, st ? 1.2 : 1)}
-    </div>
-    ${st ? `<div class="abs" style="left:0;right:0;top:${m + cardH + 56}px;text-align:center;color:${C.ink};font-size:46px;font-weight:800;letter-spacing:.12em;opacity:.9">SCI CLUB DON BOSCO</div>` : ""}
-  </div>`;
-}
-
-/**
- * Montagna: la foto (o il paesaggio disegnato) a tutta immagine con un velo
- * scuro in alto, il titolo bianco grande, un nastro con il giorno nel colore
- * della gita, e sotto una scheda bianca con tutto il resto. La scheda ha lo
- * stesso contenuto e lo stesso adattamento del biglietto (testoBiglietto(),
- * fit()): il testo grande va a capo e si riduce solo se non ci sta.
- */
-function disegnaMontagna(s) {
-  const C = categoria(s.cat), st = s.fmt === "story", W = 1080, H = st ? 1920 : 1080;
-  const k = st ? 1.3 : 1, m = 50, sopra = st ? SAFE.top : 40, sotto = st ? SAFE.bottom : m;
-  const titolo = String((s.kind === "gita" ? s.dest : s.title) || "").trim();
-  const t = testoBiglietto(s, C.txt, k, false);
-  const corso = s.corso ? `<div style="flex:none;background:${CAT.corso.c};color:#fff;border:6px solid #fff;border-radius:999px;padding:${8 * k}px ${24 * k}px;display:flex;align-items:center;gap:10px;font-size:${42 * k}px;font-weight:800;transform:rotate(-6deg);box-shadow:0 8px 20px rgba(0,0,0,.3)">${skier(46 * k)}Corso</div>` : "";
-  // Senza testo per la scheda (post di solo titolo) restano i telefoni, in fondo.
-  const scheda = t.html || s.contatti.length ? `<div data-biglietto style="flex:${t.html ? "1 1 0" : "0 0 auto"};min-height:0;margin-top:auto;background:#fff;border-radius:${30 * k}px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 12px 36px rgba(0,0,0,.3)">
-        <div data-testo data-k="${k}" style="--t:${t.T}px;--b:${t.B}px;--p:${t.P}px;flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--b) * .5);padding:${t.html ? `${22 * k}px 40px` : "0"}">${t.html}</div>
-        ${telefoni(s.contatti, k)}</div>` : "";
-  return `<div class="cv" style="width:${W}px;height:${H}px;background:#0B2440">
-    ${photo(W, H, s.photo)}
-    <div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(6,24,44,.82) 0%,rgba(6,24,44,.6) ${st ? 30 : 38}%,rgba(6,24,44,.15) 75%)"></div>
-    ${fiocchi(W, Math.round(H * .45), .3, 5)}
-    <div class="abs" style="left:${m}px;right:${m}px;top:${sopra}px;bottom:${sotto}px;display:flex;flex-direction:column;gap:${14 * k}px">
-      <div style="flex:none;display:flex;justify-content:space-between;align-items:flex-start;gap:20px">
-        <div style="background:#fff;border-radius:18px;padding:8px 16px"><img class="logo" src="${SOCIAL.logo}" style="height:${72 * k}px"></div>${corso}</div>
-      ${titolo ? `<div data-titolofoto="${st ? 3 : 2}" style="flex:none;font-size:${corpoTitolo(titolo.length) * k}px;font-weight:800;letter-spacing:-.035em;line-height:.95;color:#fff;text-wrap:balance">${escS(titolo)}</div>` : ""}
-      <div style="flex:none;margin:${4 * k}px -${m + 30}px ${10 * k}px;background:${C.c};color:${C.ink};transform:rotate(-3deg);text-align:center;padding:${8 * k}px ${m + 40}px;font-size:${50 * k}px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.25)">${escS(s.date || C.label)}</div>
-      ${scheda}
-    </div>
-  </div>`;
-}
-
-/** Calendario Montagna (1080×1350): paesaggio di sera, righe bianche alte. */
-function calendarioMontagna(titolo, righe) {
-  const W = 1080, H = 1350, m = 50;
-  // Con più di sei gite le righe si abbassano un po', fino al 70%.
-  const f = righe.length > 6 ? Math.max(.7, 6 / righe.length) : 1;
-  const conCorso = righe.some((r) => r[3]);
-  const rows = righe.map(([kc, d, dest, corso]) => { const C = categoria(kc);
-    return `<div style="display:flex;align-items:center;gap:${24 * f}px;background:#fff;border-radius:22px;padding:${12 * f}px 20px ${12 * f}px 12px;box-shadow:0 6px 18px rgba(0,0,0,.2)">
-      <div style="width:${190 * f}px;flex:none;border-radius:16px;background:${C.c};color:${C.ink};text-align:center;padding:${6 * f}px 0 ${8 * f}px">
-        ${C.day ? `<div style="font-size:${38 * f}px;font-weight:800">${escS(C.day)}</div>` : ""}<div style="font-size:${62 * f}px;font-weight:800;line-height:.95">${escS(d)}</div></div>
-      <div style="flex:1;min-width:0;font-size:${58 * f}px;font-weight:800;letter-spacing:-.02em;line-height:1.05;color:#14202E">${escS(dest)}</div>
-      ${corso ? `<div style="width:${88 * f}px;height:${88 * f}px;flex:none;border-radius:50%;background:${CAT.corso.c};display:flex;align-items:center;justify-content:center">${skier(56 * f)}</div>` : ""}</div>`; }).join("");
-  return `<div class="cv" style="width:${W}px;height:${H}px;background:#0B2440">
-    ${photo(W, H, null)}
-    <div class="abs" style="inset:0;background:linear-gradient(180deg,rgba(6,24,44,.88) 0%,rgba(6,24,44,.7) 55%,rgba(6,24,44,.45) 100%)"></div>
-    ${fiocchi(W, H, .3, 3)}
-    <div class="abs" style="left:${m}px;right:${m}px;top:44px;bottom:40px;display:flex;flex-direction:column;gap:22px">
-      <div style="flex:none;display:flex;align-items:center;justify-content:space-between;gap:20px">
-        <div style="min-width:0"><div style="font-size:42px;font-weight:800;color:#FCCF02">Calendario gite</div>
-          <div data-titolofoto="2" style="font-size:110px;font-weight:800;letter-spacing:-.04em;line-height:.95;color:#fff;text-wrap:balance">${escS(titolo)}</div></div>
-        <div style="flex:none;background:#fff;border-radius:22px;padding:12px 18px"><img class="logo" src="${SOCIAL.logo}" style="height:110px"></div></div>
-      <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:${18 * f}px">${rows}</div>
-      ${conCorso ? `<div style="flex:none;display:flex;align-items:center;gap:14px;font-size:38px;font-weight:700;color:#fff"><span style="width:60px;height:60px;border-radius:50%;background:${CAT.corso.c};display:inline-flex;align-items:center;justify-content:center">${skier(40)}</span>con il corso</div>` : ""}
-    </div>
-  </div>`;
-}
-
-/** Misure del calendario del mese nella grafica scelta: 4:5 in tutte tranne il ritocco. */
-const misureCalendario = (stile = STILE) => (stile === "ritocco" ? { w: 1080, h: 1080 } : { w: 1080, h: 1350 });
-
-/** Misure del post (non della story) nella grafica scelta: le grafiche della 2.8 sono 4:5. */
-const misurePost = (stile = STILE) => ({ w: 1080, h: NUOVI.includes(stile) ? 1350 : 1080 });
-
-/** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per l'intestazione
- *  delle grafiche della 2.8. Ritocco 1080×1080, le altre 1080×1350 (misureCalendario()). */
-function disegnaCalendario(titolo, righe, stile = STILE, mese = "") {
-  if (stile === "montagna") return calendarioMontagna(titolo, righe);
-  if (stile === "biglietto") return meseBiglietto(titolo, righe, mese);
-  if (stile === "calendario") return meseCalendario(titolo, righe, mese);
-  if (stile === "divano") return meseDivano(titolo, righe);
-  if (stile === "k") return meseK(titolo, righe, mese);
-  const bg = "#084C8D";
-  return `<div class="cv" style="width:1080px;height:1080px;background:${bg}">${fiocchi(1080, 1080)}
-    <div class="abs" style="left:60px;width:960px;top:60px;height:960px;background:#fff;border-radius:40px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.25)">
-      <div style="padding:44px 56px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span class="pill" style="background:#FCCF02;color:#06396A;font-size:34px;padding:10px 26px">Calendario gite</span>
-          <img class="logo" src="${SOCIAL.logo}" style="height:110px"></div>
-        <div class="t-dest" data-fit style="font-size:88px;color:#084C8D;margin:18px 0 10px">${escS(titolo)}</div>${calRows(righe)}</div></div>
-  </div>`;
-}
-
-// ---------------------------------------------------------------------------
-// Grafiche della 2.8: A · Biglietto, B · Calendario, C · Divano
+// K · Piani
 //
-// Rifatte uguali dalle proposte di grafica/proposte-post-social/ (tavole,
+// Rifatta uguale dalla proposta di grafica/proposte-post-social/ (tavola,
 // sorgenti e regole fisse nel README): post 4:5 (1080×1350) e story. Un solo
 // blu e un solo giallo, quelli del logo; il titolo occupa sempre due righe,
 // così il testo parte sempre dallo stesso punto e un testo lungo scende più in
@@ -600,7 +352,6 @@ function disegnaCalendario(titolo, righe, stile = STILE, mese = "") {
 // ---------------------------------------------------------------------------
 
 const BLU = "#084C8D", GIALLO = "#FCCF02";
-const NUOVI = ["biglietto", "calendario", "divano", "k"];
 
 (function stileNuovi() {
   if (typeof document === "undefined" || document.getElementById("stile-social-nuovi")) return;
@@ -613,8 +364,9 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .cv.nuovo { --s: 1; --min: 34px; line-height: normal; }
     .cv.nuovo.story { --min: 44px; }
     .cv.nuovo b { font-weight: 800; }
-    .cv.nuovo .logo-box { background: #fff; }
-    .cv.nuovo .logo-box img { display: block; height: 150px; }
+    /* Il logo tondo porta il suo cerchio bianco: il riquadro non ha più fondo né margine. */
+    .cv.nuovo .logo-box { background: none; padding: 0; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+    .cv.nuovo .logo-box img { display: block; height: 240px; }
     .cv.nuovo .col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
     .cv.nuovo [data-righe] { font-size: calc(var(--t) * var(--s)); }
     /* I telefoni su una riga sola, larga quanto il riquadro (nella story a 44 px due contatti ci stanno
@@ -624,179 +376,54 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .cv.nuovo .isc .tel span { white-space: nowrap; }
     .cv.nuovo .isc .tel b { font-weight: 800; }
 
-    .sa .biglietto { position: absolute; left: 60px; right: 60px; top: 60px; bottom: 60px; background: #fff; border-radius: 40px;
-      overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 14px 40px rgba(0,0,0,.25); }
-    .sa.story .biglietto { bottom: 340px; }
-    .sa .scena { position: relative; flex: 0 0 330px; }
-    .sa.story .scena { flex-basis: 500px; }
-    .sa .scena .foto, .sa .scena .paesaggio { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    .sa .scena .figura { position: absolute; left: 330px; bottom: 16px; height: 64%; }
-    .sa.story .scena .figura { bottom: 26px; height: 50%; }
-    .sa .logo-box { position: absolute; left: 0; top: 0; padding: 18px 26px; border-radius: 0 0 28px 0; }
-    .sa.story .logo-box { top: 190px; border-top-right-radius: 28px; }
-    .sa.story .logo-box img { height: 195px; }
-    .sa .bollo { position: absolute; right: 40px; top: 36px; background: #084C8D; color: #fff; border-radius: 28px; text-align: center; padding: 14px 26px 10px; }
-    .sa.story .bollo { top: 226px; border-radius: 36px; padding: 18px 34px 13px; }
-    .sa .bollo .g { font-size: 36px; font-weight: 700; }
-    .sa.story .bollo .g { font-size: 47px; }
-    .sa .bollo .n { font-size: 100px; font-weight: 800; line-height: .95; letter-spacing: -.03em; padding-bottom: 8px; }
-    .sa.story .bollo .n { font-size: 130px; padding-bottom: 10px; }
-    .sa .taglio { position: relative; height: 0; flex: 0 0 auto; }
-    .sa .taglio i { position: absolute; left: 40px; right: 40px; top: -2px; border-top: 4px dashed #C7D0DA; }
-    .sa .luna { position: absolute; top: 360px; width: 60px; height: 60px; border-radius: 50%; }
-    .sa.story .luna { top: 530px; }
-    .sa .testo { flex: 1 0 auto; display: flex; flex-direction: column; gap: ${q(22)}; padding: ${q(34)} 56px ${q(12)}; }
-    .sa.story .testo { gap: ${q(29)}; padding: ${q(44)} 56px ${q(21)}; }
-    .sa .tit { --t: 104px; min-height: calc((2 * .98 * 104px + 58px) * var(--s)); }
-    .sa.story .tit { --t: 134px; min-height: calc(2 * .98 * 134px * var(--s)); }
-    .sa .tit > div { font-weight: 800; letter-spacing: -.035em; line-height: .98; }
-    .sa .tit small { display: block; font-size: ${z(40)}; font-weight: 700; letter-spacing: -.01em; color: #4A5361; margin-top: 12px; line-height: 1.15; white-space: pre-line; }
-    .sa.story .tit small { font-size: ${z(48)}; }
-    .sa .fatti { display: grid; grid-template-columns: auto 1fr; column-gap: 30px; row-gap: ${q(14)}; align-items: baseline; }
-    .sa.story .fatti { row-gap: ${q(20)}; }
-    .sa .fatti dt { font-size: ${z(36)}; font-weight: 600; color: #4A5361; }
-    .sa.story .fatti dt { font-size: ${z(44)}; }
-    .sa .fatti dd { font-size: ${z(50)}; font-weight: 700; line-height: 1.12; }
-    .sa.story .fatti dd { font-size: ${z(56)}; }
-    .sa .fatti b, .sa .tit small b { color: #084C8D; }
-    .sa .isc { flex: none; margin: 0 40px; border-top: 4px dashed #C7D0DA; padding: 20px 16px 26px; display: flex; column-gap: 22px; align-items: center; }
-    .sa.story .isc { padding: 26px 16px 34px; }
-    .sa .isc > svg { flex: none; width: 70px; height: 70px; fill: #084C8D; }
-    .sa.story .isc > svg { width: 91px; height: 91px; }
-    .sa .isc > div { font-size: ${z(40)}; font-weight: 600; line-height: 1.2; }
-    .sa.story .isc > div { font-size: ${z(44)}; }
-    .sa .isc > div > b { display: block; font-size: ${z(46)}; color: #084C8D; letter-spacing: -.02em; }
-    .sa .firma { position: absolute; left: 0; right: 0; top: 1640px; text-align: center; font-size: 46px; font-weight: 800; letter-spacing: .12em; }
-    .sa .righe { display: flex; flex-direction: column; }
-    .sa .righe > div { display: flex; align-items: center; gap: 22px; padding: ${q(6)} 0; border-bottom: 2px solid #E4E6EB; }
-    .sa .righe .giorno { flex: none; width: ${q(230)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: ${q(6)} 0; }
-    .sa .righe .meta { font-size: ${q(50)}; font-weight: 700; line-height: 1.1; min-width: 0; }
-    .sa .righe .corso { margin-left: auto; flex: none; display: flex; align-items: center; gap: 8px; font-size: ${q(34)}; font-weight: 800;
-      color: #084C8D; border: 3px solid #084C8D; border-radius: 14px; padding: 2px 14px 2px 8px; }
-    .sa .righe .corso svg, .sc .righe .corso svg { width: 1.2em; height: 1.2em; }
-
-    /* Gita con il corso: la coccarda verde del Ritocco in alto a destra, accanto al logo, fuori dal flusso. */
+    /* Gita con il corso: la coccarda verde in alto a destra, accanto al logo, fuori dal flusso. */
     .cv.nuovo .stella { position: absolute; z-index: 3; right: 44px; top: 30px; transform: rotate(-12deg); }
     /* Nella story più grande (la scritta "Corso" a 45 px) e più in alto, per non toccare il titolo. */
     .cv.nuovo.story .stella { top: 196px; }
-    .sb { background: #084C8D; }
-    .sb .monti { position: absolute; left: 0; bottom: 0; width: 1080px; height: 330px; }
-    .sb.story .monti { height: 520px; }
-    /* Come nella proposta, le iscrizioni scendono fino a 26 px dal fondo del post. */
-    .sb .col { padding: 56px 60px 26px; gap: ${q(34)}; }
-    .sb.story .col { padding: 262px 60px 350px; gap: ${q(24)}; }
-    .sb .testa, .sc .testa { flex: none; display: flex; }
-    .sb .logo-box, .sc .logo-box { border-radius: 22px; padding: 12px 18px; }
-    .sb .tit { flex: none; --t: 104px; color: #fff; min-height: calc(2 * .95 * 104px * var(--s)); }
-    .sb.story .tit { --t: 110px; min-height: calc(2 * .95 * 110px * var(--s)); }
-    .sb .tit > div { font-weight: 800; letter-spacing: -.035em; line-height: .95; }
-    .sb .tit small { display: block; font-size: ${z(40)}; font-weight: 700; letter-spacing: -.01em; color: #FCCF02; margin-top: 12px; line-height: 1.15; white-space: pre-line; }
-    .sb .centro { flex: none; display: flex; gap: ${q(44)}; align-items: center; }
-    .sb.story .centro { padding-top: 22px; }
-    .sb .foglio { flex: none; width: ${q(430)}; background: #fff; border-radius: 28px; text-align: center; position: relative;
-      box-shadow: 0 16px 40px rgba(0,0,0,.35); transform: rotate(-2deg); }
-    .sb .foglio .mese { font-size: ${z(46)}; font-weight: 800; border-radius: 28px 28px 0 0; padding: ${q(30)} 0 ${q(14)}; letter-spacing: -.01em; }
-    .sb .anello { position: absolute; top: -22px; width: 30px; height: 58px; border-radius: 15px; background: #D5DAE1; border: 5px solid #14202E; }
-    .sb .foglio .giorno { font-size: ${z(48)}; font-weight: 700; margin-top: ${q(18)}; }
-    .sb .foglio .num { font-size: ${q(250)}; font-weight: 800; line-height: .82; letter-spacing: -.05em; margin-top: ${q(6)}; }
-    .sb.story .foglio .num { font-size: ${q(220)}; }
-    .sb .foglio .ora { font-size: ${z(58)}; font-weight: 800; padding: ${q(14)} 0 ${q(28)}; }
-    .sb .dati { flex: 1; color: #fff; min-width: 0; }
-    .sb .dati .et { font-size: ${z(38)}; font-weight: 600; }
-    .sb.story .dati .et { font-size: ${z(44)}; }
-    .sb .dati .et ~ .et { margin-top: ${q(26)}; }
-    .sb .dati .v { font-size: ${z(56)}; font-weight: 800; line-height: 1.08; letter-spacing: -.02em; margin-top: 6px; }
-    .sb .dati b { color: #FCCF02; }
-    .sb .tit small b { color: #fff; }
-    .sb .dati small { font-size: ${z(40)}; font-weight: 600; letter-spacing: 0; color: #fff; }
-    .sb.story .dati small { font-size: ${z(44)}; }
-    .sb .evid { flex: none; background: #FCCF02; border-radius: 28px; padding: ${q(28)} 40px; color: #084C8D; box-shadow: 0 12px 30px rgba(0,0,0,.3);
-      font-size: ${z(54)}; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
-    .sb .isc { flex: none; margin-top: auto; display: flex; column-gap: 24px; align-items: center; background: #fff; color: #084C8D;
-      border-radius: 28px; padding: 20px 32px; box-shadow: 0 12px 30px rgba(0,0,0,.25); }
-    .sb .isc > svg, .sc .isc > svg { flex: none; width: 72px; height: 72px; fill: currentColor; }
-    .sb .isc > div, .sc .isc > div { font-size: ${z(40)}; font-weight: 600; line-height: 1.2; }
-    .sb.story .isc > div, .sc.story .isc > div { font-size: ${z(44)}; }
-    .sb .isc > div > b, .sc .isc > div > b { display: block; font-size: ${z(48)}; letter-spacing: -.02em; }
-    .sb.story .isc > div > b { font-size: ${z(46)}; }
-    .sb .mese-intero { flex: none; background: #fff; border-radius: 28px; box-shadow: 0 16px 40px rgba(0,0,0,.35); position: relative; padding-bottom: 18px; }
-    .sb .mese-intero .mese { background: #FCCF02; color: #084C8D; font-size: ${q(50)}; font-weight: 800; text-align: center;
-      border-radius: 28px 28px 0 0; padding: ${q(26)} 0 ${q(12)}; }
-    .sb .righe { padding: 6px 28px 0; }
-    .sb .righe > div { display: flex; align-items: center; gap: 20px; padding: ${q(13)} 0; border-bottom: 2px solid #E4E6EB; }
-    .sb .righe > div:last-child { border-bottom: 0; }
-    .sb .righe .giorno { flex: none; width: ${q(210)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: ${q(6)} 0; }
-    .sb .righe .meta { font-size: ${q(52)}; font-weight: 700; line-height: 1.1; min-width: 0; }
-    .sb .righe .corso { margin-left: auto; flex: none; font-size: ${q(34)}; font-weight: 800; color: #084C8D; border: 3px solid #084C8D; border-radius: 14px; padding: 2px 14px; }
-
-    .sc .monti { position: absolute; left: 0; top: 380px; width: 1080px; height: 400px; }
-    .sc.story .monti { top: 560px; }
-    .sc .col { padding: 56px 64px; }
-    .sc.story .col { padding: 262px 64px 352px; }
-    .sc .nome { flex: none; --t: 150px; height: ${q(270)}; margin-top: ${q(28)}; }
-    .sc.story .nome { height: auto; margin-top: ${q(44)}; }
-    .sc .nome > div { font-weight: 800; letter-spacing: -.045em; line-height: .9; }
-    .sc .scena { flex: none; height: ${q(150)}; position: relative; z-index: 1; margin-bottom: -14px; }
-    .sc.story .scena { flex: 1 1 0; height: auto; min-height: 0; }
-    .sc .scena svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .sc .nastro { flex: none; position: relative; z-index: 2; margin: 0 -110px; transform: rotate(-2deg); text-align: center; font-size: ${q(72)};
-      font-weight: 800; letter-spacing: -.03em; padding: 16px 0 22px; white-space: nowrap; box-shadow: 0 10px 24px rgba(6,57,106,.3); }
-    .sc.story .nastro { font-size: ${q(88)}; }
-    .sc .nastro.mese { margin-top: ${q(34)}; }
-    /* Nel post nome, disegno e fascia stanno fermi: se il testo non ci sta si stringe solo il riquadro (data-adatta). */
-    .sc .scheda { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin-top: ${q(34)}; background: #fff; color: #084C8D;
-      border-radius: 28px; padding: 22px 32px 18px; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
-    .sc.story .scheda { flex: none; overflow: visible; margin-top: ${q(44)}; }
-    .sc .info { flex: 1 0 auto; }
-    .sc .gancio { font-size: ${z(58)}; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
-    .sc.story .gancio { font-size: ${z(66)}; }
-    .sc .riga { font-size: ${z(46)}; font-weight: 700; margin-top: 8px; line-height: 1.15; }
-    .sc.story .riga { font-size: ${z(56)}; }
-    .sc .poi { font-size: ${z(40)}; font-weight: 600; margin-top: 8px; line-height: 1.2; white-space: pre-line; }
-    .sc.story .poi { font-size: ${z(46)}; }
-    .sc .info b { background: #084C8D; color: #FCCF02; padding: 0 .16em; border-radius: .14em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-    .sc .isc { flex: none; display: flex; column-gap: 24px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 3px solid #C7D0DA; }
-    .sc.story .isc > svg { width: 70px; height: 70px; }
-    .sc .righe { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
-    .sc .righe > div { display: flex; align-items: center; gap: 20px; }
-    .sc .righe .giorno { flex: none; width: ${q(210)}; text-align: center; border-radius: 999px; font-size: ${q(36)}; font-weight: 800; padding: 4px 0; }
-    .sc .righe .meta { font-size: ${q(50)}; font-weight: 800; letter-spacing: -.02em; min-width: 0; }
-    .sc .righe .corso { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: ${q(36)}; font-weight: 800; }
-
     /* K · Piani (grafica/proposte-post-social/sorgenti/k.css): la foto a tutta pagina col velo
      * sotto il testo, i piani a 45°, la tessera gialla del "quando". Le misure sono quelle della
      * tavola: --fine è dove comincia il testo, --su e --giu le fasce coperte della story. Niente
      * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
      * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
-    .cv.sk { --notte: 20,32,46; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
-    /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena, il logo
-     * le sta accanto in fondo (prima galleggiava a metà) e il testo parte più su, più grande. */
+    /* --velo: il fondo sotto il testo tende al blu scuro del club (prima nero: la foto usciva cupa). */
+    .cv.sk { --notte: 20,32,46; --velo: 6,57,106; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
+    /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena e il
+     * testo parte più su, più grande. Logo e coccarda stanno dove sono nel post (15/10); l'angolo
+     * (800, prima 660) tiene dentro il logo, che sta 250 px più in basso che nel post. */
     /* In fondo 300 px per la risposta di Instagram (prima 340; la zona consigliata è 270): con
      * due telefoni la story di una gita perdeva la riga della scadenza. */
-    .cv.sk.story { --fine: 726px; --angolo: 660px; --cuneo: 680px; --su: 250px; --giu: 300px; }
+    .cv.sk.story { --fine: 726px; --angolo: 800px; --cuneo: 680px; --su: 250px; --giu: 300px; }
     .cv.sk.giallo { --notte: 18,18,18; }
-    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
+    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 45%); }
     .sk .piano { position: absolute; inset: 0; }
-    .sk .scuro { background: linear-gradient(180deg, rgba(var(--notte),0) 0, rgba(var(--notte),0) calc(var(--fine) - 200px),
-      rgba(var(--notte),.66) calc(var(--fine) + 10px), rgba(var(--notte),.76) 100%); }
+    .sk .scuro { background: linear-gradient(180deg, rgba(var(--velo),0) 0, rgba(var(--velo),0) calc(var(--fine) - 200px),
+      rgba(var(--velo),.72) calc(var(--fine) + 10px), rgba(var(--velo),.82) 100%); }
     .sk .angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
     .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
-    .sk .finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(#084C8D, #084C8D), var(--immagine) center 45% / cover;
-      background-blend-mode: normal, color, normal; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
+    /* Nella finestra la foto in bianco e nero tinta di blu: tre livelli (foto, blu in "color", velo blu),
+     * così la foto si ingrandisce (--zoom) senza ingrandire il taglio. */
+    .sk .finestra { isolation: isolate; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
     .sk .finestra.fondo { clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
     .sk .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
     .sk.giallo .angolo, .sk.giallo .finestra { background: none; opacity: .7; }
-    .sk .grigi, .sk .tinta { position: absolute; inset: 0; }
-    .sk .grigi { background: var(--immagine) center 45% / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+    .sk .grigi, .sk .tinta, .sk .foto-blu, .sk .colore-blu, .sk .velo-blu { position: absolute; inset: 0; }
+    /* La foto ingrandita (photo_zoom) attorno al punto scelto (photo_x, photo_y), uguale in ogni livello. */
+    .sk .foto, .sk .grigi, .sk .foto-blu { transform: scale(var(--zoom, 1)); transform-origin: var(--pos, 50% 45%); }
+    .sk .grigi { background: var(--immagine) var(--pos, 50% 45%) / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+    .sk .foto-blu { background: var(--immagine) var(--pos, 50% 45%) / cover; }
+    .sk .colore-blu { background: #084C8D; mix-blend-mode: color; }
+    .sk .velo-blu { background: rgba(8,76,141,.5); }
     .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
     .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
-    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
-    .cv.sk .logo-box img { height: 140px; }
-    .cv.sk.story .logo-box { top: calc(var(--su) + 270px); }
-    .cv.sk.story .logo-box img { height: 164px; }
-    .cv.sk .stella { left: 60px; right: auto; top: calc(var(--su) + 250px); }
-    /* Nella story il logo è sceso: la coccarda del corso gli sta sopra. */
-    .cv.sk.story .stella { top: calc(var(--su) + 6px); }
+    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
+    /* Il filo blu stacca l'anello giallo dalla foto (attrezzi gialli, angolo giallo dei corsi). */
+    .cv.sk .logo-box img { height: 224px; border-radius: 50%; box-shadow: 0 0 0 6px #084C8D, 0 6px 22px rgba(0,0,0,.45); }
+    .cv.sk.story .logo-box img { height: 226px; }
+    /* La coccarda del corso appesa all'angolo basso della tessera, lontana dal logo: due tondi vicini si confondevano.
+     * Post e story uguali (l'utente, 15/10): logo in alto a sinistra, coccarda che entra di 30 px nella tessera
+     * e scende 20 px sotto (nella story ×1,25, come la coccarda). */
+    .cv.sk .stella { left: auto; right: 374px; top: calc(var(--su) + 366px); }
+    .cv.sk.story .stella { right: 406px; top: calc(var(--su) + 229px); }
     /* La tessera del "quando", appesa al bordo alto: giorno, numero, mese e l'ora nella fascia blu. */
     .sk .tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px); background: #FCCF02; color: #084C8D;
       clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px); display: flex; flex-direction: column; justify-content: flex-end; }
@@ -817,12 +444,12 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .tit { margin-top: ${q(12)}; min-height: ${q(213)}; max-width: 640px; }
     .sk .tit > [data-righe] { font-weight: 800; line-height: .92; letter-spacing: -.035em; }
     .sk .tit.meta { max-width: 860px; }
-    .sk .tit.meta small { display: block; font-size: ${z(54)}; font-weight: 800; line-height: 1.05; letter-spacing: -.01em; margin-bottom: ${q(4)}; }
-    .sk .tit.meta [data-fit] { display: block; font-weight: 800; line-height: .9; letter-spacing: -.035em; }
+    /* La meta non scende con --s come il resto: lo fa solo se non ci sta in due righe. */
+    .sk .tit.meta [data-righe] { font-size: var(--t); line-height: .9; }
     /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
-    /* pre-line: gli a capo scritti nel sottotesto restano, come nelle altre grafiche. */
-    .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
+    /* pre-line: gli a capo scritti nel sottotesto restano. */
+    .sk .fatti p { font-size: ${z(50)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
     .sk.story .gancio { font-size: ${z(66)}; }
     .sk.story .tit { min-height: ${q(258)}; }
     .sk.story .fatti { margin-top: ${q(30)}; gap: ${q(12)}; }
@@ -833,19 +460,21 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .fatti p.dove { display: flex; gap: .28em; align-items: center; font-size: ${z(56)}; font-weight: 800; line-height: 1.05; }
     .sk.story .fatti p.dove { font-size: ${z(64)}; }
     .sk .fatti p.dove svg { flex: none; width: 1em; height: 1em; fill: #FCCF02; }
+    .sk .fatti p.nota { color: #FCCF02; font-weight: 800; }
     /* Le partenze della gita: un riquadro blu per fermata, l'ora in giallo (in una riga sola erano confuse). */
+    /* Non «box»: nella pagina c'è Bulma, che dà a .box colore grigio scuro e margini (il luogo usciva blu su blu). */
     .sk .partenze { display: flex; flex-wrap: wrap; gap: ${q(16)}; margin: ${q(4)} 0 ${q(6)}; }
     .sk .partenze .etichetta { flex-basis: 100%; font-size: ${z(44)}; font-weight: 700; color: #FCCF02; margin-bottom: -4px; }
-    .sk .partenze .box { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px;
+    .sk .partenze .fermata { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px; color: #fff;
       border-radius: 18px; background: #084C8D; text-shadow: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-    .sk .partenze .box b { font-size: ${z(64)}; font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
-    .sk .partenze .box span { font-size: ${z(46)}; font-weight: 700; line-height: 1.05; }
+    .sk .partenze .fermata b { font-size: ${z(64)}; font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
+    .sk .partenze .fermata span { font-size: ${z(46)}; font-weight: 700; line-height: 1.05; }
     /* Nel post lo spazio è poco: riquadri bassi, ora e fermata affiancate, l'etichetta in fila con loro. */
     .sk:not(.story) .partenze { align-items: center; }
     .sk:not(.story) .partenze .etichetta { flex-basis: auto; margin: 0 4px 0 0; color: #fff; font-size: ${z(46)}; font-weight: 500; }
-    .sk:not(.story) .partenze .box { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
-    .sk:not(.story) .partenze .box b { font-size: ${z(46)}; padding: 0 10px; }
-    .sk:not(.story) .partenze .box span { font-size: ${z(44)}; }
+    .sk:not(.story) .partenze .fermata { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
+    .sk:not(.story) .partenze .fermata b { font-size: ${z(46)}; padding: 0 10px; }
+    .sk:not(.story) .partenze .fermata span { font-size: ${z(44)}; }
     /* I telefoni: numero e icona in giallo, senza riquadri (costerebbero righe). */
     .sk .isc .tel > svg { color: #FCCF02; }
     .sk .isc .tel b { color: #FCCF02; }
@@ -854,7 +483,7 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
       -webkit-box-decoration-break: clone; box-decoration-break: clone; }
     .sk .isc { flex: none; display: flex; column-gap: 20px; align-items: center; margin-top: ${q(14)}; }
     .sk .isc > svg { flex: none; width: 56px; height: 56px; fill: currentColor; }
-    .sk .isc > div { font-size: ${z(38)}; font-weight: 600; line-height: 1.2; }
+    .sk .isc > div { font-size: ${z(42)}; font-weight: 600; line-height: 1.2; }
     .sk .isc > div > b { display: block; font-size: ${z(46)}; font-weight: 800; letter-spacing: -.01em; }
     /* Il calendario: una riga per gita, il giorno nel colore della gita, il corso contornato. */
     .sk .righe { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(8)}; }
@@ -875,7 +504,7 @@ function coloreNuovo(k) {
 }
 
 /* Quello che chi pubblica ha evidenziato ("*fino al 13 gennaio*") finisce in
- * <b>, che ogni grafica mette in evidenza a modo suo, senza gli asterischi.
+ * <b>, che la K mette nei riquadrini gialli, senza gli asterischi.
  * Con `auto` (le informazioni) anche orari, prezzi e date ("ore 20:00",
  * "€ 30", "mercoledì 7 aprile", "14/01"); nel sottotesto no, decide chi
  * scrive. Il prezzo viene prima dell'orario: "12.50 €" è un prezzo. */
@@ -884,16 +513,13 @@ const EVIDENZA = new RegExp(`€\\s?\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\
 const evidenzia = (testo, auto = true) => String(testo ?? "").split(/(\*[^*\n]+\*)/).map((pezzo, i) => (i % 2
   ? `<b>${escS(pezzo.slice(1, -1))}</b>` : auto ? escS(pezzo).replace(EVIDENZA, "<b>$&</b>") : escS(pezzo))).join("");
 
-/** "Gita a La Thuile": il titolo dice cos'è (README delle proposte); `capo` va fra "Gita a" e la meta. */
-const titoloGita = (dest, capo = " ") => (/^gita\b/i.test(dest || "") ? escS(dest) : `Gita a${capo}${escS(dest)}`);
+/* Il titolo di un evento (la gita ha per titolo la meta, in postK()); un post
+ * di solo sottotesto prende il nome del tipo ("Servizi"), così la grafica
+ * resta quella e il sottotesto sta al suo posto. */
+const titoloNuovo = (s) => escS(String(s.title || "").trim() || categoria(s.cat).label);
 
-/* Il titolo del post; un post di solo sottotesto prende il nome del tipo
- * ("Servizi"), così la grafica resta quella e il sottotesto sta al suo posto. */
-const titoloNuovo = (s, capo) => (s.kind === "gita" ? titoloGita(s.dest, capo)
-  : escS(String(s.title || "").trim() || categoria(s.cat).label));
-
-/* Le informazioni che hanno un posto loro: l'orario (nel foglio di B, con i
- * prezzi in C) e le iscrizioni (nel riquadro giallo di B, in fondo in A e C). */
+/* Le informazioni che hanno un posto loro: l'orario (nella tessera della K) e
+ * le iscrizioni (in fondo ai dati). */
 const ORARIO = /^(ora|orario|ore)$/i, ISCRIZIONI = /^iscrizion/i;
 const fattoDi = (fatti, re) => fatti.find(([n]) => re.test(String(n || "").trim()));
 
@@ -911,14 +537,9 @@ function iscrizioni(contatti = []) {
 
 const icoPin = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
 
-const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt=""></div>`;
+const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logoTondo}" alt=""></div>`;
 
-/* Lo sciatore sul tappetino del corso, nelle righe del calendario. */
-const sciatore = (col = "currentColor") => `<svg viewBox="0 0 250 240" aria-hidden="true"><rect x="4" y="208" width="242" height="16" rx="8" fill="${col}"/>
-  <g stroke="${col}" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M120 70 L84 136"/><path d="M114 82 L192 92"/>
-  <path d="M84 136 L154 142 L140 206 L172 206"/></g><circle cx="134" cy="38" r="27" fill="${col}"/></svg>`;
-
-/** La coccarda del corso in alto a destra (Calendario e Divano); nella story più grande. */
+/** La coccarda del corso, appesa alla tessera; nella story più grande. */
 const stellaNuova = (story) => `<div class="stella" style="width:${210 * (story ? 1.25 : 1)}px;height:${210 * (story ? 1.25 : 1)}px">${stellaCorso(story ? 1.25 : 1)}</div>`;
 
 /** Le gite del mese, una riga ciascuna: il giorno nel colore della gita, la meta, il corso (`corso`, l'HTML). */
@@ -926,240 +547,8 @@ function righeMese(righe, breve, corso) {
   return righe.map(([k, d, dest, c]) => {
     const C = categoria(k), giorno = `${C.day} ${breve ? Number(String(d).slice(0, 2)) : d}`.trim();
     return `<div><span class="giorno" style="background:${C.c};color:${scrittaSu(C.c)}">${escS(giorno)}</span>
-      <span class="meta">${escS(dest)}</span>${c ? corso : ""}</div>`;
+      <span class="meta">${escS(unaRiga(dest))}</span>${c ? corso : ""}</div>`;
   }).join("");
-}
-
-// --- A · Biglietto -----------------------------------------------------------
-
-/* Senza foto, in alto il paesaggio disegnato (largo: il post ne mostra la
- * parte bassa, la story tutto); nel corso, con la figura dell'esercizio. */
-const PAESAGGIO = `<svg class="paesaggio" viewBox="0 0 1080 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <defs><linearGradient id="cielo-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E7CB8"/><stop offset=".75" stop-color="#fff"/></linearGradient>
-  <linearGradient id="neve-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#C9D7E4"/></linearGradient></defs>
-  <rect width="1080" height="600" fill="url(#cielo-a)"/>
-  <polygon fill="#8FA9C4" points="0,400 150,290 290,350 460,230 600,330 760,220 900,310 1080,250 1080,600 0,600"/>
-  <polygon fill="url(#neve-a)" points="0,480 200,360 340,430 560,300 740,430 900,360 1080,450 1080,600 0,600"/>
-  <polygon fill="#5E7890" opacity=".35" points="560,300 610,350 590,390 640,450 560,420 520,350"/>
-  <polygon fill="#2E4A63" points="0,540 140,500 260,530 420,490 600,540 800,500 1080,545 1080,600 0,600"/>
-  <polygon fill="#fff" points="0,585 1080,560 1080,600 0,600"/></svg>`;
-const FIGURA = `<svg class="figura" viewBox="0 0 230 240" aria-hidden="true"><rect x="18" y="214" width="200" height="18" rx="9" fill="#FCCF02"/>
-  <g stroke="#084C8D" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M120 70 L84 136"/><path d="M114 82 L192 92"/>
-  <path d="M84 136 L154 142 L140 206 L172 206"/></g><circle cx="134" cy="38" r="25" fill="#084C8D"/></svg>`;
-
-/* Il biglietto: in alto la foto con il logo e il bollo, il taglio, il testo, le iscrizioni. */
-function biglietto(C, story, scena, bollo, testo, contatti) {
-  return `<div class="cv nuovo sa${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px;background:${C.c}">
-    ${fiocchi(1080, story ? 1920 : 1350, C.c === GIALLO ? .5 : .3)}
-    <div class="biglietto" data-adatta=".6">
-      <div class="scena">${scena}${logoNuovo()}<div class="bollo">${bollo}</div></div>
-      <div class="taglio"><i></i></div>
-      <div class="testo">${testo}</div>
-      ${iscrizioni(contatti)}
-    </div>
-    <div class="luna" style="left:30px;background:${C.c}"></div><div class="luna" style="right:30px;background:${C.c}"></div>
-    ${story ? `<div class="firma" style="color:${C.ink}">SCI CLUB DON BOSCO</div>` : ""}
-  </div>`;
-}
-
-/** A · Biglietto: il biglietto bianco sul colore del post, la foto in alto e il bollo con la data. */
-function postBiglietto(s) {
-  const C = coloreNuovo(s.cat), g = giornoDi(s.iso), gita = s.kind === "gita";
-  const bollo = g ? `<div class="g">${maiuscola(GIORNI[g.getDay()])}</div><div class="n">${dataCorta(s.iso)}</div>`
-    : `<div class="g">${escS(categoria(s.cat).label)}</div>`;
-  const quota = s.prices.map(([n, v]) => (n ? `${escS(n)} <b>${escS(v)}</b>` : `<b>${escS(v)}</b>`)).join(" · ");
-  const righe = gita ? [
-    ["Partenze", partenze(s).map(([t, l]) => `${t ? `<b>ore ${escS(t)}</b> ` : ""}${escS(l)}`).join("<br>")],
-    ["Quota", quota],
-    ["Iscrizioni", s.scadenza && `entro <b>${escS(s.scadenza)}</b>`],
-    ["Corso", s.corso && "nello stesso giorno"],
-  ] : [...s.facts.map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]];
-  // La quota prima delle iscrizioni, come nella proposta.
-  const iscr = righe.findIndex(([n]) => ISCRIZIONI.test(n));
-  if (!gita && iscr >= 0) righe.splice(iscr, 0, righe.pop());
-  const sub = gita ? "" : String(s.sub || "").trim();
-  const testo = `<div class="tit" data-cede><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
-    ${righe.some(([, v]) => v) ? `<dl class="fatti">${righe.filter(([, v]) => v).map(([n, v]) => `<dt>${n}</dt><dd>${v}</dd>`).join("")}</dl>` : ""}`;
-  const scena = s.photo ? `<img class="foto" src="${escS(s.photo)}" alt="">` : PAESAGGIO + (s.cat === "corso" ? FIGURA : "");
-  return biglietto(C, s.fmt === "story", scena, bollo, testo, s.contatti);
-}
-
-/** Calendario del mese in A: il bollo con mese e anno, le gite in righe nel biglietto. */
-function meseBiglietto(titolo, righe, mese) {
-  const [anno, m] = String(mese || "").split("-");
-  const bollo = m ? `<div class="g">${maiuscola(MESI[m - 1])}</div><div class="n">${escS(anno)}</div>` : '<div class="g">Calendario</div>';
-  const testo = `<div class="tit" data-cede><div data-righe="2">${escS(titolo)}</div></div>
-    <div class="righe">${righeMese(righe, false, `<span class="corso">${sciatore()}Corso</span>`)}</div>`;
-  return biglietto(coloreNuovo("cal"), false, PAESAGGIO, bollo, testo, []);
-}
-
-// --- B · Calendario ----------------------------------------------------------
-
-/* Montagne di sera in bianco trasparente sul blu (un solo blu). */
-const MONTI_B = `<svg class="monti" viewBox="0 0 1080 330" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <polygon fill="#fff" fill-opacity=".07" points="0,150 160,60 300,120 470,20 610,110 770,10 910,100 1080,40 1080,330 0,330"/>
-  <polygon fill="#fff" fill-opacity=".11" points="0,230 200,130 340,190 560,80 740,200 900,140 1080,210 1080,330 0,330"/>
-  <polygon fill="#fff" fill-opacity=".16" points="0,300 140,250 260,280 420,240 600,290 800,250 1080,295 1080,330 0,330"/></svg>`;
-
-const fondoB = (story, corpo, corso = false) => `<div class="cv nuovo sb${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px">
-    ${fiocchi(1080, story ? 1920 : 1350, .18)}${MONTI_B}
-    <div class="col" data-adatta=".6"><div class="testa">${logoNuovo()}</div>${corpo}</div>
-    ${corso ? stellaNuova(story) : ""}</div>`;
-
-/**
- * B · Calendario: sempre il blu del club; il foglio a strappo porta la data,
- * con la testata nel colore del post (il giallo al posto del blu, che sul
- * fondo blu non si vedrebbe). Accanto le informazioni; sotto, in un riquadro
- * giallo, la scadenza delle iscrizioni. Negli eventi l'"Orario" va nel foglio
- * e "Iscrizioni" nel riquadro giallo; senza data il foglio non c'è.
- */
-function postCalendario(s) {
-  const g = giornoDi(s.iso), gita = s.kind === "gita", c = coloreNuovo(s.cat).c, testa = c === BLU ? GIALLO : c;
-  const fatti = gita ? [] : s.facts.filter(([, v]) => String(v || "").trim());
-  const ora = g && fattoDi(fatti, ORARIO), iscr = fattoDi(fatti, ISCRIZIONI);
-  const evid = gita ? s.scadenza && `Iscrizioni entro ${s.scadenza}` : iscr && `Iscrizioni ${iscr[1]}`;
-  const quota = s.prices.map(([n, v]) => `<b>${escS(v)}</b>${n ? ` <small>${escS(n)}</small>` : ""}`).join("<br>");
-  const dati = (gita ? [
-    ["Partenze", partenze(s).map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join("<br>")],
-    ["Quota", quota],
-  ] : [...fatti.filter((f) => f !== ora && f !== iscr).map(([n, v]) => [escS(n), evidenzia(v)]), ["Quota", quota]]).filter(([, v]) => v);
-  const foglio = g ? `<div class="foglio"><i class="anello" style="left:26%"></i><i class="anello" style="right:26%"></i>
-      <div class="mese" style="background:${testa};color:${scrittaSu(testa)}">${maiuscola(MESI[g.getMonth()])}</div>
-      <div class="giorno">${maiuscola(GIORNI[g.getDay()])}</div>
-      <div class="num" style="color:${testa === GIALLO ? BLU : suBianco(testa)}">${g.getDate()}</div>
-      <div class="ora">${ora ? escS(senzaSegni(ora[1])) : "&nbsp;"}</div></div>` : "";
-  const sub = gita ? "" : String(s.sub || "").trim();
-  return fondoB(s.fmt === "story", `
-    <div class="tit" data-cede><div data-righe="2">${titoloNuovo(s)}</div>${sub ? `<small>${evidenzia(sub, false)}</small>` : ""}</div>
-    ${foglio || dati.length ? `<div class="centro">${foglio}<div class="dati">${dati.map(([n, v]) => `<div class="et">${n}</div><div class="v">${v}</div>`).join("")}</div></div>` : ""}
-    ${evid ? `<div class="evid">${escS(senzaSegni(evid))}</div>` : ""}
-    ${iscrizioni(s.contatti)}`, gita && s.corso);
-}
-
-/** Calendario del mese in B: le gite in righe dentro il foglio, con la testata del mese (senza la griglia dei giorni). */
-function meseCalendario(titolo, righe, mese) {
-  const [anno, m] = String(mese || "").split("-");
-  return fondoB(false, `
-    <div class="tit" data-cede><div data-righe="2">${escS(titolo)}</div></div>
-    <div class="mese-intero"><i class="anello" style="left:22%"></i><i class="anello" style="right:22%"></i>
-      <div class="mese">${m ? `${maiuscola(MESI[m - 1])} ${escS(anno)}` : "Le gite del mese"}</div>
-      <div class="righe">${righeMese(righe, false, '<span class="corso">Corso</span>')}</div></div>
-    ${iscrizioni()}`);
-}
-
-// --- C · Divano --------------------------------------------------------------
-
-/* Fondo di C: fiocchi e montagne stilizzate in bianco trasparente, più opache
- * sul giallo, dove il bianco si vede meno. */
-const montiC = (giallo) => `<svg class="monti" data-segue viewBox="0 0 1080 400" preserveAspectRatio="none" aria-hidden="true">
-  <polygon fill="#fff" fill-opacity="${giallo ? .34 : .16}" points="0,250 150,140 270,200 430,60 570,180 710,100 870,210 1080,110 1080,400 0,400"/>
-  <polygon fill="#fff" fill-opacity="${giallo ? .5 : .24}" points="0,330 180,225 330,295 520,180 700,295 880,230 1080,305 1080,400 0,400"/></svg>`;
-
-/* I disegni sopra la fascia, uno per tipo di post. Il divano vuoto con il
- * telecomando e gli sci (il corso, sempre sul giallo). */
-const DIVANO = `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-  <ellipse cx="350" cy="352" rx="330" ry="14" fill="#084C8D" opacity=".18"/>
-  <rect x="72" y="300" width="28" height="48" rx="6" fill="#14202E"/><rect x="560" y="300" width="28" height="48" rx="6" fill="#14202E"/>
-  <rect x="80" y="56" width="500" height="196" rx="50" fill="#084C8D"/>
-  <rect x="118" y="86" width="206" height="118" rx="38" fill="#fff" fill-opacity=".16"/><rect x="336" y="86" width="206" height="118" rx="38" fill="#fff" fill-opacity=".16"/>
-  <rect x="40" y="222" width="580" height="92" rx="28" fill="#084C8D"/>
-  <rect x="112" y="186" width="214" height="70" rx="26" fill="#fff" fill-opacity=".28"/><rect x="334" y="186" width="214" height="70" rx="26" fill="#fff" fill-opacity=".28"/>
-  <rect x="18" y="138" width="104" height="176" rx="48" fill="#084C8D"/><rect x="538" y="138" width="104" height="176" rx="48" fill="#084C8D"/>
-  <g transform="rotate(-10 215 205)"><rect x="160" y="190" width="110" height="30" rx="12" fill="#14202E"/>
-    <circle cx="182" cy="205" r="7" fill="#B3261E"/><circle cx="208" cy="205" r="5" fill="#fff"/><circle cx="228" cy="205" r="5" fill="#fff"/><circle cx="248" cy="205" r="5" fill="#fff"/></g>
-  <g transform="rotate(-9 700 350)">
-    <line x1="752" y1="350" x2="752" y2="40" stroke="#14202E" stroke-width="9" stroke-linecap="round"/>
-    <circle cx="752" cy="318" r="15" fill="none" stroke="#14202E" stroke-width="6"/><rect x="743" y="30" width="18" height="46" rx="8" fill="#14202E"/>
-    <rect x="650" y="16" width="36" height="336" rx="18" fill="#B3261E"/><rect x="694" y="8" width="36" height="344" rx="18" fill="#B3261E"/>
-    <rect x="650" y="16" width="36" height="46" rx="18" fill="#fff"/><rect x="694" y="8" width="36" height="46" rx="18" fill="#fff"/>
-    <rect x="646" y="190" width="44" height="34" rx="8" fill="#14202E"/><rect x="690" y="186" width="44" height="34" rx="8" fill="#14202E"/></g></svg>`;
-/* Il pullman della gita con gli sci sul tetto: blu sul giallo, bianco sugli altri colori (vetri nel colore del fondo). */
-const pullman = (corpo, vetri) => `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-  <ellipse cx="390" cy="352" rx="350" ry="14" fill="#14202E" opacity=".15"/>
-  <rect x="150" y="66" width="440" height="14" rx="7" fill="#14202E"/>
-  <rect x="170" y="40" width="400" height="24" rx="12" fill="#14202E"/><rect x="170" y="40" width="44" height="24" rx="12" fill="#fff"/>
-  <rect x="190" y="14" width="400" height="24" rx="12" fill="${corpo}"/><rect x="190" y="14" width="44" height="24" rx="12" fill="${vetri}"/>
-  <rect x="60" y="86" width="660" height="236" rx="40" fill="${corpo}"/>
-  <rect x="96" y="118" width="96" height="92" rx="16" fill="${vetri}"/><rect x="210" y="118" width="96" height="92" rx="16" fill="${vetri}"/>
-  <rect x="324" y="118" width="96" height="92" rx="16" fill="${vetri}"/><rect x="438" y="118" width="96" height="92" rx="16" fill="${vetri}"/>
-  <path d="M560 118 H664 Q690 118 694 146 L700 210 H560 Z" fill="${vetri}"/>
-  <rect x="60" y="234" width="660" height="20" fill="#FCCF02"/><rect x="680" y="262" width="40" height="22" rx="8" fill="#FCCF02"/>
-  <circle cx="200" cy="322" r="44" fill="#14202E"/><circle cx="200" cy="322" r="18" fill="#D5DAE1"/>
-  <circle cx="590" cy="322" r="44" fill="#14202E"/><circle cx="590" cy="322" r="18" fill="#D5DAE1"/></svg>`;
-/* Due calici che brindano (cene e feste, sul blu). */
-const CALICI = `<svg viewBox="250 -10 280 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-  <g transform="rotate(14 330 300)"><path d="M275 60 C275 150 295 176 330 179 C365 176 385 150 385 60 Z" fill="#fff"/>
-    <path d="M279 112 C283 160 300 173 330 175 C360 173 377 160 381 112 Z" fill="#FCCF02"/>
-    <rect x="325" y="178" width="10" height="96" fill="#fff"/><ellipse cx="330" cy="276" rx="46" ry="10" fill="#fff"/></g>
-  <g transform="rotate(-14 450 300)"><path d="M395 60 C395 150 415 176 450 179 C485 176 505 150 505 60 Z" fill="#fff"/>
-    <path d="M399 112 C403 160 420 173 450 175 C480 173 497 160 501 112 Z" fill="#FCCF02"/>
-    <rect x="445" y="178" width="10" height="96" fill="#fff"/><ellipse cx="450" cy="276" rx="46" ry="10" fill="#fff"/></g>
-  <g fill="#fff"><polygon points="390,0 400,26 426,30 404,44 410,70 390,56 370,70 376,44 354,30 380,26"/>
-    <circle cx="320" cy="20" r="8"/><circle cx="462" cy="18" r="8"/><circle cx="292" cy="58" r="6"/><circle cx="490" cy="56" r="6"/></g></svg>`;
-/* Due porte da slalom (la gara, sul blu). */
-const PALETTI = `<svg viewBox="0 0 780 370" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
-  <ellipse cx="390" cy="352" rx="300" ry="14" fill="#14202E" opacity=".15"/>
-  <rect x="236" y="40" width="16" height="312" rx="8" fill="#fff"/><path d="M252 52 L392 100 L252 148 Z" fill="#FCCF02"/>
-  <rect x="508" y="80" width="16" height="272" rx="8" fill="#fff"/><path d="M524 92 L664 140 L524 188 Z" fill="#fff"/></svg>`;
-
-function disegnoDivano(s, C) {
-  if (s.kind === "gita") return C.c === GIALLO ? pullman(BLU, "#fff") : pullman("#fff", C.c);
-  return { corso: DIVANO, cena: CALICI, gara: PALETTI }[s.cat] || "";
-}
-
-/* Il fondo di C: il colore del post, in alto il nome grande, poi il disegno
- * (scena), la fascia e il riquadro bianco con dentro le iscrizioni. Sul blu
- * il nome e la fascia sono gialli, sul giallo e sugli altri colori blu. */
-function manifesto(C, story, nome, scena, fascia, dentro, corso = false) {
-  const giallo = C.c === GIALLO, blu = C.c === BLU;
-  return `<div class="cv nuovo sc${story ? " story" : ""}" style="width:1080px;height:${story ? 1920 : 1350}px;background:${C.c};color:${C.ink}">
-    ${fiocchi(1080, story ? 1920 : 1350, giallo ? .7 : .38)}${montiC(giallo)}
-    <div class="col"${story ? ' data-adatta=".6"' : ""}>
-      <div class="testa">${logoNuovo()}</div>
-      <div class="nome" data-cede style="color:${blu ? GIALLO : C.ink}"><div data-righe="2">${nome}</div></div>
-      ${scena === null ? "" : `<div class="scena"${story ? "" : ' data-cede="70"'}>${scena}</div>`}
-      <div class="nastro${scena === null ? " mese" : ""}" data-ancora style="background:${blu ? GIALLO : BLU};color:${blu ? BLU : "#fff"}">${escS(fascia)}</div>
-      <div class="scheda"${story ? "" : ' data-adatta=".6"'}>${dentro}</div>
-    </div>${corso ? stellaNuova(story) : ""}</div>`;
-}
-
-/**
- * C · Divano: il manifesto. In alto il nome ("Gita a La Thuile"), nella
- * fascia la data, sotto in un riquadro bianco il gancio scritto per il post
- * ("Tutti in pista!", social_events.hook) e i dati; orari, prezzi e scadenze
- * in un riquadrino blu con la scritta gialla.
- */
-function postDivano(s) {
-  const C = coloreNuovo(s.cat), gita = s.kind === "gita";
-  const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
-  const p = partenze(s);
-  // Orario e luogo si capiscono da soli: senza etichetta, come nelle proposte.
-  const fatto = ([n, v]) => `${n && !ORARIO.test(String(n).trim()) && !/^(dove|luogo|quando)$/i.test(String(n).trim())
-    ? `${escS(n)}${ISCRIZIONI.test(String(n).trim()) ? " " : ": "}` : ""}${evidenzia(v)}`;
-  // Come nella proposta: l'orario e i prezzi su una riga sola, le iscrizioni in fondo.
-  const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
-  const ora = fattoDi(fatti, ORARIO), dove = fattoDi(fatti, /^dove$/i), iscr = fattoDi(fatti, ISCRIZIONI);
-  const righe = gita ? [
-    p.length && `<div class="riga">Partenze: ${p.map(([t, l]) => `${t ? `<b>${escS(t)}</b> ` : ""}${escS(l)}`).join(" · ")}</div>`,
-    quota && `<div class="riga">${quota}</div>`,
-    s.scadenza && `<div class="poi">Iscrizioni entro <b>${escS(s.scadenza)}</b></div>`,
-  ] : [
-    // In grande l'ora con i prezzi (o con il luogo) e il luogo; il resto sotto, più piccolo.
-    ora && `<div class="riga">${evidenzia(maiuscola(String(ora[1])))}${quota ? ` · ${quota}` : dove ? ` · ${evidenzia(dove[1])}` : ""}</div>`,
-    dove && (!ora || quota) && `<div class="riga">${evidenzia(dove[1])}</div>`,
-    !ora && quota && `<div class="riga">${quota}</div>`,
-    ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map((f) => `<div class="poi">${fatto(f)}</div>`),
-    String(s.sub || "").trim() && `<div class="poi">${evidenzia(String(s.sub).trim(), false)}</div>`,
-    iscr && `<div class="poi">${fatto(iscr)}</div>`,
-  ];
-  const dentro = `<div class="info">${s.hook ? `<div class="gancio">${escS(s.hook)}</div>` : ""}${righe.filter(Boolean).join("")}</div>${iscrizioni(s.contatti)}`;
-  return manifesto(C, s.fmt === "story", titoloNuovo(s, "<br>"), disegnoDivano(s, C), s.date || categoria(s.cat).label, dentro, gita && s.corso);
-}
-
-/** Calendario del mese in C: il nome, la fascia "Le gite del mese" e le gite nel riquadro bianco (niente disegno). */
-function meseDivano(titolo, righe) {
-  const dentro = `<div class="righe">${righeMese(righe, true, `<span class="corso">${sciatore()}corso</span>`)}</div>${iscrizioni()}`;
-  return manifesto(coloreNuovo("cal"), false, escS(titolo), null, "Le gite del mese", dentro);
 }
 
 // --- K · Piani -----------------------------------------------------------------
@@ -1167,25 +556,27 @@ function meseDivano(titolo, righe) {
 /* Il fondo della K: la foto (o il blu notte), il velo, i piani, logo, tessera e
  * la colonna del testo; nel giallo l'angolo e la finestra hanno la foto in grigi
  * col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
-function fondoK({ giallo, story, foto, fine }, tessera, testo, isc, corso) {
+function fondoK({ giallo, story, foto, pos, zoom, fine }, tessera, testo, isc, corso) {
   const livelli = giallo && foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
-  // Nell'url() del CSS virgolette e barre rovesce chiuderebbero la stringa: si codificano.
-  const url = foto && escS(String(foto).replace(/["\\\n]/g, encodeURIComponent));
-  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;)` : ""}${fine ? `;--fine:${fine}px` : ""}">
+  const finestra = giallo ? livelli : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
+  // Nell'url() del CSS si codifica tutto tranne i caratteri di un data URL: virgolette, barre rovesce,
+  // \f e \r chiuderebbero la stringa e il resto diventerebbe CSS (security review del 16/10).
+  const url = foto && escS(String(foto).replace(/[^A-Za-z0-9+/=:;,.%_-]/g, encodeURIComponent));
+  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"};--zoom:${zoom || 1}` : ""}${fine ? `;--fine:${fine}px` : ""}">
     ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
     <div class="piano scuro"></div><div class="piano angolo">${livelli}</div><div class="piano cuneo"></div>
-    ${foto ? `<div class="piano finestra">${livelli}</div>${story ? `<div class="piano finestra fondo">${livelli}</div>` : ""}` : ""}
+    ${foto ? `<div class="piano finestra">${finestra}</div>${story ? `<div class="piano finestra fondo">${finestra}</div>` : ""}` : ""}
     <div class="piano ombra"></div>
     ${logoNuovo()}${tessera}
     <div class="col">${testo}${isc}</div>${corso ? stellaNuova(story) : ""}</div>`;
 }
 
-/** La tessera del "quando": giorno, numero, mese e l'ora (nella gita la prima partenza). Senza data, niente tessera. */
+/** La tessera del "quando": giorno, numero, mese e l'ora (nella gita la partenza scelta, card_stop, o la prima). Senza data, niente tessera. */
 function tesseraK(s) {
   const d = giornoDi(s.iso);
   if (!d) return "";
-  const p = partenze(s);
-  const ora = s.kind === "gita" ? (p[0] && p[0][0] ? `ore ${p[0][0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
+  const p = partenze(s), scelta = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
+  const ora = s.kind === "gita" ? (scelta && scelta[0] ? `ore ${scelta[0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
   const story = s.fmt === "story";
   return `<div class="tessera"><span data-fit style="font-size:${story ? 62 : 54}px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
@@ -1193,7 +584,7 @@ function tesseraK(s) {
 
 /**
  * K · Piani: la foto a tutta pagina, il gancio giallo, il titolo bianco (nelle
- * gite «Gita a» piccolo e la meta grande, su una riga) e i dati con orari,
+ * gite «Gita a» piccolo e la meta grande, su due righe al massimo) e i dati con orari,
  * prezzi e scadenze nei riquadrini gialli. Corsi e gite di domenica in giallo e
  * nero, il resto in blu e nero (coloreNuovo).
  */
@@ -1207,8 +598,10 @@ function postK(s) {
   const entro = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
   const righe = gita ? [
+    // La nota facoltativa sotto la meta, in giallo ("Prova gratuita con i maestri").
+    s.nota && { html: `<p class="nota">${escS(senzaSegni(s.nota))}</p>` },
     p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
-      `<div class="box">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
+      `<div class="fermata">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
     s.scadenza && entro(s.scadenza),
   ] : [
@@ -1221,15 +614,25 @@ function postK(s) {
     iscr && entro(iscr[1]),
   ];
   const dest = String(s.dest || "").trim();
-  const meta = (testo) => `<div data-fit style="font-size:${story ? 168 : 150}px">${escS(testo)}</div>`;
+  // La meta va a capo dove l'ha scritto chi pubblica, o da sola se è più larga della riga; due righe al massimo,
+  // poi scende (fit(), data-righe). Prima stava sempre su una riga e una meta lunga diventava piccola.
+  // Su due righe scende a 104 (124 nella story, data-due): più grande della meta lunga stretta su una riga
+  // (~90), ma lascia spazio a partenze, quota e scadenza (a 116/140 la story di una gita scendeva al 66%).
+  const meta = (testo) => {
+    const righe = righeMeta(testo), due = story ? 124 : 104;
+    return `<div data-righe="2" data-due="${due}" style="--t:${righe.length > 1 ? due : story ? 168 : 150}px">${righe.map(escS).join("<br>")}</div>`;
+  };
   // data-cede: se il testo non ci sta, la seconda riga tenuta per il titolo si libera prima di stringere tutto.
+  // Nella gita il titolo è solo la meta: «Gita a» lo dice il gancio (l'utente: la riga in più era inutile).
   const tit = gita
-    ? `<div class="tit meta" data-cede>${/^gita\b/i.test(dest) ? meta(dest) : `<small>Gita a</small>${meta(dest)}`}</div>`
+    ? `<div class="tit meta" data-cede>${meta(dest)}</div>`
     : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${titoloNuovo(s)}</div></div>`;
-  // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto.
-  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${escS(s.hook) || "&nbsp;"}</div>${tit}
+  // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto. Nella gita, se è
+  // vuoto, dice «Gita a» (non se la meta dice già "Gita…").
+  const gancio = escS(s.hook) || (gita && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
+  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${gancio}</div>${tit}
     <div class="fatti">${righe.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
-  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
+  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
 }
 
 /** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
@@ -1242,6 +645,15 @@ function meseK(titolo, righe, mese) {
     <div class="righe">${righeMese(righe, true, '<span class="corso">corso</span>')}</div></div>`;
   return fondoK({ giallo: false, story: false, foto: null, fine: 470 }, tessera, testo, iscrizioni(), false);
 }
+
+/** Post o story di una gita o di un evento (modello da modelloPost()): sempre la K. */
+function disegnaPost(s) { return postK(s); }
+
+/** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per la tessera. */
+function disegnaCalendario(titolo, righe, mese = "") { return meseK(titolo, righe, mese); }
+
+/** Misure del post (non della story) e del calendario del mese: 4:5. */
+const misurePost = () => ({ w: 1080, h: 1350 });
 
 /** Copertina Facebook (820×312). */
 function disegnaCopertina(titolo, sotto) {
@@ -1414,7 +826,8 @@ function testoPost(ev, sp, stagione) {
     return righe.join("\n");
   }
   if (ev.kind === "gita") {
-    righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${ev.title}!`);
+    righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${unaRiga(ev.title)}!`);
+    if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
     if (ev.course) righe.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) righe.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) righe.push(`Quota soci: ${quote}`);
@@ -1434,6 +847,6 @@ function testoPost(ev, sp, stagione) {
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
                      contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
-                     impostaStile, stileCorrente: () => STILE, disegnaPost, disegnaCalendario, misureCalendario, misurePost,
-                     STILI, evidenzia, coloreNuovo, giornoMese };
+                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto,
+                     formatiCampagna, disegnaCopertina, photo };
 }
