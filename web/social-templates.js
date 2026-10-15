@@ -240,6 +240,8 @@ function fit(radice = document) {
   });
   radice.querySelectorAll("[data-righe]").forEach((el) => {
     const righe = Number(el.dataset.righe);
+    // La meta della gita che va a capo da sola scende al corpo di due righe (data-due) prima di stringere oltre.
+    if (el.dataset.due && el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5) el.style.setProperty("--t", el.dataset.due + "px");
     let t = parseFloat(getComputedStyle(el).getPropertyValue("--t"));
     const troppo = () => el.scrollWidth > el.clientWidth + 1
       || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * righe + 2;
@@ -274,8 +276,18 @@ function fit(radice = document) {
  */
 /** Come chiamare un post nell'elenco e nei nomi dei file: la prima riga del titolo, o del sottotesto se non ha titolo. */
 function nomePost(ev) {
+  if (ev.kind === "gita") return unaRiga(ev.title);
   return (String(ev.title || "").trim() || String(ev.subtitle || "").trim()).split("\n")[0].trim();
 }
+
+/** La meta della gita come la scrive chi pubblica, al massimo in due righe: righe vuote e spazi via, dalla terza in poi
+ *  sulla seconda. */
+function righeMeta(testo) {
+  const righe = String(testo || "").split(/\r?\n/).map((r) => r.trim().replace(/\s+/g, " ")).filter(Boolean);
+  return righe.length > 2 ? [righe[0], righe.slice(1).join(" ")] : righe;
+}
+/** La meta su una riga sola: calendario del mese, testo del post, nome nell'elenco. */
+const unaRiga = (testo) => righeMeta(testo).join(" ");
 
 function mancanti(ev) {
   const manca = [];
@@ -427,7 +439,8 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .tit { margin-top: ${q(12)}; min-height: ${q(213)}; max-width: 640px; }
     .sk .tit > [data-righe] { font-weight: 800; line-height: .92; letter-spacing: -.035em; }
     .sk .tit.meta { max-width: 860px; }
-    .sk .tit.meta [data-fit] { display: block; font-weight: 800; line-height: .9; letter-spacing: -.035em; }
+    /* La meta non scende con --s come il resto: lo fa solo se non ci sta in due righe. */
+    .sk .tit.meta [data-righe] { font-size: var(--t); line-height: .9; }
     /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
     /* pre-line: gli a capo scritti nel sottotesto restano. */
@@ -529,7 +542,7 @@ function righeMese(righe, breve, corso) {
   return righe.map(([k, d, dest, c]) => {
     const C = categoria(k), giorno = `${C.day} ${breve ? Number(String(d).slice(0, 2)) : d}`.trim();
     return `<div><span class="giorno" style="background:${C.c};color:${scrittaSu(C.c)}">${escS(giorno)}</span>
-      <span class="meta">${escS(dest)}</span>${c ? corso : ""}</div>`;
+      <span class="meta">${escS(unaRiga(dest))}</span>${c ? corso : ""}</div>`;
   }).join("");
 }
 
@@ -596,7 +609,14 @@ function postK(s) {
     iscr && entro(iscr[1]),
   ];
   const dest = String(s.dest || "").trim();
-  const meta = (testo) => `<div data-fit style="font-size:${story ? 168 : 150}px">${escS(testo)}</div>`;
+  // La meta va a capo dove l'ha scritto chi pubblica, o da sola se è più larga della riga; due righe al massimo,
+  // poi scende (fit(), data-righe). Prima stava sempre su una riga e una meta lunga diventava piccola.
+  // Su due righe scende a 104 (124 nella story, data-due): più grande della meta lunga stretta su una riga
+  // (~90), ma lascia spazio a partenze, quota e scadenza (a 116/140 la story di una gita scendeva al 66%).
+  const meta = (testo) => {
+    const righe = righeMeta(testo), due = story ? 124 : 104;
+    return `<div data-righe="2" data-due="${due}" style="--t:${righe.length > 1 ? due : story ? 168 : 150}px">${righe.map(escS).join("<br>")}</div>`;
+  };
   // data-cede: se il testo non ci sta, la seconda riga tenuta per il titolo si libera prima di stringere tutto.
   // Nella gita il titolo è solo la meta: «Gita a» lo dice il gancio (l'utente: la riga in più era inutile).
   const tit = gita
@@ -801,7 +821,7 @@ function testoPost(ev, sp, stagione) {
     return righe.join("\n");
   }
   if (ev.kind === "gita") {
-    righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${ev.title}!`);
+    righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${unaRiga(ev.title)}!`);
     if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
     if (ev.course) righe.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) righe.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));

@@ -38,8 +38,8 @@
       non toccati): `sorgenti/volantino-k.html` → `volantino-2026-2027-k*.pdf/.jpg` (`rendi.sh` fa le tre).
       Angoli tagliati a 45°, cunei blu scuro sulle testate delle gite e degli eventi, cuneo sulla fascia
       di Piazza d'Armi, angolo blu sulla copertina; solo colori pieni (nessuna trasparenza). Da scegliere.
-- [ ] 15/10: **K: logo e coccarda, meta su due righe, foto spostabile** (dev-team fatto). I punti (1) e (3) sono **fatti** (15/10: colonne `photo_x`, `photo_y` già in produzione, backup in
-      `supabase/migration/backup-2026-10-15-foto/`); il (2) è da scrivere. Scelte
+- [ ] 15/10: **K: logo e coccarda, meta su due righe, foto spostabile** (dev-team fatto). Tutti e tre **fatti**: (1) e (3) il 15/10 (colonne in produzione, backup in
+      `supabase/migration/backup-2026-10-15-foto/`), (2) il 16/10: meta su due righe a 104 (124 nella story). Scelte
       dell'utente: (1) logo e coccarda **come nel post**
       anche nella story: logo in alto a sinistra (`top: su + 40px`), coccarda all'angolo basso della
       tessera della data; una regola sola relativa alla tessera, non numeri doppi post/story

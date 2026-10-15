@@ -147,7 +147,9 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   stato «pubblicato» e testo scritto a mano. La gita può avere una nota in giallo sotto la meta
   (`subtitle`, es. «Prova gratuita con i maestri»); quota e scadenza della gita sono facoltative
   (`mancanti()` non le chiede). `photo` accetta solo data URL d'immagine (check nel database) e
-  nell'`url()` del CSS si codifica tutto tranne i caratteri di un data URL.
+  nell'`url()` del CSS si codifica tutto tranne i caratteri di un data URL. La meta della gita va su
+  due righe (a capo scritti o da sola, `righeMeta()`; `data-due` in `fit()`): su una riga 150 (168
+  nella story), su due 104 (124); fuori dal post l'a capo diventa uno spazio (`unaRiga()`).
 - Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.

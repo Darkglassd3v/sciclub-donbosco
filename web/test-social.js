@@ -183,10 +183,10 @@ assert.strictEqual(giornoMese(null), "");
     assert.ok(disegnaPost(modelloPost(ev, fmt)).includes('class="stella"'), `${fmt}: manca la coccarda del corso`);
     assert.ok(!disegnaPost(modelloPost({ ...ev, course: false }, fmt)).includes('class="stella"'), `${fmt}: coccarda senza corso`);
   }
-  // K: il titolo è solo la meta (su una riga), la data nella tessera con la prima partenza, il testo che si adatta.
+  // K: il titolo è solo la meta (fino a due righe), la data nella tessera con la prima partenza, il testo che si adatta.
   for (const fmt of ["post", "story"]) {
     const html = disegnaPost(modelloPost(ev, fmt));
-    assert.ok(!html.includes("<small>Gita a</small>") && html.includes(`<div class="tit meta" data-cede><div data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
+    assert.ok(!html.includes("<small>Gita a</small>") && html.includes(`<div class="tit meta" data-cede><div data-righe="2" data-due="${fmt === "story" ? 124 : 104}" style="--t:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
     assert.ok(html.includes('class="gancio">Tutti in pista!<'), `k ${fmt}: il gancio scritto`);
     assert.ok(disegnaPost(modelloPost({ ...ev, hook: "" }, fmt)).includes('class="gancio">Gita a<'), `k ${fmt}: senza gancio dice «Gita a»`);
     // Le partenze in riquadri, una per fermata, con l'ora; il titolo cede la riga vuota se serve.
@@ -353,8 +353,11 @@ assert.strictEqual(zoomFoto({ photo_zoom: 999 }), 3);
   const titolo = (title, fmt = "post") => (disegnaPost(modelloPost({ ...gita, title }, fmt)).match(/<div class="tit meta"[^>]*>([\s\S]*?)<\/div><\/div>/) || [])[1] || "";
   assert.ok(titolo("Cervinia\nValtournenche").includes('data-righe="2"'), "la meta deve poter andare su due righe");
   assert.ok(titolo("Cervinia\nValtournenche").includes("Cervinia<br>Valtournenche"), "l'a capo scritto nella meta si perde");
+  assert.ok(titolo("Cervinia\nValtournenche").includes("--t:104px") && titolo("Cervinia\nValtournenche", "story").includes("--t:124px"),
+    "su due righe la meta deve scendere a 104 (124 nella story)");
+  assert.ok(titolo("La Thuile").includes("--t:150px") && titolo("La Thuile", "story").includes("--t:168px"), "su una riga la meta resta grande");
   assert.ok(titolo("Cervinia\r\n\n  Valtournenche \n\nZermatt").includes("Cervinia<br>Valtournenche Zermatt"), "più di due righe: le altre vanno sulla seconda");
-  assert.ok(titolo("La Thuile").includes(">La Thuile<"), "una meta corta resta su una riga");
+  assert.ok(titolo("La Thuile").endsWith(">La Thuile"), "una meta corta resta su una riga");
   assert.ok(!titolo("La Thuile").includes("<br>"));
   assert.ok(titolo("<b>X</b>\nY").includes("&lt;b&gt;X&lt;/b&gt;<br>Y"), "la meta deve restare testo");
   assert.ok(testoPost({ ...gita, title: "Cervinia\nValtournenche" }, null, "2026/27").includes("gita a Cervinia Valtournenche!"), "a capo nel testo del post");
