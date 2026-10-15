@@ -92,7 +92,7 @@
 
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
-    /* Cursori della foto larghi e alti: si prendono bene anche col dito e con la vista debole. */
+    /* Frecce della foto: col mouse e col dito, senza tastiera. */
     .pos-foto #btnSposta[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
     .righe-editor .riga input:first-child { max-width: 11rem; }
@@ -353,16 +353,20 @@
                   <label class="label" for="fFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
                   <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
-                  <!-- Quale parte della foto si vede, uguale in post e story: con «Sposta la foto» premuto le
-                       frecce la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
+                  <!-- Quale parte della foto si vede, uguale in post e story: le frecce (pulsanti, o tastiera con
+                       «Sposta la foto» premuto) la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
                   <div id="posFoto" class="pos-foto mt-3" hidden>
                     <div class="buttons mb-1">
                       <button type="button" class="button is-link is-light" id="btnSposta" aria-pressed="false" aria-describedby="aiutoSposta">Sposta la foto</button>
                       <button type="button" class="button is-light" id="btnZoomPiu" aria-label="Ingrandisci la foto">+</button>
                       <button type="button" class="button is-light" id="btnZoomMeno" aria-label="Rimpicciolisci la foto">−</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowLeft" aria-label="Sposta la foto a sinistra">←</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowUp" aria-label="Sposta la foto in su">↑</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowDown" aria-label="Sposta la foto in giù">↓</button>
+                      <button type="button" class="button is-light" data-mossa="ArrowRight" aria-label="Sposta la foto a destra">→</button>
                       <button type="button" class="button is-small is-light" id="btnFotoCentro">Rimetti com'era</button>
                     </div>
-                    <p class="help" id="aiutoSposta">Premi «Sposta la foto», poi usa le frecce della tastiera (con Maiuscole va più veloce), + e − per ingrandire, Invio quando hai finito. Se non va in su o in giù, ingrandiscila un po'.</p>
+                    <p class="help" id="aiutoSposta">Usa le frecce qui sopra, oppure premi «Sposta la foto» e usa le frecce della tastiera (con Maiuscole va più veloce), + e − per ingrandire, Invio quando hai finito. Se non va in su o in giù, ingrandiscila un po'.</p>
                     <p class="help" id="statoFoto" aria-live="polite"></p>
                   </div>
                 </div>
@@ -961,24 +965,29 @@
     const attivo = (si) => { b.setAttribute("aria-pressed", String(si)); b.textContent = si ? "Fine spostamento" : "Sposta la foto"; };
     const limita = (v, min, max) => Math.min(max, Math.max(min, v));
     const zoom = (d) => { fotoZoom = limita((fotoZoom ?? 100) + d, 100, 300); if (fotoZoom === 100) fotoZoom = null; cambiato(); };
+    const mosse = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+    const muovi = (tasto, passo) => {
+      fotoX = limita((fotoX ?? 50) + mosse[tasto][0] * passo, 0, 100);
+      fotoY = limita((fotoY ?? 45) + mosse[tasto][1] * passo, 0, 100);
+      cambiato();
+    };
     b.addEventListener("click", () => attivo(b.getAttribute("aria-pressed") !== "true"));
-    b.addEventListener("blur", () => attivo(false));
+    // Cliccando +, − o una freccia la modalità resta accesa e la tastiera torna su «Sposta la foto».
+    b.addEventListener("blur", (e) => { if (!el("posFoto").contains(e.relatedTarget)) attivo(false); });
+    const eTorna = (fai) => () => { const acceso = b.getAttribute("aria-pressed") === "true"; fai(); if (acceso) b.focus(); };
     b.addEventListener("keydown", (e) => {
       if (b.getAttribute("aria-pressed") !== "true") return;
-      const passo = e.shiftKey ? 10 : 2;
-      const mosse = { ArrowLeft: [passo, 0], ArrowRight: [-passo, 0], ArrowUp: [0, passo], ArrowDown: [0, -passo] };
-      if (mosse[e.key]) {
-        fotoX = limita((fotoX ?? 50) + mosse[e.key][0], 0, 100);
-        fotoY = limita((fotoY ?? 45) + mosse[e.key][1], 0, 100);
-        cambiato();
-      } else if (e.key === "+" || e.key === "=") zoom(10);
+      if (mosse[e.key]) muovi(e.key, e.shiftKey ? 10 : 2);
+      else if (e.key === "+" || e.key === "=") zoom(10);
       else if (e.key === "-") zoom(-10);
       else if (e.key === "Enter" || e.key === "Escape") attivo(false);
       else return;
       e.preventDefault();
     });
-    el("btnZoomPiu").addEventListener("click", () => zoom(10));
-    el("btnZoomMeno").addEventListener("click", () => zoom(-10));
+    el("btnZoomPiu").addEventListener("click", eTorna(() => zoom(10)));
+    el("btnZoomMeno").addEventListener("click", eTorna(() => zoom(-10)));
+    el("posFoto").querySelectorAll("[data-mossa]").forEach((f) =>
+      f.addEventListener("click", eTorna(() => muovi(f.dataset.mossa, 4))));
     el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = fotoZoom = null; cambiato(); });
   }
 

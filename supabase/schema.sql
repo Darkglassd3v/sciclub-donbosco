@@ -6,6 +6,10 @@
 --   Supabase Dashboard > SQL Editor > incolla questo file > Run
 -- Poi eseguire in ordine i file di supabase/migration/ per caricare i dati,
 -- e supabase/verifica.sql per controllare che sia andato tutto bene.
+-- Su un database nuovo i blocchi "una volta sola" (assicurazione separata dalla
+-- quota, ordine del modulo) girano col listino ancora vuoto e non partono più:
+-- assicurazione, quota e posizione delle tessere vanno messe da Impostazioni,
+-- o il listino va caricato da un backup recente (supabase/migration/backup-*).
 -- Account, chiavi e pubblicazione: docs/ACCOUNT.md; regole del database: docs/SVILUPPO.md
 
 -- ---------------------------------------------------------------------------
@@ -2245,6 +2249,9 @@ begin
     raise exception 'Non hai il permesso di registrare gli incassi.';
   end if;
 
+  -- Le righe del nucleo restano bloccate fino all'incasso: un altro operatore che intanto aggiunge un
+  -- corso aspetta, e non si registra una cifra diversa da quella controllata qui sotto.
+  perform 1 from public.members m where m.id = head_id or m.payer_id = head_id for update;
   -- Le stesse righe della vista households: il capofamiglia e chi lo indica come pagante.
   select count(*) filter (where m.balance <> 0), coalesce(sum(m.balance), 0)
     into how_many, how_much
@@ -3140,21 +3147,21 @@ on conflict (weekday) do nothing;
 comment on table public.trip_days is 'Giorni della settimana delle gite e il loro colore nei post social (colore vuoto = non è un giorno di gita).';
 
 -- Impostazioni della pagina Social, una riga per voce. Per ora solo la
--- grafica dei post (style): 'ritocco' è il biglietto di sempre con la neve,
--- 'montagna' la foto a tutta immagine con le informazioni in una scheda
--- bianca; dalla 2.8 le tre proposte di grafica/proposte-post-social/:
--- 'biglietto' (A), 'calendario' (B), 'divano' (C). Vale per tutti quelli che
+-- grafica dei post (style). Dalla 2.8 la K è l'unica grafica e la pagina non
+-- legge più questa voce; le grafiche di prima (ritocco, montagna, biglietto,
+-- calendario, divano) sono nella storia di git. Vale per tutti quelli che
 -- pubblicano, da qualunque computer.
 create table if not exists public.social_settings (
   key   text primary key,
   value text not null
 );
+update public.social_settings set value = 'k' where key = 'style' and value <> 'k';
 alter table public.social_settings drop constraint if exists social_settings_style_valid;
 alter table public.social_settings add constraint social_settings_style_valid
-  check (key <> 'style' or value in ('ritocco', 'montagna', 'biglietto', 'calendario', 'divano', 'k'));
-insert into public.social_settings (key, value) values ('style', 'ritocco')
+  check (key <> 'style' or value = 'k');
+insert into public.social_settings (key, value) values ('style', 'k')
 on conflict (key) do nothing;
-comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: ritocco, montagna, biglietto, calendario, divano o k).';
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: dalla 2.8 solo k, la pagina non la legge).';
 
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;

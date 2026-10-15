@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-15
+# TODO — aggiornato il 2026-10-16
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -22,12 +22,15 @@
 
 ## Richieste nuove
 
-- [ ] 16/10: **Review completa del codice del 15-16/10.** Fatta quella dei commit del 16/10
-      (`a22a5a3..9ba37d1`), corretta: la meta lunga stringe su una riga prima di andare a capo
-      (`fit()`, `data-due`), la foto SVG diventa JPEG (prima il check del database la rifiutava),
-      Duplica non copia la nota gialla, il check della foto si crea una volta sola, test del check più
-      severo. In corso la review dei 43 commit del 15/10 (`bf605e4~1..a22a5a3~1`). In sospeso fuori dal codice: `web/etichetta…pdf` (dati personali,
-      non in git) da spostare; la bozza `volantino-k` e la «c» in più nel README del canale non in commit.
+- [ ] 16/10: **Review completa del codice del 15-16/10: fatta e corretta.** Commit del 16/10 in
+      `534ac00`. Commit del 15/10 (`bf605e4~1..a22a5a3~1`): «Sposta la foto» ha le frecce da cliccare
+      (mouse e tablet) e non si spegne cliccando + e −; `settle_household` blocca le righe del nucleo
+      prima di sommare (in produzione il 16/10); `social_settings.style` ammette solo `k`; avviso in
+      testa a `schema.sql` per un database nuovo. Controllato in produzione, nessun problema: nessun
+      socio con tessera PLUS, nessuna lista PLUS, l'unica tessera a 0 è il direttivo. Resta una scelta
+      dell'utente: i fogli del pullman stampati non dicono la partenza (solo il nome del foglio di
+      lavoro). In sospeso fuori dal codice: `web/etichetta…pdf` (dati personali, non in git) da
+      spostare; la bozza `volantino-k` e la «c» in più nel README del canale non in commit.
 - [ ] 16/10: **Nota gialla nella gita, quota e scadenza facoltative, foto blindata.** Fatto: nella
       gita il campo Sottotesto diventa «Nota in giallo sotto la meta» (riga gialla nel post e nel
       testo); quota e scadenza non fanno più segnare la gita «Da completare»; dalla security review,
