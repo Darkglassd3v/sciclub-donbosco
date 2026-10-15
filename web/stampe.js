@@ -44,6 +44,17 @@ function titoloExcel(chiave, titolo) {
   return `${titolo === "Corsisti" ? "CORSI" : "ABBONAMENTI"} ${GIORNI_STAMPA[chiave].nome.toUpperCase()}`;
 }
 
+/**
+ * Le gite fatte coi suoi abbonamenti di quei giorni (pass_status.day:
+ * "DOMENICA", "JOLLY"): "1/5", con due abbonamenti "5/5, 1/5". Sul pullman
+ * si vede se ne ha ancora. Vuoto se non ne ha.
+ */
+function giteFatte(abbonamenti, idSocio, giorni) {
+  return abbonamenti
+    .filter((a) => a.member_id === idSocio && giorni.includes(a.day) && a.trips_total)
+    .map((a) => `${a.trips_used}/${a.trips_total}`).join(", ");
+}
+
 const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
 
 /**
@@ -73,7 +84,9 @@ function gruppiPerPartenza(righe, conPartenze) {
 }
 
 /**
- * I fogli di un pulsante, in ordine: [{ titolo, nota, gruppi }].
+ * I fogli di un pulsante, in ordine: [{ titolo, nota, gite, gruppi }]. `gite`:
+ * i giorni degli abbonamenti di cui contare le gite fatte (giteFatte), solo nei
+ * fogli degli abbonamenti.
  *   - Corsisti: chi fa il corso quel giorno (sabato e domenica);
  *   - Abbonamenti 5 gite: chi ha un abbonamento di quel giorno;
  *   - Jolly: chi ha il jolly, sempre.
@@ -95,11 +108,11 @@ function fogliDelGiorno(chiave, soci, abbonamenti) {
       .filter((s) => s.course_type && g.giorni.includes(s.course_day))
       .map((s) => [s, [s.course_day]]) });
   }
-  fogli.push({ titolo: "Abbonamenti 5 gite", righe: soci
+  fogli.push({ titolo: "Abbonamenti 5 gite", gite: g.giorni, righe: soci
     .map((s) => [s, g.giorni.filter((d) => giorniDi.get(s.id)?.has(d))])
     .filter(([, giorni]) => giorni.length) });
-  fogli.push({ titolo: "Jolly", nota: "valido per tutti i giorni", righe: soci
+  fogli.push({ titolo: "Jolly", nota: "valido per tutti i giorni", gite: ["JOLLY"], righe: soci
     .filter((s) => giorniDi.get(s.id)?.has("JOLLY"))
     .map((s) => [s, g.giorni]) });
-  return fogli.map(({ titolo, nota, righe }) => ({ titolo, nota, gruppi: gruppiPerPartenza(righe, g.partenze) }));
+  return fogli.map(({ titolo, nota, gite, righe }) => ({ titolo, nota, gite, gruppi: gruppiPerPartenza(righe, g.partenze) }));
 }

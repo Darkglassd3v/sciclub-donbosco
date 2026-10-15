@@ -9,8 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 const sorgente = fs.readFileSync(path.join(__dirname, "stampe.js"), "utf8");
-const { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel } =
-  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel }; })()`);
+const { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel, giteFatte } =
+  (0, eval)(`(() => { ${sorgente}; return { fogliDelGiorno, nomePartenza, nomeFoglioExcel, titoloExcel, giteFatte }; })()`);
 
 const socio = (id, last_name, extra = {}) => ({ id, last_name, first_name: "A", ...extra });
 const soci = [
@@ -92,6 +92,22 @@ assert.strictEqual(titoloExcel("DOMENICA", "Jolly"), "ABBONAMENTI JOLLY");
 // Ogni foglio del giorno ha il suo titolo.
 for (const ch of ["SABATO", "DOMENICA", "MARTEDI"]) {
   for (const f of fogliDelGiorno(ch, [], [])) assert.match(titoloExcel(ch, f.titolo), /^(CORSI|ABBONAMENTI) [A-ZÌ]+$/, `${ch} ${f.titolo}`);
+}
+
+// Gite fatte: solo gli abbonamenti di quei giorni, uno dopo l'altro; i corsi no.
+{
+  const passi = [
+    { member_id: "alfa", day: "SABATO", trips_used: 5, trips_total: 5 },
+    { member_id: "alfa", day: "SABATO", trips_used: 1, trips_total: 5 },
+    { member_id: "alfa", day: "JOLLY", trips_used: 2, trips_total: 5 },
+    { member_id: "beta", day: "DOMENICA", trips_used: 0, trips_total: 5 },
+  ];
+  assert.strictEqual(giteFatte(passi, "alfa", ["SABATO"]), "5/5, 1/5");
+  assert.strictEqual(giteFatte(passi, "alfa", ["JOLLY"]), "2/5");
+  assert.strictEqual(giteFatte(passi, "beta", ["DOMENICA"]), "0/5");
+  assert.strictEqual(giteFatte(passi, "beta", ["SABATO"]), "");
+  const fogli = fogliDelGiorno("SABATO", soci, abbonamenti);
+  assert.deepStrictEqual(fogli.map((f) => f.gite), [undefined, ["SABATO"], ["JOLLY"]], "gite nei soli fogli degli abbonamenti");
 }
 
 // Larghezze delle colonne degli Excel (larghezzeColonne in shared.js): dalla
