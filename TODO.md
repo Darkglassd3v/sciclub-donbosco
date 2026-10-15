@@ -39,6 +39,7 @@
       po' più alti: provati 370 e 290 (prima 330 e 260), la «b» di «Club» arriva a ~10 px dall'arco
       su 1080. L'utente: «prova» una riga sola «SCI CLUB · ASTI» sotto il logo: fatta
       nell'abbozzo (righe «riga sotto», logo all'82%, immagini `#p1-sotto` e `#p2-sotto`).
+      L'utente: tutte le prove nell'abbozzo, una riga per prova.
       Dopo la scelta: il JPG in `grafica/logo/`,
       la sorgente in `grafica/logo/strumenti/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
