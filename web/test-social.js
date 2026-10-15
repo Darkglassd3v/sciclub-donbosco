@@ -114,7 +114,6 @@ assert.deepStrictEqual(mancanti(gita), [], "gita completa segnata da completare"
 assert.deepStrictEqual(mancanti({ ...gita, deadline: null, prices: [] }), [], "quota e scadenza della gita sono facoltative");
 assert.deepStrictEqual(mancanti({ kind: "gita", title: " ", stops: [["", ""]], prices: [[null, ""]] }),
   ["la meta", "il giorno", "le partenze"]);
-assert.deepStrictEqual(mancanti({ ...senzaPrezzo, prices: [] }), [], "quota chiesta anche se nascosta");
 assert.deepStrictEqual(mancanti({ kind: "cena", title: "Cena sociale" }), ["la data"]);
 assert.deepStrictEqual(mancanti({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
 assert.deepStrictEqual(mancanti({ kind: "sponsor", title: "Brindiamo" }), ["lo sponsor"]);

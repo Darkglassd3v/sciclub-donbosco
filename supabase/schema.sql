@@ -3209,9 +3209,15 @@ comment on column public.social_events.photo_x is 'Posizione orizzontale della f
 comment on column public.social_events.photo_y is 'Posizione verticale della foto nel post, 0-100 (%); vuoto = 45.';
 -- La foto è solo un'immagine in data URL (la pagina la riduce e la salva così): niente altro testo,
 -- che dentro lo style del post diventerebbe CSS (security review del 16/10).
-alter table public.social_events drop constraint if exists social_events_photo_valid;
-alter table public.social_events add constraint social_events_photo_valid
-  check (photo ~ '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+-- Una volta sola: rifatto a ogni schema, il check rileggerebbe tutte le foto con la tabella bloccata.
+-- Per cambiarlo: un nome nuovo.
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'social_events_photo_valid') then
+    alter table public.social_events add constraint social_events_photo_valid
+      check (photo ~ '^data:image/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$');
+  end if;
+end $$;
 -- Quanto è ingrandita la foto (%): senza ingrandire, una foto orizzontale nel post 4:5 si sposta solo ai lati.
 alter table public.social_events add column if not exists photo_zoom smallint;
 alter table public.social_events drop constraint if exists social_events_photo_zoom_valid;

@@ -217,10 +217,12 @@ const icoTel = (px, col) => `<svg width="${px}" height="${px}" viewBox="0 0 24 2
 /* Adatta il testo alla tela. Va chiamata dopo che il canvas è nella pagina e
  * i font sono caricati; restituisce true se qualcosa resta troppo lungo anche
  * al corpo minimo, e la pagina lo segnala prima dell'export.
- * - [data-fit] (la meta della gita, le righe della tessera): su una riga, il
- *   corpo scende fino a 40 px.
- * - [data-righe] (il titolo): va a capo fino a quelle righe; oltre, o con una
- *   parola più larga della riga, scende (--t) fino a 48 px.
+ * - [data-fit] (le righe della tessera): su una riga, il corpo scende fino a
+ *   40 px.
+ * - [data-righe] (il titolo e la meta della gita): va a capo fino a quelle
+ *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a
+ *   48 px. Con data-due (la meta) prima stringe su una riga fino a quel corpo,
+ *   poi va a capo.
  * - [data-adatta] (la colonna del testo): se il contenuto non ci sta,
  *   scende tutto insieme (--s) fino al 92%, che non si nota e lascia tutto al
  *   suo posto. Se non basta, si torna al 100% e si prende lo spazio che resta
@@ -240,9 +242,11 @@ function fit(radice = document) {
   });
   radice.querySelectorAll("[data-righe]").forEach((el) => {
     const righe = Number(el.dataset.righe);
-    // La meta della gita che va a capo da sola scende al corpo di due righe (data-due) prima di stringere oltre.
-    if (el.dataset.due && el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5) el.style.setProperty("--t", el.dataset.due + "px");
     let t = parseFloat(getComputedStyle(el).getPropertyValue("--t"));
+    // La meta della gita che va a capo da sola prima stringe su una riga fino al corpo di due righe (data-due):
+    // solo se neanche lì ci sta va a capo, a quel corpo, prima di stringere oltre.
+    const aCapo = () => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5;
+    if (el.dataset.due) while (aCapo() && t > Number(el.dataset.due)) el.style.setProperty("--t", (t = Math.max(t - 2, Number(el.dataset.due))) + "px");
     const troppo = () => el.scrollWidth > el.clientWidth + 1
       || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * righe + 2;
     while (troppo() && t > 48) el.style.setProperty("--t", (t -= 2) + "px");
@@ -270,11 +274,12 @@ function fit(radice = document) {
 
 /**
  * Cosa manca a un post per essere pronto da pubblicare, a parole ("la
- * quota"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
+ * meta"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
  * testata del post aperto, così dicono la stessa cosa. Salvare si può lo
  * stesso: salva() blocca solo meta, giorno della gita e sponsor.
  */
-/** Come chiamare un post nell'elenco e nei nomi dei file: la prima riga del titolo, o del sottotesto se non ha titolo. */
+/** Come chiamare un post nell'elenco e nei nomi dei file: la meta della gita su una riga; per gli altri la prima riga
+ *  del titolo, o del sottotesto se non ha titolo. */
 function nomePost(ev) {
   if (ev.kind === "gita") return unaRiga(ev.title);
   return (String(ev.title || "").trim() || String(ev.subtitle || "").trim()).split("\n")[0].trim();
@@ -579,7 +584,7 @@ function tesseraK(s) {
 
 /**
  * K · Piani: la foto a tutta pagina, il gancio giallo, il titolo bianco (nelle
- * gite «Gita a» piccolo e la meta grande, su una riga) e i dati con orari,
+ * gite «Gita a» piccolo e la meta grande, su due righe al massimo) e i dati con orari,
  * prezzi e scadenze nei riquadrini gialli. Corsi e gite di domenica in giallo e
  * nero, il resto in blu e nero (coloreNuovo).
  */

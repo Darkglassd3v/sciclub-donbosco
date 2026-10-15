@@ -526,7 +526,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261016meta"></script>
+<script src="social-templates.js?v=20261016fit"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -889,9 +889,14 @@
     el("fFoto").addEventListener("change", async () => {
       const file = el("fFoto").files[0];
       if (!file) return;
-      foto = await riduciImmagine(file, 1080, "image/jpeg");
-      fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
       el("fFoto").value = "";
+      try {
+        foto = await riduciImmagine(file, 1080, "image/jpeg");
+      } catch (e) {
+        showToast("Questa immagine non si apre: prova con una foto JPEG o PNG.", "is-danger");
+        return;
+      }
+      fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
       cambiato();
     });
     el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = fotoZoom = null; cambiato(); });
@@ -981,13 +986,14 @@
    * Un post nuovo, non salvato, coi dati del post salvato aperto: partenze, quota, contatti,
    * gancio, corso. Restano fuori quelli che cambiano di sicuro e farebbero pubblicare un errore:
    * giorno e scadenza (il colore della gita viene dal giorno), foto e sua posizione (la meta
-   * cambia), lo stato «pubblicato» e il testo scritto a mano (si rifà dai dati).
+   * cambia), la nota gialla della gita (vale per quella gita), lo stato «pubblicato» e il testo
+   * scritto a mano (si rifà dai dati).
    */
   function duplica() {
     if (!aperto || !aperto.id) return;
     const { id, created_at, updated_at, ...dati } = aperto;
     apri({ ...dati, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
-      published_at: null, caption: null });
+      subtitle: dati.kind === "gita" ? null : dati.subtitle, published_at: null, caption: null });
     if (aperto.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
     showToast("Copia pronta: scegli il giorno e controlla la meta, poi salva.");
     // La gita sceglie il giorno nel calendario: il campo data è nascosto.
@@ -1369,17 +1375,26 @@
       const lettore = new FileReader();
       lettore.onerror = () => ko(lettore.error);
       lettore.onload = () => {
-        // Un SVG resta com'è: è già leggero e si ingrandisce senza sgranare.
-        if (file.type === "image/svg+xml") { ok(lettore.result); return; }
+        // Il logo SVG resta com'è: è già leggero e si ingrandisce senza sgranare. La foto diventa sempre
+        // JPEG, anche da SVG: il database accetta solo foto jpeg, png e webp.
+        if (file.type === "image/svg+xml" && tipo === "image/png") { ok(lettore.result); return; }
         const img = new Image();
         img.onerror = () => ko(new Error("immagine non leggibile"));
         img.onload = () => {
-          const k = Math.min(1, massimo / Math.max(img.width, img.height));
+          // Un SVG senza misure proprie si apre a 150×150 (0×0 in qualche browser): si ingrandisce senza sgranare,
+          // quindi va al massimo; una foto non si ingrandisce mai.
+          const w = img.naturalWidth || massimo, h = img.naturalHeight || massimo;
+          const k = file.type === "image/svg+xml" ? massimo / Math.max(w, h) : Math.min(1, massimo / Math.max(w, h));
           const c = document.createElement("canvas");
-          c.width = Math.round(img.width * k);
-          c.height = Math.round(img.height * k);
-          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-          ok(c.toDataURL(tipo, .85));
+          c.width = Math.round(w * k);
+          c.height = Math.round(h * k);
+          const g = c.getContext("2d");
+          // Nel JPEG il trasparente diventerebbe nero: sotto va il bianco.
+          if (tipo === "image/jpeg") { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+          g.drawImage(img, 0, 0, c.width, c.height);
+          const url = c.toDataURL(tipo, .85);
+          // Un canvas troppo grande per il browser esce vuoto ("data:,").
+          if (url.startsWith("data:image/")) ok(url); else ko(new Error("immagine troppo grande"));
         };
         img.src = lettore.result;
       };
@@ -1581,8 +1596,13 @@
       el(id).addEventListener("change", async () => {
         const file = el(id).files[0];
         if (!file) return;
-        loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
         el(id).value = "";
+        try {
+          loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
+        } catch (e) {
+          showToast("Questo logo non si apre: prova con un PNG o un SVG.", "is-danger");
+          return;
+        }
         anteprimaSponsor();
       });
     }
