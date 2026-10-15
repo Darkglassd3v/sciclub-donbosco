@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bilancio — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261015e">
+  <link rel="stylesheet" href="brand.css?v=20261015f">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
@@ -18,8 +18,14 @@
     .riga-saldo .field { margin: 0; min-width: 200px; }
 
     /* Il form dei movimenti sta su una riga sola da tablet in su, come una riga del quaderno. */
+    /* Colonne in rem, non in px: con 150px fissi e il testo A+ al massimo il
+     * campo della data non conteneva più l'icona del calendario. Le colonne
+     * vanno a capo da sole quando non ci stanno (anche sul telefono). */
     .riga-movimento { display: grid; gap: 12px; align-items: end;
-                      grid-template-columns: 150px minmax(150px, 1.2fr) minmax(150px, 1.5fr) 90px 120px auto; }
+                      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+    /* La descrizione larga due colonne solo se ce ne sono due: su un telefono
+     * "span 2" ne creerebbe una seconda fuori dallo schermo. */
+    @media screen and (min-width: 40rem) { .riga-movimento .campo-largo { grid-column: span 2; } }
     .riga-movimento .field { margin: 0; }
 
     /* Entrata o uscita: due pulsanti grandi al posto della tendina. Un'uscita
@@ -51,9 +57,6 @@
     .riga-totale td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
     .azioni { white-space: nowrap; text-align: right; }
 
-    @media screen and (max-width: 1023px) {
-      .riga-movimento { grid-template-columns: 1fr 1fr; }
-    }
   </style>
 </head>
 <body>
@@ -127,22 +130,27 @@
         </div>
         <div class="field">
           <label class="label" for="mVoce">Voce</label>
-          <input class="input" id="mVoce" list="voci" autocomplete="off" required>
-          <datalist id="voci">
-            <option value="Skipass Sestriere"></option>
-            <option value="Tapis"></option>
-            <option value="Giornalieri"></option>
-            <option value="Invito"></option>
-            <option value="Baby"></option>
-            <option value="Gita singola"></option>
-            <option value="Maestri"></option>
-            <option value="Pullman"></option>
-            <option value="Assicurazioni"></option>
-            <option value="Altro"></option>
-          </datalist>
+          <!-- Una tendina vera: la lista dei suggerimenti (datalist) si apriva
+               come un elenco strano e filtrava sulle lettere già scritte. -->
+          <div class="select is-fullwidth">
+            <select id="mVoce" required>
+              <option value="">Scegli la voce</option>
+              <option>Skipass Sestriere</option>
+              <option>Tapis</option>
+              <option>Giornalieri</option>
+              <option>Invito</option>
+              <option>Baby</option>
+              <option>Gita singola</option>
+              <option>Maestri</option>
+              <option>Pullman</option>
+              <option>Assicurazioni</option>
+              <option>Sponsor</option>
+              <option>Altro</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label class="label" for="mDescrizione">Descrizione</label>
+        <div class="field campo-largo">
+          <label class="label" for="mDescrizione" id="lDescrizione">Descrizione</label>
           <input class="input" id="mDescrizione" autocomplete="off">
         </div>
         <div class="field">
@@ -173,8 +181,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261015e"></script>
-<script src="shared.js?v=20261015e"></script>
+<script src="config.js?v=20261015f"></script>
+<script src="shared.js?v=20261015f"></script>
 <script>
   const el = (id) => document.getElementById(id);
   const oggi = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale
@@ -184,11 +192,21 @@
     if (!(await requirePermesso("bilancio"))) return;
     el("mData").value = oggi();
     for (const id of ["mQuantita", "mPrezzo"]) el(id).addEventListener("input", anteprima);
+    el("mVoce").addEventListener("change", aggiornaDescrizione);
     el("formSaldo").addEventListener("submit", salvaSaldo);
     el("formMovimento").addEventListener("submit", aggiungi);
     el("elencoMovimenti").addEventListener("click", azioneRiga);
     await ricarica();
   })();
+
+  // Sponsor: chi ha pagato va scritto, se no a fine anno non si sa chi era. Il
+  // nome si scrive a mano: l'elenco degli sponsor è di Social, e chi tiene il
+  // bilancio non lo legge.
+  function aggiornaDescrizione() {
+    const sponsor = el("mVoce").value === "Sponsor";
+    el("lDescrizione").textContent = sponsor ? "Nome dello sponsor" : "Descrizione";
+    el("mDescrizione").required = sponsor;
+  }
 
   function anteprima() {
     el("mImporto").textContent = fmt(num(el("mQuantita").value) * num(el("mPrezzo").value));
@@ -307,6 +325,7 @@
       // Data e tipo restano: spesso si registrano più movimenti dello stesso giorno.
       for (const id of ["mVoce", "mDescrizione", "mPrezzo"]) el(id).value = "";
       el("mQuantita").value = 1;
+      aggiornaDescrizione();
       anteprima();
       el("mVoce").focus();
     }

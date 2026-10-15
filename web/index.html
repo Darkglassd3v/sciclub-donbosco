@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261015e">
+  <link rel="stylesheet" href="brand.css?v=20261015f">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -376,7 +376,7 @@
   <div class="container">
     <div class="columns is-mobile is-vcentered">
       <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount" id="v_totale">0€</span></div>
-      <div class="column has-text-centered"><span class="val-label">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
+      <div class="column has-text-centered"><span class="val-label" id="l_saldo">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
       <div class="column is-5" id="zonaSalva"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
     </div>
   </div>
@@ -384,9 +384,9 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261015e"></script>
-<script src="shared.js?v=20261015e"></script>
-<script src="codicefiscale.js?v=20261015e"></script>
+<script src="config.js?v=20261015f"></script>
+<script src="shared.js?v=20261015f"></script>
+<script src="codicefiscale.js?v=20261015f"></script>
 <script>
   let PREZZI = {};
   let familiariACarico = [];
@@ -707,21 +707,31 @@
       sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
     };
     const scritto = el("f_codice_fiscale").value.trim();
-    // Per dire che il comune di un codice scritto è sbagliato servono almeno tre
-    // soci nati lì; per proporre un codice a campo vuoto basta uno.
-    const comune = scritto || anagrafica.sesso ? await comuneDelLuogo(anagrafica.luogo, scritto ? 3 : 1) : null;
+    // Il comune serve solo per controllare un codice di 15 o 16 caratteri (uno
+    // più corto o più lungo si segnala e basta) o per proporne uno intero, che
+    // vuole anche cognome, nome, data e sesso. Per dire che il comune di un
+    // codice scritto è sbagliato servono almeno tre soci nati lì; per proporre
+    // un codice a campo vuoto basta uno.
+    const lunghezza = normalizzaCF(scritto).length;
+    const serveComune = scritto
+      ? lunghezza === 15 || lunghezza === 16
+      : Boolean(anagrafica.cognome.trim() && anagrafica.nome.trim() && anagrafica.dataNascita && anagrafica.sesso);
+    const comune = serveComune ? await comuneDelLuogo(anagrafica.luogo, scritto ? 3 : 1) : null;
     // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
     // controllo più nuovo (vince quello): questa risposta non serve più.
     if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
     if (scritto) {
       let esito = verificaCF(scritto, { ...anagrafica, comune });
       // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
-      // con lo stesso nome, dicendolo nell'avviso.
+      // con lo stesso nome, dicendolo nell'avviso. Solo per il giorno
+      // illeggibile (sessoProbabile): uno leggibile dice il sesso meglio. La
+      // richiesta parte solo se un sesso qualunque darebbe una proposta.
       const nome = anagrafica.nome.trim().toUpperCase();
-      if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome) {
+      if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome
+          && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: "M" })?.suggerito) {
         const sesso = await sessoDelNome(nome);
         if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
-        const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sesso });
+        const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: sesso });
         if (conSesso?.suggerito) {
           conSesso.problemi.push(`Sesso preso dai soci che si chiamano ${nome} (${sesso}): se non è giusto, sceglilo qui sotto.`);
           esito = conSesso;
@@ -748,23 +758,39 @@
     if (!luogo) return null;
     // Solo lettere: la provincia finisce nel filtro or() di PostgREST.
     const provincia = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
-    // Il luogo si salva in maiuscolo e senza spazi ai lati: basta l'uguaglianza.
-    let richiesta = sb.from("members").select("tax_code").eq("birth_place", luogo).not("tax_code", "is", null).limit(50);
-    // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
-    if (provincia) richiesta = richiesta.or(`birth_province.eq.${provincia},birth_province.is.null`);
-    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
-    const { data, error } = await richiesta;
-    if (error) return null;
-    return comuneDaiCF((data || []).map((r) => r.tax_code), minimo);
+    const id = el("f_id").value;
+    const codici = await codiciDeiSoci(`luogo|${luogo}|${provincia}|${id}`, () => {
+      // Il luogo si salva in maiuscolo e senza spazi ai lati (anche dal
+      // caricamento da Excel): basta l'uguaglianza.
+      let richiesta = sb.from("members").select("tax_code").eq("birth_place", luogo).not("tax_code", "is", null).limit(50);
+      // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
+      if (provincia) richiesta = richiesta.or(`birth_province.eq.${provincia},birth_province.is.null`);
+      return id ? richiesta.neq("id", id) : richiesta;
+    });
+    return codici && comuneDaiCF(codici, minimo);
   }
 
   /** Il sesso ricavato dai codici dei soci con lo stesso nome (sessoDaiCF), o null. */
   async function sessoDelNome(nome) {
-    let richiesta = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
-    if (el("f_id").value) richiesta = richiesta.neq("id", el("f_id").value);
-    const { data, error } = await richiesta;
-    if (error) return null;
-    return sessoDaiCF((data || []).map((r) => r.tax_code));
+    const id = el("f_id").value;
+    const codici = await codiciDeiSoci(`nome|${nome}|${id}`, () => {
+      const richiesta = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
+      return id ? richiesta.neq("id", id) : richiesta;
+    });
+    return codici && sessoDaiCF(codici);
+  }
+
+  // I codici fiscali già chiesti, per luogo o nome: il controllo riparte a ogni
+  // campo lasciato, e la stessa domanda non va rifatta. Si svuota con la scheda.
+  const codiciGiaLetti = new Map();
+  /** I codici fiscali della richiesta, una volta sola per chiave; null se non è andata. */
+  function codiciDeiSoci(chiave, richiesta) {
+    if (!codiciGiaLetti.has(chiave)) {
+      codiciGiaLetti.set(chiave, Promise.resolve(richiesta())
+        .then(({ data, error }) => { if (error) throw error; return (data || []).map((r) => r.tax_code); })
+        .catch(() => { codiciGiaLetti.delete(chiave); return null; }));
+    }
+    return codiciGiaLetti.get(chiave);
   }
 
   /**
@@ -846,12 +872,20 @@
     campo.value = Math.round((num(campo.value) + importo) * 100) / 100;
   }
 
+  /** Un saldo sotto zero è un credito: lo si dice a parole, come in Pagamenti ("-15 €" non si legge). */
+  const testoSaldo = (saldo) => (saldo < 0 ? `${fmt(-saldo)} a credito` : fmt(saldo));
+  /** Rosso chi deve pagare, blu chi è a credito, verde chi è a posto. */
+  const coloreSaldo = (saldo) => (saldo > 0 ? "var(--errore)" : saldo < 0 ? "var(--blu)" : "var(--ok)");
+
   function ricalcola() {
     const socioCorrente = { total: totaleIndividuale(), paid: el("f_acconto").value };
     const { totale, saldo } = totaliNucleo(socioCorrente, familiariACarico);
     el("v_totale").textContent = fmt(totale);
-    el("v_saldo").textContent = fmt(saldo);
-    el("v_saldo").style.color = saldo > 0 ? "var(--giallo)" : "#7BD8A6";
+    // Nella barra la cifra resta da sola (su un telefono non ci sta altro): a credito lo dice l'etichetta.
+    el("l_saldo").textContent = saldo < 0 ? "A credito" : "Residuo";
+    el("v_saldo").textContent = fmt(Math.abs(saldo));
+    // Sul fondo scuro della barra: giallo deve, azzurro chiaro a credito, verde a posto.
+    el("v_saldo").style.color = saldo > 0 ? "var(--giallo)" : saldo < 0 ? "var(--blu-light)" : "#7BD8A6";
   }
 
   // -------------------------------------------------------------------------
@@ -1227,14 +1261,14 @@
               <td><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong></td>
               <td>${esc(s.card_number || "—")}</td>
               <td style="text-align:right">${fmt(s.total)}</td>
-              <td style="text-align:right;font-weight:bold;color:${s.balance > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(s.balance)}</td>
+              <td style="text-align:right;font-weight:bold;color:${coloreSaldo(num(s.balance))}">${testoSaldo(num(s.balance))}</td>
               <td><button type="button" class="button is-small is-link is-light" data-id="${s.id}">Modifica</button></td>
             </tr>`).join("")}
         </tbody>
         <tfoot><tr style="background:#d4edda;font-weight:bold">
           <td colspan="2">TOTALE NUCLEO (${data.length} familiari)</td>
           <td style="text-align:right">${fmt(totali.totale)}</td>
-          <td style="text-align:right;color:${totali.saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(totali.saldo)}</td>
+          <td style="text-align:right;color:${coloreSaldo(totali.saldo)}">${testoSaldo(totali.saldo)}</td>
           <td></td>
         </tr></tfoot>
       </table>
@@ -1447,6 +1481,9 @@
   }
 
   function resetForm() {
+    // Un controllo del codice fiscale ancora in volo è della scheda di prima.
+    turnoCF++;
+    codiciGiaLetti.clear();
     el("memberForm").reset();
     aggiornaGiornoCorso();
     aggiornaTotaleMano();
@@ -1550,7 +1587,9 @@
         ["Partenza del sabato", partenzeSelezionate("check_sabato")],
         ["Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)]]],
       ["Pagamento", [["Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")],
-        ["Acconto versato", fmt(acconto)], ["Da pagare", fmt(totale - acconto)], ["Pagato da", pagante],
+        ["Acconto versato", fmt(acconto)],
+        totale - acconto < 0 ? ["A credito", fmt(acconto - totale)] : ["Da pagare", fmt(totale - acconto)],
+        ["Pagato da", pagante],
         ["Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", ")]]],
     ];
     // Le righe vuote non si scrivono, e nemmeno una sezione tutta vuota.
