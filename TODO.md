@@ -24,7 +24,8 @@
 - [ ] 16/10: **Story del canale WhatsApp** su Instagram e Facebook, col link che apre il canale.
       Abbozzo da approvare: `bozze/abbozzo-canale.png` (stile K: titolo, perché seguirlo, al centro
       una freccia gialla grossa «TOCCA QUI» che punta al riquadro col bordo giallo dove chi pubblica
-      mette lo **sticker link**, sotto «Poi premi Segui» e la strada senza link). Il link scritto nell'immagine non si apre: serve lo sticker, messo nell'app quando
+      mette lo **sticker link**, sotto «Poi premi Segui e attiva le notifiche» con la campanella,
+      importante per l'utente, e la strada senza link). Il link scritto nell'immagine non si apre: serve lo sticker, messo nell'app quando
       si pubblica (su Facebook verificarlo sulla pagina del club). Manca il link del canale. Dopo il
       sì: un tipo «Canale WhatsApp» nel generatore dei post, story (e post con «link in bio»).
 - [ ] 16/10: **Gite fatte nei fogli del pullman** fatto: colonna «Gite fatte» nei fogli ABBONAMENTI
