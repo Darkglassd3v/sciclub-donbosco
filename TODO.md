@@ -22,6 +22,35 @@
 
 ## Richieste nuove
 
+- [ ] 15/10: **K: logo e coccarda, meta su due righe, foto spostabile** (dev-team fatto). Il punto (1) è **fatto** (15/10, online); (2) e (3) da scrivere. Scelte
+      dell'utente: (1) logo e coccarda **come nel post**
+      anche nella story: logo in alto a sinistra (`top: su + 40px`), coccarda all'angolo basso della
+      tessera della data; una regola sola relativa alla tessera, non numeri doppi post/story
+      (`.cv.sk .stella`, `.cv.sk.story .stella`, `.cv.sk.story .logo-box` in `web/social-templates.js`).
+      Mai la coccarda vicino al logo (due tondi si confondono). (2) **Meta della gita**: oggi `meta()`
+      in `postK` è `data-fit` su una riga e scende fino a 40 px («Cervinia valtournenche» piccola):
+      passare a `data-righe="2"` (una riga a 150/168 px se ci sta, se no due), rispettare gli a capo
+      scritti (`white-space: pre-line`, max 2 righe, `\r\n` e righe vuote ripulite), campo della meta
+      in `social.html` da input a textarea; nel calendario del mese (`righeMese`) e nella didascalia
+      l'a capo diventa uno spazio. Rivedere `.tit min-height` e controllare che partenze, quota,
+      scadenza, telefoni non si rimpiccioliscano (story: 1920 − 250 − 300 utili). (3) **Foto
+      spostabile**, una posizione sola per post e story: due colonne nuove in `social_events`,
+      `photo_x` e `photo_y` `smallint` 0–100, nulle = come oggi (`50% 45%`), con check
+      0–100; in `schema.sql` con `add column if not exists`; in produzione **solo quelle istruzioni**
+      con `set lock_timeout` (schema intero = sito fermo), backup e review **prima del push** (senza
+      colonna il salvataggio fallisce). Nel CSS una variabile `--pos` per `.foto` (object-position),
+      `.finestra` e `.grigi` (oggi `center 45%` in tre punti), valori numerici con clamp in JS, mai
+      testo libero nello style. Nel form due cursori (sinistra-destra, alto-basso) con anteprima viva,
+      niente trascinamento. Prove: banco con meta corta/lunga/con a capo/parola lunga, foto a 0/50/100,
+      post e story con le fasce di Instagram, test node per a capo e clamp.
+- [ ] 15/10: **Pulizia** (l'utente: «c'è troppa roba»). Tolti: `bozze/` (tutte già fatte; salvata
+      solo la pagina dei PNG del logo), `docs/MIGRAZIONE_2.0.md` (il sito parte da zero),
+      `inspiration/`, `grafica/proposte-presciistica-2026/`, `grafica/scheda-tesseramento/`, le
+      proposte di grafica diverse dalla K in `grafica/proposte-post-social/`. Nel sito la **K è
+      l'unica grafica** dei post: tolti Ritocco, Montagna, Biglietto, Calendario, Divano e la scelta
+      della grafica. Tutto nella storia di git tranne `bozze/`. 
+      Fatto e provato (banco K identico al pixel, test node verdi, `social.html` senza errori JS),
+      online dal 15/10; `docs/SVILUPPO.md` e `PROJECT-CONTEXT.md` aggiornati.
 - [ ] 15/10: **Volantino col QR del canale WhatsApp**, variante in prova (copia, il definitivo non è
       toccato): `sorgenti/volantino-qr.html` → `volantino-2026-2027-qr*.pdf/.jpg` (`rendi.sh` fa entrambe).
       QR piccolo da 20 mm in cornice verde WhatsApp `#25D366` con «Seguici su WhatsApp», sopra
@@ -36,28 +65,20 @@
 - [x] 15/10: **Logo ufficiale ovunque** (commit `1fc4ec5`, deploy fatto): logo del sito
       `logo-ufficiale-trasparente-lettere-blu.svg`, tondo nei post nuovi (`logo-ufficiale-tondo.svg`,
       `SOCIAL.logoTondo`), coccarda del K all'angolo della tessera, `fermata` al posto di `box`
-      (Bulma). Ritocco, Montagna e barra del sito hanno ancora il logo rettangolare: da decidere.
+      (Bulma). La barra del sito ha ancora il logo rettangolare: da decidere.
 - [x] 15/10: **K, gita con titolo solo la meta** (commit `1823f8a`, deploy fatto): «Gita a» nel gancio.
 
-- [ ] 15/10: **Scheda di tesseramento coi quadratini a posto** fatta in locale:
-      `~/Downloads/1TESSERAMENTO Scheda e Ricevuta - quadratini sistemati.xlsx` (e il PDF), dal
-      file 2026/2027 salvato in Excel il 15/10 alle 12:25 (`… Ricevuta (1).xlsx`) con `grafica/scheda-tesseramento/sorgenti/sistema-quadratini.py` (regole per
-      modificarlo nel README della cartella). Provata solo in LibreOffice: da aprire e stampare in
-      **Excel sul PC vecchio**. Contenuto da far controllare a chi la scrive: la prescistica dice
-      ancora «GLOBAL NEVE BASE» (le tessere ora sono Reale Mutua), la ricevuta dice ancora 2025/2026
-      e «entro il 05/01/2026».
 - [ ] 16/10: **Logo ufficiale ovunque** (l'utente, 15/10: «solo i loghi ufficiali ovunque: post, sito,
       generatore»). Fatto: il logo è `grafica/logo/logo-ufficiale.JPG` (728×468, col cielo, con «Sci Club»
       e «ASTI»), ricalcato in vettoriale senza cielo, per fondo chiaro, da
       `grafica/logo/strumenti/ricalca_ufficiale.py` in `logo-ufficiale-trasparente-lettere-blu.svg`, copiato in `web/` e
       `ricerca/` (stesso nome: le 14 pagine e `SOCIAL.logo` non cambiano). Tolti: la ricostruzione del
-      07/10 (PNG, JPG, quadrato, `originale_228x170.png`, i loro script) e gli abbozzi dei loghi in
-      `bozze/` (restano quelli del canale e del post K). Provato: test node, i sei stili del generatore
+      07/10 (PNG, JPG, quadrato, `originale_228x170.png`, i loro script); `bozze/` cancellata il 15/10
+      (la pagina dei PNG del logo è ora `grafica/logo/strumenti/profilo.html`). Provato: test node, i sei stili del generatore
       in post e story, barra, login e canvas del PDF. Da guardare sul sito vero. Ancora col logo
       vecchio dentro, perché sono JPG già fatti: `grafica/proposte-post-social/`, da rifare solo se
       servono. Cartelli chiaro e scuro e story di `grafica/canale-whatsapp/` rifatti col logo tondo il
-      15/10 (QR riletto da entrambi i cartelli; non in commit). L'utente ha tenuto il post del canale
-      (`bozze/abbozzo-canale.*`), che ora mostra il logo nuovo.
+      15/10 (QR riletto da entrambi i cartelli, commit `930919b`).
       **Immagine del profilo Instagram e Facebook**: da rifare con il logo ufficiale (bianco e blu a
       fondo unito, tondo e quadrato; «Sci Club» in alto a sinistra e «ASTI» grande sotto, idea
       dell'utente). Gli abbozzi e le prove sono stati cancellati: si riparte dall'SVG nuovo. A 40 px

@@ -53,11 +53,9 @@ lo **sticker link**, che si mette con l'app quando si pubblica. Su Instagram:
 Su Facebook la storia della pagina del club ha lo stesso sticker Link: da verificare
 la prima volta che si pubblica.
 
-## QR nella scheda di tesseramento
+## Il QR da solo
 
-Sta in [`../scheda-tesseramento/`](../scheda-tesseramento/).
-
-Per metterlo altrove: `qr-canale-whatsapp.png` (QR per stampe grandi) e
+Per metterlo altrove (il volantino con il QR lo usa già): `qr-canale-whatsapp.png` (QR per stampe grandi) e
 `qr-canale-whatsapp-piccolo.png` (moduli più grossi, per stampe piccole).
 
 ## Sorgenti

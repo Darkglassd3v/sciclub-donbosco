@@ -54,6 +54,3 @@ Thumbs.db
 # PNG generati da social/export.sh: si rigenerano
 social/export/
 
-# Abbozzi delle grafiche da approvare (solo in locale): bozze/abbozzo-k.html si apre
-# copiato accanto a web/social-templates.js.
-bozze/

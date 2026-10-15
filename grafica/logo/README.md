@@ -29,6 +29,6 @@ Per rifarlo, dalla cartella `grafica/logo/`:
       python strumenti/ricalca_ufficiale.py logo-ufficiale.JPG logo-ufficiale-trasparente-lettere-blu.svg
 
 Se si ritrova il file originale (PDF, AI, SVG), usare quello. I PNG `logo-ufficiale-*` si rifanno
-da `bozze/abbozzo-logo-profilo.html` (`#blu`, `#bianco-quadrato`, `#trasparente-blu`, …).
+da `strumenti/profilo.html` (`#blu`, `#bianco-quadrato`, `#trasparente-blu`, …).
 La ricostruzione vecchia (`logo_sciclubdonbosco.*`, 07/10, senza «Sci Club» né «ASTI») è stata tolta
 il 15/10: è nella storia di git.

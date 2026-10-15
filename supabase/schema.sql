@@ -6,7 +6,7 @@
 --   Supabase Dashboard > SQL Editor > incolla questo file > Run
 -- Poi eseguire in ordine i file di supabase/migration/ per caricare i dati,
 -- e supabase/verifica.sql per controllare che sia andato tutto bene.
--- Istruzioni complete: docs/MIGRAZIONE_2.0.md
+-- Account, chiavi e pubblicazione: docs/ACCOUNT.md; regole del database: docs/SVILUPPO.md
 
 -- ---------------------------------------------------------------------------
 -- Tabelle di configurazione (ex fogli PREZZI e PARTENZE)
