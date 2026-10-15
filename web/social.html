@@ -158,14 +158,6 @@
     .riassunto { display: flex; flex-direction: column; gap: 12px; }
     .riassunto h2 { color: var(--colore); margin-bottom: 0; }
     .riassunto .occhiello { margin-bottom: 0; }
-    .stile-pagina { grid-column: 1 / -1; }
-    .scelte-stile { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 16px; border: 0; padding: 0; margin: 0; }
-    .scelte-stile .esempio { display: block; margin-top: 12px; }
-    .scelte-stile .esempio .anteprima figcaption { display: none; }
-    .scelte-stile .spunta { align-items: flex-start; padding: 10px 14px; border: 2px solid var(--filo); border-radius: 12px; cursor: pointer; }
-    .scelte-stile .spunta:has(input:checked) { border-color: var(--blu); background: var(--blu-light); }
-    .scelte-stile .spunta input { margin-top: .2em; }
-    .scelte-stile small { font-weight: 500; color: var(--testo-soft); }
     .righe-riassunto { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filo); }
     .righe-riassunto li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filo); }
     .righe-riassunto .chi { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -252,11 +244,11 @@
 
         <div class="griglia-post">
           <div>
-            <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nella grafica scelta:
+            <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nel post:
                  ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
             <section class="parte" aria-labelledby="pCampi">
               <h3 id="pCampi">Il post, dall'alto in basso</h3>
-              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post, con la grafica scelta in Impostazioni.</p>
+              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post.</p>
               <div class="campi" id="campiPost">
                 <div data-campo="data" class="field" data-per="evento sponsor">
                   <label class="label" for="fData">Data</label>
@@ -309,14 +301,13 @@
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                   <div class="evidenzia" data-per="evento">
                     <button type="button" class="button is-small is-light" id="btnEvidenzia">Evidenzia</button>
-                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nelle grafiche Biglietto, Calendario
-                      e Divano escono evidenziate; qui restano fra due asterischi. Per togliere, selezionale di
+                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nel post escono evidenziate;
+                      qui restano fra due asterischi. Per togliere, selezionale di
                       nuovo e premi Evidenzia.</p>
                   </div>
                 </div>
-                <!-- Solo nelle grafiche Divano e K: mostraCampi() lo nasconde con le altre. -->
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
-                  <label class="label" for="fGancio">Gancio: la frase che apre il post (nel Divano la prima riga del riquadro bianco, nella K la riga gialla sopra il titolo)</label>
+                  <label class="label" for="fGancio">Gancio: la frase che apre il post (la riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
                 <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
@@ -427,32 +418,6 @@
   <div data-sezione="impostazioni" hidden>
     <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
     <div class="tre-colonne" id="riassunti">
-      <section class="riquadro riassunto stile-pagina" style="--colore:#084C8D" aria-labelledby="rStile">
-        <h2 id="rStile">Grafica dei post</h2>
-        <p class="occhiello">Vale per tutta la pagina: tutti i post, le story e il calendario. Sotto ogni grafica lo stesso post d'esempio.</p>
-        <fieldset class="scelte-stile">
-          <legend class="is-sr-only">Grafica dei post</legend>
-          <label class="spunta"><input type="radio" name="stile" value="ritocco" id="stileRitocco">
-            <span><b>Ritocco</b><br><small>Il biglietto di sempre, con la neve sul fondo</small>
-            <span class="esempio" id="esempioRitocco"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="montagna" id="stileMontagna">
-            <span><b>Montagna</b><br><small>Foto grande, informazioni in una scheda bianca</small>
-            <span class="esempio" id="esempioMontagna"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="biglietto">
-            <span><b>Biglietto</b><br><small>Il biglietto bianco con la foto in alto, post 4:5</small>
-            <span class="esempio" id="esempioBiglietto"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="calendario">
-            <span><b>Calendario</b><br><small>Sempre blu, il foglio del calendario porta la data, post 4:5</small>
-            <span class="esempio" id="esempioCalendario"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="divano">
-            <span><b>Divano</b><br><small>Il manifesto: nome grande, la data nella fascia e un gancio scritto per ogni post, post 4:5</small>
-            <span class="esempio" id="esempioDivano"></span></span></label>
-          <label class="spunta"><input type="radio" name="stile" value="k">
-            <span><b>Piani</b><br><small>La foto a tutta pagina, i piani a 45° e la data nella tessera gialla; corsi e gite di domenica in giallo, il resto in blu, post 4:5</small>
-            <span class="esempio" id="esempioK"></span></span></label>
-        </fieldset>
-        <div><button type="button" class="button is-link" id="btnSalvaStile">Salva la grafica</button></div>
-      </section>
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
         <p class="occhiello">Marchio e colori per le campagne.</p>
@@ -544,7 +509,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261015velo"></script>
+<script src="social-templates.js?v=20261015solok"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -574,8 +539,7 @@
     collegaRubrica();
     window.addEventListener("hashchange", mostraSezione);
     mostraSezione();
-    collegaStile();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti(), caricaStile()]);
+    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
     disegnaElenco();
@@ -642,7 +606,6 @@
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
     el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
       || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
-    disegnaEsempiStile();
   }
 
   // ---------------------------------------------------------------------
@@ -668,81 +631,6 @@
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     apriSponsor(el("sScegli").value);
-  }
-
-  // -------------------------------------------------------------------------
-  // Grafica dei post (social_settings, chiave "style"): una di STILI.
-  // Una sola per tutta la pagina, scelta in Impostazioni guardando un post
-  // d'esempio: un interruttore nel singolo post faceva rischiare di
-  // pubblicare un post con la grafica sbagliata.
-  // -------------------------------------------------------------------------
-  let stileSalvato = "ritocco";
-  const NOMI_STILE = { ritocco: "Ritocco", montagna: "Montagna", biglietto: "Biglietto", calendario: "Calendario", divano: "Divano", k: "Piani" };
-  const CON_GANCIO = ["divano", "k"];
-
-  async function caricaStile() {
-    const { data, error } = await sb.from("social_settings").select("value").eq("key", "style").maybeSingle();
-    if (error) showToast("Grafica dei post non caricata, uso il Ritocco: " + messaggioErrore(error), "is-danger");
-    mettiStile((data && data.value) || "ritocco");
-  }
-
-  /** La grafica di tutti: disegni, scelta in Impostazioni, interruttori. Arriva anche dopo i post (si caricano insieme): si ridisegna. */
-  function mettiStile(stile) {
-    const titoloPrima = titoloMese(el("calMese").value);
-    impostaStile(stile);
-    stileSalvato = STILE;
-    document.querySelector(`input[name="stile"][value="${stileSalvato}"]`).checked = true;
-    aggiornaStile();
-    // Il gancio si scrive solo con le grafiche che lo disegnano (Divano e K).
-    el("campoGancio").hidden = !CON_GANCIO.includes(STILE) || gruppo(el("fTipo").value) === "sponsor";
-    ordinaCampi();
-    // Il titolo proposto del calendario cambia con la grafica; uno scritto a mano resta.
-    if (el("calTitolo").value === titoloPrima) el("calTitolo").value = titoloMese(el("calMese").value);
-    if (aperto && !el("editor").hidden) ridisegna();
-    disegnaCalendarioMese();
-  }
-
-  const stileScelto = () => document.querySelector('input[name="stile"]:checked').value;
-
-  function aggiornaStile() {
-    const cambiato = stileScelto() !== stileSalvato;
-    el("btnSalvaStile").textContent = cambiato ? "Salva modifiche" : "Salva la grafica";
-    el("btnSalvaStile").classList.toggle("salva-modifiche", cambiato);
-  }
-
-  function collegaStile() {
-    document.querySelectorAll('input[name="stile"]').forEach((r) => r.addEventListener("change", aggiornaStile));
-    el("btnSalvaStile").addEventListener("click", salvaStile);
-  }
-
-  async function salvaStile() {
-    const stile = stileScelto();
-    setLoading(true);
-    try {
-      const { error } = await sb.from("social_settings").upsert({ key: "style", value: stile });
-      if (error) throw error;
-      mettiStile(stile);
-      showToast(`Grafica salvata: ${NOMI_STILE[stile]}.`);
-    } catch (e) {
-      showToast("Grafica non salvata: " + messaggioErrore(e), "is-danger");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  /** Lo stesso post d'esempio (una gita di sabato) in tutte le grafiche, in Impostazioni. */
-  function disegnaEsempiStile() {
-    const sabato = new Date();
-    sabato.setDate(sabato.getDate() + ((6 - sabato.getDay() + 7) % 7 || 7));
-    const iso = `${sabato.getFullYear()}-${String(sabato.getMonth() + 1).padStart(2, "0")}-${String(sabato.getDate()).padStart(2, "0")}`;
-    const ev = { kind: "gita", title: "Sestriere", event_date: iso, course: true, show_price: true,
-      stops: [["6:00", "Asti, piazza Campo del Palio"]], prices: [["Soci", "45 €"], ["Ragazzi", "35 €"]],
-      deadline: iso, hook: "Tutti in pista!", contacts: SOCIAL.contatti.slice(0, 2).map((c) => c.id) };
-    for (const st of STILI) {
-      const dove = el(`esempio${maiuscola(st)}`);
-      dove.innerHTML = "";
-      anteprima(dove, { html: disegnaPost(modelloPost(ev, "post"), st), ...misurePost(st), nome: "Esempio" }, 260, { pulsante: false });
-    }
   }
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
@@ -1004,7 +892,7 @@
    * riga per riga (un'evidenza non va a capo) e con gli spazi fuori. Se la
    * selezione tocca parole già evidenziate, toglie quelle evidenze per intero:
    * togliere solo l'asterisco selezionato ne lasciava uno spaiato, che nel
-   * post si vedeva. Le grafiche della 2.8 disegnano le evidenze (evidenzia()
+   * post si vedeva. Il post disegna le evidenze (evidenzia()
    * in social-templates.js).
    */
   function evidenziaSelezione() {
@@ -1076,32 +964,20 @@
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  /* L'ordine dei campi è quello in cui si leggono nel post, grafica per
-   * grafica (vedi i disegni in social-templates.js): nel Divano il nome viene
-   * prima della data e il gancio subito sotto la fascia, nel Biglietto la data
-   * è nel bollo in alto... Il tipo di evento sta sempre in testa. I campi si
-   * spostano davvero (non con CSS order), così anche il tasto Tab li segue. */
+  /* L'ordine dei campi è quello in cui si leggono nel post (vedi postK() in
+   * social-templates.js): in alto la coccarda del corso a sinistra e la
+   * tessera con data e ora a destra, poi gancio, titolo e i dati nei
+   * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
+   * davvero (non con CSS order), così anche il tasto Tab li segue. */
   const ORDINE_CAMPI = {
-    ritocco: { gita: ["giorno", "corso", "titolo", "prezzi", "partenze", "scadenza"],
-               evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
-    montagna: { gita: ["corso", "titolo", "giorno", "prezzi", "partenze", "scadenza"],
-                evento: ["tipo", "titolo", "data", "sottotesto", "ora", "dove", "info", "scadenza", "prezzi"] },
-    biglietto: { gita: ["giorno", "titolo", "partenze", "prezzi", "scadenza", "corso"],
-                 evento: ["tipo", "data", "titolo", "sottotesto", "ora", "dove", "info", "prezzi", "scadenza"] },
-    calendario: { gita: ["corso", "titolo", "giorno", "partenze", "prezzi", "scadenza"],
-                  evento: ["tipo", "titolo", "sottotesto", "data", "ora", "dove", "info", "prezzi", "scadenza"] },
-    divano: { gita: ["corso", "titolo", "giorno", "gancio", "partenze", "prezzi", "scadenza"],
-              evento: ["tipo", "titolo", "data", "gancio", "ora", "prezzi", "dove", "info", "sottotesto", "scadenza"] },
-    // K: in alto la coccarda del corso a sinistra e la tessera con data e ora a
-    // destra, poi gancio, titolo e i dati nei riquadrini.
-    k: { gita: ["corso", "giorno", "gancio", "titolo", "partenze", "prezzi", "scadenza"],
-         evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"] },
+    gita: ["corso", "giorno", "gancio", "titolo", "partenze", "prezzi", "scadenza"],
+    evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
   const ORDINE_SPONSOR = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
 
   function ordinaCampi() {
     const g = gruppo(el("fTipo").value), box = el("campiPost");
-    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[STILE][g];
+    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[g];
     const campi = ordine.map((nome) => box.querySelector(`[data-campo="${nome}"]`));
     // Già in fila: niente da spostare (spostare un campo gli toglie il cursore).
     const ora = [...box.children].filter((c) => campi.includes(c));
@@ -1113,7 +989,6 @@
     const g = gruppo(el("fTipo").value);
     ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
-    if (!CON_GANCIO.includes(STILE)) el("campoGancio").hidden = true;
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post" : "Sottotesto (si può andare a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
@@ -1568,9 +1443,8 @@
   // Calendario del mese e copertina
   // ---------------------------------------------------------------------
 
-  // Il titolo proposto: le grafiche della 2.8 dicono cos'è ("Calendario di gennaio"), le altre hanno già "Calendario gite".
-  const titoloMese = (mese) => (!mese ? "" : NUOVI.includes(STILE) ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}`
-    : `${maiuscola(MESI[Number(mese.slice(5, 7)) - 1])} sulla neve`);
+  // Il titolo proposto dice cos'è: "Calendario di gennaio".
+  const titoloMese = (mese) => (mese ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}` : "");
 
   function riempiMesi() {
     const mesi = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
@@ -1591,8 +1465,7 @@
     const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
-    const { w, h } = misureCalendario();
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, STILE, mese), w, h, nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese), ...misurePost(), nome: "Calendario", file: `calendario-${mese}.png` }, 360);
   }
 
   function disegnaCopertinaFb() {

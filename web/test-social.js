@@ -8,8 +8,7 @@
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
-        impostaStile, stileCorrente, disegnaPost, disegnaCalendario, misureCalendario, misurePost,
-        STILI, evidenzia, coloreNuovo, giornoMese } = require("./social-templates.js");
+        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -134,41 +133,9 @@ assert.strictEqual(contrasto("#FFFFFF", "#000000").toFixed(1), "21.0");   // l'o
 assert.ok(contrasto(santero.color_light, santero.color_dark) > 4.5, "crema su marrone non si legge");
 assert.strictEqual(schiarisci("#000000", .5), "#808080");
 
-// --- Grafica dei post (social_settings) --------------------------------------
+// --- Grafica dei post: la K, post e calendario 4:5 -----------------------------
 
-impostaStile("montagna");
-assert.strictEqual(stileCorrente(), "montagna");
-assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1350 });
-impostaStile("qualcosa");                                  // un valore sconosciuto torna al ritocco
-assert.strictEqual(stileCorrente(), "ritocco");
-assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1080 });
-{
-  impostaContatti([{ id: 1, name: "Marco", phone: "333 1" }]);
-  const gita = modelloPost({ kind: "gita", title: "Sestriere", event_date: "2027-01-16", course: true,
-    stops: [["6:00", "Asti"]], prices: [["", "45 €"]], deadline: "2027-01-14", contacts: [1] }, "post");
-  const ritocco = disegnaPost(gita), montagna = disegnaPost(gita, "montagna");
-  assert.ok(ritocco.includes("data-biglietto") && !ritocco.includes("data-titolofoto"), "il ritocco non è il biglietto");
-  assert.ok(montagna.includes("data-titolofoto") && montagna.includes("data-biglietto"), "la montagna non ha titolo e scheda");
-  assert.ok(montagna.includes("Sabato 16 gennaio") && montagna.includes("333 1") && montagna.includes("Corso"), "manca il nastro, il telefono o il corso");
-  // Un post di solo titolo, senza contatti: niente scheda vuota.
-  const solo = disegnaPost(modelloPost({ kind: "servizi", title: "Apertura iscrizioni", contacts: [] }, "post"), "montagna");
-  assert.ok(!solo.includes("data-biglietto"), "scheda vuota in un post di solo titolo");
-  assert.ok(disegnaCalendario("Gennaio", [["g6", "09/01", "Prato Nevoso", true]], "montagna").includes("height:1350px"));
-}
-
-// --- Grafiche della 2.8: Biglietto, Calendario, Divano ------------------------
-
-for (const st of ["biglietto", "calendario", "divano", "k"]) {
-  impostaStile(st);
-  assert.strictEqual(stileCorrente(), st, `grafica ${st} non accettata`);
-  assert.deepStrictEqual(misurePost(), { w: 1080, h: 1350 }, `${st}: il post non è 4:5`);
-  assert.deepStrictEqual(misureCalendario(), { w: 1080, h: 1350 });
-}
-impostaStile("ritocco");
-assert.deepStrictEqual(misurePost(), { w: 1080, h: 1080 }, "il ritocco ha cambiato misura");
-assert.deepStrictEqual(misurePost("montagna"), { w: 1080, h: 1080 });
-assert.deepStrictEqual(STILI, ["ritocco", "montagna", "biglietto", "calendario", "divano", "k"],
-  "STILI diverso da social_settings_style_valid (supabase/schema.sql)");
+assert.deepStrictEqual(misurePost(), { w: 1080, h: 1350 }, "il post non è 4:5");
 
 // Un solo blu e un solo giallo: corsi gialli, eventi e calendario blu, le gite col colore del loro giorno.
 assert.deepStrictEqual(coloreNuovo("corso"), { c: "#FCCF02", ink: "#084C8D" });
@@ -197,12 +164,8 @@ assert.strictEqual(evidenzia("2 * 3 = 6"), "2 * 3 = 6", "un asterisco solo non �
   assert.match(testoPost(ev), /Ogni mercoledì\nfino al 13 gennaio/);
   // (il CSS ha i suoi asterischi, nei calc(): si cercano i segni attaccati alle parole)
   const segni = /\*(fino|soci)|(gennaio|soci)\*/;
-  assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "ritocco")), "asterischi nel Ritocco");
-  assert.ok(!segni.test(disegnaPost(modelloPost(ev, "post"), "montagna")), "asterischi nella Montagna");
-  for (const st of ["biglietto", "calendario", "divano", "k"]) {
-    const html = disegnaPost(modelloPost(ev, "post"), st);
-    assert.ok(html.includes("<b>fino al 13 gennaio</b>") && !segni.test(html), `${st}: evidenza del sottotesto`);
-  }
+  const html = disegnaPost(modelloPost(ev, "post"));
+  assert.ok(html.includes("<b>fino al 13 gennaio</b>") && !segni.test(html), "evidenza del sottotesto");
 }
 assert.strictEqual(giornoMese("2027-01-14"), "giovedì 14 gennaio");
 assert.strictEqual(giornoMese(null), "");
@@ -214,37 +177,17 @@ assert.strictEqual(giornoMese(null), "");
   assert.strictEqual(m.scadenza, "giovedì 14 gennaio");
   assert.strictEqual(m.hook, "Tutti in pista!");
   assert.strictEqual(m.iso, "2027-01-17");
-  for (const st of ["biglietto", "calendario", "divano"]) {
-    for (const fmt of ["post", "story"]) {
-      const html = disegnaPost(modelloPost(ev, fmt), st);
-      assert.ok(html.includes("data-adatta") && html.includes('data-righe="2"'), `${st} ${fmt}: manca l'adattamento del testo`);
-      assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1"), `${st} ${fmt}: mancano le iscrizioni o il telefono`);
-      assert.ok(/Gita a(<br>| )La Thuile/.test(html), `${st} ${fmt}: il titolo non dice che è una gita`);
-      assert.ok(!html.includes("ore ore"), `${st} ${fmt}: "ore" ripetuto nella partenza`);
-      assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`), `${st} ${fmt}: misura sbagliata`);
-      assert.strictEqual(html.includes(" story"), fmt === "story");
-    }
+  // Il corso nello stesso giorno: la coccarda verde, appesa alla tessera.
+  for (const fmt of ["post", "story"]) {
+    assert.ok(disegnaPost(modelloPost(ev, fmt)).includes('class="stella"'), `${fmt}: manca la coccarda del corso`);
+    assert.ok(!disegnaPost(modelloPost({ ...ev, course: false }, fmt)).includes('class="stella"'), `${fmt}: coccarda senza corso`);
   }
-  // Lo spazio che può cedere a un testo lungo (fit()): titolo e disegno nel post del Divano, il titolo in A e B.
-  const cedeDiv = disegnaPost(m, "divano"), cedeStory = disegnaPost(modelloPost(ev, "story"), "divano");
-  assert.ok(/class="nome" data-cede/.test(cedeDiv) && cedeDiv.includes('data-cede="70"') && cedeDiv.includes("data-ancora") && cedeDiv.includes("data-segue"));
-  assert.ok(!cedeStory.includes('data-cede="70"'), "nella story il disegno si adatta già da solo");
-  assert.ok(disegnaPost(m, "biglietto").includes('class="tit" data-cede') && disegnaPost(m, "calendario").includes('class="tit" data-cede'));
-  assert.ok(!disegnaPost(m, "ritocco").includes("data-cede"), "il Ritocco non cambia");
-  // Il corso nello stesso giorno: la coccarda verde in alto a destra in Calendario e Divano, una riga nel Biglietto.
-  for (const st of ["calendario", "divano", "k"]) for (const fmt of ["post", "story"]) {
-    assert.ok(disegnaPost(modelloPost(ev, fmt), st).includes('class="stella"'), `${st} ${fmt}: manca la coccarda del corso`);
-    assert.ok(!disegnaPost(modelloPost({ ...ev, course: false }, fmt), st).includes('class="stella"'), `${st} ${fmt}: coccarda senza corso`);
-  }
-  assert.ok(disegnaPost(m, "biglietto").includes("nello stesso giorno"), "il Biglietto ha perso il corso");
-  assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && disegnaPost(m, "k").includes("Tutti in pista!")
-    && !disegnaPost(m, "biglietto").includes("Tutti in pista!"), "il gancio deve stare solo nel Divano e nella K");
   // K: il titolo è solo la meta (su una riga), la data nella tessera con la prima partenza, il testo che si adatta.
   for (const fmt of ["post", "story"]) {
-    const html = disegnaPost(modelloPost(ev, fmt), "k");
+    const html = disegnaPost(modelloPost(ev, fmt));
     assert.ok(!html.includes("<small>Gita a</small>") && html.includes(`<div class="tit meta" data-cede><div data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
     assert.ok(html.includes('class="gancio">Tutti in pista!<'), `k ${fmt}: il gancio scritto`);
-    assert.ok(disegnaPost(modelloPost({ ...ev, hook: "" }, fmt), "k").includes('class="gancio">Gita a<'), `k ${fmt}: senza gancio dice «Gita a»`);
+    assert.ok(disegnaPost(modelloPost({ ...ev, hook: "" }, fmt)).includes('class="gancio">Gita a<'), `k ${fmt}: senza gancio dice «Gita a»`);
     // Le partenze in riquadri, una per fermata, con l'ora; il titolo cede la riga vuota se serve.
     assert.strictEqual((html.match(/class="fermata"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
     assert.ok(html.includes("<b>6:30</b>") && !html.includes("Partenze: "), `k ${fmt}: partenze ancora in riga`);
@@ -252,44 +195,34 @@ assert.strictEqual(giornoMese(null), "");
     assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:30<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
     assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1") && html.includes("giovedì 14 gennaio"), `k ${fmt}: iscrizioni, telefono o scadenza`);
     assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`) && html.includes(" senza-foto"), `k ${fmt}: misura o fondo senza foto`);
+    assert.strictEqual(html.includes(" story"), fmt === "story");
   }
   // Il luogo dell'evento: una riga sua col segnaposto, una volta sola.
-  const kEv = disegnaPost(modelloPost({ kind: "corso", title: "Presciistica", event_date: "2026-10-21", place: "Palestra Way Assauto, Asti" }, "story"), "k");
+  const kEv = disegnaPost(modelloPost({ kind: "corso", title: "Presciistica", event_date: "2026-10-21", place: "Palestra Way Assauto, Asti" }, "story"));
   assert.ok(kEv.includes('<p class="dove"><svg') && (kEv.match(/Palestra Way Assauto/g) || []).length === 1, "k: il luogo dell'evento");
-  const kFoto = disegnaPost(modelloPost({ ...ev, photo: "https://x/foto.jpg" }, "post"), "k");
+  const kFoto = disegnaPost(modelloPost({ ...ev, photo: "https://x/foto.jpg" }, "post"));
   assert.ok(kFoto.includes('class="foto" src="https://x/foto.jpg"') && kFoto.includes("piano finestra") && !kFoto.includes("senza-foto"), "k: la foto");
-  assert.ok(!disegnaPost(modelloPost({ ...ev, hook: "", title: "Gita sociale a Pila" }, "post"), "k").includes('class="gancio">Gita a<'), "k: «Gita a Gita»");
-  assert.ok(disegnaPost(m, "biglietto").includes("giovedì 14 gennaio</b>") && disegnaPost(m, "calendario").includes("Iscrizioni entro giovedì 14 gennaio"));
-  // Una meta che dice già "Gita" non diventa "Gita a Gita ...".
-  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "biglietto").includes("Gita a Gita"));
+  assert.ok(!disegnaPost(modelloPost({ ...ev, hook: "", title: "Gita sociale a Pila" }, "post")).includes('class="gancio">Gita a<'), "k: «Gita a Gita»");
   // Un titolo con caratteri HTML resta testo.
-  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "<img src=x>" }, "post"), "divano").includes("<img src=x>"), "titolo non passato da escS");
+  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "<img src=x>" }, "post")).includes("<img src=x>"), "titolo non passato da escS");
 
-  // Evento in B: l'Orario va nel foglio, le Iscrizioni nel riquadro giallo, il resto accanto.
+  // Evento: l'Orario va nella tessera, il luogo nella riga col segnaposto, le Iscrizioni in fondo.
   const cena = { kind: "cena", title: "Cena di fine stagione", event_date: "2027-04-10", prices: [["soci", "€ 30"]],
     facts: [["Orario", "ore 20:00"], ["Dove", "Salone dell'oratorio"], ["Iscrizioni", "entro mercoledì 7 aprile"]] };
-  const b = disegnaPost(modelloPost(cena, "post"), "calendario");
-  assert.match(b, /<div class="ora">ore 20:00<\/div>/);
-  assert.match(b, /<div class="evid">Iscrizioni entro mercoledì 7 aprile<\/div>/);
-  assert.ok(b.includes("Salone dell'oratorio") && !/<div class="et">Orario/.test(b), "l'orario ripetuto accanto al foglio");
-  // In C l'orario e i prezzi stanno su una riga, le iscrizioni in fondo senza i due punti.
-  const c = disegnaPost(modelloPost(cena, "post"), "divano");
-  assert.ok(c.includes("<b>Ore 20:00</b> · soci <b>€ 30</b>"), "orario e prezzi non sulla stessa riga");
-  assert.ok(c.includes('<div class="poi">Iscrizioni entro <b>mercoledì 7 aprile</b></div>'));
-  // Senza data: niente foglio in B, il nome del tipo nella fascia di C e nel bollo di A.
+  const k = disegnaPost(modelloPost(cena, "post"));
+  assert.ok(k.includes('<em data-fit style="font-size:58px">ore 20:00</em>') && (k.match(/20:00/g) || []).length === 1, "l'orario ripetuto fuori dalla tessera");
+  assert.ok(k.includes("<span>Salone dell'oratorio</span></p>") && k.includes("<p>Iscrizioni entro <b>mercoledì 7 aprile</b></p>"));
+  // Senza data: niente tessera, e l'informazione resta fra i dati.
   const corso = modelloPost({ kind: "corso", title: "Corso bambini", facts: [["Età", "5–12 anni"]] }, "post");
-  assert.ok(!disegnaPost(corso, "calendario").includes('class="foglio"'));
-  assert.ok(disegnaPost(corso, "divano").includes(">Corsi</div>") && disegnaPost(corso, "biglietto").includes('<div class="g">Corsi</div>'));
+  assert.ok(!disegnaPost(corso).includes('class="tessera"') && disegnaPost(corso).includes("<p>Età: 5–12 anni</p>"));
   // Un post di solo sottotesto prende il nome del tipo come titolo.
-  assert.ok(disegnaPost(modelloPost({ kind: "servizi", title: "", subtitle: "Negozio aperto" }, "post"), "biglietto").includes(">Servizi</div>"));
+  assert.ok(disegnaPost(modelloPost({ kind: "servizi", title: "", subtitle: "Negozio aperto" }, "post")).includes(">Servizi</div>"));
 
-  // Calendario del mese: intestazione col mese, il giorno corto in C, il corso.
+  // Calendario del mese: la tessera col mese e quante gite, il giorno corto, il corso.
   const righe = [["g0", "10/01", "Prato Nevoso", true], ["g6", "16/01", "Sestriere", false]];
-  const calA = disegnaCalendario("Calendario di gennaio", righe, "biglietto", "2027-01");
-  assert.ok(calA.includes('<div class="g">Gennaio</div><div class="n">2027</div>') && calA.includes("Dom 10/01") && calA.includes("Corso"));
-  assert.ok(disegnaCalendario("Calendario di gennaio", righe, "calendario", "2027-01").includes("Gennaio 2027"));
-  const calC = disegnaCalendario("Calendario di gennaio", righe, "divano", "2027-01");
-  assert.ok(calC.includes(">Dom 10<") && calC.includes("Le gite del mese") && calC.includes("height:1350px"));
+  const cal = disegnaCalendario("Calendario di gennaio", righe, "2027-01");
+  assert.ok(cal.includes('font-size:54px">gennaio</span><b>2</b>') && cal.includes(">Dom 10<") && cal.includes('class="corso">corso<')
+    && cal.includes("Le gite del mese") && cal.includes("height:1350px"));
   // Ora, luogo e scadenza di un evento hanno un campo loro e diventano le informazioni che le grafiche conoscono.
   const presci = { kind: "corso", title: "Ginnastica presciistica", event_date: "2026-10-21", event_time: "ore 19:30",
     place: "Palestra Way Assauto, Asti", deadline: "2026-10-19",
@@ -300,37 +233,28 @@ assert.strictEqual(giornoMese(null), "");
     "senza i campi nuovi le informazioni scritte a mano devono restare tutte");
   assert.deepStrictEqual(modelloPost({ ...presci, event_time: "dalle 18 alle 20" }, "post").facts[0], ["Orario", "dalle 18 alle 20"]);
   assert.match(testoPost(presci), /Orario: ore 19:30\nDove: Palestra Way Assauto, Asti\nQuando: ogni mercoledì\nIscrizioni: entro lunedì 19 ottobre/);
-  assert.match(disegnaPost(modelloPost(presci, "post"), "calendario"), /<div class="ora">ore 19:30<\/div>/);
-  assert.ok(disegnaPost(modelloPost(presci, "post"), "divano").includes("<b>Ore 19:30</b> · Palestra Way Assauto, Asti"),
-    "nel Divano ora e luogo vanno sulla stessa riga");
+  assert.ok(disegnaPost(modelloPost(presci, "post")).includes('<em data-fit style="font-size:58px">ore 19:30</em>'), "l'ora nella tessera");
   // I telefoni stanno in una riga sola (un elemento), e la frase dice che si può anche telefonare.
   impostaContatti([{ id: 3, name: "Cesare", phone: "3485171707" }, { id: 4, name: "Irene", phone: "3487324789" }]);
-  for (const st of ["biglietto", "calendario", "divano"]) {
-    const html = disegnaPost(modelloPost({ ...presci, contacts: [3, 4] }, "post"), st);
-    assert.strictEqual((html.match(/class="tel"/g) || []).length, 1, `${st}: un telefono per riga`);
-    assert.ok(html.includes("Iscrizioni in negozio, via mail o al telefono") && html.includes("<b>3487324789</b>"));
-    assert.ok(disegnaPost(modelloPost(presci, "post"), st).includes("Iscrizioni in negozio o via mail"));
-  }
+  const html = disegnaPost(modelloPost({ ...presci, contacts: [3, 4] }, "post"));
+  assert.strictEqual((html.match(/class="tel"/g) || []).length, 1, "un telefono per riga");
+  assert.ok(html.includes("Iscrizioni in negozio, via mail o al telefono") && html.includes("<b>3487324789</b>"));
+  assert.ok(disegnaPost(modelloPost(presci, "post")).includes("Iscrizioni in negozio o via mail"));
   impostaContatti([]);
 }
 
-// Ogni grafica ha in social.html il nome e l'ordine dei campi del form: la K
-// li aveva senza ORDINE_CAMPI, e salvarla dava "Cannot read properties of
-// undefined (reading 'gita')".
+// L'ordine dei campi del form in social.html: salvare un post con un ordine
+// mancante dava "Cannot read properties of undefined (reading 'gita')".
 {
   const pagina = require("fs").readFileSync(require("path").join(__dirname, "social.html"), "utf8");
   const leggi = (nome) => (0, eval)(`(${pagina.match(new RegExp(`const ${nome} = (\\{[^\\n]*\\}|\\{[\\s\\S]*?\\n  \\});`))[1]})`);
-  const ordine = leggi("ORDINE_CAMPI"), nomi = leggi("NOMI_STILE");
-  for (const stile of STILI) {
-    assert.ok(nomi[stile], `${stile}: manca in NOMI_STILE`);
-    for (const g of ["gita", "evento"]) assert.ok(Array.isArray(ordine[stile]?.[g]), `${stile}: manca ORDINE_CAMPI.${g}`);
-  }
+  const ordine = leggi("ORDINE_CAMPI");
+  for (const g of ["gita", "evento"]) assert.ok(Array.isArray(ordine[g]), `manca ORDINE_CAMPI.${g}`);
   // Ogni nome dell'ordine è un campo del form: ordinaCampi() lo cerca per
   // data-campo, e uno che non c'è finirebbe nel form come la scritta "null".
   const campi = new Set([...pagina.matchAll(/data-campo="([A-Za-z]+)"/g)].map((m) => m[1]));
   const sponsor = (0, eval)(pagina.match(/const ORDINE_SPONSOR = (\[[^\]]*\]);/)[1]);
-  for (const [dove, elenco] of [...Object.entries(ordine).flatMap(([st, o]) => Object.entries(o).map(([g, e]) => [`${st}.${g}`, e])),
-                                 ["ORDINE_SPONSOR", sponsor]]) {
+  for (const [dove, elenco] of [...Object.entries(ordine), ["ORDINE_SPONSOR", sponsor]]) {
     for (const nome of elenco) assert.ok(campi.has(nome), `${dove}: "${nome}" non è un data-campo di social.html`);
   }
 }
@@ -339,10 +263,10 @@ assert.strictEqual(giornoMese(null), "");
 {
   const ev = { kind: "gita", title: "La Thuile", event_date: "2026-10-03", stops: [["06:40", "Asti"], ["06:20", "Nizza Monferrato"]],
     deadline: "2026-10-23", course: true, contacts: [] };
-  for (const st of STILI) for (const fmt of ["post", "story"]) {
-    const classi = [...disegnaPost(modelloPost(ev, fmt), st).matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(/\s+/));
+  for (const fmt of ["post", "story"]) {
+    const classi = [...disegnaPost(modelloPost(ev, fmt)).matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(/\s+/));
     for (const c of ["box", "tag", "title", "button", "card", "content", "notification", "column", "columns", "media", "level"])
-      assert.ok(!classi.includes(c), `${st} ${fmt}: la classe "${c}" è anche di Bulma`);
+      assert.ok(!classi.includes(c), `${fmt}: la classe "${c}" è anche di Bulma`);
   }
 }
 
