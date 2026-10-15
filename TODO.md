@@ -27,8 +27,10 @@
       mese più grandi), sempre sotto la fascia di Instagram (250 px); logo accanto al fondo della
       tessera; testo da 754 px invece di 878, più grande (titolo 140, righe 56, gancio 66, che si
       stringono da sole se non ci stanno); luogo dell'evento su una riga sua col segnaposto; partenze
-      della gita in riquadri (ora in giallo, fermata sotto). Dopo il sì: nel codice, poi banco di
-      tutte le grafiche post e story.
+      della gita in riquadri (ora in giallo, fermata sotto). Nei post (`bozze/abbozzo-k-post.png`)
+      cambiano solo il luogo dell'evento (riga sua col segnaposto) e le partenze, in riquadri bassi
+      su una riga (ora e fermata affiancate) per non rimpicciolire quota e scadenza. Dopo il sì: nel
+      codice, poi banco di tutte le grafiche post e story.
 - [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
       assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
       le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).
