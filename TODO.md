@@ -15,6 +15,13 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Excel leggibili** fatto: colonne larghe quanto il testo (prima fisse), dati in corpo
+      14, intestazione in grassetto 15 bianca sul blu, titolo delle Stampe in grassetto 18 su tutta
+      la riga. Per gli stili SheetJS è passata a `xlsx-js-style@1.2.0` (la stessa 0.18.5 con gli
+      stili; fissata con l'impronta SRI in `caricaXlsx()`). La lista per l'**assicurazione** ha solo
+      le larghezze nuove: niente stili finché l'assicurazione non dà il tracciato (stessi valori,
+      tipi e formato delle date: controllato). Da provare sul sito vero: aprire i tre Excel
+      (Riepilogo, Stampe, Assicurazione) in Excel e sul telefono.
 - [ ] 16/10: **K sistemata** (story: tessera più corta e piena, logo accanto, testo più su e più
       grande; luogo degli eventi su una riga sua col segnaposto; partenze in riquadri blu; telefoni
       con numero e icona in giallo; in fondo 300 px per Instagram invece di 340). Provata sul banco

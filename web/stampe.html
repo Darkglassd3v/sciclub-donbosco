@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fogli dei soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016a">
+  <link rel="stylesheet" href="brand.css?v=20261016b">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
 
@@ -65,9 +65,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js?v=20261016a"></script>
-<script src="shared.js?v=20261016a"></script>
-<script src="stampe.js?v=20261016a"></script>
+<script src="config.js?v=20261016b"></script>
+<script src="shared.js?v=20261016b"></script>
+<script src="stampe.js?v=20261016b"></script>
 <script>
   // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
   // abbonamenti della stagione: è quello che serve sul pullman.
@@ -134,8 +134,8 @@
         ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Telefono"],
         ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", s.phone || ""]),
       ];
-      const lavoro = XLSX.utils.aoa_to_sheet(righe);
-      lavoro["!cols"] = [10, 22, 18, 22, 18].map((wch) => ({ wch }));
+      // Il titolo in grassetto su tutta la riga, poi le colonne: vedi foglioLeggibile().
+      const lavoro = foglioLeggibile(righe, { intestazione: 1 });
       XLSX.utils.book_append_sheet(libro, lavoro, nomeFoglioExcel(g.titolo || foglio.titolo));
     }
     const file = `${foglio.titolo} ${nomeGiorno.toLowerCase()} ${oggi}.xlsx`;
