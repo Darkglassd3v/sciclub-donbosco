@@ -138,6 +138,9 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   parole fra asterischi (`evidenzia()` le disegna, `senzaSegni()` le toglie nel testo del post). Il
   form segue l'ordine del post (`ORDINE_CAMPI` in `social.html`). Logo in alto a sinistra e coccarda
   del corso (`stellaCorso()`) all'angolo basso della tessera della data, uguali in post e story.
+  La foto si sposta coi due cursori del form (`social_events.photo_x`, `photo_y`, 0–100, vuoti =
+  50% 45%: `posFoto()`), una posizione sola per post e story, nella variabile `--pos` usata da
+  foto, finestra e grigi.
 - Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.

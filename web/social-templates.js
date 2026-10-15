@@ -143,11 +143,18 @@ function categoriaDi(ev) {
   return ev.kind === "gita" ? categoriaGita(ev.event_date) : ev.kind;
 }
 
+/** La parte della foto che si vede (photo_x, photo_y: 0–100, da sinistra e dall'alto), per object-position:
+ *  vuote = "50% 45%", come prima che si potesse spostare. Solo numeri: finisce in uno style. */
+function posFoto(ev) {
+  const n = (v, d) => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? d : Math.min(100, Math.max(0, Math.round(Number(v)))));
+  return `${n(ev.photo_x, 50)}% ${n(ev.photo_y, 45)}%`;
+}
+
 /** Dalla riga di social_events al modello dei disegni, nel formato chiesto. */
 function modelloPost(ev, fmt) {
   const prezzi = (ev.prices || []).filter((p) => p && p[1]);
   const base = {
-    fmt, photo: ev.photo || null, cat: categoriaDi(ev), iso: ev.event_date || null,
+    fmt, photo: ev.photo || null, pos: posFoto(ev), cat: categoriaDi(ev), iso: ev.event_date || null,
     hook: String(ev.hook || "").trim(),
     prices: ev.show_price === false ? [] : prezzi, contatti: contattiDi(ev),
   };
@@ -365,19 +372,19 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
      * due telefoni la story di una gita perdeva la riga della scadenza. */
     .cv.sk.story { --fine: 726px; --angolo: 800px; --cuneo: 680px; --su: 250px; --giu: 300px; }
     .cv.sk.giallo { --notte: 18,18,18; }
-    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
+    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 45%); }
     .sk .piano { position: absolute; inset: 0; }
     .sk .scuro { background: linear-gradient(180deg, rgba(var(--velo),0) 0, rgba(var(--velo),0) calc(var(--fine) - 200px),
       rgba(var(--velo),.72) calc(var(--fine) + 10px), rgba(var(--velo),.82) 100%); }
     .sk .angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
     .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
-    .sk .finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(#084C8D, #084C8D), var(--immagine) center 45% / cover;
+    .sk .finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(#084C8D, #084C8D), var(--immagine) var(--pos, 50% 45%) / cover;
       background-blend-mode: normal, color, normal; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
     .sk .finestra.fondo { clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
     .sk .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
     .sk.giallo .angolo, .sk.giallo .finestra { background: none; opacity: .7; }
     .sk .grigi, .sk .tinta { position: absolute; inset: 0; }
-    .sk .grigi { background: var(--immagine) center 45% / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+    .sk .grigi { background: var(--immagine) var(--pos, 50% 45%) / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
     .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
     .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
     .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
@@ -519,11 +526,11 @@ function righeMese(righe, breve, corso) {
 /* Il fondo della K: la foto (o il blu notte), il velo, i piani, logo, tessera e
  * la colonna del testo; nel giallo l'angolo e la finestra hanno la foto in grigi
  * col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
-function fondoK({ giallo, story, foto, fine }, tessera, testo, isc, corso) {
+function fondoK({ giallo, story, foto, pos, fine }, tessera, testo, isc, corso) {
   const livelli = giallo && foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
   // Nell'url() del CSS virgolette e barre rovesce chiuderebbero la stringa: si codificano.
   const url = foto && escS(String(foto).replace(/["\\\n]/g, encodeURIComponent));
-  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;)` : ""}${fine ? `;--fine:${fine}px` : ""}">
+  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"}` : ""}${fine ? `;--fine:${fine}px` : ""}">
     ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
     <div class="piano scuro"></div><div class="piano angolo">${livelli}</div><div class="piano cuneo"></div>
     ${foto ? `<div class="piano finestra">${livelli}</div>${story ? `<div class="piano finestra fondo">${livelli}</div>` : ""}` : ""}
@@ -584,7 +591,7 @@ function postK(s) {
   const gancio = escS(s.hook) || (gita && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
   const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${gancio}</div>${tit}
     <div class="fatti">${righe.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
-  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
+  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo, pos: s.pos }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
 }
 
 /** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
@@ -798,5 +805,5 @@ function testoPost(ev, sp, stagione) {
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
                      contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
-                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese };
+                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto };
 }

@@ -3197,6 +3197,17 @@ alter table public.social_events add column if not exists place text;
 comment on column public.social_events.event_time is 'Ora di un evento, come la scrive chi pubblica (es. "19:30").';
 comment on column public.social_events.place is 'Luogo di un evento (es. "Palestra Way Assauto, Asti").';
 
+-- La parte della foto che si vede nel post e nella story (object-position in %,
+-- da sinistra e dall'alto), scelta coi cursori del form. Vuote = 50% e 45%,
+-- come prima che si potesse spostare.
+alter table public.social_events add column if not exists photo_x smallint;
+alter table public.social_events add column if not exists photo_y smallint;
+alter table public.social_events drop constraint if exists social_events_photo_pos_valid;
+alter table public.social_events add constraint social_events_photo_pos_valid
+  check (photo_x between 0 and 100 and photo_y between 0 and 100);  -- un valore vuoto passa
+comment on column public.social_events.photo_x is 'Posizione orizzontale della foto nel post, 0-100 (%); vuoto = 50.';
+comment on column public.social_events.photo_y is 'Posizione verticale della foto nel post, 0-100 (%); vuoto = 45.';
+
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()
 returns trigger language plpgsql set search_path = public as $$

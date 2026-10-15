@@ -92,6 +92,8 @@
 
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
+    /* Cursori della foto larghi e alti: si prendono bene anche col dito e con la vista debole. */
+    .pos-foto input[type=range] { display: block; width: 100%; height: 2rem; accent-color: var(--blu); }
     .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
     .righe-editor .riga input:first-child { max-width: 11rem; }
     /* La gita ha una quota sola: l'etichetta non serve. */
@@ -349,6 +351,14 @@
                   <label class="label" for="fFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
                   <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
+                  <!-- Quale parte della foto si vede, uguale in post e story: l'anteprima cambia mentre si sposta. -->
+                  <div id="posFoto" class="pos-foto mt-3" hidden>
+                    <label class="label" for="fFotoX">Sposta la foto: da sinistra a destra</label>
+                    <input type="range" id="fFotoX" min="0" max="100" step="1">
+                    <label class="label mt-2" for="fFotoY">Sposta la foto: dall'alto in basso</label>
+                    <input type="range" id="fFotoY" min="0" max="100" step="1">
+                    <button type="button" class="button is-small is-light mt-2" id="btnFotoCentro">Rimetti al centro</button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -509,7 +519,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261015angolo"></script>
+<script src="social-templates.js?v=20261015foto"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -519,6 +529,7 @@
   let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
   let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
   let foto = null;       // la foto del post aperto (data URL ridotto)
+  let fotoX = null, fotoY = null;  // la parte della foto che si vede (photo_x, photo_y); null = al centro
 
   /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
   function stagioneDi(data = new Date()) {
@@ -867,10 +878,14 @@
       const file = el("fFoto").files[0];
       if (!file) return;
       foto = await riduciImmagine(file, 1080, "image/jpeg");
+      fotoX = fotoY = null;  // una foto nuova parte dal centro
       el("fFoto").value = "";
       cambiato();
     });
-    el("btnTogliFoto").addEventListener("click", () => { foto = null; cambiato(); });
+    el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = null; cambiato(); });
+    el("fFotoX").addEventListener("input", () => { fotoX = Number(el("fFotoX").value); cambiato(); });
+    el("fFotoY").addEventListener("input", () => { fotoY = Number(el("fFotoY").value); cambiato(); });
+    el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = null; cambiato(); });
     el("btnEvidenzia").addEventListener("click", evidenziaSelezione);
     el("btnSalva").addEventListener("click", salva);
     el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
@@ -942,6 +957,7 @@
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
     foto = post.photo || null;
+    fotoX = post.photo_x ?? null; fotoY = post.photo_y ?? null;
     meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
     for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
     (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
@@ -1027,6 +1043,8 @@
       place: g === "evento" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
       photo: g === "sponsor" ? null : foto,
+      photo_x: g === "sponsor" || !foto ? null : fotoX,
+      photo_y: g === "sponsor" || !foto ? null : fotoY,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
@@ -1191,6 +1209,8 @@
     el("sbordaTutti").hidden = true;
     if (post.kind === "gita") disegnaCalGita();
     el("btnTogliFoto").hidden = !foto;
+    el("posFoto").hidden = !foto;
+    el("fFotoX").value = fotoX ?? 50; el("fFotoY").value = fotoY ?? 45;
     aggiornaPubblicato();
     const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
     el("linkUtm").hidden = !sp || !sp.url;

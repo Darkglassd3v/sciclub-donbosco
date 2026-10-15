@@ -441,6 +441,13 @@ do $$ begin
     raise exception 'ASSERZIONE: colore non esadecimale accettato';
   exception when check_violation then null;
   end;
+  -- La foto si sposta fra 0 e 100 (%); vuota va bene.
+  insert into public.social_events (kind, title, photo_x, photo_y) values ('corso', 'PROVA FOTO', 0, 100), ('corso', 'PROVA FOTO', null, 30);
+  begin
+    insert into public.social_events (kind, title, photo_x) values ('corso', 'FOTO FUORI', 150);
+    raise exception 'ASSERZIONE: foto spostata oltre il 100%% accettata';
+  exception when check_violation then null;
+  end;
   -- Un contatto tolto dalla rubrica esce dai post che lo avevano, gli altri restano.
   insert into public.social_contacts (id, name, phone) values
     ('dddddddd-0000-0000-0000-000000000001', 'VIA', '1'), ('dddddddd-0000-0000-0000-000000000002', 'RESTA', '2');

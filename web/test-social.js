@@ -8,7 +8,7 @@
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
-        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese } = require("./social-templates.js");
+        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -268,6 +268,20 @@ assert.strictEqual(giornoMese(null), "");
     for (const c of ["box", "tag", "title", "button", "card", "content", "notification", "column", "columns", "media", "level"])
       assert.ok(!classi.includes(c), `${fmt}: la classe "${c}" è anche di Bulma`);
   }
+}
+
+
+// --- Foto spostata (photo_x, photo_y) ---------------------------------------
+
+assert.strictEqual(posFoto({}), "50% 45%", "senza posizione la foto deve restare dov'era");
+assert.strictEqual(posFoto({ photo_x: null, photo_y: "" }), "50% 45%");
+assert.strictEqual(posFoto({ photo_x: 0, photo_y: 100 }), "0% 100%", "lo zero è una posizione, non «vuoto»");
+assert.strictEqual(posFoto({ photo_x: 150, photo_y: -3 }), "100% 0%");
+assert.strictEqual(posFoto({ photo_x: "20;color:red", photo_y: 12.6 }), "50% 13%", "nello style solo numeri");
+{
+  const html = disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_x: 10, photo_y: 80 }, "post"));
+  assert.ok(html.includes("--pos:10% 80%"), "la posizione non arriva al post");
+  assert.ok(!disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo_x: 10 }, "post")).includes("--pos"), "senza foto niente posizione");
 }
 
 console.log("social: tutti i controlli passati");
