@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<title>Volantino 2026/2027</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<link rel="stylesheet" href="../../font/barlow-condensed/barlow-condensed.css">
+<style>
+  /* A5 fronte-retro. Con #tipografia ogni lato ha 3 mm di abbondanza per il taglio
+   * (154×216 mm): fondi e foto ci arrivano, il testo resta dentro il formato finito. */
+  :root { --b: 0mm; --blu: #084C8D; --blu-scuro: #06396A; --notte: #14202E; --giallo: #FCCF02; --azzurro: #E7EFF7; }
+  :root.tipografia { --b: 3mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Barlow, sans-serif; color: var(--notte); background: #999; }
+  .pagina { position: relative; overflow: hidden; background: #fff;
+            width: calc(148mm + 2 * var(--b)); height: calc(210mm + 2 * var(--b)); break-after: page; }
+  @media screen { .pagina { margin: 10mm auto; box-shadow: 0 2mm 8mm rgba(0,0,0,.35); } }
+  .ico { width: 1.15em; height: 1.15em; fill: currentColor; flex: none; }
+  /* Il contenuto di ogni lato, una colonna sola dall'alto in basso. */
+  .flusso { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .dentro { padding-left: calc(var(--b) + 6mm); padding-right: calc(var(--b) + 6mm); }
+
+  /* ---------- Fronte: la copertina ---------- */
+  /* La foto intera (il ritaglio di FOTO COPERTINA_mod.JPG, meno 8 mm di bosco in alto): si vedono tutti.
+   * Contatti e Piazza d'Armi le stanno sopra in basso, su un blu trasparente, così la foto può essere grande. */
+  .testata { position: relative; flex: none; height: calc(var(--b) + 69.2mm); }
+  /* Il ritaglio di FOTO COPERTINA_mod.JPG portato al fondo dell'originale (righe 598–2752, copertina-alta.jpg), col velo
+   * blu già dentro (copertina-alta-velata.jpg, sfuma.py). */
+  .foto { position: absolute; inset: 0; background: url(foto/copertina-alta-velata.jpg) 50% 100% / cover; }
+  .logo { position: absolute; right: calc(var(--b) + 6.2mm); top: calc(var(--b) + 3.5mm); width: 16.4mm; height: 16.4mm; border-radius: 50%;
+          box-shadow: 0 .8mm 2.5mm rgba(0,0,0,.3); }
+  .stagione { position: absolute; left: calc(var(--b) + 3.5mm); top: 0; background: var(--blu); color: #fff; border-radius: 0 0 1.6mm 1.6mm;
+              padding: calc(var(--b) + 2.4mm) 3mm 1.6mm; text-align: center; box-shadow: 0 .8mm 2.5mm rgba(0,0,0,.3); }
+  .stagione small { display: block; font: 700 6.5pt Barlow; letter-spacing: .12em; text-transform: uppercase; color: var(--giallo); }
+  /* Sotto il logo, sulla neve: su due righe resta stretta e non tocca la persona accanto. */
+  .asd { position: absolute; right: calc(var(--b) + 4.4mm); top: calc(var(--b) + 20.6mm); width: 20mm; text-align: center;
+         font: 800 5.8pt/1.1 "Barlow Condensed"; letter-spacing: .05em; text-transform: uppercase; color: var(--blu-scuro); }
+  .stagione b { display: block; font: 800 14pt/1.05 "Barlow Condensed"; }
+  .sopra { position: absolute; left: 0; right: 0; bottom: 0; }
+  /* Il velo blu è già nella foto (copertina-alta-velata.jpg, sfuma.py): nessuna trasparenza nel PDF. */
+  .info { color: #fff;
+          padding-top: 5mm; padding-bottom: 2mm; text-shadow: 0 .2mm 1.2mm rgba(0,0,0,.6); }
+  .info h2 { display: flex; justify-content: space-between; font: 800 9.5pt "Barlow Condensed"; letter-spacing: .06em; text-transform: uppercase; color: var(--giallo); margin-bottom: 1.2mm; }
+  .info h2 .slogan { font: 800 italic 10.5pt Barlow; letter-spacing: 0; text-transform: none; color: #fff; }
+  .info h2 .slogan span { color: var(--giallo); }
+  /* Il QR del canale WhatsApp sopra «Informazioni e prenotazioni», a sinistra sulla rete rossa: cornice verde
+   * WhatsApp, codice nero su bianco (il QR piccolo, moduli da 0,5 mm). */
+  .info { position: relative; }
+  .qr { position: absolute; left: calc(var(--b) + 6mm); bottom: calc(100% - 4.3mm); width: 22mm; padding: 1mm; border-radius: 1.6mm;
+        background: #25D366; text-shadow: none; box-shadow: 0 .8mm 2.5mm rgba(0,0,0,.35); }
+  .qr span { display: block; padding: .2mm 0 .9mm; text-align: center; font: 800 6.4pt/1 "Barlow Condensed"; letter-spacing: .03em;
+             text-transform: uppercase; color: var(--notte); }
+  .qr img { display: block; width: 100%; border-radius: .7mm; }
+  .contatti { display: grid; grid-template-columns: auto auto 1fr; gap: 1mm 4.5mm; font-size: 9pt; font-weight: 600; }
+  .contatti div { display: flex; align-items: center; gap: 1.4mm; white-space: nowrap; }
+  .contatti b { font-weight: 800; }
+  .contatti .ico { color: var(--giallo); }
+  .piazza { background: var(--giallo); color: var(--blu-scuro); display: flex; align-items: center; gap: 2.4mm;
+            padding-top: 1.5mm; padding-bottom: 1.5mm; font-size: 9.2pt; font-weight: 600; line-height: 1.15; }
+  .piazza .ico { width: 6.5mm; height: 6.5mm; }
+  .piazza b { font-weight: 800; text-transform: uppercase; }
+
+  h3 { display: flex; align-items: center; gap: 1.8mm; font: 800 12pt/1 "Barlow Condensed"; text-transform: uppercase; letter-spacing: .02em; color: var(--blu); }
+  .eventi { flex: none; margin-top: 1.2mm; }
+  .eventi h3 { padding-bottom: 1.2mm; border-bottom: .6mm solid var(--giallo); margin-bottom: .6mm; }
+  .eventi h3 .ico { width: 5mm; height: 5mm; }
+  .ev { display: grid; grid-template-columns: 50.5mm 1fr; column-gap: 2.4mm; padding: .3mm 1.6mm; font-size: 8.5pt; line-height: 1.1; }
+  .ev b { color: var(--blu); font-weight: 800; }
+
+  /* ---------- Le gite: un blocco per giorno, una gita per riga ---------- */
+  .gita { flex: none; margin-top: 1.8mm; }
+  .gita .testa { display: flex; align-items: center; gap: 2mm; background: var(--giallo); color: var(--blu-scuro); height: 7.4mm;
+                 padding-left: 2.4mm; border-radius: 1.6mm 1.6mm 0 0; overflow: hidden; }
+  .gita .testa h3 { color: var(--blu-scuro); font-size: 13pt; flex: 1; }
+  .gita .testa h3 .ico { width: 5.5mm; height: 5.5mm; }
+  .gita .partenze { display: flex; align-items: center; flex-wrap: wrap; gap: 1.2mm 2.2mm; background: var(--blu); color: #fff; padding: 1.05mm 2.4mm; }
+  .gita .partenze .lab { display: flex; align-items: center; gap: 1.4mm; font: 800 10pt "Barlow Condensed"; letter-spacing: .04em; text-transform: uppercase; color: var(--giallo); }
+  .gita .partenze .lab .ico { width: 5.6mm; height: 5.6mm; }
+  .gita .p { display: inline-flex; align-items: center; gap: 1.3mm; font-size: 10.5pt; font-weight: 800; line-height: 1; }
+  .gita .p i { font-style: normal; background: var(--giallo); color: var(--blu-scuro); border-radius: 1mm; padding: .5mm 1.3mm .4mm; }
+  .gita .p + .p::before { content: "·"; color: rgba(255,255,255,.55); margin-right: .9mm; }
+  .gita .elenco { position: relative; border: .3mm solid #C9D6E3; border-top: 0; border-radius: 0 0 1.6mm 1.6mm; overflow: hidden; }
+  /* La montagna occupa tutta l'altezza del riquadro sul lato destro, sfumata a 45° verso il
+   * testo. Le colonne (foto/colonna-*.jpg, sfuma.py) hanno già la proporzione del riquadro. */
+  .gita .elenco::before { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 46%; background: var(--f) right bottom / cover; }
+  .gita .riga { position: relative; }
+  /* Le gite si distinguono con fasce alternate che sfumano verso destra: spariscono prima della montagna. */
+  /* Senza trasparenza: alcuni lettori PDF disegnavano grigio scuro la sfumatura verso il trasparente. Azzurro pieno
+   * che sfuma nel bianco e finisce al 50%, prima della foto (che parte al 54%). */
+  .gita .riga:nth-child(even) { background: linear-gradient(90deg, #EAF4FD 0, #EAF4FD 60%, #FFFFFF 100%) 0 0 / 50% 100% no-repeat; }
+  .riga { display: grid; grid-template-columns: 6.6mm 16mm 1fr; align-items: baseline; padding: .02mm 2.4mm; line-height: 1.06; }
+  .riga .g { font: 800 10.4pt "Barlow Condensed"; color: var(--blu); }
+  .riga .m { font: 700 9.7pt "Barlow Condensed"; color: var(--blu); }
+  .riga .l { font-size: 9.6pt; font-weight: 500; }
+  /* Le gare in evidenza: cartellino giallo, maiuscolo. */
+  .riga em { font-style: normal; font-weight: 800; color: var(--blu-scuro); background: var(--giallo); text-transform: uppercase;
+             font-size: .92em; letter-spacing: .02em; padding: .1mm 1.2mm; border-radius: .8mm; margin-left: .8mm; }
+
+  .avviso { flex: none; margin-top: 2mm; display: flex; align-items: center; gap: 2.4mm; font-size: 8pt; line-height: 1.15; }
+  .avviso .ico { width: 6mm; height: 6mm; color: var(--blu); }
+  .avviso b { color: var(--blu); font-weight: 800; }
+  .avviso .sconto { flex: none; background: var(--giallo); color: var(--blu-scuro); border-radius: 1.4mm; padding: .9mm 2mm;
+                    font: 800 8.6pt/1.05 "Barlow Condensed"; text-transform: uppercase; text-align: center; }
+  .retro .gita:first-child { margin-top: calc(var(--b) + 6mm); }
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="bus" viewBox="0 0 24 24"><path d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/></symbol>
+  <symbol id="tel" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></symbol>
+  <symbol id="web" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.65 15.65 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></symbol>
+  <symbol id="cal" viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/></symbol>
+  <symbol id="monte" viewBox="0 0 24 24"><path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z"/></symbol>
+  <symbol id="neve" viewBox="0 0 24 24"><path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"/></symbol>
+</defs></svg>
+
+<!-- FRONTE: la copertina, i contatti, gli eventi e le gite del sabato -->
+<section class="pagina fronte"><div class="flusso">
+  <div class="testata">
+    <div class="foto"></div>
+    <div class="stagione"><small>Stagione</small><b>2026/2027</b></div>
+    <img class="logo" src="../../logo/logo-ufficiale-tondo.svg" alt="Sci Club Don Bosco Asti">
+    <div class="asd">Sci Club Don Bosco<br>A.S.D.</div>
+    <div class="sopra">
+      <div class="info dentro">
+        <div class="qr"><span>Seguici su WhatsApp</span><img src="../../canale-whatsapp/sorgenti/qr-canale-whatsapp-piccolo.svg" alt="Codice QR del canale WhatsApp dello Sci Club Don Bosco Asti"></div>
+        <h2>Informazioni e prenotazioni <span class="slogan">La neve <span>ci unisce sempre</span></span></h2>
+        <div class="contatti" id="contatti"></div>
+      </div>
+      <div class="piazza dentro"><svg class="ico"><use href="#bus"/></svg>
+        <div>Tutte le partenze da Asti verranno effettuate da <b>Piazza d'Armi (ora Cosma Manera)</b></div></div>
+    </div>
+  </div>
+
+  <div class="eventi dentro">
+    <h3><svg class="ico"><use href="#cal"/></svg>Le nostre gite e prossimi eventi</h3>
+    <div id="eventi"></div>
+  </div>
+
+  <div class="gita dentro" id="sabato"></div>
+</div></section>
+
+<!-- RETRO: le gite della domenica e del martedì, l'avvertenza -->
+<section class="pagina retro"><div class="flusso">
+  <div class="gita dentro" id="domenica"></div>
+  <div class="gita dentro" id="martedi"></div>
+  <div class="avviso dentro"><svg class="ico"><use href="#neve"/></svg>
+    <div><b>Attenzione:</b> le località prescelte potranno variare in relazione alle condizioni climatiche e di innevamento.</div>
+    <div class="sconto">Possibilità di abbonamenti<br>a prezzi scontati!</div></div>
+</div></section>
+
+<script>
+// I dati del volantino 2026/2027, trascritti da Volantino_Sci_Club_Don_Bosco_A5_Fronte_Retro.pdf.
+const CONTATTI = [["tel", "G80 Sport", "0141 530116"], ["tel", "Cesare", "348 517 1707"], ["web", "", "www.sciclubdonboscoasti.it"],
+                  ["tel", "Beppe", "339 329 1015"], ["tel", "Domenico", "389 579 4663"], ["mail", "", "sciclubdonboscoasti@gmail.com"]];
+const EVENTI = [
+  ["Mercoledì 21 ottobre 2026 ore 19,30", "Inizio corso ginnastica presciistica c/o palestra della Way Assauto"],
+  ["Mercoledì 25 novembre 2026 ore 21", "Presentazione stagione sciistica presso la Way Assauto di Asti"],
+  ["Domenica 13 dicembre 2026", "Invito allo Sci al Sestriere, per chi non ha mai sciato, con 2 maestri gratis"],
+  ["Sabato 9 gennaio 2027", "Inizio Corsi al Monginevro"],
+  ["Domenica 17 gennaio 2027", "Inizio Corsi al Sestriere"],
+  ["Fine gennaio 2027", "Settimana Bianca in Val di Fassa"],
+  ["Domenica 21 febbraio 2027", "Gara Sociale al Sestriere con rinfresco finale"],
+  ["Sabato 27 febbraio 2027", "Gara corsisti con rinfresco a fine gara"],
+  ["Fine febbraio", "Traversata Courmayeur/Chamonix"],
+  ["Domenica 14 marzo 2027", "Pranzo Sociale, presso Ristorante Da Mariuccia, con Premiazione delle Gare"],
+];
+const SESTRIERE = "Sestriere (corsi Ski & Snowboard)", MONGINEVRO = "Monginevro (corsi Ski & Snowboard)";
+const TRE = [["Asti", "7:00"], ["Montegrosso", "6:45"], ["Opessina", "6:30"]];
+const GITE = {
+  domenica: { titolo: "Gite della domenica", foto: "monte-bianco.jpg", partenze: TRE,
+    righe: [["06", "Dicembre", "Val Thorens"], ["13", "Dicembre", "Sestriere (Prova Ski/Snowboard con maestri gratis)"], ["20", "Dicembre", "Cervinia"],
+      ["03", "Gennaio", "Pila"], ["10", "Gennaio", "Serre Chevalier"], ["17", "Gennaio", SESTRIERE], ["24", "Gennaio", SESTRIERE], ["31", "Gennaio", "Monginevro"],
+      ["07", "Febbraio", SESTRIERE], ["14", "Febbraio", SESTRIERE], ["21", "Febbraio", SESTRIERE + " <em>GARA SOCIALE</em>"], ["28", "Febbraio", "Pila"],
+      ["07", "Marzo", "Val Cenis"], ["14", "Marzo", "Val Thorens"], ["21", "Marzo", "Monterosa Ski"], ["28", "Marzo", "Cervinia"],
+      ["04", "Aprile", "Serre Chevalier con tuffo alle Terme"]] },
+  martedi: { titolo: "Gite del martedì", foto: "paramont.jpg", partenze: [["Asti, Piazza d'Armi", "6:45"]],
+    righe: [["01", "Dicembre", "Val Thorens"], ["08", "Dicembre", "Cervinia (Valtournenche)"], ["15", "Dicembre", "Pila"],
+      ["05", "Gennaio", "Sestriere"], ["12", "Gennaio", "Monterosa Ski"], ["19", "Gennaio", "Serre Chevalier"], ["26", "Gennaio", "Monginevro"],
+      ["02", "Febbraio", "La Thuile"], ["09", "Febbraio", "Val Cenis"], ["16", "Febbraio", "Sestriere"], ["23", "Febbraio", "Limone"],
+      ["02", "Marzo", "Courmayeur"], ["09", "Marzo", "La Thuile"], ["16", "Marzo", "Pila"], ["23", "Marzo", "Monterosa Ski"], ["30", "Marzo", "Val Thorens"],
+      ["06", "Aprile", "Cervinia - Zermat"]] },
+  sabato: { titolo: "Gite del sabato", foto: "pista-san-bernardo.jpg", partenze: TRE,
+    righe: [["09", "Gennaio", MONGINEVRO], ["16", "Gennaio", "Sestriere"], ["23", "Gennaio", MONGINEVRO], ["30", "Gennaio", MONGINEVRO],
+      ["06", "Febbraio", "Valtournenche"], ["13", "Febbraio", MONGINEVRO], ["20", "Febbraio", "Serre Chevalier"],
+      ["27", "Febbraio", MONGINEVRO + " <em>Gara Corsisti</em>"], ["06", "Marzo", "Pila"], ["13", "Marzo", "Val Thorens"],
+      ["20", "Marzo", "Monterosa Ski"], ["27", "Marzo", "Val Cenis"], ["03", "Aprile", "Cervinia - Zermat"]] },
+};
+const $ = (id) => document.getElementById(id);
+$("contatti").innerHTML = CONTATTI.map(([i, n, t]) => `<div><svg class="ico"><use href="#${i}"/></svg>${n ? `${n} <b>${t}</b>` : `<b>${t}</b>`}</div>`).join("");
+$("eventi").innerHTML = EVENTI.map(([q, c]) => `<div class="ev"><b>${q}</b><span>${c}</span></div>`).join("");
+for (const [id, g] of Object.entries(GITE)) {
+  $(id).style.setProperty("--f", `url(foto/colonna-${g.foto})`);
+  $(id).innerHTML = `<div class="testa"><h3><svg class="ico"><use href="#monte"/></svg>${g.titolo}</h3></div>
+    <div class="partenze"><span class="lab"><svg class="ico"><use href="#bus"/></svg>Partenze</span>${g.partenze.map(([l, o]) => `<span class="p">${l} <i>ore ${o}</i></span>`).join("")}</div>
+    <div class="elenco">${g.righe.map(([n, m, l]) => `<div class="riga"><span class="g">${n}</span><span class="m">${m}</span><span class="l">${l}</span></div>`).join("")}</div>`;
+}
+const b = location.hash === "#tipografia" ? 3 : 0;
+if (b) document.documentElement.classList.add("tipografia");
+// Pagina e foglio della stessa misura in punti interi: Chrome arrotonda la pagina al punto
+// (A5 = 419,5 pt diventa 420) e col foglio a 148 mm restava una striscia bianca a destra.
+const pt = (mm) => Math.ceil(mm * 72 / 25.4);
+const W = pt(148 + 2 * b), H = pt(210 + 2 * b);
+document.head.insertAdjacentHTML("beforeend", `<style>@page { size: ${W}pt ${H}pt; margin: 0; }
+  @media print { body { background: none; } .pagina { margin: 0; box-shadow: none; width: ${W}pt; height: ${H}pt; } }</style>`);
+// Controllo per rendi.sh, nel titolo: niente deve finire a meno di 4 mm dal bordo del formato finito.
+document.fonts.ready.then(() => {
+  const mm = 96 / 25.4, fuori = [];
+  for (const p of document.querySelectorAll(".pagina")) {
+    const limite = p.getBoundingClientRect().bottom - (b + 4) * mm;
+    for (const e of p.querySelectorAll(".flusso > *")) if (e.getBoundingClientRect().bottom > limite + .5) fuori.push((e.id || e.className) + " +" + ((e.getBoundingClientRect().bottom - limite) / mm).toFixed(1) + "mm");
+  }
+  document.title = "PRONTO " + JSON.stringify(fuori);
+});
+</script>
+</body></html>

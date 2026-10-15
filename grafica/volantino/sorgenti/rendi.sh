@@ -9,7 +9,7 @@ chrome() { google-chrome --headless=new --disable-gpu --allow-file-access-from-f
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 # Foto sfumate e velo della copertina dentro i JPEG (vedi sfuma.py).
 python3 sfuma.py >/dev/null
-for v in ""; do
+for v in "" "-qr"; do
   src="volantino$v.html" out="../volantino-2026-2027$v"
   # La pagina scrive nel titolo cosa esce dal formato: deve essere una lista vuota.
   for h in "" "#tipografia"; do

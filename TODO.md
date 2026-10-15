@@ -22,6 +22,11 @@
 
 ## Richieste nuove
 
+- [ ] 15/10: **Volantino col QR del canale WhatsApp**, variante in prova (copia, il definitivo non è
+      toccato): `sorgenti/volantino-qr.html` → `volantino-2026-2027-qr*.pdf/.jpg` (`rendi.sh` fa entrambe).
+      QR piccolo da 20 mm in cornice verde WhatsApp `#25D366` con «Seguici su WhatsApp», sopra
+      «Informazioni e prenotazioni» a sinistra (copre la rete rossa e le gambe del primo a sinistra).
+      Letto dall'anteprima a 150 dpi. Se l'utente la sceglie: diventa il volantino, si toglie l'altra.
 - [ ] 15/10: **Volantino 2026/2027 rifatto**, versione definitiva scelta dall'utente (la C; A e B
       cancellate). `grafica/volantino/volantino-2026-2027.pdf` (A5 fronte-retro), `-tipografia.pdf`
       (3 mm di abbondanza), anteprime; sorgente `sorgenti/volantino.html`, `rendi.sh` (lancia `sfuma.py`):
@@ -49,8 +54,9 @@
       07/10 (PNG, JPG, quadrato, `originale_228x170.png`, i loro script) e gli abbozzi dei loghi in
       `bozze/` (restano quelli del canale e del post K). Provato: test node, i sei stili del generatore
       in post e story, barra, login e canvas del PDF. Da guardare sul sito vero. Ancora col logo
-      vecchio dentro, perché sono JPG già fatti: `grafica/canale-whatsapp/` (cartelli e story) e
-      `grafica/proposte-post-social/`: da rifare solo se servono. L'utente ha tenuto il post del canale
+      vecchio dentro, perché sono JPG già fatti: `grafica/proposte-post-social/`, da rifare solo se
+      servono. Cartelli chiaro e scuro e story di `grafica/canale-whatsapp/` rifatti col logo tondo il
+      15/10 (QR riletto da entrambi i cartelli; non in commit). L'utente ha tenuto il post del canale
       (`bozze/abbozzo-canale.*`), che ora mostra il logo nuovo.
       **Immagine del profilo Instagram e Facebook**: da rifare con il logo ufficiale (bianco e blu a
       fondo unito, tondo e quadrato; «Sci Club» in alto a sinistra e «ASTI» grande sotto, idea
