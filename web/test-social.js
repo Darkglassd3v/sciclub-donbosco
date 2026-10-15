@@ -239,10 +239,12 @@ assert.strictEqual(giornoMese(null), "");
   assert.ok(disegnaPost(m, "biglietto").includes("nello stesso giorno"), "il Biglietto ha perso il corso");
   assert.ok(disegnaPost(m, "divano").includes("Tutti in pista!") && disegnaPost(m, "k").includes("Tutti in pista!")
     && !disegnaPost(m, "biglietto").includes("Tutti in pista!"), "il gancio deve stare solo nel Divano e nella K");
-  // K: «Gita a» piccolo e la meta su una riga, la data nella tessera con la prima partenza, il testo che si adatta.
+  // K: il titolo è solo la meta (su una riga), la data nella tessera con la prima partenza, il testo che si adatta.
   for (const fmt of ["post", "story"]) {
     const html = disegnaPost(modelloPost(ev, fmt), "k");
-    assert.ok(html.includes("<small>Gita a</small>") && html.includes(`data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
+    assert.ok(!html.includes("<small>Gita a</small>") && html.includes(`<div class="tit meta" data-cede><div data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
+    assert.ok(html.includes('class="gancio">Tutti in pista!<'), `k ${fmt}: il gancio scritto`);
+    assert.ok(disegnaPost(modelloPost({ ...ev, hook: "" }, fmt), "k").includes('class="gancio">Gita a<'), `k ${fmt}: senza gancio dice «Gita a»`);
     // Le partenze in riquadri, una per fermata, con l'ora; il titolo cede la riga vuota se serve.
     assert.strictEqual((html.match(/class="fermata"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
     assert.ok(html.includes("<b>6:30</b>") && !html.includes("Partenze: "), `k ${fmt}: partenze ancora in riga`);
@@ -256,7 +258,7 @@ assert.strictEqual(giornoMese(null), "");
   assert.ok(kEv.includes('<p class="dove"><svg') && (kEv.match(/Palestra Way Assauto/g) || []).length === 1, "k: il luogo dell'evento");
   const kFoto = disegnaPost(modelloPost({ ...ev, photo: "https://x/foto.jpg" }, "post"), "k");
   assert.ok(kFoto.includes('class="foto" src="https://x/foto.jpg"') && kFoto.includes("piano finestra") && !kFoto.includes("senza-foto"), "k: la foto");
-  assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "k").includes("Gita a</small>"), "k: «Gita a Gita»");
+  assert.ok(!disegnaPost(modelloPost({ ...ev, hook: "", title: "Gita sociale a Pila" }, "post"), "k").includes('class="gancio">Gita a<'), "k: «Gita a Gita»");
   assert.ok(disegnaPost(m, "biglietto").includes("giovedì 14 gennaio</b>") && disegnaPost(m, "calendario").includes("Iscrizioni entro giovedì 14 gennaio"));
   // Una meta che dice già "Gita" non diventa "Gita a Gita ...".
   assert.ok(!disegnaPost(modelloPost({ ...ev, title: "Gita sociale a Pila" }, "post"), "biglietto").includes("Gita a Gita"));

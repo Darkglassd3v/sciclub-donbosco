@@ -819,7 +819,6 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .tit { margin-top: ${q(12)}; min-height: ${q(213)}; max-width: 640px; }
     .sk .tit > [data-righe] { font-weight: 800; line-height: .92; letter-spacing: -.035em; }
     .sk .tit.meta { max-width: 860px; }
-    .sk .tit.meta small { display: block; font-size: ${z(54)}; font-weight: 800; line-height: 1.05; letter-spacing: -.01em; margin-bottom: ${q(4)}; }
     .sk .tit.meta [data-fit] { display: block; font-weight: 800; line-height: .9; letter-spacing: -.035em; }
     /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
@@ -1226,11 +1225,14 @@ function postK(s) {
   const dest = String(s.dest || "").trim();
   const meta = (testo) => `<div data-fit style="font-size:${story ? 168 : 150}px">${escS(testo)}</div>`;
   // data-cede: se il testo non ci sta, la seconda riga tenuta per il titolo si libera prima di stringere tutto.
+  // Nella gita il titolo è solo la meta: «Gita a» lo dice il gancio (l'utente: la riga in più era inutile).
   const tit = gita
-    ? `<div class="tit meta" data-cede>${/^gita\b/i.test(dest) ? meta(dest) : `<small>Gita a</small>${meta(dest)}`}</div>`
+    ? `<div class="tit meta" data-cede>${meta(dest)}</div>`
     : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${titoloNuovo(s)}</div></div>`;
-  // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto.
-  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${escS(s.hook) || "&nbsp;"}</div>${tit}
+  // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto. Nella gita, se è
+  // vuoto, dice «Gita a» (non se la meta dice già "Gita…").
+  const gancio = escS(s.hook) || (gita && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
+  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${gancio}</div>${tit}
     <div class="fatti">${righe.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
   return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
 }
