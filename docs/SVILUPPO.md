@@ -124,7 +124,7 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   sabato) prima del corso; la Stampa nello stesso ordine.
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
-- Logo: `web/logo_sciclubdonbosco.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
+- Logo: `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
 - Post social: cinque grafiche in `web/social-templates.js`, `ritocco`, `montagna` e dalla 2.8
   `biglietto`, `calendario`, `divano` (le proposte A, B, C di `grafica/proposte-post-social/`, post
   4:5: `misurePost()`), scelte per tutta la pagina in Social > Impostazioni (`social_settings`,

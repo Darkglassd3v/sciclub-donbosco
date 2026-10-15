@@ -244,7 +244,7 @@ assert.strictEqual(giornoMese(null), "");
     const html = disegnaPost(modelloPost(ev, fmt), "k");
     assert.ok(html.includes("<small>Gita a</small>") && html.includes(`data-fit style="font-size:${fmt === "story" ? 168 : 150}px">La Thuile`), `k ${fmt}: titolo della gita`);
     // Le partenze in riquadri, una per fermata, con l'ora; il titolo cede la riga vuota se serve.
-    assert.strictEqual((html.match(/class="box"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
+    assert.strictEqual((html.match(/class="fermata"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
     assert.ok(html.includes("<b>6:30</b>") && !html.includes("Partenze: "), `k ${fmt}: partenze ancora in riga`);
     assert.ok(html.includes('class="tit meta" data-cede'), `k ${fmt}: il titolo non cede lo spazio`);
     assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:30<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
@@ -330,6 +330,17 @@ assert.strictEqual(giornoMese(null), "");
   for (const [dove, elenco] of [...Object.entries(ordine).flatMap(([st, o]) => Object.entries(o).map(([g, e]) => [`${st}.${g}`, e])),
                                  ["ORDINE_SPONSOR", sponsor]]) {
     for (const nome of elenco) assert.ok(campi.has(nome), `${dove}: "${nome}" non è un data-campo di social.html`);
+  }
+}
+
+// --- Classi che la pagina (Bulma) ha già: nel post prenderebbero colori e margini di Bulma ---
+{
+  const ev = { kind: "gita", title: "La Thuile", event_date: "2026-10-03", stops: [["06:40", "Asti"], ["06:20", "Nizza Monferrato"]],
+    deadline: "2026-10-23", course: true, contacts: [] };
+  for (const st of STILI) for (const fmt of ["post", "story"]) {
+    const classi = [...disegnaPost(modelloPost(ev, fmt), st).matchAll(/class="([^"]+)"/g)].flatMap((m) => m[1].split(/\s+/));
+    for (const c of ["box", "tag", "title", "button", "card", "content", "notification", "column", "columns", "media", "level"])
+      assert.ok(!classi.includes(c), `${st} ${fmt}: la classe "${c}" è anche di Bulma`);
   }
 }
 

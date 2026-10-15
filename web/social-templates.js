@@ -13,7 +13,9 @@
 
 const SOCIAL = {
   // Relativo alla pagina che disegna.
-  logo: "logo_sciclubdonbosco.svg",
+  logo: "logo-ufficiale-trasparente-lettere-blu.svg",
+  // Il logo ufficiale nel cerchio bianco con l'anello giallo: quello dei post nuovi (logoNuovo()).
+  logoTondo: "logo-ufficiale-tondo.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
   // che la pagina carica e passa a impostaContatti(). Ogni post sceglie i suoi
   // (ev.contacts, id in ordine): contattiDi().
@@ -613,8 +615,9 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .cv.nuovo { --s: 1; --min: 34px; line-height: normal; }
     .cv.nuovo.story { --min: 44px; }
     .cv.nuovo b { font-weight: 800; }
-    .cv.nuovo .logo-box { background: #fff; }
-    .cv.nuovo .logo-box img { display: block; height: 150px; }
+    /* Il logo tondo porta il suo cerchio bianco: il riquadro non ha più fondo né margine. */
+    .cv.nuovo .logo-box { background: none; padding: 0; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+    .cv.nuovo .logo-box img { display: block; height: 240px; }
     .cv.nuovo .col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
     .cv.nuovo [data-righe] { font-size: calc(var(--t) * var(--s)); }
     /* I telefoni su una riga sola, larga quanto il riquadro (nella story a 44 px due contatti ci stanno
@@ -632,9 +635,9 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sa .scena .foto, .sa .scena .paesaggio { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
     .sa .scena .figura { position: absolute; left: 330px; bottom: 16px; height: 64%; }
     .sa.story .scena .figura { bottom: 26px; height: 50%; }
-    .sa .logo-box { position: absolute; left: 0; top: 0; padding: 18px 26px; border-radius: 0 0 28px 0; }
-    .sa.story .logo-box { top: 190px; border-top-right-radius: 28px; }
-    .sa.story .logo-box img { height: 195px; }
+    .sa .logo-box { position: absolute; left: 24px; top: 24px; }
+    .sa.story .logo-box { top: 200px; }
+    .sa.story .logo-box img { height: 300px; }
     .sa .bollo { position: absolute; right: 40px; top: 36px; background: #084C8D; color: #fff; border-radius: 28px; text-align: center; padding: 14px 26px 10px; }
     .sa.story .bollo { top: 226px; border-radius: 36px; padding: 18px 34px 13px; }
     .sa .bollo .g { font-size: 36px; font-weight: 700; }
@@ -686,7 +689,6 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sb .col { padding: 56px 60px 26px; gap: ${q(34)}; }
     .sb.story .col { padding: 262px 60px 350px; gap: ${q(24)}; }
     .sb .testa, .sc .testa { flex: none; display: flex; }
-    .sb .logo-box, .sc .logo-box { border-radius: 22px; padding: 12px 18px; }
     .sb .tit { flex: none; --t: 104px; color: #fff; min-height: calc(2 * .95 * 104px * var(--s)); }
     .sb.story .tit { --t: 110px; min-height: calc(2 * .95 * 110px * var(--s)); }
     .sb .tit > div { font-weight: 800; letter-spacing: -.035em; line-height: .95; }
@@ -790,13 +792,13 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .grigi { background: var(--immagine) center 45% / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
     .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
     .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
-    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
-    .cv.sk .logo-box img { height: 140px; }
-    .cv.sk.story .logo-box { top: calc(var(--su) + 270px); }
-    .cv.sk.story .logo-box img { height: 164px; }
-    .cv.sk .stella { left: 60px; right: auto; top: calc(var(--su) + 250px); }
-    /* Nella story il logo è sceso: la coccarda del corso gli sta sopra. */
-    .cv.sk.story .stella { top: calc(var(--su) + 6px); }
+    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
+    .cv.sk .logo-box img { height: 224px; }
+    .cv.sk.story .logo-box { top: calc(var(--su) + 240px); }
+    .cv.sk.story .logo-box img { height: 226px; }
+    /* La coccarda del corso appesa all'angolo basso della tessera, lontana dal logo: due tondi vicini si confondevano. */
+    .cv.sk .stella { left: auto; right: 374px; top: calc(var(--su) + 366px); }
+    .cv.sk.story .stella { right: 414px; top: calc(var(--su) + 10px); }
     /* La tessera del "quando", appesa al bordo alto: giorno, numero, mese e l'ora nella fascia blu. */
     .sk .tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px); background: #FCCF02; color: #084C8D;
       clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px); display: flex; flex-direction: column; justify-content: flex-end; }
@@ -834,18 +836,19 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk.story .fatti p.dove { font-size: ${z(64)}; }
     .sk .fatti p.dove svg { flex: none; width: 1em; height: 1em; fill: #FCCF02; }
     /* Le partenze della gita: un riquadro blu per fermata, l'ora in giallo (in una riga sola erano confuse). */
+    /* Non «box»: nella pagina c'è Bulma, che dà a .box colore grigio scuro e margini (il luogo usciva blu su blu). */
     .sk .partenze { display: flex; flex-wrap: wrap; gap: ${q(16)}; margin: ${q(4)} 0 ${q(6)}; }
     .sk .partenze .etichetta { flex-basis: 100%; font-size: ${z(44)}; font-weight: 700; color: #FCCF02; margin-bottom: -4px; }
-    .sk .partenze .box { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px;
+    .sk .partenze .fermata { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px; color: #fff;
       border-radius: 18px; background: #084C8D; text-shadow: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
-    .sk .partenze .box b { font-size: ${z(64)}; font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
-    .sk .partenze .box span { font-size: ${z(46)}; font-weight: 700; line-height: 1.05; }
+    .sk .partenze .fermata b { font-size: ${z(64)}; font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
+    .sk .partenze .fermata span { font-size: ${z(46)}; font-weight: 700; line-height: 1.05; }
     /* Nel post lo spazio è poco: riquadri bassi, ora e fermata affiancate, l'etichetta in fila con loro. */
     .sk:not(.story) .partenze { align-items: center; }
     .sk:not(.story) .partenze .etichetta { flex-basis: auto; margin: 0 4px 0 0; color: #fff; font-size: ${z(46)}; font-weight: 500; }
-    .sk:not(.story) .partenze .box { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
-    .sk:not(.story) .partenze .box b { font-size: ${z(46)}; padding: 0 10px; }
-    .sk:not(.story) .partenze .box span { font-size: ${z(44)}; }
+    .sk:not(.story) .partenze .fermata { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
+    .sk:not(.story) .partenze .fermata b { font-size: ${z(46)}; padding: 0 10px; }
+    .sk:not(.story) .partenze .fermata span { font-size: ${z(44)}; }
     /* I telefoni: numero e icona in giallo, senza riquadri (costerebbero righe). */
     .sk .isc .tel > svg { color: #FCCF02; }
     .sk .isc .tel b { color: #FCCF02; }
@@ -911,7 +914,7 @@ function iscrizioni(contatti = []) {
 
 const icoPin = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
 
-const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logo}" alt=""></div>`;
+const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logoTondo}" alt=""></div>`;
 
 /* Lo sciatore sul tappetino del corso, nelle righe del calendario. */
 const sciatore = (col = "currentColor") => `<svg viewBox="0 0 250 240" aria-hidden="true"><rect x="4" y="208" width="242" height="16" rx="8" fill="${col}"/>
@@ -1208,7 +1211,7 @@ function postK(s) {
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
   const righe = gita ? [
     p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
-      `<div class="box">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
+      `<div class="fermata">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
     s.scadenza && entro(s.scadenza),
   ] : [

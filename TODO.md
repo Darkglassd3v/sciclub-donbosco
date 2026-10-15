@@ -22,26 +22,42 @@
 
 ## Richieste nuove
 
-- [ ] 16/10: **Immagine del profilo Instagram e Facebook** dal logo vettoriale
-      (`grafica/logo/logo_sciclubdonbosco.svg`), con le **scritte un po' più spesse**, in due
-      proposte da confrontare: (1) sfondo bianco, logo più grande nel cerchio e filo blu e giallo
-      intorno; (2) sfondo blu `#084C8D`, «DON» giallo e «BOSCO» bianco. Oggi a 40 px (feed, anello
-      delle storie) il logo occupa metà del cerchio e il giallo sul bianco quasi sparisce.
-      Abbozzo da scegliere: `bozze/abbozzo-logo-profilo.png` (oggi, 1 e 2 a 180, 110, 56 e 40 px,
-      sui profili chiari e scuri; contorno di 26 unità del logo, solo sulle lettere, l'arco resta
-      com'è). L'utente (16/10): su Facebook oggi c'è il logo sul blu con **«Sci Club»** in alto a
-      sinistra e **«ASTI»** in basso a destra (`bozze/profilo-facebook-oggi.png`): aggiungerli a
-      tutte e due le proposte, in Barlow Condensed, dentro il cerchio (Facebook ritaglia tondo).
-      Fatto nell'abbozzo: «Sci Club» sopra «DON», «ASTI» sotto la «O» finale allineato al fondo
-      della «B» (fuori dall'arco), logo al 78% del cerchio perché le scritte stiano dentro il filo;
-      `abbozzo-logo-profilo.html#p1` e `#p2` danno già l'immagine 1080×1080 (anteprime
-      `bozze/profilo-p1.png`, `bozze/profilo-p2.png`). L'utente chiede «Sci Club» e «ASTI» un
-      po' più alti: provati 370 e 290 (prima 330 e 260), la «b» di «Club» arriva a ~10 px dall'arco
-      su 1080. L'utente: «prova» una riga sola «SCI CLUB · ASTI» sotto il logo: fatta
-      nell'abbozzo (righe «riga sotto», logo all'82%, immagini `#p1-sotto` e `#p2-sotto`).
-      L'utente: tutte le prove nell'abbozzo, una riga per prova.
-      Dopo la scelta: il JPG in `grafica/logo/`,
-      la sorgente in `grafica/logo/strumenti/` e il README.
+- [ ] 15/10: **Volantino 2026/2027 rifatto** (l'utente: quello vecchio fatto male dall'IA, logo sbagliato):
+      `grafica/volantino/volantino-2026-2027.pdf` (A5 fronte-retro) e `-tipografia.pdf` (3 mm di
+      abbondanza), sorgente `grafica/volantino/sorgenti/volantino.html`, `rendi.sh`. Copertina con
+      `FOTO COPERTINA.JPG` e il logo tondo; foto CC0 di montagna. Tutte le 47 gite, i 10 eventi, i
+      telefoni controllati sul PDF. Da far controllare: partenze del sabato uguali alla domenica,
+      «Zermat». Da stampare una prova fronte-retro. Il PDF vecchio è ancora nella cartella.
+- [ ] 15/10: **Logo tondo nei post nuovi** (l'utente: come `logo-ufficiale-bianco-tondo.png`, una sola
+      linea gialla al posto della blu e gialla, «da usare ovunque»): `grafica/logo/logo-ufficiale-tondo.svg`
+      (copia in `web/`), `SOCIAL.logoTondo` in `logoNuovo()` per Biglietto, Calendario, Divano e K;
+      il riquadro bianco è diventato il cerchio, più grande perché DON BOSCO non rimpicciolisca.
+      Ritocco e Montagna, la barra del sito e le altre grafiche hanno ancora il logo rettangolare:
+      da decidere se il tondo va anche lì.
+
+- [ ] 15/10: **Scheda di tesseramento coi quadratini a posto** fatta in locale:
+      `~/Downloads/1TESSERAMENTO Scheda e Ricevuta - quadratini sistemati.xlsx` (e il PDF), dal
+      file 2026/2027 salvato in Excel il 15/10 alle 12:25 (`… Ricevuta (1).xlsx`) con `grafica/scheda-tesseramento/sorgenti/sistema-quadratini.py` (regole per
+      modificarlo nel README della cartella). Provata solo in LibreOffice: da aprire e stampare in
+      **Excel sul PC vecchio**. Contenuto da far controllare a chi la scrive: la prescistica dice
+      ancora «GLOBAL NEVE BASE» (le tessere ora sono Reale Mutua), la ricevuta dice ancora 2025/2026
+      e «entro il 05/01/2026».
+- [ ] 16/10: **Logo ufficiale ovunque** (l'utente, 15/10: «solo i loghi ufficiali ovunque: post, sito,
+      generatore»). Fatto: il logo è `grafica/logo/logo-ufficiale.JPG` (728×468, col cielo, con «Sci Club»
+      e «ASTI»), ricalcato in vettoriale senza cielo, per fondo chiaro, da
+      `grafica/logo/strumenti/ricalca_ufficiale.py` in `logo-ufficiale-trasparente-lettere-blu.svg`, copiato in `web/` e
+      `ricerca/` (stesso nome: le 14 pagine e `SOCIAL.logo` non cambiano). Tolti: la ricostruzione del
+      07/10 (PNG, JPG, quadrato, `originale_228x170.png`, i loro script) e gli abbozzi dei loghi in
+      `bozze/` (restano quelli del canale e del post K). Provato: test node, i sei stili del generatore
+      in post e story, barra, login e canvas del PDF. Da guardare sul sito vero. Ancora col logo
+      vecchio dentro, perché sono JPG già fatti: `grafica/canale-whatsapp/` (cartelli e story) e
+      `grafica/proposte-post-social/`: da rifare solo se servono. L'utente ha tenuto il post del canale
+      (`bozze/abbozzo-canale.*`), che ora mostra il logo nuovo.
+      **Immagine del profilo Instagram e Facebook**: da rifare con il logo ufficiale (bianco e blu a
+      fondo unito, tondo e quadrato; «Sci Club» in alto a sinistra e «ASTI» grande sotto, idea
+      dell'utente). Gli abbozzi e le prove sono stati cancellati: si riparte dall'SVG nuovo. A 40 px
+      (feed, anello delle storie) «Sci Club» e «ASTI» non si leggono.
+      Dopo la scelta: il JPG in `grafica/logo/` e il README.
 - [ ] 16/10: **Story del canale WhatsApp** fatta come JPG da caricare (l'utente: niente tipo nuovo
       nel generatore per una cosa sola): `grafica/canale-whatsapp/story-canale-whatsapp.jpg`
       1080×1920, dall'abbozzo approvato, con la foto CC0 della montagna, senza «Nessuno vede il tuo
