@@ -770,7 +770,8 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
      * tavola: --fine è dove comincia il testo, --su e --giu le fasce coperte della story. Niente
      * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
      * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
-    .cv.sk { --notte: 20,32,46; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
+    /* --velo: il fondo sotto il testo tende al blu scuro del club (prima nero: la foto usciva cupa). */
+    .cv.sk { --notte: 20,32,46; --velo: 6,57,106; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
     /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena, il logo
      * le sta accanto in fondo (prima galleggiava a metà) e il testo parte più su, più grande. */
     /* In fondo 300 px per la risposta di Instagram (prima 340; la zona consigliata è 270): con
@@ -779,8 +780,8 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .cv.sk.giallo { --notte: 18,18,18; }
     .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 45%; }
     .sk .piano { position: absolute; inset: 0; }
-    .sk .scuro { background: linear-gradient(180deg, rgba(var(--notte),0) 0, rgba(var(--notte),0) calc(var(--fine) - 200px),
-      rgba(var(--notte),.66) calc(var(--fine) + 10px), rgba(var(--notte),.76) 100%); }
+    .sk .scuro { background: linear-gradient(180deg, rgba(var(--velo),0) 0, rgba(var(--velo),0) calc(var(--fine) - 200px),
+      rgba(var(--velo),.72) calc(var(--fine) + 10px), rgba(var(--velo),.82) 100%); }
     .sk .angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
     .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
     .sk .finestra { background: linear-gradient(rgba(8,76,141,.5), rgba(8,76,141,.5)), linear-gradient(#084C8D, #084C8D), var(--immagine) center 45% / cover;
@@ -793,7 +794,8 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
     .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
     .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
-    .cv.sk .logo-box img { height: 224px; }
+    /* Il filo blu stacca l'anello giallo dalla foto (attrezzi gialli, angolo giallo dei corsi). */
+    .cv.sk .logo-box img { height: 224px; border-radius: 50%; box-shadow: 0 0 0 6px #084C8D, 0 6px 22px rgba(0,0,0,.45); }
     .cv.sk.story .logo-box { top: calc(var(--su) + 240px); }
     .cv.sk.story .logo-box img { height: 226px; }
     /* La coccarda del corso appesa all'angolo basso della tessera, lontana dal logo: due tondi vicini si confondevano. */
@@ -823,7 +825,7 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
     /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
     .sk .fatti { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(4)}; max-width: 800px; }
     /* pre-line: gli a capo scritti nel sottotesto restano, come nelle altre grafiche. */
-    .sk .fatti p { font-size: ${z(46)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
+    .sk .fatti p { font-size: ${z(50)}; font-weight: 500; line-height: 1.16; white-space: pre-line; }
     .sk.story .gancio { font-size: ${z(66)}; }
     .sk.story .tit { min-height: ${q(258)}; }
     .sk.story .fatti { margin-top: ${q(30)}; gap: ${q(12)}; }
@@ -856,7 +858,7 @@ const NUOVI = ["biglietto", "calendario", "divano", "k"];
       -webkit-box-decoration-break: clone; box-decoration-break: clone; }
     .sk .isc { flex: none; display: flex; column-gap: 20px; align-items: center; margin-top: ${q(14)}; }
     .sk .isc > svg { flex: none; width: 56px; height: 56px; fill: currentColor; }
-    .sk .isc > div { font-size: ${z(38)}; font-weight: 600; line-height: 1.2; }
+    .sk .isc > div { font-size: ${z(42)}; font-weight: 600; line-height: 1.2; }
     .sk .isc > div > b { display: block; font-size: ${z(46)}; font-weight: 800; letter-spacing: -.01em; }
     /* Il calendario: una riga per gita, il giorno nel colore della gita, il corso contornato. */
     .sk .righe { margin-top: ${q(24)}; display: flex; flex-direction: column; gap: ${q(8)}; }
