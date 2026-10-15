@@ -12,12 +12,13 @@
   backup in `supabase/migration/backup-2026-10-15-assicurazioni/` (fuori da git). Lo schema intero
   ci mette qualche minuto: applicarlo quando nessuno usa il sito.
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
-- **Ripresa (16/10, sera):** tutto fatto, pushato e online fino a `5268a48`, `dev` allineato.
-  Aspettano l'utente: (1) Sponsor nel Bilancio, nome a mano o legato all'elenco di Social; (2) la
-  partenza nel titolo stampato dei fogli del pullman (tolta come chiesto, resta nel nome del
-  foglio di lavoro); (3) le prove sul sito vero elencate sotto. Il client Supabase finto per le
-  prove nel browser sta nello scratchpad, che un riavvio svuota: va riscritto (vedi i commit del
-  16/10 per come si provano le pagine).
+- **Ripresa (16/10, sera):** tutto fatto, pushato e online fino a `fc4012a` (gite fatte nei fogli
+  del pullman), `dev` allineato. Aspettano l'utente: (1) **canale WhatsApp**: sì sull'abbozzo
+  `bozze/abbozzo-canale.png` e il link del canale, poi un tipo nuovo nel generatore dei post;
+  (2) Sponsor nel Bilancio, nome a mano o legato all'elenco di Social; (3) la partenza nel titolo
+  stampato dei fogli del pullman (tolta come chiesto, resta nel nome del foglio di lavoro); (4) le
+  prove sul sito vero elencate sotto. Il client Supabase finto per le prove nel browser sta nello
+  scratchpad, che un riavvio svuota: va riscritto.
 
 ## Richieste nuove
 
