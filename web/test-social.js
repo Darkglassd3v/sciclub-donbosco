@@ -8,7 +8,7 @@
 const assert = require("assert");
 const { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, modelloPost,
         contrasto, schiarisci, indirizzoUtm, testoPost, mancanti, nomePost, SOCIAL,
-        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto } = require("./social-templates.js");
+        disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -278,9 +278,19 @@ assert.strictEqual(posFoto({ photo_x: null, photo_y: "" }), "50% 45%");
 assert.strictEqual(posFoto({ photo_x: 0, photo_y: 100 }), "0% 100%", "lo zero è una posizione, non «vuoto»");
 assert.strictEqual(posFoto({ photo_x: 150, photo_y: -3 }), "100% 0%");
 assert.strictEqual(posFoto({ photo_x: "20;color:red", photo_y: 12.6 }), "50% 13%", "nello style solo numeri");
+assert.strictEqual(zoomFoto({}), 1);
+assert.strictEqual(zoomFoto({ photo_zoom: 130 }), 1.3);
+assert.strictEqual(zoomFoto({ photo_zoom: 50 }), 1, "la foto non deve mai essere più piccola del riquadro");
+assert.strictEqual(zoomFoto({ photo_zoom: 999 }), 3);
 {
   const html = disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_x: 10, photo_y: 80 }, "post"));
   assert.ok(html.includes("--pos:10% 80%"), "la posizione non arriva al post");
+  assert.ok(html.includes("--zoom:1"), "senza ingrandimento la foto deve restare 1");
+  const gita = { kind: "gita", title: "Pila", event_date: "2027-01-17", stops: [["7:00", "Asti"], ["6:45", "Montegrosso"]] };
+  assert.ok(disegnaPost(modelloPost(gita, "post")).includes("ore 7:00"), "senza scelta va sotto la data la prima partenza");
+  assert.ok(disegnaPost(modelloPost({ ...gita, card_stop: "Montegrosso" }, "post")).includes("ore 6:45"), "la partenza scelta non va sotto la data");
+  assert.ok(disegnaPost(modelloPost({ ...gita, card_stop: "Altrove" }, "post")).includes("ore 7:00"), "un luogo tolto deve tornare alla prima");
+  assert.ok(disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_zoom: 150 }, "post")).includes("--zoom:1.5"));
   assert.ok(!disegnaPost(modelloPost({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo_x: 10 }, "post")).includes("--pos"), "senza foto niente posizione");
 }
 

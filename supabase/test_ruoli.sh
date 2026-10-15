@@ -448,6 +448,11 @@ do $$ begin
     raise exception 'ASSERZIONE: foto spostata oltre il 100%% accettata';
   exception when check_violation then null;
   end;
+  begin
+    insert into public.social_events (kind, title, photo_zoom) values ('corso', 'FOTO RIMPICCIOLITA', 90);
+    raise exception 'ASSERZIONE: foto più piccola del riquadro accettata';
+  exception when check_violation then null;
+  end;
   -- Un contatto tolto dalla rubrica esce dai post che lo avevano, gli altri restano.
   insert into public.social_contacts (id, name, phone) values
     ('dddddddd-0000-0000-0000-000000000001', 'VIA', '1'), ('dddddddd-0000-0000-0000-000000000002', 'RESTA', '2');

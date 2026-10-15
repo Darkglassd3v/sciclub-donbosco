@@ -138,9 +138,13 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   parole fra asterischi (`evidenzia()` le disegna, `senzaSegni()` le toglie nel testo del post). Il
   form segue l'ordine del post (`ORDINE_CAMPI` in `social.html`). Logo in alto a sinistra e coccarda
   del corso (`stellaCorso()`) all'angolo basso della tessera della data, uguali in post e story.
-  La foto si sposta coi due cursori del form (`social_events.photo_x`, `photo_y`, 0–100, vuoti =
-  50% 45%: `posFoto()`), una posizione sola per post e story, nella variabile `--pos` usata da
-  foto, finestra e grigi.
+  La foto si sposta col pulsante «Sposta la foto» (frecce, + e −: `collegaSpostaFoto()` in
+  `social.html`) in `social_events.photo_x`, `photo_y` (0–100, vuoti = 50% 45%: `posFoto()`) e
+  `photo_zoom` (100–300, vuoto = 100: `zoomFoto()`), uguali per post e story, nelle variabili
+  `--pos` e `--zoom` di foto, finestra e grigi. Senza ingrandire, una foto orizzontale nel post si
+  sposta solo ai lati (object-fit: cover). La partenza sotto la data è `card_stop` (per luogo;
+  vuota = la prima). «Duplica questo post» apre una copia non salvata senza giorno, scadenza, foto,
+  stato «pubblicato» e testo scritto a mano.
 - Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.

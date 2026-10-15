@@ -22,6 +22,11 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Foto spostabile con le frecce, Duplica, partenza sotto la data** (l'utente: «muoverla
+      liberamente», «pulsante sposta con le freccette», «duplica», «scegliere quale partenza è sotto la
+      data»). Fatto: pulsante «Sposta la foto» (frecce, Maiuscole, + e −, Invio), colonna `photo_zoom`;
+      «Duplica questo post»; radio «sotto la data» nelle partenze, colonna `card_stop`. Colonne già in
+      produzione (backup `supabase/migration/backup-2026-10-15-foto/`). Da provare sul sito vero.
 - [ ] 15/10: **Volantino con le geometrie della K**, bozza in prova (copia: definitivo e variante QR
       non toccati): `sorgenti/volantino-k.html` → `volantino-2026-2027-k*.pdf/.jpg` (`rendi.sh` fa le tre).
       Angoli tagliati a 45°, cunei blu scuro sulle testate delle gite e degli eventi, cuneo sulla fascia

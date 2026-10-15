@@ -93,9 +93,11 @@
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
     /* Cursori della foto larghi e alti: si prendono bene anche col dito e con la vista debole. */
-    .pos-foto input[type=range] { display: block; width: 100%; height: 2rem; accent-color: var(--blu); }
+    .pos-foto #btnSposta[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
     .righe-editor .riga input:first-child { max-width: 11rem; }
+    /* Quale partenza va sotto la data, nella tessera del post. */
+    .righe-editor .sotto-data { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-weight: 600; }
     /* La gita ha una quota sola: l'etichetta non serve. */
     .righe-editor.una-quota .riga input:first-child { display: none; }
     .spunta { display: flex; gap: 8px; align-items: center; font-weight: 600; min-height: 2.5em; }
@@ -351,13 +353,17 @@
                   <label class="label" for="fFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
                   <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
-                  <!-- Quale parte della foto si vede, uguale in post e story: l'anteprima cambia mentre si sposta. -->
+                  <!-- Quale parte della foto si vede, uguale in post e story: con «Sposta la foto» premuto le
+                       frecce la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
                   <div id="posFoto" class="pos-foto mt-3" hidden>
-                    <label class="label" for="fFotoX">Sposta la foto: da sinistra a destra</label>
-                    <input type="range" id="fFotoX" min="0" max="100" step="1">
-                    <label class="label mt-2" for="fFotoY">Sposta la foto: dall'alto in basso</label>
-                    <input type="range" id="fFotoY" min="0" max="100" step="1">
-                    <button type="button" class="button is-small is-light mt-2" id="btnFotoCentro">Rimetti al centro</button>
+                    <div class="buttons mb-1">
+                      <button type="button" class="button is-link is-light" id="btnSposta" aria-pressed="false" aria-describedby="aiutoSposta">Sposta la foto</button>
+                      <button type="button" class="button is-light" id="btnZoomPiu" aria-label="Ingrandisci la foto">+</button>
+                      <button type="button" class="button is-light" id="btnZoomMeno" aria-label="Rimpicciolisci la foto">−</button>
+                      <button type="button" class="button is-small is-light" id="btnFotoCentro">Rimetti com'era</button>
+                    </div>
+                    <p class="help" id="aiutoSposta">Premi «Sposta la foto», poi usa le frecce della tastiera (con Maiuscole va più veloce), + e − per ingrandire, Invio quando hai finito. Se non va in su o in giù, ingrandiscila un po'.</p>
+                    <p class="help" id="statoFoto" aria-live="polite"></p>
                   </div>
                 </div>
               </div>
@@ -380,6 +386,7 @@
             </section>
 
             <div class="elimina" id="azioniElimina">
+              <button type="button" class="button is-small is-link is-light" id="btnDuplica" hidden>Duplica questo post</button>
               <button type="button" class="button is-small is-danger is-outlined" id="btnElimina">Elimina questo post</button>
             </div>
           </div>
@@ -519,7 +526,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261015foto"></script>
+<script src="social-templates.js?v=20261016sposta"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -529,7 +536,7 @@
   let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
   let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
   let foto = null;       // la foto del post aperto (data URL ridotto)
-  let fotoX = null, fotoY = null;  // la parte della foto che si vede (photo_x, photo_y); null = al centro
+  let fotoX = null, fotoY = null, fotoZoom = null;  // photo_x, photo_y, photo_zoom del post aperto; null = come prima
 
   /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
   function stagioneDi(data = new Date()) {
@@ -852,12 +859,17 @@
     riga.className = "riga";
     riga.innerHTML = `<input class="input" value="${esc(a ?? "")}" placeholder="${SEGNAPOSTI[id][0]}">
       <input class="input" value="${esc(b ?? "")}" placeholder="${SEGNAPOSTI[id][1]}" ${id === "fFermate" ? 'list="luoghi"' : ""}>
+      ${id === "fFermate" ? `<label class="sotto-data"><input type="radio" name="partenzaTessera"${el(id).children.length ? "" : " checked"}> sotto la data</label>` : ""}
       <button type="button" class="button is-light" aria-label="Togli questa riga">✕</button>`;
     riga.querySelector("button").addEventListener("click", () => { riga.remove(); cambiato(); });
     el(id).append(riga);
   }
+  function partenzaScelta() {
+    const r = el("fFermate").querySelector("input[name=partenzaTessera]:checked");
+    return r ? r.closest(".riga").querySelectorAll("input.input")[1].value.trim() || null : null;
+  }
   function righeDi(id) {
-    return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input")].map((i) => i.value.trim()))
+    return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input.input")].map((i) => i.value.trim()))
       .filter(([a, b]) => a || b);
   }
 
@@ -878,20 +890,19 @@
       const file = el("fFoto").files[0];
       if (!file) return;
       foto = await riduciImmagine(file, 1080, "image/jpeg");
-      fotoX = fotoY = null;  // una foto nuova parte dal centro
+      fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
       el("fFoto").value = "";
       cambiato();
     });
-    el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = null; cambiato(); });
-    el("fFotoX").addEventListener("input", () => { fotoX = Number(el("fFotoX").value); cambiato(); });
-    el("fFotoY").addEventListener("input", () => { fotoY = Number(el("fFotoY").value); cambiato(); });
-    el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = null; cambiato(); });
+    el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = fotoZoom = null; cambiato(); });
+    collegaSpostaFoto();
     el("btnEvidenzia").addEventListener("click", evidenziaSelezione);
     el("btnSalva").addEventListener("click", salva);
     el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
     el("btnCopia").addEventListener("click", copiaTesto);
     el("btnPubblicato").addEventListener("click", segnaPubblicato);
     el("btnElimina").addEventListener("click", elimina);
+    el("btnDuplica").addEventListener("click", duplica);
     el("calGita").addEventListener("click", sceltaCalGita);
     // La colonna dell'anteprima si ferma sotto la testata del post, che è
     // alta quanto vuole il testo (A+, "Manca: ...").
@@ -934,6 +945,56 @@
     el("nessunPost").hidden = si;
   }
 
+  /**
+   * «Sposta la foto»: finché il pulsante è premuto (e ha il fuoco) le frecce spostano la foto
+   * nella direzione della freccia, + e − la ingrandiscono, Invio ed Esc chiudono. Il passo è il 2%,
+   * il 10% con Maiuscole. Spostare a destra la foto vuol dire mostrarne di più la parte sinistra:
+   * per questo la freccia a destra abbassa photo_x.
+   */
+  function collegaSpostaFoto() {
+    const b = el("btnSposta");
+    const attivo = (si) => { b.setAttribute("aria-pressed", String(si)); b.textContent = si ? "Fine spostamento" : "Sposta la foto"; };
+    const limita = (v, min, max) => Math.min(max, Math.max(min, v));
+    const zoom = (d) => { fotoZoom = limita((fotoZoom ?? 100) + d, 100, 300); if (fotoZoom === 100) fotoZoom = null; cambiato(); };
+    b.addEventListener("click", () => attivo(b.getAttribute("aria-pressed") !== "true"));
+    b.addEventListener("blur", () => attivo(false));
+    b.addEventListener("keydown", (e) => {
+      if (b.getAttribute("aria-pressed") !== "true") return;
+      const passo = e.shiftKey ? 10 : 2;
+      const mosse = { ArrowLeft: [passo, 0], ArrowRight: [-passo, 0], ArrowUp: [0, passo], ArrowDown: [0, -passo] };
+      if (mosse[e.key]) {
+        fotoX = limita((fotoX ?? 50) + mosse[e.key][0], 0, 100);
+        fotoY = limita((fotoY ?? 45) + mosse[e.key][1], 0, 100);
+        cambiato();
+      } else if (e.key === "+" || e.key === "=") zoom(10);
+      else if (e.key === "-") zoom(-10);
+      else if (e.key === "Enter" || e.key === "Escape") attivo(false);
+      else return;
+      e.preventDefault();
+    });
+    el("btnZoomPiu").addEventListener("click", () => zoom(10));
+    el("btnZoomMeno").addEventListener("click", () => zoom(-10));
+    el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = fotoZoom = null; cambiato(); });
+  }
+
+  /**
+   * Un post nuovo, non salvato, coi dati del post salvato aperto: partenze, quota, contatti,
+   * gancio, corso. Restano fuori quelli che cambiano di sicuro e farebbero pubblicare un errore:
+   * giorno e scadenza (il colore della gita viene dal giorno), foto e sua posizione (la meta
+   * cambia), lo stato «pubblicato» e il testo scritto a mano (si rifà dai dati).
+   */
+  function duplica() {
+    if (!aperto || !aperto.id) return;
+    const { id, created_at, updated_at, ...dati } = aperto;
+    apri({ ...dati, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
+      published_at: null, caption: null });
+    if (aperto.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
+    showToast("Copia pronta: scegli il giorno e controlla la meta, poi salva.");
+    // La gita sceglie il giorno nel calendario: il campo data è nascosto.
+    const giorno = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");
+    if (giorno) giorno.focus();
+  }
+
   function apri(post) {
     if (modificato()) {
       chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
@@ -957,13 +1018,15 @@
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
     foto = post.photo || null;
-    fotoX = post.photo_x ?? null; fotoY = post.photo_y ?? null;
+    fotoX = post.photo_x ?? null; fotoY = post.photo_y ?? null; fotoZoom = post.photo_zoom ?? null;
     meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
     for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
     (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
+    const scelta = [...el("fFermate").querySelectorAll(".riga")].find((r) => post.card_stop && r.querySelectorAll("input.input")[1].value.trim() === post.card_stop);
+    if (scelta) scelta.querySelector("input[name=partenzaTessera]").checked = true;
     (post.prices || []).forEach((r) => aggiungiRiga("fPrezzi", r));
     (post.facts || []).forEach((r) => aggiungiRiga("fInfo", r));
-    if (!post.id) aggiungiRiga("fFermate");
+    if (!post.id && !(post.stops || []).length) aggiungiRiga("fFermate");
     // Un post nuovo parte dai contatti proposti nella rubrica.
     disegnaSceltaContatti(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
     formato = 0;
@@ -1037,6 +1100,8 @@
       prices: g === "sponsor" ? [] : prezzi,
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? righeDi("fFermate") : [],
+      // La partenza scritta sotto la data, per luogo (resta giusta se le righe cambiano ordine); vuota = la prima.
+      card_stop: g === "gita" ? partenzaScelta() : null,
       facts: g === "evento" ? righeDi("fInfo") : [],
       deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,
@@ -1045,6 +1110,7 @@
       photo: g === "sponsor" ? null : foto,
       photo_x: g === "sponsor" || !foto ? null : fotoX,
       photo_y: g === "sponsor" || !foto ? null : fotoY,
+      photo_zoom: g === "sponsor" || !foto ? null : fotoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
@@ -1209,8 +1275,9 @@
     el("sbordaTutti").hidden = true;
     if (post.kind === "gita") disegnaCalGita();
     el("btnTogliFoto").hidden = !foto;
+    el("btnDuplica").hidden = !(aperto && aperto.id);
     el("posFoto").hidden = !foto;
-    el("fFotoX").value = fotoX ?? 50; el("fFotoY").value = fotoY ?? 45;
+    el("statoFoto").textContent = foto ? `Ingrandita al ${fotoZoom ?? 100}%.` : "";
     aggiornaPubblicato();
     const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
     el("linkUtm").hidden = !sp || !sp.url;

@@ -3207,6 +3207,16 @@ alter table public.social_events add constraint social_events_photo_pos_valid
   check (photo_x between 0 and 100 and photo_y between 0 and 100);  -- un valore vuoto passa
 comment on column public.social_events.photo_x is 'Posizione orizzontale della foto nel post, 0-100 (%); vuoto = 50.';
 comment on column public.social_events.photo_y is 'Posizione verticale della foto nel post, 0-100 (%); vuoto = 45.';
+-- Quanto è ingrandita la foto (%): senza ingrandire, una foto orizzontale nel post 4:5 si sposta solo ai lati.
+alter table public.social_events add column if not exists photo_zoom smallint;
+alter table public.social_events drop constraint if exists social_events_photo_zoom_valid;
+alter table public.social_events add constraint social_events_photo_zoom_valid check (photo_zoom between 100 and 300);
+comment on column public.social_events.photo_zoom is 'Ingrandimento della foto nel post, 100-300 (%); vuoto = 100.';
+
+-- La partenza scritta sotto la data, nella tessera del post di una gita, per luogo
+-- (resta giusta se le righe delle partenze cambiano ordine). Vuota = la prima.
+alter table public.social_events add column if not exists card_stop text;
+comment on column public.social_events.card_stop is 'Luogo della partenza mostrata sotto la data nel post (es. "Montegrosso"); vuoto = la prima.';
 
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()
