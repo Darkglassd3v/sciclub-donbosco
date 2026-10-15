@@ -21,6 +21,14 @@
       piccolo. Le dimensioni regolabili campo per campo: **scartate** (l'utente: i testi devono
       restare coerenti fra i post); si correggono le misure della grafica. Nelle gite **partenze e
       orari sono confusi**: metterli in riquadri. Prima un abbozzo prima/dopo da approvare.
+      **16/10: abbozzo pronto, da approvare:** `bozze/abbozzo-k.png` (solo in locale; la pagina
+      `bozze/abbozzo-k.html` ha le misure come CSS sopra la K di oggi). Proposta, solo story: tessera
+      più corta (fino a 716 px invece di 806) ma più piena (numero 236 px invece di 210, giorno e
+      mese più grandi), sempre sotto la fascia di Instagram (250 px); logo accanto al fondo della
+      tessera; testo da 754 px invece di 878, più grande (titolo 140, righe 56, gancio 66, che si
+      stringono da sole se non ci stanno); luogo dell'evento su una riga sua col segnaposto; partenze
+      della gita in riquadri (ora in giallo, fermata sotto). Dopo il sì: nel codice, poi banco di
+      tutte le grafiche post e story.
 - [ ] 15/10, review del 15/10 (fatti: l'incasso dei nuclei con un credito, `c6a6936`; le
       assicurazioni, prezzi in euro interi anche nel database, applicati in produzione il 15/10 con
       le sole istruzioni nuove, backup in `supabase/migration/backup-2026-10-15-prezzi-interi/`).
