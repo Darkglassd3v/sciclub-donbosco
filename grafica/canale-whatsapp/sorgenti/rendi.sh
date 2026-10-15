@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rifà il cartello (PDF da stampare e JPEG di anteprima) con Chrome headless, in
-# due versioni: chiara (cartello.html) e scura (cartello.html#scuro).
+# due versioni: chiara (cartello.html) e scura (cartello.html#scuro), e la story (story.html).
 # Il QR nella scheda di tesseramento sta in ../../scheda-tesseramento/.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -15,3 +15,9 @@ rendi() {
 }
 rendi cartello.html ../cartello-canale-whatsapp
 rendi "cartello.html#scuro" ../cartello-canale-whatsapp-scuro
+
+# La story del canale, 1080×1920, da caricare su Instagram e Facebook.
+chrome --window-size=1080,1920 --screenshot=../story-canale-whatsapp.png "file://$PWD/story.html" >/dev/null
+python3 -c "import sys; from PIL import Image; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2], quality=90, optimize=True)" ../story-canale-whatsapp.png ../story-canale-whatsapp.jpg
+rm ../story-canale-whatsapp.png
+echo ../story-canale-whatsapp.jpg
