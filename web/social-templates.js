@@ -435,7 +435,7 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .tessera b { font-size: 210px; font-weight: 800; line-height: .8; letter-spacing: -.05em; margin: 20px 0 16px -6px; }
     .sk .tessera b + span { font-weight: 800; letter-spacing: -.02em; }
     .sk .tessera b + span:last-child { margin-bottom: 34px; }
-    .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: #084C8D; color: #fff; padding: 20px 34px 22px; margin-top: 28px; }
+    .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: var(--em, #084C8D); color: var(--em-ink, #fff); padding: 20px 34px 22px; margin-top: 28px; }
     .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
     .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
     .sk.story .tessera b + span:last-child { margin-bottom: 26px; }
@@ -493,6 +493,15 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .righe > div { display: flex; align-items: center; gap: 22px; }
     .sk .righe .giorno { flex: none; width: ${q(196)}; text-align: center; border-radius: 12px; font-size: ${q(42)}; font-weight: 800; line-height: 1.3; }
     .sk .righe .meta { font-size: ${q(48)}; font-weight: 700; letter-spacing: -.01em; min-width: 0; }
+    /* Il calendario: tessera del mese più bassa e angolo più piccolo, così il testo parte più su;
+     * il titolo senza la seconda riga riservata; le gite una per riga, la meta su una riga sola. */
+    .cv.sk:has(.tessera.mese) { --angolo: 500px; }
+    .cv.sk.story:has(.tessera.mese) { --angolo: 760px; }
+    .sk .tessera.mese { height: calc(var(--su) + 420px); }
+    .sk .tessera.mese b { font-size: 170px; }
+    .sk .tessera.mese ~ .col .tit { min-height: 0; max-width: none; margin-top: 0; }
+    .sk .tessera.mese ~ .col .righe { gap: ${q(6)}; }
+    .sk .tessera.mese ~ .col .righe .meta { white-space: nowrap; }
     .sk .righe .corso { font-size: ${q(36)}; font-weight: 700; line-height: 1; color: #FCCF02; border: 3px solid #FCCF02; border-radius: 999px; padding: 6px 16px; }`;
   document.head.append(stile);
 })();
@@ -583,7 +592,12 @@ function tesseraK(s) {
   const p = partenze(s), scelta = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
   const ora = s.kind === "gita" ? (scelta && scelta[0] ? `ore ${scelta[0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
   const story = s.fmt === "story";
-  return `<div class="tessera"><span data-fit style="font-size:${story ? 62 : 54}px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
+  // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
+  // blu con le scritte bianche e la fascia dell'ora gialla, il martedì rossa; [fondo, scritte, fascia, sua scritta].
+  const c = s.kind === "gita" ? coloreNuovo(s.cat).c.toUpperCase() : GIALLO;
+  const T = c === GIALLO ? null : c === BLU ? [BLU, "#FFFFFF", GIALLO, BLU] : [c, scrittaSu(c), BLU, "#FFFFFF"];
+  const colori = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
+  return `<div class="tessera"${colori}><span data-fit style="font-size:${story ? 62 : 54}px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
 }
 
@@ -641,21 +655,22 @@ function postK(s) {
 }
 
 /** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
-function meseK(titolo, righe, mese) {
+function meseK(titolo, righe, mese, story = false) {
   const m = Number(String(mese || "").split("-")[1]);
-  const tessera = `<div class="tessera">${m ? `<span data-fit style="font-size:54px">${MESI[m - 1]}</span>` : ""}<b>${righe.length}</b>
+  const tessera = `<div class="tessera mese">${m ? `<span data-fit style="font-size:54px">${MESI[m - 1]}</span>` : ""}<b>${righe.length}</b>
     <span data-fit style="font-size:66px">${righe.length === 1 ? "gita" : "gite"}</span></div>`;
-  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">Le gite del mese</div>
-    <div class="tit"><div data-righe="2" style="--t:116px">${escS(titolo)}</div></div>
+  // Niente gancio: la tessera dice già mese e numero di gite, e con 13 gite serve tutto lo spazio.
+  const testo = `<div class="testo" data-adatta=".6">
+    <div class="tit"><div data-righe="2" style="--t:${story ? 120 : 104}px">${escS(titolo)}</div></div>
     <div class="righe">${righeMese(righe, true, '<span class="corso">corso</span>')}</div></div>`;
-  return fondoK({ giallo: false, story: false, foto: null, fine: 470 }, tessera, testo, iscrizioni(), false);
+  return fondoK({ giallo: false, story, foto: null, fine: story ? 690 : 420 }, tessera, testo, iscrizioni(), false);
 }
 
 /** Post o story di una gita o di un evento (modello da modelloPost()): sempre la K. */
 function disegnaPost(s) { return postK(s); }
 
 /** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per la tessera. */
-function disegnaCalendario(titolo, righe, mese = "") { return meseK(titolo, righe, mese); }
+function disegnaCalendario(titolo, righe, mese = "", story = false) { return meseK(titolo, righe, mese, story); }
 
 /** Misure del post (non della story) e del calendario del mese: 4:5. */
 const misurePost = () => ({ w: 1080, h: 1350 });

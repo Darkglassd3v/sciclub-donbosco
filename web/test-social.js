@@ -222,7 +222,14 @@ assert.strictEqual(giornoMese(null), "");
   const righe = [["g0", "10/01", "Prato Nevoso", true], ["g6", "16/01", "Sestriere", false]];
   const cal = disegnaCalendario("Calendario di gennaio", righe, "2027-01");
   assert.ok(cal.includes('font-size:54px">gennaio</span><b>2</b>') && cal.includes(">Dom 10<") && cal.includes('class="corso">corso<')
-    && cal.includes("Le gite del mese") && cal.includes("height:1350px"));
+    && cal.includes("height:1350px"));
+  // Il calendario anche in story.
+  assert.ok(disegnaCalendario("Gennaio", righe, "2027-01", true).includes("height:1920px"), "manca la story del calendario");
+  // La tessera della gita prende il colore del giorno: il sabato blu con le scritte bianche, la domenica resta gialla.
+  const tessera = (iso) => disegnaPost(modelloPost({ ...gita, event_date: iso }, "post")).match(/<div class="tessera"[^>]*>/)[0];
+  assert.ok(tessera("2027-01-16").includes("background:#084C8D;color:#FFFFFF;--em:#FCCF02"), "tessera del sabato");
+  assert.ok(tessera("2027-01-19").includes("background:#B3261E"), "tessera del martedì");
+  assert.strictEqual(tessera("2027-01-17"), '<div class="tessera">', "tessera della domenica");
   // Ora, luogo e scadenza di un evento hanno un campo loro e diventano le informazioni che le grafiche conoscono.
   const presci = { kind: "corso", title: "Ginnastica presciistica", event_date: "2026-10-21", event_time: "ore 19:30",
     place: "Palestra Way Assauto, Asti", deadline: "2026-10-19",

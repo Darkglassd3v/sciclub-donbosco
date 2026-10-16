@@ -22,6 +22,35 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Tessera col colore del giorno, calendari che non sbordano, story del calendario.** Fatto:
+      nelle gite la tessera della data ha il colore del giorno (domenica gialla con le scritte blu,
+      sabato blu con le scritte bianche e la fascia dell'ora gialla, martedì rossa con le scritte
+      bianche e la fascia blu). Calendario del mese: senza «Le gite del mese» (la tessera dice mese e
+      numero), tessera e angolo più bassi, una gita per riga con la meta su una riga sola; con 13 gite
+      il testo scende al 76-78% invece di sbordare al 60%. Nuova story del calendario (1080×1920) nella
+      pagina Grafiche. Banco: post e story identici a prima nei testi e nelle misure. Da provare sul
+      sito vero.
+
+- [ ] 16/10: **Post della locandina nel database.** Fatto: 49 post da fare (45 gite di domenica,
+      martedì e sabato dal 01/12/2026 al 06/04/2027, Presentazione del 25/11, Pranzo sociale del
+      14/03, Settimana bianca in Val di Fassa e Traversata Courmayeur/Chamonix senza data, da
+      completare). Gite con i contatti di default, «Iscrizioni entro» e quota vuote; corsi e gare
+      nella nota gialla (e coccarda Corso); eventi senza telefoni. Backup in
+      `supabase/migration/backup-2026-10-16-post-locandina/`. Foto da Wikimedia Commons, una per
+      località (Sestriere e Val Thorens quelle che c'erano), da sistemare a mano dove serve. Tutte
+      tranne La Thuile (CC0) chiedono di citare l'autore, per esempio nel testo del post:
+      - Cervinia: «Cime Bianche.JPG», SteGrifo27, CC BY-SA 3.0, https://commons.wikimedia.org/wiki/File:Cime_Bianche.JPG
+      - Pila: «Panorama piste pila.JPG», Gnappo1989, CC BY 3.0, https://commons.wikimedia.org/wiki/File:Panorama_piste_pila.JPG
+      - Serre Chevalier: «Prorel-Serre-Che.JPG», Benj05, CC BY-SA 3.0, https://commons.wikimedia.org/wiki/File:Prorel-Serre-Che.JPG
+      - Monginevro: «Montgenèvre Hiver.jpg», Station de Montgenèvre, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Montgen%C3%A8vre_Hiver.jpg
+      - Monterosa Ski: «Alagna Valsesia, Funifor Salati.jpg», Massimo Beltrame, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Alagna_Valsesia,_Funifor_Salati.jpg
+      - La Thuile: «Descending the San Bernardo slope towards the Fourclaz Express, La Thuile, 2024.jpg», DimiTalen, CC0, https://commons.wikimedia.org/wiki/File:Descending_the_San_Bernardo_slope_towards_the_Fourclaz_Express,_La_Thuile,_2024.jpg
+      - Val Cenis: «Télésiège Ramasse de Val-Cenis à l'arrivée en hiver (mars 2025).JPG», Florian Pépellin, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:T%C3%A9l%C3%A9si%C3%A8ge_Ramasse_de_Val-Cenis_%C3%A0_l%27arriv%C3%A9e_en_hiver_(mars_2025).JPG
+      - Limone: «Snowy landscape.jpg», Matteo tavee, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Snowy_landscape.jpg
+      - Courmayeur: «Amazing Mont Blanc from Val Ferret, winter, Italy.jpg», Davide Tomatis, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Amazing_Mont_Blanc_from_Val_Ferret,_winter,_Italy.jpg
+      - Valtournenche: «Valtournenche-Salette - panoramio.jpg», Pier B., CC BY-SA 3.0, https://commons.wikimedia.org/wiki/File:Valtournenche-Salette_-_panoramio.jpg
+      - Val di Fassa: «Marmolada-Arabba-Val di Fassa 1.jpg», kallerna, CC BY-SA 4.0, https://commons.wikimedia.org/wiki/File:Marmolada-Arabba-Val_di_Fassa_1.jpg
+
 - [ ] 16/10: **Logo blu ufficiale e angolo sempre giallo in post e story.** Fatto: il logo dei post è
       `logo-ufficiale-blu-tondo.svg` (l'ufficiale blu nel cerchio, nuovo, anche in `grafica/logo/`),
       sull'angolo in alto a sinistra sempre giallo (foto in grigi col giallo sopra; le zone buie
