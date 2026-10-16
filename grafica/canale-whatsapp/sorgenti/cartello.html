@@ -32,8 +32,7 @@ body { font-family: Barlow, system-ui, sans-serif; color: var(--notte); -webkit-
 .bd.dentro { width: 48mm; height: 48mm; background: var(--giallo); }
 
 /* Il logo tondo ufficiale: ha già il suo cerchio bianco con l'anello giallo, va bene su entrambi i fondi. */
-.logo { position: absolute; right: 11mm; top: 7mm; width: 27mm; height: 27mm;
-  border-radius: 50%; box-shadow: 0 0 0 .8mm var(--blu); }  /* filo blu: sul bianco il cerchio bianco sparirebbe */
+.logo { position: absolute; right: 11mm; top: 7mm; width: 27mm; height: 27mm; border-radius: 50%; }
 
 .scritte { position: absolute; left: 10mm; right: 10mm; top: 36mm; text-align: center; }
 .club { color: var(--blu); font-weight: 800; font-size: 16mm; line-height: .92; letter-spacing: -.035em; }
@@ -81,7 +80,6 @@ html.scuro .as.dentro { background: var(--notte); }
 html.scuro .club, html.scuro .passi div, html.scuro .piede .link { color: #fff; }
 html.scuro .sotto, html.scuro .piede .se { color: #C7D0DA; }
 html.scuro .scheda { background: #fff; }
-html.scuro .logo { box-shadow: none; }
 html.scuro .num { background: var(--giallo); color: var(--blu-dark); }
 html.scuro .notifiche .num { background: var(--blu-dark); color: #fff; }
 </style>
