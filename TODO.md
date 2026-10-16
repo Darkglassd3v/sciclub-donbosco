@@ -22,6 +22,15 @@
 
 ## Richieste nuove
 
+- [ ] 16/10: **Logo blu ufficiale e angolo sempre giallo in post e story.** Fatto: il logo dei post è
+      `logo-ufficiale-blu-tondo.svg` (l'ufficiale blu nel cerchio, nuovo, anche in `grafica/logo/`),
+      sull'angolo in alto a sinistra sempre giallo (foto in grigi col giallo sopra; le zone buie
+      schiarite, perché con la foto della cena il giallo diventava nero); velo sotto il testo blu notte
+      (`--velo: 4,32,62`, .78/.88), così i riquadri blu delle partenze si staccano. Anche la story del
+      canale WhatsApp. Cartello e volantino restano col logo bianco ad anello giallo, senza il filo blu.
+      Banco di 9 grafiche (gite sabato/domenica, post e story, meta su due righe, corso, cena, gara,
+      servizi, calendario): testi e misure identici a prima. Da provare sul sito vero.
+
 - [ ] 16/10: **Review completa del codice del 15-16/10: fatta e corretta.** Commit del 16/10 in
       `534ac00`. Commit del 15/10 (`bf605e4~1..a22a5a3~1`): «Sposta la foto» ha le frecce da cliccare
       (mouse e tablet) e non si spegne cliccando + e −; `settle_household` blocca le righe del nucleo

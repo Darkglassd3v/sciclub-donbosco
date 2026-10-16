@@ -15,8 +15,8 @@
 const SOCIAL = {
   // Relativo alla pagina che disegna.
   logo: "logo-ufficiale-trasparente-lettere-blu.svg",
-  // Il logo ufficiale nel cerchio bianco con l'anello giallo: quello dei post nuovi (logoNuovo()).
-  logoTondo: "logo-ufficiale-tondo.svg",
+  // Il logo ufficiale, blu, nel cerchio: quello dei post e delle story (logoNuovo()), sull'angolo giallo.
+  logoTondo: "logo-ufficiale-blu-tondo.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
   // che la pagina carica e passa a impostaContatti(). Ogni post sceglie i suoi
   // (ev.contacts, id in ordine): contattiDi().
@@ -385,8 +385,9 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
      * tavola: --fine è dove comincia il testo, --su e --giu le fasce coperte della story. Niente
      * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
      * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
-    /* --velo: il fondo sotto il testo tende al blu scuro del club (prima nero: la foto usciva cupa). */
-    .cv.sk { --notte: 20,32,46; --velo: 6,57,106; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
+    /* --velo: il fondo sotto il testo, un blu notte (prima nero: la foto usciva cupa; poi il blu del club,
+     * 6,57,106, ma i riquadri blu delle partenze non si staccavano). */
+    .cv.sk { --notte: 20,32,46; --velo: 4,32,62; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
     /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena e il
      * testo parte più su, più grande. Logo e coccarda stanno dove sono nel post (15/10); l'angolo
      * (800, prima 660) tiene dentro il logo, che sta 250 px più in basso che nel post. */
@@ -397,16 +398,17 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 45%); }
     .sk .piano { position: absolute; inset: 0; }
     .sk .scuro { background: linear-gradient(180deg, rgba(var(--velo),0) 0, rgba(var(--velo),0) calc(var(--fine) - 200px),
-      rgba(var(--velo),.72) calc(var(--fine) + 10px), rgba(var(--velo),.82) 100%); }
-    .sk .angolo { background: rgba(8,76,141,.74); clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
+      rgba(var(--velo),.78) calc(var(--fine) + 10px), rgba(var(--velo),.88) 100%); }
+    /* L'angolo sempre giallo (la foto in grigi col giallo sopra): sotto il logo blu ufficiale, in ogni post. */
+    .sk .angolo { opacity: .7; clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
     .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
     /* Nella finestra la foto in bianco e nero tinta di blu: tre livelli (foto, blu in "color", velo blu),
      * così la foto si ingrandisce (--zoom) senza ingrandire il taglio. */
     .sk .finestra { isolation: isolate; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
     .sk .finestra.fondo { clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
     .sk .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
-    .sk.giallo .angolo, .sk.giallo .finestra { background: none; opacity: .7; }
-    .sk .grigi, .sk .tinta, .sk .foto-blu, .sk .colore-blu, .sk .velo-blu { position: absolute; inset: 0; }
+    .sk.giallo .finestra { background: none; opacity: .7; }
+    .sk .grigi, .sk .schiarisci, .sk .tinta, .sk .foto-blu, .sk .colore-blu, .sk .velo-blu { position: absolute; inset: 0; }
     /* La foto ingrandita (photo_zoom) attorno al punto scelto (photo_x, photo_y), uguale in ogni livello. */
     .sk .foto, .sk .grigi, .sk .foto-blu { transform: scale(var(--zoom, 1)); transform-origin: var(--pos, 50% 45%); }
     .sk .grigi { background: var(--immagine) var(--pos, 50% 45%) / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
@@ -414,10 +416,11 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
     .sk .colore-blu { background: #084C8D; mix-blend-mode: color; }
     .sk .velo-blu { background: rgba(8,76,141,.5); }
     .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
-    .sk.senza-foto.giallo .angolo { background: #FCCF02; opacity: 1; }
+    .sk .schiarisci { background: #4D4D4D; mix-blend-mode: screen; }
+    .sk.senza-foto .angolo { background: #FCCF02; opacity: 1; }
     .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
-    /* Il filo blu stacca l'anello giallo dalla foto (attrezzi gialli, angolo giallo dei corsi). */
-    .cv.sk .logo-box img { height: 224px; border-radius: 50%; box-shadow: 0 0 0 6px #084C8D, 0 6px 22px rgba(0,0,0,.45); }
+    /* Il logo ufficiale così com'è, blu, senza fili attorno; l'ombra lo stacca dall'angolo. */
+    .cv.sk .logo-box img { height: 224px; border-radius: 50%; box-shadow: 0 6px 22px rgba(0,0,0,.45); }
     .cv.sk.story .logo-box img { height: 226px; }
     /* La coccarda del corso appesa all'angolo basso della tessera, lontana dal logo: due tondi vicini si confondevano.
      * Post e story uguali (l'utente, 15/10): logo in alto a sinistra, coccarda che entra di 30 px nella tessera
@@ -554,17 +557,19 @@ function righeMese(righe, breve, corso) {
 // --- K · Piani -----------------------------------------------------------------
 
 /* Il fondo della K: la foto (o il blu notte), il velo, i piani, logo, tessera e
- * la colonna del testo; nel giallo l'angolo e la finestra hanno la foto in grigi
- * col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
+ * la colonna del testo; l'angolo (e nel giallo anche la finestra) ha la foto in
+ * grigi col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
 function fondoK({ giallo, story, foto, pos, zoom, fine }, tessera, testo, isc, corso) {
-  const livelli = giallo && foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
-  const finestra = giallo ? livelli : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
+  const grigi = foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
+  // Nell'angolo le zone scure della foto si schiariscono: con una foto buia (la cena) il giallo diventava quasi nero.
+  const angolo = foto ? '<div class="grigi"></div><div class="schiarisci"></div><div class="tinta"></div>' : "";
+  const finestra = giallo ? grigi : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
   // Nell'url() del CSS si codifica tutto tranne i caratteri di un data URL: virgolette, barre rovesce,
   // \f e \r chiuderebbero la stringa e il resto diventerebbe CSS (security review del 16/10).
   const url = foto && escS(String(foto).replace(/[^A-Za-z0-9+/=:;,.%_-]/g, encodeURIComponent));
   return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"};--zoom:${zoom || 1}` : ""}${fine ? `;--fine:${fine}px` : ""}">
     ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
-    <div class="piano scuro"></div><div class="piano angolo">${livelli}</div><div class="piano cuneo"></div>
+    <div class="piano scuro"></div><div class="piano angolo">${angolo}</div><div class="piano cuneo"></div>
     ${foto ? `<div class="piano finestra">${finestra}</div>${story ? `<div class="piano finestra fondo">${finestra}</div>` : ""}` : ""}
     <div class="piano ombra"></div>
     ${logoNuovo()}${tessera}

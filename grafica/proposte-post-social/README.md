@@ -11,7 +11,9 @@ una gita, un evento (una cena) e il calendario del mese.
 
 Cambiato nel generatore dopo queste tavole (15/10): il velo sotto il testo tende al blu scuro
 del club (`--velo`, 0,72–0,82) invece del blu notte, le righe dei dati e le iscrizioni del post
-sono più grandi e il logo tondo ha un filo blu.
+sono più grandi. Dal 16/10 il logo è quello ufficiale blu, tondo, sempre sull'angolo giallo
+(anche nei post blu), e il velo sotto il testo è blu notte, perché i riquadri blu delle partenze
+si stacchino.
 
 ## Regole fisse
 

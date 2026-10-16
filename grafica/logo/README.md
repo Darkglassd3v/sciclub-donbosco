@@ -11,6 +11,8 @@ ricopiato in `web/` e in `ricerca/`.
 | `logo-ufficiale.JPG` | l'originale, col cielo: lo storico, a bassa qualità | sorgente del ricalco: non si pubblica, non si ritocca |
 | `logo-ufficiale-trasparente-lettere-blu.svg` | l'ufficiale ricalcato in vettoriale, senza cielo, per fondo chiaro | sito, post, scheda PDF |
 | `logo-ufficiale.svg` | l'ufficiale ricalcato, su fondo blu, contorni bianchi | stampe, grafiche su blu |
+| `logo-ufficiale-blu-tondo.svg` | l'ufficiale blu nel cerchio, in vettoriale (copia in `web/`) | post e story, sull'angolo giallo |
+| `logo-ufficiale-tondo.svg` | cerchio bianco con l'anello giallo, lettere blu | cartello del canale WhatsApp, volantino |
 | `logo-ufficiale-blu-tondo.png` | 1080×1080, cerchio blu, fuori trasparente | immagine del profilo |
 | `logo-ufficiale-bianco-tondo.png` | 1080×1080, cerchio bianco con filo blu e giallo, fuori trasparente | immagine del profilo |
 | `logo-ufficiale-blu-quadrato.png` | 1080×1080, quadrato blu (il logo sta nel cerchio) | profilo, post |

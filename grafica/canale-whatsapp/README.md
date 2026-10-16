@@ -20,7 +20,7 @@ all'altro e lontana da scritte e riquadri. Al centro, grande, **Sci Club Don
 Bosco Asti ASD**, sotto «Seguici su WhatsApp» in un riquadro giallo con
 l'angolo tagliato, poi il QR di 86 mm nero su bianco, il colore più leggibile,
 in una cornice blu con l'angolo tagliato (il fumetto verde appena fuori, per
-non interromperla); il logo ufficiale tondo in alto a destra, con un filo blu attorno. Sotto, i passi per seguire il
+non interromperla); il logo ufficiale tondo in alto a destra, così com'è (bianco e blu, anello giallo). Sotto, i passi per seguire il
 canale e, in giallo, il quarto: **attivare le notifiche** con la campanella,
 perché i canali arrivano senza e gli avvisi dell'ultimo minuto non si
 vedrebbero. In basso a sinistra l'indirizzo per chi non riesce a inquadrare il
@@ -28,12 +28,13 @@ codice.
 
 La **scura** è lo stesso cartello su fondo blu scuro: scritte bianche, numeri
 dei passi nei quadrati gialli, la scheda del QR tutta bianca, il triangolo
-interno in alto a sinistra in blu notte e il logo tondo senza filo blu. Le
+interno in alto a sinistra in blu notte e il logo tondo uguale alla chiara. Le
 stampanti da ufficio lasciano una cornice bianca di qualche millimetro.
 
 ## Story per Instagram e Facebook
 
-`story-canale-whatsapp.jpg` (1080×1920), nello stile K dei post: «Il nostro canale
+`story-canale-whatsapp.jpg` (1080×1920), nello stile K dei post (angolo giallo col logo
+ufficiale blu): «Il nostro canale
 WhatsApp», perché seguirlo, la freccia gialla **TOCCA QUI** che punta al riquadro blu col
 bordo giallo, sotto «Poi premi Segui e attiva le notifiche» e la strada senza link
 (WhatsApp › Aggiornamenti). Foto: pista a La Thuile di DimiTalen, Wikimedia Commons, CC0.
