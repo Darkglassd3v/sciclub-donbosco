@@ -634,8 +634,13 @@
   // Dati
   // ---------------------------------------------------------------------
 
+  // L'elenco senza le foto: sono nel database in base64, circa 250 KB l'una, e con 50 post la pagina
+  // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (apri()).
+  const COLONNE_ELENCO = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
+    + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop";
+
   async function caricaPost() {
-    const { data, error } = await sb.from("social_events").select("*")
+    const { data, error } = await sb.from("social_events").select(COLONNE_ELENCO)
       .order("event_date", { ascending: true, nullsFirst: false }).order("created_at");
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     posts = data;
@@ -1010,11 +1015,22 @@
     if (giorno) giorno.focus();
   }
 
-  function apri(post) {
+  let aperture = 0;  // l'ultimo post chiesto: se se ne apre un altro mentre arriva la foto, vince l'ultimo
+  async function apri(post) {
     if (modificato()) {
       chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
         "Sì, lascia le modifiche", () => { salvato = firma(); apri(post); });
       return;
+    }
+    const turno = ++aperture;
+    // La foto non è nell'elenco: arriva prima di riempire il modulo, così salvare non la cancella.
+    if (post.id && !("photo" in post)) {
+      setLoading(true);
+      const { data, error } = await sb.from("social_events").select("photo").eq("id", post.id).single();
+      setLoading(false);
+      if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+      post.photo = data.photo;
+      if (turno !== aperture) return;
     }
     aperto = post;
     if (dove()[0] !== "post") history.replaceState(null, "", "#post"), mostraSezione();
