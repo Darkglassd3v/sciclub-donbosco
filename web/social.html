@@ -530,7 +530,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261016d"></script>
-<script src="social-templates.js?v=20261016angolo"></script>
+<script src="social-templates.js?v=20261016calendario"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -1578,6 +1578,7 @@
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
       .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
     anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese), ...misurePost(), nome: "Calendario", file: `calendario-${mese}.png` }, 360);
+    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese, true), w: 1080, h: 1920, nome: "Calendario, story", file: `calendario-${mese}-story.png` }, 360);
   }
 
   function disegnaCopertinaFb() {
