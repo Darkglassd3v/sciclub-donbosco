@@ -678,9 +678,11 @@
   }
 
   async function caricaAbbonamenti(idSocio) {
+    const turno = turnoScheda;
     abbonamentiNuovi = [];
     abbonamentiDaTogliere = new Set();
     const { data, error } = await sb.from("pass_status").select("*").eq("member_id", idSocio).order("created_at");
+    if (turno !== turnoScheda) return;  // nel frattempo si è aperta un'altra scheda
     if (error) throw error;
     abbonamentiSalvati = data;
     disegnaAbbonamenti();
@@ -956,12 +958,18 @@
    * con oltre 5.000 anagrafiche scaricarle tutte ad ogni ricerca era il collo
    * di bottiglia della 1.x.
    */
+  // L'ultima ricerca scritta: ogni lettera manda una richiesta, e la risposta
+  // di "RO" arrivata dopo quella di "ROSSI MA" copriva l'elenco giusto.
+  let turnoRicerca = 0, turnoPagante = 0;
+
   async function cercaSoci() {
+    const turno = ++turnoRicerca;
     const query = el("searchInput").value.trim();
     const box = el("searchResults");
     if (query.length < 2) { box.innerHTML = ""; return; }
 
     const risultati = await cercaNelDatabase(query, 8);
+    if (turno !== turnoRicerca) return;
     box.innerHTML = risultati.length
       ? risultati.map((s) => `
           <div class="result-item box p-2 mb-1" data-id="${esc(s.id)}">
@@ -1069,6 +1077,21 @@
     box.hidden = false;
   }
 
+  /**
+   * Un socio nuovo che forse è già in archivio: mostra le sue schede e dice di
+   * fermarsi (true). Lo chiede salva() prima della domanda e scrivi() subito
+   * prima di scrivere: nel frattempo un altro operatore può averlo inserito.
+   */
+  async function fermaSeDoppioni() {
+    const doppioni = await cercaDoppioni();
+    if (!doppioni.length) return false;
+    mostraDoppioni(doppioni);
+    el("avvisoDoppioni").scrollIntoView({ block: "center" });
+    showToast("Questa persona sembra già in archivio: apri la sua scheda, "
+      + "oppure premi «No, è un'altra persona» e salva di nuovo.", "is-danger");
+    return true;
+  }
+
   function nascondiDoppioni() {
     doppioniScartati = new Set();
     el("avvisoDoppioni").hidden = true;
@@ -1095,10 +1118,19 @@
     f_tipologia_corso: "course_type",
   };
 
+  // L'ultima scheda chiesta. setLoading non blocca la pagina e le risposte non
+  // arrivano per forza in ordine: aprendo un socio e subito un altro, quelle
+  // del primo arrivate dopo mettevano i suoi abbonamenti e familiari nella
+  // scheda del secondo. Una risposta di un turno vecchio non scrive più niente.
+  let turnoScheda = 0;
+
   async function caricaSocio(id) {
+    const turno = ++turnoScheda;
+    const vecchia = () => turno !== turnoScheda;
     setLoading(true);
     try {
       const { data: socio, error } = await sb.from("members").select("*").eq("id", id).single();
+      if (vecchia()) return;
       if (error) throw error;
 
       el("f_id").value = socio.id;
@@ -1118,6 +1150,7 @@
 
       if (socio.payer_id) {
         const { data: pagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
+        if (vecchia()) return;
         abilitaSezionePagante();
         el("f_payer_id").value = socio.payer_id;
         el("f_payerDisplay").value = pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id;
@@ -1128,6 +1161,7 @@
 
       await caricaFamiliari(socio.id);
       await caricaAbbonamenti(socio.id);
+      if (vecchia()) return;
 
       // Il superadmin può togliere dalla stagione chi ci è finito per sbaglio.
       el("zonaTogli").hidden = !(socio.enrolled_at && accesso.permissions.includes("gestione"));
@@ -1139,10 +1173,12 @@
       numeroProposto = null;
       el("notaTessera").hidden = true;
       await proponiNumeroTessera();
+      if (vecchia()) return;
 
       socioAperto = socio;
       aggiornaFascia();
       nascondiDoppioni();
+      turnoRicerca++;
       el("searchInput").value = "";
       el("searchResults").innerHTML = "";
       ricalcola();
@@ -1191,6 +1227,7 @@
   }
 
   async function cercaPagante() {
+    const turno = ++turnoPagante;
     const query = el("f_payerDisplay").value.trim();
     const box = el("payerResults");
     el("f_payer_id").value = "";
@@ -1199,6 +1236,7 @@
     if (query.length < 2) { box.style.display = "none"; return; }
 
     const risultati = await cercaNelDatabase(query, 6, el("f_id").value || undefined);
+    if (turno !== turnoPagante) return;
     if (!risultati.length) { box.style.display = "none"; return; }
 
     box.style.display = "block";
@@ -1225,6 +1263,7 @@
   }
 
   function rimuoviPagante() {
+    turnoPagante++;
     el("f_payer_id").value = "";
     el("f_payerDisplay").value = "";
     el("payerResults").style.display = "none";
@@ -1241,7 +1280,9 @@
 
     if (!idSocio) { panel.style.display = "none"; return; }
 
+    const turno = turnoScheda;
     const { data, error } = await sb.from("members").select("*").eq("payer_id", idSocio).order("last_name");
+    if (turno !== turnoScheda) return;  // nel frattempo si è aperta un'altra scheda
     if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
 
     familiariACarico = data;
@@ -1318,14 +1359,7 @@
       bottone.disabled = true;
       setLoading(true);
       try {
-        const doppioni = await cercaDoppioni();
-        if (doppioni.length) {
-          mostraDoppioni(doppioni);
-          el("avvisoDoppioni").scrollIntoView({ block: "center" });
-          showToast("Questa persona sembra già in archivio: apri la sua scheda, "
-            + "oppure premi «No, è un'altra persona» e salva di nuovo.", "is-danger");
-          return;
-        }
+        if (await fermaSeDoppioni()) return;
       } catch (error) {
         showToast(messaggioErrore(error), "is-danger");
         return;
@@ -1416,16 +1450,7 @@
       let id = el("f_id").value;
       // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
       // altro operatore può aver inserito la stessa persona.
-      if (!id) {
-        const doppioni = await cercaDoppioni();
-        if (doppioni.length) {
-          mostraDoppioni(doppioni);
-          el("avvisoDoppioni").scrollIntoView({ block: "center" });
-          showToast("Questa persona sembra già in archivio: apri la sua scheda, "
-            + "oppure premi «No, è un'altra persona» e salva di nuovo.", "is-danger");
-          return;
-        }
-      }
+      if (!id && await fermaSeDoppioni()) return;
       if (id) {
         // Solo se nessuno l'ha cambiato da quando è aperto: Pagamenti, il
         // pannello gite e l'Assicurazione scrivono sullo stesso socio, e il
@@ -1481,8 +1506,11 @@
   }
 
   function resetForm() {
-    // Un controllo del codice fiscale ancora in volo è della scheda di prima.
+    // Un controllo del codice fiscale, una scheda o una ricerca ancora in volo
+    // sono di prima.
     turnoCF++;
+    turnoScheda++;
+    turnoRicerca++;
     codiciGiaLetti.clear();
     el("memberForm").reset();
     aggiornaGiornoCorso();

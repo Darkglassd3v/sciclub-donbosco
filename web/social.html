@@ -674,7 +674,7 @@
     impostaContatti(data);
     if (!rubricaModificata()) apriRubrica(data);
     // Il post aperto prima che la rubrica arrivasse: rifatto con i suoi contatti.
-    if (aperto && !modificato()) { salvato = ""; apri(aperto); }
+    if (aperto && !modificato()) apri(aperto);
   }
 
   // ---------------------------------------------------------------------
