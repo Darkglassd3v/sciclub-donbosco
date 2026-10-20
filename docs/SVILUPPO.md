@@ -167,7 +167,9 @@ concatenabile con tabelle in memoria, `rpc("my_access")` che restituisce ruolo e
 `python3 -m http.server` e si guarda nel browser, anche a 400px e con A+ al massimo.
 
 Test senza browser: `node web/test-social.js`, `node web/test-stampe.js`,
-`node web/test-codicefiscale.js`, `node ricerca/test-ricerca.js`.
+`node web/test-codicefiscale.js`, `node ricerca/test-ricerca.js`. Il deploy li lancia tutti
+prima di pubblicare (`web/test-*.js` e quello della ricerca): se uno fallisce il sito resta com'era.
+Nel sito pubblicato i file dei test non ci sono.
 
 ## Regole decise con il direttivo (30/09/2026)
 

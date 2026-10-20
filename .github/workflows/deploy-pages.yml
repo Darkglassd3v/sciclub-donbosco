@@ -77,6 +77,11 @@ jobs:
       - name: Controlla la ricerca soci
         run: node ricerca/test-ricerca.js
 
+      # Grafiche dei post, codice fiscale e stampe: un test che fallisce ferma
+      # il deploy prima che la pagina rotta arrivi in produzione.
+      - name: Controlla le pagine web
+        run: for f in web/test-*.js; do node "$f" || exit 1; done
+
       # La versione mostrata nella pagina Amministrazione: il branch pubblicato
       # (2.5, 2.6-SNAPSHOT...), il commit e la sua data. Scritta qui, così non
       # va mai aggiornata a mano; quella nel repository serve solo in locale.
@@ -94,7 +99,7 @@ jobs:
           mkdir -p _site
           cp -r web/. _site/
           cp -r ricerca _site/ricerca
-          rm -f _site/ricerca/test-ricerca.js
+          rm -f _site/ricerca/test-ricerca.js _site/test-*.js
 
       # enablement: attiva GitHub Pages se non lo è già, invece di fallire con
       # "Get Pages site failed". Non sostituisce la regola sui branch: quella
