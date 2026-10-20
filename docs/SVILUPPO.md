@@ -171,6 +171,13 @@ Test senza browser: `node web/test-social.js`, `node web/test-stampe.js`,
 prima di pubblicare (`web/test-*.js` e quello della ricerca): se uno fallisce il sito resta com'era.
 Nel sito pubblicato i file dei test non ci sono.
 
+Prove nel browser: `bash test-browser/esegui.sh` apre le pagine vere in Chrome headless con un
+client Supabase finto (`test-browser/fake-supabase.js`) che risponde quando e come dice la prova:
+servono per quello che i test node non vedono, come le risposte che arrivano in ordine sparso.
+Una prova è un file `.js` che imposta `FINTO.risposta` e `FINTO.ritardo`, usa la pagina e scrive
+l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenco in `esegui.sh`.
+Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la correzione.
+
 ## Regole decise con il direttivo (30/09/2026)
 
 - Assicurazioni, in ordine di copertura: Base 35 €, Neve Plus 50 €, Global Sport 65 €. Dal 14/10/2026:

@@ -82,6 +82,12 @@ jobs:
       - name: Controlla le pagine web
         run: for f in web/test-*.js; do node "$f" || exit 1; done
 
+      # Le pagine vere in Chrome (già sul runner), con un client Supabase finto
+      # che fa arrivare le risposte in ordine sparso: schede e ricerche che si
+      # mescolano, domande di conferma inutili. test-browser/ non si pubblica.
+      - name: Controlla le pagine nel browser
+        run: bash test-browser/esegui.sh
+
       # La versione mostrata nella pagina Amministrazione: il branch pubblicato
       # (2.5, 2.6-SNAPSHOT...), il commit e la sua data. Scritta qui, così non
       # va mai aggiornata a mano; quella nel repository serve solo in locale.
