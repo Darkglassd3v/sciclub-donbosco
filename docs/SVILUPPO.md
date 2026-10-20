@@ -5,8 +5,10 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
 
 ## Regole di lavoro
 
-- **Niente commit senza un sì esplicito** di chi segue il progetto. Commit limitati ai
-  percorsi toccati (`git commit -- file...`), così non finisce in stage altro.
+- I commit locali si fanno senza chiedere, limitati ai percorsi toccati
+  (`git commit -- file...`), così non finisce in stage altro: un commit non pubblica niente.
+  **Niente push senza un sì esplicito** di chi segue il progetto: il push su un branch nei
+  trigger di `deploy-pages.yml` (oggi `2.7` e `2.8-SNAPSHOT`) ricostruisce il sito.
 - Messaggi di commit: Conventional Commits in italiano, con un corpo che spiega il perché
   (vedi `git log`).
 - Interfaccia, commenti e variabili JS in **italiano**; nomi del database in **inglese**. I
