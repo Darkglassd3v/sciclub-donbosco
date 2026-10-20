@@ -2,11 +2,12 @@
 
 - Prima leggere `PROJECT-CONTEXT.md` (breve) e `TODO.md` (cosa fare);
   regole, rilascio e database in `docs/SVILUPPO.md`.
-- **Niente commit senza sì esplicito** da chi segue progetto.
+- Commit locali liberi, limitati ai file toccati (`git commit -- file...`). **Niente push senza sì
+  esplicito** da chi segue progetto: il push su `2.7` o `2.8-SNAPSHOT` pubblica il sito.
 - Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
 - "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
   nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
-  di cosa è fatto e cosa no): la sola lettura non chiude il turno. Commit sempre solo col sì.
+  di cosa è fatto e cosa no): la sola lettura non chiude il turno. Push sempre solo col sì.
 - Interfaccia, commenti e variabili JS in italiano; nomi database in inglese.
 
 ## graphify
