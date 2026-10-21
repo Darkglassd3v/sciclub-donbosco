@@ -5,10 +5,13 @@
 //   Base senza tessera assicurata il suo prezzo intero.
 // - Si salva solo un'assicurazione diversa da quella della tessera; togliendo
 //   la presciistica torna vuota. Un socio salvato si riapre con la sua.
+// - Cambiando tessera la scelta riparte da quella della tessera nuova: la
+//   Base rimasta da prima declasserebbe chi ha appena preso la tessera Sport.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const LISTINO = [
     { category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, insurance: "BASE", insurance_paid: true, min_role: "utente" },
+    { category: "TESSERA", name: "TESSERA ORDINARIA - REALE TOTAL SPORT", price: 65, insurance: "SPORT", insurance_paid: true, min_role: "utente" },
     { category: "TESSERA", name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, insurance: null, insurance_paid: true, min_role: "utente" },
     { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA", price: 90, insurance: null, insurance_paid: true, min_role: "utente" },
   ];
@@ -71,6 +74,15 @@
     compila();
     await scrivi();
     prova("toltaSiSvuota", ultimo() === null, `salvata ${ultimo()}`);
+
+    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
+    scegli("f_presciistica", "CORSO PRESCIISTICA");
+    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE TOTAL SPORT");
+    prova("cambioTessera", assicurazione() === "SPORT" && totaleIndividuale() === 155,
+      `scelta ${assicurazione()}, totale ${totaleIndividuale()}`);
+    compila();
+    await scrivi();
+    prova("cambioTesseraNonSiSalva", ultimo() === null, `salvata ${ultimo()}`);
 
     await caricaSocio("M");
     prova("riaperto", !box.hidden && assicurazione() === "SPORT" && totaleIndividuale() === 155,

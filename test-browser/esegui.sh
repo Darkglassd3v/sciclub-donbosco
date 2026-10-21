@@ -32,7 +32,8 @@ for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html p
   if ! grep -q "fake-supabase.js" "$TMP/$copia"; then
     echo "$script: in $pagina non trovo lo script di supabase-js da sostituire"; falliti=1; continue
   fi
-  esito=$("$CHROME" --headless=new --disable-gpu --no-sandbox --virtual-time-budget=8000 --dump-dom \
+  # timeout: una pagina bloccata (ciclo infinito, Chrome appeso) non deve fermare il deploy.
+  esito=$(timeout 90 "$CHROME" --headless=new --disable-gpu --no-sandbox --virtual-time-budget=8000 --dump-dom \
     "http://127.0.0.1:$PORTA/$copia" 2>/dev/null | grep -o "<title>RISULTATO[^<]*" | sed "s/<title>RISULTATO //")
   if [ -z "$esito" ]; then
     echo "$script: nessun risultato (la pagina si è fermata prima?)"; falliti=1

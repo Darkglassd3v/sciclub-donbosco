@@ -1284,7 +1284,7 @@ as $$
    order by coalesce(m.insurance, p.insurance), m.last_name, m.first_name, m.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione della tessera.';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (della tessera, o quello scelto: members.insurance).';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)

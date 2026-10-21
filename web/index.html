@@ -459,8 +459,14 @@
       Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
       el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
       // La scelta dell'assicurazione dipende dalla presciistica e dalla tessera.
-      ["f_tipologia_tessera", "f_presciistica"].forEach((id) =>
-        el(id).addEventListener("change", () => { aggiornaAssicurazione(); ricalcola(); }));
+      // Cambiando tessera riparte da quella della tessera nuova: la Base rimasta
+      // da prima declasserebbe chi ha appena scelto la tessera con la Sport.
+      el("f_tipologia_tessera").addEventListener("change", () => {
+        el("f_assicurazione").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        aggiornaAssicurazione();
+        ricalcola();
+      });
+      el("f_presciistica").addEventListener("change", () => { aggiornaAssicurazione(); ricalcola(); });
       el("f_assicurazione").addEventListener("change", ricalcola);
       el("f_acconto").addEventListener("input", ricalcola);
       el("f_totale_a_mano").addEventListener("change", () => { aggiornaTotaleMano({ daListino: true }); ricalcola(); });
