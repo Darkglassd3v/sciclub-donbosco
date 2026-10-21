@@ -36,7 +36,10 @@
       4. Prove col PostgREST vero in docker sul database di `test_ruoli.sh` (le richieste vere delle
          pagine: filtri, rpc, RLS).
       Avanzamento (aggiornare qui a ogni pagina finita, poi `/ecc:ck save`):
-      - (niente ancora)
+      - Audit fatto: `docs/audit-2026-10-22.md` (sospetti S*, G*, P*; stato in fondo al file).
+      - Banco col database vero: `bash test-reale/avvia.sh [prova.js]` (copia della produzione in
+        `supabase/migration/copia-test/`, fuori da git; Postgres 17 + PostgREST in docker; Chrome a
+        tempo reale da `test-reale/chrome.js`). Prova di fumo `test-reale/fumo.js` verde.
 
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
