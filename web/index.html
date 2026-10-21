@@ -9,6 +9,8 @@
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
+    /* Numeri tessera forse dimenticati: si devono vedere. */
+    #tessereLibere { color: var(--errore); font-weight: 600; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
 
     /* La barra dei totali resta incollata in basso, ma smette di sembrare una
@@ -231,6 +233,7 @@
       <div class="column is-4">
         <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
         <p id="notaTessera" class="help" hidden>Proposto: il successivo dell'ultimo dato. Si può cambiare.</p>
+        <p id="tessereLibere" class="help" hidden></p>
       </div>
     </div>
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
@@ -411,6 +414,12 @@
   // propone un altro da sé. Uno scritto a mano invece non si tocca.
   let numeroProposto = null;
 
+  // I numeri tessera già dati ({ id, card_number }) e da dove contare i liberi
+  // (Impostazioni, settings.card_gaps_from): sotto, i posti del direttivo e della
+  // famiglia, tenuti vuoti apposta. Letti quando si apre il modulo; null = non letti.
+  let tessereUsate = null;
+  let tessereDa = 1;
+
   // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
   // cima e il pulsante Salva.
   let socioAperto = null;
@@ -485,6 +494,7 @@
       }));
       window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
       el("f_numero_tessera").addEventListener("input", () => (el("notaTessera").hidden = true));
+      el("f_numero_tessera").addEventListener("input", mostraTessereLibere);
       el("btnTogli").addEventListener("click", chiediTogli);
       el("btnEliminaNo1").addEventListener("click", () => el("dlgElimina").close());
       el("btnEliminaNo2").addEventListener("click", () => el("dlgElimina2").close());
@@ -810,9 +820,11 @@
   /**
    * Mette nel campo vuoto il numero tessera successivo all'ultimo dato. Un
    * numero già scritto (socio che ce l'ha, o scritto a mano) resta com'è.
+   * Prima rilegge i numeri dati, per quelli liberi sotto il campo.
    */
   async function proponiNumeroTessera() {
     const campo = el("f_numero_tessera");
+    await caricaTessereUsate();
     if (campo.value.trim()) return;
     const { data, error } = await sb.rpc("next_card_number");
     // Senza proposta si scrive a mano, come prima: non vale un messaggio.
@@ -820,6 +832,51 @@
     numeroProposto = String(data);
     campo.value = numeroProposto;
     el("notaTessera").hidden = false;
+    mostraTessereLibere();
+  }
+
+  /**
+   * Legge i numeri tessera dati e da dove contare i liberi. Chi registra nel
+   * frattempo da un altro computer si vede al prossimo socio (il doppione lo
+   * ferma comunque il database). Se la lettura non va, niente riga: è un aiuto.
+   */
+  async function caricaTessereUsate() {
+    try {
+      const [usate, impostazione] = await Promise.all([
+        tutteLeRighe(() => sb.from("members").select("id, card_number").not("card_number", "is", null).order("id")),
+        sb.from("settings").select("value").eq("key", "card_gaps_from"),
+      ]);
+      // Senza l'impostazione si conterebbe da 1: i posti del direttivo sembrerebbero liberi.
+      if (impostazione.error || !impostazione.data?.length) throw impostazione.error;
+      tessereUsate = usate;
+      tessereDa = Number(impostazione.data[0].value);
+    } catch {
+      tessereUsate = null;
+    }
+    mostraTessereLibere();
+  }
+
+  /**
+   * Sotto il numero tessera, in rosso, i numeri da tessereDa al più alto dato o
+   * scritto che nessuno ha («36, 38–44»): magari tessere fatte e non registrate.
+   * Il numero vecchio del socio aperto non conta: se lo cambia, torna libero.
+   * Contano solo i numeri di sole cifre, come in next_card_number().
+   */
+  function mostraTessereLibere() {
+    if (!tessereUsate) { el("tessereLibere").hidden = true; return; }
+    const numero = (v) => (/^\d{1,15}$/.test(v || "") ? Number(v) : null);
+    const altri = tessereUsate.filter((t) => t.id !== el("f_id").value).map((t) => t.card_number);
+    const presi = [...new Set([...altri, el("f_numero_tessera").value.trim()].map(numero))]
+      .filter((n) => n != null && n >= tessereDa).sort((a, b) => a - b);
+    // Fra due numeri presi di fila, quelli in mezzo sono liberi: niente giro su ogni numero.
+    const liberi = [];
+    let prima = tessereDa - 1;
+    for (const n of presi) {
+      if (n > prima + 1) liberi.push(n === prima + 2 ? String(prima + 1) : `${prima + 1}–${n - 1}`);
+      prima = n;
+    }
+    el("tessereLibere").textContent = `Numeri liberi: ${liberi.join(", ")}`;
+    el("tessereLibere").hidden = !liberi.length;
   }
 
   /** Numero tessera come va salvato: "0021" e "21" sono lo stesso numero. */
@@ -846,6 +903,7 @@
       showToast(`Il numero tessera ${scritto} è già di un altro socio: scegline un altro`
         + (libero ? ` (il primo dopo l'ultimo dato è ${libero}).` : "."), "is-danger");
     }
+    await caricaTessereUsate();
   }
 
   // -------------------------------------------------------------------------

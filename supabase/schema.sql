@@ -1770,6 +1770,30 @@ create policy departures_select on public.departures
 create policy departures_write on public.departures
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
+-- Impostazioni del club, una riga per voce (come social_settings). Per ora
+-- card_gaps_from: da che numero la pagina Soci conta i numeri tessera liberi,
+-- quelli magari dimenticati registrando le tessere. Sotto, i posti sono tenuti
+-- vuoti apposta per direttivo e famiglia (al 22/10/2026 i primi 20). Si cambia
+-- dalle Impostazioni; la legge chi iscrive i soci.
+create table if not exists public.settings (
+  key   text primary key,
+  value text not null
+);
+alter table public.settings drop constraint if exists settings_card_gaps_from_valid;
+alter table public.settings add constraint settings_card_gaps_from_valid
+  check (key <> 'card_gaps_from' or value ~ '^[1-9][0-9]{0,8}$');
+insert into public.settings (key, value) values ('card_gaps_from', '21')
+on conflict (key) do nothing;
+comment on table public.settings is 'Impostazioni del club (card_gaps_from = da che numero la pagina Soci segnala i numeri tessera liberi).';
+
+alter table public.settings enable row level security;
+drop policy if exists settings_select on public.settings;
+drop policy if exists settings_write  on public.settings;
+create policy settings_select on public.settings
+  for select to authenticated using ((select public.can('soci', 'gestione')));
+create policy settings_write on public.settings
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+
 -- Le viste ereditano la RLS delle tabelle sottostanti (security invoker).
 alter view public.households      set (security_invoker = true);
 alter view public.season_totals   set (security_invoker = true);

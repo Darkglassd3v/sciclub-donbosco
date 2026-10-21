@@ -22,6 +22,15 @@
 
 ## Richieste nuove
 
+- [ ] 22/10: **Numeri tessera liberi in rosso sotto il numero tessera.** Fatto (TDD: c9bd5d1 e 92b52fe RED,
+      ffe38d5 e 35f9094 GREEN; in produzione e online): in Soci, sotto «Numero tessera», i numeri che
+      nessuno ha dal numero delle Impostazioni (`settings.card_gaps_from`, 21: sotto, direttivo e
+      famiglia tenuti vuoti apposta) al più alto dato o scritto («36, 38–44»); il numero vecchio del
+      socio aperto torna libero se cambiato. Si cambia in Impostazioni, riquadro Listino. Al 22/10 in
+      produzione dal 21 al 33 nessun buco. Da provare sul sito vero. Non fatto (da chiedere):
+      `next_card_number` propone ancora «il più alto + 1», quindi a inizio stagione senza numeri dati
+      propone 1 e non il 21.
+
 - [ ] 21/10: **Agevolazioni famiglia con l'assicurazione, al posto della tessera.** Fatto (TDD: 3a729e2 e
       a8c3f47 RED, 5b8ac3c, 607cb2a, 974c42b, 35fc63d GREEN; in produzione e online): o la tessera o
       l'agevolazione, che la sceglie il capofamiglia e copre lui e i familiari a carico fino alle sue

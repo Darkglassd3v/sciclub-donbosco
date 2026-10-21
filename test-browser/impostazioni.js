@@ -6,6 +6,8 @@
 // - Un nome con «&amp;» si carica e si salva com'è (prima l'HTML lo cambiava in «&»).
 // - Cambiato il nome, la riga si accende come modificata.
 // - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
+// - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
+//   salva; 0 o lettere no.
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
@@ -25,6 +27,7 @@
       { id: 3, category: "FAMIGLIA", name: "3 PERSONE CON ASSICURAZIONE", price: 50, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1, people: 3 },
     ];
     if (t === "insurances") return [{ code: "BASE", name: "REALE MUTUA NEVE", price: 20 }, { code: "SPORT", name: ASS_LUNGA, price: 45 }];
+    if (t === "settings") return [{ key: "card_gaps_from", value: "21" }];
     if (t === "departures") return [{ id: 7, day: "SABATO", place: LUOGO, active: true }];
     return [];
   };
@@ -70,6 +73,23 @@
     const paga = famiglia?.querySelector("[data-paga]")?.textContent || "";
     prova("famigliaAssicurata", Boolean(famiglia?.querySelector("[data-assicurazione]")) && paga.includes("110"),
       `assicurazione ${Boolean(famiglia?.querySelector("[data-assicurazione]"))}, «${paga}»`);
+
+    const tessereDa = el("tessereDa");
+    prova("tessereDaCaricato", tessereDa?.value === "21", `nel campo «${tessereDa?.value}»`);
+    if (tessereDa) {
+      tessereDa.value = "25";
+      el("btnSalvaTessereDa").click();
+      await aspetta(200);
+    }
+    prova("tessereDaSalvato", ultimo("settings").value === "25", `salvato «${ultimo("settings").value}»`);
+    const scrittiPrima = scritti.length;
+    for (const sbagliato of ["0", "abc"]) {
+      if (!tessereDa) break;
+      tessereDa.value = sbagliato;
+      el("btnSalvaTessereDa").click();
+      await aspetta(200);
+    }
+    prova("tessereDaSbagliato", tessereDa && scritti.length === scrittiPrima, `salvati ${scritti.length - scrittiPrima} valori sbagliati`);
 
     const nudi = el("contenuto").querySelectorAll(
       "input:not([type=checkbox]):not(.input), textarea:not(.textarea)").length
