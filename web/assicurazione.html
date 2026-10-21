@@ -49,6 +49,9 @@
     .tabella-assic .vuota { color: var(--testo-soft); font-weight: 400; }
     .tabella-assic tr.salvata td { background: var(--ok-bg); }
     .tabella-assic tr.gruppo td { background: var(--riga-alt); font-weight: 700; font-size: 1.1rem; }
+    .tabella-assic tr.pagine .buttons { justify-content: center; align-items: center; margin: 0; }
+    .tabella-assic tr.pagine .buttons .button { margin-bottom: 0; }
+    .tabella-assic .pagine-testo { font-weight: 600; margin: 0 .75rem; }
     /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
     .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
     .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
@@ -373,6 +376,11 @@
   // Lista unica dei da assicurare, per tipo e in ordine alfabetico
   // -------------------------------------------------------------------------
 
+  // A pagine di 25, una per tipo: con centinaia di tesserati la lista allungava
+  // la pagina. Gli Excel e «Segna come assicurati» prendono sempre tutti.
+  const PER_PAGINA = 25;
+  const paginaDi = {};   // tipo → pagina mostrata, da 0
+
   function disegnaDaAssicurare() {
     el("quanti").textContent = `(${daAssicurare.length})`;
     const corpo = el("elencoDa");
@@ -384,11 +392,61 @@
     corpo.replaceChildren(...TIPI.flatMap((t) => {
       const soci = daAssicurare.filter((s) => s.insurance === t.kind).sort(perNome);
       if (!soci.length) return [];
+      // Le righe rosse sono sparse fra le pagine: il titolo dice quante sono.
+      const senza = soci.filter((s) => !conCF(s)).length;
+      const pagine = Math.ceil(soci.length / PER_PAGINA);
+      // Lista accorciata (codice salvato, liste segnate): l'ultima pagina che c'è.
+      const pagina = Math.min(paginaDi[t.kind] || 0, pagine - 1);
+      paginaDi[t.kind] = pagina;
       const titolo = document.createElement("tr");
       titolo.className = "gruppo";
-      titolo.innerHTML = `<td colspan="5">${esc(t.nome)} · ${quanti(soci.length, "socio", "soci")}</td>`;
-      return [titolo, ...soci.map((s) => riga(s, { conTipo: true }))];
+      titolo.dataset.kind = t.kind;
+      titolo.innerHTML = `<td colspan="5">${esc(t.nome)} · ${quanti(soci.length, "socio", "soci")}${
+        senza ? ` · ${senza} senza codice fiscale` : ""}</td>`;
+      const righe = soci.slice(pagina * PER_PAGINA, (pagina + 1) * PER_PAGINA).map((s) => riga(s, { conTipo: true }));
+      return [titolo, ...righe, ...(pagine > 1 ? [rigaPagine(t, pagina, pagine, soci.length)] : [])];
     }));
+  }
+
+  /** «‹ Indietro · 26–50 di 60 · Avanti ›», sotto il gruppo. */
+  function rigaPagine(t, pagina, pagine, totale) {
+    const tr = document.createElement("tr");
+    tr.className = "pagine";
+    tr.dataset.kind = t.kind;
+    tr.innerHTML = `<td colspan="5"><div class="buttons">
+      <button type="button" class="button" data-indietro ${pagina === 0 ? "disabled" : ""}>‹ Indietro</button>
+      <span class="pagine-testo">${pagina * PER_PAGINA + 1}–${Math.min((pagina + 1) * PER_PAGINA, totale)} di ${totale}</span>
+      <button type="button" class="button" data-avanti ${pagina === pagine - 1 ? "disabled" : ""}>Avanti ›</button>
+    </div></td>`;
+    tr.querySelector("[data-indietro]").addEventListener("click", () => cambiaPagina(t, pagina - 1, "[data-indietro]"));
+    tr.querySelector("[data-avanti]").addEventListener("click", () => cambiaPagina(t, pagina + 1, "[data-avanti]"));
+    return tr;
+  }
+
+  /**
+   * Cambiando pagina la lista si ridisegna: un codice fiscale scritto e non
+   * salvato andrebbe perso, quindi prima lo si chiede. Poi si torna in cima al
+   * gruppo, col fuoco sullo stesso pulsante (chi va avanti con la tastiera).
+   */
+  function cambiaPagina(t, pagina, pulsante) {
+    const vai = () => {
+      paginaDi[t.kind] = pagina;
+      disegnaDaAssicurare();
+      el("elencoDa").querySelector(`tr.gruppo[data-kind="${t.kind}"]`)?.scrollIntoView({ block: "start" });
+      // All'ultima (o alla prima) pagina quel pulsante è spento: allora l'altro.
+      const pagine = el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`);
+      (pagine?.querySelector(`${pulsante}:not([disabled])`) || pagine?.querySelector("button:not([disabled])"))
+        ?.focus({ preventScroll: true });
+    };
+    const nonSalvati = [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
+      const s = daAssicurare.find((d) => d.id === tr.dataset.id);
+      return s && normalizzaCF(tr.querySelector(".cf").value) !== normalizzaCF(s.tax_code);
+    }).length;
+    if (!nonSalvati) { vai(); return; }
+    chiedi(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
+      `${nonSalvati === 1 ? "Un codice fiscale scritto non è salvato: cambiando pagina si perde"
+        : `${nonSalvati} codici fiscali scritti non sono salvati: cambiando pagina si perdono`}. Cambiare pagina lo stesso?`,
+      "Cambia pagina", vai);
   }
 
   // -------------------------------------------------------------------------

@@ -174,7 +174,8 @@ Nel sito pubblicato i file dei test non ci sono.
 Prove nel browser: `bash test-browser/esegui.sh` apre le pagine vere in Chrome headless con un
 client Supabase finto (`test-browser/fake-supabase.js`) che risponde quando e come dice la prova:
 servono per quello che i test node non vedono, come le risposte che arrivano in ordine sparso.
-Una prova è un file `.js` che imposta `FINTO.risposta` e `FINTO.ritardo`, usa la pagina e scrive
+Una prova è un file `.js` che imposta `FINTO.risposta` e `FINTO.ritardo` (le funzioni del database,
+`sb.rpc`, rispondono con `FINTO.rpc[nome]` e hanno `.range()`), usa la pagina e scrive
 l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenco in `esegui.sh`.
 Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la correzione.
 
@@ -193,6 +194,9 @@ Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la corre
   della tessera nelle liste (`insurance_members()`, `insurance_send()`); nella pagina Soci, con la
   presciistica, la tessera non si somma al totale. `close_season()` conta la presciistica a
   `card_price()`. La scelta a parte del 21/10 (`members.insurance`, +25 €) è stata tolta.
+- «Da assicurare» (dal 21/10/2026) è a pagine di 25, una per tipo; il titolo del gruppo dice
+  quanti sono senza codice fiscale. Dopo Salva si resta sulla pagina; un codice fiscale scritto e
+  non salvato si chiede prima di cambiare pagina. Excel e «Segna come assicurati» prendono tutti.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.
