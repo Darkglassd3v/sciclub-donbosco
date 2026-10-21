@@ -47,8 +47,10 @@
   const compila = () => { el("f_cognome").value = "Prova"; el("f_nome").value = "Uno"; el("f_telefono").value = "333"; };
   const tessere = () => [...el("f_tipologia_tessera").querySelectorAll("input")];
   const tesseraObbligatoria = () => tessere().some((r) => r.required);
-  const visibile = (voce) => !el("f_presciistica").querySelector(`input[data-nome="${voce}"]`)?.closest("label").hidden;
+  // Quello che si vede (display), non solo l'attributo hidden: le classi di Bulma lo battevano.
+  const visibile = (voce) => getComputedStyle(el("f_presciistica").querySelector(`input[data-nome="${voce}"]`).closest("label")).display !== "none";
   const nota = () => el("notaFamiglia");
+  const notaVisibile = () => getComputedStyle(nota()).display !== "none";
   const ultimo = () => salvati[salvati.length - 1] || {};
 
   window.addEventListener("load", () => setTimeout(async () => {
@@ -72,7 +74,7 @@
     scegli("f_agevolazioni_famiglia", "3 PERSONE CON ASSICURAZIONE");
     prova("agevolazioneTogliTessera", !tessere().some((x) => x.checked) && !tesseraObbligatoria() && totaleIndividuale() === 110,
       `tessera scelta ${tessere().some((x) => x.checked)}, totale ${totaleIndividuale()}`);
-    prova("capoNucleo", !nota().hidden && nota().textContent.includes("1 persona") && nota().textContent.includes("per 3"),
+    prova("capoNucleo", notaVisibile() && nota().textContent.includes("1 persona") && nota().textContent.includes("per 3"),
       `nota «${nota().textContent.trim()}»`);
     prova("capoSoloCorso", visibile("CORSO PRESCIISTICA - FAMIGLIA") && !visibile("CORSO PRESCIISTICA"),
       `solo corso ${visibile("CORSO PRESCIISTICA - FAMIGLIA")}, con assicurazione ${visibile("CORSO PRESCIISTICA")}`);
@@ -89,12 +91,12 @@
 
     // 3. Capofamiglia aperto: nel nucleo lui e un familiare.
     await caricaSocio("CAPO");
-    prova("capoAperto", !nota().hidden && nota().textContent.includes("2 persone"), `nota «${nota().textContent.trim()}»`);
+    prova("capoAperto", notaVisibile() && nota().textContent.includes("2 persone"), `nota «${nota().textContent.trim()}»`);
 
     // 4. Familiare a carico di ROSSI (nucleo: ROSSI e ANNA, c'è posto).
     resetForm();
     await scegliPagante("CAPO", "ROSSI MARIO");
-    prova("figlioCoperto", !tesseraObbligatoria() && !nota().hidden && nota().textContent.includes("ROSSI MARIO") && totaleIndividuale() === 0,
+    prova("figlioCoperto", !tesseraObbligatoria() && notaVisibile() && nota().textContent.includes("ROSSI MARIO") && totaleIndividuale() === 0,
       `tessera obbligatoria ${tesseraObbligatoria()}, nota «${nota().textContent.trim()}», totale ${totaleIndividuale()}`);
     scegli("f_presciistica", "CORSO PRESCIISTICA - FAMIGLIA");
     prova("figlioSoloCorso", totaleIndividuale() === 50 && !visibile("CORSO PRESCIISTICA"), `totale ${totaleIndividuale()}`);

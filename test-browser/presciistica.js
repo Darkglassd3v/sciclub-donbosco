@@ -4,6 +4,9 @@
 //   card_price in `price`, come la select di caricaPrezzi().
 // - Con la presciistica la tessera non si somma (la comprende), e sotto la
 //   tessera lo dice una nota; tolta la presciistica la tessera conta di nuovo.
+// - Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Le
+//   scelte della tessera si spengono e si svuotano, l'asterisco di «Tipologia tessera»
+//   sparisce; un socio che le ha tutte e due le tiene (spente) quando lo si riapre.
 // - Niente scelta dell'assicurazione a parte e niente `insurance` nel
 //   salvataggio: l'assicurazione la dice la voce della presciistica.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
@@ -31,6 +34,11 @@
   const compila = () => { el("f_cognome").value = "Presci"; el("f_nome").value = "Pia"; el("f_telefono").value = "333"; };
   const ultimo = () => salvati[salvati.length - 1] || {};
   const nota = () => el("notaPresciistica");
+  // Nascosta davvero (display), non solo con l'attributo: .help di Bulma lo batteva.
+  const notaNascosta = () => getComputedStyle(nota()).display === "none";
+  const tessere = () => [...el("f_tipologia_tessera").querySelectorAll("input")];
+  const asterisco = () => getComputedStyle(el("f_tipologia_tessera").querySelector("legend .obbligo") || el("f_tipologia_tessera")).display !== "none"
+    && el("f_tipologia_tessera").querySelector("legend").textContent.includes("*");
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
@@ -40,10 +48,12 @@
     if (!nota()) { document.title = "RISULTATO " + r.concat("nota=NO(manca #notaPresciistica)").join(" "); return; }
 
     scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
-    prova("soloTessera", totaleIndividuale() === 40 && nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
+    prova("soloTessera", totaleIndividuale() === 40 && notaNascosta(), `totale ${totaleIndividuale()}, nota nascosta ${notaNascosta()}`);
 
     scegli("f_presciistica", "CORSO PRESCIISTICA");
-    prova("presciBase", totaleIndividuale() === 90 && !nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
+    prova("presciBase", totaleIndividuale() === 90 && !notaNascosta(), `totale ${totaleIndividuale()}, nota nascosta ${notaNascosta()}`);
+    prova("tesseraSpenta", tessere().every((t) => t.disabled && !t.checked) && !asterisco(),
+      `spente ${tessere().every((t) => t.disabled)}, scelta ${tessere().some((t) => t.checked)}, asterisco ${asterisco()}`);
     compila();
     await scrivi();
     prova("salvaBase", !("insurance" in ultimo()) && ultimo().preski_type === "CORSO PRESCIISTICA" && ultimo().total === 90,
@@ -61,13 +71,16 @@
     scegli("f_presciistica", "CORSO PRESCIISTICA");
     prova("tesseraSenza", totaleIndividuale() === 90, `totale ${totaleIndividuale()}`);
 
-    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
     scegli("f_presciistica", "CORSO PRESCIISTICA - REALE TOTAL SPORT");
     scegli("f_presciistica", "");
-    prova("tolta", totaleIndividuale() === 40 && nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
+    prova("tolta", tessere().every((t) => !t.disabled) && asterisco() && notaNascosta(),
+      `accese ${tessere().every((t) => !t.disabled)}, asterisco ${asterisco()}, nota nascosta ${notaNascosta()}`);
+    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
+    prova("tessera", totaleIndividuale() === 40, `totale ${totaleIndividuale()}`);
 
     await caricaSocio("M");
-    prova("riaperto", totaleIndividuale() === 120 && !nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
+    prova("riaperto", totaleIndividuale() === 120 && !notaNascosta() && nomeSelezionato("f_tipologia_tessera") === SOCIO.card_type,
+      `totale ${totaleIndividuale()}, nota nascosta ${notaNascosta()}, tessera ${nomeSelezionato("f_tipologia_tessera")}`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

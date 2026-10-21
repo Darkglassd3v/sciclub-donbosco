@@ -434,9 +434,10 @@ html[data-permessi~="soci"] .barra-voci .voce-cerca { display: none !important; 
 .schede-social .conta:empty { display: none; }
 .schede-social a[aria-current="page"] .conta { background: #fff; color: var(--scheda); }
 
-/* Bulma dà display:block alle colonne e inline-flex ai pulsanti, che
-   vincerebbero sull'attributo hidden. */
-.column[hidden], .button[hidden] { display: none; }
+/* L'attributo hidden vince sempre: le classi di Bulma con un display (.help,
+   .column, .button, le scelte...) lo battevano, e una nota "nascosta" restava a
+   schermo. Le voci della barra si mostrano da sé, coi permessi (più sotto). */
+[hidden]:not(.barra-voci [data-permesso]) { display: none !important; }
 .barra-voci .voce-rischiosa[aria-current="page"] {
   background: var(--errore);
   border-color: var(--errore);
