@@ -522,6 +522,8 @@ psql_ -c "delete from public.social_contacts; insert into public.social_contacts
 # Una tessera col tipo nel nome messa da Impostazioni a "nessuna" e senza posizione:
 # l'assicurazione dal nome e l'ordine del modulo valgono una volta sola.
 psql_ -c "insert into public.prices (category, name, price) values ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 15);"
+# La presciistica come in produzione prima del 21/10/2026: 90 € senza assicurazione.
+psql_ -c "insert into public.prices (category, name, price) values ('PRESCIISTICA', 'CORSO PRESCIISTICA', 90);"
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
@@ -540,6 +542,12 @@ do $$ begin
   assert (select color from public.trip_days where weekday = 2) is null, 'schema.sql ha rimesso il martedì tolto';
   assert (select color from public.trip_days where weekday = 6) = '#FCCF02', 'schema.sql ha rimesso il colore di prima al sabato';
   assert (select count(*) from public.social_contacts) = 1, 'schema.sql ha cambiato i contatti dei post';
+  assert (select price = 70 and insurance = 'BASE' and public.card_price(p) = 90 from public.prices p
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA'),
+         'presciistica: attesa la quota 70 più la Base (90)';
+  assert (select price = 75 and insurance = 'SPORT' and active and public.card_price(p) = 120 from public.prices p
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - REALE TOTAL SPORT'),
+         'presciistica: attesa la voce con la Total Sport, 75 più 45 (120)';
   assert (select hours from public.social_contacts) = 'dopo le 18', 'schema.sql ha perso gli orari del contatto';
   assert (select insurance is null and position is null from public.prices
            where name = 'TESSERA ORDINARIA - GLOBAL NEVE BASE'),
@@ -1003,14 +1011,23 @@ do $$ begin
          = 'BASE10@2026-12-01,SPORT1@2026-12-01', 'liste insieme sbagliate';
 end $$;
 
--- L'assicurazione scelta con la presciistica (members.insurance) vale al posto
--- di quella della tessera: nell'elenco da assicurare e nelle liste. Con una
--- tessera senza assicurazione, la scelta assicura lo stesso.
+-- La presciistica comprende tessera, quota e assicurazione: la sua voce del
+-- listino dice quale (prices.insurance), e vale al posto di quella della
+-- tessera nell'elenco da assicurare e nelle liste. Con una tessera senza
+-- assicurazione, la voce della presciistica assicura lo stesso.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
-insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, insurance) values
-  ('aaaaaaaa-0000-0000-0000-000000000012', 'GIALLI', 'PRESCI', now(), 'PROVA TESSERA ORDINARIA', 'GLLPRS80A01F205X', null),
-  ('aaaaaaaa-0000-0000-0000-000000000013', 'GIALLI', 'SENZA', now(), 'PROVA TESSERA PRESIDENTE', 'GLLSNZ80A01F205X', 'BASE');
+insert into public.prices (category, name, price, min_role, insurance) values
+  ('PRESCIISTICA', 'PROVA PRESCIISTICA', 70, 'utente', 'BASE'),
+  ('PRESCIISTICA', 'PROVA PRESCIISTICA - SPORT', 75, 'utente', 'SPORT');
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, preski_type) values
+  ('aaaaaaaa-0000-0000-0000-000000000012', 'GIALLI', 'PRESCI', now(), 'PROVA TESSERA ORDINARIA', 'GLLPRS80A01F205X', 'PROVA PRESCIISTICA - SPORT'),
+  ('aaaaaaaa-0000-0000-0000-000000000013', 'GIALLI', 'SENZA', now(), 'PROVA TESSERA PRESIDENTE', 'GLLSNZ80A01F205X', 'PROVA PRESCIISTICA');
+do $$ begin
+  assert not exists (select 1 from information_schema.columns
+                      where table_schema = 'public' and table_name = 'members' and column_name = 'insurance'),
+         'members.insurance c''è ancora: l''assicurazione la dice la voce della presciistica';
+end $$;
 set role authenticated;
 do $$
 declare
@@ -1018,27 +1035,24 @@ declare
   senza  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000013';
 begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin, come la pagina Soci
-  update public.members set insurance = 'SPORT' where id = presci;
-  assert found, 'assicurazione scelta: l''admin non riesce a scriverla';
-  begin
-    update public.members set insurance = 'INESISTENTE' where id = presci;
-    raise exception 'ASSERZIONE: accettata un''assicurazione che non esiste';
-  exception when foreign_key_violation then null;
-  end;
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA PRESCIISTICA') = 90,
+         'presciistica Base: attesi 70 + 20 = 90';
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA PRESCIISTICA - SPORT') = 120,
+         'presciistica Sport: attesi 75 + 45 = 120';
 
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert (select insurance from public.insurance_members() where id = presci) = 'SPORT',
-         'assicurazione scelta: conta ancora quella della tessera';
+         'presciistica Sport: conta ancora l''assicurazione della tessera';
   assert (select insurance from public.insurance_members() where id = senza) = 'BASE',
-         'assicurazione scelta con una tessera senza assicurazione: il socio non è da assicurare';
+         'presciistica con una tessera senza assicurazione: il socio non è da assicurare';
   begin
     perform public.insurance_send('BASE', 20, array[presci]);
-    raise exception 'ASSERZIONE: scelta la Sport, mandato nella lista Base';
+    raise exception 'ASSERZIONE: presciistica Sport, mandato nella lista Base';
   exception when others then
     if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     assert sqlerrm like '%Nessun socio%', 'errore inatteso: ' || sqlerrm;
   end;
-  assert public.insurance_send('SPORT', 20, array[presci]) = 1, 'scelta la Sport: non è entrato nella lista Sport';
+  assert public.insurance_send('SPORT', 20, array[presci]) = 1, 'presciistica Sport: non è entrato nella lista Sport';
   assert public.insurance_send('BASE', 21, array[senza]) = 1, 'tessera senza assicurazione: non è entrato nella lista Base';
 end $$;
 
@@ -1155,7 +1169,6 @@ begin
   perform public.use_trip(luca, 'eeeeeeee-0000-0000-0000-000000000001', 'JOLLY');
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   update public.members set payer_id = luca where id = elio;
-  update public.members set insurance = 'SPORT' where id = luca;
 
   foreach chi in array array['11111111-1111-1111-1111-111111111111',     -- gite
                              '33333333-3333-3333-3333-333333333333',     -- tesoriere
@@ -1194,7 +1207,6 @@ begin
 
   assert (select enrolled_at from public.members where id = luca) is null, 'il socio è ancora iscritto';
   assert (select card_type is null and card_number is null and total = 0 and paid = 0 and pass_type is null
-                 and insurance is null
             from public.members where id = luca), 'dati di stagione non azzerati';
   assert (select last_name from public.members where id = luca) = 'VERDI', 'l''anagrafica è stata toccata';
   assert (select tax_code from public.members where id = luca) = 'VRDLCU90A01F205Z', 'il codice fiscale è stato toccato';
@@ -1242,8 +1254,9 @@ begin
          'chiusura: giorno del corso non azzerato';
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
-  assert (select insurance from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000012') is null,
-         'chiusura: assicurazione scelta con la presciistica non azzerata';
+  assert (select total from public.season_breakdown
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - SPORT') = 120,
+         'chiusura: presciistica contata senza l''assicurazione che comprende';
   assert not (select total_manual from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000009'),
          'chiusura: totale a mano non azzerato';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';

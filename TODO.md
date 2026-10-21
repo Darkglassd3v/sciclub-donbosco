@@ -22,6 +22,19 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Presciistica in due voci del listino.** Fatto (TDD, commit 442df28 RED, 42203e0 GREEN;
+      online e in produzione): la presciistica comprende tessera, quota CONI e assicurazione, come
+      sulla scheda di carta. «CORSO PRESCIISTICA» 70 + Base 20 = 90 €, «CORSO PRESCIISTICA - REALE
+      TOTAL SPORT» 75 + Sport 45 = 120 € (`prices.insurance` anche per la presciistica). Tolta la
+      scelta a parte (`members.insurance`, +25). In Soci, con la presciistica la tessera non si somma
+      al totale (nota sotto la tessera). L'assicurazione della voce vale nelle liste; `close_season`
+      conta la presciistica a `card_price`; Impostazioni mette l'assicurazione anche sulle voci della
+      presciistica; Riepilogo prezzi a `card_price`. Produzione: backup in
+      `supabase/migration/backup-2026-10-21-presciistica-2/`; COLOMBA Base (90, pagato 105, 15 a
+      credito), MARENGO Total Sport (120). Resta (Basso, c'era già): `card_counts` e la chiusura
+      contano anche la tessera di chi ha la presciistica, che la comprende. Da provare sul sito vero
+      (voce sotto).
+
 - [ ] 16/10: **Tessera col colore del giorno, calendari che non sbordano, story del calendario.** Fatto:
       nelle gite la tessera della data ha il colore del giorno (domenica gialla con le scritte blu,
       sabato blu con le scritte bianche e la fascia dell'ora gialla, martedì rossa con le scritte
@@ -220,10 +233,10 @@ della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ord
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
 - [ ] Provare sul sito vero due operatori sullo stesso socio: aprire la scheda in Soci, segnare un
       acconto da Pagamenti, poi Salva in Soci: deve dire "Socio NON salvato" e non toccare niente.
-- [ ] Provare sul sito vero l'assicurazione con la presciistica (dal 21/10, schema già in
-      produzione): aprire COLOMBA o MARENGO, deve esserci la Reale Total Sport; in Assicurazione
-      devono stare fra gli Sport. Un socio nuovo con presciistica: Base proposta, la Total Sport
-      aggiunge 25 € al totale; cambiando tessera la scelta segue quella della tessera.
+- [ ] Provare sul sito vero la presciistica in due voci (dal 21/10, online e in produzione):
+      COLOMBA con «CORSO PRESCIISTICA» (90), MARENGO con «… - REALE TOTAL SPORT» (120); in
+      Assicurazione COLOMBA fra i Base e MARENGO fra gli Sport. Un socio nuovo: tessera ordinaria
+      40, con la presciistica 90 (la tessera non si somma, nota sotto), con la Total Sport 120.
 - [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
       cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al
