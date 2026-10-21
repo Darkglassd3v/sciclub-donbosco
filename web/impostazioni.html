@@ -93,7 +93,9 @@
         Nessuna voce si cancella davvero: si disattiva. "Ordine" è la posizione nella pagina Soci,
         come sul modulo di carta (vuoto = in fondo). Il prezzo di una tessera è la sola quota:
         il socio paga anche l'assicurazione, se non la paga il club. Così anche la presciistica,
-        che comprende la tessera: il socio paga la sua quota più la sua assicurazione.
+        che comprende la tessera: il socio paga la sua quota più la sua assicurazione. Le
+        agevolazioni famiglia sostituiscono la tessera: le persone si leggono dal nome
+        (es. "3 PERSONE") e il socio paga la quota più l'assicurazione di ognuna.
       </p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
@@ -287,7 +289,10 @@
   // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto). Anche la
   // presciistica ne ha una: comprende tessera, quota e assicurazione.
   let ASSICURAZIONI = [];
-  const conAssicurazione = (categoria) => categoria === "TESSERA" || categoria === "PRESCIISTICA";
+  const conAssicurazione = (categoria) => ["TESSERA", "PRESCIISTICA", "FAMIGLIA"].includes(categoria);
+  // Le agevolazioni famiglia pagano l'assicurazione per ogni persona, lette dal nome come fa il database.
+  const personeDelNome = (riga) => (riga.dataset.categoria === "FAMIGLIA"
+    && Number(nomePulito(riga.querySelector("[data-nome]")).toUpperCase().match(/(\d+)\s*PERSON/)?.[1])) || 1;
   const opzioniAssicurazione = (scelta) => [{ code: "", name: "nessuna" }, ...ASSICURAZIONI].map((a) =>
     `<option value="${esc(a.code)}" ${(scelta || "") === a.code ? "selected" : ""}>${esc(a.name)}${
       a.code ? ` (${fmt(a.price)})` : ""}</option>`).join("");
@@ -301,7 +306,8 @@
     club.closest("label").hidden = !codice;
     const assicurazione = ASSICURAZIONI.find((a) => a.code === codice);
     const quota = parseFloat(riga.querySelector("[data-prezzo]").value) || 0;
-    scritta.textContent = `Paga il socio: ${fmt(quota + (assicurazione && !club.checked ? num(assicurazione.price) : 0))}`;
+    const perAssicurazione = assicurazione && !club.checked ? num(assicurazione.price) * personeDelNome(riga) : 0;
+    scritta.textContent = `Paga il socio: ${fmt(quota + perAssicurazione)}`;
   }
 
   function rigaPrezzo(p) {
@@ -315,7 +321,7 @@
          </select></div>`
       : "—";
     return `
-      <tr data-id="${p.id}">
+      <tr data-id="${p.id}" data-categoria="${esc(p.category)}">
         <td data-etichetta="Categoria">${esc(p.category)}</td>
         <td data-etichetta="Ordine"><input class="input ordine" type="number" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
         <td data-etichetta="Nome">${campoNome(p.name, "data-nome", "Nome")}</td>
