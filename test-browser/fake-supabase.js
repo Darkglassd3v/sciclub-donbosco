@@ -3,7 +3,9 @@
 // window.FINTO.ritardo(tabella, richiesta) millisecondi: la prova decide cosa
 // torna e in che ordine arriva, che è proprio quello che il database vero non
 // garantisce. richiesta.filtri sono le chiamate fatte ([nome, ...argomenti]),
-// richiesta.colonne quelle chieste con select().
+// richiesta.colonne quelle chieste con select(). Le funzioni del database
+// (rpc) sono richieste su "rpc:<nome>": rispondono con FINTO.rpc[nome] se c'è,
+// se no con FINTO.risposta; i parametri sono in richiesta.parametri.
 window.FINTO = {
   ritardo: () => 20,
   risposta: () => [],
@@ -20,7 +22,7 @@ function Richiesta(tabella) {
   this.colonne = "*";
   this.singola = false;
 }
-for (const nome of ["eq", "neq", "or", "ilike", "like", "not", "in", "is", "gte", "lte", "order", "limit",
+for (const nome of ["eq", "neq", "or", "ilike", "like", "not", "in", "is", "gte", "lte", "order", "limit", "range",
                     "insert", "update", "upsert", "delete"]) {
   Richiesta.prototype[nome] = function (...argomenti) { this.filtri.push([nome, ...argomenti]); return this; };
 }
@@ -29,7 +31,8 @@ Richiesta.prototype.single = function () { this.singola = true; return this; };
 // Come supabase-js: la richiesta parte quando la si aspetta (await o then).
 Richiesta.prototype.then = function (ok, ko) {
   return new Promise((fine) => setTimeout(() => {
-    let data = window.FINTO.risposta(this.tabella, this);
+    const rpc = this.tabella.startsWith("rpc:") ? this.tabella.slice(4) : null;
+    let data = rpc && rpc in window.FINTO.rpc ? window.FINTO.rpc[rpc] : window.FINTO.risposta(this.tabella, this);
     if (this.singola) data = Array.isArray(data) ? data[0] : data;
     fine({ data, error: null });
   }, window.FINTO.ritardo(this.tabella, this))).then(ok, ko);
@@ -43,7 +46,8 @@ window.supabase = {
       signOut: async () => ({}),
     },
     from: (tabella) => new Richiesta(tabella),
-    rpc: async (nome) => ({ data: window.FINTO.rpc[nome] ?? null, error: null }),
+    // Come supabase-js: una richiesta, con .range() per tutteLeRighe().
+    rpc: (nome, parametri) => Object.assign(new Richiesta("rpc:" + nome), { parametri }),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel() {},
   }),

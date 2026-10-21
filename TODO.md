@@ -22,6 +22,13 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Assicurazione: «Da assicurare» a pagine.** Con tanti soci la lista allunga la pagina.
+      Piano approvato: 25 per pagina (chiesto dall'utente), per tipo (Base e Sport ognuno le sue),
+      «‹ Indietro · 26–50 di 134 · Avanti ›» sotto il gruppo; nel titolo del gruppo quanti senza codice fiscale; dopo Salva
+      si resta sulla pagina, lista accorciata = ultima pagina che c'è; codice fiscale scritto e non
+      salvato: `chiedi()` prima di cambiare pagina. Excel e «Segna come assicurati» sempre su tutti.
+      TDD con `test-browser/assicurazione.js`; push e dev allineato chiesti dall'utente.
+
 - [ ] 21/10: **Presciistica in due voci del listino.** Fatto (TDD, commit 442df28 RED, 42203e0 GREEN;
       online e in produzione): la presciistica comprende tessera, quota CONI e assicurazione, come
       sulla scheda di carta. «CORSO PRESCIISTICA» 70 + Base 20 = 90 €, «CORSO PRESCIISTICA - REALE
