@@ -17,10 +17,12 @@
     .tabella-costi th { text-align: left; padding: 8px 6px; color: var(--testo-soft);
                          font-weight: 600; font-size: .875rem; border-bottom: 1px solid var(--filo); }
     .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
-    .tabella-costi input, .tabella-costi select { font-size: .9375rem; }
-    .tabella-costi input[type="text"] { min-width: 180px; }
+    /* Nomi interi: il campo va a capo e cresce col testo (vedi adatta()). */
+    .tabella-costi .campo-nome { min-width: 14rem; min-height: 0; resize: none; overflow: hidden; }
+    .tabella-costi .select, .tabella-costi .select select { width: 100%; }
+    .tabella-costi input[type="checkbox"] { width: 1.25rem; height: 1.25rem; vertical-align: middle; }
     /* "Salva modifiche" va a capo invece di uscire dalla tabella a testo grande. */
-    .tabella-costi .button { white-space: normal; height: auto; min-height: 2.25em; }
+    .tabella-costi .button { white-space: normal; height: auto; min-height: 2.5em; }
     .tabella-costi input[type="number"] { width: 6rem; }
     .tabella-costi .vuota { color: var(--testo-soft); }
     .tabella-costi .riga-nuova td { background: var(--riga-alt); }
@@ -29,6 +31,19 @@
     .tabella-costi tr.modificata td { background: var(--giallo-light); }
     .tabella-costi input.ordine { width: 4.5rem; }
     .tabella-costi .paga-socio { margin-top: 4px; font-weight: 600; }
+    .tabella-costi .checkbox { margin-top: 6px; }
+    /* Sul telefono ogni voce è una scheda, coi campi uno sotto l'altro e
+     * l'etichetta sopra: niente tabella da scorrere di lato. */
+    @media screen and (max-width: 900px) {
+      .tabella-costi thead { display: none; }
+      .tabella-costi tr, .tabella-costi td { display: block; width: 100%; }
+      .tabella-costi tr { border-top: 1px solid var(--filo); padding: 12px; }
+      .tabella-costi td { border-top: 0; padding: 4px 0; }
+      .tabella-costi td:empty { display: none; }
+      .tabella-costi td[data-etichetta]::before { content: attr(data-etichetta); display: block;
+        font-weight: 600; font-size: .875rem; color: var(--testo-soft); margin-bottom: 2px; }
+      .tabella-costi .campo-nome { min-width: 0; }
+    }
 
   </style>
 </head>
@@ -69,8 +84,9 @@
   <p class="occhiello">Listino prezzi, assicurazioni e partenze del pullman: si cambiano poche volte a stagione.</p>
 
   <div id="contenuto">
-    <div class="riquadro">
-      <h2>Listino prezzi</h2>
+    <section class="riquadro sezione pagamento">
+      <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Listino prezzi <span class="cosa">Tessere, abbonamenti, corsi e presciistica</span></h2>
+      <div class="corpo">
       <p class="occhiello">
         Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi), corsi e presciistica.
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
@@ -86,37 +102,39 @@
           </tr></thead>
           <tbody id="tabellaPrezzi"><tr><td colspan="8" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
-            <td>
-              <select id="nuovoCategoria">
+            <td data-etichetta="Categoria della voce nuova">
+              <div class="select"><select id="nuovoCategoria" aria-label="Categoria della voce nuova">
                 <option value="TESSERA">TESSERA</option>
                 <option value="FAMIGLIA">FAMIGLIA</option>
                 <option value="ABBONAMENTO">ABBONAMENTO</option>
                 <option value="CORSO">CORSO</option>
                 <option value="PRESCIISTICA">PRESCIISTICA</option>
-              </select>
+              </select></div>
             </td>
             <td></td>
-            <td><input type="text" id="nuovoNome" placeholder="Nome"></td>
-            <td><input type="number" id="nuovoPrezzo" step="1" min="0" placeholder="0"></td>
-            <td>
-              <select id="nuovoMinRole">
+            <td data-etichetta="Nome"><textarea class="textarea campo-nome" id="nuovoNome" rows="1" placeholder="Nome" aria-label="Nome della voce nuova"></textarea></td>
+            <td data-etichetta="Prezzo €"><input class="input" type="number" id="nuovoPrezzo" step="1" min="0" placeholder="0" aria-label="Prezzo in euro della voce nuova"></td>
+            <td data-etichetta="Chi la assegna">
+              <div class="select"><select id="nuovoMinRole" aria-label="Chi assegna la voce nuova">
                 <option value="utente">utente</option>
                 <option value="admin">admin</option>
                 <option value="superadmin">superadmin</option>
-              </select>
+              </select></div>
             </td>
-            <td>
-              <select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o presciistica)"></select>
+            <td data-etichetta="Assicurazione">
+              <div class="select"><select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o presciistica)"></select></div>
             </td>
             <td></td>
-            <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
+            <td><button type="button" class="button is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
           </tr></tfoot>
         </table>
       </div>
-    </div>
+      </div>
+    </section>
 
-    <div class="riquadro">
-      <h2>Assicurazioni</h2>
+    <section class="riquadro sezione tessera">
+      <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Assicurazioni <span class="cosa">Nome e prezzo</span></h2>
+      <div class="corpo">
       <p class="occhiello">
         Quelle che danno le tessere (si sceglie nel listino qui sopra). Il prezzo si somma alla quota
         della tessera. Una si toglie solo se nessuna tessera e nessuna lista mandata la usa.
@@ -126,35 +144,38 @@
           <thead><tr><th>Nome</th><th>Prezzo €</th><th></th></tr></thead>
           <tbody id="tabellaAssicurazioni"><tr><td colspan="3" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
-            <td><input type="text" id="nuovaAssNome" placeholder="Nome"></td>
-            <td><input type="number" id="nuovaAssPrezzo" step="1" min="0" placeholder="0"></td>
-            <td><button type="button" class="button is-small is-link" id="btnAggiungiAss">+ Aggiungi</button></td>
+            <td data-etichetta="Nome dell'assicurazione nuova"><textarea class="textarea campo-nome" id="nuovaAssNome" rows="1" placeholder="Nome" aria-label="Nome dell'assicurazione nuova"></textarea></td>
+            <td data-etichetta="Prezzo €"><input class="input" type="number" id="nuovaAssPrezzo" step="1" min="0" placeholder="0" aria-label="Prezzo in euro dell'assicurazione nuova"></td>
+            <td><button type="button" class="button is-link" id="btnAggiungiAss">+ Aggiungi</button></td>
           </tr></tfoot>
         </table>
       </div>
-    </div>
+      </div>
+    </section>
 
-    <div class="riquadro">
-      <h2>Partenze</h2>
+    <section class="riquadro sezione gite">
+      <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Partenze <span class="cosa">Dove sale chi va in gita</span></h2>
+      <div class="corpo">
       <p class="occhiello">Luoghi di partenza del pullman per sabato e domenica.</p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th></th></tr></thead>
           <tbody id="tabellaPartenze"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
-            <td>
-              <select id="nuovoGiorno">
+            <td data-etichetta="Giorno della partenza nuova">
+              <div class="select"><select id="nuovoGiorno" aria-label="Giorno della partenza nuova">
                 <option value="SABATO">SABATO</option>
                 <option value="DOMENICA">DOMENICA</option>
-              </select>
+              </select></div>
             </td>
-            <td><input type="text" id="nuovoLuogo" placeholder="Luogo"></td>
+            <td data-etichetta="Luogo"><textarea class="textarea campo-nome" id="nuovoLuogo" rows="1" placeholder="Luogo" aria-label="Luogo della partenza nuova"></textarea></td>
             <td></td>
-            <td><button type="button" class="button is-small is-link" id="btnAggiungiPartenza">+ Aggiungi</button></td>
+            <td><button type="button" class="button is-link" id="btnAggiungiPartenza">+ Aggiungi</button></td>
           </tr></tfoot>
         </table>
       </div>
-    </div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -185,7 +206,7 @@
   // ---------------------------------------------------------------------
 
   function valoriRiga(riga) {
-    return JSON.stringify([...riga.querySelectorAll("input, select")]
+    return JSON.stringify([...riga.querySelectorAll("input, select, textarea")]
       .map((c) => (c.type === "checkbox" ? c.checked : c.value)));
   }
 
@@ -208,6 +229,32 @@
   function sorvegliaRighe(tabella) {
     tabella.querySelectorAll("tr[data-id]").forEach(sorvegliaRiga);
   }
+
+  // ---------------------------------------------------------------------
+  // Nomi interi
+  //
+  // Nome della voce, dell'assicurazione e luogo della partenza: il campo va a
+  // capo e cresce col testo, così il nome si legge tutto. È una riga sola (lo
+  // stesso testo che si sceglie in Soci): Invio non va a capo, e spazi e a
+  // capo incollati diventano uno spazio al salvataggio.
+  // ---------------------------------------------------------------------
+
+  const campoNome = (valore, attributo, etichetta) =>
+    `<textarea class="textarea campo-nome" ${attributo} rows="1" aria-label="${etichetta}">${esc(valore)}</textarea>`;
+  const nomePulito = (campo) => campo.value.replace(/\s+/g, " ").trim();
+
+  function adatta(campo) {
+    campo.style.height = "auto";
+    campo.style.height = campo.scrollHeight + campo.offsetHeight - campo.clientHeight + "px";
+  }
+  const adattaTutti = () => document.querySelectorAll("textarea.campo-nome").forEach(adatta);
+  window.addEventListener("resize", adattaTutti);
+  // A+ cambia la grandezza del testo, e con lei le righe del nome.
+  new MutationObserver(adattaTutti).observe(document.documentElement, { attributes: true, attributeFilter: ["data-testo"] });
+  el("contenuto").addEventListener("input", (e) => { if (e.target.matches("textarea.campo-nome")) adatta(e.target); });
+  el("contenuto").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.matches("textarea.campo-nome")) e.preventDefault();
+  });
 
   /** Prezzo in euro interi, anche 0; null se il campo è vuoto, negativo o coi centesimi. */
   function leggiEuro(campo) {
@@ -261,25 +308,25 @@
     // Il livello di visibilità vale solo per le tessere (vincolo
     // prices_min_role_only_card nel database).
     const selettoreRuolo = p.category === "TESSERA"
-      ? `<select data-min-role>
+      ? `<div class="select"><select data-min-role aria-label="Chi la assegna">
            <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>tutti</option>
            <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin e superadmin</option>
            <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>solo superadmin</option>
-         </select>`
+         </select></div>`
       : "—";
     return `
       <tr data-id="${p.id}">
-        <td>${p.category}</td>
-        <td><input type="number" class="ordine" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
-        <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
-        <td><input type="number" data-prezzo step="1" min="0" value="${p.price}" aria-label="Prezzo in euro"></td>
-        <td>${selettoreRuolo}</td>
-        <td>${conAssicurazione(p.category)
-          ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>
+        <td data-etichetta="Categoria">${esc(p.category)}</td>
+        <td data-etichetta="Ordine"><input class="input ordine" type="number" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
+        <td data-etichetta="Nome">${campoNome(p.name, "data-nome", "Nome")}</td>
+        <td data-etichetta="Prezzo €"><input class="input" type="number" data-prezzo step="1" min="0" value="${p.price}" aria-label="Prezzo in euro"></td>
+        <td data-etichetta="Chi la assegna">${selettoreRuolo}</td>
+        <td data-etichetta="Assicurazione">${conAssicurazione(p.category)
+          ? `<div class="select"><select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select></div>
              <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> la paga il club</label>
              <p class="paga-socio" data-paga></p>` : "—"}</td>
-        <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
-        <td><button type="button" class="button is-small" data-salva>Salva</button></td>
+        <td data-etichetta="Attiva"><input type="checkbox" data-attivo ${p.active ? "checked" : ""} aria-label="Attiva"></td>
+        <td><button type="button" class="button" data-salva>Salva</button></td>
       </tr>`;
   }
 
@@ -308,6 +355,7 @@
         bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
       });
       sorvegliaRighe(el("tabellaPrezzi"));
+      adattaTutti();
     } catch (error) {
       showToast("Errore di caricamento listino: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -322,7 +370,7 @@
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
     if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
     const patch = {
-      name: riga.querySelector("[data-nome]").value.trim(),
+      name: nomePulito(riga.querySelector("[data-nome]")),
       price: prezzo,
       active: riga.querySelector("[data-attivo]").checked,
       position: parseInt(riga.querySelector("[data-posizione]").value, 10) || null,
@@ -348,7 +396,7 @@
   }
 
   async function aggiungiPrezzo() {
-    const nome = el("nuovoNome").value.trim();
+    const nome = nomePulito(el("nuovoNome"));
     if (!nome) {
       showToast("Inserisci un nome.", "is-warning");
       return;
@@ -390,11 +438,11 @@
   function rigaAssicurazione(a) {
     return `
       <tr data-id="${esc(a.code)}">
-        <td><input type="text" data-nome value="${esc(a.name)}" aria-label="Nome"></td>
-        <td><input type="number" data-prezzo step="1" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
+        <td data-etichetta="Nome">${campoNome(a.name, "data-nome", "Nome")}</td>
+        <td data-etichetta="Prezzo €"><input class="input" type="number" data-prezzo step="1" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
         <td><div class="buttons">
-          <button type="button" class="button is-small" data-salva>Salva</button>
-          <button type="button" class="button is-small is-danger is-outlined" data-togli>Togli</button>
+          <button type="button" class="button" data-salva>Salva</button>
+          <button type="button" class="button is-danger is-outlined" data-togli>Togli</button>
         </div></td>
       </tr>`;
   }
@@ -417,6 +465,7 @@
         ? ASSICURAZIONI.map(rigaAssicurazione).join("")
         : RIGA_NESSUNA_ASS;
       el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach(attivaRigaAssicurazione);
+      adattaTutti();
     } catch (error) {
       showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
     }
@@ -450,7 +499,7 @@
   }
 
   async function salvaAssicurazione(riga) {
-    const nome = riga.querySelector("[data-nome]").value.trim();
+    const nome = nomePulito(riga.querySelector("[data-nome]"));
     if (!nome) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
     if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
@@ -501,7 +550,7 @@
   }
 
   async function aggiungiAssicurazione() {
-    const nome = el("nuovaAssNome").value.trim();
+    const nome = nomePulito(el("nuovaAssNome"));
     // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
     const base = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       .replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
@@ -538,10 +587,10 @@
   function rigaPartenza(p) {
     return `
       <tr data-id="${p.id}">
-        <td>${p.day}</td>
-        <td><input type="text" data-luogo value="${p.place.replace(/"/g, "&quot;")}"></td>
-        <td><input type="checkbox" data-attivo ${p.active ? "checked" : ""}></td>
-        <td><button type="button" class="button is-small" data-salva>Salva</button></td>
+        <td data-etichetta="Giorno">${esc(p.day)}</td>
+        <td data-etichetta="Luogo">${campoNome(p.place, "data-luogo", "Luogo")}</td>
+        <td data-etichetta="Attiva"><input type="checkbox" data-attivo ${p.active ? "checked" : ""} aria-label="Attiva"></td>
+        <td><button type="button" class="button" data-salva>Salva</button></td>
       </tr>`;
   }
 
@@ -562,6 +611,7 @@
         bottone.addEventListener("click", () => salvaPartenza(bottone.closest("tr")));
       });
       sorvegliaRighe(el("tabellaPartenze"));
+      adattaTutti();
     } catch (error) {
       showToast("Errore di caricamento partenze: " + messaggioErrore(error), "is-danger");
     }
@@ -571,7 +621,7 @@
     const id = riga.dataset.id;
     const bottone = riga.querySelector("[data-salva]");
     const patch = {
-      place: riga.querySelector("[data-luogo]").value.trim(),
+      place: nomePulito(riga.querySelector("[data-luogo]")),
       active: riga.querySelector("[data-attivo]").checked,
     };
     bottone.disabled = true;
@@ -588,7 +638,7 @@
   }
 
   async function aggiungiPartenza() {
-    const luogo = el("nuovoLuogo").value.trim();
+    const luogo = nomePulito(el("nuovoLuogo"));
     if (!luogo) {
       showToast("Inserisci un luogo.", "is-warning");
       return;

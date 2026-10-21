@@ -176,7 +176,9 @@ client Supabase finto (`test-browser/fake-supabase.js`) che risponde quando e co
 servono per quello che i test node non vedono, come le risposte che arrivano in ordine sparso.
 Una prova è un file `.js` che imposta `FINTO.risposta` e `FINTO.ritardo` (le funzioni del database,
 `sb.rpc`, rispondono con `FINTO.rpc[nome]` e hanno `.range()`), usa la pagina e scrive
-l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenco in `esegui.sh`.
+l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenco in `esegui.sh`,
+con la larghezza della finestra se conta (Impostazioni gira a 1280 e a 500 px, il minimo di Chrome
+headless: tabella sul computer, schede sul telefono).
 Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la correzione.
 
 ## Regole decise con il direttivo (30/09/2026)

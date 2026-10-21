@@ -22,6 +22,37 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Impostazioni leggibili e nello stile del sito.** Fatto (TDD: ef07e87 RED, poi GREEN; online):
+      nome della voce, dell'assicurazione e luogo della partenza in un campo che va a capo e cresce col
+      testo (Invio non va a capo, spazi e a capo diventano uno spazio al salvataggio); nomi con «&amp;»
+      non più cambiati in «&» (esc()); riquadri a striscia (Listino arancio, Assicurazioni verde,
+      Partenze viola), campi `.input`/`.textarea`/`.select` come in Bilancio; sotto i 900 px ogni voce
+      è una scheda con le etichette. Prova `test-browser/impostazioni.js` a 1280 e 500 px. Da provare
+      sul sito vero (anche col testo grande, A+). Resta: sul computer i menu «Chi la assegna» e
+      «Assicurazione» sono stretti e tagliano il testo («admin e…», «REALE TOTAL SPORT (€…»);
+      allargarli fa scorrere la tabella di lato a 1280 px (la prova lo blocca): serve stringere altro.
+
+- [ ] 21/10: **Campi che fanno sparire il valore del record (PIANO, fase 2, da fare con TDD).**
+      L'utente: «controlla che in giro per il sito non ci siano field che inserendo campi troppo
+      lunghi o non previsti facciano sparire il valore del record»; rimandato il 21/10.
+      1. Censimento in sola lettura, pagina per pagina (index, admin, assicurazione, bilancio,
+         social, utenti, stagione, gestione, ricerca/): campo, colonna, come si carica, come si
+         salva. Casi da cercare:
+         - scelta non più nel listino: `selezionaPerNome` (index.html, ~riga 1200) non spunta niente
+           se card_type / family_discount / preski_type / course_type sono di una voce disattivata o
+           rinominata (caricaPrezzi legge solo `active`), e Salva scrive vuoto; lo stesso per
+           `spuntaPartenze` con una partenza disattivata; in Impostazioni un'assicurazione che non c'è
+           più nel menu;
+         - campi numerici: «12,5» in `type=number` dà "" e diventa 0 (acconto, totale a mano, importi
+           in Pagamenti e Bilancio);
+         - date scritte a metà (data di nascita) che diventano null;
+         - pulizie del testo che danno vuoto (telefono, codice fiscale, email);
+         - `maxlength` più corti di quello che c'è nel database; trigger che azzerano un campo.
+      2. Per ogni caso vero: prova nel browser che fallisce (test-browser/), correzione nel codice
+         condiviso se il difetto è in più pagine (per la scelta fuori listino: mostrarla spuntata come
+         «(non più nel listino)», così salvando resta), commit.
+      3. Docs (SVILUPPO, GUIDA_VOLONTARI se cambia l'uso), review OCR in delega, push e dev col sì.
+
 - [ ] 21/10: **Assicurazione: «Da assicurare» a pagine.** Fatto (TDD: b156014 RED, 3ec5114 GREEN, poi il
       fuoco all'ultima pagina; online): 25 per pagina, una per tipo, «‹ Indietro · 26–50 di 60 ·
       Avanti ›» sotto il gruppo; il titolo dice quanti senza codice fiscale; dopo Salva si resta sulla
