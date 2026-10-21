@@ -427,9 +427,12 @@ const NOMI_RUOLI = {
 
 /**
  * Avviso sotto un campo codice fiscale, a partire dall'esito di verificaCF()
- * (codicefiscale.js): cosa non torna e, se c'è, il pulsante per mettere nel
- * campo il codice proposto. Non blocca niente: chi ha il documento davanti
- * decide. `dopo` viene chiamata quando il codice proposto finisce nel campo.
+ * (codicefiscale.js): solo «Codice fiscale errato» (o, a campo vuoto, «Codice
+ * proposto») e il codice proposto, che è un pulsante: il click lo scrive nel
+ * campo. Il motivo non si dice: chi compila vuole il codice giusto, non la
+ * regola. `esito.messaggio`, se c'è, prende il posto della frase. Non blocca
+ * niente: chi ha il documento davanti decide. `dopo` viene chiamata quando il
+ * codice proposto finisce nel campo.
  */
 function mostraAvvisoCF(box, campo, esito, dopo) {
   if (!esito || esito.ok) {
@@ -437,17 +440,16 @@ function mostraAvvisoCF(box, campo, esito, dopo) {
     box.replaceChildren();
     return;
   }
-  const righe = esito.problemi.map((p) => {
-    const riga = document.createElement("p");
-    riga.textContent = p;
-    return riga;
-  });
-  box.replaceChildren(...righe);
+  const riga = document.createElement("p");
+  riga.textContent = esito.messaggio || (campo.value.trim()
+    ? `Codice fiscale errato${esito.suggerito ? ", codice proposto:" : "."}` : "Codice proposto:");
+  box.replaceChildren(riga);
   if (esito.suggerito) {
     const usa = document.createElement("button");
     usa.type = "button";
     usa.className = "button is-link is-small";
-    usa.innerHTML = `Usa il codice proposto: <code>${esc(esito.suggerito)}</code>`;
+    usa.setAttribute("aria-label", `Scrivi nel campo il codice proposto ${esito.suggerito}`);
+    usa.innerHTML = `<code>${esc(esito.suggerito)}</code>`;
     usa.addEventListener("click", () => {
       campo.value = esito.suggerito;
       box.hidden = true;
