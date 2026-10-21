@@ -5,6 +5,7 @@
 // - Invio non va a capo nel nome; al salvataggio spazi e a capo diventano uno spazio.
 // - Un nome con «&amp;» si carica e si salva com'è (prima l'HTML lo cambiava in «&»).
 // - Cambiato il nome, la riga si accende come modificata.
+// - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
@@ -21,6 +22,7 @@
     if (t === "prices") return [
       { id: 1, category: "PRESCIISTICA", name: LUNGO, price: 75, active: true, min_role: "utente", insurance: "SPORT", insurance_paid: true, position: null },
       { id: 2, category: "TESSERA", name: CON_AMP, price: 20, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1 },
+      { id: 3, category: "FAMIGLIA", name: "3 PERSONE CON ASSICURAZIONE", price: 50, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1, people: 3 },
     ];
     if (t === "insurances") return [{ code: "BASE", name: "REALE MUTUA NEVE", price: 20 }, { code: "SPORT", name: ASS_LUNGA, price: 45 }];
     if (t === "departures") return [{ id: 7, day: "SABATO", place: LUOGO, active: true }];
@@ -63,6 +65,11 @@
     riga("tabellaPrezzi", 2)?.querySelector("[data-salva]").click();
     await aspetta(200);
     prova("ampSalvato", ultimo("prices").name === CON_AMP, `salvato «${ultimo("prices").name}»`);
+
+    const famiglia = riga("tabellaPrezzi", 3);
+    const paga = famiglia?.querySelector("[data-paga]")?.textContent || "";
+    prova("famigliaAssicurata", Boolean(famiglia?.querySelector("[data-assicurazione]")) && paga.includes("110"),
+      `assicurazione ${Boolean(famiglia?.querySelector("[data-assicurazione]"))}, «${paga}»`);
 
     const nudi = el("contenuto").querySelectorAll(
       "input:not([type=checkbox]):not(.input), textarea:not(.textarea)").length

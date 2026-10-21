@@ -33,15 +33,24 @@ Il modulo ha quattro parti colorate, con il nome scritto nella striscia in
 alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
 **Pagamento** (arancio).
 
-- **Tessera**: scegli quella giusta (il prezzo è scritto accanto).
+- **Tessera**: scegli quella giusta (il prezzo è scritto accanto). Non serve
+  se il socio è già coperto: con la presciistica (che la comprende), con
+  un'agevolazione famiglia, o se paga per lui un capofamiglia che ha
+  l'agevolazione. Una nota sotto l'agevolazione dice da cosa è coperto.
+- **Agevolazione famiglia**: la sceglie solo il capofamiglia, **al posto
+  della tessera**, e copre lui e i familiari a carico (3, 4 o 5 persone, con
+  o senza assicurazione). Il prezzo comprende l'assicurazione di ognuno. La
+  nota dice quante persone ci sono nel nucleo: se un familiare in più non ci
+  sta, gli serve la sua tessera.
 - **Abbonamenti gite**: premi **+ Aggiungi** sull'abbonamento. Se lo paga
   subito sul pullman, spunta **già pagato**.
 - **Corso**: sceglilo e poi scegli il **giorno** (sabato o domenica).
 - **Presciistica**: comprende tessera, quota e assicurazione, come sulla scheda
   di carta. Ci sono due voci: **CORSO PRESCIISTICA** (90 €, con l'assicurazione
   Base) e **CORSO PRESCIISTICA - REALE TOTAL SPORT** (120 €, con la più
-  completa). Scegli lo stesso la tessera: nel totale non si somma, e sotto la
-  tessera lo dice una nota.
+  completa). La tessera non serve: se la scegli lo stesso, nel totale non si
+  somma, e sotto la tessera lo dice una nota. Chi è coperto da un'agevolazione
+  famiglia ha la **CORSO PRESCIISTICA - FAMIGLIA** (50 €, solo il corso).
 - **Partenze**: spunta da dove parte il sabato e la domenica.
 - **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
 - **Acconto** (nella parte Pagamento): quanto ha già dato.

@@ -136,7 +136,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021presci2"></script>
+<script src="shared.js?v=20261021famiglia"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -186,8 +186,8 @@
         .select("last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
           + "address, city, province, postal_code, card_type, card_number")
         .not("enrolled_at", "is", null)
-        .not("card_type", "is", null)
-        .neq("card_type", "NO")
+        // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
+        .is("card_holder", true)
         .order("last_name").order("first_name").order("id"));
       await scaricaExcel(soci, "soci-stagione");
     } catch (error) {

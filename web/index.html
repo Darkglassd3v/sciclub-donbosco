@@ -236,6 +236,7 @@
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
       <p id="notaPresciistica" class="help" hidden>Compresa nella presciistica: nel totale conta solo la presciistica.</p>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
+      <p id="notaFamiglia" class="help" hidden></p>
     </div>
     </section>
 
@@ -386,11 +387,15 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021presci2"></script>
+<script src="shared.js?v=20261021famiglia"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
   let familiariACarico = [];
+  // Il capofamiglia che paga per il socio aperto, se ha l'agevolazione famiglia:
+  // { nome, agevolazione, coperti } (coperti = lui e i familiari a carico senza
+  // tessera, il socio aperto escluso). Vedi caricaCapofamiglia().
+  let capofamiglia = null;
   let accesso = null; // chi è collegato (getProfile), per tessere riservate e Togli
 
   // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
@@ -449,6 +454,12 @@
       riempiPartenze("check_domenica", partenze.DOMENICA);
 
       Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
+      // O la tessera o l'agevolazione famiglia, che la comprende: scelta l'una, l'altra si svuota.
+      el("f_tipologia_tessera").addEventListener("change", () => { selezionaPerNome("f_agevolazioni_famiglia", null); ricalcola(); });
+      el("f_agevolazioni_famiglia").addEventListener("change", () => {
+        if (nomeSelezionato("f_agevolazioni_famiglia")) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        ricalcola();
+      });
       el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
       el("f_acconto").addEventListener("input", ricalcola);
       el("f_totale_a_mano").addEventListener("change", () => { aggiornaTotaleMano({ daListino: true }); ricalcola(); });
@@ -843,8 +854,9 @@
 
   /** Il totale come lo dà il listino: voci scelte più abbonamenti. */
   function totaleDaListino() {
-    // La presciistica comprende tessera, quota e assicurazione (scheda di carta): la tessera non si somma.
-    const conPresciistica = Boolean(nomeSelezionato("f_presciistica"));
+    // La presciistica con l'assicurazione comprende tessera, quota e assicurazione
+    // (scheda di carta): la tessera non si somma. Quella «solo corso» no.
+    const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
     const voci = Object.keys(SELECT_CATEGORIE)
       .filter((id) => !(conPresciistica && id === "f_tipologia_tessera"))
       .reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
@@ -884,8 +896,68 @@
   /** Rosso chi deve pagare, blu chi è a credito, verde chi è a posto. */
   const coloreSaldo = (saldo) => (saldo > 0 ? "var(--errore)" : saldo < 0 ? "var(--blu)" : "var(--ok)");
 
+  /** La voce del listino scelta nel gruppo, con assicurazione e persone, o undefined. */
+  const voceScelta = (categoria, idGruppo) => (PREZZI[categoria] || []).find((p) => p.name === nomeSelezionato(idGruppo));
+  const persone = (n) => (n === 1 ? "1 persona" : `${n} persone`);
+
+  /**
+   * Da dove viene la tessera di chi non la sceglie: l'agevolazione famiglia la
+   * dà al capofamiglia e ai familiari a carico, fino alle sue persone
+   * ({ famiglia: true }); la presciistica con l'assicurazione la comprende
+   * ({ famiglia: false }). null = la tessera serve.
+   */
+  function copertura() {
+    const propria = voceScelta("FAMIGLIA", "f_agevolazioni_famiglia");
+    if (propria) return { famiglia: true, agevolazione: propria };
+    const delCapo = el("pagaFamiliare").checked && capofamiglia
+      && (PREZZI.FAMIGLIA || []).find((p) => p.name === capofamiglia.agevolazione);
+    if (delCapo && capofamiglia.coperti < (delCapo.people || 1)) return { famiglia: true, agevolazione: delCapo, capo: capofamiglia };
+    if (voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) return { famiglia: false };
+    return null;
+  }
+
+  /** Nucleo pieno: il capofamiglia ha l'agevolazione ma copre già tutte le sue persone. */
+  function nucleoPieno() {
+    if (!el("pagaFamiliare").checked || !capofamiglia || copertura()?.famiglia) return null;
+    const voce = (PREZZI.FAMIGLIA || []).find((p) => p.name === capofamiglia.agevolazione);
+    return voce ? `L'agevolazione di ${capofamiglia.nome} è per ${persone(voce.people || 1)} e il nucleo ne copre già `
+      + `${capofamiglia.coperti}: scegli una tessera o cambia l'agevolazione.` : null;
+  }
+
+  /**
+   * Tessera obbligatoria solo per chi non è coperto; la nota dice da cosa (o
+   * quante persone conta il nucleo del capofamiglia); la presciistica di chi è
+   * coperto dall'agevolazione è solo il corso, quella degli altri ha l'assicurazione.
+   */
+  function aggiornaCopertura() {
+    const c = copertura();
+    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; });
+    const nota = el("notaFamiglia");
+    let testo = "", avviso = false;
+    if (c?.capo) {
+      testo = `Coperto dall'agevolazione di ${c.capo.nome} (${c.agevolazione.name}): la tessera non serve.`;
+    } else if (c?.famiglia) {
+      const nucleo = 1 + familiariACarico.filter((f) => !f.card_type).length;
+      const previste = c.agevolazione.people || 1;
+      testo = `L'agevolazione comprende la tessera: nel nucleo ${persone(nucleo)} senza tessera, l'agevolazione è per ${previste}.`;
+      avviso = nucleo !== previste;
+    } else if (nucleoPieno()) {
+      testo = nucleoPieno();
+      avviso = true;
+    }
+    nota.textContent = testo;
+    nota.hidden = !testo;
+    nota.classList.toggle("is-danger", avviso);
+    const famiglia = Boolean(c?.famiglia);
+    el("f_presciistica").querySelectorAll("input").forEach((r) => {
+      const voce = (PREZZI.PRESCIISTICA || []).find((p) => p.name === r.dataset.nome);
+      r.closest("label").hidden = Boolean(voce) && !r.checked && (famiglia ? Boolean(voce.insurance) : !voce.insurance);
+    });
+  }
+
   function ricalcola() {
-    el("notaPresciistica").hidden = !nomeSelezionato("f_presciistica");
+    aggiornaCopertura();
+    el("notaPresciistica").hidden = !voceScelta("PRESCIISTICA", "f_presciistica")?.insurance;
     const socioCorrente = { total: totaleIndividuale(), paid: el("f_acconto").value };
     const { totale, saldo } = totaliNucleo(socioCorrente, familiariACarico);
     el("v_totale").textContent = fmt(totale);
@@ -1157,10 +1229,8 @@
       if (socio.payer_id) {
         const { data: pagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
         if (vecchia()) return;
-        abilitaSezionePagante();
-        el("f_payer_id").value = socio.payer_id;
-        el("f_payerDisplay").value = pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id;
-        confermaPagante(el("f_payerDisplay").value);
+        await scegliPagante(socio.payer_id, pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id);
+        if (vecchia()) return;
       } else {
         disabilitaSezionePagante();
       }
@@ -1230,6 +1300,8 @@
     el("f_payer_id").value = "";
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
+    capofamiglia = null;
+    ricalcola();
   }
 
   async function cercaPagante() {
@@ -1238,6 +1310,7 @@
     const box = el("payerResults");
     el("f_payer_id").value = "";
     el("payerConfirm").style.display = "none";
+    if (capofamiglia) { capofamiglia = null; ricalcola(); }
 
     if (query.length < 2) { box.style.display = "none"; return; }
 
@@ -1253,13 +1326,38 @@
       </div>`).join("");
 
     box.querySelectorAll(".result-item").forEach((riga) => {
-      riga.addEventListener("click", () => {
-        el("f_payer_id").value = riga.dataset.id;
-        el("f_payerDisplay").value = riga.dataset.nome;
-        box.style.display = "none";
-        confermaPagante(riga.dataset.nome);
-      });
+      riga.addEventListener("click", () => scegliPagante(riga.dataset.id, riga.dataset.nome));
     });
+  }
+
+  /** Il familiare che paga: si legge la sua agevolazione famiglia e chi ne copre già. */
+  async function scegliPagante(id, nome) {
+    abilitaSezionePagante();
+    el("f_payer_id").value = id;
+    el("f_payerDisplay").value = nome;
+    el("payerResults").style.display = "none";
+    confermaPagante(nome);
+    await caricaCapofamiglia(id);
+  }
+
+  async function caricaCapofamiglia(id) {
+    capofamiglia = null;
+    const turno = turnoScheda;
+    const [capo, nucleo] = await Promise.all([
+      sb.from("members").select("id, last_name, first_name, family_discount").eq("id", id).single(),
+      sb.from("members").select("id, card_type").eq("payer_id", id),
+    ]);
+    if (turno !== turnoScheda || el("f_payer_id").value !== id) return;
+    const errore = capo.error || nucleo.error;
+    if (errore) { showToast(messaggioErrore(errore), "is-danger"); return; }
+    if (capo.data?.family_discount) {
+      capofamiglia = {
+        nome: `${capo.data.last_name} ${capo.data.first_name}`,
+        agevolazione: capo.data.family_discount,
+        coperti: 1 + nucleo.data.filter((f) => !f.card_type && f.id !== el("f_id").value).length,
+      };
+    }
+    ricalcola();
   }
 
   function confermaPagante(nome) {
@@ -1270,6 +1368,7 @@
 
   function rimuoviPagante() {
     turnoPagante++;
+    capofamiglia = null;
     el("f_payer_id").value = "";
     el("f_payerDisplay").value = "";
     el("payerResults").style.display = "none";
@@ -1349,6 +1448,18 @@
    */
   async function salva() {
     const form = el("memberForm");
+    if (el("pagaFamiliare").checked && nomeSelezionato("f_agevolazioni_famiglia")) {
+      showToast("L'agevolazione famiglia la sceglie il capofamiglia: chi è a carico ne è già coperto.", "is-danger");
+      return;
+    }
+    if (!nomeSelezionato("f_tipologia_tessera") && nucleoPieno()) {
+      showToast(nucleoPieno(), "is-danger");
+      return;
+    }
+    if (copertura()?.famiglia && voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) {
+      showToast("Con l'agevolazione famiglia tessera e assicurazione ci sono già: la presciistica è solo il corso.", "is-danger");
+      return;
+    }
     if (!form.checkValidity()) { form.reportValidity(); return; }
     // Senza questo controllo "La paga un familiare" senza nome si salvava
     // come "paga da sé", senza dire niente.

@@ -22,6 +22,28 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Agevolazioni famiglia con l'assicurazione, al posto della tessera.** Fatto (TDD: 3a729e2 e
+      a8c3f47 RED, 5b8ac3c, 607cb2a, 974c42b, 35fc63d GREEN; in produzione e online): o la tessera o
+      l'agevolazione, che la sceglie il capofamiglia e copre lui e i familiari a carico fino alle sue
+      persone (dal nome); prezzo quota + persone × assicurazione (3 persone Base 110, invariato);
+      con la presciistica con l'assicurazione la tessera non è obbligatoria; chi è coperto
+      dall'agevolazione ha la «CORSO PRESCIISTICA - FAMIGLIA» (50 €); liste dell'assicurazione,
+      tesserati (Riepilogo, Gite) e conteggi contano chi è coperto; la tessera compresa nella
+      presciistica non si conta più (6 soci al 21/10). Backup in
+      `supabase/migration/backup-2026-10-21-agevolazioni/`. Da provare sul sito vero: capofamiglia
+      con l'agevolazione e due familiari, un familiare in più col nucleo pieno, socio con la sola
+      presciistica. Da controllare: LACHELLI ha la presciistica Total Sport (120) e il totale 115.
+      Non fatto: nelle pagine Cerca socio ed Excel dei soci la colonna «Tessera» resta vuota per chi
+      è coperto senza tessera; Riepilogo e Gite usano il filtro `card_holder` (PostgREST), provato
+      solo nel database.
+
+- [ ] 21/10: **Codice fiscale proposto anche senza scegliere il sesso.** L'utente: «quando inserisco
+      un nuovo socio perché non viene proposto un codice fiscale?». Oggi `controllaCF()`
+      (index.html ~riga 702) lo propone solo con cognome, nome, data, sesso scelto (non si salva) e un
+      luogo dove è nato almeno un altro socio col codice fiscale (il comune si ricava dai loro
+      codici: un elenco dei comuni non c'è). Proposta: senza sesso, prenderlo dai soci con lo stesso
+      nome (`sessoDelNome`, già usato per controllare), dicendolo nell'avviso. Da fare con TDD.
+
 - [ ] 21/10: **Impostazioni leggibili e nello stile del sito.** Fatto (TDD: ef07e87 RED, poi GREEN; online):
       nome della voce, dell'assicurazione e luogo della partenza in un campo che va a capo e cresce col
       testo (Invio non va a capo, spazi e a capo diventano uno spazio al salvataggio); nomi con «&amp;»
