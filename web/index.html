@@ -416,8 +416,8 @@
 
   // I numeri tessera già dati ({ id, card_number }) e da dove contare i liberi
   // (Impostazioni, settings.card_gaps_from): sotto, i posti del direttivo e della
-  // famiglia, tenuti vuoti apposta. Letti quando si apre il modulo.
-  let tessereUsate = [];
+  // famiglia, tenuti vuoti apposta. Letti quando si apre il modulo; null = non letti.
+  let tessereUsate = null;
   let tessereDa = 1;
 
   // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
@@ -846,10 +846,12 @@
         tutteLeRighe(() => sb.from("members").select("id, card_number").not("card_number", "is", null).order("id")),
         sb.from("settings").select("value").eq("key", "card_gaps_from"),
       ]);
+      // Senza l'impostazione si conterebbe da 1: i posti del direttivo sembrerebbero liberi.
+      if (impostazione.error || !impostazione.data?.length) throw impostazione.error;
       tessereUsate = usate;
-      tessereDa = Number(impostazione.data?.[0]?.value) || 1;
+      tessereDa = Number(impostazione.data[0].value);
     } catch {
-      tessereUsate = [];
+      tessereUsate = null;
     }
     mostraTessereLibere();
   }
@@ -861,6 +863,7 @@
    * Contano solo i numeri di sole cifre, come in next_card_number().
    */
   function mostraTessereLibere() {
+    if (!tessereUsate) { el("tessereLibere").hidden = true; return; }
     const numero = (v) => (/^\d{1,15}$/.test(v || "") ? Number(v) : null);
     const altri = tessereUsate.filter((t) => t.id !== el("f_id").value).map((t) => t.card_number);
     const presi = [...new Set([...altri, el("f_numero_tessera").value.trim()].map(numero))]
