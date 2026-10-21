@@ -1,30 +1,27 @@
-// Soci (index.html): con la presciistica si sceglie l'assicurazione.
-// - Senza presciistica la scelta non c'è; con la presciistica compare con
-//   quella della tessera già scelta, e se la tessera non ne ha, con la Base.
-// - La Total Sport somma al totale la differenza (45 − 20 = 25 €), e la
-//   Base senza tessera assicurata il suo prezzo intero.
-// - Si salva solo un'assicurazione diversa da quella della tessera; togliendo
-//   la presciistica torna vuota. Un socio salvato si riapre con la sua.
-// - Cambiando tessera la scelta riparte da quella della tessera nuova: la
-//   Base rimasta da prima declasserebbe chi ha appena preso la tessera Sport.
+// Soci (index.html): la presciistica comprende tessera, quota e assicurazione.
+// - Due voci nel listino: «CORSO PRESCIISTICA» 90 (70 + Base 20) e «CORSO
+//   PRESCIISTICA - REALE TOTAL SPORT» 120 (75 + Sport 45). Il finto dà già
+//   card_price in `price`, come la select di caricaPrezzi().
+// - Con la presciistica la tessera non si somma (la comprende), e sotto la
+//   tessera lo dice una nota; tolta la presciistica la tessera conta di nuovo.
+// - Niente scelta dell'assicurazione a parte e niente `insurance` nel
+//   salvataggio: l'assicurazione la dice la voce della presciistica.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const LISTINO = [
-    { category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, insurance: "BASE", insurance_paid: true, min_role: "utente" },
-    { category: "TESSERA", name: "TESSERA ORDINARIA - REALE TOTAL SPORT", price: 65, insurance: "SPORT", insurance_paid: true, min_role: "utente" },
-    { category: "TESSERA", name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, insurance: null, insurance_paid: true, min_role: "utente" },
-    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA", price: 90, insurance: null, insurance_paid: true, min_role: "utente" },
+    { category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" },
+    { category: "TESSERA", name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, min_role: "utente" },
+    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA", price: 90, min_role: "utente" },
+    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA - REALE TOTAL SPORT", price: 120, min_role: "utente" },
   ];
-  const ASSICURAZIONI_PROVA = [{ code: "BASE", name: "REALE MUTUA NEVE", price: 20 }, { code: "SPORT", name: "REALE TOTAL SPORT", price: 45 }];
-  const SOCIO = { id: "M", last_name: "PRESCI", first_name: "PIA", updated_at: "1", enrolled_at: "2026-10-14", paid: 0, total: 155,
-    total_manual: false, card_type: "TESSERA ORDINARIA - REALE MUTUA NEVE", preski_type: "CORSO PRESCIISTICA", insurance: "SPORT" };
+  const SOCIO = { id: "M", last_name: "PRESCI", first_name: "PIA", updated_at: "1", enrolled_at: "2026-10-14", paid: 0, total: 120,
+    total_manual: false, card_type: "TESSERA ORDINARIA - REALE MUTUA NEVE", preski_type: "CORSO PRESCIISTICA - REALE TOTAL SPORT" };
   const salvati = [];
 
   FINTO.risposta = (t, r) => {
     const scrittura = r.filtri.find((f) => f[0] === "insert" || f[0] === "update");
     if (t === "members" && scrittura) { salvati.push(scrittura[1]); return [{ id: "NUOVO", updated_at: "2" }]; }
     if (t === "prices") return LISTINO;
-    if (t === "insurances") return ASSICURAZIONI_PROVA;
     if (t === "members" && r.filtri.some((f) => f[0] === "eq" && f[1] === "id")) return [SOCIO];
     return [];
   };
@@ -32,61 +29,45 @@
   const scegli = (gruppo, voce) =>
     [...el(gruppo).querySelectorAll("input")].find((r) => r.dataset.nome === voce || r.value === voce).click();
   const compila = () => { el("f_cognome").value = "Presci"; el("f_nome").value = "Pia"; el("f_telefono").value = "333"; };
-  const assicurazione = () => el("f_assicurazione").querySelector("input:checked")?.value;
-  const ultimo = () => (salvati.length ? salvati[salvati.length - 1].insurance : "niente salvato");
+  const ultimo = () => salvati[salvati.length - 1] || {};
+  const nota = () => el("notaPresciistica");
 
   window.addEventListener("load", () => setTimeout(async () => {
-    if (!el("f_assicurazione")) { document.title = "RISULTATO scelta=NO(nella pagina non c'è la scelta dell'assicurazione)"; return; }
     const r = [];
     const prova = (nome, vero, perche) => r.push(`${nome}=${vero ? "ok" : `NO(${perche})`}`);
-    const box = el("f_assicurazione");
+
+    prova("senzaScelta", !el("f_assicurazione"), "c'è ancora la scelta dell'assicurazione a parte");
+    if (!nota()) { document.title = "RISULTATO " + r.concat("nota=NO(manca #notaPresciistica)").join(" "); return; }
 
     scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
-    prova("senzaPresciistica", box.hidden, "la scelta si vede senza presciistica");
+    prova("soloTessera", totaleIndividuale() === 40 && nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
+
     scegli("f_presciistica", "CORSO PRESCIISTICA");
-    prova("compare", !box.hidden && assicurazione() === "BASE" && totaleIndividuale() === 130,
-      `nascosta ${box.hidden}, scelta ${assicurazione()}, totale ${totaleIndividuale()}`);
+    prova("presciBase", totaleIndividuale() === 90 && !nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
     compila();
     await scrivi();
-    prova("baseNonSiSalva", ultimo() === null, `salvata ${ultimo()}`);
+    prova("salvaBase", !("insurance" in ultimo()) && ultimo().preski_type === "CORSO PRESCIISTICA" && ultimo().total === 90,
+      `insurance ${"insurance" in ultimo()}, preski_type ${ultimo().preski_type}, totale ${ultimo().total}`);
 
     scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
-    scegli("f_presciistica", "CORSO PRESCIISTICA");
-    scegli("f_assicurazione", "SPORT");
-    prova("sportCosta", totaleIndividuale() === 155, `totale ${totaleIndividuale()}`);
+    scegli("f_presciistica", "CORSO PRESCIISTICA - REALE TOTAL SPORT");
+    prova("presciSport", totaleIndividuale() === 120, `totale ${totaleIndividuale()}`);
     compila();
     await scrivi();
-    prova("sportSiSalva", ultimo() === "SPORT", `salvata ${ultimo()}`);
+    prova("salvaSport", !("insurance" in ultimo()) && ultimo().preski_type === "CORSO PRESCIISTICA - REALE TOTAL SPORT" && ultimo().total === 120,
+      `insurance ${"insurance" in ultimo()}, preski_type ${ultimo().preski_type}, totale ${ultimo().total}`);
 
     scegli("f_tipologia_tessera", "SOLO TESSERA - NO ASSICURAZIONE");
     scegli("f_presciistica", "CORSO PRESCIISTICA");
-    prova("tesseraSenza", !box.hidden && assicurazione() === "BASE" && totaleIndividuale() === 130,
-      `scelta ${assicurazione()}, totale ${totaleIndividuale()}`);
-    compila();
-    await scrivi();
-    prova("tesseraSenzaSiSalva", ultimo() === "BASE", `salvata ${ultimo()}`);
+    prova("tesseraSenza", totaleIndividuale() === 90, `totale ${totaleIndividuale()}`);
 
     scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
-    scegli("f_presciistica", "CORSO PRESCIISTICA");
-    scegli("f_assicurazione", "SPORT");
+    scegli("f_presciistica", "CORSO PRESCIISTICA - REALE TOTAL SPORT");
     scegli("f_presciistica", "");
-    prova("tolta", box.hidden && totaleIndividuale() === 40, `nascosta ${box.hidden}, totale ${totaleIndividuale()}`);
-    compila();
-    await scrivi();
-    prova("toltaSiSvuota", ultimo() === null, `salvata ${ultimo()}`);
-
-    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
-    scegli("f_presciistica", "CORSO PRESCIISTICA");
-    scegli("f_tipologia_tessera", "TESSERA ORDINARIA - REALE TOTAL SPORT");
-    prova("cambioTessera", assicurazione() === "SPORT" && totaleIndividuale() === 155,
-      `scelta ${assicurazione()}, totale ${totaleIndividuale()}`);
-    compila();
-    await scrivi();
-    prova("cambioTesseraNonSiSalva", ultimo() === null, `salvata ${ultimo()}`);
+    prova("tolta", totaleIndividuale() === 40 && nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
 
     await caricaSocio("M");
-    prova("riaperto", !box.hidden && assicurazione() === "SPORT" && totaleIndividuale() === 155,
-      `scelta ${assicurazione()}, totale ${totaleIndividuale()}`);
+    prova("riaperto", totaleIndividuale() === 120 && !nota().hidden, `totale ${totaleIndividuale()}, nota nascosta ${nota().hidden}`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));
