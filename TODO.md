@@ -22,6 +22,28 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Agevolazioni famiglia con l'assicurazione, al posto della tessera (PIANO approvato, TDD).**
+      L'utente: con le agevolazioni le assicurazioni ci sono già, e con la presciistica i conti
+      sbagliano; agevolazioni collegate alle assicurazioni ed esclusive con le tessere; il figlio di
+      un capofamiglia che ha pagato non ha la tessera obbligatoria, ma si contano quelli del nucleo;
+      con la presciistica con l'assicurazione la tessera non è obbligatoria. Decisioni: sceglie solo
+      il capofamiglia; prezzo = quota + persone × assicurazione (3 persone Base 50 + 3×20 = 110);
+      presciistica di chi è coperto dall'agevolazione «solo corso», voce «CORSO PRESCIISTICA -
+      FAMIGLIA» a 50 €. Persone lette dal nome («3 PERSONE», trigger come i viaggi degli abbonamenti).
+      Passi: schema (prices.people, card_price × persone, assicurazione per FAMIGLIA, voci «CON
+      ASSICURAZIONE» a 50/65/80 + Base una volta sola, vincolo tessera o agevolazione,
+      member_insurance()/card_holder() per liste, conteggi, Riepilogo e Gite); Soci (copertura:
+      tessera non obbligatoria, esclusività, nucleo contato, presciistica solo corso); Impostazioni
+      (assicurazione per FAMIGLIA, Paga il socio × persone); produzione: migrazione PRIMA del
+      deploy (la pagina nuova legge `people`). Push e dev chiesti.
+
+- [ ] 21/10: **Codice fiscale proposto anche senza scegliere il sesso.** L'utente: «quando inserisco
+      un nuovo socio perché non viene proposto un codice fiscale?». Oggi `controllaCF()`
+      (index.html ~riga 702) lo propone solo con cognome, nome, data, sesso scelto (non si salva) e un
+      luogo dove è nato almeno un altro socio col codice fiscale (il comune si ricava dai loro
+      codici: un elenco dei comuni non c'è). Proposta: senza sesso, prenderlo dai soci con lo stesso
+      nome (`sessoDelNome`, già usato per controllare), dicendolo nell'avviso. Da fare con TDD.
+
 - [ ] 21/10: **Impostazioni leggibili e nello stile del sito.** Fatto (TDD: ef07e87 RED, poi GREEN; online):
       nome della voce, dell'assicurazione e luogo della partenza in un campo che va a capo e cresce col
       testo (Invio non va a capo, spazi e a capo diventano uno spazio al salvataggio); nomi con «&amp;»

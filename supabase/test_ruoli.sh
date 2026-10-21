@@ -524,6 +524,8 @@ psql_ -c "delete from public.social_contacts; insert into public.social_contacts
 psql_ -c "insert into public.prices (category, name, price) values ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 15);"
 # La presciistica come in produzione prima del 21/10/2026: 90 € senza assicurazione.
 psql_ -c "insert into public.prices (category, name, price) values ('PRESCIISTICA', 'CORSO PRESCIISTICA', 90);"
+# Le agevolazioni famiglia come in produzione prima del 21/10: la Base dentro il prezzo.
+psql_ -c "insert into public.prices (category, name, price) values ('FAMIGLIA', '3 PERSONE CON ASSICURAZIONE', 110), ('FAMIGLIA', '3 PERSONE SENZA ASSICURAZIONE', 50);"
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
@@ -548,6 +550,15 @@ do $$ begin
   assert (select price = 75 and insurance = 'SPORT' and active and public.card_price(p) = 120 from public.prices p
            where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - REALE TOTAL SPORT'),
          'presciistica: attesa la voce con la Total Sport, 75 più 45 (120)';
+  assert (select price = 50 and insurance = 'BASE' and people = 3 and public.card_price(p) = 110 from public.prices p
+           where category = 'FAMIGLIA' and name = '3 PERSONE CON ASSICURAZIONE'),
+         'agevolazione: attesa la quota 50 più 3 × Base (110)';
+  assert (select price = 50 and insurance is null and people = 3 and public.card_price(p) = 50 from public.prices p
+           where category = 'FAMIGLIA' and name = '3 PERSONE SENZA ASSICURAZIONE'),
+         'agevolazione senza assicurazione: attesa la sola quota (50)';
+  assert (select price = 50 and insurance is null from public.prices
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - FAMIGLIA'),
+         'attesa la presciistica solo corso (50) per chi è coperto dall''agevolazione';
   assert (select hours from public.social_contacts) = 'dopo le 18', 'schema.sql ha perso gli orari del contatto';
   assert (select insurance is null and position is null from public.prices
            where name = 'TESSERA ORDINARIA - GLOBAL NEVE BASE'),
@@ -1056,6 +1067,76 @@ begin
   assert public.insurance_send('BASE', 21, array[senza]) = 1, 'tessera senza assicurazione: non è entrato nella lista Base';
 end $$;
 
+-- Agevolazioni famiglia: le sceglie il capofamiglia al posto della tessera e
+-- coprono lui e i familiari a carico, con l'assicurazione della voce (quota +
+-- persone × assicurazione). La presciistica con l'assicurazione comprende la
+-- tessera: chi ha solo lei è assicurato lo stesso. I tesserati (card_holder)
+-- sono anche loro, e la tessera compresa nella presciistica non si conta.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.prices (category, name, price, min_role, insurance) values
+  ('FAMIGLIA', 'PROVA 3 PERSONE CON ASSICURAZIONE', 50, 'utente', 'BASE'),
+  ('FAMIGLIA', 'PROVA 3 PERSONE SPORT', 50, 'utente', 'SPORT'),
+  ('FAMIGLIA', 'PROVA 4 PERSONE SENZA ASSICURAZIONE', 65, 'utente', null),
+  ('PRESCIISTICA', 'PROVA PRESCIISTICA - FAMIGLIA', 50, 'utente', null);
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, family_discount, preski_type) values
+  ('aaaaaaaa-0000-0000-0000-000000000020', 'ROSA', 'CAPO', now(), 'RSOCPA80A01F205X', 'PROVA 3 PERSONE CON ASSICURAZIONE', null),
+  ('aaaaaaaa-0000-0000-0000-000000000022', 'ROSA', 'SOLAPRESCI', now(), 'RSOSLP80A01F205X', null, 'PROVA PRESCIISTICA - SPORT'),
+  ('aaaaaaaa-0000-0000-0000-000000000023', 'VIOLA', 'CAPO', now(), 'VLICPA80A01F205X', 'PROVA 4 PERSONE SENZA ASSICURAZIONE', null);
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, payer_id, preski_type) values
+  ('aaaaaaaa-0000-0000-0000-000000000021', 'ROSA', 'FIGLIO', now(), 'RSOFGL80A01F205X',
+   'aaaaaaaa-0000-0000-0000-000000000020', 'PROVA PRESCIISTICA - FAMIGLIA'),
+  ('aaaaaaaa-0000-0000-0000-000000000024', 'VIOLA', 'FIGLIO', now(), 'VLIFGL80A01F205X',
+   'aaaaaaaa-0000-0000-0000-000000000023', null);
+set role authenticated;
+do $$
+declare
+  capo    constant uuid := 'aaaaaaaa-0000-0000-0000-000000000020';
+  figlio  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000021';
+  sola    constant uuid := 'aaaaaaaa-0000-0000-0000-000000000022';
+  capo2   constant uuid := 'aaaaaaaa-0000-0000-0000-000000000023';
+  figlio2 constant uuid := 'aaaaaaaa-0000-0000-0000-000000000024';
+begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin, come la pagina Soci
+  assert (select people from public.prices where name = 'PROVA 4 PERSONE SENZA ASSICURAZIONE') = 4,
+         'agevolazione: le persone non si leggono dal nome';
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
+         'agevolazione Base: attesi 50 + 3 × 20 = 110';
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA 3 PERSONE SPORT') = 185,
+         'agevolazione Sport: attesi 50 + 3 × 45 = 185';
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA 4 PERSONE SENZA ASSICURAZIONE') = 65,
+         'agevolazione senza assicurazione: attesa la sola quota';
+  begin
+    update public.members set card_type = 'PROVA TESSERA ORDINARIA' where id = capo;
+    raise exception 'ASSERZIONE: accettati tessera e agevolazione insieme';
+  exception when check_violation then null;
+  end;
+  assert (select count(*) from public.members m where m.id in (capo, figlio, sola, capo2, figlio2) and public.card_holder(m)) = 5,
+         'tesserati: chi è coperto senza tessera non conta';
+  assert (select card_holders from public.admin_summary)
+       = (select count(*) from public.members m where m.enrolled_at is not null and public.card_holder(m)),
+         'riepilogo: i tesserati non contano chi è coperto senza tessera';
+  assert (select count = 1 and price = 110 and total = 110 from public.card_counts where name = 'PROVA 3 PERSONE CON ASSICURAZIONE'),
+         'conteggi: l''agevolazione manca o ha il prezzo sbagliato';
+  assert not exists (select 1 from public.card_counts c
+                      where c.name = 'PROVA TESSERA ORDINARIA'
+                        and c.count <> (select count(*) from public.members m
+                                         where m.enrolled_at is not null and m.card_type = 'PROVA TESSERA ORDINARIA'
+                                           and not exists (select 1 from public.prices pp
+                                                            where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
+                                                              and pp.insurance is not null))),
+         'conteggi: la tessera compresa nella presciistica conta ancora';
+
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert (select insurance from public.insurance_members() where id = capo) = 'BASE', 'capofamiglia con l''agevolazione: non è da assicurare';
+  assert (select insurance from public.insurance_members() where id = figlio) = 'BASE', 'familiare coperto dall''agevolazione: non è da assicurare';
+  assert (select insurance from public.insurance_members() where id = sola) = 'SPORT', 'presciistica senza tessera: non è da assicurare';
+  assert not exists (select 1 from public.insurance_members() where id in (capo2, figlio2)),
+         'agevolazione senza assicurazione: il nucleo è da assicurare';
+  assert public.insurance_send('BASE', 30, array[capo, figlio]) = 2, 'agevolazione: il nucleo non è entrato nella lista Base';
+  assert public.insurance_send('SPORT', 30, array[sola]) = 1, 'presciistica senza tessera: non è entrato nella lista Sport';
+end $$;
+
 -- La ricerca dell'assicurazione si ferma a 20 risultati.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
@@ -1257,6 +1338,9 @@ begin
   assert (select total from public.season_breakdown
            where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - SPORT') = 120,
          'chiusura: presciistica contata senza l''assicurazione che comprende';
+  assert (select total from public.season_breakdown
+           where season = chiusa and category = 'CARD' and label = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
+         'chiusura: agevolazione famiglia non contata';
   assert not (select total_manual from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000009'),
          'chiusura: totale a mano non azzerato';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
