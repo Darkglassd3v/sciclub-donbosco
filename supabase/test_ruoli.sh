@@ -432,6 +432,7 @@ end $$;
 -- Da dove la pagina Soci conta i numeri tessera liberi: un intero da 1 in su,
 -- 21 di partenza (1-20 tenuti vuoti apposta per direttivo e famiglia).
 do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
   assert (select value from public.settings where key = 'card_gaps_from') = '21',
          'settings: card_gaps_from non parte da 21';
   begin

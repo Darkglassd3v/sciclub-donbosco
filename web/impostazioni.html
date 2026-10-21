@@ -131,6 +131,12 @@
           </tr></tfoot>
         </table>
       </div>
+      <label class="label mt-4" for="tessereDa">Numeri tessera liberi: in Soci si segnalano dal numero</label>
+      <div class="field has-addons">
+        <div class="control"><input class="input" id="tessereDa" inputmode="numeric" autocomplete="off" style="width: 7em"></div>
+        <div class="control"><button type="button" class="button is-link" id="btnSalvaTessereDa">Salva</button></div>
+      </div>
+      <p class="help">Sotto questo numero i posti sono tenuti vuoti apposta (direttivo e famiglia): non si segnalano.</p>
       </div>
     </section>
 
@@ -192,9 +198,10 @@
     el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
     el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
     el("btnAggiungiAss").addEventListener("click", aggiungiAssicurazione);
+    el("btnSalvaTessereDa").addEventListener("click", salvaTessereDa);
     // Il listino usa i nomi e i prezzi delle assicurazioni: prima loro.
     await caricaAssicurazioni();
-    await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte()]);
+    await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte(), caricaTessereDa()]);
   })();
 
   // ---------------------------------------------------------------------
@@ -279,6 +286,25 @@
       evento.returnValue = "";
     }
   });
+
+  // ---------------------------------------------------------------------
+  // Numeri tessera liberi: da dove la pagina Soci li conta (settings.card_gaps_from)
+  // ---------------------------------------------------------------------
+
+  async function caricaTessereDa() {
+    const { data, error } = await sb.from("settings").select("value").eq("key", "card_gaps_from");
+    if (error) { showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger"); return; }
+    el("tessereDa").value = data[0]?.value || "";
+  }
+
+  async function salvaTessereDa() {
+    const valore = el("tessereDa").value.trim();
+    // Come il vincolo settings_card_gaps_from_valid del database.
+    if (!/^[1-9]\d{0,8}$/.test(valore)) { showToast("Scrivi un numero intero da 1 in su (es. 21).", "is-warning"); return; }
+    const { error } = await sb.from("settings").update({ value: valore }).eq("key", "card_gaps_from");
+    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    showToast(`In Soci i numeri tessera liberi si contano dal ${valore}.`);
+  }
 
   // ---------------------------------------------------------------------
   // Listino prezzi
