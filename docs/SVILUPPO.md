@@ -186,6 +186,11 @@ Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la corre
 - Tessera → assicurazione: ORDINARIA NEVE BASE e SCONTATA NEVE BASE (nati prima del 1947) → Base;
   ORDINARIA NEVE PLUS → Plus; ORDINARIA GLOBAL SPORT e DIRETTIVO → Sport;
   SOLO TESSERA / SCONTATA NO ASSICURAZIONE → in nessuna lista.
+- Presciistica (dal 21/10/2026): si sceglie l'assicurazione, partendo da quella della tessera (la
+  Base se la tessera non ne ha); una diversa va in `members.insurance` e vale al posto di quella
+  della tessera nelle liste (`insurance_members()`, `insurance_send()`), e il totale somma la
+  differenza di prezzo. La svuotano `remove_from_season()` e `close_season()`. I due soci con la
+  presciistica di quel giorno sono passati alla Sport.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.

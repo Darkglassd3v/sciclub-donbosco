@@ -706,7 +706,7 @@ function totaliNucleo(capofamiglia, familiari = []) {
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price:card_price, min_role, trips, day")
+    .select("category, name, price:card_price, min_role, trips, day, insurance, insurance_paid")
     .eq("active", true)
     .order("category")
     .order("position", { nullsFirst: false })

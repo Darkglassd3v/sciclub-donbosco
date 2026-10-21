@@ -37,6 +37,9 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
 - **Abbonamenti gite**: premi **+ Aggiungi** sull'abbonamento. Se lo paga
   subito sul pullman, spunta **già pagato**.
 - **Corso**: sceglilo e poi scegli il **giorno** (sabato o domenica).
+- **Presciistica**: sceglila e sotto compare l'**assicurazione**, già messa su
+  quella della tessera (la Base se la tessera non ne ha). Se il socio vuole la
+  più completa, sceglila: accanto c'è quanto si aggiunge al totale.
 - **Partenze**: spunta da dove parte il sabato e la domenica.
 - **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
 - **Acconto** (nella parte Pagamento): quanto ha già dato.

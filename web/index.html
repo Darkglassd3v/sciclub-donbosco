@@ -251,6 +251,9 @@
         <div class="scelte-opzioni" id="listinoAbbonamenti"></div>
       </fieldset>
       <fieldset class="scelte" id="f_presciistica"><legend class="label">Presciistica</legend><div class="scelte-opzioni"></div></fieldset>
+      <!-- Con la presciistica si sceglie l'assicurazione (members.insurance): parte da quella della
+           tessera, o dalla Base se la tessera non ne ha; una più completa somma la differenza. -->
+      <fieldset class="scelte" id="f_assicurazione" hidden><legend class="label">Assicurazione con la presciistica</legend><div class="scelte-opzioni"></div></fieldset>
 
     <!-- Le partenze prima del corso, la domenica prima del sabato: come sul modulo di carta. -->
     <div class="columns mt-1">
@@ -385,10 +388,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261016d"></script>
+<script src="shared.js?v=20261021presci"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
+  let ASSICURAZIONI = [];  // insurances, dalla più economica: con la presciistica se ne sceglie una
   let familiariACarico = [];
   let accesso = null; // chi è collegato (getProfile), per tessere riservate e Togli
 
@@ -439,6 +443,11 @@
       accesso = await getProfile();
 
       PREZZI = await caricaPrezzi();
+      const { data: assicurazioni, error: erroreAssicurazioni } = await sb.from("insurances")
+        .select("code, name, price").order("price").order("name");
+      if (erroreAssicurazioni) throw erroreAssicurazioni;
+      ASSICURAZIONI = assicurazioni;
+      riempiAssicurazioni();
       Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
       riempiListinoAbbonamenti();
       disegnaAbbonamenti();
@@ -449,6 +458,10 @@
 
       Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
       el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
+      // La scelta dell'assicurazione dipende dalla presciistica e dalla tessera.
+      ["f_tipologia_tessera", "f_presciistica"].forEach((id) =>
+        el(id).addEventListener("change", () => { aggiornaAssicurazione(); ricalcola(); }));
+      el("f_assicurazione").addEventListener("change", ricalcola);
       el("f_acconto").addEventListener("input", ricalcola);
       el("f_totale_a_mano").addEventListener("change", () => { aggiornaTotaleMano({ daListino: true }); ricalcola(); });
       el("f_totale_manuale").addEventListener("input", ricalcola);
@@ -545,6 +558,59 @@
       r.required = conCorso;
       if (!conCorso) r.checked = false;
     });
+  }
+
+  /** Una riga per assicurazione; il prezzo accanto lo scrive aggiornaAssicurazione(). */
+  function riempiAssicurazioni() {
+    el("f_assicurazione").querySelector(".scelte-opzioni").replaceChildren(...ASSICURAZIONI.map((a) => {
+      const scelta = document.createElement("label");
+      scelta.className = "scelta";
+      scelta.innerHTML = `<input type="radio" name="f_assicurazione" value="${esc(a.code)}"><span>${esc(a.name)}</span><span class="prezzo"></span>`;
+      return scelta;
+    }));
+  }
+
+  /** La voce del listino della tessera scelta, con la sua assicurazione, o null. */
+  const tesseraScelta = () => (PREZZI.TESSERA || []).find((p) => p.name === nomeSelezionato("f_tipologia_tessera")) || null;
+
+  /**
+   * Quanto cambia il totale con l'assicurazione `codice` al posto di quella
+   * della tessera: la differenza di prezzo, o il prezzo intero se la tessera
+   * non ne ha. Niente se è la stessa, o se quella della tessera la paga il club
+   * (insurance_paid, il direttivo).
+   */
+  function differenzaAssicurazione(codice) {
+    const tessera = tesseraScelta();
+    if (!codice || codice === tessera?.insurance || tessera?.insurance_paid === false) return 0;
+    const prezzo = (c) => num(ASSICURAZIONI.find((a) => a.code === c)?.price);
+    return prezzo(codice) - prezzo(tessera?.insurance);
+  }
+
+  /**
+   * Con la presciistica compare la scelta dell'assicurazione: già su quella
+   * della tessera, o sulla Base (la più economica) se la tessera non ne ha, e
+   * accanto a ognuna quanto cambia il totale. Senza presciistica si svuota e
+   * vale di nuovo quella della tessera.
+   */
+  function aggiornaAssicurazione() {
+    const box = el("f_assicurazione"), conPresciistica = Boolean(nomeSelezionato("f_presciistica"));
+    const radio = [...box.querySelectorAll("input")];
+    box.hidden = !conPresciistica;
+    if (!conPresciistica) { radio.forEach((r) => { r.checked = false; }); return; }
+    if (!radio.some((r) => r.checked)) {
+      const predefinita = tesseraScelta()?.insurance || ASSICURAZIONI[0]?.code;
+      radio.forEach((r) => { r.checked = r.value === predefinita; });
+    }
+    radio.forEach((r) => {
+      const d = differenzaAssicurazione(r.value);
+      r.closest(".scelta").querySelector(".prezzo").textContent = d > 0 ? `+ ${fmt(d)}` : d < 0 ? `− ${fmt(-d)}` : "";
+    });
+  }
+
+  /** L'assicurazione da salvare (members.insurance): solo se diversa da quella della tessera, se no vuota. */
+  function assicurazioneDaSalvare() {
+    const codice = sceltaDi("f_assicurazione")?.value || null;
+    return codice && codice !== tesseraScelta()?.insurance ? codice : null;
   }
 
   function riempiPartenze(contenitore, luoghi) {
@@ -840,10 +906,11 @@
   // Totali
   // -------------------------------------------------------------------------
 
-  /** Il totale come lo dà il listino: voci scelte più abbonamenti. */
+  /** Il totale come lo dà il listino: voci scelte, abbonamenti e l'assicurazione scelta con la presciistica. */
   function totaleDaListino() {
     const voci = Object.keys(SELECT_CATEGORIE).reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
-    return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0);
+    return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0)
+      + differenzaAssicurazione(sceltaDi("f_assicurazione")?.value);
   }
 
   const totaleAMano = () => el("f_totale_a_mano").checked;
@@ -1140,6 +1207,9 @@
 
       Object.keys(SELECT_CATEGORIE).forEach((idSelect) =>
         selezionaPerNome(idSelect, socio[CAMPI_SELECT_DB[idSelect]]));
+      // Vuota = quella della tessera: aggiornaAssicurazione() la sceglie da sé.
+      el("f_assicurazione").querySelectorAll("input").forEach((r) => (r.checked = r.value === socio.insurance));
+      aggiornaAssicurazione();
       el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === socio.course_day));
       aggiornaGiornoCorso();
       el("f_totale_a_mano").checked = Boolean(socio.total_manual);
@@ -1432,6 +1502,7 @@
       // pass_type non si manda: lo scrive il database dagli abbonamenti
       // (member_passes), vedi sotto.
       preski_type: nomeSelezionato("f_presciistica"),
+      insurance: assicurazioneDaSalvare(),
       course_type: nomeSelezionato("f_tipologia_corso"),
       course_day: sceltaDi("f_giorno_corso")?.value || null,
       saturday_departure: partenzeSelezionate("check_sabato"),
@@ -1514,6 +1585,7 @@
     codiciGiaLetti.clear();
     el("memberForm").reset();
     aggiornaGiornoCorso();
+    aggiornaAssicurazione();
     aggiornaTotaleMano();
     el("f_id").value = "";
     familiariACarico = [];
@@ -1611,6 +1683,7 @@
       ["Tessera", [["Numero tessera", numeroTessera()], ["Tessera", nomeSelezionato("f_tipologia_tessera")],
         ["Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")]]],
       ["Gite e corsi", [["Abbonamenti", abbonamenti], ["Presciistica", nomeSelezionato("f_presciistica")],
+        ["Assicurazione", ASSICURAZIONI.find((a) => a.code === sceltaDi("f_assicurazione")?.value)?.name],
         ["Partenza della domenica", partenzeSelezionate("check_domenica")],
         ["Partenza del sabato", partenzeSelezionate("check_sabato")],
         ["Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)]]],
