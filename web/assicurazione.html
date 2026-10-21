@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assicurazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016d">
+  <link rel="stylesheet" href="brand.css?v=20261022errori">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
 
@@ -167,7 +167,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021famiglia"></script>
+<script src="shared.js?v=20261022cf"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
@@ -288,19 +288,17 @@
 
   async function scaricaTutte() {
     const decorrenza = el("decorrenza").value;
-    if (!decorrenza) { showToast("Scrivi la data di decorrenza.", "is-danger"); el("decorrenza").focus(); return; }
+    if (!decorrenza) { segnaErrore(el("decorrenza"), "Scrivi la data di decorrenza."); return; }
     const liste = [];
     for (const t of TIPI.filter((x) => pronti(x).length)) {
       const input = el("numero_" + t.kind);
       const numero = Number(input.value);
       if (!Number.isInteger(numero) || numero < 1) {
-        showToast(`Scrivi il numero della lista ${t.nome}: 1 o più.`, "is-danger");
-        input.focus();
+        segnaErrore(input, `Scrivi il numero della lista ${t.nome}: 1 o più.`);
         return;
       }
       if (listeMandate.some((l) => l.kind === t.kind && l.number === numero)) {
-        showToast(`La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`, "is-danger");
-        input.focus();
+        segnaErrore(input, `La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`);
         return;
       }
       liste.push({ t, numero, soci: pronti(t) });

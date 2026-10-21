@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Social — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016d">
+  <link rel="stylesheet" href="brand.css?v=20261022errori">
   <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -529,7 +529,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021famiglia"></script>
+<script src="shared.js?v=20261022cf"></script>
 <script src="social-templates.js?v=20261016calendario"></script>
 <script>
   const el = (id) => document.getElementById(id);
@@ -746,7 +746,13 @@
   /** Prima di salvare: se un contatto tolto sta su post non pubblicati, lo si chiede. */
   function salvaRubrica() {
     const righe = rubricaDaForm();
-    if (righe.some((c) => !c.name || !c.phone)) { showToast("Ogni contatto vuole nome e telefono.", "is-warning"); return; }
+    if (righe.some((c) => !c.name || !c.phone)) {
+      // Il primo nome o telefono vuoto di una riga cominciata.
+      const vuoto = [...el("righeContatti").children].map((riga) => [...riga.querySelectorAll("input.input")])
+        .filter((campi) => campi.some((c) => c.value.trim())).flatMap((campi) => campi.slice(0, 2)).find((c) => !c.value.trim());
+      segnaErrore(vuoto, "Ogni contatto vuole nome e telefono.");
+      return;
+    }
     const inUso = {};  // id → quanti post non pubblicati lo mostrano
     for (const p of posts) if (!p.published_at) for (const id of p.contacts || []) inUso[id] = (inUso[id] || 0) + 1;
     const restano = new Set(righe.map((c) => c.id));
@@ -1196,11 +1202,16 @@
     const riga = daForm();
     // Un post può essere solo sottotesto; la gita ha sempre la meta.
     if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
-      showToast(riga.kind === "gita" ? "Scrivi la meta." : "Scrivi il titolo o il sottotesto.", "is-warning");
+      segnaErrore(el("fTitolo"), riga.kind === "gita" ? "Scrivi la meta." : "Scrivi il titolo o il sottotesto.");
       return;
     }
-    if (riga.kind === "gita" && !riga.event_date) { showToast("Scegli il giorno della gita nel calendario: decide anche il colore.", "is-warning"); return; }
-    if (riga.kind === "sponsor" && !riga.sponsor_id) { showToast("Scegli lo sponsor.", "is-warning"); return; }
+    if (riga.kind === "gita" && !riga.event_date) { segnaErrore(el("fData"), "Scegli il giorno della gita nel calendario: decide anche il colore."); return; }
+    if (riga.kind === "sponsor" && !riga.sponsor_id) { segnaErrore(el("fSponsor"), "Scegli lo sponsor."); return; }
+    // Prezzi in euro interi o con i 50 centesimi («€ 12,50»; «€ 1.200» sono migliaia).
+    const centesimi = (testo) => [...testo.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
+    const prezzoSbagliato = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
+      .find((c) => c && centesimi(c.value));
+    if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo è in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
     setLoading(true);
     try {
       const { data, error } = aperto && aperto.id
@@ -1720,7 +1731,7 @@
 
   async function salvaSponsor() {
     const riga = sponsorDaForm(), id = el("sScegli").value;
-    if (!riga.name) { showToast("Scrivi il nome dello sponsor.", "is-warning"); return; }
+    if (!riga.name) { segnaErrore(el("sNome"), "Scrivi il nome dello sponsor."); return; }
     setLoading(true);
     try {
       const { data, error } = id

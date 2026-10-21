@@ -125,6 +125,18 @@ textarea:focus-visible,
 .select:not(.is-multiple) { height: auto; }
 .select:not(.is-multiple):not(.is-loading)::after { border-color: var(--blu); }
 
+/* Campo con un errore (segnaCampo() in shared.js): bordo rosso finché non lo si
+ * cambia. Un gruppo di scelte (radio) si borda tutto intorno. */
+.campo-errore.input, .campo-errore.textarea, .select select.campo-errore, input.campo-errore {
+  border-color: var(--errore) !important;
+  box-shadow: 0 0 0 2px rgba(179, 38, 30, .25) !important;
+}
+fieldset.campo-errore, [role="radiogroup"].campo-errore {
+  outline: 2px solid var(--errore);
+  outline-offset: 6px;
+  border-radius: var(--raggio);
+}
+
 /* Caselle di spunta: quelle del browser sono di 13px, troppo piccole da
  * vedere e da centrare. Tutta l'etichetta resta cliccabile. */
 .checkbox { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tocco); }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016d">
+  <link rel="stylesheet" href="brand.css?v=20261022errori">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -200,7 +200,11 @@
       <div class="column is-4"><label class="label" for="f_luogo_nascita">Città di nascita</label><input class="input" id="f_luogo_nascita"></div>
       <div class="column is-3"><label class="label" for="f_provincia_nascita">Provincia di nascita</label><input class="input" id="f_provincia_nascita" maxlength="2"></div>
       <div class="column is-5">
-        <label class="label" for="f_codice_fiscale">Codice fiscale</label><input class="input" id="f_codice_fiscale" maxlength="16" autocomplete="off">
+        <label class="label" for="f_codice_fiscale">Codice fiscale</label>
+        <div class="field has-addons mb-0">
+          <div class="control is-expanded"><input class="input" id="f_codice_fiscale" maxlength="16" autocomplete="off"></div>
+          <div class="control"><button type="button" class="button is-link" id="btnCalcolaCF">Calcola</button></div>
+        </div>
         <div id="avvisoCF" class="avviso-cf" role="status" hidden></div>
       </div>
       <div class="column is-4"><label class="label" for="f_data_nascita">Data di nascita</label><input class="input" type="date" id="f_data_nascita"></div>
@@ -286,12 +290,12 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Pagamento <span class="cosa">Acconto, totale, chi paga</span></h2>
     <div class="corpo">
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.01" id="f_acconto" value="0"></div>
+      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.5" id="f_acconto" value="0"></div>
       <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
            listino a ogni salvataggio, e lo sconto si perdeva. -->
       <div class="column is-4">
         <label class="checkbox totale-mano" for="f_totale_a_mano"><input type="checkbox" id="f_totale_a_mano"> Totale scritto a mano (€)</label>
-        <input class="input" type="number" step="0.01" min="0" id="f_totale_manuale" disabled aria-label="Totale scritto a mano, in euro">
+        <input class="input" type="number" step="0.5" min="0" id="f_totale_manuale" disabled aria-label="Totale scritto a mano, in euro">
         <p id="notaTotaleMano" class="help" hidden>Non si ricalcola dal listino. Un abbonamento aggiunto o tolto qui lo cambia del suo prezzo.</p>
       </div>
     </div>
@@ -390,7 +394,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021famiglia"></script>
+<script src="shared.js?v=20261022cf"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
@@ -484,6 +488,7 @@
       // Luogo e sesso servono al codice fiscale: il comune atteso e la data da rifare.
       ["f_luogo_nascita", "f_provincia_nascita"].forEach((id) => el(id).addEventListener("change", controllaCF));
       document.querySelectorAll("input[name=sessoCF]").forEach((r) => r.addEventListener("change", controllaCF));
+      el("btnCalcolaCF").addEventListener("click", calcolaCodiceFiscale);
       // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
       el("f_cognome").addEventListener("input", aggiornaFascia);
       el("f_nome").addEventListener("input", aggiornaFascia);
@@ -717,11 +722,26 @@
   /**
    * Confronta il codice fiscale con l'anagrafica (codicefiscale.js), anche col
    * comune dei soci nati nello stesso posto; se il campo è vuoto, propone il
-   * codice calcolato.
+   * codice calcolato. L'avviso non dice il motivo: «Codice fiscale errato» e,
+   * se si può, il codice proposto (mostraAvvisoCF).
    */
   let turnoCF = 0;
   async function controllaCF() {
     const turno = ++turnoCF;
+    const scritto = el("f_codice_fiscale").value.trim();
+    // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
+    // controllo più nuovo (vince quello): la risposta non serve più.
+    const vecchio = () => turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto;
+    if (!scritto) {
+      // Campo vuoto: il codice dai dati, se ci sono tutti (il sesso anche dal nome).
+      const { anagrafica, mancano } = await datiPerCF();
+      const comune = !mancano.length && await comuneDelLuogo(anagrafica.luogo, 1);
+      if (vecchio()) return;
+      // Per un posto mai visto non si propone niente.
+      const proposto = comune && calcolaCF({ ...anagrafica, comune });
+      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), proposto && { ok: false, suggerito: proposto }, controllaDoppioni);
+      return;
+    }
     const anagrafica = {
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
@@ -730,47 +750,84 @@
       // Il sesso lo indica chi compila e non si salva.
       sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
     };
-    const scritto = el("f_codice_fiscale").value.trim();
     // Il comune serve solo per controllare un codice di 15 o 16 caratteri (uno
-    // più corto o più lungo si segnala e basta) o per proporne uno intero, che
-    // vuole anche cognome, nome, data e sesso. Per dire che il comune di un
-    // codice scritto è sbagliato servono almeno tre soci nati lì; per proporre
-    // un codice a campo vuoto basta uno.
+    // più corto o più lungo è errato e basta). Per dire che il comune di un
+    // codice scritto è sbagliato servono almeno tre soci nati lì.
     const lunghezza = normalizzaCF(scritto).length;
-    const serveComune = scritto
-      ? lunghezza === 15 || lunghezza === 16
-      : Boolean(anagrafica.cognome.trim() && anagrafica.nome.trim() && anagrafica.dataNascita && anagrafica.sesso);
-    const comune = serveComune ? await comuneDelLuogo(anagrafica.luogo, scritto ? 3 : 1) : null;
-    // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
-    // controllo più nuovo (vince quello): questa risposta non serve più.
-    if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
-    if (scritto) {
-      let esito = verificaCF(scritto, { ...anagrafica, comune });
-      // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
-      // con lo stesso nome, dicendolo nell'avviso. Solo per il giorno
-      // illeggibile (sessoProbabile): uno leggibile dice il sesso meglio. La
-      // richiesta parte solo se un sesso qualunque darebbe una proposta.
-      const nome = anagrafica.nome.trim().toUpperCase();
-      if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome
-          && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: "M" })?.suggerito) {
-        const sesso = await sessoDelNome(nome);
-        if (turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto) return;
-        const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: sesso });
-        if (conSesso?.suggerito) {
-          conSesso.problemi.push(`Sesso preso dai soci che si chiamano ${nome} (${sesso}): se non è giusto, sceglilo qui sotto.`);
-          esito = conSesso;
-        }
-      }
-      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito);
+    const comune = lunghezza === 15 || lunghezza === 16 ? await comuneDelLuogo(anagrafica.luogo, 3) : null;
+    if (vecchio()) return;
+    let esito = verificaCF(scritto, { ...anagrafica, comune });
+    // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
+    // con lo stesso nome. Solo per il giorno illeggibile (sessoProbabile): uno
+    // leggibile dice il sesso meglio. La richiesta parte solo se un sesso
+    // qualunque darebbe una proposta.
+    const nome = anagrafica.nome.trim().toUpperCase();
+    if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome
+        && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: "M" })?.suggerito) {
+      const sesso = await sessoDelNome(nome);
+      if (vecchio()) return;
+      const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: sesso });
+      if (conSesso?.suggerito) esito = conSesso;
+    }
+    // Sbagliato: con tutti i dati si propone il codice che ne viene, al posto
+    // della correzione del solo codice scritto.
+    if (esito && !esito.ok) {
+      const { anagrafica: dati, mancano } = await datiPerCF();
+      const comuneDati = !mancano.length && await comuneDelLuogo(dati.luogo, 1);
+      if (vecchio()) return;
+      const calcolato = comuneDati && calcolaCF({ ...dati, comune: comuneDati });
+      if (calcolato && calcolato !== normalizzaCF(scritto)) esito = { ...esito, suggerito: calcolato };
+    }
+    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito, controllaDoppioni);
+  }
+
+  /**
+   * I dati per calcolare il codice fiscale dalla scheda. Il sesso non scelto si
+   * prende dai soci con lo stesso nome (sessoDelNome); quello che manca torna in
+   * `mancano`, come [campo, nome].
+   */
+  async function datiPerCF() {
+    const anagrafica = {
+      cognome: el("f_cognome").value,
+      nome: el("f_nome").value,
+      dataNascita: el("f_data_nascita").value,
+      luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
+      sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
+    };
+    const mancano = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
+      .filter(([id]) => !el(id).value.trim()).map(([id, nome]) => [el(id), nome]);
+    const nome = anagrafica.nome.trim().toUpperCase();
+    if (!anagrafica.sesso && nome) anagrafica.sesso = await sessoDelNome(nome);
+    if (!anagrafica.sesso) mancano.push([document.querySelector("input[name=sessoCF]"), "sesso"]);
+    return { anagrafica, mancano };
+  }
+
+  /** «Calcola»: il codice fiscale dai dati della scheda, o quali dati mancano (bordati di rosso). */
+  async function calcolaCodiceFiscale() {
+    const turno = ++turnoCF;
+    const campo = el("f_codice_fiscale"), box = el("avvisoCF");
+    const { anagrafica, mancano } = await datiPerCF();
+    if (turno !== turnoCF) return;
+    if (mancano.length) {
+      mancano.forEach(([c]) => segnaCampo(c));
+      mostraAvvisoCF(box, campo, { ok: false, messaggio: `Per calcolarlo mancano: ${mancano.map(([, nome]) => nome).join(", ")}.` });
       return;
     }
-    // Per un posto mai visto non si propone niente.
-    const proposto = comune && calcolaCF({ ...anagrafica, comune });
-    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), proposto && {
-      ok: false,
-      problemi: ["Codice fiscale calcolato dai dati della scheda: controllalo sulla tessera sanitaria."],
-      suggerito: proposto,
-    }, controllaDoppioni);
+    const comune = await comuneDelLuogo(anagrafica.luogo, 1);
+    if (turno !== turnoCF) return;
+    if (!comune) {
+      segnaCampo(el("f_luogo_nascita"));
+      mostraAvvisoCF(box, campo, { ok: false, messaggio: `Non conosco il codice del comune di ${anagrafica.luogo}: `
+        + "nessun socio nato lì ha il codice fiscale. Copialo dalla tessera sanitaria." });
+      return;
+    }
+    const proposto = calcolaCF({ ...anagrafica, comune });
+    if (proposto === normalizzaCF(campo.value)) {
+      mostraAvvisoCF(box, campo, null);
+      showToast("Il codice fiscale scritto torna con i dati.");
+      return;
+    }
+    mostraAvvisoCF(box, campo, { ok: false, suggerito: proposto }, controllaDoppioni);
   }
 
   /**
@@ -1507,23 +1564,22 @@
   async function salva() {
     const form = el("memberForm");
     if (el("pagaFamiliare").checked && nomeSelezionato("f_agevolazioni_famiglia")) {
-      showToast("L'agevolazione famiglia la sceglie il capofamiglia: chi è a carico ne è già coperto.", "is-danger");
+      segnaErrore(el("f_agevolazioni_famiglia"), "L'agevolazione famiglia la sceglie il capofamiglia: chi è a carico ne è già coperto.");
       return;
     }
     if (!nomeSelezionato("f_tipologia_tessera") && nucleoPieno()) {
-      showToast(nucleoPieno(), "is-danger");
+      segnaErrore(el("f_tipologia_tessera"), nucleoPieno());
       return;
     }
     if (copertura()?.famiglia && voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) {
-      showToast("Con l'agevolazione famiglia tessera e assicurazione ci sono già: la presciistica è solo il corso.", "is-danger");
+      segnaErrore(el("f_presciistica"), "Con l'agevolazione famiglia tessera e assicurazione ci sono già: la presciistica è solo il corso.");
       return;
     }
     if (!form.checkValidity()) { form.reportValidity(); return; }
     // Senza questo controllo "La paga un familiare" senza nome si salvava
     // come "paga da sé", senza dire niente.
     if (el("pagaFamiliare").checked && !el("f_payer_id").value) {
-      showToast("Scegli dall'elenco il familiare che paga, oppure segna «Paga da sé».", "is-danger");
-      el("f_payerDisplay").focus();
+      segnaErrore(el("f_payerDisplay"), "Scegli dall'elenco il familiare che paga, oppure segna «Paga da sé».");
       return;
     }
 
@@ -1820,8 +1876,7 @@
   async function scaricaScheda() {
     const nome = nomeNelModulo();
     if (!nome) {
-      showToast("Scrivi almeno cognome e nome, poi scarica la scheda.", "is-danger");
-      el("f_cognome").focus();
+      segnaErrore(el(el("f_cognome").value.trim() ? "f_nome" : "f_cognome"), "Scrivi almeno cognome e nome, poi scarica la scheda.");
       return;
     }
     const pulsante = el("btnScarica");
