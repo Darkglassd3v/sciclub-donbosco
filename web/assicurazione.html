@@ -433,7 +433,10 @@
       paginaDi[t.kind] = pagina;
       disegnaDaAssicurare();
       el("elencoDa").querySelector(`tr.gruppo[data-kind="${t.kind}"]`)?.scrollIntoView({ block: "start" });
-      el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"] ${pulsante}:not([disabled])`)?.focus({ preventScroll: true });
+      // All'ultima (o alla prima) pagina quel pulsante è spento: allora l'altro.
+      const pagine = el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`);
+      (pagine?.querySelector(`${pulsante}:not([disabled])`) || pagine?.querySelector("button:not([disabled])"))
+        ?.focus({ preventScroll: true });
     };
     const nonSalvati = [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
       const s = daAssicurare.find((d) => d.id === tr.dataset.id);
