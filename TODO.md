@@ -22,12 +22,13 @@
 
 ## Richieste nuove
 
-- [ ] 21/10: **Assicurazione: «Da assicurare» a pagine.** Con tanti soci la lista allunga la pagina.
-      Piano approvato: 25 per pagina (chiesto dall'utente), per tipo (Base e Sport ognuno le sue),
-      «‹ Indietro · 26–50 di 134 · Avanti ›» sotto il gruppo; nel titolo del gruppo quanti senza codice fiscale; dopo Salva
-      si resta sulla pagina, lista accorciata = ultima pagina che c'è; codice fiscale scritto e non
-      salvato: `chiedi()` prima di cambiare pagina. Excel e «Segna come assicurati» sempre su tutti.
-      TDD con `test-browser/assicurazione.js`; push e dev allineato chiesti dall'utente.
+- [ ] 21/10: **Assicurazione: «Da assicurare» a pagine.** Fatto (TDD: b156014 RED, 3ec5114 GREEN, poi il
+      fuoco all'ultima pagina; online): 25 per pagina, una per tipo, «‹ Indietro · 26–50 di 60 ·
+      Avanti ›» sotto il gruppo; il titolo dice quanti senza codice fiscale; dopo Salva si resta sulla
+      pagina; lista accorciata = ultima pagina; codice fiscale scritto e non salvato: `chiedi()` prima
+      di cambiare pagina. Excel e «Segna come assicurati» prendono tutti. Resta (Basso, c'era già):
+      Salva su una riga ridisegna la lista e perde un codice scritto e non salvato su un'altra riga.
+      Da provare sul sito vero con un account `assicurazione`.
 
 - [ ] 21/10: **Presciistica in due voci del listino.** Fatto (TDD, commit 442df28 RED, 42203e0 GREEN;
       online e in produzione): la presciistica comprende tessera, quota CONI e assicurazione, come
