@@ -343,9 +343,9 @@
     const sotto = apriSotto(id, `
       <div class="modifica-importi">
         <div><label class="label" for="quota_${id}">Quota (€)</label>
-          <input class="input" type="number" step="0.01" min="0" id="quota_${id}" value="${num(socio.total)}"></div>
+          <input class="input" type="number" step="0.5" min="0" id="quota_${id}" value="${num(socio.total)}"></div>
         <div><label class="label" for="versato_${id}">Già versato (€)</label>
-          <input class="input" type="number" step="0.01" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
+          <input class="input" type="number" step="0.5" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
         <div class="motivo"><label class="label" for="motivo_${id}">Motivo*</label>
           <input class="input" id="motivo_${id}" maxlength="200" autocomplete="off"
                  placeholder="Es. rimborso corso: fatte 2 lezioni su 8"></div>
@@ -363,9 +363,10 @@
     const quota = el("quota_" + socio.id).value;
     const versato = el("versato_" + socio.id).value;
     const motivo = el("motivo_" + socio.id).value.trim();
-    if (quota === "" || versato === "" || num(quota) < 0 || num(versato) < 0) {
-      const sbagliato = quota === "" || num(quota) < 0 ? "quota_" : "versato_";
-      segnaErrore(el(sbagliato + socio.id), "Quota e già versato: scrivi una cifra, zero o più.");
+    // Euro interi o con i 50 centesimi, da zero in su (step e min del campo).
+    const sbagliato = ["quota_", "versato_"].map((p) => el(p + socio.id)).find((c) => c.value === "" || !c.checkValidity());
+    if (sbagliato) {
+      segnaErrore(sbagliato, "Quota e già versato: euro interi o con 50 centesimi (es. 12 o 12,50), zero o più.");
       return;
     }
     if (!motivo) {

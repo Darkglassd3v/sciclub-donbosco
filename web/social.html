@@ -1207,6 +1207,11 @@
     }
     if (riga.kind === "gita" && !riga.event_date) { segnaErrore(el("fData"), "Scegli il giorno della gita nel calendario: decide anche il colore."); return; }
     if (riga.kind === "sponsor" && !riga.sponsor_id) { segnaErrore(el("fSponsor"), "Scegli lo sponsor."); return; }
+    // Prezzi in euro interi o con i 50 centesimi («€ 12,50»; «€ 1.200» sono migliaia).
+    const centesimi = (testo) => [...testo.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
+    const prezzoSbagliato = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
+      .find((c) => c && centesimi(c.value));
+    if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo è in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
     setLoading(true);
     try {
       const { data, error } = aperto && aperto.id

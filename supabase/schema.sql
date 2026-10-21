@@ -1228,14 +1228,15 @@ begin
   on conflict (category, name) do nothing;
 end $$;
 
--- Prezzi in euro interi (15/10/2026): nel listino e nelle assicurazioni non
--- ci sono centesimi, e uno scritto per sbaglio sballerebbe i totali.
+-- Prezzi in euro interi o con i 50 centesimi (22/10/2026, regola di tutto il
+-- sito; prima solo interi): altri centesimi scritti per sbaglio sballerebbero
+-- i totali.
 alter table public.prices drop constraint if exists prices_price_valid;
 alter table public.prices add constraint prices_price_valid
-  check (price >= 0 and price = trunc(price));
+  check (price >= 0 and price * 2 = trunc(price * 2));
 alter table public.insurances drop constraint if exists insurances_price_valid;
 alter table public.insurances add constraint insurances_price_valid
-  check (price >= 0 and price = trunc(price));
+  check (price >= 0 and price * 2 = trunc(price * 2));
 
 -- Quello che paga il socio per una voce del listino: il prezzo, più quello
 -- dell'assicurazione se la tessera ne dà una e non la paga il club (per ogni
