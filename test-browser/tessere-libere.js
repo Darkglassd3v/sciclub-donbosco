@@ -7,6 +7,8 @@
 // - Il socio aperto non occupa il suo numero vecchio: cambiato, quello torna libero.
 // - Numeri con lettere non contano (come next_card_number).
 // - Impostazione illeggibile: niente riga, invece dei posti del direttivo come liberi.
+// - La riga dice «NUMERI TESSERA LIBERI PROPOSTI: …»; senza numeri liberi non si vede
+//   proprio (display, non solo l'attributo hidden: .help di Bulma lo batteva).
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const LISTINO = [{ category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" }];
@@ -28,8 +30,9 @@
 
   const aspetta = (ms) => new Promise((fine) => setTimeout(fine, ms));
   const riga = () => el("tessereLibere");
-  // Quello che la riga elenca, senza «Numeri liberi:»; vuoto se la riga non si vede.
-  const liberi = () => (riga() && !riga().hidden ? riga().textContent.replace(/^[^:]*:\s*/, "").trim() : "");
+  // Quello che la riga elenca, senza «NUMERI TESSERA LIBERI PROPOSTI:»; vuoto se la riga non si vede.
+  const siVede = () => riga() && getComputedStyle(riga()).display !== "none";
+  const liberi = () => (siVede() ? riga().textContent.replace(/^[^:]*:\s*/, "").trim() : "");
   const scrivi = (valore) => {
     el("f_numero_tessera").value = valore;
     el("f_numero_tessera").dispatchEvent(new Event("input", { bubbles: true }));
@@ -43,6 +46,7 @@
     prova("proposto", el("f_numero_tessera").value === "38" && liberi() === "36",
       `numero «${el("f_numero_tessera").value}», liberi «${liberi()}»`);
     prova("rosso", getComputedStyle(riga()).color === "rgb(179, 38, 30)", `colore ${getComputedStyle(riga()).color}`);
+    prova("testo", riga().textContent.startsWith("NUMERI TESSERA LIBERI PROPOSTI: "), `«${riga().textContent}»`);
     scrivi("36");
     prova("riempito", liberi() === "", `liberi «${liberi()}»`);
     scrivi("45");
