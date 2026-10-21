@@ -23,7 +23,7 @@ trap 'kill "$SERVER" 2>/dev/null; rm -rf "$TMP"' EXIT
 for _ in $(seq 50); do (echo > "/dev/tcp/127.0.0.1/$PORTA") 2>/dev/null && break; sleep .1; done
 
 falliti=0
-for prova in "index.html scheda-socio.js" "index.html doppioni.js" "social.html post-rubrica.js"; do
+for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html presciistica.js" "social.html post-rubrica.js"; do
   read -r pagina script <<< "$prova"
   # Una copia della pagina per prova, accanto all'originale: i percorsi relativi restano giusti.
   copia="prova-${script%.js}.html"
