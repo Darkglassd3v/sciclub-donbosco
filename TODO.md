@@ -22,6 +22,12 @@
 
 ## Richieste nuove
 
+- [ ] 21/10: **Impostazioni leggibili e nello stile del sito, poi campi che perdono il valore.**
+      L'utente: il nome nel listino è tagliato («deve vedersi il nome completo, anche su due righe»),
+      la pagina è brutta e non segue la grafica del resto del sito; poi controllare in tutto il sito
+      i campi che, con valori troppo lunghi o non previsti, fanno sparire il valore del record. TDD
+      sempre; prima Impostazioni con commit, poi il resto; push e dev allineato chiesti.
+
 - [ ] 21/10: **Assicurazione: «Da assicurare» a pagine.** Fatto (TDD: b156014 RED, 3ec5114 GREEN, poi il
       fuoco all'ultima pagina; online): 25 per pagina, una per tipo, «‹ Indietro · 26–50 di 60 ·
       Avanti ›» sotto il gruppo; il titolo dice quanti senza codice fiscale; dopo Salva si resta sulla
