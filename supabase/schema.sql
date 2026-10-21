@@ -1338,9 +1338,10 @@ as $$
     (select p.insurance from public.prices p where p.category = 'PRESCIISTICA' and p.name = m.preski_type),
     (select p.insurance from public.prices p where p.category = 'TESSERA' and p.name = m.card_type),
     (select p.insurance from public.prices p where p.category = 'FAMIGLIA' and p.name = m.family_discount),
+    -- Chi ha la sua tessera (nucleo pieno) non è coperto dal capofamiglia.
     (select p.insurance from public.members c
        join public.prices p on p.category = 'FAMIGLIA' and p.name = c.family_discount
-      where c.id = m.payer_id and c.enrolled_at is not null));
+      where c.id = m.payer_id and c.enrolled_at is not null and m.card_type is null));
 $$;
 
 comment on function public.member_insurance(public.members) is 'Assicurazione del socio: della presciistica, della tessera, dell''agevolazione o di quella del capofamiglia.';
