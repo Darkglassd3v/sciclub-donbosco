@@ -220,6 +220,10 @@ della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ord
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
 - [ ] Provare sul sito vero due operatori sullo stesso socio: aprire la scheda in Soci, segnare un
       acconto da Pagamenti, poi Salva in Soci: deve dire "Socio NON salvato" e non toccare niente.
+- [ ] Provare sul sito vero l'assicurazione con la presciistica (dal 21/10, schema già in
+      produzione): aprire COLOMBA o MARENGO, deve esserci la Reale Total Sport; in Assicurazione
+      devono stare fra gli Sport. Un socio nuovo con presciistica: Base proposta, la Total Sport
+      aggiunge 25 € al totale; cambiando tessera la scelta segue quella della tessera.
 - [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
       cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al

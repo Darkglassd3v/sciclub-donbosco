@@ -147,6 +147,7 @@ node ricerca/test-ricerca.js              # controlla la logica della ricerca
 node web/test-social.js                   # controlla testi, prezzo facoltativo, contatti e UTM dei post
 node web/test-codicefiscale.js            # controlla il validatore del codice fiscale
 node web/test-stampe.js                   # controlla i fogli delle Stampe
+bash test-browser/esegui.sh               # le pagine vere in Chrome, con un Supabase finto
 ./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```
 

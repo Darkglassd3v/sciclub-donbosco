@@ -171,6 +171,13 @@ Test senza browser: `node web/test-social.js`, `node web/test-stampe.js`,
 prima di pubblicare (`web/test-*.js` e quello della ricerca): se uno fallisce il sito resta com'era.
 Nel sito pubblicato i file dei test non ci sono.
 
+Prove nel browser: `bash test-browser/esegui.sh` apre le pagine vere in Chrome headless con un
+client Supabase finto (`test-browser/fake-supabase.js`) che risponde quando e come dice la prova:
+servono per quello che i test node non vedono, come le risposte che arrivano in ordine sparso.
+Una prova è un file `.js` che imposta `FINTO.risposta` e `FINTO.ritardo`, usa la pagina e scrive
+l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenco in `esegui.sh`.
+Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la correzione.
+
 ## Regole decise con il direttivo (30/09/2026)
 
 - Assicurazioni, in ordine di copertura: Base 35 €, Neve Plus 50 €, Global Sport 65 €. Dal 14/10/2026:
@@ -179,6 +186,11 @@ Nel sito pubblicato i file dei test non ci sono.
 - Tessera → assicurazione: ORDINARIA NEVE BASE e SCONTATA NEVE BASE (nati prima del 1947) → Base;
   ORDINARIA NEVE PLUS → Plus; ORDINARIA GLOBAL SPORT e DIRETTIVO → Sport;
   SOLO TESSERA / SCONTATA NO ASSICURAZIONE → in nessuna lista.
+- Presciistica (dal 21/10/2026): si sceglie l'assicurazione, partendo da quella della tessera (la
+  Base se la tessera non ne ha); una diversa va in `members.insurance` e vale al posto di quella
+  della tessera nelle liste (`insurance_members()`, `insurance_send()`), e il totale somma la
+  differenza di prezzo. La svuotano `remove_from_season()` e `close_season()`. I due soci con la
+  presciistica di quel giorno sono passati alla Sport.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.

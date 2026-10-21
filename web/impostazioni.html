@@ -159,7 +159,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261016d"></script>
+<script src="shared.js?v=20261021presci"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -490,9 +490,9 @@
       showToast("Assicurazione tolta.");
       await dopoAssicurazioni();
     } catch (error) {
-      // 23503: la usa ancora una tessera o una lista già mandata all'assicurazione.
+      // 23503: la usa ancora una tessera, un socio (scelta con la presciistica) o una lista già mandata.
       showToast("Non tolta: " + (error.code === "23503"
-        ? "la usa ancora una tessera o una lista già mandata all'assicurazione."
+        ? "la usa ancora una tessera, un socio della presciistica o una lista già mandata all'assicurazione."
         : messaggioErrore(error)), "is-danger");
     }
   }

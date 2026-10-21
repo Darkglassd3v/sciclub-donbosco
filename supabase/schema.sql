@@ -1088,7 +1088,7 @@ drop view if exists public.members_kiosk_search;
 -- Si aggiungono e si tolgono da Impostazioni; il codice si ricava dal nome e
 -- non cambia, perché lo usano le liste già mandate. Niente "attiva": una che
 -- non serve più si cancella, e la chiave esterna lo impedisce finché una
--- tessera o una lista la usa.
+-- tessera, un socio (members.insurance) o una lista la usa.
 create table if not exists public.insurances (
   code   text primary key check (code ~ '^[A-Z0-9_]+$'),
   name   text not null unique,
@@ -1111,6 +1111,15 @@ create policy insurances_write on public.insurances
 alter table public.prices add column if not exists insurance text;
 
 comment on column public.prices.insurance is 'Tessere: assicurazione che dà (insurances.code); vuoto = nessuna.';
+
+-- L'assicurazione scelta per il socio (dalla 2.8), al posto di quella della
+-- tessera: la sceglie chi iscrive quando c'è la presciistica, che si fa in
+-- palestra e può volere una copertura più completa della Neve (o una
+-- copertura, con una tessera che non ne ha). Vuota = quella della tessera.
+-- La chiave esterna impedisce di cancellare un'assicurazione che un socio usa.
+alter table public.members add column if not exists insurance text references public.insurances (code);
+
+comment on column public.members.insurance is 'Assicurazione scelta (insurances.code) al posto di quella della tessera; vuota = quella della tessera.';
 
 -- Una volta sola, al passaggio alle assicurazioni a parte (14/10/2026): le due
 -- assicurazioni decise col direttivo, la Neve Plus tolta insieme alla sua
@@ -1249,8 +1258,9 @@ drop function if exists public.insurance_members(boolean);
 drop function if exists public.insurance_members();
 
 -- I tesserati della stagione aperta ancora da assicurare, con il tipo della
--- loro tessera. Ci sono anche quelli senza codice fiscale: la pagina li
--- mostra, perché lo si scriva, ma in una lista non entrano.
+-- loro tessera (o quello scelto, members.insurance). Ci sono anche quelli
+-- senza codice fiscale: la pagina li mostra, perché lo si scriva, ma in una
+-- lista non entrano.
 create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
@@ -1262,19 +1272,19 @@ set search_path = ''
 as $$
   select m.id, m.last_name, m.first_name, m.birth_date,
          m.birth_place, m.birth_province, m.tax_code,
-         m.card_type, m.card_number, p.insurance
+         m.card_type, m.card_number, coalesce(m.insurance, p.insurance)
     from public.members m
     join public.prices p
-      on p.category = 'TESSERA' and p.name = m.card_type and p.insurance is not null
+      on p.category = 'TESSERA' and p.name = m.card_type and coalesce(m.insurance, p.insurance) is not null
    where public.can('polizze')
      and m.enrolled_at is not null
      and m.insurance_list_id is null
    -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
    -- l'altra (la pagina legge a blocchi di 1000, vedi tutteLeRighe()).
-   order by p.insurance, m.last_name, m.first_name, m.id;
+   order by coalesce(m.insurance, p.insurance), m.last_name, m.first_name, m.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione della tessera.';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (della tessera, o quello scelto: members.insurance).';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)
@@ -1415,7 +1425,7 @@ begin
      and nullif(trim(m.tax_code), '') is not null
      and exists (select 1 from public.prices p
                   where p.category = 'TESSERA' and p.name = m.card_type
-                    and p.insurance = insurance_send.kind);
+                    and coalesce(m.insurance, p.insurance) = insurance_send.kind);
   get diagnostics quanti = row_count;
 
   -- Una lista vuota non si manda: l'eccezione annulla anche la riga appena
@@ -2066,6 +2076,7 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
+    insurance          = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -2137,6 +2148,7 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
+    insurance          = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
