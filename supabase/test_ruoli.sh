@@ -1335,8 +1335,8 @@ begin
          'chiusura: giorno del corso non azzerato';
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
-  assert (select total from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - SPORT') = 120,
+  assert (select total = count * 120 from public.season_breakdown
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - SPORT'),
          'chiusura: presciistica contata senza l''assicurazione che comprende';
   assert (select total from public.season_breakdown
            where season = chiusa and category = 'CARD' and label = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
