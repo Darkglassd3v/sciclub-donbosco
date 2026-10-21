@@ -238,6 +238,8 @@ begin
     ('scrivi', 'insert into public.trip_uses (member_id) values (' || m || ')',   'xxxxxxx'),
     ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price) values (''USCITA'', ''PROVA'', 1, 1)', 'SxSxxxx'),
     ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
+    ('leggi',  'select 1 from public.settings',                                  'SSxxxxx'),
+    ('scrivi', 'update public.settings set value = value',                        'Sxxxxxx'),
     ('leggi',  'select 1 from public.insurances',                                'SSSSSxx'),
     ('scrivi', 'update public.insurances set price = price',                      'Sxxxxxx'),
     ('scrivi', 'update public.departures set place = place',                      'Sxxxxxx'),
@@ -425,6 +427,23 @@ begin
 
   perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);
   assert not public.can('social'), 'un utente rimosso ha ancora i suoi permessi';
+end $$;
+
+-- Da dove la pagina Soci conta i numeri tessera liberi: un intero da 1 in su,
+-- 21 di partenza (1-20 tenuti vuoti apposta per direttivo e famiglia).
+do $$ begin
+  assert (select value from public.settings where key = 'card_gaps_from') = '21',
+         'settings: card_gaps_from non parte da 21';
+  begin
+    update public.settings set value = 'abc' where key = 'card_gaps_from';
+    raise exception 'ASSERZIONE: card_gaps_from non numerico accettato';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.settings set value = '0' where key = 'card_gaps_from';
+    raise exception 'ASSERZIONE: card_gaps_from a 0 accettato';
+  exception when check_violation then null;
+  end;
 end $$;
 
 -- Una campagna vuole il suo sponsor, e un post normale non ne ha. (L'account
