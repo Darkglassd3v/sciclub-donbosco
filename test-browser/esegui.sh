@@ -27,7 +27,7 @@ trap 'kill "$SERVER" 2>/dev/null; rm -rf "$TMP"' EXIT
 for _ in $(seq 50); do (echo > "/dev/tcp/127.0.0.1/$PORTA") 2>/dev/null && break; sleep .1; done
 
 falliti=0
-for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html presciistica.js" "index.html famiglia.js" "index.html tessere-libere.js" "index.html errori.js" "index.html codice-fiscale.js" "social.html post-rubrica.js" "assicurazione.html assicurazione.js" \
+for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html presciistica.js" "index.html famiglia.js" "index.html tessere-libere.js" "index.html errori.js" "index.html codice-fiscale.js" "index.html importi.js" "social.html importi-social.js" "social.html post-rubrica.js" "assicurazione.html assicurazione.js" \
              "impostazioni.html impostazioni.js 1280" "impostazioni.html impostazioni.js 500"; do
   read -r pagina script larghezza <<< "$prova"
   # Una copia della pagina per prova, accanto all'originale: i percorsi relativi restano giusti.

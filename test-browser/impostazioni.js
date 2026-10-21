@@ -8,6 +8,7 @@
 // - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
 // - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
 //   salva; 0 o lettere no.
+// - Prezzi in euro interi o con i 50 centesimi: 12,50 si salva, 12,30 no (bordo rosso).
 // - Voce nuova senza nome: il nome ha il bordo rosso e si vede (regola di shared.js).
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
@@ -91,6 +92,18 @@
       await aspetta(200);
     }
     prova("tessereDaSbagliato", tessereDa && scritti.length === scrittiPrima, `salvati ${scritti.length - scrittiPrima} valori sbagliati`);
+
+    const prezzoTessera = riga("tabellaPrezzi", 2)?.querySelector("[data-prezzo]");
+    prezzoTessera.value = "12.5";
+    riga("tabellaPrezzi", 2).querySelector("[data-salva]").click();
+    await aspetta(200);
+    prova("cinquantaCent", ultimo("prices").price === 12.5, `salvato ${ultimo("prices").price}`);
+    const scrittiPrezzo = scritti.length;
+    prezzoTessera.value = "12.3";
+    riga("tabellaPrezzi", 2).querySelector("[data-salva]").click();
+    await aspetta(200);
+    prova("centesimiNo", scritti.length === scrittiPrezzo && prezzoTessera.classList.contains("campo-errore"),
+      `salvati ${scritti.length - scrittiPrezzo}, bordato ${prezzoTessera.classList.contains("campo-errore")}`);
 
     window.scrollTo(0, 0);
     el("btnAggiungiPrezzo").click();
