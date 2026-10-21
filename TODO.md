@@ -22,14 +22,18 @@
 
 ## Richieste nuove
 
-- [ ] 22/10: **Errori sui campi, codice fiscale da calcolare, euro interi; poi rilascio 2.8 e branch 2.9.**
-      L'utente: (1) in tutto il sito un campo obbligatorio che manca o un campo con un errore ha il
-      bordo rosso, e la pagina scorre fin lì (oggi al Salva di un socio l'errore è in alto e non si
-      capisce); (2) in Soci un pulsante «Calcola» accanto al codice fiscale: dà il codice proposto
-      (un click lo scrive nel campo) o borda di rosso i dati che mancano; un codice sbagliato dice
-      solo «Codice fiscale errato, codice proposto: …», senza il motivo; (3) gli importi in euro sono
-      interi ovunque, «al massimo ,50 cent per qualche evento»: oggi alcuni campi prendono i
-      decimali; (4) poi tag 2.8 e nuovo branch 2.9-SNAPSHOT (docs/SVILUPPO.md, «Rilascio»). TDD.
+- [ ] 22/10: **Errori sui campi, codice fiscale da calcolare, euro interi o coi 50 centesimi.** Fatto
+      (TDD: 0626e00, b4f61e4, 7766a47 e il RED del database; GREEN bbc3b10, 9c96499, 1f68d0a; vincolo
+      dei prezzi in produzione; online). (1) In tutto il sito un campo che il browser non accetta al
+      salvataggio o che la pagina segnala (segnaErrore() in shared.js) ha il bordo rosso finché non lo
+      si cambia, la pagina scorre al primo e un messaggio dice quali sono. (2) Soci: «Calcola» accanto al
+      codice fiscale (codice proposto da cliccare, o i dati che mancano bordati); il sesso non scelto si
+      prende dai soci con lo stesso nome; un codice sbagliato dice solo «Codice fiscale errato, codice
+      proposto: …» (anche in Assicurazione). (3) Importi a passi di 0,50 € ovunque, anche nel database per
+      listino e assicurazioni; Social controlla i centesimi nei prezzi dei post. Da provare sul sito vero.
+      Non fatto: il saldo della banca in Bilancio resta coi centesimi (lo dice l'estratto conto: dirlo
+      all'utente); i totali e i versati dei soci nel database non hanno un vincolo sui centesimi (solo
+      i campi delle pagine). Poi: tag 2.8 e branch 2.9-SNAPSHOT.
 
 - [ ] 22/10: **Numeri tessera liberi in rosso sotto il numero tessera.** Fatto (TDD: c9bd5d1 e 92b52fe RED,
       ffe38d5 e 35f9094 GREEN; in produzione e online): in Soci, sotto «Numero tessera», i numeri che
@@ -54,13 +58,6 @@
       Non fatto: nelle pagine Cerca socio ed Excel dei soci la colonna «Tessera» resta vuota per chi
       è coperto senza tessera; Riepilogo e Gite usano il filtro `card_holder` (PostgREST), provato
       solo nel database.
-
-- [ ] 21/10: **Codice fiscale proposto anche senza scegliere il sesso.** L'utente: «quando inserisco
-      un nuovo socio perché non viene proposto un codice fiscale?». Oggi `controllaCF()`
-      (index.html ~riga 702) lo propone solo con cognome, nome, data, sesso scelto (non si salva) e un
-      luogo dove è nato almeno un altro socio col codice fiscale (il comune si ricava dai loro
-      codici: un elenco dei comuni non c'è). Proposta: senza sesso, prenderlo dai soci con lo stesso
-      nome (`sessoDelNome`, già usato per controllare), dicendolo nell'avviso. Da fare con TDD.
 
 - [ ] 21/10: **Impostazioni leggibili e nello stile del sito.** Fatto (TDD: ef07e87 RED, poi GREEN; online):
       nome della voce, dell'assicurazione e luogo della partenza in un campo che va a capo e cresce col
