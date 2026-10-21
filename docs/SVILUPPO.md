@@ -196,6 +196,17 @@ Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la corre
   della tessera nelle liste (`insurance_members()`, `insurance_send()`); nella pagina Soci, con la
   presciistica, la tessera non si somma al totale. `close_season()` conta la presciistica a
   `card_price()`. La scelta a parte del 21/10 (`members.insurance`, +25 €) è stata tolta.
+- Agevolazioni famiglia (dal 21/10/2026): al posto della tessera (vincolo
+  `members_card_or_family`), le sceglie il capofamiglia e coprono lui e i familiari a carico.
+  `prices.people` dal nome («3 PERSONE», trigger `fill_family_people`), `prices.insurance` anche
+  per FAMIGLIA, `card_price()` = quota + persone × assicurazione (3 persone Base 50 + 3×20 = 110).
+  `member_insurance(m)` dà l'assicurazione di un socio (presciistica, tessera, agevolazione sua o
+  del capofamiglia) per le liste; `card_holder(m)` dice chi è tesserato (Riepilogo, Gite,
+  `admin_summary`). `card_counts` e `close_season()` contano le agevolazioni e non la tessera
+  compresa nella presciistica con l'assicurazione. In Soci (`copertura()`) la tessera è
+  obbligatoria solo per chi non è coperto; il nucleo si conta e un familiare oltre le persone
+  dell'agevolazione deve avere la tessera; chi è coperto dall'agevolazione ha la presciistica
+  «solo corso» (CORSO PRESCIISTICA - FAMIGLIA, 50 €).
 - «Da assicurare» (dal 21/10/2026) è a pagine di 25, una per tipo; il titolo del gruppo dice
   quanti sono senza codice fiscale. Dopo Salva si resta sulla pagina; un codice fiscale scritto e
   non salvato si chiede prima di cambiare pagina. Excel e «Segna come assicurati» prendono tutti.
