@@ -8,6 +8,7 @@
 // - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
 // - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
 //   salva; 0 o lettere no.
+// - Voce nuova senza nome: il nome ha il bordo rosso e si vede (regola di shared.js).
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
@@ -90,6 +91,13 @@
       await aspetta(200);
     }
     prova("tessereDaSbagliato", tessereDa && scritti.length === scrittiPrima, `salvati ${scritti.length - scrittiPrima} valori sbagliati`);
+
+    window.scrollTo(0, 0);
+    el("btnAggiungiPrezzo").click();
+    await aspetta(300);
+    const nuovo = el("nuovoNome").getBoundingClientRect();
+    prova("nomeMancanteRosso", el("nuovoNome").classList.contains("campo-errore") && nuovo.top >= 0 && nuovo.bottom <= innerHeight,
+      `bordato ${el("nuovoNome").classList.contains("campo-errore")}, in alto a ${Math.round(nuovo.top)} px`);
 
     const nudi = el("contenuto").querySelectorAll(
       "input:not([type=checkbox]):not(.input), textarea:not(.textarea)").length
