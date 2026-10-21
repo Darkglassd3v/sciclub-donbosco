@@ -522,6 +522,8 @@ psql_ -c "delete from public.social_contacts; insert into public.social_contacts
 # Una tessera col tipo nel nome messa da Impostazioni a "nessuna" e senza posizione:
 # l'assicurazione dal nome e l'ordine del modulo valgono una volta sola.
 psql_ -c "insert into public.prices (category, name, price) values ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 15);"
+# La presciistica come in produzione prima del 21/10/2026: 90 € senza assicurazione.
+psql_ -c "insert into public.prices (category, name, price) values ('PRESCIISTICA', 'CORSO PRESCIISTICA', 90);"
 
 # Lo script rieseguito non deve rimettere in gioco chi è stato rimosso: il
 # backfill una tantum vede ancora il suo account in auth.users, e senza il
@@ -540,6 +542,12 @@ do $$ begin
   assert (select color from public.trip_days where weekday = 2) is null, 'schema.sql ha rimesso il martedì tolto';
   assert (select color from public.trip_days where weekday = 6) = '#FCCF02', 'schema.sql ha rimesso il colore di prima al sabato';
   assert (select count(*) from public.social_contacts) = 1, 'schema.sql ha cambiato i contatti dei post';
+  assert (select price = 70 and insurance = 'BASE' and public.card_price(p) = 90 from public.prices p
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA'),
+         'presciistica: attesa la quota 70 più la Base (90)';
+  assert (select price = 75 and insurance = 'SPORT' and active and public.card_price(p) = 120 from public.prices p
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - REALE TOTAL SPORT'),
+         'presciistica: attesa la voce con la Total Sport, 75 più 45 (120)';
   assert (select hours from public.social_contacts) = 'dopo le 18', 'schema.sql ha perso gli orari del contatto';
   assert (select insurance is null and position is null from public.prices
            where name = 'TESSERA ORDINARIA - GLOBAL NEVE BASE'),

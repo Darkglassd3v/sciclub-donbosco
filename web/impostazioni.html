@@ -76,7 +76,8 @@
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
         Nessuna voce si cancella davvero: si disattiva. "Ordine" è la posizione nella pagina Soci,
         come sul modulo di carta (vuoto = in fondo). Il prezzo di una tessera è la sola quota:
-        il socio paga anche l'assicurazione, se non la paga il club.
+        il socio paga anche l'assicurazione, se non la paga il club. Così anche la presciistica,
+        che comprende la tessera: il socio paga la sua quota più la sua assicurazione.
       </p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
@@ -105,7 +106,7 @@
               </select>
             </td>
             <td>
-              <select id="nuovoAssicurazione" aria-label="Assicurazione della tessera nuova"></select>
+              <select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o presciistica)"></select>
             </td>
             <td></td>
             <td><button type="button" class="button is-small is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
@@ -159,7 +160,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021presci"></script>
+<script src="shared.js?v=20261021presci2"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -236,8 +237,10 @@
 
   // L'assicurazione che dà una tessera: decide in quale lista della pagina
   // Assicurazione finisce chi ce l'ha (prices.insurance) e quanto si somma
-  // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto).
+  // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto). Anche la
+  // presciistica ne ha una: comprende tessera, quota e assicurazione.
   let ASSICURAZIONI = [];
+  const conAssicurazione = (categoria) => categoria === "TESSERA" || categoria === "PRESCIISTICA";
   const opzioniAssicurazione = (scelta) => [{ code: "", name: "nessuna" }, ...ASSICURAZIONI].map((a) =>
     `<option value="${esc(a.code)}" ${(scelta || "") === a.code ? "selected" : ""}>${esc(a.name)}${
       a.code ? ` (${fmt(a.price)})` : ""}</option>`).join("");
@@ -271,7 +274,7 @@
         <td><input type="text" data-nome value="${p.name.replace(/"/g, "&quot;")}"></td>
         <td><input type="number" data-prezzo step="1" min="0" value="${p.price}" aria-label="Prezzo in euro"></td>
         <td>${selettoreRuolo}</td>
-        <td>${p.category === "TESSERA"
+        <td>${conAssicurazione(p.category)
           ? `<select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select>
              <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> la paga il club</label>
              <p class="paga-socio" data-paga></p>` : "—"}</td>
@@ -361,7 +364,7 @@
         name: nome,
         price: prezzo,
         min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
-        insurance: categoria === "TESSERA" ? el("nuovoAssicurazione").value || null : null,
+        insurance: conAssicurazione(categoria) ? el("nuovoAssicurazione").value || null : null,
         // In fondo alla sua categoria: l'ordine si cambia poi nella colonna Ordine.
         position: null,
       });
@@ -490,9 +493,9 @@
       showToast("Assicurazione tolta.");
       await dopoAssicurazioni();
     } catch (error) {
-      // 23503: la usa ancora una tessera, un socio (scelta con la presciistica) o una lista già mandata.
+      // 23503: la usa ancora una voce del listino o una lista già mandata all'assicurazione.
       showToast("Non tolta: " + (error.code === "23503"
-        ? "la usa ancora una tessera, un socio della presciistica o una lista già mandata all'assicurazione."
+        ? "la usa ancora una voce del listino o una lista già mandata all'assicurazione."
         : messaggioErrore(error)), "is-danger");
     }
   }

@@ -1067,7 +1067,7 @@ drop view if exists public.members_kiosk_search;
 -- Neve Plus, Global Sport, in ordine di copertura e di prezzo) e riceve dal
 -- club tre elenchi separati, numerati per tipo e per stagione: "8 Lista Neve
 -- Base", "5 Lista Neve Plus", "3 Lista Global Sport". Il tipo lo decide la
--- tessera (prices.insurance). Chi prepara gli elenchi scarica l'Excel dei
+-- tessera (prices.insurance), o la voce della presciistica, che la comprende. Chi prepara gli elenchi scarica l'Excel dei
 -- nuovi, lo manda e preme "Segna come inviata": è quello, e non lo scarico, a
 -- rendere assicurati i soci della lista (members.insurance_list_id). Senza
 -- codice fiscale non si assicura: il socio resta fuori finché non lo si
@@ -1088,7 +1088,7 @@ drop view if exists public.members_kiosk_search;
 -- Si aggiungono e si tolgono da Impostazioni; il codice si ricava dal nome e
 -- non cambia, perché lo usano le liste già mandate. Niente "attiva": una che
 -- non serve più si cancella, e la chiave esterna lo impedisce finché una
--- tessera, un socio (members.insurance) o una lista la usa.
+-- voce del listino o una lista la usa.
 create table if not exists public.insurances (
   code   text primary key check (code ~ '^[A-Z0-9_]+$'),
   name   text not null unique,
@@ -1108,18 +1108,16 @@ create policy insurances_write on public.insurances
 -- Il tipo di assicurazione di ogni tessera; vuoto = la tessera non assicura
 -- (SOLO TESSERA, SCONTATA - NO ASSICURAZIONE). La scontata dei nati prima del
 -- 1947 ha la Base, il direttivo la Global Sport, la più completa.
+-- Anche le voci della presciistica (dalla 2.8): comprende tessera, quota e
+-- assicurazione, come sulla scheda di carta, e la sua vale al posto di quella
+-- della tessera. Due voci: 70 + Base e 75 + Total Sport.
 alter table public.prices add column if not exists insurance text;
 
-comment on column public.prices.insurance is 'Tessere: assicurazione che dà (insurances.code); vuoto = nessuna.';
+comment on column public.prices.insurance is 'Tessere e presciistica: assicurazione che dà (insurances.code); vuoto = nessuna.';
 
--- L'assicurazione scelta per il socio (dalla 2.8), al posto di quella della
--- tessera: la sceglie chi iscrive quando c'è la presciistica, che si fa in
--- palestra e può volere una copertura più completa della Neve (o una
--- copertura, con una tessera che non ne ha). Vuota = quella della tessera.
--- La chiave esterna impedisce di cancellare un'assicurazione che un socio usa.
-alter table public.members add column if not exists insurance text references public.insurances (code);
-
-comment on column public.members.insurance is 'Assicurazione scelta (insurances.code) al posto di quella della tessera; vuota = quella della tessera.';
+-- L'assicurazione scelta per il socio (members.insurance, 21/10/2026), tolta
+-- il giorno dopo: quella della presciistica la dice la sua voce del listino.
+alter table public.members drop column if exists insurance;
 
 -- Una volta sola, al passaggio alle assicurazioni a parte (14/10/2026): le due
 -- assicurazioni decise col direttivo, la Neve Plus tolta insieme alla sua
@@ -1163,10 +1161,29 @@ comment on column public.prices.insurance_paid is 'Tessere: false = l''assicuraz
 
 alter table public.prices drop constraint if exists prices_insurance_valid;
 alter table public.prices add constraint prices_insurance_valid
-  check (insurance is null or category = 'TESSERA');
+  check (insurance is null or category in ('TESSERA', 'PRESCIISTICA'));
 alter table public.prices drop constraint if exists prices_insurance_fkey;
 alter table public.prices add constraint prices_insurance_fkey
   foreign key (insurance) references public.insurances (code);
+
+-- Una volta sola (21/10/2026): la presciistica passa dai 90 € con dentro la
+-- vecchia assicurazione da 15 alla quota più la Base (70 + 20 = 90), e arriva
+-- la voce con la Total Sport (75 + 45 = 120). Parte solo se nessuna voce della
+-- presciistica ha già un'assicurazione: rieseguito non tocca i prezzi.
+do $$
+begin
+  if exists (select 1 from public.prices where category = 'PRESCIISTICA' and insurance is not null)
+     or not exists (select 1 from public.prices where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA')
+     or not exists (select 1 from public.insurances where code = 'BASE')
+     or not exists (select 1 from public.insurances where code = 'SPORT') then
+    return;
+  end if;
+  update public.prices set price = 70, insurance = 'BASE'
+   where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA';
+  insert into public.prices (category, name, price, insurance)
+  values ('PRESCIISTICA', 'CORSO PRESCIISTICA - REALE TOTAL SPORT', 75, 'SPORT')
+  on conflict (category, name) do nothing;
+end $$;
 
 -- Prezzi in euro interi (15/10/2026): nel listino e nelle assicurazioni non
 -- ci sono centesimi, e uno scritto per sbaglio sballerebbe i totali.
@@ -1258,7 +1275,7 @@ drop function if exists public.insurance_members(boolean);
 drop function if exists public.insurance_members();
 
 -- I tesserati della stagione aperta ancora da assicurare, con il tipo della
--- loro tessera (o quello scelto, members.insurance). Ci sono anche quelli
+-- loro tessera (o della presciistica, che la comprende). Ci sono anche quelli
 -- senza codice fiscale: la pagina li mostra, perché lo si scriva, ma in una
 -- lista non entrano.
 create or replace function public.insurance_members()
@@ -1272,19 +1289,20 @@ set search_path = ''
 as $$
   select m.id, m.last_name, m.first_name, m.birth_date,
          m.birth_place, m.birth_province, m.tax_code,
-         m.card_type, m.card_number, coalesce(m.insurance, p.insurance)
+         m.card_type, m.card_number, coalesce(pp.insurance, p.insurance)
     from public.members m
-    join public.prices p
-      on p.category = 'TESSERA' and p.name = m.card_type and coalesce(m.insurance, p.insurance) is not null
+    join public.prices p on p.category = 'TESSERA' and p.name = m.card_type
+    left join public.prices pp on pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
    where public.can('polizze')
      and m.enrolled_at is not null
      and m.insurance_list_id is null
+     and coalesce(pp.insurance, p.insurance) is not null
    -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
    -- l'altra (la pagina legge a blocchi di 1000, vedi tutteLeRighe()).
-   order by coalesce(m.insurance, p.insurance), m.last_name, m.first_name, m.id;
+   order by coalesce(pp.insurance, p.insurance), m.last_name, m.first_name, m.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (della tessera, o quello scelto: members.insurance).';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (della tessera, o della presciistica che la comprende).';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)
@@ -1424,8 +1442,9 @@ begin
      and m.insurance_list_id is null
      and nullif(trim(m.tax_code), '') is not null
      and exists (select 1 from public.prices p
+                   left join public.prices pp on pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
                   where p.category = 'TESSERA' and p.name = m.card_type
-                    and coalesce(m.insurance, p.insurance) = insurance_send.kind);
+                    and coalesce(pp.insurance, p.insurance) = insurance_send.kind);
   get diagnostics quanti = row_count;
 
   -- Una lista vuota non si manda: l'eccezione annulla anche la riga appena
@@ -2011,12 +2030,13 @@ begin
     where m.course_type is not null and upper(m.course_type) <> 'NO'
     group by m.course_type, p.price
     union all
-    select which, 'PRESKI', m.preski_type, '', count(*), count(*) * p.price
+    -- La presciistica col prezzo che paga il socio: comprende l'assicurazione.
+    select which, 'PRESKI', m.preski_type, '', count(*), sum(public.card_price(p))
     from public.members m
     join da_chiudere t on t.id = m.id
     left join public.prices p on p.category = 'PRESCIISTICA' and p.name = m.preski_type
     where m.preski_type is not null and upper(m.preski_type) <> 'NO'
-    group by m.preski_type, p.price
+    group by m.preski_type
     union all
     select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
     from public.members m
@@ -2076,7 +2096,6 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
-    insurance          = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -2148,7 +2167,6 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
-    insurance          = null,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
