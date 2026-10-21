@@ -22,57 +22,18 @@
 
 ## Richieste nuove
 
-- [ ] 21/10: **Presciistica in due voci del listino, al posto della scelta separata (PIANO, da fare con TDD).**
-      Perché: la scheda di carta (`legacy/dati26/1TESSERAMENTO Scheda e Ricevuta.pdf`) dice «Corso
-      ginnastica presciistica … comprensivo di Tessera ordinaria + Quota … € 90»: la presciistica
-      comprende tessera, quota CONI e assicurazione. Prima: 75 + 15 di assicurazione = 90. Ora le
-      assicurazioni sono SOLO due, Base 20 € e Sport 45 € (non toccarle): presciistica Base =
-      70 + 20 = 90 €, con la Total Sport = 75 + 45 = 120 €. La scelta separata «Assicurazione con la
-      presciistica» (commit 56ef637, 99b284f, già online) somma +25 e va tolta.
-      Decisioni dell'utente: due voci nel listino; COLOMBA → Base, 90 € (pagato 105, 15 a credito:
-      aveva la vecchia intermedia da 30, sparita); MARENGO → Total Sport, 120 €.
-      1. RED (`supabase/test_ruoli.sh`, al posto del blocco members.insurance dopo «Due tipi
-         insieme»; togliere anche gli assert su `insurance` in remove_from_season e close_season):
-         voce PRESCIISTICA con `insurance = 'SPORT'`, price 75 → `card_price` 120; socio con tessera
-         Base + quella voce → `insurance_members()` SPORT, lista BASE rifiutata, SPORT accettata;
-         tessera senza assicurazione + voce con BASE → lista Base; `close_season` conta il PRESKI a
-         `card_price` (120, non 75); la colonna `members.insurance` non c'è più.
-         RED (`test-browser/presciistica.js`, da riscrivere): listino con «CORSO PRESCIISTICA» 90 e
-         «CORSO PRESCIISTICA - REALE TOTAL SPORT» 120 (il finto dà già card_price in `price`); tessera
-         ordinaria da sola 40; + presciistica Base 90 (la tessera non si somma, nota visibile);
-         Sport 120; tolta la presciistica 40; nel salvataggio niente chiave `insurance`, preski_type
-         giusto; nessun `#f_assicurazione`; socio aperto con la Sport → 120.
-      2. GREEN `supabase/schema.sql`: `alter table public.members drop column if exists insurance`
-         (al posto dell'add); `insurance_members`/`insurance_send`: left join della voce
-         PRESCIISTICA (`pp.name = m.preski_type`), tipo = `coalesce(pp.insurance, p.insurance)`;
-         togliere `insurance = null` da close_season e remove_from_season; PRESKI in close_season
-         con `public.card_price(p)` invece di `p.price`; commenti di `prices.insurance` (ora anche
-         presciistica) e della chiave esterna di insurances.
-         GREEN `web/index.html`: togliere fieldset `f_assicurazione`, ASSICURAZIONI e il suo
-         caricamento, riempiAssicurazioni, tesseraScelta, differenzaAssicurazione,
-         aggiornaAssicurazione, assicurazioneDaSalvare, i listener, `insurance:` nel salvataggio, le
-         righe in caricaSocio/resetForm/datiScheda; in `totaleDaListino` con la presciistica la
-         tessera non si somma, con nota sotto la tessera («compresa nella presciistica»).
-         `web/shared.js`: select di caricaPrezzi com'era (senza insurance, insurance_paid), ?v= nuovo
-         in tutte le 13 pagine. `web/riepilogo.html:208`: `price:card_price` (se no la presciistica
-         esce a 70/75). `web/impostazioni.html`: selettore assicurazione anche per PRESCIISTICA
-         (rigaPrezzo, aggiungiPrezzo riga 364), testo del 23503 senza «socio della presciistica».
-         Docs: SVILUPPO.md (paragrafo presciistica del 21/10), GUIDA_VOLONTARI.md (presciistica).
-      3. Review prima della produzione (OCR in delega, memoria), correggere Alto/Medio con TDD.
-      4. Ordine in produzione (autorizzato dall'utente il 21/10: «sei autorizzato a fare tutto su
-         db prod, commit»; push e allineamento dev chiesti): commit, push, deploy (gh workflow run
-         se l'ultimo commit ha [skip ci]) PRIMA della migrazione, così la pagina online smette di
-         mandare `insurance`. Poi backup in `supabase/migration/backup-2026-10-21-presciistica-2/`,
-         prova a secco con rollback, migrazione con `lock_timeout` e tentativi: update
-         «CORSO PRESCIISTICA» price 70, insurance BASE; insert «CORSO PRESCIISTICA - REALE TOTAL
-         SPORT» PRESCIISTICA price 75 insurance SPORT active; MARENGO preski_type = la voce Sport;
-         funzioni nuove; drop column members.insurance; `notify pgrst`. Verificare: card_price 90 e
-         120, COLOMBA Base e MARENGO Sport nella lista. MAI `pgrep -af` o simili sulla connessione
-         (stampa la password). Poi allineare dev, aggiornare la voce di prova sul sito vero.
-      5. Alla fine (chiesto dall'utente il 21/10): aspettare che finisca anche la sessione «dierre»
-         (ListAgents), poi `~/.local/bin/spegni-tutto` e in background
-         `sleep 60; gnome-session-quit --power-off --no-prompt`.
-      Da dire all'utente: cambiare la password del database (finita in chiaro in conversazione).
+- [ ] 21/10: **Presciistica in due voci del listino.** Fatto (TDD, commit 442df28 RED, 42203e0 GREEN;
+      online e in produzione): la presciistica comprende tessera, quota CONI e assicurazione, come
+      sulla scheda di carta. «CORSO PRESCIISTICA» 70 + Base 20 = 90 €, «CORSO PRESCIISTICA - REALE
+      TOTAL SPORT» 75 + Sport 45 = 120 € (`prices.insurance` anche per la presciistica). Tolta la
+      scelta a parte (`members.insurance`, +25). In Soci, con la presciistica la tessera non si somma
+      al totale (nota sotto la tessera). L'assicurazione della voce vale nelle liste; `close_season`
+      conta la presciistica a `card_price`; Impostazioni mette l'assicurazione anche sulle voci della
+      presciistica; Riepilogo prezzi a `card_price`. Produzione: backup in
+      `supabase/migration/backup-2026-10-21-presciistica-2/`; COLOMBA Base (90, pagato 105, 15 a
+      credito), MARENGO Total Sport (120). Resta (Basso, c'era già): `card_counts` e la chiusura
+      contano anche la tessera di chi ha la presciistica, che la comprende. Da provare sul sito vero
+      (voce sotto).
 
 - [ ] 16/10: **Tessera col colore del giorno, calendari che non sbordano, story del calendario.** Fatto:
       nelle gite la tessera della data ha il colore del giorno (domenica gialla con le scritte blu,
@@ -272,10 +233,10 @@ della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ord
 - [ ] Prova generale delle iscrizioni (`docs/ISCRIZIONI.md`).
 - [ ] Provare sul sito vero due operatori sullo stesso socio: aprire la scheda in Soci, segnare un
       acconto da Pagamenti, poi Salva in Soci: deve dire "Socio NON salvato" e non toccare niente.
-- [ ] Provare sul sito vero l'assicurazione con la presciistica (dal 21/10, schema già in
-      produzione): aprire COLOMBA o MARENGO, deve esserci la Reale Total Sport; in Assicurazione
-      devono stare fra gli Sport. Un socio nuovo con presciistica: Base proposta, la Total Sport
-      aggiunge 25 € al totale; cambiando tessera la scelta segue quella della tessera.
+- [ ] Provare sul sito vero la presciistica in due voci (dal 21/10, online e in produzione):
+      COLOMBA con «CORSO PRESCIISTICA» (90), MARENGO con «… - REALE TOTAL SPORT» (120); in
+      Assicurazione COLOMBA fra i Base e MARENGO fra gli Sport. Un socio nuovo: tessera ordinaria
+      40, con la presciistica 90 (la tessera non si somma, nota sotto), con la Total Sport 120.
 - [ ] Provare sul sito vero il primo accesso: creare un account di prova da Utenti, entrare,
       cambiare la password, poi Reimposta password e rientrare con `donbosco26!`.
 - [ ] Provare sul sito vero con i dati reali: Soci (doppioni su tutto l'archivio, A+ al
