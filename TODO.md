@@ -22,6 +22,22 @@
 
 ## Richieste nuove
 
+- [ ] 22/10 notte: **Prove su tutto il sito (scelta «b»), in autonomia.** L'utente: «non mi sento molto
+      sicuro sulle feature… compaiono bug su nuove feature e anche su vecchie». Regole della notte:
+      **solo commit locali, niente push né deploy né database di produzione**; a fine lavoro spegnere
+      «come al solito» (chiudere cswap auto e la sua bash, `~/.local/bin/spegni-tutto`, dopo 60 s
+      `gnome-session-quit --power-off --no-prompt`). Ogni bug: prova RED (commit `[skip ci]`), poi GREEN.
+      Piano, in ordine di rischio per le iscrizioni di metà novembre:
+      1. Audit in sola lettura: percorsi di ogni pagina e punti a rischio, elenco qui sotto.
+      2. Prove nel browser coi percorsi critici: Soci (iscrizione, modifica, famiglia, abbonamenti),
+         Pagamenti, Assicurazione, Riepilogo/Excel, Stampe/pullman, Bilancio, Stagione, Gestione/Utenti,
+         Ricerca. Le prove guardano quello che si vede (display), non gli attributi.
+      3. Foto delle pagine a 1280 e 500 px (bug grafici).
+      4. Prove col PostgREST vero in docker sul database di `test_ruoli.sh` (le richieste vere delle
+         pagine: filtri, rpc, RLS).
+      Avanzamento (aggiornare qui a ogni pagina finita, poi `/ecc:ck save`):
+      - (niente ancora)
+
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
       .help e le scelte di Bulma lo battevano: in Soci si vedevano la nota della presciistica, la riga
