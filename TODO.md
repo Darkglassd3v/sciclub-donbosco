@@ -26,8 +26,8 @@
       fuoco all'ultima pagina; online): 25 per pagina, una per tipo, «‹ Indietro · 26–50 di 60 ·
       Avanti ›» sotto il gruppo; il titolo dice quanti senza codice fiscale; dopo Salva si resta sulla
       pagina; lista accorciata = ultima pagina; codice fiscale scritto e non salvato: `chiedi()` prima
-      di cambiare pagina. Excel e «Segna come assicurati» prendono tutti. Resta (Basso, c'era già):
-      Salva su una riga ridisegna la lista e perde un codice scritto e non salvato su un'altra riga.
+      di cambiare pagina. Excel e «Segna come assicurati» prendono tutti. Salva su una riga non perde
+      più i codici scritti e non salvati nelle altre (d4dd02c RED, poi GREEN).
       Da provare sul sito vero con un account `assicurazione`.
 
 - [ ] 21/10: **Presciistica in due voci del listino.** Fatto (TDD, commit 442df28 RED, 42203e0 GREEN;

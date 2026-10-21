@@ -1,7 +1,8 @@
 // Assicurazione (assicurazione.html): «Da assicurare» a pagine di 25, per tipo.
 // - Sotto ogni gruppo «‹ Indietro · 26–50 di 60 · Avanti ›»; con 25 o meno niente pulsanti.
 // - Nel titolo del gruppo quanti sono senza codice fiscale (le righe rosse, sparse fra le pagine).
-// - Dopo Salva si resta sulla pagina; lista accorciata: l'ultima pagina che c'è.
+// - Dopo Salva si resta sulla pagina, e un codice scritto e non salvato su un'altra riga resta;
+//   lista accorciata: l'ultima pagina che c'è.
 // - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
 // - Cambiata pagina il fuoco resta su Indietro/Avanti (tastiera), anche all'ultima.
@@ -44,9 +45,12 @@
 
     const b026 = righe("B")[0];
     b026.querySelector(".cf").value = "RSSMRA80A01F205X";
+    righe("B")[2].querySelector(".cf").value = "ABC";   // B028, scritto e non salvato
     b026.querySelector(".salva-riga").click();
     await aspetta(300);
     prova("salvaResta", testo("BASE") === "26–50 di 60" && righe("B")[0]?.dataset.id === "B026", `«${testo("BASE")}»`);
+    const b028 = righe("B")[2]?.querySelector(".cf");
+    prova("salvaNonPerde", b028?.value === "ABC", `B028 «${b028?.value}»`);
 
     righe("B")[1].querySelector(".cf").value = "ABC";
     avanti("BASE").click();
