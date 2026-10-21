@@ -5,6 +5,7 @@
 //   lista accorciata: l'ultima pagina che c'è.
 // - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
+// - Un codice fiscale sbagliato dice solo «Codice fiscale errato» (e il proposto), senza il motivo.
 // - Cambiata pagina il fuoco resta su Indietro/Avanti (tastiera), anche all'ultima.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
@@ -38,6 +39,10 @@
       `${righe("B").length} righe, «${testo("BASE")}», indietro spento ${indietro("BASE").disabled}`);
     prova("pocheSenzaPagine", righe("S").length === 3 && !pagine("SPORT"), `${righe("S").length} Sport, pagine ${Boolean(pagine("SPORT"))}`);
     prova("senzaCF", titoloBase?.textContent.includes("3 senza codice fiscale"), `titolo «${titoloBase?.textContent.trim()}»`);
+
+    const avvisoCF = righe("B")[0]?.querySelector(".avviso-cf");
+    const testoCF = avvisoCF && !avvisoCF.hidden ? avvisoCF.textContent.replace(/\s+/g, " ").trim() : "";
+    prova("cfGenerico", testoCF.startsWith("Codice fiscale errato") && !/dovrebbe|lettere|carattere/i.test(testoCF), `avviso «${testoCF}»`);
 
     avanti("BASE").click();
     prova("avanti", righe("B")[0]?.dataset.id === "B026" && righe("B").length === 25 && testo("BASE") === "26–50 di 60",
