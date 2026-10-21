@@ -22,6 +22,11 @@
 
 ## Richieste nuove
 
+- [ ] 22/10: **2.8 rilasciata, si lavora su 2.9-SNAPSHOT.** Tag e branch `2.8` (le pagine pubblicano da
+      lì finché non parte un deploy da `2.9-SNAPSHOT`). Da fare al primo deploy da `2.9-SNAPSHOT`
+      (docs/SVILUPPO.md, passo 5): controllare con `git tag --contains` e togliere i branch
+      `2.8` e `2.8-SNAPSHOT` da GitHub, e `2.8` dai trigger di deploy-pages.yml.
+
 - [ ] 22/10: **Errori sui campi, codice fiscale da calcolare, euro interi o coi 50 centesimi.** Fatto
       (TDD: 0626e00, b4f61e4, 7766a47 e il RED del database; GREEN bbc3b10, 9c96499, 1f68d0a; vincolo
       dei prezzi in produzione; online). (1) In tutto il sito un campo che il browser non accetta al
