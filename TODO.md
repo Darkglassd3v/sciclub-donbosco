@@ -22,6 +22,15 @@
 
 ## Richieste nuove
 
+- [ ] 22/10: **Errori sui campi, codice fiscale da calcolare, euro interi; poi rilascio 2.8 e branch 2.9.**
+      L'utente: (1) in tutto il sito un campo obbligatorio che manca o un campo con un errore ha il
+      bordo rosso, e la pagina scorre fin lì (oggi al Salva di un socio l'errore è in alto e non si
+      capisce); (2) in Soci un pulsante «Calcola» accanto al codice fiscale: dà il codice proposto
+      (un click lo scrive nel campo) o borda di rosso i dati che mancano; un codice sbagliato dice
+      solo «Codice fiscale errato, codice proposto: …», senza il motivo; (3) gli importi in euro sono
+      interi ovunque, «al massimo ,50 cent per qualche evento»: oggi alcuni campi prendono i
+      decimali; (4) poi tag 2.8 e nuovo branch 2.9-SNAPSHOT (docs/SVILUPPO.md, «Rilascio»). TDD.
+
 - [ ] 22/10: **Numeri tessera liberi in rosso sotto il numero tessera.** Fatto (TDD: c9bd5d1 e 92b52fe RED,
       ffe38d5 e 35f9094 GREEN; in produzione e online): in Soci, sotto «Numero tessera», i numeri che
       nessuno ha dal numero delle Impostazioni (`settings.card_gaps_from`, 21: sotto, direttivo e
