@@ -22,20 +22,20 @@
 
 ## Richieste nuove
 
-- [ ] 21/10: **Agevolazioni famiglia con l'assicurazione, al posto della tessera (PIANO approvato, TDD).**
-      L'utente: con le agevolazioni le assicurazioni ci sono già, e con la presciistica i conti
-      sbagliano; agevolazioni collegate alle assicurazioni ed esclusive con le tessere; il figlio di
-      un capofamiglia che ha pagato non ha la tessera obbligatoria, ma si contano quelli del nucleo;
-      con la presciistica con l'assicurazione la tessera non è obbligatoria. Decisioni: sceglie solo
-      il capofamiglia; prezzo = quota + persone × assicurazione (3 persone Base 50 + 3×20 = 110);
-      presciistica di chi è coperto dall'agevolazione «solo corso», voce «CORSO PRESCIISTICA -
-      FAMIGLIA» a 50 €. Persone lette dal nome («3 PERSONE», trigger come i viaggi degli abbonamenti).
-      Passi: schema (prices.people, card_price × persone, assicurazione per FAMIGLIA, voci «CON
-      ASSICURAZIONE» a 50/65/80 + Base una volta sola, vincolo tessera o agevolazione,
-      member_insurance()/card_holder() per liste, conteggi, Riepilogo e Gite); Soci (copertura:
-      tessera non obbligatoria, esclusività, nucleo contato, presciistica solo corso); Impostazioni
-      (assicurazione per FAMIGLIA, Paga il socio × persone); produzione: migrazione PRIMA del
-      deploy (la pagina nuova legge `people`). Push e dev chiesti.
+- [ ] 21/10: **Agevolazioni famiglia con l'assicurazione, al posto della tessera.** Fatto (TDD: 3a729e2 e
+      a8c3f47 RED, 5b8ac3c, 607cb2a, 974c42b, 35fc63d GREEN; in produzione e online): o la tessera o
+      l'agevolazione, che la sceglie il capofamiglia e copre lui e i familiari a carico fino alle sue
+      persone (dal nome); prezzo quota + persone × assicurazione (3 persone Base 110, invariato);
+      con la presciistica con l'assicurazione la tessera non è obbligatoria; chi è coperto
+      dall'agevolazione ha la «CORSO PRESCIISTICA - FAMIGLIA» (50 €); liste dell'assicurazione,
+      tesserati (Riepilogo, Gite) e conteggi contano chi è coperto; la tessera compresa nella
+      presciistica non si conta più (6 soci al 21/10). Backup in
+      `supabase/migration/backup-2026-10-21-agevolazioni/`. Da provare sul sito vero: capofamiglia
+      con l'agevolazione e due familiari, un familiare in più col nucleo pieno, socio con la sola
+      presciistica. Da controllare: LACHELLI ha la presciistica Total Sport (120) e il totale 115.
+      Non fatto: nelle pagine Cerca socio ed Excel dei soci la colonna «Tessera» resta vuota per chi
+      è coperto senza tessera; Riepilogo e Gite usano il filtro `card_holder` (PostgREST), provato
+      solo nel database.
 
 - [ ] 21/10: **Codice fiscale proposto anche senza scegliere il sesso.** L'utente: «quando inserisco
       un nuovo socio perché non viene proposto un codice fiscale?». Oggi `controllaCF()`
