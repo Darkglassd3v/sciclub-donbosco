@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016d">
+  <link rel="stylesheet" href="brand.css?v=20261022errori">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
@@ -189,7 +189,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021famiglia"></script>
+<script src="shared.js?v=20261022errori"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -300,7 +300,7 @@
   async function salvaTessereDa() {
     const valore = el("tessereDa").value.trim();
     // Come il vincolo settings_card_gaps_from_valid del database.
-    if (!/^[1-9]\d{0,8}$/.test(valore)) { showToast("Scrivi un numero intero da 1 in su (es. 21).", "is-warning"); return; }
+    if (!/^[1-9]\d{0,8}$/.test(valore)) { segnaErrore(el("tessereDa"), "Scrivi un numero intero da 1 in su (es. 21)."); return; }
     const { error } = await sb.from("settings").update({ value: valore }).eq("key", "card_gaps_from");
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     showToast(`In Soci i numeri tessera liberi si contano dal ${valore}.`);
@@ -400,7 +400,7 @@
     const bottone = riga.querySelector("[data-salva]");
     const selettoreRuolo = riga.querySelector("[data-min-role]");
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
-    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
+    if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
     const patch = {
       name: nomePulito(riga.querySelector("[data-nome]")),
       price: prezzo,
@@ -430,11 +430,11 @@
   async function aggiungiPrezzo() {
     const nome = nomePulito(el("nuovoNome"));
     if (!nome) {
-      showToast("Inserisci un nome.", "is-warning");
+      segnaErrore(el("nuovoNome"), "Inserisci un nome.");
       return;
     }
     const prezzo = leggiEuro(el("nuovoPrezzo"));
-    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
+    if (prezzo == null) { segnaErrore(el("nuovoPrezzo"), AVVISO_EURO); return; }
     const bottone = el("btnAggiungiPrezzo");
     bottone.disabled = true;
     try {
@@ -532,9 +532,9 @@
 
   async function salvaAssicurazione(riga) {
     const nome = nomePulito(riga.querySelector("[data-nome]"));
-    if (!nome) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    if (!nome) { segnaErrore(riga.querySelector("[data-nome]"), "Scrivi il nome dell'assicurazione."); return; }
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
-    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
+    if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
     const bottone = riga.querySelector("[data-salva]");
     bottone.disabled = true;
     try {
@@ -557,7 +557,7 @@
     const nome = ASSICURAZIONI.find((a) => a.code === riga.dataset.id)?.name || riga.dataset.id;
     const usata = el("tabellaPrezzi").querySelector(`[data-assicurazione] option[value="${CSS.escape(riga.dataset.id)}"]:checked`);
     if (usata) {
-      showToast(`${nome} la dà ancora una tessera del listino: prima scegli un'altra assicurazione per quella tessera.`, "is-danger");
+      segnaErrore(usata.closest("select"), `${nome} la dà ancora una tessera del listino: prima scegli un'altra assicurazione per quella tessera.`);
       return;
     }
     const dove = riga.querySelector(".buttons");
@@ -586,12 +586,12 @@
     // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
     const base = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       .replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!base) { showToast("Scrivi il nome dell'assicurazione.", "is-warning"); return; }
+    if (!base) { segnaErrore(el("nuovaAssNome"), "Scrivi il nome dell'assicurazione."); return; }
     // "Global Neve-Sport" dà lo stesso codice di "Global Neve Sport": il secondo diventa _2.
     let codice = base;
     for (let n = 2; ASSICURAZIONI.some((a) => a.code === codice); n++) codice = `${base}_${n}`;
     const prezzo = leggiEuro(el("nuovaAssPrezzo"));
-    if (prezzo == null) { showToast(AVVISO_EURO, "is-warning"); return; }
+    if (prezzo == null) { segnaErrore(el("nuovaAssPrezzo"), AVVISO_EURO); return; }
     const bottone = el("btnAggiungiAss");
     bottone.disabled = true;
     try {
@@ -672,7 +672,7 @@
   async function aggiungiPartenza() {
     const luogo = nomePulito(el("nuovoLuogo"));
     if (!luogo) {
-      showToast("Inserisci un luogo.", "is-warning");
+      segnaErrore(el("nuovoLuogo"), "Inserisci un luogo.");
       return;
     }
     const bottone = el("btnAggiungiPartenza");

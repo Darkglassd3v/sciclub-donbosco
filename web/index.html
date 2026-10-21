@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261016d">
+  <link rel="stylesheet" href="brand.css?v=20261022errori">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -390,7 +390,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261021famiglia"></script>
+<script src="shared.js?v=20261022errori"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
@@ -1507,23 +1507,22 @@
   async function salva() {
     const form = el("memberForm");
     if (el("pagaFamiliare").checked && nomeSelezionato("f_agevolazioni_famiglia")) {
-      showToast("L'agevolazione famiglia la sceglie il capofamiglia: chi è a carico ne è già coperto.", "is-danger");
+      segnaErrore(el("f_agevolazioni_famiglia"), "L'agevolazione famiglia la sceglie il capofamiglia: chi è a carico ne è già coperto.");
       return;
     }
     if (!nomeSelezionato("f_tipologia_tessera") && nucleoPieno()) {
-      showToast(nucleoPieno(), "is-danger");
+      segnaErrore(el("f_tipologia_tessera"), nucleoPieno());
       return;
     }
     if (copertura()?.famiglia && voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) {
-      showToast("Con l'agevolazione famiglia tessera e assicurazione ci sono già: la presciistica è solo il corso.", "is-danger");
+      segnaErrore(el("f_presciistica"), "Con l'agevolazione famiglia tessera e assicurazione ci sono già: la presciistica è solo il corso.");
       return;
     }
     if (!form.checkValidity()) { form.reportValidity(); return; }
     // Senza questo controllo "La paga un familiare" senza nome si salvava
     // come "paga da sé", senza dire niente.
     if (el("pagaFamiliare").checked && !el("f_payer_id").value) {
-      showToast("Scegli dall'elenco il familiare che paga, oppure segna «Paga da sé».", "is-danger");
-      el("f_payerDisplay").focus();
+      segnaErrore(el("f_payerDisplay"), "Scegli dall'elenco il familiare che paga, oppure segna «Paga da sé».");
       return;
     }
 
@@ -1820,8 +1819,7 @@
   async function scaricaScheda() {
     const nome = nomeNelModulo();
     if (!nome) {
-      showToast("Scrivi almeno cognome e nome, poi scarica la scheda.", "is-danger");
-      el("f_cognome").focus();
+      segnaErrore(el(el("f_cognome").value.trim() ? "f_nome" : "f_cognome"), "Scrivi almeno cognome e nome, poi scarica la scheda.");
       return;
     }
     const pulsante = el("btnScarica");

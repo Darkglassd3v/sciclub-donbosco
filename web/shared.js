@@ -219,6 +219,77 @@ function showToast(messaggio, tipo = "is-success") {
   }, 8000);
 }
 
+// ---------------------------------------------------------------------------
+// Campi con un errore: bordo rosso e la pagina che scorre fin lì
+//
+// Vale per tutto il sito. Un campo che il browser non accetta quando si prova
+// a salvare (required, min, step...: l'evento "invalid") e un campo che una
+// pagina segnala con segnaErrore() prendono il bordo rosso finché non li si
+// cambia; la pagina scorre al primo e il fuoco ci va. Prima l'errore era solo
+// un messaggio in alto, e il campo non si trovava.
+// ---------------------------------------------------------------------------
+
+/** Dove si vede il bordo: il campo, o per una scelta (radio, spunta) il suo gruppo. */
+function bordoDelCampo(campo) {
+  const scelta = campo.matches?.("input[type=radio], input[type=checkbox]");
+  return (scelta && campo.closest("fieldset, [role=radiogroup]")) || campo;
+}
+
+/** Il nome del campo come lo legge chi compila: la sua etichetta, senza l'asterisco. */
+function nomeDelCampo(campo) {
+  const bordo = bordoDelCampo(campo);
+  const testo = bordo.matches("fieldset") ? bordo.querySelector("legend")?.textContent
+    : (campo.id && document.querySelector(`label[for="${CSS.escape(campo.id)}"]`)?.textContent)
+      || campo.getAttribute("aria-label") || campo.placeholder;
+  return (testo || "").replace(/\*/g, "").replace(/\s+/g, " ").trim();
+}
+
+/** Bordo rosso sul campo (o sul suo gruppo) finché non lo si cambia. */
+function segnaCampo(campo) {
+  const bordo = bordoDelCampo(campo);
+  bordo.classList.add("campo-errore");
+  const togli = () => bordo.classList.remove("campo-errore");
+  bordo.addEventListener("input", togli, { once: true });
+  bordo.addEventListener("change", togli, { once: true });
+}
+
+// I campi segnati nello stesso momento (un Salva ne trova più d'uno): si va al
+// primo e, se la pagina non ha già spiegato l'errore, un messaggio li nomina tutti.
+let campiDaMostrare = [];
+function vaiAiCampi(campi, giaDetto = false) {
+  if (!campiDaMostrare.length) {
+    setTimeout(() => {
+      const [primo] = campiDaMostrare;
+      const nomi = [...new Set(campiDaMostrare.map(nomeDelCampo).filter(Boolean))];
+      campiDaMostrare = [];
+      bordoDelCampo(primo).scrollIntoView({ block: "center" });
+      primo.focus({ preventScroll: true });
+      if (!vaiAiCampi.giaDetto) showToast(`Da completare o correggere: ${nomi.join(", ")}.`, "is-danger");
+      vaiAiCampi.giaDetto = false;
+    });
+  }
+  campiDaMostrare.push(...campi);
+  if (giaDetto) vaiAiCampi.giaDetto = true;
+}
+
+/**
+ * Un errore su un campo, trovato dalla pagina: bordo rosso, la pagina scorre fin
+ * lì e il messaggio lo spiega. `campo` può essere anche il gruppo (fieldset): il
+ * fuoco va sulla sua prima scelta.
+ */
+function segnaErrore(campo, messaggio) {
+  const fuoco = campo.matches("fieldset") ? campo.querySelector("input, select, textarea") || campo : campo;
+  segnaCampo(fuoco);
+  showToast(messaggio, "is-danger");
+  vaiAiCampi([fuoco], true);
+}
+
+// Quello che il browser non accetta: required vuoto, numero fuori da min/step...
+document.addEventListener("invalid", (evento) => {
+  segnaCampo(evento.target);
+  vaiAiCampi([evento.target]);
+}, true);
+
 /**
  * Pulsante A+ della barra: tre grandezze del testo (17, 19, 21px), poi si
  * torna alla normale. La scelta resta in questo browser; lo script nell'head
