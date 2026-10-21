@@ -389,6 +389,9 @@
       return;
     }
     const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
+    // Salva di una riga ridisegna la lista: i codici scritti e non salvati
+    // nelle altre righe restano (cambiando pagina, invece, lo si chiede prima).
+    const scritti = new Map(codiciNonSalvati().map((tr) => [tr.dataset.id, tr.querySelector(".cf").value]));
     corpo.replaceChildren(...TIPI.flatMap((t) => {
       const soci = daAssicurare.filter((s) => s.insurance === t.kind).sort(perNome);
       if (!soci.length) return [];
@@ -406,6 +409,20 @@
       const righe = soci.slice(pagina * PER_PAGINA, (pagina + 1) * PER_PAGINA).map((s) => riga(s, { conTipo: true }));
       return [titolo, ...righe, ...(pagine > 1 ? [rigaPagine(t, pagina, pagine, soci.length)] : [])];
     }));
+    corpo.querySelectorAll("tr[data-id]").forEach((tr) => {
+      if (!scritti.has(tr.dataset.id)) return;
+      const cf = tr.querySelector(".cf");
+      cf.value = scritti.get(tr.dataset.id);
+      cf.dispatchEvent(new Event("change"));   // l'avviso del codice scritto
+    });
+  }
+
+  /** Le righe della lista con un codice fiscale scritto e non ancora salvato. */
+  function codiciNonSalvati() {
+    return [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
+      const s = daAssicurare.find((d) => d.id === tr.dataset.id);
+      return s && normalizzaCF(tr.querySelector(".cf").value) !== normalizzaCF(s.tax_code);
+    });
   }
 
   /** «‹ Indietro · 26–50 di 60 · Avanti ›», sotto il gruppo. */
@@ -438,10 +455,7 @@
       (pagine?.querySelector(`${pulsante}:not([disabled])`) || pagine?.querySelector("button:not([disabled])"))
         ?.focus({ preventScroll: true });
     };
-    const nonSalvati = [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
-      const s = daAssicurare.find((d) => d.id === tr.dataset.id);
-      return s && normalizzaCF(tr.querySelector(".cf").value) !== normalizzaCF(s.tax_code);
-    }).length;
+    const nonSalvati = codiciNonSalvati().length;
     if (!nonSalvati) { vai(); return; }
     chiedi(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
       `${nonSalvati === 1 ? "Un codice fiscale scritto non è salvato: cambiando pagina si perde"
