@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022errori">
+  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -240,8 +240,8 @@
         <p id="tessereLibere" class="help" hidden></p>
       </div>
     </div>
-      <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera*</legend><div class="scelte-opzioni"></div></fieldset>
-      <p id="notaPresciistica" class="help" hidden>Compresa nella presciistica: nel totale conta solo la presciistica.</p>
+      <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera<span class="obbligo">*</span></legend><div class="scelte-opzioni"></div></fieldset>
+      <p id="notaPresciistica" class="help" hidden>La tessera è compresa nella presciistica: non serve sceglierla.</p>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
       <p id="notaFamiglia" class="help" hidden></p>
     </div>
@@ -471,6 +471,12 @@
       el("f_tipologia_tessera").addEventListener("change", () => { selezionaPerNome("f_agevolazioni_famiglia", null); ricalcola(); });
       el("f_agevolazioni_famiglia").addEventListener("change", () => {
         if (nomeSelezionato("f_agevolazioni_famiglia")) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        ricalcola();
+      });
+      // Anche la presciistica con l'assicurazione comprende la tessera: scelta lei, la
+      // tessera si svuota (e si spegne, aggiornaCopertura()).
+      el("f_presciistica").addEventListener("change", () => {
+        if (voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
         ricalcola();
       });
       el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
@@ -932,7 +938,7 @@
       if (n > prima + 1) liberi.push(n === prima + 2 ? String(prima + 1) : `${prima + 1}–${n - 1}`);
       prima = n;
     }
-    el("tessereLibere").textContent = `Numeri liberi: ${liberi.join(", ")}`;
+    el("tessereLibere").textContent = `NUMERI TESSERA LIBERI PROPOSTI: ${liberi.join(", ")}`;
     el("tessereLibere").hidden = !liberi.length;
   }
 
@@ -1046,7 +1052,11 @@
    */
   function aggiornaCopertura() {
     const c = copertura();
-    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; });
+    // Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Chi
+    // le ha già tutte e due (prima del 22/10) la tiene, spenta.
+    const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
+    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica; });
+    el("f_tipologia_tessera").querySelector(".obbligo").hidden = Boolean(c);
     const nota = el("notaFamiglia");
     let testo = "", avviso = false;
     if (c?.capo) {
