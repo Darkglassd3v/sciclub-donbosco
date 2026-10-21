@@ -4,6 +4,7 @@
 // - Dopo Salva si resta sulla pagina; lista accorciata: l'ultima pagina che c'è.
 // - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
+// - Cambiata pagina il fuoco resta su Indietro/Avanti (tastiera), anche all'ultima.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const numero = (i) => String(i).padStart(3, "0");
@@ -57,6 +58,8 @@
     domanda()?.querySelector("[data-si]").click();
     prova("ultima", righe("B").length === 10 && testo("BASE") === "51–60 di 60" && avanti("BASE").disabled,
       `${righe("B").length} righe, «${testo("BASE")}», avanti spento ${avanti("BASE")?.disabled}`);
+    // All'ultima pagina Avanti è spento: il fuoco va su Indietro, non si perde.
+    prova("fuoco", document.activeElement === indietro("BASE"), `fuoco su ${document.activeElement?.tagName} ${document.activeElement?.textContent.trim().slice(0, 20)}`);
     indietro("BASE").click();
     prova("indietro", !domanda() && testo("BASE") === "26–50 di 60", `domanda ${Boolean(domanda())}, «${testo("BASE")}»`);
     avanti("BASE").click();
