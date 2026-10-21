@@ -1749,9 +1749,18 @@ do $$ begin
     raise exception 'una tessera ha preso un''assicurazione che non esiste';
   exception when foreign_key_violation then null;
   end;
-  -- Prezzi in euro interi, mai negativi.
+  -- Prezzi in euro interi o con i 50 centesimi (22/10/2026), mai negativi.
+  declare prima numeric;
   begin
+    select price into prima from public.prices where name = 'PROVA TESSERA ORDINARIA';
     update public.prices set price = 35.5 where name = 'PROVA TESSERA ORDINARIA';
+    update public.prices set price = prima where name = 'PROVA TESSERA ORDINARIA';
+    select price into prima from public.insurances where code = 'BASE';
+    update public.insurances set price = 20.5 where code = 'BASE';
+    update public.insurances set price = prima where code = 'BASE';
+  end;
+  begin
+    update public.prices set price = 35.3 where name = 'PROVA TESSERA ORDINARIA';
     raise exception 'il listino ha preso un prezzo coi centesimi';
   exception when check_violation then null;
   end;
@@ -1761,7 +1770,7 @@ do $$ begin
   exception when check_violation then null;
   end;
   begin
-    update public.insurances set price = 20.5 where code = 'BASE';
+    update public.insurances set price = 20.3 where code = 'BASE';
     raise exception 'un''assicurazione ha preso un prezzo coi centesimi';
   exception when check_violation then null;
   end;
