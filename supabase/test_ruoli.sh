@@ -1088,6 +1088,10 @@ insert into public.members (id, last_name, first_name, enrolled_at, tax_code, pa
    'aaaaaaaa-0000-0000-0000-000000000020', 'PROVA PRESCIISTICA - FAMIGLIA'),
   ('aaaaaaaa-0000-0000-0000-000000000024', 'VIOLA', 'FIGLIO', now(), 'VLIFGL80A01F205X',
    'aaaaaaaa-0000-0000-0000-000000000023', null);
+-- Familiare con la sua tessera senza assicurazione (nucleo pieno): l'agevolazione non lo copre.
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, payer_id, card_type) values
+  ('aaaaaaaa-0000-0000-0000-000000000025', 'ROSA', 'CONTESSERA', now(), 'RSOCNT80A01F205X',
+   'aaaaaaaa-0000-0000-0000-000000000020', 'PROVA TESSERA PRESIDENTE');
 set role authenticated;
 do $$
 declare
@@ -1133,6 +1137,8 @@ begin
   assert (select insurance from public.insurance_members() where id = sola) = 'SPORT', 'presciistica senza tessera: non è da assicurare';
   assert not exists (select 1 from public.insurance_members() where id in (capo2, figlio2)),
          'agevolazione senza assicurazione: il nucleo è da assicurare';
+  assert not exists (select 1 from public.insurance_members() where id = 'aaaaaaaa-0000-0000-0000-000000000025'),
+         'familiare con la sua tessera senza assicurazione: assicurato dall''agevolazione del capofamiglia';
   assert public.insurance_send('BASE', 30, array[capo, figlio]) = 2, 'agevolazione: il nucleo non è entrato nella lista Base';
   assert public.insurance_send('SPORT', 30, array[sola]) = 1, 'presciistica senza tessera: non è entrato nella lista Sport';
 end $$;
