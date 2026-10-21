@@ -6,6 +6,7 @@
 //   scrivendo 36 non manca niente e la riga sparisce.
 // - Il socio aperto non occupa il suo numero vecchio: cambiato, quello torna libero.
 // - Numeri con lettere non contano (come next_card_number).
+// - Impostazione illeggibile: niente riga, invece dei posti del direttivo come liberi.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const LISTINO = [{ category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" }];
@@ -60,6 +61,11 @@
     await aspetta(300);
     scrivi("45");
     prova("daImpostazioni", liberi() === "38–44", `liberi «${liberi()}»`);
+
+    FINTO.errore = (t) => (t === "settings" ? { message: "relation \"public.settings\" does not exist" } : null);
+    resetForm();
+    await aspetta(300);
+    prova("senzaImpostazione", liberi() === "", `liberi «${liberi()}»`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

@@ -6,6 +6,7 @@
 // richiesta.colonne quelle chieste con select(). Le funzioni del database
 // (rpc) sono richieste su "rpc:<nome>": rispondono con FINTO.rpc[nome] se c'è,
 // se no con FINTO.risposta; i parametri sono in richiesta.parametri.
+// FINTO.errore(tabella, richiesta), se dà qualcosa, è l'errore della risposta.
 window.FINTO = {
   ritardo: () => 20,
   risposta: () => [],
@@ -34,7 +35,8 @@ Richiesta.prototype.then = function (ok, ko) {
     const rpc = this.tabella.startsWith("rpc:") ? this.tabella.slice(4) : null;
     let data = rpc && rpc in window.FINTO.rpc ? window.FINTO.rpc[rpc] : window.FINTO.risposta(this.tabella, this);
     if (this.singola) data = Array.isArray(data) ? data[0] : data;
-    fine({ data, error: null });
+    const error = window.FINTO.errore?.(this.tabella, this) || null;
+    fine({ data: error ? null : data, error });
   }, window.FINTO.ritardo(this.tabella, this))).then(ok, ko);
 };
 
