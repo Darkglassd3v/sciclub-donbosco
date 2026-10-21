@@ -244,11 +244,12 @@ function nomeDelCampo(campo) {
   return (testo || "").replace(/\*/g, "").replace(/\s+/g, " ").trim();
 }
 
-/** Bordo rosso sul campo (o sul suo gruppo) finché non lo si cambia. */
+/** Bordo rosso sul campo (o sul suo gruppo) finché non lo si cambia; aria-invalid per chi usa il lettore di schermo. */
 function segnaCampo(campo) {
   const bordo = bordoDelCampo(campo);
   bordo.classList.add("campo-errore");
-  const togli = () => bordo.classList.remove("campo-errore");
+  campo.setAttribute("aria-invalid", "true");
+  const togli = () => { bordo.classList.remove("campo-errore"); campo.removeAttribute("aria-invalid"); };
   bordo.addEventListener("input", togli, { once: true });
   bordo.addEventListener("change", togli, { once: true });
 }

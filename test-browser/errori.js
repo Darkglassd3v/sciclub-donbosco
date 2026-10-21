@@ -32,7 +32,8 @@
 
     el("f_cognome").value = "Rossi";
     el("f_cognome").dispatchEvent(new Event("input", { bubbles: true }));
-    prova("toltoScrivendo", !rosso("f_cognome") && rosso("f_nome"), `cognome ${rosso("f_cognome")}, nome ${rosso("f_nome")}`);
+    prova("toltoScrivendo", !rosso("f_cognome") && rosso("f_nome") && !el("f_cognome").hasAttribute("aria-invalid")
+      && el("f_nome").getAttribute("aria-invalid") === "true", `cognome ${rosso("f_cognome")}, nome ${rosso("f_nome")}`);
 
     el("f_nome").value = "Mario";
     el("f_telefono").value = "333";
