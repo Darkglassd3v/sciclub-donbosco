@@ -22,10 +22,14 @@
 
 ## Richieste nuove
 
-- [ ] 22/10: **2.8 rilasciata, si lavora su 2.9-SNAPSHOT.** Tag e branch `2.8` (le pagine pubblicano da
-      lì finché non parte un deploy da `2.9-SNAPSHOT`). Da fare al primo deploy da `2.9-SNAPSHOT`
-      (docs/SVILUPPO.md, passo 5): controllare con `git tag --contains` e togliere i branch
-      `2.8` e `2.8-SNAPSHOT` da GitHub, e `2.8` dai trigger di deploy-pages.yml.
+- [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
+      ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
+      .help e le scelte di Bulma lo battevano: in Soci si vedevano la nota della presciistica, la riga
+      vuota dei numeri liberi, le voci della presciistica da nascondere); riga «NUMERI TESSERA LIBERI
+      PROPOSTI: …», assente senza numeri liberi; con la presciistica con l'assicurazione la tessera si
+      svuota e si spegne, l'asterisco sparisce. Da provare sul sito vero, anche nelle pagine senza prove
+      nel browser (Bilancio, Stagione, Gestione, Utenti, Riepilogo, Stampe). 2.8 rilasciata (tag `2.8`),
+      branch `2.8` e `2.8-SNAPSHOT` tolti il 22/10.
 
 - [ ] 22/10: **Errori sui campi, codice fiscale da calcolare, euro interi o coi 50 centesimi.** Fatto
       (TDD: 0626e00, b4f61e4, 7766a47 e il RED del database; GREEN bbc3b10, 9c96499, 1f68d0a; vincolo

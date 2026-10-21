@@ -3,7 +3,7 @@
 - Prima leggere `PROJECT-CONTEXT.md` (breve) e `TODO.md` (cosa fare);
   regole, rilascio e database in `docs/SVILUPPO.md`.
 - Commit locali liberi, limitati ai file toccati (`git commit -- file...`). **Niente push senza sì
-  esplicito** da chi segue progetto: il push su `2.8` o `2.9-SNAPSHOT` pubblica il sito.
+  esplicito** da chi segue progetto: il push su `2.9-SNAPSHOT` pubblica il sito.
 - Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
 - "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
   nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
