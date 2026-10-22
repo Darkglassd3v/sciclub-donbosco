@@ -9,6 +9,11 @@
 // - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
 //   salva; 0 o lettere no.
 // - Prezzi in euro interi o con i 50 centesimi: 12,50 si salva, 12,30 no (bordo rosso).
+// - Un salvataggio che il database non scrive (riga negata dalla RLS o sparita):
+//   errore, e la riga resta gialla; non «aggiornata».
+// - Nome della voce vuoto: non si salva, bordo rosso.
+// - Con una riga modificata e non salvata non si aggiunge una voce (rileggere il
+//   listino la perderebbe): si borda il suo Salva.
 // - Voce nuova senza nome: il nome ha il bordo rosso e si vede (regola di shared.js).
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
@@ -19,10 +24,11 @@
   const LUOGO = "ASTI - PIAZZA D'ARMI (CORSO ALFIERI ANGOLO VIA ROMA)";
   const ASS_LUNGA = "REALE TOTAL SPORT CON RIMBORSO SPESE MEDICHE";
   const scritti = [];
+  let negata = false;   // il database non scrive (RLS o riga sparita): niente righe indietro
 
   FINTO.risposta = (t, r) => {
     const scrittura = r.filtri.find((f) => f[0] === "update" || f[0] === "insert");
-    if (scrittura) { scritti.push([t, scrittura[1]]); return []; }
+    if (scrittura) { scritti.push([t, scrittura[1]]); return negata ? [] : [{ id: 1 }]; }
     if (t === "prices") return [
       { id: 1, category: "PRESCIISTICA", name: LUNGO, price: 75, active: true, min_role: "utente", insurance: "SPORT", insurance_paid: true, position: null },
       { id: 2, category: "TESSERA", name: CON_AMP, price: 20, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1 },
@@ -104,6 +110,40 @@
     await aspetta(200);
     prova("centesimiNo", scritti.length === scrittiPrezzo && prezzoTessera.classList.contains("campo-errore"),
       `salvati ${scritti.length - scrittiPrezzo}, bordato ${prezzoTessera.classList.contains("campo-errore")}`);
+
+    const toast = () => el("statusToast")?.textContent || "";
+    const r2 = riga("tabellaPrezzi", 2);
+    r2.querySelector("[data-prezzo]").value = "30";
+    r2.querySelector("[data-prezzo]").dispatchEvent(new Event("input", { bubbles: true }));
+    negata = true;
+    r2.querySelector("[data-salva]").click();
+    await aspetta(200);
+    negata = false;
+    prova("nonScritta", /non salvat/i.test(toast()) && r2.classList.contains("modificata"),
+      `«${toast().slice(0, 60)}», gialla ${r2.classList.contains("modificata")}`);
+
+    const nomeR2 = r2.querySelector("[data-nome]");
+    const primaNome = scritti.length;
+    nomeR2.value = "";
+    nomeR2.dispatchEvent(new Event("input", { bubbles: true }));
+    r2.querySelector("[data-salva]").click();
+    await aspetta(200);
+    prova("nomeVuoto", scritti.length === primaNome && nomeR2.classList.contains("campo-errore"),
+      `salvati ${scritti.length - primaNome}, bordato ${nomeR2.classList.contains("campo-errore")}`);
+    nomeR2.value = CON_AMP;
+    nomeR2.dispatchEvent(new Event("input", { bubbles: true }));
+
+    el("nuovoNome").value = "VOCE NUOVA";
+    el("nuovoPrezzo").value = "10";
+    const primaNuova = scritti.length;
+    el("btnAggiungiPrezzo").click();
+    await aspetta(300);
+    prova("nonPerdeModifiche", scritti.length === primaNuova && riga("tabellaPrezzi", 2)?.classList.contains("modificata"),
+      `inseriti ${scritti.length - primaNuova}, riga gialla ${riga("tabellaPrezzi", 2)?.classList.contains("modificata")}`);
+    r2.querySelector("[data-prezzo]").value = "20";
+    r2.querySelector("[data-prezzo]").dispatchEvent(new Event("input", { bubbles: true }));
+    el("nuovoNome").value = "";
+    el("nuovoPrezzo").value = "";
 
     window.scrollTo(0, 0);
     el("btnAggiungiPrezzo").click();
