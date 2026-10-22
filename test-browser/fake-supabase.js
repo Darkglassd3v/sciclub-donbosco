@@ -7,6 +7,8 @@
 // (rpc) sono richieste su "rpc:<nome>": rispondono con FINTO.rpc[nome] se c'è,
 // se no con FINTO.risposta; i parametri sono in richiesta.parametri.
 // FINTO.errore(tabella, richiesta), se dà qualcosa, è l'errore della risposta.
+// L'accesso: FINTO.email è l'email della sessione (null: senza); le chiamate di
+// auth (signInWithPassword, updateUser, signOut) finiscono in FINTO.auth.
 window.FINTO = {
   ritardo: () => 20,
   risposta: () => [],
@@ -15,6 +17,8 @@ window.FINTO = {
       permissions: ["soci", "pagamenti", "riepilogo", "storico", "bilancio", "cerca", "gite", "stampe", "polizze", "social", "gestione"] }],
     next_card_number: 100,
   },
+  email: "prova@sciclub.it",
+  auth: [],
 };
 
 function Richiesta(tabella) {
@@ -43,9 +47,11 @@ Richiesta.prototype.then = function (ok, ko) {
 window.supabase = {
   createClient: () => ({
     auth: {
-      getSession: async () => ({ data: { session: { user: { id: "prova" } } } }),
+      getSession: async () => ({ data: { session: { user: { id: "prova", email: window.FINTO.email ?? undefined } } } }),
       onAuthStateChange() {},
-      signOut: async () => ({}),
+      signOut: async (opzioni) => { window.FINTO.auth.push(["signOut", opzioni || {}]); return {}; },
+      signInWithPassword: async (dati) => { window.FINTO.auth.push(["signIn", dati]); return { error: null }; },
+      updateUser: async (dati) => { window.FINTO.auth.push(["updateUser", dati]); return { error: null }; },
     },
     from: (tabella) => new Richiesta(tabella),
     // Come supabase-js: una richiesta, con .range() per tutteLeRighe().
