@@ -1662,6 +1662,9 @@
     ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
   ];
 
+  const GITA_NEL_FRATTEMPO = "Socio NON salvato: su un abbonamento da togliere è stata appena segnata una gita "
+    + "(dal pullman). Riapri la scheda dalla ricerca: un abbonamento con gite fatte non si toglie.";
+
   async function scrivi() {
     const bottone = el("btnSalva");
     bottone.disabled = true;
@@ -1710,6 +1713,17 @@
       // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
       // altro operatore può aver inserito la stessa persona.
       if (!id && await fermaSeDoppioni()) return;
+      // Un abbonamento da togliere su cui intanto è stata segnata una gita (dal
+      // pullman) non si cancella più: lo si guarda prima di scrivere, se no il socio
+      // restava col totale già abbassato e l'abbonamento ancora lì.
+      if (id && abbonamentiDaTogliere.size) {
+        const { data: gite, error } = await sb.from("trip_uses").select("id").in("pass_id", [...abbonamentiDaTogliere]).limit(1);
+        if (error) throw error;
+        if (gite.length) {
+          showToast(GITA_NEL_FRATTEMPO, "is-danger");
+          return;
+        }
+      }
       if (id) {
         // Solo se nessuno l'ha cambiato da quando è aperto: Pagamenti, il
         // pannello gite e l'Assicurazione scrivono sullo stesso socio, e il
@@ -1747,7 +1761,8 @@
       }
       if (abbonamentiDaTogliere.size) {
         const { error } = await sb.from("member_passes").delete().in("id", [...abbonamentiDaTogliere]);
-        if (error) throw error;
+        // La gita segnata proprio fra il controllo e qui.
+        if (error) throw error.code === "23503" ? new Error(GITA_NEL_FRATTEMPO) : error;
       }
 
       showToast(`${socio.last_name} ${socio.first_name} salvato`);
