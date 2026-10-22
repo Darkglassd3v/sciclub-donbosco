@@ -29,7 +29,9 @@
       Poi i minori dell'audit: S4 (dopo l'inserimento il blocco su updated_at), S12 (pagante
       illeggibile mostrato come id), P16 (in Pagamenti i riquadri seguono la ricerca). Chiusi senza
       modifiche: S8 e G9 non possono succedere oggi (nessun abbonamento o corso con
-      l'assicurazione; remove_from_season azzera anche il versato). TDD.
+      l'assicurazione; remove_from_season azzera anche il versato). TDD. **Fatto e pubblicato il
+      23/10** (G10 42af362, prima tessera b483e42 con next_card_number in produzione, S4 fe590fe, S12
+      a07ad44, P16 e51e9de). Resta P12 (riscarico di una lista oltre 1000 soci: oggi non succede).
 
 - [ ] 23/10 mattina, **DA LEGGERE: com'è andata la notte delle prove** (scelta «b», in autonomia).
       **23/10: pubblicato** (push e deploy di `2.9-SNAPSHOT` a 603f346, `dev` allineato) e in
