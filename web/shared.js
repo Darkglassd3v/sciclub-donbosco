@@ -135,7 +135,15 @@ function paginaDiArrivo(accesso) {
 async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
-  const accesso = await getProfile();
+  let accesso;
+  try {
+    accesso = await getProfile();
+  } catch (error) {
+    // Rete o database giù: nessuna pagina prende l'errore, e restava «Caricamento…» senza dire niente.
+    setLoading(false);
+    showToast(`Non riesco a leggere il tuo accesso (${messaggioErrore(error)}). Ricarica la pagina fra poco.`, "is-danger");
+    return null;
+  }
   if (accesso && accesso.change_password) {
     location.replace("password.html");
     return null;
