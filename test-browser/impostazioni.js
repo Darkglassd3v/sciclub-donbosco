@@ -140,7 +140,8 @@
     await aspetta(300);
     prova("nonPerdeModifiche", scritti.length === primaNuova && riga("tabellaPrezzi", 2)?.classList.contains("modificata"),
       `inseriti ${scritti.length - primaNuova}, riga gialla ${riga("tabellaPrezzi", 2)?.classList.contains("modificata")}`);
-    r2.querySelector("[data-prezzo]").value = "20";
+    // Di nuovo com'è salvata (12,50 da cinquantaCent): la riga si spegne.
+    r2.querySelector("[data-prezzo]").value = "12.5";
     r2.querySelector("[data-prezzo]").dispatchEvent(new Event("input", { bubbles: true }));
     el("nuovoNome").value = "";
     el("nuovoPrezzo").value = "";

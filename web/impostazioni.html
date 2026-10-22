@@ -288,6 +288,23 @@
     }
   });
 
+  // Un update o delete che il database non applica (riga negata dalla RLS, o tolta
+  // nel frattempo) non dà errore: torna senza righe. Senza questo controllo la
+  // pagina diceva «salvato».
+  const NON_SALVATO = "Non salvato: la riga non c'è più o non hai il permesso di cambiarla. Ricarica la pagina.";
+  function scritta({ data, error }) {
+    if (error) throw error;
+    if (!data?.length) throw new Error(NON_SALVATO);
+  }
+
+  /** Con una riga gialla nella tabella non si aggiunge: rileggerla perderebbe le modifiche. */
+  function rigaDaSalvare(tabella) {
+    const aperta = el(tabella).querySelector("tr.modificata");
+    if (aperta) segnaErrore(aperta.querySelector("[data-salva]"),
+      "Prima salva le righe modificate (in giallo): aggiungendo si rilegge la tabella e le modifiche andrebbero perse.");
+    return Boolean(aperta);
+  }
+
   // ---------------------------------------------------------------------
   // Numeri tessera liberi: da dove la pagina Soci li conta (settings.card_gaps_from)
   // ---------------------------------------------------------------------
@@ -302,8 +319,9 @@
     const valore = el("tessereDa").value.trim();
     // Come il vincolo settings_card_gaps_from_valid del database.
     if (!/^[1-9]\d{0,8}$/.test(valore)) { segnaErrore(el("tessereDa"), "Scrivi un numero intero da 1 in su (es. 21)."); return; }
-    const { error } = await sb.from("settings").update({ value: valore }).eq("key", "card_gaps_from");
-    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    try {
+      scritta(await sb.from("settings").update({ value: valore }).eq("key", "card_gaps_from").select("key"));
+    } catch (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
     showToast(`In Soci i numeri tessera liberi si contano dal ${valore}.`);
   }
 
@@ -402,6 +420,7 @@
     const selettoreRuolo = riga.querySelector("[data-min-role]");
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
     if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
+    if (!nomePulito(riga.querySelector("[data-nome]"))) { segnaErrore(riga.querySelector("[data-nome]"), "Inserisci un nome."); return; }
     const patch = {
       name: nomePulito(riga.querySelector("[data-nome]")),
       price: prezzo,
@@ -417,8 +436,7 @@
 
     bottone.disabled = true;
     try {
-      const { error } = await sb.from("prices").update(patch).eq("id", id);
-      if (error) throw error;
+      scritta(await sb.from("prices").update(patch).eq("id", id).select("id"));
       segnaSalvata(riga);
       showToast("Voce aggiornata.");
     } catch (error) {
@@ -429,6 +447,7 @@
   }
 
   async function aggiungiPrezzo() {
+    if (rigaDaSalvare("tabellaPrezzi")) return;
     const nome = nomePulito(el("nuovoNome"));
     if (!nome) {
       segnaErrore(el("nuovoNome"), "Inserisci un nome.");
@@ -539,10 +558,9 @@
     const bottone = riga.querySelector("[data-salva]");
     bottone.disabled = true;
     try {
-      const { error } = await sb.from("insurances")
+      scritta(await sb.from("insurances")
         .update({ name: nome, price: prezzo })
-        .eq("code", riga.dataset.id);
-      if (error) throw error;
+        .eq("code", riga.dataset.id).select("code"));
       segnaSalvata(riga);
       showToast("Assicurazione aggiornata.");
       await dopoAssicurazioni();
@@ -568,8 +586,7 @@
 
   async function togliAssicurazione(riga) {
     try {
-      const { error } = await sb.from("insurances").delete().eq("code", riga.dataset.id);
-      if (error) throw error;
+      scritta(await sb.from("insurances").delete().eq("code", riga.dataset.id).select("code"));
       riga.remove();
       if (!el("tabellaAssicurazioni").querySelector("tr")) el("tabellaAssicurazioni").innerHTML = RIGA_NESSUNA_ASS;
       showToast("Assicurazione tolta.");
@@ -583,6 +600,7 @@
   }
 
   async function aggiungiAssicurazione() {
+    if (rigaDaSalvare("tabellaAssicurazioni")) return;
     const nome = nomePulito(el("nuovaAssNome"));
     // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
     const base = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
@@ -657,10 +675,10 @@
       place: nomePulito(riga.querySelector("[data-luogo]")),
       active: riga.querySelector("[data-attivo]").checked,
     };
+    if (!patch.place) { segnaErrore(riga.querySelector("[data-luogo]"), "Inserisci un luogo."); return; }
     bottone.disabled = true;
     try {
-      const { error } = await sb.from("departures").update(patch).eq("id", id);
-      if (error) throw error;
+      scritta(await sb.from("departures").update(patch).eq("id", id).select("id"));
       segnaSalvata(riga);
       showToast("Partenza aggiornata.");
     } catch (error) {
@@ -671,6 +689,7 @@
   }
 
   async function aggiungiPartenza() {
+    if (rigaDaSalvare("tabellaPartenze")) return;
     const luogo = nomePulito(el("nuovoLuogo"));
     if (!luogo) {
       segnaErrore(el("nuovoLuogo"), "Inserisci un luogo.");
