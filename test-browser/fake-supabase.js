@@ -8,7 +8,8 @@
 // se no con FINTO.risposta; i parametri sono in richiesta.parametri.
 // FINTO.errore(tabella, richiesta), se dà qualcosa, è l'errore della risposta.
 // L'accesso: FINTO.email è l'email della sessione (null: senza); le chiamate di
-// auth (signInWithPassword, updateUser, signOut) finiscono in FINTO.auth.
+// auth (signInWithPassword, updateUser, signOut) finiscono in FINTO.auth. Le
+// callback del realtime (channel().on()) stanno in FINTO.realtime: la prova le chiama.
 window.FINTO = {
   ritardo: () => 20,
   risposta: () => [],
@@ -19,6 +20,7 @@ window.FINTO = {
   },
   email: "prova@sciclub.it",
   auth: [],
+  realtime: [],
 };
 
 function Richiesta(tabella) {
@@ -56,7 +58,7 @@ window.supabase = {
     from: (tabella) => new Richiesta(tabella),
     // Come supabase-js: una richiesta, con .range() per tutteLeRighe().
     rpc: (nome, parametri) => Object.assign(new Richiesta("rpc:" + nome), { parametri }),
-    channel: () => ({ on() { return this; }, subscribe() { return this; } }),
+    channel: () => ({ on(tipo, filtro, callback) { window.FINTO.realtime.push(callback); return this; }, subscribe() { return this; } }),
     removeChannel() {},
   }),
 };
