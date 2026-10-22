@@ -819,9 +819,22 @@ function formatiCampagna(c, sp, stagione) {
 const semplice = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "");
 
 /** Indirizzo dello sponsor con i parametri UTM, per sapere quanti arrivano da noi. */
+/** L'indirizzo dello sponsor come URL (con https:// se manca), o null se non è un indirizzo. */
+function urlSponsor(testo) {
+  if (!testo) return null;
+  try {
+    const url = new URL(/^https?:\/\//i.test(testo) ? testo : `https://${testo}`);
+    // «www.santero it»: lo spazio passa nel percorso, ma il nome del sito ha un punto e niente spazi.
+    return /^[^\s.]+(\.[^\s.]+)+$/.test(url.hostname) && !/\s/.test(testo) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function indirizzoUtm(sp, c, mezzo, stagione) {
-  if (!sp.url) return "";
-  const url = new URL(/^https?:\/\//i.test(sp.url) ? sp.url : `https://${sp.url}`);
+  // Scritto male: niente link, invece di rompere il testo e l'apertura dei post.
+  const url = urlSponsor(sp.url);
+  if (!url) return "";
   url.searchParams.set("utm_source", "instagram");
   url.searchParams.set("utm_medium", mezzo);
   url.searchParams.set("utm_campaign", `${semplice(sp.name)}-${semplice(stagione)}`);
@@ -866,7 +879,7 @@ function testoPost(ev, sp, stagione) {
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
   module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
-                     contrasto, schiarisci, indirizzoUtm, testoPost, semplice, mancanti, nomePost, SOCIAL,
+                     contrasto, schiarisci, indirizzoUtm, urlSponsor, testoPost, semplice, mancanti, nomePost, SOCIAL,
                      disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto,
                      formatiCampagna, disegnaCopertina, photo };
 }
