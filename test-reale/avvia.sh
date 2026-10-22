@@ -112,6 +112,27 @@ if [ -n "${TIENI:-}" ]; then
   while :; do sleep 60; done
 fi
 
+# FOTO=cartella: niente prove, una foto per pagina a 1280 e 500 px (superadmin), e gli
+# errori JavaScript di ognuna. Le foto hanno dati veri: la cartella va tenuta fuori da git.
+if [ -n "${FOTO:-}" ]; then
+  mkdir -p "$FOTO"
+  cat > "$TMP/sito/foto-prova.js" <<'JS'
+// PAGINA: (ognuna)
+{
+  const errori = [];
+  window.addEventListener("error", (e) => errori.push(e.message));
+  window.addEventListener("unhandledrejection", (e) => errori.push(String(e.reason?.message || e.reason)));
+  window.addEventListener("load", () => setTimeout(() => {
+    document.title = `RISULTATO senzaErrori=${errori.length ? `NO(${errori.join(" / ").slice(0, 160)})` : "ok"}`;
+  }, 5000));
+}
+JS
+  cp "$TMP/sito/foto-prova.js" "$TMP/sito/ricerca/foto-prova.js"
+  PROVE=()
+  # FOTO_PAGINE="admin.html riepilogo.html": solo quelle.
+  PAGINE_FOTO="${FOTO_PAGINE:-$(cd "$RADICE/web" && ls *.html | grep -v 'social-contatti') $(cd "$RADICE/ricerca" && ls *.html | sed 's#^#ricerca/#')}"
+fi
+
 falliti=0
 for script in "${PROVE[@]}"; do
   pagina="$(grep -m1 -o '// PAGINA: .*' "$QUI/$script" | sed 's#// PAGINA: ##')"
@@ -149,5 +170,25 @@ PY
     echo "$nome: nessun risultato (${titolo:-Chrome non risponde}); $(head -c 300 "$TMP/console.txt")"; falliti=1
   elif [[ "$esito" == *"=NO"* ]]; then echo "$nome: FALLITA: $esito"; falliti=1
   else echo "$nome: $esito"; fi
+done
+for pagina in ${PAGINE_FOTO:-}; do
+  for larghezza in 1280 500; do
+    id="70000000-0000-0000-0000-000000000001"
+    accesso="$(token authenticated "$id" "prova-superadmin@locale")"
+    sessione="{\"access_token\":\"$accesso\",\"token_type\":\"bearer\",\"expires_in\":86400,\"expires_at\":$(( $(date +%s) + 86400 )),\"refresh_token\":\"prova\",\"user\":{\"id\":\"$id\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"prova-superadmin@locale\",\"app_metadata\":{},\"user_metadata\":{}}}"
+    dir="$(dirname "$pagina")"; base="$(basename "$pagina" .html)"
+    copia="$dir/foto-$base.html"; su="$( [ "$dir" = "." ] && echo "" || echo "../")"
+    python3 - "$TMP/sito/$pagina" "$TMP/sito/$copia" "<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione));</script>" "${su}foto-prova.js" "${su}supabase-locale.js" <<'PY' || continue
+import re, sys
+sorgente, destinazione, inizio, prova, locale = sys.argv[1:6]
+testo = open(sorgente, encoding="utf-8").read()
+tag = re.search(r'<script src="https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js@[^"]*"[^>]*></script>', testo)
+if not tag: sys.exit(1)
+testo = testo[:tag.start()] + inizio + f'<script src="{locale}"></script><script src="{prova}"></script>' + testo[tag.end():]
+open(destinazione, "w", encoding="utf-8").write(testo)
+PY
+    titolo=$(node "$QUI/chrome.js" "$CHROME" "http://127.0.0.1:$PORTA/$copia" "$larghezza" 60000 "$FOTO/${base}-$larghezza.png" 2> "$TMP/console.txt")
+    echo "$pagina ($larghezza px): ${titolo#RISULTATO } $(grep -m2 . "$TMP/console.txt" | tr '\n' ' ' | head -c 200)"
+  done
 done
 exit "$falliti"

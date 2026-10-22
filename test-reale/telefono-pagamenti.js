@@ -7,6 +7,7 @@
   window.addEventListener("load", () => setTimeout(() => {
     const larghe = [...document.querySelectorAll(".tabella-scorrevole, table")].filter((c) => c.scrollWidth > c.clientWidth + 1
       || c.getBoundingClientRect().right > innerWidth + 1);
-    document.title = `RISULTATO nienteScorrimento=${larghe.length ? `NO(${larghe.length} tabelle oltre lo schermo a ${innerWidth} px)` : "ok"}`;
+    const come = larghe.slice(0, 3).map((c) => `${c.tagName} ${c.scrollWidth}/${c.clientWidth} a ${Math.round(c.getBoundingClientRect().right)}`).join(", ");
+    document.title = `RISULTATO nienteScorrimento=${larghe.length ? `NO(${larghe.length} tabelle oltre lo schermo a ${innerWidth} px: ${come})` : "ok"}`;
   }, 4000));
 }

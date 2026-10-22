@@ -30,6 +30,17 @@
      * come i prezzi, così la somma non si confonde con loro. */
     .total-row td:nth-child(4) { color: var(--blu); font-size: 1.6rem; font-weight: 700; }
     .total-row td { font-weight: 700; border-top: 2px solid var(--testo-soft); }
+    /* Sul telefono le quattro colonne stanno nello schermo: una colonna fuori
+     * (il Totale) non si vedeva. La voce va a capo, gli importi no. */
+    @media (max-width: 600px) {
+      .rtable { min-width: 0; }
+      .rtable th, .rtable td { padding-left: 4px; padding-right: 4px; }
+      .rtable td { font-size: 1.05rem; padding-top: 12px; padding-bottom: 12px; }
+      .rtable th:nth-child(2) { width: 2.8rem; }
+      .rtable th:nth-child(3) { width: 5.6rem; }
+      .rtable th:nth-child(4) { width: 7rem; }
+      .total-row td:nth-child(4) { font-size: 1.2rem; }
+    }
     .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
@@ -358,8 +369,8 @@
         <tr>
           <td>${esc(r.name)} ${etichettaGiorno(r.day)}</td>
           <td><span class="badge badge-blue">${r.count}</span></td>
-          <td>${r.price ? fmt(r.price) : "—"}</td>
-          <td>${r.total ? fmt(r.total) : "—"}</td>
+          <td>${r.price != null ? fmt(r.price) : "—"}</td>
+          <td>${r.total != null ? fmt(r.total) : "—"}</td>
         </tr>`).join("") +
       `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${conImporti ? fmt(totEuro) : "—"}</td></tr>`;
   }
