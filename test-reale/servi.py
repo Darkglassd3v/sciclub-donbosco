@@ -54,6 +54,10 @@ class Gestore(http.server.SimpleHTTPRequestHandler):
             return self._rispondi(401, b'{"message":"prova: niente login vero"}')
         if not self.path.startswith("/rest/v1/"):
             return False
+        # Come il gateway di Supabase (nginx, large_client_header_buffers 8k): una riga di
+        # richiesta più lunga è rifiutata. Qui PostgREST da solo accetterebbe tutto.
+        if len(self.requestline) > 8190:
+            return self._rispondi(414, b'{"message":"Request-URI Too Large"}')
         lunghezza = int(self.headers.get("Content-Length") or 0)
         corpo = self.rfile.read(lunghezza) if lunghezza else None
         richiesta = urllib.request.Request(POSTGREST + self.path[len("/rest/v1"):], data=corpo, method=self.command)

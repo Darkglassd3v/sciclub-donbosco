@@ -1,0 +1,17 @@
+// PAGINA: admin.html
+// RUOLO: tesoriere
+// Pagamenti, sulla copia con 400 iscritti in più: tolto «Solo chi deve pagare»,
+// i familiari e i capofamiglia si leggono con tutti gli id. Messi tutti in un URL
+// passano gli 8 KB che il gateway di Supabase accetta (414). Si devono vedere tutti.
+{
+  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  window.addEventListener("load", () => setTimeout(async () => { try {
+    el("soloInsoluti").checked = false;
+    await caricaDati();
+    await aspetta(500);
+    const t = el("statusToast");
+    const errore = t && t.style.display !== "none" && t.classList.contains("is-danger") ? t.textContent.slice(0, 80) : "";
+    const n = ultimi[0].length;
+    document.title = `RISULTATO tutti=${!errore && n === ATTESO.nuclei ? "ok" : `NO(${n} nuclei su ${ATTESO.nuclei}${errore ? `, «${errore}»` : ""})`}`;
+  } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 150)})`; } }, 4000));
+}
