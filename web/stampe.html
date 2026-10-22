@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fogli dei soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
 
@@ -66,8 +66,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
-<script src="stampe.js?v=20261016d"></script>
+<script src="shared.js?v=20261023vivo"></script>
+<script src="stampe.js?v=20261023fogli"></script>
 <script>
   // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
   // abbonamenti della stagione: è quello che serve sul pullman.
@@ -125,6 +125,7 @@
     const nomeGiorno = GIORNI_STAMPA[chiave].nome;
     const oggi = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
     const libro = XLSX.utils.book_new();
+    const nomiUsati = new Set();   // nomeFoglioExcel(): due fogli uguali fermerebbero lo scarico
     let quanti = 0;
     for (const g of foglio.gruppi) {
       quanti += g.soci.length;
@@ -139,7 +140,7 @@
       ];
       // Il titolo in grassetto su tutta la riga, poi le colonne: vedi foglioLeggibile().
       const lavoro = foglioLeggibile(righe, { intestazione: 1, dateNF: "dd/mm/yyyy" });
-      XLSX.utils.book_append_sheet(libro, lavoro, nomeFoglioExcel(g.titolo || foglio.titolo));
+      XLSX.utils.book_append_sheet(libro, lavoro, nomeFoglioExcel(g.titolo || foglio.titolo, nomiUsati));
     }
     const file = `${foglio.titolo} ${nomeGiorno.toLowerCase()} ${oggi}.xlsx`;
     scaricaExcelDaStampare(libro, file);

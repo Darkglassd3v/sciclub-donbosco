@@ -59,9 +59,9 @@
   <ul class="risultati" id="risultati"></ul>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261016d"></script>
+<script src="comune.js?v=20261023coda"></script>
 <script>
 (() => {
   "use strict";
@@ -163,7 +163,8 @@
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
       clearTimeout(attesa);
-      if (pezzi(testoCercato).length === 0) { svuota(); return; }
+      // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
+      if (pezzi(testoCercato).length === 0) { ultima++; svuota(); return; }
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;

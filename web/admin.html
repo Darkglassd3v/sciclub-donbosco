@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pannello Pagamenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -62,6 +62,15 @@
     @media screen and (max-width: 768px) {
       .custom-table th, .custom-table td { padding-left: 20px; padding-right: 20px; }
       .unit-header, .barra-saldo { padding-left: 20px; padding-right: 20px; }
+    }
+    /* Sul telefono ogni socio è una scheda: il nome intero in cima, sotto gli
+     * importi «etichetta … valore». In colonne «Da pagare» finiva fuori schermo, e
+     * stringendo le colonne i nomi si spezzavano a metà. */
+    @media (max-width: 600px) {
+      .custom-table td:first-child { padding-top: 10px; padding-bottom: 6px; }
+      .custom-table td.num small { display: none; }
+      .row-dependent td:first-child { padding-left: 28px; }
+      .barra-saldo { padding: 16px; }
     }
   </style>
 </head>
@@ -125,7 +134,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023vivo"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -158,7 +167,9 @@
       let query = sb
         .from("households")
         .select("*")
-        .gte("enrolled_at", inizioStagione())
+        // Iscritto alla stagione aperta: enrolled_at pieno (close_season() lo svuota), come
+        // in Stampe e Riepilogo. Il 1° settembre del calendario perdeva chi si iscrive ad agosto.
+        .not("enrolled_at", "is", null)
         .order("last_name");
 
       // Anche chi è a credito (saldo sotto zero): è un conto da chiudere, come chi deve pagare.
@@ -169,13 +180,8 @@
 
       // I familiari a carico dei nuclei mostrati, in una sola query.
       const idPaganti = nuclei.map((n) => n.head_id);
-      let familiari = [];
-      if (idPaganti.length) {
-        const { data, error: erroreFam } = await sb
-          .from("members").select("*").in("payer_id", idPaganti).order("last_name");
-        if (erroreFam) throw erroreFam;
-        familiari = data;
-      }
+      const familiari = (await perPezzi(idPaganti, (pezzo) => sb.from("members").select("*").in("payer_id", pezzo)))
+        .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
 
       ultimi = [nuclei, await caricaCapofamiglia(idPaganti), familiari];
       render();
@@ -187,16 +193,23 @@
   }
 
   async function caricaCapofamiglia(ids) {
-    if (!ids.length) return {};
-    const { data, error } = await sb.from("members").select("*").in("id", ids);
-    if (error) throw error;
+    const data = await perPezzi(ids, (pezzo) => sb.from("members").select("*").in("id", pezzo));
     return Object.fromEntries(data.map((s) => [s.id, s]));
   }
 
-  function inizioStagione() {
-    const oggi = new Date();
-    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
-    return new Date(anno, 8, 1).toISOString();
+  /**
+   * Le righe per un elenco di id, letti a pezzi da 100 (circa 4 KB di URL): tutti
+   * insieme, con «Solo chi deve pagare» tolto, passavano gli 8 KB che il gateway di
+   * Supabase accetta, e la lettura falliva (414).
+   */
+  async function perPezzi(ids, leggi) {
+    const righe = [];
+    for (let i = 0; i < ids.length; i += 100) {
+      const { data, error } = await leggi(ids.slice(i, i + 100));
+      if (error) throw error;
+      righe.push(...data);
+    }
+    return righe;
   }
 
   function render() {
@@ -238,7 +251,7 @@
             <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>
           </div>
           <div class="tabella-scorrevole">
-            <table class="custom-table">
+            <table class="custom-table a-schede">
               <thead><tr>
                 <th>Socio</th><th class="num">Quota</th><th class="num">Già versato</th><th class="num">Da pagare</th>
               </tr></thead>
@@ -284,11 +297,11 @@
             <button type="button" class="button is-light" data-storico="${socio.id}">Storico</button>
           </div>
         </td>
-        <td class="num">${fmt(socio.total)}</td>
-        <td class="num">${fmt(socio.paid)}</td>
+        <td class="num" data-etichetta="Quota">${fmt(socio.total)}</td>
+        <td class="num" data-etichetta="Già versato">${fmt(socio.paid)}</td>
         ${saldo < 0
-          ? `<td class="num credito" style="font-weight:700">${fmt(-saldo)}<small>a credito</small></td>`
-          : `<td class="num" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>`}
+          ? `<td class="num credito" data-etichetta="A credito" style="font-weight:700">${fmt(-saldo)}<small>a credito</small></td>`
+          : `<td class="num" data-etichetta="Da pagare" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>`}
       </tr>`;
   }
 
@@ -454,6 +467,10 @@
       showToast(esito && esito.members_settled
         ? `Incassati ${fmt(esito.amount)} — ${esito.members_settled} soci saldati`
         : "Questo nucleo era già saldato.");
+      // Con uno Storico o una Modifica aperti il ridisegno salta (li chiuderebbe):
+      // almeno la barra del nucleo appena incassato dice che è saldato.
+      const barra = el("barra_" + idPagante);
+      if (barra) barra.outerHTML = barraSaldo(idPagante, 0, "");
       await caricaDati({ silenzioso: true });
     } catch (error) {
       showToast(messaggioErrore(error), "is-danger");

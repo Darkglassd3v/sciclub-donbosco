@@ -137,6 +137,19 @@ fieldset.campo-errore, [role="radiogroup"].campo-errore {
   border-radius: var(--raggio);
 }
 
+/* Tabelle che sul telefono diventano schede (class="a-schede"): ogni riga un
+ * blocco, ogni cella con data-etichetta su una riga «etichetta … valore», le
+ * altre (nome, pulsanti) larghe quanto la scheda. Una tabella che scorre di
+ * lato nasconde le colonne fuori schermo, e chi la usa non sa che ci sono. */
+@media (max-width: 600px) {
+  table.a-schede thead { display: none; }
+  table.a-schede, table.a-schede tbody, table.a-schede tr, table.a-schede td { display: block; width: 100%; }
+  table.a-schede tr { padding: 8px 0; border-top: 1px solid var(--filo); }
+  table.a-schede td { border: 0; padding: 4px 16px; text-align: left; }
+  table.a-schede td[data-etichetta] { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  table.a-schede td[data-etichetta]::before { content: attr(data-etichetta); color: var(--testo-soft); font-weight: 400; }
+}
+
 /* Caselle di spunta: quelle del browser sono di 13px, troppo piccole da
  * vedere e da centrare. Tutta l'etichetta resta cliccabile. */
 .checkbox { display: inline-flex; align-items: center; gap: 10px; min-height: var(--tocco); }

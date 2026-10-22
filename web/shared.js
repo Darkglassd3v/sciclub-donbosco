@@ -25,13 +25,26 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  */
 const PAGINE_DI_ARRIVO = [
   ["soci", "index.html"],
+  ["pagamenti", "admin.html"],
   ["riepilogo", "riepilogo.html"],
+  ["bilancio", "bilancio.html"],
   ["polizze", "assicurazione.html"],
   ["social", "social.html"],
   ["cerca", "ricerca/index.html"],
   ["gite", "ricerca/gite.html"],
   ["stampe", "stampe.html"],
 ];
+
+/**
+ * Il superadmin che guarda il sito come un altro ruolo torna sé stesso: da fare
+ * prima di ogni uscita (anche quella del login per un ruolo senza pagine), se
+ * no la vista resta salvata nel database e vale al prossimo accesso.
+ */
+async function chiudiVediCome(accesso) {
+  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+    await sb.rpc("set_view_as", { role: null });
+  }
+}
 
 /** Blocca la pagina se non c'è una sessione valida. Da chiamare per prima. */
 async function requireAuth() {
@@ -51,10 +64,7 @@ async function requireAuth() {
  * sé stessi.
  */
 async function logout() {
-  const accesso = await getProfile().catch(() => null);
-  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
-    await sb.rpc("set_view_as", { role: null });
-  }
+  await chiudiVediCome(await getProfile().catch(() => null));
   ricordaAccesso(null);
   await sb.auth.signOut();
   location.replace("login.html");
@@ -125,7 +135,15 @@ function paginaDiArrivo(accesso) {
 async function requirePermesso(permesso) {
   const sessione = await requireAuth();
   if (!sessione) return null;
-  const accesso = await getProfile();
+  let accesso;
+  try {
+    accesso = await getProfile();
+  } catch (error) {
+    // Rete o database giù: nessuna pagina prende l'errore, e restava «Caricamento…» senza dire niente.
+    setLoading(false);
+    showToast(`Non riesco a leggere il tuo accesso (${messaggioErrore(error)}). Ricarica la pagina fra poco.`, "is-danger");
+    return null;
+  }
   if (accesso && accesso.change_password) {
     location.replace("password.html");
     return null;
@@ -624,7 +642,8 @@ function foglioLeggibile(righe, { intestazione = 0, ...opzioni } = {}) {
 // jsPDF per la scheda del socio, anche lui solo al primo clic.
 function caricaPdf() {
   if (window.jspdf) return Promise.resolve();
-  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF");
+  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF",
+    "sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk");
 }
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
@@ -775,13 +794,13 @@ function totaliNucleo(capofamiglia, familiari = []) {
 /**
  * Listino raggruppato per categoria: { TESSERA: [...], FAMIGLIA: [...] }, nell'ordine del
  * modulo di carta (position). Il prezzo è quello che paga il socio: per le tessere comprende
- * l'assicurazione (card_price() nel database).
+ * l'assicurazione (card_price() nel database). Anche le voci spente (active false): un socio
+ * che le ha già le tiene, e il suo totale non cambia; nuove non si scelgono.
  */
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price:card_price, min_role, trips, day, insurance, people")
-    .eq("active", true)
+    .select("category, name, price:card_price, min_role, trips, day, insurance, people, active")
     .order("category")
     .order("position", { nullsFirst: false })
     .order("card_price")
@@ -817,9 +836,23 @@ async function caricaPartenze() {
  * manuale della 1.x.
  */
 function ascoltaSoci(callback) {
+  // Un incasso cambia le righe di tutta la famiglia, cioè un evento per riga: si
+  // aspetta che la raffica finisca e si ricarica una volta. E mai due insieme: una
+  // lettura più vecchia che arriva dopo coprirebbe quella nuova.
+  let attesa = null, inCorso = false, ancora = false;
+  const ricarica = async () => {
+    if (inCorso) { ancora = true; return; }
+    inCorso = true;
+    try { await callback(); } catch { /* la pagina dice da sé i suoi errori */ }
+    inCorso = false;
+    if (ancora) { ancora = false; ricarica(); }
+  };
   return sb
     .channel("soci-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, callback)
+    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
+      clearTimeout(attesa);
+      attesa = setTimeout(ricarica, 400);
+    })
     .subscribe();
 }
 

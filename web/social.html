@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Social — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -529,8 +529,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
-<script src="social-templates.js?v=20261016calendario"></script>
+<script src="shared.js?v=20261023vivo"></script>
+<script src="social-templates.js?v=20261023sponsor"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -783,10 +783,13 @@
         const senzaId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input.input")].some((i) => i.value.trim()));
         data.forEach((d, i) => { nuovi[i].id = senzaId[i].dataset.id = d.id; });
       }
-      let via = sb.from("social_contacts").delete();
-      via = righe.length ? via.not("id", "in", `(${righe.map((c) => c.id).join(",")})`) : via.not("id", "is", null);
-      const { error } = await via;
-      if (error) throw error;
+      // Solo quelli tolti qui, fra quelli letti all'apertura: un contatto che un altro
+      // ha appena aggiunto non è in pagina, e «tutti quelli che non ci sono» lo cancellava.
+      const tolti = JSON.parse(rubricaSalvata).map((c) => c.id).filter((id) => id && !righe.some((c) => c.id === id));
+      if (tolti.length) {
+        const { error } = await sb.from("social_contacts").delete().in("id", tolti);
+        if (error) throw error;
+      }
       apriRubrica(righe);
       showToast("Contatti salvati.");
       // Il riassunto, le spunte del post e i telefoni nelle immagini prendono
@@ -1048,7 +1051,8 @@
     el("fGancio").value = post.hook || "";
     el("fTitoloStory").value = post.story_title || "";
     el("fCta").value = post.cta || "";
-    if (post.sponsor_id) el("fSponsor").value = post.sponsor_id;
+    // Senza sponsor si svuota: restava quello del post aperto prima.
+    el("fSponsor").value = post.sponsor_id || "";
     el("fScadenza").value = post.deadline || "";
     el("fOra").value = post.event_time || "";
     el("fDove").value = post.place || "";
@@ -1198,7 +1202,10 @@
     aggiornaTesta();
   }
 
+  // Salva premuto due volte prima che arrivi la risposta: il secondo inseriva un altro post.
+  let salvaInCorso = false;
   async function salva() {
+    if (salvaInCorso) return;
     const riga = daForm();
     // Un post può essere solo sottotesto; la gita ha sempre la meta.
     if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
@@ -1212,6 +1219,7 @@
     const prezzoSbagliato = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
       .find((c) => c && centesimi(c.value));
     if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo è in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
+    salvaInCorso = true;
     setLoading(true);
     try {
       const { data, error } = aperto && aperto.id
@@ -1227,6 +1235,7 @@
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
+      salvaInCorso = false;
       setLoading(false);
     }
   }
@@ -1732,6 +1741,7 @@
   async function salvaSponsor() {
     const riga = sponsorDaForm(), id = el("sScegli").value;
     if (!riga.name) { segnaErrore(el("sNome"), "Scrivi il nome dello sponsor."); return; }
+    if (riga.url && !urlSponsor(riga.url)) { segnaErrore(el("sUrl"), "Indirizzo non valido: scrivilo come santero.it o https://www.santero.it."); return; }
     setLoading(true);
     try {
       const { data, error } = id

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Amministrazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .versione-sito { font-size: 1.15rem; }
@@ -82,7 +82,7 @@
   <div class="riquadro">
     <h2>Stagione in corso</h2>
     <div class="tabella-scorrevole">
-      <table class="tabella-stagioni">
+      <table class="tabella-stagioni a-schede">
         <thead><tr>
           <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
           <th class="num">Incassato</th><th class="num">Da incassare</th>
@@ -98,7 +98,7 @@
 
     <h3>Stagioni chiuse</h3>
     <div class="tabella-scorrevole">
-      <table class="tabella-stagioni">
+      <table class="tabella-stagioni a-schede">
         <thead><tr>
           <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
           <th class="num">Incassato</th><th class="num">Da incassare</th><th></th>
@@ -171,7 +171,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023vivo"></script>
 <script>
   const el = (id) => document.getElementById(id);
   const FRASE = "CHIUDI STAGIONE";
@@ -227,10 +227,10 @@
     return stagioni.map((st) => `
       <tr>
         <td class="anno">${annoStagione(st.season)}</td>
-        <td class="num">${st.members}</td>
-        <td class="num">${fmt(st.total)}</td>
-        <td class="num">${fmt(st.collected)}</td>
-        <td class="num" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
+        <td class="num" data-etichetta="Soci">${st.members}</td>
+        <td class="num" data-etichetta="Quote">${fmt(st.total)}</td>
+        <td class="num" data-etichetta="Incassato">${fmt(st.collected)}</td>
+        <td class="num" data-etichetta="Da incassare" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
       </tr>`).join("");
   }
 
@@ -244,10 +244,10 @@
       return `
         <tr>
           <td class="anno">${annoStagione(st.season)}</td>
-          <td class="num">${st.members}</td>
-          <td class="num">${fmt(st.total)}</td>
-          <td class="num">${fmt(st.collected)}</td>
-          <td class="num" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
+          <td class="num" data-etichetta="Soci">${st.members}</td>
+          <td class="num" data-etichetta="Quote">${fmt(st.total)}</td>
+          <td class="num" data-etichetta="Incassato">${fmt(st.collected)}</td>
+          <td class="num" data-etichetta="Da incassare" style="color:${st.outstanding > 0 ? "var(--errore)" : "var(--ok)"};font-weight:600">${fmt(st.outstanding)}</td>
           <td><a class="button is-small is-light" href="riepilogo.html?stagione=${String(st.season).slice(0, 10)}">Riepilogo</a></td>
         </tr>`;
     }).join("");
@@ -302,17 +302,21 @@
       if (error) throw error;
 
       const esito = Array.isArray(data) ? data[0] : data;
-      el("esito").innerHTML = `
-        <div class="notification is-success">
+      // Senza posizioni close_season() non scrive lo storico e la stagione non avanza.
+      el("esito").innerHTML = !Number(esito?.archived)
+        ? `<div class="notification is-warning">Non c'era niente da chiudere: nessun socio iscritto o con importi.
+             La stagione resta aperta.</div>`
+        : `<div class="notification is-success">
           <b>Stagione ${annoStagione(esito.season_closed)} chiusa.</b><br>
           Archiviate ${esito.archived} posizioni. Le anagrafiche sono rimaste al loro posto:
           si riparte iscrivendo i soci dalla pagina <a href="index.html">Soci</a>.
         </div>`;
       el("frase").value = "";
-      await caricaSituazione();
+      // Anche i riquadri in alto: restavano quelli della stagione appena chiusa.
+      await Promise.all([caricaSituazione(), caricaResoconto()]);
     } catch (error) {
       el("esito").innerHTML =
-        `<div class="notification is-danger">Non è stato chiuso niente: ${messaggioErrore(error)}</div>`;
+        `<div class="notification is-danger">Non è stato chiuso niente: ${esc(messaggioErrore(error))}</div>`;
     } finally {
       setLoading(false);
     }

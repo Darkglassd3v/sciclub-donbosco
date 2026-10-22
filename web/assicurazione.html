@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assicurazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
 
@@ -167,7 +167,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023vivo"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
@@ -310,6 +310,23 @@
       el("btnSegna").disabled = false;
       el("passo").textContent = `Scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
         + "Mandale all'assicurazione, poi premi «Segna come assicurati».";
+      // Più file in un click: il browser può bloccare quelli dopo il primo (chiede di
+      // consentire i download multipli). Uno per lista, da riscaricare da solo.
+      if (liste.length > 1) {
+        const pulsanti = document.createElement("span");
+        pulsanti.className = "buttons mt-2";
+        for (const l of liste) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "button is-small is-light";
+          b.dataset.riscarica = l.t.kind;
+          b.textContent = `Riscarica ${l.t.nome} n. ${l.numero}`;
+          b.addEventListener("click", () => excelLista(l.t, l.numero, decorrenza, l.soci)
+            .catch((e) => showToast("Errore: " + messaggioErrore(e), "is-danger")));
+          pulsanti.append(b);
+        }
+        el("passo").append(" Se il browser ne ha scaricata una sola, riscarica le altre da qui: ", pulsanti);
+      }
       el("passo").hidden = false;
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -569,7 +586,14 @@
     try {
       const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codice });
       if (error) throw error;
-      showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      // Era in una lista appena scaricata: il file ha il codice di prima, e segnarlo
+      // assicurato lo darebbe all'assicurazione sbagliato.
+      if (scaricato?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
+        annullaScarico();
+        showToast(`${s.last_name} ${s.first_name}: salvato. Era in una lista già scaricata: riscarica le liste prima di mandarle.`, "is-warning");
+      } else {
+        showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      }
       // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
       // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
       const daElenco = daAssicurare.find((d) => d.id === s.id);
@@ -599,7 +623,8 @@
   async function cerca() {
     const testo = el("cerca").value.trim();
     const corpo = el("elencoCerca");
-    if (testo.replace(/\s/g, "").length < 2) { corpo.replaceChildren(); return; }
+    // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
+    if (testo.replace(/\s/g, "").length < 2) { ultimaRicerca++; corpo.replaceChildren(); return; }
 
     const mia = ++ultimaRicerca;
     try {

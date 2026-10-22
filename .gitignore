@@ -54,3 +54,6 @@ Thumbs.db
 # PNG generati da social/export.sh: si rigenerano
 social/export/
 
+
+# Cartella temporanea di test-reale/avvia.sh con TIENI=1
+test-reale/.tieni-cartella

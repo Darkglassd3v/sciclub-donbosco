@@ -22,6 +22,36 @@
 
 ## Richieste nuove
 
+- [ ] 23/10 mattina, **DA LEGGERE: com'è andata la notte delle prove** (scelta «b», in autonomia).
+      **Tutto solo in commit locali su `2.9-SNAPSHOT`, niente push, niente deploy, niente database di
+      produzione.** Da fare col sì dell'utente:
+      1. **Push** di `2.9-SNAPSHOT` (deploy) e allineare `dev`.
+      2. **Database di produzione**, due funzioni nuove (solo `create or replace function`, con
+         lock_timeout e la prova a secco): `public.can` (G1, sicurezza: con la password iniziale da
+         cambiare niente permessi, anche dall'API) e `public.members_no_double_insert` (S15, messaggio).
+         Nient'altro cambia nel database.
+      3. Provare sul sito vero, soprattutto: Soci (voci e partenze spente, «Calcola», tessera con la
+         presciistica, totale a mano), Pagamenti sul telefono (schede), Riepilogo e Bilancio sul
+         telefono, Gite (coda, stagione), Assicurazione (riscarica una lista), Social (rubrica).
+      Fatto (ogni voce con la prova che falliva prima, poi la correzione; dettagli e commit in fondo a
+      `docs/audit-2026-10-22.md`): audit di tutto il sito (3 agenti, sospetti S*, G*, P*); banco di prova
+      sulla **copia del database vero** (`test-reale/`, vedi docs/SVILUPPO.md); corretti S1/S10 voci e
+      partenze spente che il Salva toglieva (perdita di dati), S2 abbonamento tolto con una gita
+      appena segnata, S3 scheda caricata a metà, S5/S6/S11 totale a mano, acconto negativo, pagante
+      tolto, S13 virgole nei luoghi, S14 ricerca con «*», S15 messaggio dell'omonimo; P1-P3 stagione
+      dall'orologio in Pagamenti/Gite/Riepilogo, P4 nucleo incassato con lo Storico aperto, P5 URL oltre
+      8 KB con tutti i nuclei, P6 ricaricamenti dal vivo, P7/P8 Gite (errori temporanei, doppia vendita),
+      P9 ricerche vecchie, P10/P11 Assicurazione, P13/P14 Stampe, P15 prezzo 0, P17 supabase-js fisso;
+      G1 password iniziale, G2 pagine di arrivo e Vedi come, G3 conferma per superadmin, G4/G5/G7
+      Impostazioni, G8 Stagione, G11 Social, G12 accesso illeggibile, G13 password, G14 jsPDF con SRI;
+      foto di tutte le pagine a 1280/500: Riepilogo, Pagamenti, Bilancio e Stagione sul telefono ora a
+      schede o dentro lo schermo (`a-schede` in brand.css). Nessun errore JavaScript in nessuna pagina
+      con i dati veri. Prove: node 6 file, browser col client finto 25, ruoli verdi, copia 18 verdi.
+      **Non fatto** (minori, nell'audit): S4, S8, S12, G9 (saldo previsto e chiusura banca possono non
+      tornare), G10 (Bilancio: il prezzo a passi di 0,50 rifiuta spese coi centesimi, es. 1,35 di
+      commissione: da decidere con l'utente), P12, P16; la matrice dei permessi in Gestione scorre
+      ancora di lato sul telefono (voluto). La password del database va ancora cambiata.
+
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
       .help e le scelte di Bulma lo battevano: in Soci si vedevano la nota della presciistica, la riga

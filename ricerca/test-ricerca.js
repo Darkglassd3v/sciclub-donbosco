@@ -154,5 +154,15 @@ assert.strictEqual(ritentabile({ message: "Load failed" }), true);
 // che riprovare a vuoto.
 assert.strictEqual(ritentabile({ message: "qualcosa di inatteso" }), true);
 assert.strictEqual(ritentabile(null), true);
+// Errori del database che passano da soli: database non raggiungibile o pool
+// esaurito (PGRST000-003), tempo scaduto (57014), troppe connessioni, riavvio,
+// conflitto fra transazioni. Buttare la voce perderebbe una gita o una vendita.
+for (const code of ["PGRST000", "PGRST001", "PGRST002", "PGRST003", "57014", "53300", "57P01", "57P03", "40001", "40P01"]) {
+  assert.strictEqual(ritentabile({ code, message: "temporaneo" }), true, `${code} va riprovato`);
+}
+// Un no vero resta un no: riprovare darebbe lo stesso esito.
+for (const code of ["23505", "P0001", "42501", "PGRST116"]) {
+  assert.strictEqual(ritentabile({ code, message: "no" }), false, `${code} non va riprovato`);
+}
 
 console.log("ok — ricerca");

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Utenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -131,7 +131,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023vivo"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -208,7 +208,11 @@
     const select = riga.querySelector("[data-ruolo]");
     const conferma = riga.querySelector("[data-conferma]");
     conferma.disabled = select.value === riga.dataset.ruoloSalvato;
-    conferma.addEventListener("click", () => cambiaRuolo(riga));
+    // Il superadmin può tutto, anche togliere gli altri: si chiede, come per togliere un account.
+    conferma.addEventListener("click", () => (select.value === "superadmin"
+      ? chiedi(conferma.parentElement, `Dare a ${riga.querySelector("td")?.textContent.trim() || "questo account"} il ruolo superadmin? Potrà fare tutto, anche togliere gli altri account.`,
+        "Sì, superadmin", () => cambiaRuolo(riga))
+      : cambiaRuolo(riga)));
     riga.querySelector("[data-reset]").addEventListener("click", () => chiediReset(riga));
     riga.querySelector("[data-rimuovi]").addEventListener("click", () => chiediRimozione(riga));
   }

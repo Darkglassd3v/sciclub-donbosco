@@ -100,6 +100,10 @@ assert.strictEqual(url.searchParams.get("utm_medium"), "story");
 assert.strictEqual(url.searchParams.get("utm_campaign"), "958santero-202627");
 assert.strictEqual(url.searchParams.get("utm_content"), "unastagionedabrindare");
 assert.strictEqual(indirizzoUtm({ ...santero, url: "" }, campagna, "post", "2026/27"), "");
+// Un indirizzo dello sponsor scritto male («www.santero it») non deve rompere il
+// testo del post (testoPost), né l'apertura dei post della campagna: niente link.
+assert.doesNotThrow(() => indirizzoUtm({ ...santero, url: "www.santero it" }, campagna, "post", "2026/27"));
+assert.strictEqual(indirizzoUtm({ ...santero, url: "www.santero it" }, campagna, "post", "2026/27"), "");
 
 const testoSponsor = testoPost(campagna, santero, "2026/27");
 assert.match(testoSponsor, /^Una stagione da brindare\./);

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -290,12 +290,12 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Pagamento <span class="cosa">Acconto, totale, chi paga</span></h2>
     <div class="corpo">
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.5" id="f_acconto" value="0"></div>
+      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.5" min="0" id="f_acconto" value="0"></div>
       <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
            listino a ogni salvataggio, e lo sconto si perdeva. -->
       <div class="column is-4">
         <label class="checkbox totale-mano" for="f_totale_a_mano"><input type="checkbox" id="f_totale_a_mano"> Totale scritto a mano (€)</label>
-        <input class="input" type="number" step="0.5" min="0" id="f_totale_manuale" disabled aria-label="Totale scritto a mano, in euro">
+        <input class="input" type="number" step="0.5" min="0" id="f_totale_manuale" required disabled aria-label="Totale scritto a mano, in euro">
         <p id="notaTotaleMano" class="help" hidden>Non si ricalcola dal listino. Un abbonamento aggiunto o tolto qui lo cambia del suo prezzo.</p>
       </div>
     </div>
@@ -394,7 +394,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023vivo"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
@@ -542,7 +542,7 @@
       radio.defaultChecked = Boolean(p.nessuna);
 
       const nome = document.createElement("span");
-      nome.textContent = p.nessuna ? "Nessuna" : p.name;
+      nome.textContent = p.nessuna ? "Nessuna" : p.active === false ? `${p.name} (non più nel listino)` : p.name;
 
       const scelta = document.createElement("label");
       scelta.className = "scelta";
@@ -558,8 +558,12 @@
       // e disabilitate: se un socio le ha già selezionaPerNome() le trova
       // comunque e il valore non sparisce al primo salvataggio fatto da chi
       // non ha il permesso di sceglierle.
-      if (categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) {
+      // Così anche una voce spenta in Impostazioni (active false): il socio che l'ha
+      // la vede e la tiene, nessun altro la sceglie. dataset.fisso: resta spenta
+      // anche quando aggiornaCopertura() riaccende le tessere.
+      if ((categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) || p.active === false) {
         radio.disabled = true;
+        radio.dataset.fisso = "1";
         scelta.classList.add("riservata");
       }
       return scelta;
@@ -599,7 +603,7 @@
   function riempiListinoAbbonamenti() {
     // Solo gli abbonamenti a gite (con il numero di viaggi): gli altri non
     // avrebbero un conto di gite da mostrare.
-    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips);
+    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips && p.active !== false);
     el("listinoAbbonamenti").replaceChildren(...voci.map((p) => {
       const riga = document.createElement("div");
       riga.className = "scelta aggiungi";
@@ -1055,7 +1059,7 @@
     // Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Chi
     // le ha già tutte e due (prima del 22/10) la tiene, spenta.
     const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
-    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica; });
+    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica || r.dataset.fisso === "1"; });
     el("f_tipologia_tessera").querySelector(".obbligo").hidden = Boolean(c);
     const nota = el("notaFamiglia");
     let testo = "", avviso = false;
@@ -1194,7 +1198,11 @@
     // Ogni termine deve comparire in cognome, nome o codice fiscale; o nella
     // chiave del nome, così "D'ANGELO" trova anche "DANGELO" e viceversa.
     termini.forEach((termine) => {
-      const t = termine.replace(/[%,()]/g, "");
+      // Solo lettere, cifre, apostrofi e trattini: «%» e «*» fanno da jolly in PostgREST,
+      // virgole, parentesi, virgolette e barre rompono or(). Un termine che resta vuoto
+      // non filtra niente: si salta.
+      const t = termine.replace(/[^\p{L}\p{N}'’-]/gu, "");
+      if (!t) return;
       const chiave = chiaveNome(t);
       richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`
         + (chiave ? `,name_key.like.%${chiave}%` : ""));
@@ -1386,7 +1394,11 @@
       salvato = firma();
       window.scrollTo(0, 0);
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      if (vecchia()) return;
+      // A metà il modulo avrebbe l'id di questo socio e gli abbonamenti, il pagante,
+      // i familiari di quello di prima: un Salva o un «Togli» toccherebbe l'altro.
+      resetForm();
+      showToast(`Scheda non caricata (${messaggioErrore(error)}): riprova ad aprirla.`, "is-danger");
     } finally {
       setLoading(false);
     }
@@ -1403,7 +1415,15 @@
 
   function spuntaPartenze(contenitore, valore) {
     // Confronto sui valori e non con un selettore: un luogo con le virgolette lo romperebbe.
-    const scelte = (valore || "").split(",").map((v) => v.trim());
+    const scelte = (valore || "").split(",").map((v) => v.trim()).filter(Boolean);
+    // Un luogo spento o rinominato in Impostazioni resta al socio che l'aveva: si
+    // aggiunge, spuntato, e il Salva non lo toglie. Quelli del socio di prima vanno via.
+    el(contenitore).querySelectorAll("label[data-fuori]").forEach((l) => l.remove());
+    const presenti = [...el(contenitore).querySelectorAll("input[type=checkbox]")].map((c) => c.value);
+    for (const luogo of scelte.filter((s) => !presenti.includes(s))) {
+      el(contenitore).insertAdjacentHTML("beforeend",
+        `<label class="checkbox mr-3" data-fuori><input type="checkbox" value="${esc(luogo)}"> ${esc(luogo)} (non più fra le partenze)</label>`);
+    }
     el(contenitore).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = scelte.includes(c.value)));
   }
 
@@ -1498,6 +1518,8 @@
     el("f_payerDisplay").value = "";
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
+    // Senza il capofamiglia non c'è più la sua agevolazione: tessera di nuovo obbligatoria.
+    ricalcola();
   }
 
   // -------------------------------------------------------------------------
@@ -1644,6 +1666,9 @@
     ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
   ];
 
+  const GITA_NEL_FRATTEMPO = "Socio NON salvato: su un abbonamento da togliere è stata appena segnata una gita "
+    + "(dal pullman). Riapri la scheda dalla ricerca: un abbonamento con gite fatte non si toglie.";
+
   async function scrivi() {
     const bottone = el("btnSalva");
     bottone.disabled = true;
@@ -1692,6 +1717,17 @@
       // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
       // altro operatore può aver inserito la stessa persona.
       if (!id && await fermaSeDoppioni()) return;
+      // Un abbonamento da togliere su cui intanto è stata segnata una gita (dal
+      // pullman) non si cancella più: lo si guarda prima di scrivere, se no il socio
+      // restava col totale già abbassato e l'abbonamento ancora lì.
+      if (id && abbonamentiDaTogliere.size) {
+        const { data: gite, error } = await sb.from("trip_uses").select("id").in("pass_id", [...abbonamentiDaTogliere]).limit(1);
+        if (error) throw error;
+        if (gite.length) {
+          showToast(GITA_NEL_FRATTEMPO, "is-danger");
+          return;
+        }
+      }
       if (id) {
         // Solo se nessuno l'ha cambiato da quando è aperto: Pagamenti, il
         // pannello gite e l'Assicurazione scrivono sullo stesso socio, e il
@@ -1729,7 +1765,8 @@
       }
       if (abbonamentiDaTogliere.size) {
         const { error } = await sb.from("member_passes").delete().in("id", [...abbonamentiDaTogliere]);
-        if (error) throw error;
+        // La gita segnata proprio fra il controllo e qui.
+        if (error) throw error.code === "23503" ? new Error(GITA_NEL_FRATTEMPO) : error;
       }
 
       showToast(`${socio.last_name} ${socio.first_name} salvato`);
@@ -1754,6 +1791,9 @@
     turnoRicerca++;
     codiciGiaLetti.clear();
     el("memberForm").reset();
+    // Le partenze fuori elenco aggiunte per il socio di prima (spuntaPartenze) vanno via.
+    spuntaPartenze("check_sabato", "");
+    spuntaPartenze("check_domenica", "");
     aggiornaGiornoCorso();
     aggiornaTotaleMano();
     el("f_id").value = "";

@@ -120,6 +120,10 @@ do $$ begin
   assert (select count(*) from public.profiles) = 0, 'un account nuovo è nato con un ruolo';
 end $$;
 
+-- Gli account delle prove hanno già cambiato la password iniziale: chi deve
+-- ancora cambiarla non ha permessi (can(), vedi il cambio password più sotto).
+update auth.users set encrypted_password = 'cambiata' where email like '%@test' and email <> 'esistente@test';
+
 insert into public.profiles (user_id, email, role) values
   ('11111111-1111-1111-1111-111111111111', 'gite@test',      'gite'),
   ('22222222-2222-2222-2222-222222222222', 'super@test',     'superadmin'),
@@ -1579,6 +1583,11 @@ do $$ begin
          'appena inserito'), 'doppio inserimento: il secondo è passato';
   -- Un omonimo con un'altra data di nascita passa.
   insert into public.members (last_name, first_name, birth_date) values ('PROVA', 'DOPPIA', '1950-01-01');
+  -- Due omonimi senza data di nascita: il secondo si ferma, e il messaggio dice come
+  -- inserirlo se è davvero un'altra persona (la data di nascita), non solo «cercalo».
+  insert into public.members (last_name, first_name) values ('PROVA', 'OMONIMO');
+  assert public.test_rifiuta($q$insert into public.members (last_name, first_name) values ('PROVA', 'OMONIMO')$q$,
+         'data di nascita'), 'omonimo senza data: il messaggio non dice di scrivere la data di nascita';
 
   -- I rifiuti, uno per motivo.
   assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000002')$q$, 'ha versato'),
@@ -1655,17 +1664,25 @@ psql_ <<'SQL'
 do $$
 declare
   tesoriere constant uuid := '33333333-3333-3333-3333-333333333333';
+  nuovo constant uuid := '77777777-7777-7777-7777-777777777777';
 begin
-  perform set_config('test.uid', tesoriere::text, false);
+  -- Un account nuovo, tesoriere: con la password iniziale (pubblica, nel
+  -- repository) non vede niente finché non la cambia, anche dall'API.
+  insert into auth.users (id, email) values (nuovo, 'nuovo@test');
+  insert into public.profiles (user_id, email, role) values (nuovo, 'nuovo@test', 'tesoriere');
+  perform set_config('test.uid', nuovo::text, false);
   assert (select change_password from public.my_access()), 'un account nuovo non deve cambiare la password';
+  -- Le policy usano can(): niente permessi, niente righe.
+  assert not public.can('pagamenti'), 'con la password iniziale da cambiare ha già i permessi';
 
-  update auth.users set email = email where id = tesoriere;
-  update auth.users set encrypted_password = encrypted_password where id = tesoriere;
+  update auth.users set email = email where id = nuovo;
+  update auth.users set encrypted_password = encrypted_password where id = nuovo;
   assert (select change_password from public.my_access()), 'obbligo tolto senza cambiare la password';
 
   -- Come fa Supabase Auth con updateUser({ password }).
-  update auth.users set encrypted_password = 'nuova' where id = tesoriere;
+  update auth.users set encrypted_password = 'nuova' where id = nuovo;
   assert not (select change_password from public.my_access()), 'password cambiata ma obbligo rimasto';
+  assert public.can('pagamenti'), 'password cambiata ma niente permessi';
 
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
   perform public.reset_password(tesoriere, 'donbosco26!');
@@ -1673,6 +1690,7 @@ begin
             from auth.users where id = tesoriere), 'reset_password: la password non è quella data';
   perform set_config('test.uid', tesoriere::text, false);
   assert (select change_password from public.my_access()), 'dopo il reset la password va cambiata di nuovo';
+  assert not public.can('pagamenti'), 'dopo il reset ha i permessi con la password iniziale';
 
   begin
     perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
@@ -1681,6 +1699,10 @@ begin
   exception when raise_exception then
     if sqlerrm not like '%almeno 8%' then raise; end if;
   end;
+  -- Il tesoriere torna con la password sua, per le prove dopo.
+  update auth.users set encrypted_password = 'ricambiata' where id = tesoriere;
+  delete from public.profiles where user_id = nuovo;
+  delete from auth.users where id = nuovo;
   perform set_config('test.uid', '', false);
 end $$;
 SQL

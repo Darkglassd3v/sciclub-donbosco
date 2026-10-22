@@ -609,6 +609,24 @@ $$;
 
 comment on function public.role_permissions is 'Permessi di un ruolo: superadmin tutto, gli altri da role_grants. Lo usano can() e my_access().';
 
+-- Cambio della password al primo accesso (dalla 2.7). Gli account nascono
+-- tutti con la stessa password iniziale (web/utenti.html), quindi chi entra
+-- per la prima volta deve sceglierne una sua prima di vedere qualunque pagina.
+-- Una riga qui = password ancora da cambiare. La mette il database quando
+-- nasce un account (o quando il superadmin la riporta a quella iniziale, vedi
+-- reset_password) e la toglie solo lui, quando la password in auth.users
+-- cambia davvero: dal browser non si toglie. Gli account che c'erano prima di
+-- questa tabella non hanno riga, cioè contano come password già cambiata.
+create table if not exists public.pending_password_changes (
+  user_id    uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+-- Nessuna policy: la leggono can() e my_access() e la scrivono i trigger più sotto.
+alter table public.pending_password_changes enable row level security;
+
+comment on table public.pending_password_changes is 'Account che devono ancora cambiare la password iniziale. Senza riga: già cambiata.';
+
 -- true se chi ha fatto la richiesta ha almeno uno dei permessi passati.
 -- Nelle policy va scritta dentro una select, `(select public.can('soci'))`:
 -- così Postgres la calcola una volta per query e non per ognuna delle
@@ -620,10 +638,13 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce(public.role_permissions(public.current_role()) && perms, false);
+  -- Con la password iniziale ancora da cambiare, nessun permesso: è pubblica (nel
+  -- repository), e l'obbligo di cambiarla lo facevano solo le pagine, non l'API.
+  select coalesce(public.role_permissions(public.current_role()) && perms, false)
+     and not exists (select 1 from public.pending_password_changes c where c.user_id = auth.uid());
 $$;
 
-comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi.';
+comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi e ha già cambiato la password iniziale.';
 
 -- I nomi delle voci della barra (dalla 2.8), scelti dal superadmin in Gestione
 -- > Ruoli: la chiave è il permesso della voce. Una voce senza riga tiene il
@@ -645,23 +666,7 @@ create policy nav_labels_select on public.nav_labels
 create policy nav_labels_write on public.nav_labels
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
--- Cambio della password al primo accesso (dalla 2.7). Gli account nascono
--- tutti con la stessa password iniziale (web/utenti.html), quindi chi entra
--- per la prima volta deve sceglierne una sua prima di vedere qualunque pagina.
--- Una riga qui = password ancora da cambiare. La mette il database quando
--- nasce un account (o quando il superadmin la riporta a quella iniziale, vedi
--- reset_password) e la toglie solo lui, quando la password in auth.users
--- cambia davvero: dal browser non si toglie. Gli account che c'erano prima di
--- questa tabella non hanno riga, cioè contano come password già cambiata.
-create table if not exists public.pending_password_changes (
-  user_id    uuid primary key references auth.users (id) on delete cascade,
-  created_at timestamptz not null default now()
-);
-
--- Nessuna policy: la legge my_access() e la scrivono i trigger qui sotto.
-alter table public.pending_password_changes enable row level security;
-
-comment on table public.pending_password_changes is 'Account che devono ancora cambiare la password iniziale. Senza riga: già cambiata.';
+-- (La tabella pending_password_changes è più sopra, prima di can() che la legge.)
 
 -- Definer: le scritture su auth.users le fa l'utente di Supabase Auth, che
 -- su questa tabella non ha diritti.
@@ -3512,7 +3517,7 @@ begin
                 and m.created_at > now() - interval '10 minutes'
                 and (m.birth_date is not distinct from new.birth_date
                      or m.tax_code = new.tax_code)) then
-    raise exception '% % è stato appena inserito, da te o da un altro operatore: cercalo e apri la sua scheda.',
+    raise exception '% % è stato appena inserito, da te o da un altro operatore: cercalo e apri la sua scheda. Se è un''altra persona con lo stesso nome, scrivi la sua data di nascita e salva di nuovo.',
       new.last_name, new.first_name;
   end if;
   return new;
