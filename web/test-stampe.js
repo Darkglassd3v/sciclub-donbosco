@@ -125,4 +125,24 @@ for (const ch of ["SABATO", "DOMENICA", "MARTEDI"]) {
   assert.strictEqual(larghezzeColonne([["Data di nascita"], ["31/01/1950"]], 0, 1.3, 1.5)[0].wch, Math.ceil(15 * 1.5) + 3);
 }
 
+// Corso «NO» (dai fogli vecchi vuol dire niente corso): non è un corsista, anche
+// col giorno del corso rimasto. Come le viste del database (upper(course_type) <> 'NO').
+{
+  const conNo = [socio("no", "NOCORSO", { course_type: "NO", course_day: "SABATO", saturday_departure: "ASTI" })];
+  const corsisti = fogliDelGiorno("SABATO", conNo, []).find((f) => f.titolo === "Corsisti");
+  assert.deepStrictEqual(corsisti ? corsisti.gruppi.flatMap((g) => g.soci.map((x) => x.id)) : [], [], "corso NO fra i corsisti");
+}
+
+// Due partenze che danno lo stesso nome di foglio («/» e «:» diventano spazi, al
+// massimo 31 caratteri): nello stesso file i nomi restano diversi, se no lo
+// scarico del giorno si ferma (xlsx non accetta due fogli uguali).
+{
+  const usati = new Set();
+  const nomi = ["Partenza da ASTI/CENTRO", "Partenza da ASTI:CENTRO", "Partenza da asti centro",
+    "Partenza da " + "A".repeat(40), "Partenza da " + "A".repeat(35)].map((t) => nomeFoglioExcel(t, usati));
+  assert.strictEqual(new Set(nomi.map((n) => n.toLowerCase())).size, nomi.length, `nomi uguali: ${nomi.join(" | ")}`);
+  assert.ok(nomi.every((n) => n.length <= 31), "un nome oltre 31 caratteri");
+  assert.strictEqual(nomi[0], "ASTI CENTRO");
+}
+
 console.log("test stampe: tutto a posto");
