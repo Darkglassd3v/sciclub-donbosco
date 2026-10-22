@@ -775,13 +775,13 @@ function totaliNucleo(capofamiglia, familiari = []) {
 /**
  * Listino raggruppato per categoria: { TESSERA: [...], FAMIGLIA: [...] }, nell'ordine del
  * modulo di carta (position). Il prezzo è quello che paga il socio: per le tessere comprende
- * l'assicurazione (card_price() nel database).
+ * l'assicurazione (card_price() nel database). Anche le voci spente (active false): un socio
+ * che le ha già le tiene, e il suo totale non cambia; nuove non si scelgono.
  */
 async function caricaPrezzi() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price:card_price, min_role, trips, day, insurance, people")
-    .eq("active", true)
+    .select("category, name, price:card_price, min_role, trips, day, insurance, people, active")
     .order("category")
     .order("position", { nullsFirst: false })
     .order("card_price")

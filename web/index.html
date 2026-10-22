@@ -394,7 +394,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261022cf"></script>
+<script src="shared.js?v=20261023spente"></script>
 <script src="codicefiscale.js?v=20261016d"></script>
 <script>
   let PREZZI = {};
@@ -542,7 +542,7 @@
       radio.defaultChecked = Boolean(p.nessuna);
 
       const nome = document.createElement("span");
-      nome.textContent = p.nessuna ? "Nessuna" : p.name;
+      nome.textContent = p.nessuna ? "Nessuna" : p.active === false ? `${p.name} (non più nel listino)` : p.name;
 
       const scelta = document.createElement("label");
       scelta.className = "scelta";
@@ -558,8 +558,12 @@
       // e disabilitate: se un socio le ha già selezionaPerNome() le trova
       // comunque e il valore non sparisce al primo salvataggio fatto da chi
       // non ha il permesso di sceglierle.
-      if (categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) {
+      // Così anche una voce spenta in Impostazioni (active false): il socio che l'ha
+      // la vede e la tiene, nessun altro la sceglie. dataset.fisso: resta spenta
+      // anche quando aggiornaCopertura() riaccende le tessere.
+      if ((categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) || p.active === false) {
         radio.disabled = true;
+        radio.dataset.fisso = "1";
         scelta.classList.add("riservata");
       }
       return scelta;
@@ -599,7 +603,7 @@
   function riempiListinoAbbonamenti() {
     // Solo gli abbonamenti a gite (con il numero di viaggi): gli altri non
     // avrebbero un conto di gite da mostrare.
-    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips);
+    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips && p.active !== false);
     el("listinoAbbonamenti").replaceChildren(...voci.map((p) => {
       const riga = document.createElement("div");
       riga.className = "scelta aggiungi";
@@ -1055,7 +1059,7 @@
     // Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Chi
     // le ha già tutte e due (prima del 22/10) la tiene, spenta.
     const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
-    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica; });
+    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica || r.dataset.fisso === "1"; });
     el("f_tipologia_tessera").querySelector(".obbligo").hidden = Boolean(c);
     const nota = el("notaFamiglia");
     let testo = "", avviso = false;
@@ -1403,7 +1407,15 @@
 
   function spuntaPartenze(contenitore, valore) {
     // Confronto sui valori e non con un selettore: un luogo con le virgolette lo romperebbe.
-    const scelte = (valore || "").split(",").map((v) => v.trim());
+    const scelte = (valore || "").split(",").map((v) => v.trim()).filter(Boolean);
+    // Un luogo spento o rinominato in Impostazioni resta al socio che l'aveva: si
+    // aggiunge, spuntato, e il Salva non lo toglie. Quelli del socio di prima vanno via.
+    el(contenitore).querySelectorAll("label[data-fuori]").forEach((l) => l.remove());
+    const presenti = [...el(contenitore).querySelectorAll("input[type=checkbox]")].map((c) => c.value);
+    for (const luogo of scelte.filter((s) => !presenti.includes(s))) {
+      el(contenitore).insertAdjacentHTML("beforeend",
+        `<label class="checkbox mr-3" data-fuori><input type="checkbox" value="${esc(luogo)}"> ${esc(luogo)} (non più fra le partenze)</label>`);
+    }
     el(contenitore).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = scelte.includes(c.value)));
   }
 
@@ -1754,6 +1766,9 @@
     turnoRicerca++;
     codiciGiaLetti.clear();
     el("memberForm").reset();
+    // Le partenze fuori elenco aggiunte per il socio di prima (spuntaPartenze) vanno via.
+    spuntaPartenze("check_sabato", "");
+    spuntaPartenze("check_domenica", "");
     aggiornaGiornoCorso();
     aggiornaTotaleMano();
     el("f_id").value = "";
