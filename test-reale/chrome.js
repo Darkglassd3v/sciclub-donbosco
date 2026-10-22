@@ -4,9 +4,11 @@
 // metà: qui si guida Chrome dal protocollo DevTools (WebSocket di Node 22).
 // Gli errori della pagina vanno su stderr.
 //
-//   node chrome.js <chrome> <url> [larghezza] [attesa massima in ms]
+//   node chrome.js <chrome> <url> [larghezza] [attesa massima in ms] [foto.png]
+// Con foto.png, appena c'è il risultato salva la pagina intera (le foto di avvia.sh, FOTO=1).
 const { spawn } = require("child_process");
-const [chrome, url, larghezza = "1280", attesa = "90000"] = process.argv.slice(2);
+const fs = require("fs");
+const [chrome, url, larghezza = "1280", attesa = "90000", foto] = process.argv.slice(2);
 const porta = 9300 + (process.pid % 600);
 const proc = spawn(chrome, ["--headless=new", "--disable-gpu", "--no-sandbox", `--remote-debugging-port=${porta}`,
   `--window-size=${larghezza},1000`, `--user-data-dir=/tmp/chrome-prova-${process.pid}`, "about:blank"], { stdio: "ignore" });
@@ -39,7 +41,16 @@ setTimeout(() => fine("", 1), Number(attesa) + 15000);
     await new Promise((ok) => setTimeout(ok, 500));
     const r = await manda("Runtime.evaluate", { expression: "document.title" });
     const titolo = r?.result?.value || "";
-    if (titolo.startsWith("RISULTATO ")) fine(titolo);
+    if (titolo.startsWith("RISULTATO ")) {
+      if (foto) {
+        const misure = await manda("Page.getLayoutMetrics");
+        const alto = Math.min(Math.ceil(misure?.cssContentSize?.height || 1000), 12000);
+        const scatto = await manda("Page.captureScreenshot", { format: "png", captureBeyondViewport: true,
+          clip: { x: 0, y: 0, width: Number(larghezza), height: alto, scale: 1 } });
+        if (scatto?.data) fs.writeFileSync(foto, Buffer.from(scatto.data, "base64"));
+      }
+      fine(titolo);
+    }
   }
   const r = await manda("Runtime.evaluate", { expression: "document.title + ' @ ' + location.pathname" });
   fine(`SCADUTA ${r?.result?.value || ""}`, 1);

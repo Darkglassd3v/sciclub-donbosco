@@ -33,7 +33,7 @@ for p in "$PORTA" "$PORTA_REST" "$PORTA_PG"; do
 done
 
 # Ogni prova: script, ruolo e, se serve, larghezza della finestra. La pagina la dice lo script (// PAGINA: ...).
-PROVE=(${@:-$(cd "$QUI" && ls -1 *.js 2>/dev/null)})
+PROVE=(${@:-$(cd "$QUI" && grep -l '^// PAGINA:' *.js 2>/dev/null)})   # chrome.js è lo strumento, non una prova
 
 N=$$
 RETE="scdb-reale-$N"; PG="scdb-reale-pg-$N"; REST="scdb-reale-rest-$N"
@@ -123,7 +123,11 @@ if [ -n "${FOTO:-}" ]; then
   window.addEventListener("error", (e) => errori.push(e.message));
   window.addEventListener("unhandledrejection", (e) => errori.push(String(e.reason?.message || e.reason)));
   window.addEventListener("load", () => setTimeout(() => {
-    document.title = `RISULTATO senzaErrori=${errori.length ? `NO(${errori.join(" / ").slice(0, 160)})` : "ok"}`;
+    // Tabelle che scorrono di lato (colonne fuori schermo) e pagina più larga dello schermo.
+    const tabelle = [...document.querySelectorAll(".tabella-scorrevole")].filter((c) => c.scrollWidth > c.clientWidth + 1).length;
+    const pagina = document.documentElement.scrollWidth > innerWidth + 1;
+    document.title = `RISULTATO senzaErrori=${errori.length ? `NO(${errori.join(" / ").slice(0, 160)})` : "ok"}`
+      + ` tabelleDentro=${tabelle ? `NO(${tabelle} scorrono di lato)` : "ok"} paginaDentro=${pagina ? `NO(larga ${document.documentElement.scrollWidth})` : "ok"}`;
   }, 5000));
 }
 JS
@@ -178,6 +182,7 @@ for pagina in ${PAGINE_FOTO:-}; do
     sessione="{\"access_token\":\"$accesso\",\"token_type\":\"bearer\",\"expires_in\":86400,\"expires_at\":$(( $(date +%s) + 86400 )),\"refresh_token\":\"prova\",\"user\":{\"id\":\"$id\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"prova-superadmin@locale\",\"app_metadata\":{},\"user_metadata\":{}}}"
     dir="$(dirname "$pagina")"; base="$(basename "$pagina" .html)"
     copia="$dir/foto-$base.html"; su="$( [ "$dir" = "." ] && echo "" || echo "../")"
+    nomefoto="$( [ "$dir" = "." ] && echo "$base" || echo "$dir-$base")"   # ricerca/index.html non copre index.html
     python3 - "$TMP/sito/$pagina" "$TMP/sito/$copia" "<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione));</script>" "${su}foto-prova.js" "${su}supabase-locale.js" <<'PY' || continue
 import re, sys
 sorgente, destinazione, inizio, prova, locale = sys.argv[1:6]
@@ -187,7 +192,7 @@ if not tag: sys.exit(1)
 testo = testo[:tag.start()] + inizio + f'<script src="{locale}"></script><script src="{prova}"></script>' + testo[tag.end():]
 open(destinazione, "w", encoding="utf-8").write(testo)
 PY
-    titolo=$(node "$QUI/chrome.js" "$CHROME" "http://127.0.0.1:$PORTA/$copia" "$larghezza" 60000 "$FOTO/${base}-$larghezza.png" 2> "$TMP/console.txt")
+    titolo=$(node "$QUI/chrome.js" "$CHROME" "http://127.0.0.1:$PORTA/$copia" "$larghezza" 60000 "$FOTO/${nomefoto}-$larghezza.png" 2> "$TMP/console.txt")
     echo "$pagina ($larghezza px): ${titolo#RISULTATO } $(grep -m2 . "$TMP/console.txt" | tr '\n' ' ' | head -c 200)"
   done
 done
