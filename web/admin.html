@@ -450,6 +450,10 @@
       showToast(esito && esito.members_settled
         ? `Incassati ${fmt(esito.amount)} — ${esito.members_settled} soci saldati`
         : "Questo nucleo era già saldato.");
+      // Con uno Storico o una Modifica aperti il ridisegno salta (li chiuderebbe):
+      // almeno la barra del nucleo appena incassato dice che è saldato.
+      const barra = el("barra_" + idPagante);
+      if (barra) barra.outerHTML = barraSaldo(idPagante, 0, "");
       await caricaDati({ silenzioso: true });
     } catch (error) {
       showToast(messaggioErrore(error), "is-danger");
