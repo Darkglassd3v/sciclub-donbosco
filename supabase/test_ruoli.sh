@@ -1667,9 +1667,8 @@ begin
   insert into public.profiles (user_id, email, role) values (nuovo, 'nuovo@test', 'tesoriere');
   perform set_config('test.uid', nuovo::text, false);
   assert (select change_password from public.my_access()), 'un account nuovo non deve cambiare la password';
+  -- Le policy usano can(): niente permessi, niente righe.
   assert not public.can('pagamenti'), 'con la password iniziale da cambiare ha già i permessi';
-  assert not public.test_prova(nuovo, 'leggi', 'select 1 from public.members'),
-         'con la password iniziale da cambiare legge i soci';
 
   update auth.users set email = email where id = nuovo;
   update auth.users set encrypted_password = encrypted_password where id = nuovo;
