@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bilancio — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261022nascosti">
+  <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
@@ -167,7 +167,7 @@
     </form>
 
     <div class="tabella-scorrevole mt-5">
-      <table class="tabella-movimenti">
+      <table class="tabella-movimenti a-schede">
         <thead><tr>
           <th>Data</th><th>Voce</th><th>Descrizione</th>
           <th class="num">Q.tà</th><th class="num">Prezzo</th><th class="num">Importo</th><th></th>
@@ -253,18 +253,18 @@
       const uscita = m.kind === "USCITA";
       return `
         <tr>
-          <td>${new Date(m.entry_date + "T00:00").toLocaleDateString("it-IT")}</td>
-          <td>${esc(m.category)}</td>
-          <td>${esc(m.description)}</td>
-          <td class="num">${num(m.quantity).toLocaleString("it-IT")}</td>
-          <td class="num">${fmt(m.unit_price)}</td>
-          <td class="num ${uscita ? "uscita" : "entrata"}">${uscita ? "−" : "+"} ${fmt(m.amount)}</td>
+          <td data-etichetta="Data">${new Date(m.entry_date + "T00:00").toLocaleDateString("it-IT")}</td>
+          <td data-etichetta="Voce">${esc(m.category)}</td>
+          <td data-etichetta="Descrizione">${esc(m.description)}</td>
+          <td class="num" data-etichetta="Quantità">${num(m.quantity).toLocaleString("it-IT")}</td>
+          <td class="num" data-etichetta="Prezzo">${fmt(m.unit_price)}</td>
+          <td class="num ${uscita ? "uscita" : "entrata"}" data-etichetta="Importo">${uscita ? "−" : "+"} ${fmt(m.amount)}</td>
           <td class="azioni" data-id="${m.id}">${pulsanteElimina()}</td>
         </tr>`;
     }).join("") + `
       <tr class="riga-totale">
         <td colspan="5">Totale movimenti</td>
-        <td class="num ${totale < 0 ? "uscita" : "entrata"}">${fmt(totale)}</td>
+        <td class="num ${totale < 0 ? "uscita" : "entrata"}" data-etichetta="Totale">${fmt(totale)}</td>
         <td></td>
       </tr>`;
   }
