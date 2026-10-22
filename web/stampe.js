@@ -28,9 +28,15 @@ function nomePartenza(testo) {
  * Nome del foglio di lavoro Excel: "Partenza da NIZZA M." → "NIZZA M.". Excel
  * rifiuta [ ] : * ? / \ e più di 31 caratteri, e il file non si aprirebbe.
  */
-function nomeFoglioExcel(titolo) {
-  const nome = String(titolo || "").replace(/^Partenza da /, "").replace(/[[\]:*?/\\]/g, " ").trim().slice(0, 31);
-  return nome || "Foglio1";
+function nomeFoglioExcel(titolo, usati = null) {
+  const base = String(titolo || "").replace(/^Partenza da /, "").replace(/[[\]:*?/\\]/g, " ").trim().slice(0, 31) || "Foglio1";
+  if (!usati) return base;
+  // Nello stesso file due fogli non possono chiamarsi uguale (anche a parte le
+  // maiuscole): «ASTI/CENTRO» e «ASTI:CENTRO» diventano «ASTI CENTRO» e «ASTI CENTRO 2».
+  let nome = base;
+  for (let n = 2; usati.has(nome.toLowerCase()); n++) nome = `${base.slice(0, 31 - String(n).length - 1).trim()} ${n}`;
+  usati.add(nome.toLowerCase());
+  return nome;
 }
 
 /**
@@ -105,7 +111,8 @@ function fogliDelGiorno(chiave, soci, abbonamenti) {
   const fogli = [];
   if (g.corsi) {
     fogli.push({ titolo: "Corsisti", righe: soci
-      .filter((s) => s.course_type && g.giorni.includes(s.course_day))
+      // «NO» nei fogli vecchi vuol dire niente corso, come nelle viste del database.
+      .filter((s) => s.course_type && s.course_type.toUpperCase() !== "NO" && g.giorni.includes(s.course_day))
       .map((s) => [s, [s.course_day]]) });
   }
   fogli.push({ titolo: "Abbonamenti 5 gite", gite: g.giorni, righe: soci
