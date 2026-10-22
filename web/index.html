@@ -1360,7 +1360,9 @@
       spuntaPartenze("check_domenica", socio.sunday_departure);
 
       if (socio.payer_id) {
-        const { data: pagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
+        const { data: pagante, error: errorePagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
+        // Illeggibile: scheda non caricata tutta (vedi il catch), invece del suo id come nome.
+        if (errorePagante) throw errorePagante;
         if (vecchia()) return;
         await scegliPagante(socio.payer_id, pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id);
         if (vecchia()) return;
