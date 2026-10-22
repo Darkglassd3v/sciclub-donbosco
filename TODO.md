@@ -22,6 +22,15 @@
 
 ## Richieste nuove
 
+- [ ] 22/10 sera: **Testi del sito in registro professionale** (l'utente: «messaggi scritti veramente
+      male e poco professionali… etichette professionali e non che sembrano del parlato comune»).
+      Fatto (TDD: `web/test-testi.js` RED 204cb13, poi GREEN): tutte le pagine di `web/` e
+      `ricerca/`, regole in `docs/SVILUPPO.md` («Testi»). Nomi cambiati: «Ruoli e permessi» (era
+      «Ruoli e vedi come»), «Visualizza come», «Liste inviate nella stagione in corso»,
+      «Correzione del codice fiscale», «Rimuovi dalla stagione», «Totale manuale», «A carico del
+      socio / di un familiare», «Registra una gita», «Rigenera dai dati». **Commit locali, push col
+      sì.** Restano fuori: i post dei social (parlano al pubblico) e i messaggi d'errore scritti
+      nel database (`raise exception` in `schema.sql`, cambiarli vuol dire toccare la produzione).
 - [ ] 22/10 sera: **Il totale di un socio non cambia coi prezzi nuovi** (audit S7). Fatto (TDD, prova
       `test-browser/totale-fisso.js`), online dal 22/10 (e9e9eeb). L'utente: «il totale
       pagato ad un dato momento vale sempre anche se cambiano i prezzi». Salvando un socio senza

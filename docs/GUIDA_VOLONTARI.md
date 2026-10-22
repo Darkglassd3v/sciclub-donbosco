@@ -54,7 +54,7 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
 - **Partenze**: spunta da dove parte il sabato e la domenica.
 - **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
 - **Acconto** (nella parte Pagamento): quanto ha già dato.
-- **Chi paga**: se paga un familiare, scegli **"La paga un familiare"** e
+- **Chi paga**: se paga un familiare, scegli **"A carico di un familiare"** e
   cerca il suo cognome.
 
 In fondo allo schermo vedi **Totale** e **Residuo**. Premi il pulsante

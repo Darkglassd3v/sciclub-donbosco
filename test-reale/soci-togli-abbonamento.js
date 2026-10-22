@@ -11,8 +11,8 @@
     if (!ATTESO?.pass) { document.title = "RISULTATO dati=NO(nessun socio per l'abbonamento di prova)"; return; }
     await caricaSocio(ATTESO.id);
     await aspetta(1500);
-    const togli = [...document.querySelectorAll("#elencoAbbonamenti button")].find((b) => b.textContent === "Togli");
-    if (!togli) { document.title = "RISULTATO togli=NO(nessun pulsante Togli)"; return; }
+    const togli = [...document.querySelectorAll("#elencoAbbonamenti button")].find((b) => b.textContent === "Rimuovi");
+    if (!togli) { document.title = "RISULTATO togli=NO(nessun pulsante Rimuovi)"; return; }
     togli.click();
     const { error: gita } = await sb.rpc("use_trip", { member_id: ATTESO.id, client_id: crypto.randomUUID() });
     prova("gitaSegnata", !gita, gita?.message);

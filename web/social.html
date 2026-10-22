@@ -233,7 +233,7 @@
     </div>
 
     <div>
-      <div class="riquadro vuoto" id="nessunPost">Scegli un post dall'elenco, oppure premi «+ Nuovo post».</div>
+      <div class="riquadro vuoto" id="nessunPost">Selezionare un post dall'elenco oppure crearne uno con «+ Nuovo post».</div>
 
       <div class="riquadro" id="editor" hidden>
         <div class="testa-post" id="testaPost">
@@ -251,8 +251,8 @@
             <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nel post:
                  ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
             <section class="parte" aria-labelledby="pCampi">
-              <h3 id="pCampi">Il post, dall'alto in basso</h3>
-              <p class="occhiello mb-2">I campi sono nell'ordine in cui si leggono nel post.</p>
+              <h3 id="pCampi">Contenuto del post</h3>
+              <p class="occhiello mb-2">I campi seguono l'ordine di lettura del post.</p>
               <div class="campi" id="campiPost">
                 <div data-campo="data" class="field" data-per="evento sponsor">
                   <label class="label" for="fData">Data</label>
@@ -263,7 +263,7 @@
                   <input class="input" id="fOra" placeholder="Es. 19:30">
                 </div>
                 <div data-campo="dove" class="field campo-largo" data-per="evento">
-                  <label class="label" for="fDove">Dove</label>
+                  <label class="label" for="fDove">Luogo</label>
                   <input class="input" id="fDove" placeholder="Es. Palestra Way Assauto, Asti">
                 </div>
                 <div data-campo="giorno" class="field campo-largo" data-per="gita">
@@ -275,7 +275,7 @@
                   <input class="input" type="date" id="fScadenza">
                 </div>
                 <div data-campo="corso" class="field" data-per="gita">
-                  <label class="spunta"><input type="checkbox" id="fCorso"> Nello stesso giorno c'è il corso</label>
+                  <label class="spunta"><input type="checkbox" id="fCorso"> Corso previsto nello stesso giorno</label>
                 </div>
                 <!-- Il tipo si sceglie con "+ Nuovo post"; resta qui solo per gli
                      eventi, che si possono spostare fra corso, cena, gara e servizi. -->
@@ -305,17 +305,17 @@
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
                   <div class="evidenzia" data-per="evento">
                     <button type="button" class="button is-small is-light" id="btnEvidenzia">Evidenzia</button>
-                    <p class="help mt-0">Seleziona le parole e premi Evidenzia: nel post escono evidenziate;
-                      qui restano fra due asterischi. Per togliere, selezionale di
-                      nuovo e premi Evidenzia.</p>
+                    <p class="help mt-0">Selezionare le parole e scegliere «Evidenzia»: nel post appaiono
+                      evidenziate, qui sono racchiuse tra due asterischi. Per rimuovere
+                      l'evidenziazione, selezionarle di nuovo e scegliere «Evidenzia».</p>
                   </div>
                 </div>
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
-                  <label class="label" for="fGancio">Gancio: la frase che apre il post (la riga gialla sopra il titolo)</label>
+                  <label class="label" for="fGancio">Frase di apertura (riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
                 <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
-                  <label class="label" for="fTitoloStory">Titolo della story (un a capo = una riga; l'ultima riga prende il colore d'accento)</label>
+                  <label class="label" for="fTitoloStory">Titolo della story (ogni a capo inizia una riga; l'ultima riga usa il colore d'accento)</label>
                   <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
                 </div>
                 <div data-campo="cta" class="field" data-per="sponsor">
@@ -347,12 +347,12 @@
                 <div class="field campo-largo">
                   <span class="label" id="lContatti">Contatti in fondo al post</span>
                   <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
-                  <a class="button is-small is-light mt-2" href="#contatti">Aggiungi o cambia i contatti</a>
+                  <a class="button is-small is-light mt-2" href="#contatti">Gestisci i contatti</a>
                 </div>
                 <div class="field">
                   <label class="label" for="fFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
-                  <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Togli la foto</button>
+                  <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Rimuovi la foto</button>
                   <!-- Quale parte della foto si vede, uguale in post e story: le frecce (pulsanti, o tastiera con
                        «Sposta la foto» premuto) la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
                   <div id="posFoto" class="pos-foto mt-3" hidden>
@@ -364,9 +364,9 @@
                       <button type="button" class="button is-light" data-mossa="ArrowUp" aria-label="Sposta la foto in su">↑</button>
                       <button type="button" class="button is-light" data-mossa="ArrowDown" aria-label="Sposta la foto in giù">↓</button>
                       <button type="button" class="button is-light" data-mossa="ArrowRight" aria-label="Sposta la foto a destra">→</button>
-                      <button type="button" class="button is-small is-light" id="btnFotoCentro">Rimetti com'era</button>
+                      <button type="button" class="button is-small is-light" id="btnFotoCentro">Ripristina la posizione</button>
                     </div>
-                    <p class="help" id="aiutoSposta">Usa le frecce qui sopra, oppure premi «Sposta la foto» e usa le frecce della tastiera (con Maiuscole va più veloce), + e − per ingrandire, Invio quando hai finito. Se non va in su o in giù, ingrandiscila un po'.</p>
+                    <p class="help" id="aiutoSposta">Usare le frecce qui sopra, oppure scegliere «Sposta la foto» e usare le frecce della tastiera (con Maiusc lo spostamento è più rapido), + e − per lo zoom, Invio per terminare. Se la foto non si sposta in verticale, ingrandirla leggermente.</p>
                     <p class="help" id="statoFoto" aria-live="polite"></p>
                   </div>
                 </div>
@@ -376,16 +376,16 @@
             <!-- Il testo sta qui, largo, dopo i dati da cui nasce: nella colonna
                  dell'anteprima finiva sotto le immagini, fuori dallo schermo. -->
             <section class="parte" aria-labelledby="pTesto">
-              <h3 id="pTesto">Testo da incollare sotto al post</h3>
-              <p class="occhiello mb-2">Si scrive da solo mentre compili i dati. Puoi correggerlo: da lì resta com'è.</p>
+              <h3 id="pTesto">Testo della didascalia</h3>
+              <p class="occhiello mb-2">Generato automaticamente dai dati del post. Può essere modificato: dopo una modifica manuale non viene più aggiornato.</p>
               <textarea class="textarea" id="testoPost" aria-labelledby="pTesto"></textarea>
               <p class="avviso-contrasto mt-2 mb-0" id="testoAMano" hidden>
-                Questo testo non segue più i dati (è stato cambiato a mano, o i dati sono cambiati dopo):
-                «Rifai dai dati» lo riscrive.
+                Il testo non è più allineato ai dati (modificato a mano, oppure dati cambiati in seguito):
+                «Rigenera dai dati» lo riscrive.
               </p>
               <div class="azioni-post">
                 <button type="button" class="button is-link" id="btnCopia">Copia il testo</button>
-                <button type="button" class="button is-light" id="btnRigenera" hidden>Rifai dai dati</button>
+                <button type="button" class="button is-light" id="btnRigenera" hidden>Rigenera dai dati</button>
               </div>
             </section>
 
@@ -396,7 +396,7 @@
           </div>
 
           <aside class="lato" aria-label="Anteprima e pubblicazione">
-            <h3>Come verrà</h3>
+            <h3>Anteprima</h3>
             <div class="formati" id="formati" role="group" aria-label="Quale immagine" hidden></div>
             <div class="anteprime" id="anteprime"></div>
             <p class="occhiello mb-0" id="senzaAnteprima" hidden></p>
@@ -405,7 +405,7 @@
             <p id="linkUtm" hidden></p>
             <hr>
             <button type="button" class="button is-success" id="btnPubblicato">Segna come pubblicato</button>
-            <p class="help mt-0">Quando è uscito su Instagram e Facebook.</p>
+            <p class="help mt-0">Dopo la pubblicazione su Instagram e Facebook.</p>
           </aside>
         </div>
       </div>
@@ -416,7 +416,7 @@
   <div class="due-colonne" data-sezione="grafiche" hidden>
     <div class="riquadro">
       <h2>Calendario del mese</h2>
-      <p class="occhiello">Si fa da solo con le gite salvate del mese scelto.</p>
+      <p class="occhiello">Generato automaticamente dalle gite salvate del mese selezionato.</p>
       <div class="campi">
         <div class="field"><label class="label" for="calMese">Mese</label><select class="input" id="calMese"></select></div>
         <div class="field"><label class="label" for="calTitolo">Titolo</label><input class="input" id="calTitolo"></div>
@@ -426,10 +426,10 @@
 
     <div class="riquadro">
       <h2>Copertina Facebook</h2>
-      <p class="occhiello">Una volta a stagione.</p>
+      <p class="occhiello">Da aggiornare una volta a stagione.</p>
       <div class="campi">
         <div class="field"><label class="label" for="copTitolo">Titolo</label><input class="input" id="copTitolo"></div>
-        <div class="field campo-largo"><label class="label" for="copSotto">Sotto</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
+        <div class="field campo-largo"><label class="label" for="copSotto">Sottotitolo</label><input class="input" id="copSotto" value="Gite, corsi e gare sociali. Iscrizioni aperte in sede."></div>
       </div>
       <div class="anteprime" id="anteprimaCopertina"></div>
     </div>
@@ -437,7 +437,7 @@
 
   <!-- Impostazioni: in breve, poi il modulo scelto (#sponsor, #giorni). -->
   <div data-sezione="impostazioni" hidden>
-    <p class="occhiello">Si cambiano poche volte a stagione: i post le prendono da qui.</p>
+    <p class="occhiello">Impostazioni comuni a tutti i post, da modificare raramente.</p>
     <div class="tre-colonne" id="riassunti">
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
@@ -447,16 +447,16 @@
       </section>
       <section class="riquadro riassunto" style="--colore:#0B6E69" aria-labelledby="rContatti">
         <h2 id="rContatti">Contatti</h2>
-        <p class="occhiello">Nome e telefono in fondo ai post.</p>
+        <p class="occhiello">Nomi e telefoni riportati in fondo ai post.</p>
         <ul class="righe-riassunto" id="riassuntoContatti"></ul>
         <a class="button is-light" href="#contatti">Modifica la rubrica</a>
       </section>
       <section class="riquadro riassunto" style="--colore:#B3261E" aria-labelledby="rGiorni">
         <h2 id="rGiorni">Giorni e colori delle gite</h2>
-        <p class="occhiello">Il giorno decide il colore della gita nei post e nel calendario.</p>
+        <p class="occhiello">Il giorno della gita ne determina il colore nei post e nel calendario.</p>
         <div class="legenda mt-0" id="riassuntoGiorni"></div>
-        <p class="help mt-0">Una gita in un altro giorno prende il blu del club.</p>
-        <a class="button is-light" href="#giorni">Cambia giorni e colori</a>
+        <p class="help mt-0">Le gite in altri giorni usano il blu del club.</p>
+        <a class="button is-light" href="#giorni">Modifica giorni e colori</a>
       </section>
     </div>
 
@@ -464,8 +464,8 @@
       <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
       <h2>Sponsor</h2>
       <p class="occhiello">
-        Marchio e colori di chi ci sostiene: le campagne li prendono da qui. Per
-        una campagna nuova: <b>+ Nuovo post</b> › <b>Campagna sponsor</b>, nella scheda Post.
+        Marchi e colori degli sponsor, usati dalle campagne. Per una nuova campagna:
+        <b>+ Nuovo post</b> › <b>Campagna sponsor</b>, nella scheda Post.
       </p>
       <div class="campi">
         <div class="field"><label class="label" for="sScegli">Sponsor</label><select class="input" id="sScegli"></select></div>
@@ -495,11 +495,11 @@
       <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
       <h2>Contatti per info e iscrizioni</h2>
       <p class="occhiello">
-        Qui scrivi una volta nome e telefono; poi ogni post sceglie i suoi, con
-        una spunta nel form del post. Gli orari sono facoltativi (es. "dopo le
-        18"). "Proposto" = già spuntato nei post nuovi. Correggere un numero lo
-        corregge anche nei post non ancora pubblicati (il testo da incollare già
-        scritto no: nel post premi "Rifai dai dati").
+        Nomi e telefoni si registrano una sola volta; in ogni post si selezionano quelli da
+        mostrare. Gli orari sono facoltativi (es. "dopo le 18"). «Proposto» indica i contatti
+        già selezionati nei nuovi post. La correzione di un numero si applica anche ai post
+        non ancora pubblicati, ma non alla didascalia già generata: nel post, usare
+        «Rigenera dai dati».
       </p>
       <div class="intestazione-rubrica" aria-hidden="true"><span>Nome</span><span>Telefono</span><span>Orari</span><span>Proposto</span></div>
       <div id="righeContatti"></div>
@@ -514,9 +514,9 @@
       <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
       <h2>Giorni e colori delle gite</h2>
       <p class="occhiello">
-        Il giorno della settimana decide il colore della gita nei post e nel
-        calendario del mese. Quando inserisci una gita il calendario ti mostra
-        questi giorni colorati; un altro giorno si può scegliere lo stesso.
+        Il giorno della settimana determina il colore della gita nei post e nel
+        calendario del mese. Durante l'inserimento di una gita il calendario evidenzia
+        questi giorni; è comunque possibile scegliere un giorno diverso.
       </p>
       <div id="righeGiorni"></div>
       <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
@@ -529,7 +529,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script src="social-templates.js?v=20261023sponsor"></script>
 <script>
   const el = (id) => document.getElementById(id);
@@ -663,14 +663,14 @@
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
   async function caricaGiorniGita() {
     const { data, error } = await sb.from("trip_days").select("weekday, color");
-    if (error) showToast("Giorni delle gite non caricati, uso i colori di sempre: " + messaggioErrore(error), "is-danger");
+    if (error) showToast("Giorni delle gite non caricati, in uso i colori predefiniti: " + messaggioErrore(error), "is-danger");
     else impostaColoriGita(mappaColori(data));
     apriGiorni();
   }
   /** La rubrica dei contatti (social_contacts), da cui ogni post sceglie i suoi. */
   async function caricaContatti() {
     const { data, error } = await sb.from("social_contacts").select("id, name, phone, hours, is_default").order("position");
-    if (error) { showToast("Contatti non caricati, i post escono senza telefoni: " + messaggioErrore(error), "is-danger"); return; }
+    if (error) { showToast("Contatti non caricati, i post saranno privi di recapiti telefonici: " + messaggioErrore(error), "is-danger"); return; }
     impostaContatti(data);
     if (!rubricaModificata()) apriRubrica(data);
     // Il post aperto prima che la rubrica arrivasse: rifatto con i suoi contatti.
@@ -737,7 +737,7 @@
   function aggiornaRubrica() {
     const mezze = rubricaDaForm().filter((c) => !c.name || !c.phone).length;
     el("avvisoRubrica").hidden = !mezze;
-    el("avvisoRubrica").textContent = `${mezze === 1 ? "Un contatto non ha" : `${mezze} contatti non hanno`} nome e telefono: scrivili tutti e due.`;
+    el("avvisoRubrica").textContent = `${mezze === 1 ? "Un contatto è privo" : `${mezze} contatti sono privi`} di nome o telefono: completare entrambi i campi.`;
     const m = rubricaModificata();
     el("btnSalvaRubrica").textContent = m ? "Salva modifiche" : "Salva contatti";
     el("btnSalvaRubrica").classList.toggle("salva-modifiche", m);
@@ -750,7 +750,7 @@
       // Il primo nome o telefono vuoto di una riga cominciata.
       const vuoto = [...el("righeContatti").children].map((riga) => [...riga.querySelectorAll("input.input")])
         .filter((campi) => campi.some((c) => c.value.trim())).flatMap((campi) => campi.slice(0, 2)).find((c) => !c.value.trim());
-      segnaErrore(vuoto, "Ogni contatto vuole nome e telefono.");
+      segnaErrore(vuoto, "Ogni contatto richiede nome e telefono.");
       return;
     }
     const inUso = {};  // id → quanti post non pubblicati lo mostrano
@@ -759,8 +759,8 @@
     const tolti = JSON.parse(rubricaSalvata).filter((c) => c.id && !restano.has(c.id) && inUso[c.id]);
     if (!tolti.length) { scriviRubrica(righe); return; }
     const quanti = tolti.reduce((n, c) => n + inUso[c.id], 0);
-    chiedi(el("azioniRubrica"), `${tolti.map((c) => c.name).join(", ")} ${tolti.length === 1 ? "è" : "sono"} su ${quanti === 1 ? "un post" : `${quanti} post`} non ancora pubblicat${quanti === 1 ? "o" : "i"}: toglierl${tolti.length === 1 ? "o" : "i"} anche da lì?`,
-      "Sì, togli", () => scriviRubrica(righe));
+    chiedi(el("azioniRubrica"), `${tolti.map((c) => c.name).join(", ")} ${tolti.length === 1 ? "è" : "sono"} su ${quanti === 1 ? "un post" : `${quanti} post`} non ancora pubblicat${quanti === 1 ? "o" : "i"}: rimuover${tolti.length === 1 ? "lo" : "li"} anche da lì?`,
+      "Rimuovi", () => scriviRubrica(righe));
   }
 
   /**
@@ -911,7 +911,7 @@
       try {
         foto = await riduciImmagine(file, 1080, "image/jpeg");
       } catch (e) {
-        showToast("Questa immagine non si apre: prova con una foto JPEG o PNG.", "is-danger");
+        showToast("Impossibile aprire l'immagine: usare una foto JPEG o PNG.", "is-danger");
         return;
       }
       fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
@@ -946,7 +946,7 @@
    */
   function evidenziaSelezione() {
     const t = el("fSottotitolo"), v = t.value, a = t.selectionStart, b = t.selectionEnd;
-    if (a === b) { showToast("Seleziona prima, nel sottotesto, le parole da evidenziare.", "is-warning"); t.focus(); return; }
+    if (a === b) { showToast("Selezionare prima, nel sottotesto, le parole da evidenziare.", "is-warning"); t.focus(); return; }
     const toccate = [...v.matchAll(/\*[^*\n]+\*/g)].filter((m) => m.index < b && m.index + m[0].length > a);
     if (toccate.length) {
       const inizio = toccate[0].index, fine = toccate.at(-1).index + toccate.at(-1)[0].length;
@@ -1018,7 +1018,7 @@
     apri({ ...dati, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
       subtitle: dati.kind === "gita" ? null : dati.subtitle, published_at: null, caption: null });
     if (aperto.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
-    showToast("Copia pronta: scegli il giorno e controlla la meta, poi salva.");
+    showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
     // La gita sceglie il giorno nel calendario: il campo data è nascosto.
     const giorno = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");
     if (giorno) giorno.focus();
@@ -1027,8 +1027,8 @@
   let aperture = 0;  // l'ultimo post chiesto: se se ne apre un altro mentre arriva la foto, vince l'ultimo
   async function apri(post) {
     if (modificato()) {
-      chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Lasciarle e aprire l'altro?",
-        "Sì, lascia le modifiche", () => { salvato = firma(); apri(post); });
+      chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Abbandonarle e aprire l'altro?",
+        "Abbandona le modifiche", () => { salvato = firma(); apri(post); });
       return;
     }
     const turno = ++aperture;
@@ -1109,13 +1109,13 @@
     const g = gruppo(el("fTipo").value);
     ordinaCampi();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
-    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (un a capo = una riga)" }[g];
+    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (ogni a capo inizia una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
-      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (si può andare a capo)";
+      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
-    if (g === "sponsor" && !sponsors.length) showToast("Prima aggiungi uno sponsor, in Impostazioni.", "is-warning");
+    if (g === "sponsor" && !sponsors.length) showToast("Aggiungere prima uno sponsor in Impostazioni.", "is-warning");
   }
 
   /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
@@ -1209,16 +1209,16 @@
     const riga = daForm();
     // Un post può essere solo sottotesto; la gita ha sempre la meta.
     if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
-      segnaErrore(el("fTitolo"), riga.kind === "gita" ? "Scrivi la meta." : "Scrivi il titolo o il sottotesto.");
+      segnaErrore(el("fTitolo"), riga.kind === "gita" ? "Inserire la meta." : "Inserire il titolo o il sottotesto.");
       return;
     }
-    if (riga.kind === "gita" && !riga.event_date) { segnaErrore(el("fData"), "Scegli il giorno della gita nel calendario: decide anche il colore."); return; }
-    if (riga.kind === "sponsor" && !riga.sponsor_id) { segnaErrore(el("fSponsor"), "Scegli lo sponsor."); return; }
+    if (riga.kind === "gita" && !riga.event_date) { segnaErrore(el("fData"), "Selezionare il giorno della gita nel calendario: ne determina anche il colore."); return; }
+    if (riga.kind === "sponsor" && !riga.sponsor_id) { segnaErrore(el("fSponsor"), "Selezionare lo sponsor."); return; }
     // Prezzi in euro interi o con i 50 centesimi («€ 12,50»; «€ 1.200» sono migliaia).
     const centesimi = (testo) => [...testo.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
     const prezzoSbagliato = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
       .find((c) => c && centesimi(c.value));
-    if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo è in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
+    if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo deve essere in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
     salvaInCorso = true;
     setLoading(true);
     try {
@@ -1241,7 +1241,7 @@
   }
 
   async function segnaPubblicato() {
-    if (!aperto || !aperto.id) { showToast("Prima salva il post.", "is-warning"); return; }
+    if (!aperto || !aperto.id) { showToast("Salvare prima il post.", "is-warning"); return; }
     const quando = aperto.published_at ? null : new Date().toISOString();
     const { data, error } = await sb.from("social_events").update({ published_at: quando }).eq("id", aperto.id).select().single();
     if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
@@ -1249,19 +1249,19 @@
     aggiornaPubblicato();
     aggiornaTesta();
     await caricaPost();
-    showToast(quando ? "Segnato come pubblicato." : "Tolto il segno di pubblicato.");
+    showToast(quando ? "Post segnato come pubblicato." : "Segno di pubblicazione rimosso.");
   }
   function aggiornaPubblicato() {
     const uscito = !!(aperto && aperto.published_at);
     el("btnPubblicato").textContent = uscito
-      ? `Pubblicato il ${new Date(aperto.published_at).toLocaleDateString("it-IT")} · togli il segno`
+      ? `Pubblicato il ${new Date(aperto.published_at).toLocaleDateString("it-IT")} · rimuovi il segno`
       : "Segna come pubblicato";
     el("btnPubblicato").classList.toggle("is-light", uscito);
   }
 
   function elimina() {
     if (!aperto || !aperto.id) { salvato = firma(); aperto = null; mostraEditor(false); disegnaElenco(); return; }
-    chiedi(el("azioniElimina"), "Eliminare questo post? Non si torna indietro.", "Sì, elimina", eliminaDavvero);
+    chiedi(el("azioniElimina"), "Eliminare il post? L'operazione non è reversibile.", "Elimina", eliminaDavvero);
   }
 
   async function eliminaDavvero() {
@@ -1276,10 +1276,10 @@
   async function copiaTesto() {
     try {
       await navigator.clipboard.writeText(el("testoPost").value);
-      showToast("Testo copiato: incollalo su Instagram o Facebook.");
+      showToast("Testo copiato: pronto da incollare su Instagram o Facebook.");
     } catch (e) {
       el("testoPost").select();
-      showToast("Non riesco a copiare da solo: il testo è selezionato, premi Ctrl+C.", "is-warning");
+      showToast("Copia automatica non riuscita: il testo è selezionato, copiarlo con Ctrl+C.", "is-warning");
     }
   }
 
@@ -1300,7 +1300,7 @@
     figura.className = "anteprima" + (fuori ? " fuori" : "");
     figura.innerHTML = `<figcaption>${esc(nome)} · ${w}×${h}</figcaption>
       <div class="cornice" style="width:${w * k}px;height:${h * k}px"><div class="scala" style="transform:scale(${k})">${html}</div></div>
-      <p class="sborda" hidden>Un testo è troppo lungo: accorcialo.</p>
+      <p class="sborda" hidden>Un testo supera lo spazio disponibile: accorciarlo.</p>
       ${pulsante ? '<button type="button" class="button is-small is-link mt-2">Scarica PNG</button>' : ""}`;
     dove.append(figura);
     const canvas = figura.querySelector(".cv");
@@ -1342,8 +1342,8 @@
     const lista = formatiPost(post);
     el("formati").hidden = lista.length < 2;
     el("senzaAnteprima").hidden = lista.length > 0;
-    el("senzaAnteprima").textContent = { gita: "Scrivi la meta e scegli il giorno: qui compare l'immagine.",
-      sponsor: "Scegli lo sponsor: qui compaiono le immagini." }[post.kind] || "Scrivi il titolo: qui compare l'immagine.";
+    el("senzaAnteprima").textContent = { gita: "L'anteprima compare dopo l'inserimento di meta e giorno.",
+      sponsor: "Le anteprime compaiono dopo la scelta dello sponsor." }[post.kind] || "L'anteprima compare dopo l'inserimento del titolo.";
     if (!lista.length) return;
     formato = Math.min(formato, lista.length - 1);
     const disegnati = lista.map((f, i) =>
@@ -1364,7 +1364,7 @@
       if (giro !== giroAnteprime) return;
       const lunghi = lista.filter((f, i) => esiti[i]).map((f) => f.breve);
       el("sbordaTutti").hidden = !lunghi.length;
-      el("sbordaTutti").textContent = `Un testo è troppo lungo (${lunghi.join(", ")}): accorcialo.`;
+      el("sbordaTutti").textContent = `Un testo supera lo spazio disponibile (${lunghi.join(", ")}): accorciarlo.`;
     });
   }
 
@@ -1391,7 +1391,7 @@
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
       script.onload = ok;
-      script.onerror = () => { _pngInArrivo = null; script.remove(); ko(new Error("non riesco a scaricare il modulo per le immagini: controlla la connessione.")); };
+      script.onerror = () => { _pngInArrivo = null; script.remove(); ko(new Error("impossibile scaricare il modulo per le immagini: verificare la connessione.")); };
       document.head.append(script);
     });
     return _pngInArrivo;
@@ -1408,7 +1408,7 @@
       a.download = nome;
       a.click();
     } catch (error) {
-      showToast("Errore nel PNG: " + messaggioErrore(error), "is-danger");
+      showToast("Errore nella generazione del PNG: " + messaggioErrore(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -1479,8 +1479,8 @@
     }
     // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
     const fuori = scelta && categoriaGita(scelta) === "gita", gia = altre.get(scelta);
-    const esito = !scelta ? "Scegli il giorno: quelli colorati sono i giorni di gita."
-      : fuori ? `${dataLunga(scelta)} non è un giorno di gita: il post avrà il blu del club.`
+    const esito = !scelta ? "Selezionare il giorno: quelli colorati sono i giorni di gita."
+      : fuori ? `${dataLunga(scelta)} non è un giorno di gita: il post userà il blu del club.`
       : `✓ ${dataLunga(scelta)}`;
     el("calGita").innerHTML = `
       <div class="testa">
@@ -1491,7 +1491,7 @@
       <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${celle.join("")}</div>
       <p class="esito ${fuori ? "fuori" : ""}">${esc(esito)}${gia ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(gia)}.</span>` : ""}</p>
       <div class="legenda">${SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")}
-        <a href="#giorni">Cambia giorni e colori</a></div>`;
+        <a href="#giorni">Modifica giorni e colori</a></div>`;
   }
 
   function sceltaCalGita(e) {
@@ -1545,7 +1545,7 @@
       if (color && contrasto(color, inchiostro(color)) < 4.5) deboli.push(GIORNI[g]);
     }
     el("avvisoGiorni").hidden = !deboli.length;
-    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${deboli.join(", ")} la scritta si legge poco. Prova un colore più scuro o più chiaro.`;
+    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${deboli.join(", ")} il testo è poco leggibile. Scegliere un colore più scuro o più chiaro.`;
     const m = giorniModificati();
     el("btnSalvaGiorni").textContent = m ? "Salva modifiche" : "Salva giorni e colori";
     el("btnSalvaGiorni").classList.toggle("salva-modifiche", m);
@@ -1584,7 +1584,7 @@
     el("fContatti").innerHTML = SOCIAL.contatti.length
       ? SOCIAL.contatti.map((c) => `<label class="spunta"><input type="checkbox" value="${esc(c.id)}" ${scelti.includes(c.id) ? "checked" : ""}>
           <span>${esc(c.name)} ${esc(c.phone)}${c.hours ? ` <small>${esc(c.hours)}</small>` : ""}</span></label>`).join("")
-      : '<span class="avviso-contrasto">La rubrica è vuota: aggiungi i contatti in Impostazioni.</span>';
+      : '<span class="avviso-contrasto">La rubrica è vuota: aggiungere i contatti in Impostazioni.</span>';
   }
 
   // ---------------------------------------------------------------------
@@ -1646,7 +1646,7 @@
         try {
           loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
         } catch (e) {
-          showToast("Questo logo non si apre: prova con un PNG o un SVG.", "is-danger");
+          showToast("Impossibile aprire il logo: usare un file PNG o SVG.", "is-danger");
           return;
         }
         anteprimaSponsor();
@@ -1684,9 +1684,9 @@
     const uscite = campagne.filter((p) => p.published_at).length;
     const quante = campagne.length === 1 ? "la sua campagna" : `le sue ${campagne.length} campagne`;
     const domanda = campagne.length
-      ? `Eliminare ${sp.name} e ${quante}${uscite ? ` (${uscite} già pubblicat${uscite === 1 ? "a" : "e"})` : ""}? Non si torna indietro.`
-      : `Eliminare ${sp.name}? Non si torna indietro.`;
-    chiedi(el("azioniSponsor"), domanda, "Sì, elimina", () => eliminaSponsor(sp, campagne));
+      ? `Eliminare ${sp.name} e ${quante}${uscite ? ` (${uscite} già pubblicat${uscite === 1 ? "a" : "e"})` : ""}? L'operazione non è reversibile.`
+      : `Eliminare ${sp.name}? L'operazione non è reversibile.`;
+    chiedi(el("azioniSponsor"), domanda, "Elimina", () => eliminaSponsor(sp, campagne));
   }
 
   async function eliminaSponsor(sp, campagne) {
@@ -1732,16 +1732,16 @@
       <div style="background:${sp.color_light};padding:18px 26px;border-radius:12px">${logoSuChiaro(M, 70)}</div>
       <div style="background:${sp.color_dark};padding:18px 26px;border-radius:12px">${logoSuScuro(M, 70)}</div>`;
     const problemi = [];
-    if (contrasto(sp.color_light, sp.color_dark) < 4.5) problemi.push("il testo chiaro sul fondo scuro si legge poco");
-    if (contrasto(sp.color_accent, sp.color_dark) < 3) problemi.push("l'accento sul fondo scuro si vede poco");
+    if (contrasto(sp.color_light, sp.color_dark) < 4.5) problemi.push("il testo chiaro sul fondo scuro è poco leggibile");
+    if (contrasto(sp.color_accent, sp.color_dark) < 3) problemi.push("il colore d'accento sul fondo scuro è poco visibile");
     el("avvisoContrasto").hidden = !problemi.length;
-    el("avvisoContrasto").textContent = problemi.length ? `Attenzione: ${problemi.join("; ")}. Prova colori più distanti.` : "";
+    el("avvisoContrasto").textContent = problemi.length ? `Attenzione: ${problemi.join("; ")}. Scegliere colori più contrastati.` : "";
   }
 
   async function salvaSponsor() {
     const riga = sponsorDaForm(), id = el("sScegli").value;
-    if (!riga.name) { segnaErrore(el("sNome"), "Scrivi il nome dello sponsor."); return; }
-    if (riga.url && !urlSponsor(riga.url)) { segnaErrore(el("sUrl"), "Indirizzo non valido: scrivilo come santero.it o https://www.santero.it."); return; }
+    if (!riga.name) { segnaErrore(el("sNome"), "Inserire il nome dello sponsor."); return; }
+    if (riga.url && !urlSponsor(riga.url)) { segnaErrore(el("sUrl"), "Indirizzo non valido: usare il formato santero.it o https://www.santero.it."); return; }
     setLoading(true);
     try {
       const { data, error } = id

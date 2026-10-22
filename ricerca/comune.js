@@ -293,8 +293,8 @@ function mostraVediCome(accesso) {
   if (accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
   const fascia = document.createElement("div");
   fascia.className = "fascia-vedi-come";
-  fascia.innerHTML = `Stai vedendo il sito come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
-    <button type="button" class="btn-chiaro">Torna superadmin</button>`;
+  fascia.innerHTML = `Visualizzazione come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+    <button type="button" class="btn-chiaro">Torna alla vista superadmin</button>`;
   fascia.querySelector("button").addEventListener("click", async () => {
     const { error } = await sb.rpc("set_view_as", { role: null });
     if (!error) location.replace("../gestione.html");

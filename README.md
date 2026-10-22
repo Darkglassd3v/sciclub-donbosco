@@ -43,7 +43,7 @@ misure stanno in `web/brand.css`, che nasce da
 | `web/impostazioni.html` | listino (con l'assicurazione di ogni tessera) e luoghi di partenza |
 | `web/utenti.html` | account dei volontari e il loro ruolo |
 | `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
-| `web/gestione.html` | solo superadmin, scheda "Ruoli e vedi come" di Gestione (con Amministrazione, Utenti e Impostazioni): chi fa cosa, e "Vedi come" per guardare il sito con gli occhi di un altro ruolo |
+| `web/gestione.html` | solo superadmin, scheda "Ruoli e permessi" di Gestione (con Amministrazione, Utenti e Impostazioni): chi fa cosa, e "Visualizza come" per guardare il sito con gli occhi di un altro ruolo |
 | `web/social.html` | post per Instagram e Facebook (grafica "Skipass"), calendario del mese, copertina, campagne degli sponsor: anteprima, PNG e testo da incollare |
 | `web/social-contatti.html` | solo un rimando a `social.html#contatti`: la rubrica dei contatti ora sta in Social > Impostazioni > Contatti |
 | `ricerca/index.html` | sito a parte: si cerca un socio, con i pulsanti per chiamarlo o scrivergli su WhatsApp |
@@ -72,7 +72,7 @@ Su `ricerca/gite.html` si filtra per giorno — chiedendo un giorno preciso
 compaiono anche i jolly, che valgono lo stesso — si cerca per cognome, e ogni
 abbonamento mostra il suo conto: **3/5 — LIBERE 2**.
 
-Per scalare c'è un solo pulsante: **＋ Segna una gita**. Un tocco, una gita, con
+Per scalare c'è un solo pulsante: **＋ Registra una gita**. Un tocco, una gita, con
 la data del giorno in cui si preme. Niente data da scegliere e niente numero di
 persone da indicare: chi lo usa è sul pullman alle sette del mattino, e se
 salgono in due si preme due volte. La data serve solo a ritrovare una

@@ -74,7 +74,7 @@
 
 <div class="container-main">
   <h1 class="title is-4" id="titolo">Riepilogo Stagione</h1>
-  <p class="occhiello">Quanti soci, quanto è stato incassato e cosa è stato venduto.</p>
+  <p class="occhiello">Numero di soci, importi incassati e voci vendute nella stagione.</p>
 
   <!-- Solo con ?stagione=AAAA-MM-GG: una stagione chiusa, letta dallo storico. -->
   <div class="notification is-warning is-light" id="fasciaStorico" hidden>
@@ -147,7 +147,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -280,7 +280,7 @@
     if (storia.error) throw storia.error;
     if (righe.error) throw righe.error;
     if (movimenti.error) throw movimenti.error;
-    if (!storia.data) throw new Error("Stagione non trovata, o non disponibile per il tuo ruolo.");
+    if (!storia.data) throw new Error("Stagione non trovata o non consultabile con il ruolo attuale.");
 
     const di = (categoria) => righe.data.filter((r) => r.category === categoria);
     const incasso = di("COURSE_INCOME")[0];
