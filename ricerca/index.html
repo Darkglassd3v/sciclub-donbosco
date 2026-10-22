@@ -163,7 +163,8 @@
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
       clearTimeout(attesa);
-      if (pezzi(testoCercato).length === 0) { svuota(); return; }
+      // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
+      if (pezzi(testoCercato).length === 0) { ultima++; svuota(); return; }
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;

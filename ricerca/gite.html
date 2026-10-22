@@ -619,6 +619,7 @@
     // Senza ricerca scritta l'elenco resta chiuso: sono migliaia di soci, e
     // qui interessa solo la persona che si ha davanti.
     if (!parti.length || !opzioniAbbonamento.length) {
+      ultimaRicerca++;   // quella ancora in viaggio non ridisegna il campo vuoto
       senzaAbbonamento = [];
       disegnaSenza();
       return;

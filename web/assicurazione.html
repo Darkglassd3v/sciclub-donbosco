@@ -623,7 +623,8 @@
   async function cerca() {
     const testo = el("cerca").value.trim();
     const corpo = el("elencoCerca");
-    if (testo.replace(/\s/g, "").length < 2) { corpo.replaceChildren(); return; }
+    // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
+    if (testo.replace(/\s/g, "").length < 2) { ultimaRicerca++; corpo.replaceChildren(); return; }
 
     const mia = ++ultimaRicerca;
     try {
