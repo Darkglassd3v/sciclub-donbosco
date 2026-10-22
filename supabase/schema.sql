@@ -1755,6 +1755,51 @@ create policy departures_select on public.departures
 create policy departures_write on public.departures
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
+-- Una partenza rinominata in Impostazioni (es. un errore di battitura) cambia nome
+-- anche nei soci che l'hanno scelta: in members i luoghi sono testo ("A, B"), non
+-- chiavi. Solo nel suo giorno e solo il luogo intero ("ASTI" non tocca "ASTI BIS").
+-- Senza, il socio teneva il nome vecchio e nei fogli del pullman i gruppi erano due.
+create or replace function public.departure_list_rename(lista text, vecchio text, nuovo text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when vecchio = any (select trim(x) from unnest(string_to_array(lista, ',')) as x)
+    then (select string_agg(case when trim(p) = vecchio then nuovo else trim(p) end, ', ' order by n)
+            from unnest(string_to_array(lista, ',')) with ordinality as t(p, n))
+    else lista end;
+$$;
+
+create or replace function public.departures_rename()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.place is distinct from old.place and new.day = old.day then
+    if old.day = 'SABATO' then
+      update public.members
+         set saturday_departure = public.departure_list_rename(saturday_departure, old.place, new.place)
+       where saturday_departure <> public.departure_list_rename(saturday_departure, old.place, new.place);
+    else
+      update public.members
+         set sunday_departure = public.departure_list_rename(sunday_departure, old.place, new.place)
+       where sunday_departure <> public.departure_list_rename(sunday_departure, old.place, new.place);
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function public.departures_rename() from public;
+
+drop trigger if exists departures_rename on public.departures;
+create trigger departures_rename
+  after update of place on public.departures
+  for each row execute function public.departures_rename();
+
 -- Impostazioni del club, una riga per voce (come social_settings). Per ora
 -- card_gaps_from: da che numero la pagina Soci conta i numeri tessera liberi,
 -- quelli magari dimenticati registrando le tessere. Sotto, i posti sono tenuti
