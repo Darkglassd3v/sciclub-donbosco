@@ -85,7 +85,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261016d"></script>
+<script src="comune.js?v=20261023coda"></script>
 <script>
 (() => {
   "use strict";
@@ -644,7 +644,9 @@
       const { data, error } = await query.order("last_name").order("first_name").limit(MAX_SENZA);
       if (error) throw error;
       if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
-      senzaAbbonamento = data;
+      // Chi ha l'abbonamento ancora in coda (senza linea) per il database non l'ha
+      // ancora: un secondo click glielo venderebbe due volte.
+      senzaAbbonamento = data.filter((s) => !coda.some((v) => v.tipo === "abbonamento" && v.socio === s.id));
       disegnaSenza();
     } catch (errore) {
       if (mia !== ultimaRicerca) return;

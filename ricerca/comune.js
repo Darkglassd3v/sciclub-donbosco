@@ -325,6 +325,10 @@ function ritentabile(errore) {
   // La sessione scaduta è l'eccezione: con un nuovo accesso la stessa
   // richiesta passa, e buttarla perderebbe una gita fatta davvero.
   if (erroreDiRete(errore) || sessioneScaduta(errore)) return true;
+  // Anche gli errori del database che passano da soli: non raggiungibile o pool
+  // esaurito (PGRST000-003), tempo scaduto, troppe connessioni, riavvio,
+  // conflitto fra transazioni. Riprovare è sicuro: ogni voce ha il suo client_id.
+  if (/^(PGRST00[0-3]|57014|53300|57P0[1-3]|40001|40P01)$/.test(errore?.code || "")) return true;
   return !(errore && errore.code);
 }
 
