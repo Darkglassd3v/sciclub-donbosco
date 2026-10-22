@@ -14,6 +14,8 @@
 // - Nome della voce vuoto: non si salva, bordo rosso.
 // - Con una riga modificata e non salvata non si aggiunge una voce (rileggere il
 //   listino la perderebbe): si borda il suo Salva.
+// - Luogo della partenza con la virgola: non si salva (in Soci le partenze di un
+//   socio si separano con la virgola, e il luogo si spezzerebbe in due).
 // - Voce nuova senza nome: il nome ha il bordo rosso e si vede (regola di shared.js).
 // - Campi come nel resto del sito (.input, .textarea, .select) e riquadri a striscia;
 //   sul telefono la pagina non scorre di lato.
@@ -145,6 +147,17 @@
     r2.querySelector("[data-prezzo]").dispatchEvent(new Event("input", { bubbles: true }));
     el("nuovoNome").value = "";
     el("nuovoPrezzo").value = "";
+
+    const luogoR = riga("tabellaPartenze", 7)?.querySelector("[data-luogo]");
+    const primaLuogo = scritti.length;
+    luogoR.value = "ASTI, PIAZZA D'ARMI";
+    luogoR.dispatchEvent(new Event("input", { bubbles: true }));
+    riga("tabellaPartenze", 7).querySelector("[data-salva]").click();
+    await aspetta(200);
+    prova("luogoSenzaVirgola", scritti.length === primaLuogo && luogoR.classList.contains("campo-errore"),
+      `salvati ${scritti.length - primaLuogo}, bordato ${luogoR.classList.contains("campo-errore")}`);
+    luogoR.value = LUOGO;
+    luogoR.dispatchEvent(new Event("input", { bubbles: true }));
 
     window.scrollTo(0, 0);
     el("btnAggiungiPrezzo").click();
