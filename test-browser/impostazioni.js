@@ -7,8 +7,8 @@
 // - Cambiato il nome, la riga si accende come modificata.
 // - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
 // - Colonna «In Soci»: il prezzo che compare nella pagina Soci (quota più assicurazione, se
-//   non la paga il club), grande e in grassetto, per ogni voce; segue subito quota e
-//   «la paga il club». Il campo del prezzo si chiama «Quota €». «Chi la assegna» non c'è
+//   non è a carico del club), grande e in grassetto, per ogni voce; segue subito quota e
+//   «a carico del club». Il campo del prezzo si chiama «Quota €». «Chi la assegna» non c'è
 //   più (nessuno usa il sito da utente) e min_role non si salva.
 // - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
 //   salva; 0 o lettere no.

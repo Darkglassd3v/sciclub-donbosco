@@ -74,7 +74,7 @@
     <a href="stagione.html">Amministrazione</a>
     <a href="utenti.html">Utenti</a>
     <a href="impostazioni.html">Impostazioni</a>
-    <a href="gestione.html">Ruoli e vedi come</a>
+    <a href="gestione.html">Ruoli e permessi</a>
   </nav>
   <h1 class="title is-4">Utenti</h1>
   <p class="occhiello">Chi entra nel gestionale e con quale ruolo.</p>
@@ -83,8 +83,8 @@
     <div class="riquadro">
       <h2>Nuovo utente</h2>
       <p class="occhiello">
-        L'account nasce già con il ruolo scelto e la password
-        <b id="passwordIniziale"></b>, da cambiare al primo accesso.
+        L'account viene creato con il ruolo selezionato e la password iniziale
+        <b id="passwordIniziale"></b>, da modificare al primo accesso.
       </p>
       <div class="riga-nuovo">
         <input class="input" type="email" id="nuovaEmail" placeholder="email@esempio.it" autocomplete="off" required>
@@ -96,14 +96,13 @@
     <div class="riquadro">
       <h2>Utenti registrati</h2>
       <p class="occhiello">
-        Il ruolo cambiato vale dal login successivo: scegli il nuovo ruolo e premi
-        <b>Conferma</b>. <b>Rimuovi</b> revoca l'accesso: l'account scende in
-        fondo, <b>senza accesso</b>, e non vede più niente. Da lì si può
-        <b>Riattivare</b> con un ruolo (la password resta quella che aveva) o
-        <b>Eliminare per sempre</b>, che libera anche l'indirizzo email.
-        Chi ha dimenticato la password: <b>Reimposta password</b> la riporta a quella
-        iniziale, e al prossimo accesso ne sceglie una nuova.
-        Cosa può fare ogni ruolo: vedi la scheda <a href="gestione.html">Ruoli e vedi come</a>.
+        Per cambiare ruolo, selezionare il nuovo ruolo e confermare con <b>Conferma</b>: la
+        modifica si applica dal login successivo. <b>Rimuovi</b> revoca l'accesso e sposta
+        l'account in fondo all'elenco, <b>senza accesso</b>. Da lì l'account può essere
+        <b>riattivato</b> con un ruolo (la password resta invariata) oppure <b>eliminato
+        definitivamente</b>, liberando anche l'indirizzo email. In caso di password dimenticata,
+        <b>Reimposta password</b> ripristina quella iniziale, da modificare al primo accesso.
+        I permessi di ciascun ruolo sono descritti nella scheda <a href="gestione.html">Ruoli e permessi</a>.
       </p>
       <table class="tabella-utenti">
         <thead><tr><th>Email</th><th>Ruolo</th><th></th></tr></thead>
@@ -210,7 +209,7 @@
     conferma.disabled = select.value === riga.dataset.ruoloSalvato;
     // Il superadmin può tutto, anche togliere gli altri: si chiede, come per togliere un account.
     conferma.addEventListener("click", () => (select.value === "superadmin"
-      ? chiedi(conferma.parentElement, `Dare a ${riga.querySelector("td")?.textContent.trim() || "questo account"} il ruolo superadmin? Potrà fare tutto, anche togliere gli altri account.`,
+      ? chiedi(conferma.parentElement, `Assegnare a ${riga.querySelector("td")?.textContent.trim() || "questo account"} il ruolo superadmin? Avrà accesso completo, compresa la gestione degli altri account.`,
         "Sì, superadmin", () => cambiaRuolo(riga))
       : cambiaRuolo(riga)));
     riga.querySelector("[data-reset]").addEventListener("click", () => chiediReset(riga));
@@ -224,7 +223,7 @@
    * preso uno.
    */
   function rigaSenzaAccesso(account) {
-    const opzioni = ['<option value="" selected>— scegli il ruolo —</option>']
+    const opzioni = ['<option value="" selected>— Selezionare il ruolo —</option>']
       .concat(RUOLI.map((r) => opzioneRuolo(r, null))).join("");
     return `
       <tr data-senza="${account.user_id}" class="senza">
@@ -237,7 +236,7 @@
   function azioniSenzaAccessoHtml() {
     return `
       <button type="button" class="button is-small is-link" data-riattiva disabled>Riattiva</button>
-      <button type="button" class="button is-small is-danger is-light" data-elimina>Elimina per sempre</button>`;
+      <button type="button" class="button is-small is-danger is-light" data-elimina>Elimina definitivamente</button>`;
   }
 
   function collegaRigaSenzaAccesso(riga) {
@@ -279,9 +278,9 @@
   async function chiediEliminazione(riga) {
     const email = emailDi(riga);
     const si = await chiediInFinestra({
-      titolo: "Eliminare per sempre questo account?", chi: email,
-      testo: "L'account sparisce e l'indirizzo email torna libero. Non si torna indietro.",
-      si: "Sì, elimina per sempre",
+      titolo: "Eliminare definitivamente l'account?", chi: email,
+      testo: "L'account viene eliminato e l'indirizzo email torna disponibile. L'operazione non è reversibile.",
+      si: "Elimina definitivamente",
     });
     if (si) eliminaAccount(riga, email);
   }
@@ -291,7 +290,7 @@
     try {
       const { error } = await sb.rpc("delete_account", { user_id: riga.dataset.senza });
       if (error) throw error;
-      showToast(`${email} eliminato: l'indirizzo è di nuovo libero.`);
+      showToast(`Account ${email} eliminato: l'indirizzo email è di nuovo disponibile.`);
       await caricaUtenti();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -350,8 +349,8 @@
       if (rimosso) {
         const { error } = await sb.rpc("restore_account", { user_id: rimosso.user_id, role: ruolo });
         if (error) throw error;
-        showToast(`${email} aveva già un account, rimosso in passato: ora ha di nuovo accesso come ${NOMI_RUOLI[ruolo]}. `
-          + "La password è rimasta quella di prima.");
+        showToast(`${email} aveva già un account, rimosso in precedenza: l'accesso è stato ripristinato come ${NOMI_RUOLI[ruolo]}. `
+          + "La password è rimasta invariata.");
         campoEmail.value = "";
         await caricaUtenti();
         return;
@@ -380,10 +379,10 @@
       const { error: errRuolo } = await sb.rpc("restore_account", { user_id: data.user_id, role: ruolo });
       if (errRuolo) {
         throw new Error(`${email} è stato creato, ma il ruolo non è stato applicato (${messaggioErrore(errRuolo)}): `
-          + "sceglilo in fondo all'elenco, fra gli account senza accesso, e premi Riattiva.");
+          + "selezionarlo in fondo all'elenco, tra gli account senza accesso, e confermare con Riattiva.");
       }
 
-      showToast(`${email} creato come ${NOMI_RUOLI[ruolo]}. Password: ${PASSWORD_INIZIALE}`);
+      showToast(`Account ${email} creato come ${NOMI_RUOLI[ruolo]}. Password iniziale: ${PASSWORD_INIZIALE}`);
       campoEmail.value = "";
       await caricaUtenti();
     } catch (error) {
@@ -415,8 +414,8 @@
   function spiegaErroreCreazione(error) {
     const testo = String((error && error.message) || "");
     if (/failed to send a request|not found|failed to fetch/i.test(testo)) {
-      return "La funzione «crea-utente» non risponde: va pubblicata una volta sola su "
-        + "Supabase (vedi docs/ACCOUNT.md), altrimenti gli account non si possono creare da qui.";
+      return "La funzione «crea-utente» non risponde: deve essere pubblicata su Supabase "
+        + "(vedi docs/ACCOUNT.md), altrimenti non è possibile creare account da questa pagina.";
     }
     return "Errore: " + messaggioErrore(error);
   }
@@ -440,9 +439,9 @@
       const { data, error } = await sb
         .from("profiles").update({ role: nuovoRuolo }).eq("user_id", riga.dataset.id).select();
       if (error) throw error;
-      if (!data.length) throw new Error("il database non ha accettato la modifica: controlla di essere ancora superadmin.");
+      if (!data.length) throw new Error("il database non ha accettato la modifica: verificare di avere ancora il ruolo superadmin.");
       riga.dataset.ruoloSalvato = nuovoRuolo;
-      showToast("Ruolo aggiornato: vale dal prossimo login.");
+      showToast("Ruolo aggiornato: valido dal login successivo.");
     } catch (error) {
       select.value = riga.dataset.ruoloSalvato;
       conferma.disabled = false;
@@ -457,7 +456,7 @@
     try {
       const { error } = await sb.rpc("restore_account", { user_id: riga.dataset.senza, role: ruolo });
       if (error) throw error;
-      showToast(`Accesso ridato come ${NOMI_RUOLI[ruolo]}: vale dal prossimo login. La password è quella di prima.`);
+      showToast(`Accesso ripristinato come ${NOMI_RUOLI[ruolo]}, valido dal login successivo. La password è rimasta invariata.`);
       await caricaUtenti();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -468,9 +467,9 @@
   /** Per chi ha dimenticato la password: torna quella iniziale, da cambiare al prossimo accesso. */
   async function chiediReset(riga) {
     const si = await chiediInFinestra({
-      titolo: "Riportare la password a quella iniziale?", chi: emailDi(riga),
-      testo: `La password diventa ${PASSWORD_INIZIALE} e quella di adesso smette di funzionare. `
-        + "Al prossimo accesso dovrà sceglierne una nuova.",
+      titolo: "Ripristinare la password iniziale?", chi: emailDi(riga),
+      testo: `La password diventa ${PASSWORD_INIZIALE} e quella attuale non sarà più valida. `
+        + "Al primo accesso l'utente dovrà sceglierne una nuova.",
       si: "Sì, reimposta la password",
     });
     if (si) reimpostaPassword(riga);
@@ -482,7 +481,7 @@
     try {
       const { error } = await sb.rpc("reset_password", { user_id: riga.dataset.id, password: PASSWORD_INIZIALE });
       if (error) throw error;
-      showToast(`Password di ${emailDi(riga)} riportata a ${PASSWORD_INIZIALE}: al prossimo accesso ne sceglierà una nuova.`);
+      showToast(`Password di ${emailDi(riga)} reimpostata a ${PASSWORD_INIZIALE}: al primo accesso dovrà essere modificata.`);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -494,9 +493,9 @@
   async function chiediRimozione(riga) {
     const si = await chiediInFinestra({
       titolo: "Revocare l'accesso?", chi: emailDi(riga),
-      testo: "Non potrà più entrare nel gestionale. L'account resta in fondo all'elenco, "
-        + "senza accesso: da lì si può riattivare con un ruolo.",
-      si: "Sì, revoca l'accesso",
+      testo: "L'utente non potrà più accedere al gestionale. L'account resta in fondo all'elenco, "
+        + "senza accesso, e può essere riattivato con un ruolo.",
+      si: "Revoca l'accesso",
     });
     if (si) rimuovi(riga);
   }

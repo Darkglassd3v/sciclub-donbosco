@@ -95,20 +95,21 @@
 <div class="container-main">
   <h1 class="title is-4">Assicurazione</h1>
   <p class="occhiello">
-    Una lista per ogni tipo di assicurazione. Scarica gli Excel e mandali all'assicurazione;
-    poi premi <b>Segna come assicurati</b>: solo allora quei soci risultano assicurati e non
-    tornano nelle liste della volta dopo. Numeri e decorrenza sono proposti, e si possono cambiare.
+    Per ciascun tipo di assicurazione viene preparata una lista. Scaricare i file Excel, inviarli
+    alla compagnia assicurativa e confermare con <b>Segna come assicurati</b>: solo da quel momento
+    i soci risultano assicurati e non compaiono nelle liste successive. Numero e decorrenza sono
+    proposti automaticamente e possono essere modificati.
   </p>
 
   <section class="riquadro sezione tessera" id="invio">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste da mandare</h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste da inviare</h2>
     <div class="corpo">
-    <p class="occhiello">Il numero di ogni lista è quello dopo l'ultima mandata dello stesso tipo.</p>
+    <p class="occhiello">Il numero proposto per ciascuna lista segue quello dell'ultima lista inviata dello stesso tipo.</p>
     <div class="progressivi" id="tipi"></div>
-    <label class="label" for="decorrenza">Decorrenza, uguale per tutte le liste</label>
+    <label class="label" for="decorrenza">Data di decorrenza (comune a tutte le liste)</label>
     <input class="input" type="date" id="decorrenza">
     <div class="azioni-lista" id="azioniInvio">
-      <button type="button" class="button is-link" id="btnScarica">Scarica gli Excel</button>
+      <button type="button" class="button is-link" id="btnScarica">Scarica i file Excel</button>
       <button type="button" class="button is-success" id="btnSegna" disabled>Segna come assicurati</button>
     </div>
     <p class="passo" id="passo" hidden></p>
@@ -116,11 +117,12 @@
   </section>
 
   <section class="riquadro sezione tessera">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Da assicurare <span class="conta" id="quanti"></span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Soci da assicurare <span class="conta" id="quanti"></span></h2>
     <div class="corpo">
     <p class="occhiello">
-      Tutti i tesserati ancora da assicurare, per tipo di assicurazione e in ordine alfabetico.
-      Senza codice fiscale un socio non si può assicurare: la riga è rossa finché non lo scrivi e premi Salva.
+      Tesserati non ancora assicurati, suddivisi per tipo di assicurazione e in ordine alfabetico.
+      I soci privi di codice fiscale non possono essere assicurati: la riga resta evidenziata in
+      rosso fino all'inserimento e al salvataggio del codice.
     </p>
     <div class="tabella-scorrevole">
       <table class="tabella-assic">
@@ -132,11 +134,12 @@
   </section>
 
   <section class="riquadro sezione tessera">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste mandate in questa stagione</h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste inviate nella stagione in corso</h2>
     <div class="corpo">
     <p class="occhiello">
-      Si possono riscaricare uguali. Se una lista non è partita, annullala: i suoi soci
-      tornano da assicurare. Si annulla solo l'ultima di ogni tipo.
+      Ogni lista inviata può essere scaricata di nuovo, identica all'originale. Una lista non
+      ancora trasmessa può essere annullata: i relativi soci tornano tra quelli da assicurare.
+      È possibile annullare soltanto l'ultima lista di ciascun tipo.
     </p>
     <div class="tabella-scorrevole">
       <table class="tabella-assic">
@@ -148,11 +151,12 @@
   </section>
 
   <section class="riquadro sezione anagrafica">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Cerca e correggi</h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Correzione del codice fiscale</h2>
     <div class="corpo">
     <p class="occhiello">
-      Per correggere un codice fiscale già salvato: cerca fra i tesserati della stagione,
-      anche quelli già assicurati. Escono al massimo 20 persone: se non c'è chi cerchi, scrivi di più.
+      Ricerca tra i tesserati della stagione, compresi quelli già assicurati, per correggere un
+      codice fiscale già registrato. Vengono mostrati al massimo 20 risultati: se il socio non
+      compare, precisare la ricerca.
     </p>
     <input class="input mb-4" id="cerca" type="search" autocomplete="off"
            placeholder="Cognome, nome, codice fiscale o numero tessera…">
@@ -266,7 +270,7 @@
         <label class="label" for="numero_${t.kind}">${esc(t.nome)} n.</label>
         <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}"
                value="${nelFile ? nelFile.numero : (ultima ? ultima.number + 1 : 1)}" ${n ? "" : "disabled"}>
-        <p class="conta">${n ? quanti(n, "da assicurare", "da assicurare") : "nessuno da assicurare"}${
+        <p class="conta">${n ? quanti(n, "da assicurare", "da assicurare") : "nessun socio da assicurare"}${
           soci.length > n ? ` · <span class="senza">${soci.length - n} senza codice fiscale</span>` : ""}</p>`;
       div.querySelector(".numero").addEventListener("input", annullaScarico);
       return div;
@@ -275,8 +279,8 @@
     const soci = liste.reduce((somma, t) => somma + pronti(t).length, 0);
     el("btnScarica").disabled = !liste.length;
     el("btnScarica").textContent = liste.length
-      ? `Scarica gli Excel (${quanti(liste.length, "lista", "liste")}, ${quanti(soci, "socio", "soci")})`
-      : "Nessuno da assicurare";
+      ? `Scarica i file Excel (${quanti(liste.length, "lista", "liste")}, ${quanti(soci, "socio", "soci")})`
+      : "Nessun socio da assicurare";
   }
 
   /** Numeri o decorrenza cambiati dopo lo scarico: i file hanno quelli vecchi, vanno riscaricati. */
@@ -288,17 +292,17 @@
 
   async function scaricaTutte() {
     const decorrenza = el("decorrenza").value;
-    if (!decorrenza) { segnaErrore(el("decorrenza"), "Scrivi la data di decorrenza."); return; }
+    if (!decorrenza) { segnaErrore(el("decorrenza"), "Inserire la data di decorrenza."); return; }
     const liste = [];
     for (const t of TIPI.filter((x) => pronti(x).length)) {
       const input = el("numero_" + t.kind);
       const numero = Number(input.value);
       if (!Number.isInteger(numero) || numero < 1) {
-        segnaErrore(input, `Scrivi il numero della lista ${t.nome}: 1 o più.`);
+        segnaErrore(input, `Inserire il numero della lista ${t.nome} (minimo 1).`);
         return;
       }
       if (listeMandate.some((l) => l.kind === t.kind && l.number === numero)) {
-        segnaErrore(input, `La lista ${t.nome} n. ${numero} è già stata mandata: scegli un altro numero.`);
+        segnaErrore(input, `La lista ${t.nome} n. ${numero} risulta già inviata: indicare un numero diverso.`);
         return;
       }
       liste.push({ t, numero, soci: pronti(t) });
@@ -308,8 +312,8 @@
       for (const l of liste) await excelLista(l.t, l.numero, decorrenza, l.soci);
       scaricato = { decorrenza, liste };
       el("btnSegna").disabled = false;
-      el("passo").textContent = `Scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
-        + "Mandale all'assicurazione, poi premi «Segna come assicurati».";
+      el("passo").textContent = `Liste scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
+        + "Inviarle alla compagnia assicurativa, quindi confermare con «Segna come assicurati».";
       // Più file in un click: il browser può bloccare quelli dopo il primo (chiede di
       // consentire i download multipli). Uno per lista, da riscaricare da solo.
       if (liste.length > 1) {
@@ -325,7 +329,7 @@
             .catch((e) => showToast("Errore: " + messaggioErrore(e), "is-danger")));
           pulsanti.append(b);
         }
-        el("passo").append(" Se il browser ne ha scaricata una sola, riscarica le altre da qui: ", pulsanti);
+        el("passo").append(" Se il browser ha scaricato un solo file, le altre liste sono disponibili qui: ", pulsanti);
       }
       el("passo").hidden = false;
     } catch (error) {
@@ -342,8 +346,8 @@
     if (!scaricato) return;
     const n = scaricato.liste.reduce((somma, l) => somma + l.soci.length, 0);
     chiedi(el("azioniInvio"),
-      `Le liste sono state mandate? ${descriviListe(scaricato.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`}, con decorrenza ${dataIt(scaricato.decorrenza)}.`,
-      "Sì, sono state mandate", invia);
+      `Confermare l'invio delle liste? ${descriviListe(scaricato.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`} con decorrenza ${dataIt(scaricato.decorrenza)}.`,
+      "Conferma invio", invia);
   }
 
   async function invia() {
@@ -358,7 +362,7 @@
       });
       if (error) throw error;
       annullaScarico();
-      showToast(`Liste segnate: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
+      showToast(`Invio registrato: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
       await carica();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -400,7 +404,7 @@
     el("quanti").textContent = `(${daAssicurare.length})`;
     const corpo = el("elencoDa");
     if (!daAssicurare.length) {
-      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Nessun socio da assicurare: sono tutti a posto.</td></tr>';
+      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Tutti i tesserati risultano assicurati.</td></tr>';
       return;
     }
     const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
@@ -473,8 +477,8 @@
     const nonSalvati = codiciNonSalvati().length;
     if (!nonSalvati) { vai(); return; }
     chiedi(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
-      `${nonSalvati === 1 ? "Un codice fiscale scritto non è salvato: cambiando pagina si perde"
-        : `${nonSalvati} codici fiscali scritti non sono salvati: cambiando pagina si perdono`}. Cambiare pagina lo stesso?`,
+      `${nonSalvati === 1 ? "Un codice fiscale inserito non è stato salvato e andrà perso"
+        : `${nonSalvati} codici fiscali inseriti non sono stati salvati e andranno persi`}. Cambiare pagina comunque?`,
       "Cambia pagina", vai);
   }
 
@@ -485,7 +489,7 @@
   function disegnaListe() {
     const corpo = el("elencoListe");
     if (!listeMandate.length) {
-      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista mandata in questa stagione.</td></tr>';
+      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista inviata nella stagione in corso.</td></tr>';
       return;
     }
     corpo.replaceChildren(...listeMandate.map((l) => {
@@ -501,7 +505,7 @@
         </div></td>`;
       tr.querySelector("[data-riscarica]").addEventListener("click", () => riscarica(l));
       tr.querySelector("[data-annulla]")?.addEventListener("click", () => chiedi(tr.querySelector(".azioni-lista"),
-        `Annullare la lista ${tipo(l.kind).nome} n. ${l.number}? I suoi ${l.members} soci tornano da assicurare.`,
+        `Annullare la lista ${tipo(l.kind).nome} n. ${l.number}? I ${l.members} soci della lista torneranno tra quelli da assicurare.`,
         "Sì, annulla", () => annulla(l)));
       return tr;
     }));
@@ -524,7 +528,7 @@
     try {
       const { error } = await sb.rpc("insurance_undo", { list_id: l.id });
       if (error) throw error;
-      showToast(`Lista ${tipo(l.kind).nome} n. ${l.number} annullata: i suoi soci sono di nuovo da assicurare.`);
+      showToast(`Lista ${tipo(l.kind).nome} n. ${l.number} annullata: i soci sono di nuovo da assicurare.`);
       await carica();
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -589,9 +593,9 @@
       // assicurato lo darebbe all'assicurazione sbagliato.
       if (scaricato?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
         annullaScarico();
-        showToast(`${s.last_name} ${s.first_name}: salvato. Era in una lista già scaricata: riscarica le liste prima di mandarle.`, "is-warning");
+        showToast(`${s.last_name} ${s.first_name}: codice fiscale salvato. Il socio era in una lista già scaricata: scaricare di nuovo le liste prima dell'invio.`, "is-warning");
       } else {
-        showToast(`${s.last_name} ${s.first_name}: salvato.`);
+        showToast(`${s.last_name} ${s.first_name}: codice fiscale salvato.`);
       }
       // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
       // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
@@ -631,7 +635,7 @@
       if (error) throw error;
       if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
       if (!data.length) {
-        corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione trovato.</td></tr>';
+        corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione corrisponde alla ricerca.</td></tr>';
         return;
       }
       corpo.replaceChildren(...data.map((s) => riga(s, { stato: s.list_number
@@ -639,7 +643,7 @@
         : "Non ancora assicurato" })));
       if (data.length === 20) {
         const altri = document.createElement("tr");
-        altri.innerHTML = '<td colspan="4" class="vuota">Ce ne potrebbero essere altri: scrivi qualcosa in più.</td>';
+        altri.innerHTML = '<td colspan="4" class="vuota">Potrebbero esserci altri risultati: precisare la ricerca.</td>';
         corpo.append(altri);
       }
     } catch (error) {
