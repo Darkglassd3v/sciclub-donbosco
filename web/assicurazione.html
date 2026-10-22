@@ -510,9 +510,8 @@
   async function riscarica(l) {
     setLoading(true);
     try {
-      const { data, error } = await sb.rpc("insurance_list_members", { list_id: l.id });
-      if (error) throw error;
-      await excelLista(tipo(l.kind), l.number, l.starts_on, data);
+      const soci = await tutteLeRighe(() => sb.rpc("insurance_list_members", { list_id: l.id }));
+      await excelLista(tipo(l.kind), l.number, l.starts_on, soci);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
