@@ -6,6 +6,10 @@
 // - Un nome con «&amp;» si carica e si salva com'è (prima l'HTML lo cambiava in «&»).
 // - Cambiato il nome, la riga si accende come modificata.
 // - Le agevolazioni famiglia hanno l'assicurazione: paga il socio quota + persone × assicurazione.
+// - Colonna «In Soci»: il prezzo che compare nella pagina Soci (quota più assicurazione, se
+//   non la paga il club), grande e in grassetto, per ogni voce; segue subito quota e
+//   «la paga il club». Il campo del prezzo si chiama «Quota €». «Chi la assegna» non c'è
+//   più (nessuno usa il sito da utente) e min_role non si salva.
 // - Da dove si contano i numeri tessera liberi (settings.card_gaps_from): si carica e si
 //   salva; 0 o lettere no.
 // - Prezzi in euro interi o con i 50 centesimi: 12,50 si salva, 12,30 no (bordo rosso).
@@ -35,6 +39,7 @@
       { id: 1, category: "PRESCIISTICA", name: LUNGO, price: 75, active: true, min_role: "utente", insurance: "SPORT", insurance_paid: true, position: null },
       { id: 2, category: "TESSERA", name: CON_AMP, price: 20, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1 },
       { id: 3, category: "FAMIGLIA", name: "3 PERSONE CON ASSICURAZIONE", price: 50, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1, people: 3 },
+      { id: 4, category: "CORSO", name: "CORSO SCI ADULTI", price: 210, active: true, min_role: "utente", insurance: null, insurance_paid: true, position: 1 },
     ];
     if (t === "insurances") return [{ code: "BASE", name: "REALE MUTUA NEVE", price: 20 }, { code: "SPORT", name: ASS_LUNGA, price: 45 }];
     if (t === "settings") return [{ key: "card_gaps_from", value: "21" }];
@@ -78,6 +83,32 @@
     riga("tabellaPrezzi", 2)?.querySelector("[data-salva]").click();
     await aspetta(200);
     prova("ampSalvato", ultimo("prices").name === CON_AMP, `salvato «${ultimo("prices").name}»`);
+    prova("nienteMinRole", !("min_role" in ultimo("prices")), `salvato min_role «${ultimo("prices").min_role}»`);
+
+    const intestazioni = [...document.querySelectorAll("table.tabella-costi th")].map((th) => th.textContent.trim());
+    prova("senzaChiAssegna", !intestazioni.includes("Chi la assegna") && !el("tabellaPrezzi").querySelector("[data-min-role]")
+      && !el("nuovoMinRole"), `colonne ${intestazioni.join(" | ")}`);
+    prova("quotaEInSoci", intestazioni.includes("Quota €") && intestazioni.includes("In Soci"), `colonne ${intestazioni.join(" | ")}`);
+    const inSoci = (id) => riga("tabellaPrezzi", id)?.querySelector('td[data-etichetta="In Soci"] [data-paga]');
+    const testo = (id) => inSoci(id)?.textContent.trim() || "";
+    prova("inSociTessera", testo(2) === "€ 40,00", `«${testo(2)}»`);
+    prova("inSociCorso", testo(4) === "€ 210,00", `«${testo(4)}»`);
+    const stile = inSoci(2) && getComputedStyle(inSoci(2));
+    prova("inSociGrande", stile && parseFloat(stile.fontSize) >= 19 && Number(stile.fontWeight) >= 700,
+      `${stile?.fontSize} ${stile?.fontWeight}`);
+    const club = riga("tabellaPrezzi", 2)?.querySelector("[data-pagata-club]");
+    const quota = riga("tabellaPrezzi", 2)?.querySelector("[data-prezzo]");
+    if (club && quota) {
+      club.click();
+      const conClub = testo(2);
+      club.click();
+      quota.value = "25";
+      quota.dispatchEvent(new Event("input", { bubbles: true }));
+      const conQuota = testo(2);
+      quota.value = "20";
+      quota.dispatchEvent(new Event("input", { bubbles: true }));
+      prova("inSociSegue", conClub === "€ 20,00" && conQuota === "€ 45,00", `club «${conClub}», quota 25 «${conQuota}»`);
+    } else prova("inSociSegue", false, "riga della tessera mancante");
 
     const famiglia = riga("tabellaPrezzi", 3);
     const paga = famiglia?.querySelector("[data-paga]")?.textContent || "";
