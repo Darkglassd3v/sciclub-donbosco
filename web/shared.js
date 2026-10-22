@@ -642,7 +642,8 @@ function foglioLeggibile(righe, { intestazione = 0, ...opzioni } = {}) {
 // jsPDF per la scheda del socio, anche lui solo al primo clic.
 function caricaPdf() {
   if (window.jspdf) return Promise.resolve();
-  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF");
+  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF",
+    "sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk");
 }
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
