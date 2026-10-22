@@ -25,13 +25,26 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  */
 const PAGINE_DI_ARRIVO = [
   ["soci", "index.html"],
+  ["pagamenti", "admin.html"],
   ["riepilogo", "riepilogo.html"],
+  ["bilancio", "bilancio.html"],
   ["polizze", "assicurazione.html"],
   ["social", "social.html"],
   ["cerca", "ricerca/index.html"],
   ["gite", "ricerca/gite.html"],
   ["stampe", "stampe.html"],
 ];
+
+/**
+ * Il superadmin che guarda il sito come un altro ruolo torna sé stesso: da fare
+ * prima di ogni uscita (anche quella del login per un ruolo senza pagine), se
+ * no la vista resta salvata nel database e vale al prossimo accesso.
+ */
+async function chiudiVediCome(accesso) {
+  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+    await sb.rpc("set_view_as", { role: null });
+  }
+}
 
 /** Blocca la pagina se non c'è una sessione valida. Da chiamare per prima. */
 async function requireAuth() {
@@ -51,10 +64,7 @@ async function requireAuth() {
  * sé stessi.
  */
 async function logout() {
-  const accesso = await getProfile().catch(() => null);
-  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
-    await sb.rpc("set_view_as", { role: null });
-  }
+  await chiudiVediCome(await getProfile().catch(() => null));
   ricordaAccesso(null);
   await sb.auth.signOut();
   location.replace("login.html");
