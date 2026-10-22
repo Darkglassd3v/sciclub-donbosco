@@ -310,6 +310,23 @@
       el("btnSegna").disabled = false;
       el("passo").textContent = `Scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
         + "Mandale all'assicurazione, poi premi «Segna come assicurati».";
+      // Più file in un click: il browser può bloccare quelli dopo il primo (chiede di
+      // consentire i download multipli). Uno per lista, da riscaricare da solo.
+      if (liste.length > 1) {
+        const pulsanti = document.createElement("span");
+        pulsanti.className = "buttons mt-2";
+        for (const l of liste) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "button is-small is-light";
+          b.dataset.riscarica = l.t.kind;
+          b.textContent = `Riscarica ${l.t.nome} n. ${l.numero}`;
+          b.addEventListener("click", () => excelLista(l.t, l.numero, decorrenza, l.soci)
+            .catch((e) => showToast("Errore: " + messaggioErrore(e), "is-danger")));
+          pulsanti.append(b);
+        }
+        el("passo").append(" Se il browser ne ha scaricata una sola, riscarica le altre da qui: ", pulsanti);
+      }
       el("passo").hidden = false;
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -569,7 +586,14 @@
     try {
       const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codice });
       if (error) throw error;
-      showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      // Era in una lista appena scaricata: il file ha il codice di prima, e segnarlo
+      // assicurato lo darebbe all'assicurazione sbagliato.
+      if (scaricato?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
+        annullaScarico();
+        showToast(`${s.last_name} ${s.first_name}: salvato. Era in una lista già scaricata: riscarica le liste prima di mandarle.`, "is-warning");
+      } else {
+        showToast(`${s.last_name} ${s.first_name}: salvato.`);
+      }
       // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
       // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
       const daElenco = daAssicurare.find((d) => d.id === s.id);
