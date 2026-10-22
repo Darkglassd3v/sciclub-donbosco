@@ -23,7 +23,7 @@
 ## Richieste nuove
 
 - [ ] 22/10 sera: **Il totale di un socio non cambia coi prezzi nuovi** (audit S7). Fatto (TDD, prova
-      `test-browser/totale-fisso.js`), commit locale: push col sì. L'utente: «il totale
+      `test-browser/totale-fisso.js`), online dal 22/10 (e9e9eeb). L'utente: «il totale
       pagato ad un dato momento vale sempre anche se cambiano i prezzi». Salvando un socio senza
       cambiare le sue voci il totale resta quello salvato; cambiando una voce si aggiunge il prezzo
       di oggi della voce nuova e si toglie quello di oggi della voce tolta («solo la differenza»).
