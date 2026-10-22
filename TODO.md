@@ -43,7 +43,10 @@
       - Corretti (RED/GREEN, solo locali): S1/S10 voci e partenze spente perse al Salva (7e0fe4f);
         P1-P3 stagione dall'orologio in Pagamenti/Gite/Riepilogo (c1730ad); G1 can() con la password
         iniziale da cambiare (1942773, **da applicare in produzione**); G2 pagine di arrivo e Vedi come
-        (a051638). Elenco completo e stato: fondo di `docs/audit-2026-10-22.md`.
+        (a051638); S5/S6/S11 Soci (aa825cb); P7/P8 Gite coda (23ba9e4); P10/P11 Assicurazione
+        (0c86986); P13/P14 Stampe (14c55da); G4/G5/G7 Impostazioni (f622890); G12 accesso illeggibile
+        (b6273ba); G3 Utenti superadmin (f34f8a9); G11 Social (eb5b1b9).
+        Elenco completo e stato: fondo di `docs/audit-2026-10-22.md`.
 
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
