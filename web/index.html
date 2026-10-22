@@ -290,12 +290,12 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Pagamento <span class="cosa">Acconto, totale, chi paga</span></h2>
     <div class="corpo">
     <div class="columns mt-1">
-      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.5" id="f_acconto" value="0"></div>
+      <div class="column is-4"><label class="label" for="f_acconto">Acconto versato (€)</label><input class="input" type="number" step="0.5" min="0" id="f_acconto" value="0"></div>
       <!-- Uno sconto fatto a mano: senza la spunta il totale si ricalcola dal
            listino a ogni salvataggio, e lo sconto si perdeva. -->
       <div class="column is-4">
         <label class="checkbox totale-mano" for="f_totale_a_mano"><input type="checkbox" id="f_totale_a_mano"> Totale scritto a mano (€)</label>
-        <input class="input" type="number" step="0.5" min="0" id="f_totale_manuale" disabled aria-label="Totale scritto a mano, in euro">
+        <input class="input" type="number" step="0.5" min="0" id="f_totale_manuale" required disabled aria-label="Totale scritto a mano, in euro">
         <p id="notaTotaleMano" class="help" hidden>Non si ricalcola dal listino. Un abbonamento aggiunto o tolto qui lo cambia del suo prezzo.</p>
       </div>
     </div>
@@ -1510,6 +1510,8 @@
     el("f_payerDisplay").value = "";
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
+    // Senza il capofamiglia non c'è più la sua agevolazione: tessera di nuovo obbligatoria.
+    ricalcola();
   }
 
   // -------------------------------------------------------------------------
