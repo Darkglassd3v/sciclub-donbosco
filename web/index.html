@@ -1198,7 +1198,11 @@
     // Ogni termine deve comparire in cognome, nome o codice fiscale; o nella
     // chiave del nome, così "D'ANGELO" trova anche "DANGELO" e viceversa.
     termini.forEach((termine) => {
-      const t = termine.replace(/[%,()]/g, "");
+      // Solo lettere, cifre, apostrofi e trattini: «%» e «*» fanno da jolly in PostgREST,
+      // virgole, parentesi, virgolette e barre rompono or(). Un termine che resta vuoto
+      // non filtra niente: si salta.
+      const t = termine.replace(/[^\p{L}\p{N}'’-]/gu, "");
+      if (!t) return;
       const chiave = chiaveNome(t);
       richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`
         + (chiave ? `,name_key.like.%${chiave}%` : ""));
