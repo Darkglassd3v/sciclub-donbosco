@@ -836,9 +836,23 @@ async function caricaPartenze() {
  * manuale della 1.x.
  */
 function ascoltaSoci(callback) {
+  // Un incasso cambia le righe di tutta la famiglia, cioè un evento per riga: si
+  // aspetta che la raffica finisca e si ricarica una volta. E mai due insieme: una
+  // lettura più vecchia che arriva dopo coprirebbe quella nuova.
+  let attesa = null, inCorso = false, ancora = false;
+  const ricarica = async () => {
+    if (inCorso) { ancora = true; return; }
+    inCorso = true;
+    try { await callback(); } catch { /* la pagina dice da sé i suoi errori */ }
+    inCorso = false;
+    if (ancora) { ancora = false; ricarica(); }
+  };
   return sb
     .channel("soci-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, callback)
+    .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
+      clearTimeout(attesa);
+      attesa = setTimeout(ricarica, 400);
+    })
     .subscribe();
 }
 
