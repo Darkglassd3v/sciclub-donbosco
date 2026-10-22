@@ -988,11 +988,19 @@
     return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0);
   }
 
+  /**
+   * Il totale di un socio già salvato non segue i prezzi nuovi del listino: quello fatto
+   * pagare vale. Resta il suo, più la differenza delle voci cambiate coi prezzi di oggi
+   * (listinoAllApertura: il listino delle sue voci quando si è aperto, vedi caricaSocio).
+   */
+  const totaleCalcolato = () => (socioAperto?.listinoAllApertura == null ? totaleDaListino()
+    : num(socioAperto.total) + totaleDaListino() - socioAperto.listinoAllApertura);
+
   const totaleAMano = () => el("f_totale_a_mano").checked;
 
   /** Il totale che si salva: quello scritto a mano, se c'è la spunta. */
   function totaleIndividuale() {
-    return totaleAMano() ? num(el("f_totale_manuale").value) : totaleDaListino();
+    return totaleAMano() ? num(el("f_totale_manuale").value) : totaleCalcolato();
   }
 
   /**
@@ -1003,7 +1011,7 @@
   function aggiornaTotaleMano({ daListino = false } = {}) {
     const aMano = totaleAMano();
     const campo = el("f_totale_manuale");
-    if (aMano && daListino) campo.value = Math.round(totaleDaListino() * 100) / 100;
+    if (aMano && daListino) campo.value = Math.round(totaleCalcolato() * 100) / 100;
     if (!aMano) campo.value = "";
     campo.disabled = !aMano;
     el("notaTotaleMano").hidden = !aMano;
@@ -1386,6 +1394,8 @@
       await proponiNumeroTessera();
       if (vecchia()) return;
 
+      // Il totale a mano non ha un listino da cui partire: spenta la spunta, torna al listino.
+      if (!socio.total_manual) socio.listinoAllApertura = totaleDaListino();
       socioAperto = socio;
       aggiornaFascia();
       nascondiDoppioni();
