@@ -1744,13 +1744,14 @@
         }
         socioAperto.updated_at = data[0].updated_at;
       } else {
-        const { data, error } = await sb.from("members").insert(socio).select("id").single();
+        const { data, error } = await sb.from("members").insert(socio).select("id, updated_at").single();
         if (error) throw error;
         id = data.id;
         // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
-        // Salva, va aggiornato, non inserito una seconda volta.
+        // Salva, va aggiornato, non inserito una seconda volta, e col blocco su
+        // updated_at come ogni altra modifica.
         el("f_id").value = id;
-        socioAperto = { ...socio, id };
+        socioAperto = { ...socio, id, updated_at: data.updated_at };
         aggiornaFascia();
       }
 
