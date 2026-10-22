@@ -214,10 +214,6 @@
 
   function render() {
     const [tutti, capofamiglia, familiari] = ultimi;
-    // Da incassare e a credito separati: sommati, il credito di uno abbasserebbe il debito degli altri.
-    const saldi = tutti.map((n) => parseFloat(n.household_balance || 0));
-    el("totalInsoluti").textContent = fmt(saldi.filter((x) => x > 0).reduce((a, b) => a + b, 0));
-    el("totalCredito").textContent = fmt(-saldi.filter((x) => x < 0).reduce((a, b) => a + b, 0));
 
     // Con centinaia di nuclei si scorreva a mano: una famiglia si trova per
     // il nome di chiunque ne faccia parte, in qualsiasi ordine.
@@ -228,8 +224,14 @@
           return termini.every((t) => nome.includes(t));
         }))
       : tutti;
+    // I riquadri seguono la ricerca, come «Nuclei»: le famiglie mostrate.
+    // Da incassare e a credito separati: sommati, il credito di uno abbasserebbe il debito degli altri.
+    const saldi = nuclei.map((n) => parseFloat(n.household_balance || 0));
+    el("totalInsoluti").textContent = fmt(saldi.filter((x) => x > 0).reduce((a, b) => a + b, 0));
+    el("totalCredito").textContent = fmt(-saldi.filter((x) => x < 0).reduce((a, b) => a + b, 0));
+    const familiariMostrati = familiari.filter((f) => nuclei.some((n) => n.head_id === f.payer_id));
     el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${tutti.length}` : tutti.length;
-    el("numFamiliari").textContent = familiari.length;
+    el("numFamiliari").textContent = termini.length ? `${familiariMostrati.length} di ${familiari.length}` : familiari.length;
 
     const contenitore = el("displayArea");
     if (!nuclei.length) {

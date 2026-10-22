@@ -22,15 +22,22 @@
 
 ## Richieste nuove
 
+- [ ] 23/10: **Centesimi in Bilancio, prima tessera dal numero di Impostazioni, minori dell'audit.**
+      L'utente ha scelto: (1) i movimenti di Bilancio (prezzo unitario) accettano i centesimi, sono
+      spese vere (es. 1,35 di commissione); quote, listino e acconti restano a 0,50 €; (2) il numero
+      tessera proposto non scende mai sotto `card_gaps_from` (21): a inizio stagione propone 21, non 1.
+      Poi i minori dell'audit: S4 (dopo l'inserimento il blocco su updated_at), S12 (pagante
+      illeggibile mostrato come id), P16 (in Pagamenti i riquadri seguono la ricerca). Chiusi senza
+      modifiche: S8 e G9 non possono succedere oggi (nessun abbonamento o corso con
+      l'assicurazione; remove_from_season azzera anche il versato). TDD. **Fatto e pubblicato il
+      23/10** (G10 42af362, prima tessera b483e42 con next_card_number in produzione, S4 fe590fe, S12
+      a07ad44, P16 e51e9de). Resta P12 (riscarico di una lista oltre 1000 soci: oggi non succede).
+
 - [ ] 23/10 mattina, **DA LEGGERE: com'è andata la notte delle prove** (scelta «b», in autonomia).
-      **Tutto solo in commit locali su `2.9-SNAPSHOT`, niente push, niente deploy, niente database di
-      produzione.** Da fare col sì dell'utente:
-      1. **Push** di `2.9-SNAPSHOT` (deploy) e allineare `dev`.
-      2. **Database di produzione**, due funzioni nuove (solo `create or replace function`, con
-         lock_timeout e la prova a secco): `public.can` (G1, sicurezza: con la password iniziale da
-         cambiare niente permessi, anche dall'API) e `public.members_no_double_insert` (S15, messaggio).
-         Nient'altro cambia nel database.
-      3. Provare sul sito vero, soprattutto: Soci (voci e partenze spente, «Calcola», tessera con la
+      **23/10: pubblicato** (push e deploy di `2.9-SNAPSHOT` a 603f346, `dev` allineato) e in
+      produzione le due funzioni `public.can` (G1) e `public.members_no_double_insert` (S15), con la
+      prova a secco; nessun account con la password da cambiare, quindi nessuno perde l'accesso.
+      Resta: provare sul sito vero, soprattutto: Soci (voci e partenze spente, «Calcola», tessera con la
          presciistica, totale a mano), Pagamenti sul telefono (schede), Riepilogo e Bilancio sul
          telefono, Gite (coda, stagione), Assicurazione (riscarica una lista), Social (rubrica).
       Fatto (ogni voce con la prova che falliva prima, poi la correzione; dettagli e commit in fondo a

@@ -225,28 +225,7 @@ create trigger members_set_updated_at
 alter table public.members drop constraint if exists members_card_number_key;
 alter table public.members add constraint members_card_number_key unique (card_number);
 
--- Il numero da proporre: il più alto già dato, più uno. Non riempie i buchi
--- apposta: il direttivo si tiene i primi numeri (es. 1-20) ma si tessera più
--- tardi, e i soci partono dopo (21, 22, ...). Riempire i buchi darebbe a un
--- socio il numero riservato a un consigliere. Il primo socio della stagione
--- si numera a mano; da lì in poi la proposta va da sola.
---
--- I numeri scritti in altri formati (lettere, trattini) non contano: non
--- hanno un "successivo". Security invoker: legge solo quello che la RLS di
--- members lascia già vedere.
-create or replace function public.next_card_number()
-returns bigint
-language sql
-stable
-security invoker
-set search_path = ''
-as $$
-  select coalesce(max(m.card_number::bigint), 0) + 1
-    from public.members m
-   where m.card_number ~ '^[0-9]{1,15}$';
-$$;
-
-comment on function public.next_card_number is 'Numero tessera da proporre: il più alto già dato (solo quelli numerici) più uno.';
+-- next_card_number(), il numero da proporre, è più sotto: legge settings.
 
 -- ---------------------------------------------------------------------------
 -- Stagione
@@ -1799,6 +1778,32 @@ create policy settings_select on public.settings
   for select to authenticated using ((select public.can('soci', 'gestione')));
 create policy settings_write on public.settings
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+
+-- Il numero da proporre: il più alto già dato, più uno. Non riempie i buchi
+-- apposta: il direttivo si tiene i primi numeri (es. 1-20) ma si tessera più
+-- tardi, e i soci partono dopo (21, 22, ...). Riempire i buchi darebbe a un
+-- socio il numero riservato a un consigliere. Mai sotto card_gaps_from (le
+-- Impostazioni, dal 23/10/2026): a inizio stagione la proposta è quel numero,
+-- non 1.
+--
+-- I numeri scritti in altri formati (lettere, trattini) non contano: non
+-- hanno un "successivo". Security invoker: legge solo quello che la RLS di
+-- members e settings lascia già vedere.
+create or replace function public.next_card_number()
+returns bigint
+language sql
+stable
+security invoker
+set search_path = ''
+as $$
+  select greatest(
+    coalesce(max(m.card_number::bigint), 0) + 1,
+    coalesce((select s.value::bigint from public.settings s where s.key = 'card_gaps_from'), 1))
+    from public.members m
+   where m.card_number ~ '^[0-9]{1,15}$';
+$$;
+
+comment on function public.next_card_number is 'Numero tessera da proporre: il più alto già dato (solo quelli numerici) più uno, mai sotto card_gaps_from.';
 
 -- Le viste ereditano la RLS delle tabelle sottostanti (security invoker).
 alter view public.households      set (security_invoker = true);

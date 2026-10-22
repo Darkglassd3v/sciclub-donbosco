@@ -766,6 +766,15 @@ set role authenticated;
 do $$ begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert public.next_card_number() = 22, 'numero tessera proposto sbagliato (atteso 22: 21 più uno, A-7 non conta)';
+  -- Mai sotto il numero delle Impostazioni (card_gaps_from): i posti prima sono del
+  -- direttivo e della famiglia, e a inizio stagione la proposta partiva da 1.
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.settings set value = '30' where key = 'card_gaps_from';
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  assert public.next_card_number() = 30, 'numero tessera proposto sotto card_gaps_from (atteso 30)';
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.settings set value = '21' where key = 'card_gaps_from';
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   begin
     update public.members set card_number = '21' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
     raise exception 'ASSERZIONE: due soci con lo stesso numero tessera';
