@@ -27,6 +27,10 @@ PORTA_REST="${PORTA_REST:-53000}"
 PORTA_PG="${PORTA_PG:-55432}"
 [ -s "$COPIA/public.dump" ] || { echo "Manca la copia: $COPIA/public.dump (vedi in cima a questo file)"; exit 1; }
 [ -n "$CHROME" ] || { echo "Chrome non trovato"; exit 1; }
+# Un'altra copia accesa (es. TIENI=1) sulle stesse porte: questa si attaccherebbe al suo database.
+for p in "$PORTA" "$PORTA_REST" "$PORTA_PG"; do
+  (echo > "/dev/tcp/127.0.0.1/$p") 2>/dev/null && { echo "porta $p già usata: un altro avvia.sh acceso? (PORTA, PORTA_REST, PORTA_PG)"; exit 1; }
+done
 
 # Ogni prova: script, ruolo e, se serve, larghezza della finestra. La pagina la dice lo script (// PAGINA: ...).
 PROVE=(${@:-$(cd "$QUI" && ls -1 *.js 2>/dev/null)})
