@@ -1938,4 +1938,34 @@ delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000ae');
 delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000ad', 'aaaaaaaa-0000-0000-0000-0000000000af');
 SQL
 
+# ---------------------------------------------------------------------------
+# 22/10/2026: una partenza rinominata in Impostazioni (es. un errore di
+# battitura) cambia nome anche nei soci che l'hanno scelta, solo nel suo giorno
+# e solo dove c'è quel luogo intero. Prima restava il vecchio, «non più fra le
+# partenze», e nei fogli del pullman i soci finivano in due gruppi.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+insert into public.departures (day, place) values ('SABATO', 'PROVA PIAZA'), ('DOMENICA', 'PROVA PIAZA');
+insert into public.members (id, last_name, first_name, saturday_departure, sunday_departure) values
+  ('aaaaaaaa-0000-0000-0000-0000000000c1', 'PARTENZA', 'UNO', 'PROVA PIAZA, ALTRO', 'PROVA PIAZA'),
+  ('aaaaaaaa-0000-0000-0000-0000000000c2', 'PARTENZA', 'DUE', 'PROVA PIAZA BIS', null);
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.departures set place = 'PROVA PIAZZA' where day = 'SABATO' and place = 'PROVA PIAZA';
+  perform set_config('test.uid', '', false);
+end $$;
+reset role;
+do $$ begin
+  assert (select saturday_departure from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000c1') = 'PROVA PIAZZA, ALTRO',
+         'partenza rinominata: il socio ha ancora il nome vecchio';
+  assert (select sunday_departure from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000c1') = 'PROVA PIAZA',
+         'partenza rinominata di sabato: cambiata anche la domenica';
+  assert (select saturday_departure from public.members where id = 'aaaaaaaa-0000-0000-0000-0000000000c2') = 'PROVA PIAZA BIS',
+         'partenza rinominata: cambiato un luogo che la contiene soltanto';
+end $$;
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000c1', 'aaaaaaaa-0000-0000-0000-0000000000c2');
+delete from public.departures where place in ('PROVA PIAZA', 'PROVA PIAZZA');
+SQL
+
 echo "test ruoli: tutto a posto"
