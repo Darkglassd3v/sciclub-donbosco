@@ -22,6 +22,15 @@
 
 ## Richieste nuove
 
+- [ ] 23/10: **Centesimi in Bilancio, prima tessera dal numero di Impostazioni, minori dell'audit.**
+      L'utente ha scelto: (1) i movimenti di Bilancio (prezzo unitario) accettano i centesimi, sono
+      spese vere (es. 1,35 di commissione); quote, listino e acconti restano a 0,50 €; (2) il numero
+      tessera proposto non scende mai sotto `card_gaps_from` (21): a inizio stagione propone 21, non 1.
+      Poi i minori dell'audit: S4 (dopo l'inserimento il blocco su updated_at), S12 (pagante
+      illeggibile mostrato come id), P16 (in Pagamenti i riquadri seguono la ricerca). Chiusi senza
+      modifiche: S8 e G9 non possono succedere oggi (nessun abbonamento o corso con
+      l'assicurazione; remove_from_season azzera anche il versato). TDD.
+
 - [ ] 23/10 mattina, **DA LEGGERE: com'è andata la notte delle prove** (scelta «b», in autonomia).
       **23/10: pubblicato** (push e deploy di `2.9-SNAPSHOT` a 603f346, `dev` allineato) e in
       produzione le due funzioni `public.can` (G1) e `public.members_no_double_insert` (S15), con la
