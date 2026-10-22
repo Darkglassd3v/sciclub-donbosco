@@ -18,7 +18,7 @@
     const testo = () => el("esito").textContent.replace(/\s+/g, " ").trim();
 
     await chiudi();
-    prova("zeroNonChiusa", !/chiusa\./i.test(testo()) && /niente da chiudere/i.test(testo()), `«${testo().slice(0, 90)}»`);
+    prova("zeroNonChiusa", !/chiusa\./i.test(testo()) && /nessun dato da archiviare/i.test(testo()), `«${testo().slice(0, 90)}»`);
 
     esito = [{ archived: 12, season_closed: "2026-09-01T00:00:00+00:00" }];
     const prima = letture;

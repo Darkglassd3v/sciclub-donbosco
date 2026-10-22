@@ -123,7 +123,7 @@ dalla dashboard, tranne che per il primissimo superadmin (sotto).
 
 ### Cambio della password al primo accesso (dalla 2.7)
 
-Chi entra con un account nuovo, prima di vedere qualunque pagina, finisce su **Cambia la password**
+Chi entra con un account nuovo, prima di vedere qualunque pagina, finisce su **Modifica della password**
 (`web/password.html`): password attuale, nuova password (almeno 8 caratteri, diversa da quella
 attuale) e conferma. Fatto il cambio, arriva sulla pagina del suo ruolo. Vale anche per il sito da
 telefono (`/ricerca/`).
@@ -188,7 +188,7 @@ Dalla 2.5 i ruoli non sono più una scala: ognuno ha i suoi **permessi**, scritt
 del database (`role_permissions()` in `supabase/schema.sql`). Il tesoriere vede il Bilancio ma non
 modifica i soci, l'admin modifica i soci ma non vede il Bilancio.
 
-Dalla 2.6 il superadmin decide cosa vede ogni ruolo in **Gestione > Ruoli e vedi come**: una
+Dalla 2.6 il superadmin decide cosa vede ogni ruolo in **Gestione > Ruoli e permessi**: una
 matrice di spunte (tabella `role_grants`, ogni cambio registrato in `role_grant_changes`). Il
 superadmin vede sempre tutto e Gestione non si assegna. La tabella qui sotto è la partenza.
 
@@ -212,10 +212,10 @@ Un account creato dal pannello nasce già con il ruolo scelto lì. Il cambio di 
 chiede sempre una conferma esplicita (si sceglie il ruolo, poi si preme **Conferma**) e vale dal
 login successivo di quella persona.
 
-**Vedi come** (Gestione, scheda "Ruoli e vedi come", solo superadmin): si sceglie un ruolo e si
+**Visualizza come** (Gestione, scheda "Ruoli e permessi", solo superadmin): si sceglie un ruolo e si
 guarda il sito come lo vede lui. Il database tratta davvero il superadmin da quel ruolo, quindi
 quello che il ruolo non può fare non lo può fare nemmeno lui; una fascia gialla in fondo a ogni
-pagina lo ricorda, con il pulsante **Torna superadmin**. Anche **Esci** chiude la vista: al
+pagina lo ricorda, con il pulsante **Torna alla vista superadmin**. Anche **Esci** chiude la vista: al
 prossimo accesso si rientra superadmin.
 
 **Promuovere il primo superadmin** (una tantum, subito dopo aver eseguito `supabase/schema.sql` la prima volta): creare l'account da **Authentication > Users > Add user** spuntando **Auto Confirm User**, poi da **Supabase Dashboard > SQL Editor**:
@@ -240,7 +240,7 @@ Supabase resta in piedi. L'account scende in fondo all'elenco, **senza accesso**
 
 - **Riattiva** (dopo aver scelto un ruolo) gli ridà l'accesso, con la password che aveva. Succede
   anche creando di nuovo la stessa email dal riquadro "Nuovo utente";
-- **Elimina per sempre** cancella l'account da Supabase (funzione `delete_account()`), e l'email si
+- **Elimina definitivamente** cancella l'account da Supabase (funzione `delete_account()`), e l'email si
   può riusare per un account nuovo. Non si torna indietro. Si elimina solo un account già rimosso:
   prima Rimuovi, poi Elimina.
 

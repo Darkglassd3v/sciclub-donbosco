@@ -181,7 +181,7 @@ function verificaCF(codice, anagrafica = {}) {
   if (cf.length !== 16 && cf.length !== 15) {
     return {
       ok: false,
-      problemi: [`Il codice fiscale deve avere 16 caratteri: ne ha ${cf.length}.`],
+      problemi: [`Il codice fiscale deve contenere 16 caratteri (inseriti: ${cf.length}).`],
       suggerito: null,
     };
   }
@@ -208,7 +208,7 @@ function verificaCF(codice, anagrafica = {}) {
   if (cognome) {
     const atteso = codiceCognome(cognome);
     if (parti.cognome !== atteso) {
-      problemi.push(`Le lettere del cognome non tornano: per ${anagrafica.cognome.trim().toUpperCase()} dovrebbero essere ${atteso}.`);
+      problemi.push(`Le lettere del cognome non corrispondono: per ${anagrafica.cognome.trim().toUpperCase()} sono attese ${atteso}.`);
       corretto.cognome = atteso;
     }
   } else if (!/^[A-Z]{3}$/.test(parti.cognome)) {
@@ -220,7 +220,7 @@ function verificaCF(codice, anagrafica = {}) {
   if (nome) {
     const atteso = codiceNome(nome);
     if (parti.nome !== atteso) {
-      problemi.push(`Le lettere del nome non tornano: per ${anagrafica.nome.trim().toUpperCase()} dovrebbero essere ${atteso}.`);
+      problemi.push(`Le lettere del nome non corrispondono: per ${anagrafica.nome.trim().toUpperCase()} sono attese ${atteso}.`);
       corretto.nome = atteso;
     }
   } else if (!/^[A-Z]{3}$/.test(parti.nome)) {
@@ -244,8 +244,8 @@ function verificaCF(codice, anagrafica = {}) {
       // Data giusta ma col sesso opposto a quello scelto: lo si dice, se no
       // "la data non torna" con la data giusta sotto gli occhi non si capisce.
       problemi.push(codiceData(data, femminaNelCodice) === scritta
-        ? `Nel codice il giorno (${parti.giorno}) è quello ${femminaNelCodice ? "di una donna (il giorno più 40)" : "di un uomo"}, ma il sesso scelto è ${sessoScelto}: controlla sulla tessera sanitaria.`
-        : `La data di nascita non torna con quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
+        ? `Nel codice il giorno (${parti.giorno}) corrisponde a ${femminaNelCodice ? "una donna (giorno più 40)" : "un uomo"}, ma il sesso indicato è ${sessoScelto}: verificare sulla tessera sanitaria.`
+        : `La data di nascita non corrisponde a quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
       corretto.data = attesa;
     }
   } else if (!formaData) {
@@ -271,9 +271,9 @@ function verificaCF(codice, anagrafica = {}) {
     && /^[A-Z]{6}$/.test(cf.slice(0, 6)) && formaData && formaComune;
   const problemiDellaScheda = problemi.length;
   if (comuneAtteso && parti.comune !== comuneAtteso && coerente) {
-    problemi.push(`Il comune nel codice (${parti.comune}) non è quello dei soci nati a ${luogo} (${comuneAtteso}): controlla il luogo di nascita sulla tessera sanitaria.`);
+    problemi.push(`Il comune nel codice (${parti.comune}) non corrisponde a quello dei soci nati a ${luogo} (${comuneAtteso}): verificare il luogo di nascita sulla tessera sanitaria.`);
   } else if (comuneAtteso && parti.comune !== comuneAtteso) {
-    problemi.push(`Il comune di nascita nel codice non torna: per ${luogo} i codici dei soci nati lì hanno ${comuneAtteso}.`);
+    problemi.push(`Il comune di nascita nel codice non corrisponde: per i soci nati a ${luogo} il codice del comune è ${comuneAtteso}.`);
     corretto.comune = comuneAtteso;
   } else if (!formaComune) {
     problemi.push("Il codice del comune di nascita (caratteri dal 12° al 15°) non è valido.");
@@ -282,7 +282,7 @@ function verificaCF(codice, anagrafica = {}) {
 
   if (!ricostruibile) return { ok: false, problemi, suggerito: null };
   if (coerente && problemi.length) {
-    if (problemiDellaScheda) problemi.push("Il codice però torna col suo carattere finale: di solito è giusto, ed è la scheda a dire un'altra cosa. Controlla sulla tessera sanitaria prima di cambiarlo.");
+    if (problemiDellaScheda) problemi.push("Il codice è tuttavia coerente con il carattere di controllo: di norma è corretto ed è la scheda a riportare dati diversi. Verificare sulla tessera sanitaria prima di modificarlo.");
     return { ok: false, problemi, suggerito: null };
   }
 
@@ -291,17 +291,17 @@ function verificaCF(codice, anagrafica = {}) {
   const suggerito = primi15 + controllo;
 
   if (cf.length === 15) {
-    problemi.push(`Manca l'ultimo carattere: dovrebbe essere ${controllo}.`);
+    problemi.push(`Manca il carattere di controllo finale: il valore atteso è ${controllo}.`);
   } else if (!problemi.length && cf[15] !== controllo) {
     // Solo se il resto è giusto: altrimenti il carattere finale è sbagliato
     // per forza, e dirlo sarebbe una riga in più da leggere per niente.
     if (!comuneAtteso) {
       // Senza il comune dei soci nati lì, lo sbaglio può essere nel comune e
       // non nel finale: proporre un finale nuovo rovinerebbe un finale giusto.
-      problemi.push(`L'ultimo carattere non torna col resto del codice: o è sbagliato lui (dovrebbe essere ${controllo}) o un altro carattere, di solito del comune (dal 12° al 15°). Controlla sulla tessera sanitaria.`);
+      problemi.push(`Il carattere di controllo finale non corrisponde al resto del codice: è errato il carattere finale (valore atteso ${controllo}) oppure un altro carattere, di solito del comune (dal 12° al 15°). Verificare sulla tessera sanitaria.`);
       return { ok: false, problemi, suggerito: null };
     }
-    problemi.push(`L'ultimo carattere è sbagliato: dovrebbe essere ${controllo}.`);
+    problemi.push(`Il carattere di controllo finale è errato: il valore atteso è ${controllo}.`);
   }
 
   // Uguale a quello scritto (solo un avviso sul luogo): niente da proporre.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Ruoli e vedi come — Sci Club Don Bosco</title>
+  <title>Ruoli e permessi — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
@@ -71,33 +71,34 @@
     <a href="stagione.html">Amministrazione</a>
     <a href="utenti.html">Utenti</a>
     <a href="impostazioni.html">Impostazioni</a>
-    <a href="gestione.html">Ruoli e vedi come</a>
+    <a href="gestione.html">Ruoli e permessi</a>
   </nav>
-  <h1 class="title is-4">Ruoli e vedi come</h1>
-  <p class="occhiello">Cosa vede ogni ruolo, e il sito visto con gli occhi di un altro ruolo.</p>
+  <h1 class="title is-4">Ruoli e permessi</h1>
+  <p class="occhiello">Sezioni accessibili a ciascun ruolo e anteprima del sito con i permessi di un altro ruolo.</p>
 
   <div class="riquadro">
-    <h2>Vedi come</h2>
+    <h2>Visualizza come</h2>
     <p class="occhiello">
-      Guarda il sito come lo vede un altro ruolo, per controllare che ognuno
-      trovi quello che gli serve. Il database ti tratta davvero da quel ruolo:
-      quello che lui non può fare, non lo puoi fare nemmeno tu finché non torni.
-      Una fascia gialla in fondo allo schermo ti ricorda che sei in questa vista,
-      con il pulsante per tornare superadmin.
+      Mostra il sito con i permessi di un altro ruolo, per verificare che ciascuno
+      disponga delle sezioni necessarie. Il database applica effettivamente i permessi
+      del ruolo scelto: le operazioni non consentite a quel ruolo restano bloccate fino
+      al ritorno alla vista superadmin. Una fascia gialla in fondo allo schermo indica
+      la modalità attiva e contiene il pulsante per uscirne.
     </p>
     <div class="riga-vedi">
       <select class="input" id="vediRuolo"></select>
-      <button type="button" class="button is-link" id="btnVedi">Vedi il sito così</button>
+      <button type="button" class="button is-link" id="btnVedi">Attiva la vista</button>
     </div>
   </div>
 
   <div class="riquadro">
-    <h2>Cosa vede ogni ruolo</h2>
+    <h2>Permessi per ruolo</h2>
     <p class="occhiello">
-      Spunta le sezioni che ogni ruolo può aprire. Il superadmin vede sempre tutto e
-      Gestione resta solo sua. Le sezioni segnate <span class="tag-dati">dati personali</span>
-      fanno leggere l'anagrafica dei soci: codice fiscale, indirizzo e telefono.
-      Le modifiche valgono dalla prossima pagina che ognuno apre.
+      Selezionare le sezioni accessibili a ciascun ruolo. Il superadmin accede sempre a tutte
+      le sezioni e la Gestione è riservata a lui. Le sezioni contrassegnate
+      <span class="tag-dati">dati personali</span> consentono la lettura dell'anagrafica dei soci
+      (codice fiscale, indirizzo e telefono). Le modifiche si applicano all'apertura successiva
+      di ogni pagina.
     </p>
     <div class="tabella-scorrevole">
       <table class="tabella-permessi" id="tabellaPermessi"><tbody><tr><td>Caricamento…</td></tr></tbody></table>
@@ -105,17 +106,18 @@
     <div class="azioni" id="azioniPermessi">
       <button type="button" class="button is-link" id="btnSalvaPermessi" disabled>Salva i permessi</button>
       <button type="button" class="button is-light" id="btnAnnullaPermessi" disabled>Annulla le modifiche</button>
-      <button type="button" class="button is-link is-outlined a-destra" id="btnRipristina">Torna ai permessi di partenza</button>
+      <button type="button" class="button is-link is-outlined a-destra" id="btnRipristina">Ripristina i permessi predefiniti</button>
     </div>
     <h3>Ultime modifiche</h3>
     <ul class="storico-permessi" id="storicoPermessi"></ul>
   </div>
 
   <div class="riquadro">
-    <h2>Nomi della barra</h2>
+    <h2>Voci del menu</h2>
     <p class="occhiello">
-      Come si chiamano le voci della barra in cima a ogni pagina, per tutti. Al massimo 20 lettere,
-      perché la barra deve stare anche sul telefono. Vuoto = il nome di sempre, scritto in grigio.
+      Nomi delle voci del menu in cima a ogni pagina, validi per tutti gli utenti. Massimo 20
+      caratteri, per garantire la leggibilità sul telefono. Con il campo vuoto si usa il nome
+      predefinito, indicato in grigio.
     </p>
     <div class="tabella-scorrevole">
       <table class="tabella-nomi"><tbody id="tabellaNomi"></tbody></table>
@@ -128,7 +130,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -139,16 +141,16 @@
   // codici fiscali dei tesserati (policy e funzioni insurance_* in
   // supabase/schema.sql). Il nome è quello della barra (nomiBarra() in shared.js).
   const PERMESSI = [
-    ["soci", "Soci", "Iscrivere e modificare i soci, vendere abbonamenti dal modulo.", true],
-    ["pagamenti", "Pagamenti", "Incassare dalle famiglie, modificare gli importi (rimborsi e sconti).", true],
-    ["riepilogo", "Riepilogo", "I numeri della stagione e l'Excel di tutti i tesserati.", true],
-    ["storico", "Stagioni chiuse", "Le stagioni passate, dentro il Riepilogo: serve anche Riepilogo.", false],
-    ["cerca", "Cerca socio", "Dal telefono: cercare un socio e vedere la sua scheda.", true],
-    ["gite", "Gite", "Dal telefono: segnare le gite, vendere un abbonamento.", true],
-    ["stampe", "Stampe", "I fogli Excel di corsisti e abbonati, divisi per partenza.", true],
-    ["polizze", "Assicurazione", "Liste da mandare all'assicurazione, con codice fiscale e data di nascita.", true],
-    ["bilancio", "Bilancio", "Movimenti e saldo della banca.", false],
-    ["social", "Social", "Post, sponsor e contatti per i social.", false],
+    ["soci", "Soci", "Iscrizione e modifica dei soci, vendita di abbonamenti dalla scheda.", true],
+    ["pagamenti", "Pagamenti", "Incassi dai nuclei familiari e modifica degli importi (rimborsi e sconti).", true],
+    ["riepilogo", "Riepilogo", "Dati riepilogativi della stagione ed elenco Excel dei tesserati.", true],
+    ["storico", "Stagioni chiuse", "Consultazione delle stagioni precedenti nel Riepilogo (richiede anche Riepilogo).", false],
+    ["cerca", "Cerca socio", "Da telefono: ricerca di un socio e consultazione della scheda.", true],
+    ["gite", "Gite", "Da telefono: registrazione delle gite e vendita di abbonamenti.", true],
+    ["stampe", "Stampe", "Fogli Excel di corsisti e abbonati, suddivisi per partenza.", true],
+    ["polizze", "Assicurazione", "Liste da inviare alla compagnia assicurativa, con codice fiscale e data di nascita.", true],
+    ["bilancio", "Bilancio", "Movimenti e saldo del conto.", false],
+    ["social", "Social", "Post, sponsor e contatti per i canali social.", false],
   ];
   // Il nome a schermo: quello scelto per la barra, se c'è (la voce Stagioni chiuse non è nella barra).
   // Con un shared.js vecchio ancora nella cache del browser NOMI_BARRA e
@@ -204,7 +206,7 @@
             aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}></label></td>`).join("")}
       </tr>`; }).join("")}
       <tr><th scope="row">Gestione<span class="descr">Amministrazione, Utenti, Impostazioni e questa pagina.</span></th>
-        <td colspan="${matrice.length}" class="solo-super">Solo il superadmin</td></tr>
+        <td colspan="${matrice.length}" class="solo-super">Riservata al superadmin</td></tr>
       </tbody>`;
     aggiornaStato();
   }
@@ -237,12 +239,12 @@
     el("btnAnnullaPermessi").disabled = !cambi;
   }
 
-  /** "Utente (ricerca e gite) ora vede Soci e non vede più Gite" */
+  /** "Utente (ricerca e gite) accede a Soci e non accede più a Gite" */
   function frase(ruolo, aggiunti, tolti) {
     const nomi = (lista) => lista.map(nomePermesso).join(", ");
     const parti = [];
-    if (aggiunti.length) parti.push(`ora vede ${nomi(aggiunti)}`);
-    if (tolti.length) parti.push(`non vede più ${nomi(tolti)}`);
+    if (aggiunti.length) parti.push(`accede a ${nomi(aggiunti)}`);
+    if (tolti.length) parti.push(`non accede più a ${nomi(tolti)}`);
     return `${NOMI_RUOLI[ruolo] || ruolo} ${parti.join(" e ")}`;
   }
 
@@ -251,8 +253,8 @@
     const partenza = Object.fromEntries(matrice.map((r) => [r.role, r.defaults]));
     caselle().forEach((c) => { c.checked = partenza[c.dataset.ruolo].includes(c.dataset.permesso); });
     aggiornaStato();
-    showToast(differenze().length ? "Rimessi i permessi di partenza: controlla e premi Salva."
-                                  : "I permessi sono già quelli di partenza.", "is-warning");
+    showToast(differenze().length ? "Permessi predefiniti ripristinati: verificare e salvare."
+                                  : "I permessi corrispondono già a quelli predefiniti.", "is-warning");
   }
 
   /** Prima di salvare, la frase con cosa cambia; i dati personali in evidenza. */
@@ -262,8 +264,8 @@
     const datiNuovi = diff.some((d) => d.aggiunti.some((p) => DATI_PERSONALI.has(p)));
     chiedi(el("azioniPermessi"),
       diff.map((d) => frase(d.ruolo, d.aggiunti, d.tolti)).join("; ") + "."
-        + (datiNuovi ? " Attenzione: leggerà i dati personali dei soci." : "") + " Salvare?",
-      "Sì, salva", salvaPermessi);
+        + (datiNuovi ? " Attenzione: il ruolo avrà accesso ai dati personali dei soci." : "") + " Salvare?",
+      "Salva", salvaPermessi);
   }
 
   async function salvaPermessi() {
@@ -274,7 +276,7 @@
       const { error } = await sb.rpc("set_role_grants", { grants });
       if (error) throw error;
       await caricaPermessi();
-      showToast("Permessi salvati: valgono dalla prossima pagina che ognuno apre.");
+      showToast("Permessi salvati: si applicano all'apertura successiva di ogni pagina.");
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -319,7 +321,7 @@
       disegnaNomi();
       // Con spunte non ancora salvate la matrice resta com'è: i nomi nuovi si vedono al prossimo disegno.
       if (!differenze().length) disegnaMatrice();
-      showToast("Nomi salvati: li vede chi apre una pagina da adesso.");
+      showToast("Nomi salvati: visibili all'apertura successiva di ogni pagina.");
     } catch (error) {
       showToast("Nomi non salvati: " + messaggioErrore(error), "is-danger");
     } finally {
@@ -333,7 +335,7 @@
     el("storicoPermessi").innerHTML = righe.length
       ? righe.map((h) => `<li><span class="quando">${quando(h.changed_at)}</span>${esc(h.changed_by || "")}:
           ${esc(frase(h.role, h.added, h.removed))}</li>`).join("")
-      : "<li>Nessuna modifica: valgono i permessi di partenza.</li>";
+      : "<li>Nessuna modifica: sono in uso i permessi predefiniti.</li>";
   }
 
   // Lasciare la pagina con spunte non salvate: il browser chiede conferma.

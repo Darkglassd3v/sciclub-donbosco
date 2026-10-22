@@ -87,19 +87,19 @@
 
 <div class="container-main">
   <h1 class="title is-4" id="titolo">Bilancio</h1>
-  <p class="occhiello">Quanto c'è in banca: incassi dei soci, entrate extra e uscite della stagione.</p>
+  <p class="occhiello">Situazione del conto della stagione: incassi dai soci, altre entrate e uscite.</p>
 
   <div id="contenuto">
   <div class="cifre">
     <div class="kpi evidenza"><div class="kpi-label">Saldo attuale</div><div class="kpi-value" id="kSaldo">—</div></div>
-    <div class="kpi"><div class="kpi-label">Incassato soci</div><div class="kpi-value" id="kSoci">—</div></div>
-    <div class="kpi"><div class="kpi-label">Entrate extra</div><div class="kpi-value" id="kExtra">—</div></div>
-    <div class="kpi"><div class="kpi-label">Totale incassato</div><div class="kpi-value" id="kTotale">—</div></div>
+    <div class="kpi"><div class="kpi-label">Incassi dai soci</div><div class="kpi-value" id="kSoci">—</div></div>
+    <div class="kpi"><div class="kpi-label">Altre entrate</div><div class="kpi-value" id="kExtra">—</div></div>
+    <div class="kpi"><div class="kpi-label">Totale entrate</div><div class="kpi-value" id="kTotale">—</div></div>
     <div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div>
   </div>
 
   <section class="riquadro sezione pagamento">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Saldo banca inizio stagione <span class="cosa">Il saldo da cui parte la stagione</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Saldo iniziale <span class="cosa">Saldo bancario a inizio stagione</span></h2>
     <div class="corpo">
     <form class="riga-saldo" id="formSaldo">
       <div class="field">
@@ -108,12 +108,12 @@
       </div>
       <button class="button is-link" type="submit" id="btnSaldo">Salva</button>
     </form>
-    <p class="help mt-2" id="saldoProposto" hidden>Proposto dalla stagione precedente: salvalo per confermarlo.</p>
+    <p class="help mt-2" id="saldoProposto" hidden>Valore proposto dalla stagione precedente: salvare per confermarlo.</p>
     </div>
   </section>
 
   <section class="riquadro sezione pagamento">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Movimenti <span class="cosa">Entrate e uscite che non sono quote dei soci</span></h2>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Movimenti <span class="cosa">Entrate e uscite diverse dalle quote dei soci</span></h2>
     <div class="corpo">
     <form id="formMovimento">
       <div class="riga-movimento">
@@ -134,7 +134,7 @@
                come un elenco strano e filtrava sulle lettere già scritte. -->
           <div class="select is-fullwidth">
             <select id="mVoce" required>
-              <option value="">Scegli la voce</option>
+              <option value="">Selezionare la voce</option>
               <option>Skipass Sestriere</option>
               <option>Tapis</option>
               <option>Giornalieri</option>
@@ -182,7 +182,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   const el = (id) => document.getElementById(id);
   const oggi = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale
@@ -244,7 +244,7 @@
       .order("created_at", { ascending: false });
     if (error) throw error;
     if (!data.length) {
-      el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento in questa stagione.</td></tr>`;
+      el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento registrato nella stagione in corso.</td></tr>`;
       return;
     }
     // Totale netto: entrate meno uscite.

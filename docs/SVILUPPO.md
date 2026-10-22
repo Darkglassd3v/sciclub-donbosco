@@ -158,6 +158,22 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di
   `chiedi()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 
+### Testi
+
+Registro professionale in tutto il sito (`web/` e `ricerca/`), deciso il 22/10/2026 («etichette
+professionali e non che sembrano del parlato comune»). Lo controlla `node web/test-testi.js`.
+
+- Istruzioni e avvisi impersonali o all'infinito: «Inserire la data di decorrenza», «Selezionare
+  il ruolo», «Ricaricare la pagina». Niente seconda persona («premi», «scrivi», «hai», «tuo») né
+  prima persona del sito («non riesco», «ho messo»): «Impossibile scaricare il modulo».
+- Pulsanti: verbi brevi all'imperativo, come nei programmi («Salva», «Scarica i file Excel»,
+  «Rimuovi»). Nelle conferme il pulsante dice l'azione («Conferma incasso», «Elimina
+  definitivamente»), non «Sì, …».
+- Titoli fatti di nomi: «Liste inviate nella stagione in corso», «Correzione del codice fiscale».
+- Lessico: «inviare» e non «mandare», «rimuovere» e non «togliere», «registrare una gita» e non
+  «segnare», «definitivamente» e non «per sempre», «L'operazione non è reversibile».
+- I post dei social (`social-templates.js`) parlano al pubblico e restano fuori da queste regole.
+
 ## Provare le pagine senza login
 
 Le pagine chiedono il login Supabase. Si prova una copia della cartella `web/` (fuori dal
@@ -233,7 +249,7 @@ escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Non le lan
 - Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form
   Soci la casella "già pagato" sulla riga aggiunta somma il prezzo all'acconto.
 - Rimborso: riduce il pagato del socio. Lo possono fare tesoriere e admin, con lo storico delle modifiche.
-- Totale scritto a mano: segnato come manuale, il form non lo ricalcola più.
+- Totale manuale: segnato come manuale, il form non lo ricalcola più.
 - Totale di un socio già salvato (22/10): non segue i prezzi nuovi del listino, quello fatto pagare
   vale. Cambiando una voce cambia solo la differenza, coi prezzi di oggi (`totaleCalcolato()` in Soci).
 - Codici fiscali dai fogli di dati26 (`legacy/dati26/`): si correggono su tutte le righe della persona, anche quelle
@@ -249,4 +265,4 @@ escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Non le lan
   assicurato; la pagina lo elenca a parte in rosso. "Segna come inviata" con il permesso polizze;
   si annulla solo l'ultima lista di ogni tipo. La colonna policy_number si toglie (backup prima).
 - Modifica di totale e pagato (rimborsi) da Pagamenti, tesoriere e admin, con il motivo obbligatorio;
-  storico scritto dal database. Nel form Soci casella "Totale scritto a mano".
+  storico scritto dal database. Nel form Soci casella "Totale manuale".

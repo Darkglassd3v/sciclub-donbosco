@@ -1,6 +1,6 @@
 // PAGINA: admin.html
 // RUOLO: tesoriere
-// Pagamenti, sulla copia con 400 iscritti in più: tolto «Solo chi deve pagare»,
+// Pagamenti, sulla copia con 400 iscritti in più: tolto «Solo nuclei da incassare o a credito»,
 // i familiari e i capofamiglia si leggono con tutti gli id. Messi tutti in un URL
 // passano gli 8 KB che il gateway di Supabase accetta (414). Si devono vedere tutti.
 {

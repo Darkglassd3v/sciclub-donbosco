@@ -67,10 +67,10 @@
     <a href="stagione.html">Amministrazione</a>
     <a href="utenti.html">Utenti</a>
     <a href="impostazioni.html">Impostazioni</a>
-    <a href="gestione.html">Ruoli e vedi come</a>
+    <a href="gestione.html">Ruoli e permessi</a>
   </nav>
   <h1 class="title is-4">Amministrazione</h1>
-  <p class="occhiello">Chiusura della stagione e conti degli anni passati.</p>
+  <p class="occhiello">Chiusura della stagione e consuntivi delle stagioni precedenti.</p>
 
   <div id="contenuto">
   <!-- Resoconto rapido: incasso corsi = iscritti al corso x listino. -->
@@ -158,9 +158,9 @@
     I soci restano in anagrafica senza stagione: rientrano nei conteggi quando
     vengono risalvati dalla pagina Soci.
   </p>
-  <p class="mt-4">Saldo banca finale previsto: <b id="saldoFinale">…</b></p>
+  <p class="mt-4">Saldo bancario finale previsto: <b id="saldoFinale">…</b></p>
   <div class="conferma">
-    <label for="frase">Per procedere scrivi <code>CHIUDI STAGIONE</code> qui sotto</label>
+    <label for="frase">Per procedere, digitare <code>CHIUDI STAGIONE</code> nel campo sottostante</label>
     <input class="input" id="frase" autocomplete="off" placeholder="CHIUDI STAGIONE">
     <div class="buttons mt-4">
       <button type="button" class="button" id="btnAnnulla">Annulla</button>
@@ -171,7 +171,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   const el = (id) => document.getElementById(id);
   const FRASE = "CHIUDI STAGIONE";
@@ -274,7 +274,7 @@
 
       el("tabellaChiuse").innerHTML = chiuse.data.length
         ? righeChiuse(chiuse.data)
-        : vuota("Non è mai stata chiusa una stagione.", 6);
+        : vuota("Nessuna stagione chiusa.", 6);
 
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
@@ -304,19 +304,19 @@
       const esito = Array.isArray(data) ? data[0] : data;
       // Senza posizioni close_season() non scrive lo storico e la stagione non avanza.
       el("esito").innerHTML = !Number(esito?.archived)
-        ? `<div class="notification is-warning">Non c'era niente da chiudere: nessun socio iscritto o con importi.
+        ? `<div class="notification is-warning">Nessun dato da archiviare: nessun socio iscritto o con importi.
              La stagione resta aperta.</div>`
         : `<div class="notification is-success">
           <b>Stagione ${annoStagione(esito.season_closed)} chiusa.</b><br>
-          Archiviate ${esito.archived} posizioni. Le anagrafiche sono rimaste al loro posto:
-          si riparte iscrivendo i soci dalla pagina <a href="index.html">Soci</a>.
+          Archiviate ${esito.archived} posizioni. Le anagrafiche restano registrate: la nuova
+          stagione inizia con l'iscrizione dei soci dalla pagina <a href="index.html">Soci</a>.
         </div>`;
       el("frase").value = "";
       // Anche i riquadri in alto: restavano quelli della stagione appena chiusa.
       await Promise.all([caricaSituazione(), caricaResoconto()]);
     } catch (error) {
       el("esito").innerHTML =
-        `<div class="notification is-danger">Non è stato chiuso niente: ${esc(messaggioErrore(error))}</div>`;
+        `<div class="notification is-danger">Chiusura non eseguita: ${esc(messaggioErrore(error))}</div>`;
     } finally {
       setLoading(false);
     }

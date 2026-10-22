@@ -45,14 +45,14 @@
 
 <div class="container-main">
   <h1 class="title is-4">Fogli dei soci</h1>
-  <p class="occhiello">Un pulsante per giorno: scarica i fogli Excel di corsisti, abbonamenti e jolly, un foglio per partenza.</p>
+  <p class="occhiello">Fogli Excel di corsisti, abbonamenti e jolly per ciascun giorno di gita, con un foglio per ogni partenza.</p>
 
   <div class="riquadro">
-    <h2>Scarica i fogli</h2>
+    <h2>Download dei fogli</h2>
     <p class="occhiello">
-      Fino a tre file per giorno, solo quelli con qualcuno dentro: i corsisti (sabato e domenica),
-      gli abbonamenti di quel giorno e i jolly. In ogni file c'è un foglio per partenza, in ordine
-      alfabetico. La prima volta il browser può chiedere il permesso di scaricare più file: rispondi di sì.
+      Fino a tre file per giorno, solo se contengono almeno un socio: corsisti (sabato e domenica),
+      abbonamenti del giorno e jolly. Ogni file contiene un foglio per partenza, in ordine alfabetico.
+      Al primo download il browser può chiedere l'autorizzazione a scaricare più file: confermare.
     </p>
     <div class="giorni-stampa">
       <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
@@ -66,7 +66,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script src="stampe.js?v=20261023fogli"></script>
 <script>
   // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
@@ -102,12 +102,12 @@
       const fogli = fogliDelGiorno(chiave, soci, abbonamenti).filter((f) => f.gruppi.length);
       const nomeGiorno = GIORNI_STAMPA[chiave].nome.toLowerCase();
       if (!fogli.length) {
-        mostraEsito(`Nessun socio della stagione per ${nomeGiorno}: nessun file scaricato.`, []);
+        mostraEsito(`Nessun socio della stagione per ${nomeGiorno}: nessun file generato.`, []);
         return;
       }
       await caricaXlsx();
       const scaricati = fogli.map((f) => excelFoglio(chiave, f, abbonamenti));
-      mostraEsito(`Scaricati i fogli di ${nomeGiorno}:`, scaricati);
+      mostraEsito(`Fogli di ${nomeGiorno} scaricati:`, scaricati);
     } catch (error) {
       showToast("Errore: " + messaggioErrore(error), "is-danger");
     } finally {

@@ -41,7 +41,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   // Un solo indirizzo per tutti, la radice del sito: dopo l'accesso ognuno va
   // dove lo manda il suo ruolo (paginaDiArrivo in shared.js), oppure alla
@@ -62,8 +62,8 @@
     errore.style.display = "block";
   }
 
-  const SENZA_RUOLO = "Questo account non ha ancora un ruolo, quindi non può vedere niente. "
-    + "Chiedi a chi gestisce gli utenti del club di assegnartelo.";
+  const SENZA_RUOLO = "Questo account non ha ancora un ruolo assegnato e non può accedere ad alcuna sezione. "
+    + "Rivolgersi all'amministratore degli utenti del club per l'assegnazione.";
   // Rimandato qui da una pagina perché l'account non ha un ruolo: la sessione
   // non serve a niente, si chiude.
   if (richiesta.get("senza")) {

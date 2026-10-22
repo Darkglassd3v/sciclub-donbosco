@@ -141,7 +141,7 @@ async function requirePermesso(permesso) {
   } catch (error) {
     // Rete o database giù: nessuna pagina prende l'errore, e restava «Caricamento…» senza dire niente.
     setLoading(false);
-    showToast(`Non riesco a leggere il tuo accesso (${messaggioErrore(error)}). Ricarica la pagina fra poco.`, "is-danger");
+    showToast(`Impossibile leggere i permessi di accesso (${messaggioErrore(error)}). Ricaricare la pagina tra qualche istante.`, "is-danger");
     return null;
   }
   if (accesso && accesso.change_password) {
@@ -419,8 +419,8 @@ function mostraVediCome(accesso) {
   const fascia = document.createElement("div");
   fascia.className = "fascia-vedi-come";
   fascia.setAttribute("role", "status");
-  fascia.innerHTML = `Stai vedendo il sito come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
-    <button type="button" class="button is-dark">Torna superadmin</button>`;
+  fascia.innerHTML = `Visualizzazione come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+    <button type="button" class="button is-dark">Torna alla vista superadmin</button>`;
   fascia.querySelector("button").addEventListener("click", () => vediCome(null));
   document.body.append(fascia);
 }
@@ -428,7 +428,7 @@ function mostraVediCome(accesso) {
 /** Guarda il sito come `ruolo` (null per tornare superadmin) e riparte dalla sua pagina. */
 async function vediCome(ruolo) {
   const { error } = await sb.rpc("set_view_as", { role: ruolo });
-  if (error) { showToast("Non riesco a cambiare vista: " + messaggioErrore(error), "is-danger"); return; }
+  if (error) { showToast("Impossibile cambiare vista: " + messaggioErrore(error), "is-danger"); return; }
   _accessoCache = null;
   const accesso = await getProfile();
   location.href = ruolo ? paginaDiArrivo(accesso) || "index.html" : "gestione.html";
@@ -467,7 +467,7 @@ function mostraAvvisoCF(box, campo, esito, dopo) {
     const usa = document.createElement("button");
     usa.type = "button";
     usa.className = "button is-link is-small";
-    usa.setAttribute("aria-label", `Scrivi nel campo il codice proposto ${esito.suggerito}`);
+    usa.setAttribute("aria-label", `Usa il codice proposto ${esito.suggerito}`);
     usa.innerHTML = `<code>${esc(esito.suggerito)}</code>`;
     usa.addEventListener("click", () => {
       campo.value = esito.suggerito;
@@ -528,7 +528,7 @@ function caricaScript(src, cosa, integrita) {
     script.onerror = () => {
       delete _scriptInArrivo[src];
       script.remove();
-      ko(new Error(`non riesco a scaricare il modulo ${cosa}: controlla la connessione e riprova.`));
+      ko(new Error(`impossibile scaricare il modulo ${cosa}: verificare la connessione e riprovare.`));
     };
     document.head.append(script);
   });
@@ -648,7 +648,7 @@ function caricaPdf() {
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
 async function scaricaExcel(righe, nome) {
-  if (!righe.length) { showToast("Non c'è nessun socio da scaricare."); return; }
+  if (!righe.length) { showToast("Nessun socio da scaricare."); return; }
   await caricaXlsx();
   const foglio = foglioLeggibile([
     COLONNE_ASSICURAZIONE.map(([titolo]) => titolo),
@@ -860,7 +860,7 @@ function ascoltaSoci(callback) {
 function messaggioErrore(error) {
   if (!error) return "Errore sconosciuto";
   if (error.code === "PGRST301" || error.status === 401) {
-    return "Sessione scaduta: rifai il login.";
+    return "Sessione scaduta: effettuare di nuovo l'accesso.";
   }
   return error.message || String(error);
 }

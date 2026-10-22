@@ -10,7 +10,7 @@ Per chi gestisce il sito. La guida per i volontari è in `GUIDA_VOLONTARI.md`
 - [ ] **Ruoli giusti**: chi iscrive = Admin; chi sta in cassa = Admin o
       Tesoriere; chi segna le gite = Utente. Controllare in Gestione > Ruoli
       cosa vede ogni ruolo.
-- [ ] **"Vedi come" per ogni ruolo** (Gestione > Ruoli): aprire Soci,
+- [ ] **"Visualizza come" per ogni ruolo** (Gestione > Ruoli e permessi): aprire Soci,
       Pagamenti, Gite e controllare che ci sia quello che serve, e niente di più.
 - [ ] **Listino**: prezzi di tessere, abbonamenti, corsi e presciistica
       giusti e attivi (Gestione > Impostazioni). Partenze del sabato e della
@@ -21,7 +21,7 @@ Per chi gestisce il sito. La guida per i volontari è in `GUIDA_VOLONTARI.md`
       persona. Poi incassare da Pagamenti.
 - [ ] **Controlli**: lanciare `supabase/scripts/controlli.sh` dopo la prova.
       Le iscrizioni di prova devono comparire nelle anomalie se fatte male.
-- [ ] **Togliere le iscrizioni di prova**: Soci > "Togli dalla stagione"
+- [ ] **Togliere le iscrizioni di prova**: Soci > "Rimuovi dalla stagione"
       (superadmin), e rilanciare i controlli.
 - [ ] **Stampare** la guida per i volontari, una copia per postazione.
 - [ ] **Telefoni**: aprire Gite sui telefoni di chi lo userà e salvarla
@@ -52,7 +52,7 @@ Cosa controllano (`supabase/scripts/controlli.sql`):
 | Abbonamento o corso senza tessera | Scegliere la tessera in Soci |
 | Corso senza giorno | Scegliere sabato o domenica in Soci |
 | Pagato più del dovuto | Controllare in Pagamenti > Storico; correggere con Modifica importi |
-| Pagato da un familiare non iscritto | Iscrivere il familiare, o togliere "La paga un familiare" |
+| Pagato da un familiare non iscritto | Iscrivere il familiare, o togliere "A carico di un familiare" |
 
 **Se qualcosa non va**: il volontario lo dice a chi segue il sito (nome del
 socio, pagina, cosa ha premuto, cosa è comparso). Si passa a Claude con il

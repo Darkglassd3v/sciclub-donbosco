@@ -41,14 +41,14 @@
   <header class="testata">
     <h1>Ricerca Socio</h1>
   </header>
-  <p class="occhiello">Cerca un socio e guarda tessera, abbonamenti e telefono.</p>
+  <p class="occhiello">Ricerca di un socio e consultazione di tessera, abbonamenti e recapito telefonico.</p>
 
   <div class="cerca">
-    <label for="q">Cerca per cognome o nome</label>
+    <label for="q">Ricerca per cognome o nome</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
            placeholder="Cognome o nome">
     <p class="suggerimento" id="suggerimento">
-      La ricerca funziona anche con le prime lettere. Più termini restringono il risultato.
+      È sufficiente inserire le prime lettere. Più termini restringono i risultati.
     </p>
   </div>
 
@@ -61,7 +61,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261023coda"></script>
+<script src="comune.js?v=20261022testi"></script>
 <script>
 (() => {
   "use strict";
@@ -175,11 +175,11 @@
           if (!soci || !soci.length) {
             lista().innerHTML = "";
             conteggio().hidden = true;
-            messaggio("Nessun socio trovato con «" + testoCercato.trim() + "».", "avviso-vuoto");
+            messaggio("Nessun socio corrisponde a «" + testoCercato.trim() + "».", "avviso-vuoto");
             return;
           }
           conteggio().textContent = soci.length >= MAX
-            ? `Primi ${MAX} risultati: scrivi qualche lettera in più.`
+            ? `Primi ${MAX} risultati: precisare la ricerca.`
             : `Trovati: ${soci.length}`;
           conteggio().hidden = false;
           const parti = pezzi(testoCercato);

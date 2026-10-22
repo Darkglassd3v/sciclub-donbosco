@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pannello Pagamenti — Sci Club Don Bosco</title>
+  <title>Pagamenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
   <link rel="stylesheet" href="brand.css?v=20261023schede">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
@@ -101,30 +101,29 @@
 </header>
 
 <div class="container-main">
-  <h1 class="title is-4">Pannello Pagamenti</h1>
+  <h1 class="title is-4">Pagamenti</h1>
   <p class="occhiello">
-    Le famiglie con qualcosa da pagare, e quelle a credito (hanno versato più del dovuto).
-    Quote e numero di tessera si modificano
-    dalla pagina <a href="index.html">Soci</a>; un rimborso o uno sconto si
-    scrive qui, con <b>Modifica importi</b> sulla riga del socio, e resta nello <b>Storico</b>.
+    Nuclei familiari con importi da incassare o con un credito (versamenti superiori al dovuto).
+    Quote e numero di tessera si modificano nella pagina <a href="index.html">Soci</a>; rimborsi e
+    sconti si registrano qui con <b>Modifica importi</b> sulla riga del socio e restano nello <b>Storico</b>.
   </p>
 
   <div class="cifre">
     <div class="kpi"><div class="kpi-label">Totale da incassare</div><div class="kpi-value rosso" id="totalInsoluti">—</div></div>
-    <div class="kpi"><div class="kpi-label">A credito</div><div class="kpi-value credito" id="totalCredito">—</div></div>
-    <div class="kpi"><div class="kpi-label">Nuclei</div><div class="kpi-value" id="numNuclei">—</div></div>
+    <div class="kpi"><div class="kpi-label">Totale a credito</div><div class="kpi-value credito" id="totalCredito">—</div></div>
+    <div class="kpi"><div class="kpi-label">Nuclei familiari</div><div class="kpi-value" id="numNuclei">—</div></div>
     <div class="kpi"><div class="kpi-label">Familiari a carico</div><div class="kpi-value" id="numFamiliari">—</div></div>
   </div>
 
   <div class="riquadro">
-    <h2>Cerca e filtra</h2>
-    <p class="occhiello">Per chi ha già pagato tutto togli la spunta «Solo chi deve pagare».</p>
+    <h2>Ricerca e filtri</h2>
+    <p class="occhiello">Per visualizzare anche i nuclei in regola, deselezionare «Solo nuclei da incassare o a credito».</p>
     <div class="comandi">
       <div class="field">
-        <label class="label" for="cercaNucleo">Cerca una famiglia</label>
-        <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di chiunque della famiglia" autocomplete="off">
+        <label class="label" for="cercaNucleo">Nucleo familiare</label>
+        <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di un componente del nucleo" autocomplete="off">
       </div>
-      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo chi deve pagare o è a credito</label>
+      <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo nuclei da incassare o a credito</label>
       <button class="button is-link is-outlined" onclick="caricaDati()">Aggiorna</button>
     </div>
   </div>
@@ -134,7 +133,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261023vivo"></script>
+<script src="shared.js?v=20261022testi"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -236,7 +235,7 @@
     const contenitore = el("displayArea");
     if (!nuclei.length) {
       contenitore.innerHTML = `<div class="notification is-light has-text-centered">${
-        termini.length ? "Nessuna famiglia con questo nome." : "Nessun nucleo da mostrare."}</div>`;
+        termini.length ? "Nessun nucleo corrisponde alla ricerca." : "Nessun nucleo da visualizzare."}</div>`;
       return;
     }
 
@@ -317,7 +316,7 @@
     // Modifica importi (Già versato più basso, con il motivo nello storico).
     if (saldo < 0) {
       return `<div class="barra-saldo"><span class="a-credito">A credito: ${fmt(-saldo)}</span>
-        <span>Per restituirli: <b>Modifica importi</b> sulla riga del socio, «Già versato» più basso.</span></div>`;
+        <span>Per il rimborso: <b>Modifica importi</b> sulla riga del socio, riducendo «Già versato».</span></div>`;
     }
     if (saldo === 0) {
       return `<div class="barra-saldo"><span class="nucleo-saldato">Nucleo saldato</span></div>`;
@@ -363,7 +362,7 @@
           <input class="input" type="number" step="0.5" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
         <div class="motivo"><label class="label" for="motivo_${id}">Motivo*</label>
           <input class="input" id="motivo_${id}" maxlength="200" autocomplete="off"
-                 placeholder="Es. rimborso corso: fatte 2 lezioni su 8"></div>
+                 placeholder="Es. rimborso corso: 2 lezioni frequentate su 8"></div>
         <div class="azioni">
           <button type="button" class="button is-success" data-salva>Salva ${esc(socio.last_name)} ${esc(socio.first_name)}</button>
           <button type="button" class="button is-light" data-chiudi>Annulla</button>
@@ -381,11 +380,11 @@
     // Euro interi o con i 50 centesimi, da zero in su (step e min del campo).
     const sbagliato = ["quota_", "versato_"].map((p) => el(p + socio.id)).find((c) => c.value === "" || !c.checkValidity());
     if (sbagliato) {
-      segnaErrore(sbagliato, "Quota e già versato: euro interi o con 50 centesimi (es. 12 o 12,50), zero o più.");
+      segnaErrore(sbagliato, "Quota e importo versato: euro interi o con 50 centesimi (es. 12 o 12,50), non negativi.");
       return;
     }
     if (!motivo) {
-      segnaErrore(el("motivo_" + socio.id), "Scrivi il motivo: resta nello storico del socio.");
+      segnaErrore(el("motivo_" + socio.id), "Indicare il motivo, che sarà registrato nello storico del socio.");
       return;
     }
     setLoading(true);
@@ -441,14 +440,14 @@
     if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
     const saldo = parseFloat(data?.household_balance || 0);
     if (saldo <= 0) {
-      showToast(saldo < 0 ? "Questo nucleo è a credito: non c'è niente da incassare." : "Questo nucleo è già saldato.");
+      showToast(saldo < 0 ? "Il nucleo è a credito: nessun importo da incassare." : "Il nucleo risulta già saldato.");
       await caricaDati({ silenzioso: true });
       return;
     }
     barra.querySelector(".da-pagare").textContent = `Da incassare: ${fmt(saldo)}`;
     const nome = barra.dataset.nome;
-    chiedi(barra.querySelector(".azioni"), `Hai riscosso ${fmt(saldo)}${nome ? ` da ${nome}` : ""}?`,
-      "Sì, incassato", () => salda(idPagante, saldo), { pericolo: false });
+    chiedi(barra.querySelector(".azioni"), `Confermare l'incasso di ${fmt(saldo)}${nome ? ` da ${nome}` : ""}?`,
+      "Conferma incasso", () => salda(idPagante, saldo), { pericolo: false });
   }
 
   /**
@@ -467,8 +466,8 @@
 
       const esito = Array.isArray(data) ? data[0] : data;
       showToast(esito && esito.members_settled
-        ? `Incassati ${fmt(esito.amount)} — ${esito.members_settled} soci saldati`
-        : "Questo nucleo era già saldato.");
+        ? `Incasso registrato: ${fmt(esito.amount)}, ${esito.members_settled} soci saldati.`
+        : "Il nucleo risultava già saldato.");
       // Con uno Storico o una Modifica aperti il ridisegno salta (li chiuderebbe):
       // almeno la barra del nucleo appena incassato dice che è saldato.
       const barra = el("barra_" + idPagante);

@@ -41,10 +41,10 @@
   <header class="testata">
     <h1>Abbonamenti Gite</h1>
   </header>
-  <p class="occhiello">Segna le gite fatte da chi ha l'abbonamento. Funziona anche senza linea.</p>
+  <p class="occhiello">Registrazione delle gite effettuate dagli abbonati, disponibile anche senza connessione.</p>
 
   <div class="cerca">
-    <label for="q">Cerca per cognome o nome</label>
+    <label for="q">Ricerca per cognome o nome</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
            placeholder="Cognome o nome">
 
@@ -62,9 +62,9 @@
     </label>
 
     <p class="suggerimento">
-      La registrazione utilizza la data odierna e funziona anche senza campo:
-      le gite partono da sole appena la linea torna. Le registrazioni errate si
-      annullano da «Gite fatte».
+      La registrazione usa la data odierna ed è disponibile anche senza connessione:
+      le gite vengono inviate automaticamente al ritorno della rete. Le registrazioni
+      errate si annullano da «Gite fatte».
     </p>
   </div>
 
@@ -85,7 +85,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261023coda"></script>
+<script src="comune.js?v=20261022testi"></script>
 <script>
 (() => {
   "use strict";
@@ -199,8 +199,8 @@
 
     if (coda.length) {
       riga.textContent = coda.length === 1
-        ? "1 gita da inviare: parte da sola appena c'è linea."
-        : `${coda.length} gite da inviare: partono da sole appena c'è linea.`;
+        ? "1 gita in attesa di invio: sarà inviata al ritorno della connessione."
+        : `${coda.length} gite in attesa di invio: saranno inviate al ritorno della connessione.`;
       riga.className = "da-inviare";
       riga.hidden = false;
       return;
@@ -335,7 +335,7 @@
 
         <div class="azioni-pannello" style="margin-top:14px">
           <button class="btn-verde grande" data-segna="${a.member_id}" ${finito ? "disabled" : ""}>
-            ＋ Segna una gita
+            ＋ Registra una gita
           </button>
           <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usati})</button>
           <button class="btn-chiaro" data-nuovo="${a.member_id}">＋ Nuovo abbonamento</button>
@@ -405,8 +405,8 @@
     const a = abbonamenti.find((x) => x.member_id === socioId);
     const residuo = a ? conAttesa(a).trips_left : null;
     confermaNellaScheda(socioId, residuo === 0
-      ? "Gita segnata. Era l'ultima: abbonamento esaurito."
-      : `Gita segnata. Ne restano ${residuo === null ? "—" : residuo}.`);
+      ? "Gita registrata. Era l'ultima: abbonamento esaurito."
+      : `Gita registrata. Gite rimanenti: ${residuo === null ? "—" : residuo}.`);
 
     svuotaCoda();
   }
@@ -454,7 +454,7 @@
         } catch (errore) {
           if (ritentabile(errore)) {
             if (sessioneScaduta(errore)) {
-              messaggio(messaggioErrore(errore) + " Le gite segnate restano sul telefono e partono dopo.", "avviso-errore");
+              messaggio(messaggioErrore(errore) + " Le gite registrate restano sul telefono e saranno inviate in seguito.", "avviso-errore");
             }
             programmaRitentativo();
             return;
@@ -548,7 +548,7 @@
       : letturaFallita ? "" : `<p class="aiuto">Nessuna gita registrata.</p>`;
 
     const nota = letturaFallita
-      ? `<p class="aiuto">Le gite già inviate non si vedono: manca la linea.</p>`
+      ? `<p class="aiuto">Le gite già inviate non sono visibili: connessione assente.</p>`
       : "";
 
     zona.innerHTML = `${corpo}${nota}
@@ -704,7 +704,7 @@
     if (!socio) return;
     if (!scelta) {
       const esito = el("esito_" + socioId);
-      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">Scegli prima l'abbonamento.</p>`;
+      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">Selezionare prima l'abbonamento.</p>`;
       return;
     }
 
@@ -750,7 +750,7 @@
     const a = abbonamenti.find((x) => x.member_id === socioId);
     if (!zona || !a) return;
     if (!opzioniAbbonamento.length) {
-      zona.innerHTML = `<p class="avviso avviso-errore">Il listino non si è caricato: serve la linea almeno una volta. Ricarica la pagina quando c'è campo.</p>`;
+      zona.innerHTML = `<p class="avviso avviso-errore">Listino non caricato: è necessaria la connessione almeno una volta. Ricaricare la pagina quando la rete è disponibile.</p>`;
       return;
     }
     // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
@@ -776,13 +776,13 @@
       const voce = scelta && opzioniAbbonamento.find((v) => v.name === scelta.value);
       if (!voce) {
         zona.querySelector("[data-esito-nuovo]").innerHTML =
-          `<p class="avviso avviso-errore">Scegli prima l'abbonamento.</p>`;
+          `<p class="avviso avviso-errore">Selezionare prima l'abbonamento.</p>`;
         return;
       }
       accodaAbbonamento({ id: socioId, last_name: a.last_name, first_name: a.first_name }, voce, b.dataset.vendi === "1");
       disegna();
       confermaNellaScheda(socioId, `Abbonamento «${voce.name}» ${b.dataset.vendi === "1" ? "pagato" : "da pagare"}: in invio. `
-        + "Le sue gite si possono già segnare.");
+        + "Le gite del socio possono già essere registrate.");
       svuotaCoda();
     }));
   }

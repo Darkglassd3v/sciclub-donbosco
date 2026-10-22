@@ -74,7 +74,7 @@
     scegli("f_agevolazioni_famiglia", "3 PERSONE CON ASSICURAZIONE");
     prova("agevolazioneTogliTessera", !tessere().some((x) => x.checked) && !tesseraObbligatoria() && totaleIndividuale() === 110,
       `tessera scelta ${tessere().some((x) => x.checked)}, totale ${totaleIndividuale()}`);
-    prova("capoNucleo", notaVisibile() && nota().textContent.includes("1 persona") && nota().textContent.includes("per 3"),
+    prova("capoNucleo", notaVisibile() && nota().textContent.includes("1 persona") && nota().textContent.includes("ne prevede 3"),
       `nota «${nota().textContent.trim()}»`);
     prova("capoSoloCorso", visibile("CORSO PRESCIISTICA - FAMIGLIA") && !visibile("CORSO PRESCIISTICA"),
       `solo corso ${visibile("CORSO PRESCIISTICA - FAMIGLIA")}, con assicurazione ${visibile("CORSO PRESCIISTICA")}`);
