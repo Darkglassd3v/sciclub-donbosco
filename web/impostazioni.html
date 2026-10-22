@@ -291,6 +291,8 @@
   // Un update o delete che il database non applica (riga negata dalla RLS, o tolta
   // nel frattempo) non dà errore: torna senza righe. Senza questo controllo la
   // pagina diceva «salvato».
+  // In Soci le partenze di un socio si salvano separate da virgola (spuntaPartenze()).
+  const SENZA_VIRGOLA = "Niente virgole nel luogo: in Soci le partenze si separano con la virgola. Usa il trattino (ASTI - PIAZZA D'ARMI).";
   const NON_SALVATO = "Non salvato: la riga non c'è più o non hai il permesso di cambiarla. Ricarica la pagina.";
   function scritta({ data, error }) {
     if (error) throw error;
@@ -676,6 +678,7 @@
       active: riga.querySelector("[data-attivo]").checked,
     };
     if (!patch.place) { segnaErrore(riga.querySelector("[data-luogo]"), "Inserisci un luogo."); return; }
+    if (patch.place.includes(",")) { segnaErrore(riga.querySelector("[data-luogo]"), SENZA_VIRGOLA); return; }
     bottone.disabled = true;
     try {
       scritta(await sb.from("departures").update(patch).eq("id", id).select("id"));
@@ -695,6 +698,7 @@
       segnaErrore(el("nuovoLuogo"), "Inserisci un luogo.");
       return;
     }
+    if (luogo.includes(",")) { segnaErrore(el("nuovoLuogo"), SENZA_VIRGOLA); return; }
     const bottone = el("btnAggiungiPartenza");
     bottone.disabled = true;
     try {
