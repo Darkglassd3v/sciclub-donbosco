@@ -234,6 +234,8 @@ escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Non le lan
   Soci la casella "già pagato" sulla riga aggiunta somma il prezzo all'acconto.
 - Rimborso: riduce il pagato del socio. Lo possono fare tesoriere e admin, con lo storico delle modifiche.
 - Totale scritto a mano: segnato come manuale, il form non lo ricalcola più.
+- Totale di un socio già salvato (22/10): non segue i prezzi nuovi del listino, quello fatto pagare
+  vale. Cambiando una voce cambia solo la differenza, coi prezzi di oggi (`totaleCalcolato()` in Soci).
 - Codici fiscali dai fogli di dati26 (`legacy/dati26/`): si correggono su tutte le righe della persona, anche quelle
   vecchie. Prima un controllo che non scrive niente, poi il backup, poi la correzione.
   Se il CF dei fogli è diverso da quello del database vince quello dei fogli; i CF dei fogli si

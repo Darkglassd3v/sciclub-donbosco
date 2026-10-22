@@ -22,6 +22,12 @@
 
 ## Richieste nuove
 
+- [ ] 22/10 sera: **Il totale di un socio non cambia coi prezzi nuovi** (audit S7). Fatto (TDD, prova
+      `test-browser/totale-fisso.js`), commit locale: push col sì. L'utente: «il totale
+      pagato ad un dato momento vale sempre anche se cambiano i prezzi». Salvando un socio senza
+      cambiare le sue voci il totale resta quello salvato; cambiando una voce si aggiunge il prezzo
+      di oggi della voce nuova e si toglie quello di oggi della voce tolta («solo la differenza»).
+      Da fare con TDD. Doppioni d'archivio: l'utente ha visto l'elenco delle 27 coppie, decide lui.
 - [ ] 23/10: **Centesimi in Bilancio, prima tessera dal numero di Impostazioni, minori dell'audit.**
       L'utente ha scelto: (1) i movimenti di Bilancio (prezzo unitario) accettano i centesimi, sono
       spese vere (es. 1,35 di commissione); quote, listino e acconti restano a 0,50 €; (2) il numero
@@ -397,8 +403,6 @@ della tessera a parte, direttivo pagato dal club); scheda Soci e Stampa nell'ord
 
 - [ ] Pulsante A+ anche nel sito `ricerca/`.
 - [ ] Presciistica nella scheda del socio in `ricerca/` (oggi mostra solo l'abbonamento).
-- [ ] Ripubblicare la Edge Function `crea-utente` (la versione nel repository non assegna più
-      ruoli; quella pubblicata funziona lo stesso). Come: `docs/ACCOUNT.md`.
 - [ ] Il tag locale `2.1` è diverso da quello su GitHub (`git fetch --tags` lo rifiuta): capire
       quale è giusto prima di toccarlo.
 
