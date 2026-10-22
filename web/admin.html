@@ -158,7 +158,9 @@
       let query = sb
         .from("households")
         .select("*")
-        .gte("enrolled_at", inizioStagione())
+        // Iscritto alla stagione aperta: enrolled_at pieno (close_season() lo svuota), come
+        // in Stampe e Riepilogo. Il 1° settembre del calendario perdeva chi si iscrive ad agosto.
+        .not("enrolled_at", "is", null)
         .order("last_name");
 
       // Anche chi è a credito (saldo sotto zero): è un conto da chiudere, come chi deve pagare.
@@ -191,12 +193,6 @@
     const { data, error } = await sb.from("members").select("*").in("id", ids);
     if (error) throw error;
     return Object.fromEntries(data.map((s) => [s.id, s]));
-  }
-
-  function inizioStagione() {
-    const oggi = new Date();
-    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
-    return new Date(anno, 8, 1).toISOString();
   }
 
   function render() {

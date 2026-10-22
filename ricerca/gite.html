@@ -217,11 +217,15 @@
     riga.hidden = true;
   }
 
-  /** Inizio della stagione, per leggere solo le gite di quest'anno. */
-  function inizioStagione() {
-    const oggi = new Date();
-    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
-    return new Date(anno, 8, 1).toISOString();
+  // La stagione aperta la decide il database (current_season(): quella dopo l'ultima
+  // chiusa), non il 1° settembre del calendario. Letta una volta.
+  let stagioneLetta = null;
+  function stagioneAperta() {
+    stagioneLetta ??= sb.rpc("current_season").then(({ data, error }) => {
+      if (error) { stagioneLetta = null; throw error; }
+      return data;
+    });
+    return stagioneLetta;
   }
 
   function messaggio(testoMsg, classe) {
@@ -267,7 +271,7 @@
     const { data, error } = await sb
       .from("trip_uses").select("id, trip_date")
       .eq("member_id", socioId)
-      .gte("season", inizioStagione())
+      .eq("season", await stagioneAperta())
       .order("trip_date", { ascending: false });
     if (error) throw error;
     return data;
@@ -623,7 +627,8 @@
     let query = sb
       .from("members")
       .select("id, last_name, first_name")
-      .gte("enrolled_at", inizioStagione())
+      // Iscritto alla stagione aperta: enrolled_at pieno (close_season() lo svuota).
+      .not("enrolled_at", "is", null)
       // L'abbonamento si vende solo a chi è tesserato: con la tessera o coperto
       // da presciistica o agevolazione famiglia (card_holder()).
       .is("card_holder", true)

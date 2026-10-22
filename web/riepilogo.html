@@ -207,7 +207,10 @@
       sb.from("preski_counts").select("*"),
       sb.from("prices").select("category, name, price:card_price, day"),
       // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
-      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").gte("season", inizioStagione()),
+      // Della stagione aperta (current_season() del database, non il 1° settembre), tutti.
+      sb.rpc("current_season").then(({ data: stagione, error }) => (error ? { error }
+        : tutteLeRighe(() => sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").eq("season", stagione).order("id"))
+          .then((data) => ({ data }), (errore) => ({ error: errore })))),
     ]);
     const errore = risposte.find((r) => r.error);
     if (errore) throw errore.error;
@@ -226,13 +229,6 @@
       presciistica: conPrezzo(presciistica, "PRESCIISTICA"),
       ...perVoce(movimenti),
     };
-  }
-
-  /** Inizio della stagione in corso (1° settembre), come nel pannello Pagamenti. */
-  function inizioStagione() {
-    const oggi = new Date();
-    const anno = oggi.getMonth() >= 8 ? oggi.getFullYear() : oggi.getFullYear() - 1;
-    return new Date(anno, 8, 1).toISOString();
   }
 
   /**
