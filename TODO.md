@@ -22,31 +22,35 @@
 
 ## Richieste nuove
 
-- [ ] 22/10 notte: **Prove su tutto il sito (scelta «b»), in autonomia.** L'utente: «non mi sento molto
-      sicuro sulle feature… compaiono bug su nuove feature e anche su vecchie». Regole della notte:
-      **solo commit locali, niente push né deploy né database di produzione**; a fine lavoro spegnere
-      «come al solito» (chiudere cswap auto e la sua bash, `~/.local/bin/spegni-tutto`, dopo 60 s
-      `gnome-session-quit --power-off --no-prompt`). Ogni bug: prova RED (commit `[skip ci]`), poi GREEN.
-      Piano, in ordine di rischio per le iscrizioni di metà novembre:
-      1. Audit in sola lettura: percorsi di ogni pagina e punti a rischio, elenco qui sotto.
-      2. Prove nel browser coi percorsi critici: Soci (iscrizione, modifica, famiglia, abbonamenti),
-         Pagamenti, Assicurazione, Riepilogo/Excel, Stampe/pullman, Bilancio, Stagione, Gestione/Utenti,
-         Ricerca. Le prove guardano quello che si vede (display), non gli attributi.
-      3. Foto delle pagine a 1280 e 500 px (bug grafici).
-      4. Prove col PostgREST vero in docker sul database di `test_ruoli.sh` (le richieste vere delle
-         pagine: filtri, rpc, RLS).
-      Avanzamento (aggiornare qui a ogni pagina finita, poi `/ecc:ck save`):
-      - Audit fatto: `docs/audit-2026-10-22.md` (sospetti S*, G*, P*; stato in fondo al file).
-      - Banco col database vero: `bash test-reale/avvia.sh [prova.js]` (copia della produzione in
-        `supabase/migration/copia-test/`, fuori da git; Postgres 17 + PostgREST in docker; Chrome a
-        tempo reale da `test-reale/chrome.js`). Prova di fumo `test-reale/fumo.js` verde.
-      - Corretti (RED/GREEN, solo locali): S1/S10 voci e partenze spente perse al Salva (7e0fe4f);
-        P1-P3 stagione dall'orologio in Pagamenti/Gite/Riepilogo (c1730ad); G1 can() con la password
-        iniziale da cambiare (1942773, **da applicare in produzione**); G2 pagine di arrivo e Vedi come
-        (a051638); S5/S6/S11 Soci (aa825cb); P7/P8 Gite coda (23ba9e4); P10/P11 Assicurazione
-        (0c86986); P13/P14 Stampe (14c55da); G4/G5/G7 Impostazioni (f622890); G12 accesso illeggibile
-        (b6273ba); G3 Utenti superadmin (f34f8a9); G11 Social (eb5b1b9).
-        Elenco completo e stato: fondo di `docs/audit-2026-10-22.md`.
+- [ ] 23/10 mattina, **DA LEGGERE: com'è andata la notte delle prove** (scelta «b», in autonomia).
+      **Tutto solo in commit locali su `2.9-SNAPSHOT`, niente push, niente deploy, niente database di
+      produzione.** Da fare col sì dell'utente:
+      1. **Push** di `2.9-SNAPSHOT` (deploy) e allineare `dev`.
+      2. **Database di produzione**, due funzioni nuove (solo `create or replace function`, con
+         lock_timeout e la prova a secco): `public.can` (G1, sicurezza: con la password iniziale da
+         cambiare niente permessi, anche dall'API) e `public.members_no_double_insert` (S15, messaggio).
+         Nient'altro cambia nel database.
+      3. Provare sul sito vero, soprattutto: Soci (voci e partenze spente, «Calcola», tessera con la
+         presciistica, totale a mano), Pagamenti sul telefono (schede), Riepilogo e Bilancio sul
+         telefono, Gite (coda, stagione), Assicurazione (riscarica una lista), Social (rubrica).
+      Fatto (ogni voce con la prova che falliva prima, poi la correzione; dettagli e commit in fondo a
+      `docs/audit-2026-10-22.md`): audit di tutto il sito (3 agenti, sospetti S*, G*, P*); banco di prova
+      sulla **copia del database vero** (`test-reale/`, vedi docs/SVILUPPO.md); corretti S1/S10 voci e
+      partenze spente che il Salva toglieva (perdita di dati), S2 abbonamento tolto con una gita
+      appena segnata, S3 scheda caricata a metà, S5/S6/S11 totale a mano, acconto negativo, pagante
+      tolto, S13 virgole nei luoghi, S14 ricerca con «*», S15 messaggio dell'omonimo; P1-P3 stagione
+      dall'orologio in Pagamenti/Gite/Riepilogo, P4 nucleo incassato con lo Storico aperto, P5 URL oltre
+      8 KB con tutti i nuclei, P6 ricaricamenti dal vivo, P7/P8 Gite (errori temporanei, doppia vendita),
+      P9 ricerche vecchie, P10/P11 Assicurazione, P13/P14 Stampe, P15 prezzo 0, P17 supabase-js fisso;
+      G1 password iniziale, G2 pagine di arrivo e Vedi come, G3 conferma per superadmin, G4/G5/G7
+      Impostazioni, G8 Stagione, G11 Social, G12 accesso illeggibile, G13 password, G14 jsPDF con SRI;
+      foto di tutte le pagine a 1280/500: Riepilogo, Pagamenti, Bilancio e Stagione sul telefono ora a
+      schede o dentro lo schermo (`a-schede` in brand.css). Nessun errore JavaScript in nessuna pagina
+      con i dati veri. Prove: node 6 file, browser col client finto 25, ruoli verdi, copia 18 verdi.
+      **Non fatto** (minori, nell'audit): S4, S8, S12, G9 (saldo previsto e chiusura banca possono non
+      tornare), G10 (Bilancio: il prezzo a passi di 0,50 rifiuta spese coi centesimi, es. 1,35 di
+      commissione: da decidere con l'utente), P12, P16; la matrice dei permessi in Gestione scorre
+      ancora di lato sul telefono (voluto). La password del database va ancora cambiata.
 
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima

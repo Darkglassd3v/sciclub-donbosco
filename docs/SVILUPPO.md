@@ -180,6 +180,19 @@ l'esito nel titolo (`RISULTATO nome=ok nome=NO(perché)`); si aggiunge all'elenc
 con la larghezza della finestra se conta (Impostazioni gira a 1280 e a 500 px, il minimo di Chrome
 headless: tabella sul computer, schede sul telefono).
 Le lancia anche il deploy. Per un bug: prima la prova che fallisce, poi la correzione.
+Il client finto sa anche rispondere con un errore (`FINTO.errore`), fare l'accesso
+(`FINTO.email`, `FINTO.auth`) e mandare eventi del realtime (`FINTO.realtime`).
+
+Prove sulla copia del database vero (dal 23/10/2026): `bash test-reale/avvia.sh [prova.js]`.
+Servono docker e una copia della produzione in `supabase/migration/copia-test/` (dati personali:
+fuori da git; i due comandi per farla sono in cima a `avvia.sh`). Postgres 17 con la copia,
+PostgREST vero davanti e `servi.py` che fa da Supabase sullo stesso indirizzo: la pagina usa
+supabase-js vero, con filtri, rpc e RLS veri, e un account per ruolo. Una prova dice in testa
+`// PAGINA:`, `// RUOLO:` e se serve `// LARGHEZZA:`; un `.sql` accanto (stesso nome) prepara i
+dati sulla copia e dà `window.ATTESO`, quello che la pagina deve mostrare calcolato dal database.
+Chrome va a tempo reale (`chrome.js`). `TIENI=1` lascia tutto acceso per guardare a mano;
+`FOTO=cartella` fotografa ogni pagina a 1280 e 500 px e segnala errori JavaScript e tabelle che
+escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Non le lancia il deploy.
 
 ## Regole decise con il direttivo (30/09/2026)
 
