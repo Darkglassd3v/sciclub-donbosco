@@ -62,7 +62,8 @@ grep -v 'schema "public" already exists\|errors ignored on restore\|^pg_restore:
 psql_ -f "$QUI/dopo.sql" >/dev/null || { echo "dopo.sql non va"; exit 1; }
 echo "copia pronta: $(psql "$URL_PG" -X -At -c 'select count(*) from public.members') soci"
 
-docker run -d --name "$REST" --network "$RETE" -p "127.0.0.1:$PORTA_REST:3000" \
+# PGRST_DB_MAX_ROWS: come Supabase (Max rows 1000), una richiesta dà al più 1000 righe.
+docker run -d --name "$REST" --network "$RETE" -p "127.0.0.1:$PORTA_REST:3000" -e PGRST_DB_MAX_ROWS=1000 \
   -e PGRST_DB_URI="postgres://authenticator:prova-locale@$PG:5432/postgres" \
   -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon -e PGRST_JWT_SECRET="$SEGRETO" \
   postgrest/postgrest:v12.2.3 >/dev/null

@@ -1418,7 +1418,8 @@
   function spuntaPartenze(contenitore, valore) {
     // Confronto sui valori e non con un selettore: un luogo con le virgolette lo romperebbe.
     const scelte = (valore || "").split(",").map((v) => v.trim()).filter(Boolean);
-    // Un luogo spento o rinominato in Impostazioni resta al socio che l'aveva: si
+    // Un luogo spento in Impostazioni resta al socio che l'aveva (uno rinominato cambia
+    // nei soci da sé, departures_rename() nel database): si
     // aggiunge, spuntato, e il Salva non lo toglie. Quelli del socio di prima vanno via.
     el(contenitore).querySelectorAll("label[data-fuori]").forEach((l) => l.remove());
     const presenti = [...el(contenitore).querySelectorAll("input[type=checkbox]")].map((c) => c.value);
