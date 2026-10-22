@@ -1390,7 +1390,11 @@
       salvato = firma();
       window.scrollTo(0, 0);
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      if (vecchia()) return;
+      // A metà il modulo avrebbe l'id di questo socio e gli abbonamenti, il pagante,
+      // i familiari di quello di prima: un Salva o un «Togli» toccherebbe l'altro.
+      resetForm();
+      showToast(`Scheda non caricata (${messaggioErrore(error)}): riprova ad aprirla.`, "is-danger");
     } finally {
       setLoading(false);
     }
