@@ -30,7 +30,8 @@
      * dopo essersi distratti (vedi sorvegliaRighe). */
     .tabella-costi tr.modificata td { background: var(--giallo-light); }
     .tabella-costi input.ordine { width: 4.5rem; }
-    .tabella-costi .paga-socio { margin-top: 4px; font-weight: 600; }
+    /* Il prezzo che si vede in Soci: grande come lì, perché la quota da sola inganna. */
+    .tabella-costi .paga-socio { font-weight: 700; font-size: 1.2rem; white-space: nowrap; }
     .tabella-costi .checkbox { margin-top: 6px; }
     /* Sul telefono ogni voce è una scheda, coi campi uno sotto l'altro e
      * l'etichetta sopra: niente tabella da scorrere di lato. */
@@ -91,7 +92,8 @@
         Tessere, agevolazioni famiglia, abbonamenti (gite/viaggi), corsi e presciistica.
         Gite e giorno di un abbonamento si riconoscono da soli dal nome (es. "5 viaggi SABATO").
         Nessuna voce si cancella davvero: si disattiva. "Ordine" è la posizione nella pagina Soci,
-        come sul modulo di carta (vuoto = in fondo). Il prezzo di una tessera è la sola quota:
+        come sul modulo di carta (vuoto = in fondo). "In Soci" è il prezzo che si vede nella pagina
+        Soci. La quota di una tessera è senza assicurazione:
         il socio paga anche l'assicurazione, se non la paga il club. Così anche la presciistica,
         che comprende la tessera: il socio paga la sua quota più la sua assicurazione. Le
         agevolazioni famiglia sostituiscono la tessera: le persone si leggono dal nome
@@ -100,7 +102,7 @@
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Ordine</th><th>Nome</th><th>Prezzo €</th><th>Chi la assegna</th><th>Assicurazione</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Ordine</th><th>Nome</th><th>Quota €</th><th>Assicurazione</th><th>In Soci</th><th>Attiva</th><th></th>
           </tr></thead>
           <tbody id="tabellaPrezzi"><tr><td colspan="8" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
@@ -115,17 +117,11 @@
             </td>
             <td></td>
             <td data-etichetta="Nome"><textarea class="textarea campo-nome" id="nuovoNome" rows="1" placeholder="Nome" aria-label="Nome della voce nuova"></textarea></td>
-            <td data-etichetta="Prezzo €"><input class="input" type="number" id="nuovoPrezzo" step="0.5" min="0" placeholder="0" aria-label="Prezzo in euro della voce nuova"></td>
-            <td data-etichetta="Chi la assegna">
-              <div class="select"><select id="nuovoMinRole" aria-label="Chi assegna la voce nuova">
-                <option value="utente">utente</option>
-                <option value="admin">admin</option>
-                <option value="superadmin">superadmin</option>
-              </select></div>
-            </td>
+            <td data-etichetta="Quota €"><input class="input" type="number" id="nuovoPrezzo" step="0.5" min="0" placeholder="0" aria-label="Quota in euro della voce nuova"></td>
             <td data-etichetta="Assicurazione">
               <div class="select"><select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o presciistica)"></select></div>
             </td>
+            <td></td>
             <td></td>
             <td><button type="button" class="button is-link" id="btnAggiungiPrezzo">+ Aggiungi</button></td>
           </tr></tfoot>
@@ -344,40 +340,30 @@
     `<option value="${esc(a.code)}" ${(scelta || "") === a.code ? "selected" : ""}>${esc(a.name)}${
       a.code ? ` (${fmt(a.price)})` : ""}</option>`).join("");
 
-  /** Quello che paga il socio per la tessera della riga: quota più assicurazione, se non la paga il club. */
+  /** Il prezzo della riga in Soci: quota più assicurazione, se non la paga il club (card_price() nel database). */
   function aggiornaPagaSocio(riga) {
     const scritta = riga.querySelector("[data-paga]");
     if (!scritta) return;
-    const codice = riga.querySelector("[data-assicurazione]").value;
+    const codice = riga.querySelector("[data-assicurazione]")?.value;
     const club = riga.querySelector("[data-pagata-club]");
-    club.closest("label").hidden = !codice;
+    if (club) club.closest("label").hidden = !codice;
     const assicurazione = ASSICURAZIONI.find((a) => a.code === codice);
     const quota = parseFloat(riga.querySelector("[data-prezzo]").value) || 0;
-    const perAssicurazione = assicurazione && !club.checked ? num(assicurazione.price) * personeDelNome(riga) : 0;
-    scritta.textContent = `Paga il socio: ${fmt(quota + perAssicurazione)}`;
+    const perAssicurazione = assicurazione && !club?.checked ? num(assicurazione.price) * personeDelNome(riga) : 0;
+    scritta.textContent = fmt(quota + perAssicurazione);
   }
 
   function rigaPrezzo(p) {
-    // Il livello di visibilità vale solo per le tessere (vincolo
-    // prices_min_role_only_card nel database).
-    const selettoreRuolo = p.category === "TESSERA"
-      ? `<div class="select"><select data-min-role aria-label="Chi la assegna">
-           <option value="utente" ${p.min_role === "utente" ? "selected" : ""}>tutti</option>
-           <option value="admin" ${p.min_role === "admin" ? "selected" : ""}>admin e superadmin</option>
-           <option value="superadmin" ${p.min_role === "superadmin" ? "selected" : ""}>solo superadmin</option>
-         </select></div>`
-      : "—";
     return `
       <tr data-id="${p.id}" data-categoria="${esc(p.category)}">
         <td data-etichetta="Categoria">${esc(p.category)}</td>
         <td data-etichetta="Ordine"><input class="input ordine" type="number" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
         <td data-etichetta="Nome">${campoNome(p.name, "data-nome", "Nome")}</td>
-        <td data-etichetta="Prezzo €"><input class="input" type="number" data-prezzo step="0.5" min="0" value="${p.price}" aria-label="Prezzo in euro"></td>
-        <td data-etichetta="Chi la assegna">${selettoreRuolo}</td>
+        <td data-etichetta="Quota €"><input class="input" type="number" data-prezzo step="0.5" min="0" value="${p.price}" aria-label="Quota in euro"></td>
         <td data-etichetta="Assicurazione">${conAssicurazione(p.category)
           ? `<div class="select"><select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select></div>
-             <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> la paga il club</label>
-             <p class="paga-socio" data-paga></p>` : "—"}</td>
+             <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> la paga il club</label>` : "—"}</td>
+        <td data-etichetta="In Soci"><span class="paga-socio" data-paga></span></td>
         <td data-etichetta="Attiva"><input type="checkbox" data-attivo ${p.active ? "checked" : ""} aria-label="Attiva"></td>
         <td><button type="button" class="button" data-salva>Salva</button></td>
       </tr>`;
@@ -388,7 +374,7 @@
     try {
       const { data, error } = await sb
         .from("prices")
-        .select("id, category, name, price, active, min_role, insurance, insurance_paid, position")
+        .select("id, category, name, price, active, insurance, insurance_paid, position")
         .order("category")
         .order("position", { nullsFirst: false })
         .order("price")
@@ -419,7 +405,6 @@
   async function salvaPrezzo(riga) {
     const id = riga.dataset.id;
     const bottone = riga.querySelector("[data-salva]");
-    const selettoreRuolo = riga.querySelector("[data-min-role]");
     const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
     if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
     if (!nomePulito(riga.querySelector("[data-nome]"))) { segnaErrore(riga.querySelector("[data-nome]"), "Inserisci un nome."); return; }
@@ -429,7 +414,6 @@
       active: riga.querySelector("[data-attivo]").checked,
       position: parseInt(riga.querySelector("[data-posizione]").value, 10) || null,
     };
-    if (selettoreRuolo) patch.min_role = selettoreRuolo.value;
     const assicurazione = riga.querySelector("[data-assicurazione]");
     if (assicurazione) {
       patch.insurance = assicurazione.value || null;
@@ -465,7 +449,6 @@
         category: categoria,
         name: nome,
         price: prezzo,
-        min_role: categoria === "TESSERA" ? el("nuovoMinRole").value : "utente",
         insurance: conAssicurazione(categoria) ? el("nuovoAssicurazione").value || null : null,
         // In fondo alla sua categoria: l'ordine si cambia poi nella colonna Ordine.
         position: null,
