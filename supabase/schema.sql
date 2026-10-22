@@ -3517,7 +3517,7 @@ begin
                 and m.created_at > now() - interval '10 minutes'
                 and (m.birth_date is not distinct from new.birth_date
                      or m.tax_code = new.tax_code)) then
-    raise exception '% % è stato appena inserito, da te o da un altro operatore: cercalo e apri la sua scheda.',
+    raise exception '% % è stato appena inserito, da te o da un altro operatore: cercalo e apri la sua scheda. Se è un''altra persona con lo stesso nome, scrivi la sua data di nascita e salva di nuovo.',
       new.last_name, new.first_name;
   end if;
   return new;
