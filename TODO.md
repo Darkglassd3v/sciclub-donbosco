@@ -40,6 +40,10 @@
       - Banco col database vero: `bash test-reale/avvia.sh [prova.js]` (copia della produzione in
         `supabase/migration/copia-test/`, fuori da git; Postgres 17 + PostgREST in docker; Chrome a
         tempo reale da `test-reale/chrome.js`). Prova di fumo `test-reale/fumo.js` verde.
+      - Corretti (RED/GREEN, solo locali): S1/S10 voci e partenze spente perse al Salva (7e0fe4f);
+        P1-P3 stagione dall'orologio in Pagamenti/Gite/Riepilogo (c1730ad); G1 can() con la password
+        iniziale da cambiare (1942773, **da applicare in produzione**); G2 pagine di arrivo e Vedi come
+        (a051638). Elenco completo e stato: fondo di `docs/audit-2026-10-22.md`.
 
 - [ ] 22/10: **Note nascoste che restavano a schermo; tessera compresa nella presciistica.** Fatto (TDD:
       ebdfee0 RED, b6e5044 GREEN; online da 2.9-SNAPSHOT): `[hidden]` vince sempre in brand.css (prima
