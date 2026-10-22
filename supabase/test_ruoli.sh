@@ -1583,6 +1583,11 @@ do $$ begin
          'appena inserito'), 'doppio inserimento: il secondo è passato';
   -- Un omonimo con un'altra data di nascita passa.
   insert into public.members (last_name, first_name, birth_date) values ('PROVA', 'DOPPIA', '1950-01-01');
+  -- Due omonimi senza data di nascita: il secondo si ferma, e il messaggio dice come
+  -- inserirlo se è davvero un'altra persona (la data di nascita), non solo «cercalo».
+  insert into public.members (last_name, first_name) values ('PROVA', 'OMONIMO');
+  assert public.test_rifiuta($q$insert into public.members (last_name, first_name) values ('PROVA', 'OMONIMO')$q$,
+         'data di nascita'), 'omonimo senza data: il messaggio non dice di scrivere la data di nascita';
 
   -- I rifiuti, uno per motivo.
   assert public.test_rifiuta($q$select public.delete_member('dddddddd-0000-0000-0000-000000000002')$q$, 'ha versato'),
