@@ -66,8 +66,12 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   pieno (assicurazione dentro) e senza assicurazione: in Impostazioni sceglierla e abbassare la
   quota. I prezzi sono in euro interi (il database rifiuta i centesimi).
 - Backup automatico: `.github/workflows/backup-db.yml` su `dev`, martedì, giovedì e sabato
-  (frase in `supabase/.backup_passphrase`).
-- Test: `./supabase/test_ruoli.sh` (ruoli, RLS e trigger in Postgres su docker).
+  (frase in `supabase/.backup_passphrase`): il dump cifrato e `dati-AAAA-MM-GG.7z` con ogni
+  tabella per Excel (`supabase/scripts/esporta-tutto.sh`). Seconda copia sul PC del club
+  (`supabase/scripts/scarica-backup.sh`, timer di systemd) e, col secret `RCLONE_CONFIG`, su
+  Google Drive. Come leggerli e rimetterli: `docs/BACKUP.md`.
+- Test: `./supabase/test_ruoli.sh` (ruoli, RLS e trigger in Postgres su docker),
+  `./supabase/test_backup.sh` (backup leggibili e copia sul PC).
 
 ## Modello dati da ricordare
 

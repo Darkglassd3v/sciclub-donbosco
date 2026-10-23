@@ -46,6 +46,8 @@ insert into public.members values
   ('b0000000-0000-0000-0000-000000000002', 'NICOLÒ', 'ANNA', null, false, null, null, null, null);
 create table public.prices (name text, price numeric);
 insert into public.prices values ('TESSERA', 40);
+create table public.social_events (id int, image jsonb);
+insert into public.social_events values (1, jsonb_build_object('png', repeat('A', 40000)));
 create table public.nuova_tabella (x int);
 create view public.vista as select count(*) from public.members;
 SQL
@@ -66,6 +68,7 @@ prova "sì/no" "$(vero grep -q ';sì;2026-10-14;' "$SOCI")" "$(sed -n 2p "$SOCI"
 prova "ora italiana" "$(vero grep -q '2026-10-23 10:21:16' "$SOCI")" "attesa 2026-10-23 10:21:16 (ora legale)"
 prova "testo col ; fra virgolette" "$(vero grep -q '"paga; a rate ""due""' "$SOCI")" "$(sed -n 2p "$SOCI" 2>/dev/null)"
 prova "accenti" "$(vero grep -q 'NICOLÒ' "$SOCI")" "NICOLÒ perso"
+prova "cella oltre il limite di Excel" "$(vero grep -q '^1;(troppo lungo per Excel' "$TMP/chiaro/post_social.csv")" "$(cut -c1-80 "$TMP/chiaro/post_social.csv" 2>/dev/null | tr '\n' ' ')"
 prova "conti in LEGGIMI" "$(vero grep -Eq 'soci\.csv.*\b2\b' "$TMP/chiaro/LEGGIMI.txt")" "$(grep soci "$TMP/chiaro/LEGGIMI.txt" 2>/dev/null)"
 
 # --- con la frase: un archivio solo, cifrato anche nei nomi dei file ---
@@ -84,11 +87,12 @@ printf 'frase di prova lunga' > "$TMP/frase"
 cp "$ARCHIVIO" "$TMP/github/dati-2026-10-23.7z" 2>/dev/null || true
 printf 'PGDMP finto' | gpg --batch --yes --pinentry-mode loopback --passphrase-file "$TMP/frase" \
   --symmetric -o "$TMP/github/backup-2026-10-23.dump.gpg" 2>/dev/null
+echo '[{"databaseId":2,"createdAt":"2026-10-23T08:21:16Z"},{"databaseId":1,"createdAt":"2026-10-20T08:14:17Z"}]' > "$TMP/lista.json"
 cat > "$TMP/bin/gh" <<EOF
 #!/usr/bin/env bash
 echo "\$*" >> "$TMP/gh.log"
 case "\$1 \$2" in
-  "run list") printf '%s\n' "\${GH_RUN_LIST:-[{\"databaseId\":2,\"createdAt\":\"2026-10-23T08:21:16Z\"},{\"databaseId\":1,\"createdAt\":\"2026-10-20T08:14:17Z\"}]}" ;;
+  "run list") if [ -n "\${GH_RUN_LIST:-}" ]; then printf '%s\n' "\$GH_RUN_LIST"; else cat "$TMP/lista.json"; fi ;;
   "run download") d=""; while [ \$# -gt 0 ]; do [ "\$1" = -D ] && d="\$2"; shift; done
                   mkdir -p "\$d"; cp "$TMP/github/"* "\$d/" ;;
 esac
@@ -111,6 +115,19 @@ printf 'altra' > "$TMP/frase2"; rm -rf "$TMP/pc/backup-2026-10-23"
 PATH="$TMP/bin:$PATH" OGGI=$OGGI FRASE_FILE="$TMP/frase2" \
   bash "$QUI/scripts/scarica-backup.sh" "$TMP/pc" > "$TMP/uscita.txt" 2>&1 && stato=0 || stato=$?
 prova "frase sbagliata = errore e avviso" "$( [ "$stato" -ne 0 ] && grep -q 'non si apre' "$TMP/avvisi.log" 2>/dev/null; echo $?)" "uscita $stato, avvisi: $(cat "$TMP/avvisi.log" 2>/dev/null)"
+
+# Il giro dopo, con la frase ancora sbagliata, deve avvisare di nuovo: un backup mai aperto non è a posto.
+: > "$TMP/avvisi.log"
+PATH="$TMP/bin:$PATH" OGGI=$OGGI FRASE_FILE="$TMP/frase2" \
+  bash "$QUI/scripts/scarica-backup.sh" "$TMP/pc" > "$TMP/uscita.txt" 2>&1 && stato=0 || stato=$?
+prova "frase ancora sbagliata = avviso di nuovo" "$( [ "$stato" -ne 0 ] && grep -q 'non si apre' "$TMP/avvisi.log" 2>/dev/null; echo $?)" "uscita $stato, avvisi: $(cat "$TMP/avvisi.log" 2>/dev/null)"
+
+# Frase rimessa giusta: il giro dopo ricontrolla quel backup senza riscaricarlo e smette di avvisare.
+: > "$TMP/avvisi.log"; : > "$TMP/gh.log"
+PATH="$TMP/bin:$PATH" OGGI=$OGGI FRASE_FILE="$TMP/frase" \
+  bash "$QUI/scripts/scarica-backup.sh" "$TMP/pc" > "$TMP/uscita.txt" 2>&1 && stato=0 || stato=$?
+prova "frase rimessa = backup a posto" "$( [ "$stato" -eq 0 ] && [ -s "$TMP/pc/backup-2026-10-23/dati-2026-10-23.7z" ] && ! test -s "$TMP/avvisi.log"; echo $?)" "uscita $stato, avvisi: $(cat "$TMP/avvisi.log" 2>/dev/null), $(ls "$TMP/pc")"
+prova "ricontrollo senza riscaricare" "$(! grep -q 'run download' "$TMP/gh.log"; echo $?)" "$(cat "$TMP/gh.log")"
 
 # Ultimo backup di 10 giorni prima: il workflow si è fermato (succede d'estate).
 : > "$TMP/avvisi.log"

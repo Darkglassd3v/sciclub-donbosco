@@ -136,6 +136,7 @@ quote, si aggiornano da Supabase.
 | Spiegare ai volontari come si iscrive un socio | [docs/GUIDA_VOLONTARI.md](docs/GUIDA_VOLONTARI.md) |
 | Preparare le iscrizioni di massa | [docs/ISCRIZIONI.md](docs/ISCRIZIONI.md) |
 | Lavorare sul codice: regole, rilascio, database | [docs/SVILUPPO.md](docs/SVILUPPO.md) |
+| Leggere i dati se il sito non funziona, backup | [docs/BACKUP.md](docs/BACKUP.md) |
 | Cosa c'è da fare | [TODO.md](TODO.md) |
 
 ## Sviluppo in locale

@@ -2,7 +2,13 @@ name: Backup del database
 
 # Martedì, giovedì e sabato esporta tutto il database Supabase (piano Free:
 # Supabase non fa backup da solo), lo cifra e lo tiene 90 giorni fra gli
-# artifact: circa 40 copie da poco più di 1 MB.
+# artifact: circa 40 copie da poco più di 1 MB. Ogni backup ha due file:
+#   backup-AAAA-MM-GG.dump.gpg  il database intero, per rimetterlo (pg_restore)
+#   dati-AAAA-MM-GG.7z          ogni tabella in un file per Excel, da aprire con
+#                               7-Zip e la frase anche senza il sito (vedi
+#                               docs/BACKUP.md, supabase/scripts/esporta-tutto.sh)
+# Copie in più: sul PC del club (supabase/scripts/scarica-backup.sh, ogni giorno)
+# e, se c'è il secret RCLONE_CONFIG, su Google Drive (vedi sotto).
 #
 # Il repository è pubblico e gli artifact li può scaricare chiunque: per questo
 # il file è cifrato (gpg, AES-256) con una frase che sta nei secret e in
@@ -13,6 +19,8 @@ name: Backup del database
 #   SUPABASE_DB_URL     stringa di connessione del pooler, porta 5432 (i runner
 #                       non hanno IPv6: la connessione diretta non si raggiunge)
 #   BACKUP_PASSPHRASE   la frase per cifrare
+#   RCLONE_CONFIG       (facoltativo) il file di rclone con un remote «drive»
+#                       verso il Google Drive del club: docs/BACKUP.md dice come farlo
 #
 # GitHub fa partire gli orari solo dal branch predefinito (dev), e in un
 # repository pubblico li sospende dopo 60 giorni senza commit: d'estate
@@ -42,7 +50,14 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      RCLONE_CONFIG_TESTO: ${{ secrets.RCLONE_CONFIG }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: supabase/scripts
+          persist-credentials: false
+
       - name: Esporta, controlla e cifra
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
@@ -62,13 +77,34 @@ jobs:
           gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
               --symmetric --cipher-algo AES256 -o "$nome.dump.gpg" "$nome.dump" 3<<<"$FRASE"
           rm "$nome.dump"
-          ls -l "$nome.dump.gpg"
+          # La stessa copia in file per Excel, per leggerla anche senza il sito.
+          dati="dati-${nome#backup-}"
+          command -v 7z >/dev/null || sudo apt-get install -y -q p7zip-full
+          command -v psql >/dev/null || sudo apt-get install -y -q postgresql-client
+          FRASE="$FRASE" bash supabase/scripts/esporta-tutto.sh "$DB" "$dati"
+          7z t -p"$FRASE" "$dati.7z" >/dev/null
+          ls -l "$nome.dump.gpg" "$dati.7z"
           echo "NOME=$nome" >> "$GITHUB_ENV"
+          echo "DATI=$dati" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ env.NOME }}
-          path: ${{ env.NOME }}.dump.gpg
+          path: |
+            ${{ env.NOME }}.dump.gpg
+            ${{ env.DATI }}.7z
           retention-days: 90
           compression-level: 0   # già compresso e cifrato
           if-no-files-found: error
+
+      # Una copia fuori da GitHub: se manca il secret il passo non parte.
+      - name: Copia su Google Drive
+        if: env.RCLONE_CONFIG_TESTO != ''
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -q rclone >/dev/null
+          mkdir -p ~/.config/rclone
+          printf '%s\n' "$RCLONE_CONFIG_TESTO" > ~/.config/rclone/rclone.conf
+          rclone copy "$NOME.dump.gpg" drive:SciClubDonBosco-backup/
+          rclone copy "$DATI.7z" drive:SciClubDonBosco-backup/
+          rclone lsl drive:SciClubDonBosco-backup/ | tail -3
