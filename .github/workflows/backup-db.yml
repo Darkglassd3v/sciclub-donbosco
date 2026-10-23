@@ -77,14 +77,25 @@ jobs:
           gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
               --symmetric --cipher-algo AES256 -o "$nome.dump.gpg" "$nome.dump" 3<<<"$FRASE"
           rm "$nome.dump"
-          # La stessa copia in file per Excel, per leggerla anche senza il sito.
-          dati="dati-${nome#backup-}"
+          ls -l "$nome.dump.gpg"
+          echo "NOME=$nome" >> "$GITHUB_ENV"
+
+      # La stessa copia in file per Excel, per leggerla anche senza il sito. Se non
+      # riesce il dump si salva lo stesso, e l'ultimo passo fa diventare rossa l'esecuzione.
+      - name: File per Excel
+        id: dati
+        continue-on-error: true
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          FRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          dati="dati-${NOME#backup-}"
           command -v 7z >/dev/null || sudo apt-get install -y -q p7zip-full
           command -v psql >/dev/null || sudo apt-get install -y -q postgresql-client
           FRASE="$FRASE" bash supabase/scripts/esporta-tutto.sh "$DB" "$dati"
           7z t -p"$FRASE" "$dati.7z" >/dev/null
-          ls -l "$nome.dump.gpg" "$dati.7z"
-          echo "NOME=$nome" >> "$GITHUB_ENV"
+          ls -l "$dati.7z"
           echo "DATI=$dati" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4
@@ -106,5 +117,11 @@ jobs:
           mkdir -p ~/.config/rclone
           printf '%s\n' "$RCLONE_CONFIG_TESTO" > ~/.config/rclone/rclone.conf
           rclone copy "$NOME.dump.gpg" drive:SciClubDonBosco-backup/
-          rclone copy "$DATI.7z" drive:SciClubDonBosco-backup/
+          if [ -n "${DATI:-}" ]; then rclone copy "$DATI.7z" drive:SciClubDonBosco-backup/; fi
           rclone lsl drive:SciClubDonBosco-backup/ | tail -3
+
+      - name: Esito del file per Excel
+        if: steps.dati.outcome == 'failure'
+        run: |
+          echo "::error::Il file per Excel (dati-AAAA-MM-GG.7z) non è stato creato: il dump è salvato, vedere il passo «File per Excel»"
+          exit 1
