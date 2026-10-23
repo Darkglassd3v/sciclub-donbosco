@@ -32,7 +32,7 @@ for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html p
   read -r pagina script larghezza <<< "$prova"
   # Una copia della pagina per prova, accanto all'originale: i percorsi relativi restano giusti.
   copia="prova-${script%.js}${larghezza:+-$larghezza}.html"
-  sed "s#<script src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@[^\"]*\"></script>#<script src=\"fake-supabase.js\"></script><script src=\"$script\"></script>#" \
+  sed "s#<script src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@[^\"]*\"[^>]*></script>#<script src=\"fake-supabase.js\"></script><script src=\"$script\"></script>#" \
     "$TMP/$pagina" > "$TMP/$copia"
   if ! grep -q "fake-supabase.js" "$TMP/$copia"; then
     echo "$script: in $pagina non trovo lo script di supabase-js da sostituire"; falliti=1; continue

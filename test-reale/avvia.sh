@@ -87,11 +87,11 @@ declare -A UTENTE=( [superadmin]=1 [admin]=2 [tesoriere]=3 [assicurazione]=4 [gi
 ANON="$(token anon "" "")"
 
 # supabase-js della stessa versione delle pagine, scaricato una volta: il CDN a volte non risponde.
-CACHE="$HOME/.cache/sciclub-prove"; JS="$CACHE/supabase-js-2.45.4.min.js"
+CACHE="$HOME/.cache/sciclub-prove"; JS="$CACHE/supabase-js-2.45.4.js"
 if [ ! -s "$JS" ]; then
   mkdir -p "$CACHE"
   python3 -c "import urllib.request,sys; urllib.request.urlretrieve(sys.argv[1], sys.argv[2])" \
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" "$JS" || { echo "supabase-js non scaricato"; exit 1; }
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" "$JS" || { echo "supabase-js non scaricato"; exit 1; }
 fi
 
 mkdir -p "$TMP/sito"
