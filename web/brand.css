@@ -72,6 +72,12 @@ body {
  * più contrasto (8.7:1 sul bianco) ed è lo stesso dei pulsanti. */
 a { color: var(--blu); }
 a:hover { color: var(--blu-dark); }
+/* Un link dentro una frase si riconosce anche senza il colore (WCAG 1.4.1): il
+ * blu sul testo scuro ha contrasto 1,11:1, per chi non distingue i colori è uguale. */
+p a:not(.button):not(.tag), li a:not(.button):not(.tag), .help a, label a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 strong, label, .label { color: var(--testo); }
 .label { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261023schede">
+  <link rel="stylesheet" href="brand.css?v=20261023accessibile">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
@@ -74,7 +74,7 @@
   <div class="barra-avanzamento" id="avanzamento"></div>
 </header>
 
-<div class="container-main">
+<div class="container-main" role="main">
   <nav class="schede-gestione" aria-label="Gestione">
     <a href="stagione.html">Amministrazione</a>
     <a href="utenti.html">Utenti</a>
@@ -101,7 +101,7 @@
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
           <thead><tr>
-            <th>Categoria</th><th>Ordine</th><th>Nome</th><th>Quota €</th><th>Assicurazione</th><th>In Soci</th><th>Attiva</th><th></th>
+            <th>Categoria</th><th>Ordine</th><th>Nome</th><th>Quota €</th><th>Assicurazione</th><th>In Soci</th><th>Attiva</th><th><span class="is-sr-only">Azioni</span></th>
           </tr></thead>
           <tbody id="tabellaPrezzi"><tr><td colspan="8" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
@@ -145,7 +145,7 @@
       </p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
-          <thead><tr><th>Nome</th><th>Prezzo €</th><th></th></tr></thead>
+          <thead><tr><th>Nome</th><th>Prezzo €</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
           <tbody id="tabellaAssicurazioni"><tr><td colspan="3" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
             <td data-etichetta="Nome dell'assicurazione nuova"><textarea class="textarea campo-nome" id="nuovaAssNome" rows="1" placeholder="Nome" aria-label="Nome dell'assicurazione nuova"></textarea></td>
@@ -164,7 +164,7 @@
         il nome viene aggiornato anche nei soci che lo hanno scelto.</p>
       <div class="tabella-scorrevole">
         <table class="tabella-costi">
-          <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th></th></tr></thead>
+          <thead><tr><th>Giorno</th><th>Luogo</th><th>Attiva</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
           <tbody id="tabellaPartenze"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
           <tfoot><tr class="riga-nuova">
             <td data-etichetta="Giorno della partenza nuova">

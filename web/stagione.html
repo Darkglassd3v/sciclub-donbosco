@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Amministrazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261023schede">
+  <link rel="stylesheet" href="brand.css?v=20261023accessibile">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
   <style>
     .versione-sito { font-size: 1.15rem; }
@@ -62,7 +62,7 @@
   <div class="barra-avanzamento" id="avanzamento"></div>
 </header>
 
-<div class="container-main">
+<div class="container-main" role="main">
   <nav class="schede-gestione" aria-label="Gestione">
     <a href="stagione.html">Amministrazione</a>
     <a href="utenti.html">Utenti</a>
@@ -101,7 +101,7 @@
       <table class="tabella-stagioni a-schede">
         <thead><tr>
           <th>Stagione</th><th class="num">Soci</th><th class="num">Quote</th>
-          <th class="num">Incassato</th><th class="num">Da incassare</th><th></th>
+          <th class="num">Incassato</th><th class="num">Da incassare</th><th><span class="is-sr-only">Azioni</span></th>
         </tr></thead>
         <tbody id="tabellaChiuse"><tr><td colspan="6">Caricamento…</td></tr></tbody>
       </table>
