@@ -113,6 +113,12 @@
 
 ## Da decidere
 
+- Soci, «Leggi la scheda» (23/10, rimandato dall'utente): foto della scheda di carta con la
+  fotocamera, letta da Claude in una Edge Function (come `supabase/functions/crea-utente`), modulo
+  compilato senza salvare, totale ricontrollato col listino. Circa 3 centesimi a scheda, serve un
+  account Anthropic e una riga nell'informativa privacy (le foto vanno ad Anthropic, negli USA).
+  Prima una prova con 2-3 schede finte fotografate dal portatile.
+
 - Bilancio, voce Sponsor: basta il nome scritto a mano, o serve il legame con l'elenco degli
   sponsor di Social (colonna nuova; oggi chi ha il bilancio non legge quell'elenco)?
 - Codice fiscale: un elenco dei codici dei comuni (JSON statico nel repository, niente libreria)
