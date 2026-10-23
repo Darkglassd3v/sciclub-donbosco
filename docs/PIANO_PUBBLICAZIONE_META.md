@@ -1,7 +1,8 @@
 # Piano: pubblicare su Facebook e Instagram dal sito
 
-Proposta del 2026-09-28, **da decidere** (vedi `TODO.md`). Oggi i post si scaricano dalla
-pagina Social e si pubblicano a mano.
+Proposta del 2026-09-28. **Deciso: si pubblica a mano in Meta Business Suite**, che programma i
+post su Facebook e Instagram (16/10); niente pulsante «Prepara per Business Suite» nel sito
+(23/10). Il piano resta qui se un giorno servisse.
 
 - **Complessità**: medio-alta, ~12-18 ore più i tempi di Meta. Prima di tutto chiedersi se serve: con 2-4 post a settimana il giro
   "scarica, copia, pubblica" costa 1-2 minuti, e Meta Business Suite pubblica già su tutti e due in un
