@@ -32,7 +32,8 @@ for p in "$PORTA" "$PORTA_REST" "$PORTA_PG"; do
   (echo > "/dev/tcp/127.0.0.1/$p") 2>/dev/null && { echo "porta $p già usata: un altro avvia.sh acceso? (PORTA, PORTA_REST, PORTA_PG)"; exit 1; }
 done
 
-# Ogni prova: script, ruolo e, se serve, larghezza della finestra. La pagina la dice lo script (// PAGINA: ...).
+# Ogni prova: script, ruolo e, se serve, larghezza della finestra. La pagina la dice lo script
+# (// PAGINA: ...); con più pagine nella stessa riga la prova gira su ognuna.
 PROVE=(${@:-$(cd "$QUI" && grep -l '^// PAGINA:' *.js 2>/dev/null)})   # chrome.js è lo strumento, non una prova
 
 N=$$
@@ -105,9 +106,30 @@ python3 "$QUI/servi.py" "$PORTA" "$TMP/sito" "http://127.0.0.1:$PORTA_REST" "$SE
 SERVER=$!
 for _ in $(seq 50); do (echo > "/dev/tcp/127.0.0.1/$PORTA") 2>/dev/null && break; sleep .1; done
 
+# Copia della pagina $1 in $2 col superadmin già entrato e supabase-js locale, più lo script $3 se c'è.
+entrata() {
+  local id="70000000-0000-0000-0000-000000000001" accesso sessione su
+  accesso="$(token authenticated "$id" "prova-superadmin@locale")"
+  sessione="{\"access_token\":\"$accesso\",\"token_type\":\"bearer\",\"expires_in\":86400,\"expires_at\":$(( $(date +%s) + 86400 )),\"refresh_token\":\"prova\",\"user\":{\"id\":\"$id\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"prova-superadmin@locale\",\"app_metadata\":{},\"user_metadata\":{}}}"
+  su="$( [ "$(dirname "$1")" = "." ] && echo "" || echo "../")"
+  python3 - "$TMP/sito/$1" "$TMP/sito/$2" "<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione));</script>" "${3:+$su$3}" "${su}supabase-locale.js" <<'PY'
+import re, sys
+sorgente, destinazione, inizio, prova, locale = sys.argv[1:6]
+testo = open(sorgente, encoding="utf-8").read()
+tag = re.search(r'<script src="https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js@[^"]*"[^>]*></script>', testo)
+if not tag: sys.exit(1)
+testo = testo[:tag.start()] + inizio + f'<script src="{locale}"></script>' + (f'<script src="{prova}"></script>' if prova else '') + testo[tag.end():]
+open(destinazione, "w", encoding="utf-8").write(testo)
+PY
+}
+
 # TIENI=1: niente prove, tutto acceso finché non si ferma lo script (per guardare a mano).
+# Ogni pagina ha anche la copia entra-<pagina>.html col superadmin già entrato (es. per Lighthouse).
 if [ -n "${TIENI:-}" ]; then
-  echo "acceso: sito http://127.0.0.1:$PORTA, PostgREST $PORTA_REST, Postgres $PORTA_PG; token in $TMP/token"
+  for pagina in $(cd "$TMP/sito" && ls *.html; cd "$TMP/sito" && ls ricerca/*.html); do
+    entrata "$pagina" "$(dirname "$pagina")/entra-$(basename "$pagina")" || true
+  done
+  echo "acceso: sito http://127.0.0.1:$PORTA (già entrati: entra-index.html...), PostgREST $PORTA_REST, Postgres $PORTA_PG; token in $TMP/token"
   token authenticated 70000000-0000-0000-0000-000000000001 prova-superadmin@locale > "$TMP/token"
   echo "$TMP" > "$QUI/.tieni-cartella"
   while :; do sleep 60; done
@@ -140,10 +162,10 @@ fi
 
 falliti=0
 for script in "${PROVE[@]}"; do
-  pagina="$(grep -m1 -o '// PAGINA: .*' "$QUI/$script" | sed 's#// PAGINA: ##')"
+  pagine="$(grep -m1 -o '// PAGINA: .*' "$QUI/$script" | sed 's#// PAGINA: ##')"
   ruolo="$(grep -m1 -o '// RUOLO: .*' "$QUI/$script" | sed 's#// RUOLO: ##')"; ruolo="${ruolo:-superadmin}"
   larghezza="$(grep -m1 -o '// LARGHEZZA: .*' "$QUI/$script" | sed 's#// LARGHEZZA: ##')"
-  [ -n "$pagina" ] || { echo "$script: manca // PAGINA:"; falliti=1; continue; }
+  [ -n "$pagine" ] || { echo "$script: manca // PAGINA:"; falliti=1; continue; }
   id="70000000-0000-0000-0000-00000000000${UTENTE[$ruolo]}"
   accesso="$(token authenticated "$id" "prova-$ruolo@locale")"
   sessione="{\"access_token\":\"$accesso\",\"token_type\":\"bearer\",\"expires_in\":86400,\"expires_at\":$(( $(date +%s) + 86400 )),\"refresh_token\":\"prova\",\"user\":{\"id\":\"$id\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"prova-$ruolo@locale\",\"app_metadata\":{},\"user_metadata\":{}}}"
@@ -152,8 +174,9 @@ for script in "${PROVE[@]}"; do
     atteso="$(psql "$URL_PG" -X -At -v ON_ERROR_STOP=1 -f "$QUI/${script%.js}.sql" 2>"$TMP/sql.txt" | tail -1)"
     [ -n "$atteso" ] || { echo "$script: ${script%.js}.sql non dà niente: $(head -2 "$TMP/sql.txt")"; falliti=1; continue; }
   fi
+  for pagina in $pagine; do
   dir="$(dirname "$pagina")"; base="$(basename "$pagina")"
-  copia="$dir/prova-${script%.js}.html"
+  copia="$dir/prova-${script%.js}-$base"
   inizio="<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione)); window.ATTESO = $atteso;</script>"
   # supabase-js vero (copia locale); la prova subito dopo, prima degli script della pagina.
   su="$( [ "$dir" = "." ] && echo "" || echo "../")"
@@ -170,29 +193,19 @@ PY
   # A tempo reale (chrome.js): col tempo virtuale di --dump-dom e la rete vera le pagine si chiudevano a metà.
   titolo=$(node "$QUI/chrome.js" "$CHROME" "http://127.0.0.1:$PORTA/$copia" "${larghezza:-1280}" 90000 2> "$TMP/console.txt")
   esito="${titolo#RISULTATO }"
-  nome="$script ($ruolo${larghezza:+, $larghezza px})"
+  nome="$script ($ruolo${larghezza:+, $larghezza px}$( [ "$pagine" = "$pagina" ] || echo ", $pagina"))"
   if [[ "$titolo" != RISULTATO* ]]; then
     echo "$nome: nessun risultato (${titolo:-Chrome non risponde}); $(head -c 300 "$TMP/console.txt")"; falliti=1
   elif [[ "$esito" == *"=NO"* ]]; then echo "$nome: FALLITA: $esito"; falliti=1
   else echo "$nome: $esito"; fi
+  done
 done
 for pagina in ${PAGINE_FOTO:-}; do
   for larghezza in 1280 500; do
-    id="70000000-0000-0000-0000-000000000001"
-    accesso="$(token authenticated "$id" "prova-superadmin@locale")"
-    sessione="{\"access_token\":\"$accesso\",\"token_type\":\"bearer\",\"expires_in\":86400,\"expires_at\":$(( $(date +%s) + 86400 )),\"refresh_token\":\"prova\",\"user\":{\"id\":\"$id\",\"aud\":\"authenticated\",\"role\":\"authenticated\",\"email\":\"prova-superadmin@locale\",\"app_metadata\":{},\"user_metadata\":{}}}"
     dir="$(dirname "$pagina")"; base="$(basename "$pagina" .html)"
-    copia="$dir/foto-$base.html"; su="$( [ "$dir" = "." ] && echo "" || echo "../")"
+    copia="$dir/foto-$base.html"
     nomefoto="$( [ "$dir" = "." ] && echo "$base" || echo "$dir-$base")"   # ricerca/index.html non copre index.html
-    python3 - "$TMP/sito/$pagina" "$TMP/sito/$copia" "<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione));</script>" "${su}foto-prova.js" "${su}supabase-locale.js" <<'PY' || continue
-import re, sys
-sorgente, destinazione, inizio, prova, locale = sys.argv[1:6]
-testo = open(sorgente, encoding="utf-8").read()
-tag = re.search(r'<script src="https://cdn\.jsdelivr\.net/npm/@supabase/supabase-js@[^"]*"[^>]*></script>', testo)
-if not tag: sys.exit(1)
-testo = testo[:tag.start()] + inizio + f'<script src="{locale}"></script><script src="{prova}"></script>' + testo[tag.end():]
-open(destinazione, "w", encoding="utf-8").write(testo)
-PY
+    entrata "$pagina" "$copia" foto-prova.js || continue
     titolo=$(node "$QUI/chrome.js" "$CHROME" "http://127.0.0.1:$PORTA/$copia" "$larghezza" 60000 "$FOTO/${nomefoto}-$larghezza.png" 2> "$TMP/console.txt")
     echo "$pagina ($larghezza px): ${titolo#RISULTATO } $(grep -m2 . "$TMP/console.txt" | tr '\n' ' ' | head -c 200)"
   done
