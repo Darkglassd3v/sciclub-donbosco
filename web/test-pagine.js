@@ -6,6 +6,8 @@
 //   CDN dà l'ultima 2.x, che può cambiare sotto i piedi da un giorno all'altro.
 // - Gli script caricati a richiesta (jsPDF, xlsx) col controllo integrity
 //   (SRI): se il file sul CDN cambia, il browser non lo esegue.
+// - Lo stesso per i <script> e i <link> dal CDN scritti nelle pagine (supabase-js,
+//   Bulma): supabase-js vede la sessione, un file cambiato leggerebbe tutti i dati.
 
 const assert = require("assert");
 const fs = require("fs");
@@ -23,6 +25,9 @@ for (const f of file) {
   const nome = path.relative(radice, f);
   for (const [url] of testo.matchAll(/https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@[^"'\s)]*/g)) {
     if (!url.includes("@2.45.4/")) sbagliati.push(`${nome}: ${url}`);
+  }
+  for (const [tag] of testo.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="https:\/\/cdn\.jsdelivr\.net\/[^"]+"[^>]*>/g)) {
+    if (!/\bintegrity="sha384-[A-Za-z0-9+/=]+"/.test(tag) || !/crossorigin="anonymous"/.test(tag)) sbagliati.push(`${nome}: ${tag} senza integrity`);
   }
   // Script a richiesta: l'url in una stringa, accanto a un integrity.
   for (const m of testo.matchAll(/["'](https:\/\/cdn\.jsdelivr\.net\/npm\/(jspdf|xlsx-js-style)@[^"']+)["']/g)) {

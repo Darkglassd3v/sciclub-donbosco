@@ -28,11 +28,11 @@ for _ in $(seq 50); do (echo > "/dev/tcp/127.0.0.1/$PORTA") 2>/dev/null && break
 
 falliti=0
 for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html presciistica.js" "index.html famiglia.js" "index.html tessere-libere.js" "index.html errori.js" "index.html codice-fiscale.js" "index.html importi.js" "index.html arrivo.js" "index.html soci-campi.js" "index.html accesso-errore.js" "index.html scheda-a-meta.js" "index.html ricerca-soci.js" "index.html salva-ripetuto.js" "index.html pagante-illeggibile.js" "index.html totale-fisso.js" "social.html importi-social.js" "social.html social-salva.js" "social.html post-rubrica.js" "assicurazione.html assicurazione.js" "assicurazione.html assicurazione-scarico.js" "assicurazione.html ricerca-vecchia.js" \
-             "admin.html realtime.js" "admin.html pagamenti-cerca.js" "utenti.html utenti-superadmin.js" "stagione.html stagione.js" "password.html password.js" "impostazioni.html impostazioni.js 1280" "impostazioni.html impostazioni.js 500"; do
+             "admin.html realtime.js" "admin.html pagamenti-cerca.js" "utenti.html utenti-superadmin.js" "stagione.html stagione.js" "password.html password.js" "login.html accesso-accessibile.js" "impostazioni.html impostazioni.js 1280" "impostazioni.html impostazioni.js 500"; do
   read -r pagina script larghezza <<< "$prova"
   # Una copia della pagina per prova, accanto all'originale: i percorsi relativi restano giusti.
   copia="prova-${script%.js}${larghezza:+-$larghezza}.html"
-  sed "s#<script src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@[^\"]*\"></script>#<script src=\"fake-supabase.js\"></script><script src=\"$script\"></script>#" \
+  sed "s#<script src=\"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@[^\"]*\"[^>]*></script>#<script src=\"fake-supabase.js\"></script><script src=\"$script\"></script>#" \
     "$TMP/$pagina" > "$TMP/$copia"
   if ! grep -q "fake-supabase.js" "$TMP/$copia"; then
     echo "$script: in $pagina non trovo lo script di supabase-js da sostituire"; falliti=1; continue

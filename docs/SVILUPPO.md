@@ -66,8 +66,12 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   pieno (assicurazione dentro) e senza assicurazione: in Impostazioni sceglierla e abbassare la
   quota. I prezzi sono in euro interi (il database rifiuta i centesimi).
 - Backup automatico: `.github/workflows/backup-db.yml` su `dev`, martedì, giovedì e sabato
-  (frase in `supabase/.backup_passphrase`).
-- Test: `./supabase/test_ruoli.sh` (ruoli, RLS e trigger in Postgres su docker).
+  (frase in `supabase/.backup_passphrase`): il dump cifrato e `dati-AAAA-MM-GG.7z` con ogni
+  tabella per Excel (`supabase/scripts/esporta-tutto.sh`). Seconda copia sul PC del club
+  (`supabase/scripts/scarica-backup.sh`, timer di systemd) e, col secret `RCLONE_CONFIG`, su
+  Google Drive. Come leggerli e rimetterli: `docs/BACKUP.md`.
+- Test: `./supabase/test_ruoli.sh` (ruoli, RLS e trigger in Postgres su docker),
+  `./supabase/test_backup.sh` (backup leggibili e copia sul PC).
 
 ## Modello dati da ricordare
 
@@ -174,6 +178,22 @@ professionali e non che sembrano del parlato comune»). Lo controlla `node web/t
   «segnare», «definitivamente» e non «per sempre», «L'operazione non è reversibile».
 - I post dei social (`social-templates.js`) parlano al pubblico e restano fuori da queste regole.
 
+### Accessibilità
+
+WCAG 2.2, controllata il 23/10/2026 con Lighthouse (100 in tutte le pagine, sul computer e sul
+telefono) e da `test-reale/accessibilita.js` (ogni pagina coi dati veri) e
+`test-browser/accesso-accessibile.js` (la pagina di accesso).
+
+- Una sola zona principale per pagina (`role="main"` sul contenitore del contenuto).
+- Ogni campo e ogni tendina ha un nome: `<label for>`, o `aria-label` se non c'è un'etichetta che
+  si vede (anche nelle righe scritte dal JS, es. «Ruolo di <email>»).
+- Le colonne dei pulsanti hanno l'intestazione `<th><span class="is-sr-only">Azioni</span></th>`,
+  mai `<th></th>`.
+- I link dentro una frase sono sottolineati (brand.css): il blu sul testo scuro non basta.
+- Testo con contrasto almeno 4,5:1 (3:1 se grande): niente `has-text-grey` di Bulma sul bianco.
+- Le conferme sono `<dialog>` con `showModal()` (`chiedi()` in shared.js): il fuoco resta dentro,
+  Esc vale come Annulla, il fuoco torna dove era.
+
 ## Provare le pagine senza login
 
 Le pagine chiedono il login Supabase. Si prova una copia della cartella `web/` (fuori dal
@@ -208,7 +228,10 @@ supabase-js vero, con filtri, rpc e RLS veri, e un account per ruolo. Una prova 
 dati sulla copia e dà `window.ATTESO`, quello che la pagina deve mostrare calcolato dal database.
 Chrome va a tempo reale (`chrome.js`). `TIENI=1` lascia tutto acceso per guardare a mano;
 `FOTO=cartella` fotografa ogni pagina a 1280 e 500 px e segnala errori JavaScript e tabelle che
-escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Non le lancia il deploy.
+escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Con `TIENI=1` ogni pagina
+ha anche la copia `entra-<pagina>.html` col superadmin già entrato: si apre in Chrome o la si passa
+a Lighthouse. Una prova con più pagine in `// PAGINA:` (es. `accessibilita.js`) gira su ognuna. Non
+le lancia il deploy.
 
 ## Regole decise con il direttivo (30/09/2026)
 

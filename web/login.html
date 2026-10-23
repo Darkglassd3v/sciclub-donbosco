@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Accesso — Sci Club Don Bosco</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-  <link rel="stylesheet" href="brand.css?v=20261023schede">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
+  <link rel="stylesheet" href="brand.css?v=20261023accessibile">
   <style>
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
     .card-login { max-width: 420px; width: 100%; background: #fff; padding: 44px 40px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
@@ -15,15 +15,15 @@
 </head>
 <body>
 
-<div class="card-login">
+<div class="card-login" role="main">
   <img src="logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco" style="display:block;margin:0 auto 18px;max-width:220px">
   <h1 class="title is-4 has-text-centered">Sci Club Don Bosco</h1>
   <p class="sottotitolo">Gestione soci, iscrizioni e pagamenti.</p>
-  <p class="subtitle is-6 has-text-centered has-text-grey">Accesso riservato ai volontari del club</p>
+  <p class="subtitle is-6 has-text-centered has-text-grey-dark">Accesso riservato ai volontari del club</p>
 
   <form id="loginForm">
     <div class="field">
-      <label class="label">Email</label>
+      <label class="label" for="email">Email</label>
       <input class="input" type="email" id="email" required autocomplete="username">
     </div>
     <div class="field">
@@ -39,7 +39,7 @@
   <p id="errore" class="notification is-danger is-light mt-4" role="alert" style="display:none"></p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261022testi"></script>
 <script>
