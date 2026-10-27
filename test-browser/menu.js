@@ -1,6 +1,6 @@
 // Il menu della 3.0 (27/10/2026): sul computer una colonna a sinistra, sul telefono un pannello
 // che si apre col pulsante «Menu». In alto a destra chi è entrato.
-// - nome: la barra in alto dice l'email e il ruolo di chi è entrato;
+// - nome: si vedono l'email e il ruolo di chi è entrato (in alto, sul telefono nel menu aperto);
 // - gruppi: Gestione e Social si aprono e chiudono (details/summary); quello della pagina aperta
 //   nasce aperto, con la sua voce segnata (aria-current), gli altri chiusi;
 // - computer (oltre 768 px): il menu si vede sempre, a sinistra, senza pulsante «Menu»;
@@ -15,9 +15,13 @@
     const dentro = (x) => { const b = x.getBoundingClientRect(); return b.width > 0 && b.left >= -1 && b.right <= innerWidth + 1; };
     const pagina = location.pathname.split("/").pop().replace(/^prova-menu.*/, "");
 
-    const utente = document.querySelector(".barra-utente");
-    esito("nome", utente && utente.textContent.includes("prova@sciclub.it") && /superadmin/i.test(utente.textContent) && dentro(utente)
-      ? "" : `«${utente ? utente.textContent.trim() : "manca"}»`);
+    // Chi è entrato: in alto sul computer, in fondo al menu aperto sul telefono.
+    const nome = () => {
+      const utente = [...document.querySelectorAll(".barra-utente")].find((x) => x.getClientRects().length && dentro(x));
+      esito("nome", utente && utente.textContent.includes("prova@sciclub.it") && /superadmin/i.test(utente.textContent)
+        ? "" : `«${utente ? utente.textContent.trim() : "non si vede"}»`);
+    };
+    if (innerWidth > 768) nome();
 
     const gruppi = [...menu.querySelectorAll("details.gruppo")];
     const gestione = gruppi.find((g) => g.dataset.permesso === "gestione"), social = gruppi.find((g) => g.dataset.permesso === "social");
@@ -35,6 +39,7 @@
       esito("chiuso", bottone && bottone.getAttribute("aria-expanded") === "false" && !dentro(menu) ? "" : `aria-expanded ${bottone?.getAttribute("aria-expanded")}, menu ${dentro(menu) ? "visibile" : "nascosto"}`);
       bottone.click();
       await aspetta(400);
+      nome();
       const voci = [...menu.querySelectorAll(":scope > a, :scope > details > summary, :scope button")].filter((x) => x.getClientRects().length);
       const fuori = voci.filter((x) => !dentro(x)).map((x) => x.textContent.trim() || x.getAttribute("aria-label"));
       esito("aperto", bottone.getAttribute("aria-expanded") === "true" && dentro(menu) && voci.length >= 12 && !fuori.length

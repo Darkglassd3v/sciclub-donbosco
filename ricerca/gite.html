@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Abbonamenti Gite — Sci Club Don Bosco</title>
   <link rel="icon" type="image/svg+xml" href="logo-ufficiale-trasparente-lettere-blu.svg">
-  <link rel="stylesheet" href="../brand.css?v=20261027barranuova">
-  <link rel="stylesheet" href="stile.css?v=20261027tessera">
+  <link rel="stylesheet" href="../brand.css?v=20261028material">
+  <link rel="stylesheet" href="stile.css?v=20261028material">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
 <body>
@@ -15,27 +15,53 @@
      passando da una pagina all'altra non cambia niente lassù. -->
 <header class="barra">
   <div class="barra-dentro">
+    <button type="button" class="apri-menu" aria-controls="menu" aria-expanded="false"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span></button>
     <a class="barra-marchio" href="../index.html">
       <img src="logo-ufficiale-trasparente-lettere-blu.svg" alt="Sci Club Don Bosco">
       <span>Sci Club Don Bosco</span>
     </a>
-    <nav class="barra-voci">
-      <a href="../index.html" data-permesso="soci" hidden>Soci</a>
-      <a href="../admin.html" data-permesso="pagamenti" hidden>Pagamenti</a>
-      <a href="../riepilogo.html" data-permesso="riepilogo" hidden>Riepilogo</a>
-      <a class="voce-cerca" href="index.html" data-permesso="cerca" hidden>Cerca socio</a>
-      <a href="gite.html" data-permesso="gite" hidden aria-current="page">Gite</a>
-      <a href="../stampe.html" data-permesso="stampe" hidden>Stampe</a>
-      <a href="../assicurazione.html" data-permesso="polizze" hidden>Assicurazione</a>
-      <a href="../bilancio.html" data-permesso="bilancio" hidden>Bilancio</a>
-      <a href="../social.html" data-permesso="social" hidden>Social</a>
-      <a class="voce-rischiosa" href="../stagione.html" title="Amministrazione, utenti e impostazioni" data-permesso="gestione" hidden>Gestione</a>
+    <span class="barra-pagina" aria-hidden="true"></span>
+    <div class="barra-azioni">
+      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
       <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
-      <button type="button" id="btnEsci">Esci</button>
-    </nav>
+      <span class="barra-utente"></span>
+      <button type="button" class="voce-esci"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
+    </div>
   </div>
   <div class="barra-avanzamento" id="avanzamento"></div>
 </header>
+<!-- Il menu: sul computer una colonna a sinistra, sul telefono un pannello che apre «Menu».
+     Gestione e Social sono gruppi che si aprono e chiudono; quello della pagina aperta nasce
+     aperto. In fondo, sul telefono, chi è entrato, tema, A+ ed Esci (sul computer stanno in alto). -->
+<nav class="barra-voci" id="menu" aria-label="Menu principale">
+    <a href="../index.html" data-permesso="soci" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg><span>Soci</span></a>
+    <a href="../admin.html" data-permesso="pagamenti" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10h9M4 14h9"/></svg><span>Pagamenti</span></a>
+    <a href="../riepilogo.html" data-permesso="riepilogo" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-7M21 20H3"/></svg><span>Riepilogo</span></a>
+    <a class="voce-cerca" href="index.html" data-permesso="cerca" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Cerca socio</span></a>
+    <a href="gite.html" data-permesso="gite" hidden aria-current="page"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2 20 7-13 4 7 3-4 6 10Z"/></svg><span>Gite</span></a>
+    <a href="../stampe.html" data-permesso="stampe" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7Z"/></svg><span>Stampe</span></a>
+    <a href="../assicurazione.html" data-permesso="polizze" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/></svg><span>Assicurazione</span></a>
+    <a href="../bilancio.html" data-permesso="bilancio" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M6 21h12M5 7h14"/><path d="m5 7-3 7a3 3 0 0 0 6 0Z"/><path d="m19 7-3 7a3 3 0 0 0 6 0Z"/></svg><span>Bilancio</span></a>
+    <details class="gruppo" data-permesso="social" hidden>
+      <summary><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10v4h4l7 5V5L7 10Z"/><path d="M18 8a5 5 0 0 1 0 8"/></svg><span>Social</span></summary>
+      <a href="../social.html#post">Post<span class="conta" id="contaDaFare"></span></a>
+      <a href="../social.html#grafiche">Grafiche</a>
+      <a href="../social.html#impostazioni">Impostazioni</a>
+    </details>
+    <details class="gruppo" data-permesso="gestione" hidden>
+      <summary><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><span>Gestione</span></summary>
+      <a href="../stagione.html">Amministrazione</a>
+      <a href="../utenti.html">Utenti</a>
+      <a href="../impostazioni.html">Impostazioni</a>
+      <a href="../gestione.html">Ruoli e permessi</a>
+    </details>
+    <div class="menu-fondo">
+      <span class="barra-utente"></span>
+      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-esci"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
+    </div>
+</nav>
 
 <div id="contenuto" class="wrap" role="main" hidden>
   <header class="testata">
@@ -85,7 +111,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261027barra"></script>
+<script src="comune.js?v=20261028material"></script>
 <script>
 (() => {
   "use strict";
