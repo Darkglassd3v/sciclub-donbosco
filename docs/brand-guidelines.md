@@ -9,7 +9,7 @@ dense. La leggibilità viene prima dell'estetica: testo grande, contrasto alto,
 bersagli ampi.
 
 L'impaginazione segue un impianto editoriale: spaziatura ampia, poche linee,
-titoli grandi con spaziatura stretta, pulsanti a pillola, fondo grigio neutro
+titoli grandi con spaziatura stretta, pulsanti rettangolari in stile Material (dalla 3.0), fondo grigio neutro
 sotto schede bianche. Nessuna misura di leggibilità è stata ridotta per
 ottenerlo.
 
@@ -156,10 +156,11 @@ Base 17px invece dei consueti 16: un punto in più si legge, non si nota.
 | Small | 15px | 15px | 400 | 1.5 |
 | Importi (KPI) | 34px | 28px | 800 | 1.1 |
 
-Mai `text-transform: uppercase`: si legge più lentamente e non aggiunge
+Mai `text-transform: uppercase` nei testi: si legge più lentamente e non aggiunge
 informazione. I titoli si distinguono per corpo e peso, non per maiuscolo.
-Unica eccezione le voci della barra di navigazione (18px, 700, tracking
-`.03em`): sono poche parole sempre uguali, e in maiuscolo si trovano prima.
+Eccezioni (dalla 3.0, stile Material): le voci del menu (16px, 600, tracking `.04em`) e
+le scritte dei pulsanti (700, tracking `.04em`): sono poche parole sempre uguali, e in
+maiuscolo si riconoscono a colpo d'occhio come comandi.
 I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ---
@@ -245,17 +246,24 @@ Le misure servono a chi ha la vista lunga e il mouse impreciso.
 
 | Type | Background | Text | Altezza min | Border Radius |
 |------|------------|------|-------------|---------------|
-| Primary | #084C8D | #FFFFFF | 48px | pillola |
-| Secondary | #FFFFFF (bordo 1px #D5DAE1) | #084C8D | 48px | pillola |
-| Evidenza | #FCCF02 | #084C8D | 48px | pillola |
-| Pericolo | #FFFFFF (bordo 1px #B3261E) | #B3261E | 48px | pillola |
+| Primary | #084C8D | #FFFFFF | 48px | 4px |
+| Secondary | #FFFFFF (bordo 1px #D5DAE1) | #084C8D | 48px | 4px |
+| Evidenza | #FCCF02 | #084C8D | 48px | 4px |
+| Pericolo | #FFFFFF (bordo 1px #B3261E) | #B3261E | 48px | 4px |
 
-Raggi: 12px sui campi, 18px sulle schede, pillola sui pulsanti e sulle etichette.
+Raggi (dalla 3.0, Material): 4px su pulsanti, campi ed etichette, 8px su schede e finestre.
+I pulsanti piccoli sono alti almeno 44px, il minimo per il dito.
 
-Le voci della barra di navigazione (dal 27/10/2026) sono pulsanti in stile Material: alti
-52px (48 sul telefono), angoli di 8px, fondo #E7EFF7 con scritta #084C8D e un'ombra
-leggera; sotto il mouse #D3E2F2, premuti #C1D5EB; la pagina aperta piena #084C8D con
-scritta bianca; Gestione in #B3261E su #FBE9E7.
+Menu (dalla 3.0): una barra in alto e una colonna a sinistra larga 240px, tutte e due blu
+#084C8D con scritte bianche; il logo tondo bianco. Le voci della colonna sono alte 48px
+(52 sul telefono), con l'icona; quella della pagina aperta è gialla #FCCF02 con la scritta
+#084C8D. Gestione e Social sono gruppi che si aprono e chiudono. Sul telefono la colonna è
+un pannello che apre il pulsante «Menu».
+
+Tema scuro (dalla 3.0): gli stessi nomi dei colori con valori scuri (`html[data-tema="scuro"]`
+in `brand.css`): fondo #0E141B, schede #18212C, testo #E7ECF2; blu, verde e rosso come
+scritte schiariscono (#8DBBEA, #6BD49A, #FF8A80), come fondo sotto una scritta bianca si usano
+`--blu-pieno`, `--ok-pieno`, `--errore-pieno`. Barra e menu blu notte #10263F.
 
 Il pulsante che cancella non è mai adiacente a quello che salva.
 
@@ -284,7 +292,7 @@ lasciati, e cambia solo il contenuto. Mockup: «Impianto delle pagine»
 (proposta del 01/10/2026).
 
 ```
-barra (ferma, larga quanto lo schermo: 76px, più alta se le voci vanno su due righe)
+barra (ferma in alto, 64px; 56 sul telefono) + menu a colonna a sinistra (240px)
 └─ .container-main    max 1180px (1280 per il superadmin), margini 18px (16 sul telefono)
    ├─ .schede-gestione / .schede-social   solo nelle sezioni con più pagine
    ├─ h1.title.is-4
@@ -296,9 +304,9 @@ barra (ferma, larga quanto lo schermo: 76px, più alta se le voci vanno su due r
 | Regola | Misure |
 |--------|--------|
 | **Una larghezza sola** | `.container-main` max 1180px (1280 per il superadmin), centrata. Nessuna pagina ha una larghezza sua. Le pagine Gite e Cerca socio usano `.wrap` con le stesse misure. |
-| **Barra** | Larga quanto lo schermo: il logo a sinistra, le voci centrate sullo schermo finché c'è posto, poi si allungano verso destra e sul computer vanno a capo (mai tagliate). Sul telefono una riga sola che scorre di lato. L'altezza vera è in `--barra-h` (`altezzaBarra()` in `web/shared.js` e `ricerca/comune.js`): ci si attaccano sotto le strisce delle sezioni. |
+| **Barra e menu** | La barra in alto è larga quanto lo schermo: logo a sinistra, a destra tema, A+, chi è entrato ed Esci. Il menu è una colonna a sinistra, una voce per riga (mai tagliate). Sul telefono la barra ha «Menu» e il nome della pagina, il menu è un pannello. L'altezza vera della barra è in `--barra-h` (`altezzaBarra()` in `web/shared.js` e `ricerca/comune.js`), la larghezza del menu in `--menu-l` (0 sul telefono): le fasce fisse in fondo partono da lì. |
 | **Testata fissa** | 24px sotto la barra; schede, 16px; titolo 32px (26 sul telefono); occhiello in #4A5361, 8px sotto il titolo, 24px prima del contenuto. |
-| **Schede** | Un solo componente `.schede` per Gestione e Social: pillole da 48px, bordo #D5DAE1, la scheda aperta blu piena (`aria-current="page"`). |
+| **Sezioni di Gestione e Social** | Dalla 3.0 sono le voci dei gruppi Gestione e Social nel menu; niente schede in cima alle pagine. |
 | **Riquadri** | Un solo `.riquadro`: bianco, raggio 18px, ombra `--ombra`, padding 28px (20 sul telefono), 24px fra uno e l'altro, sempre largo quanto la pagina. Dentro: `h2` (22px, 600), frase facoltativa `.occhiello`, contenuto, `.azioni`. |
 | **Cifre** | L'unica cosa affiancata: `.cifre` > `.kpi` (`.kpi-label` piccola + `.kpi-value` 32px; `.rosso` da incassare, `.verde` incassato), 4 per riga sul computer, 2 sul telefono, sopra i riquadri. |
 | **Pulsanti** | In `.azioni` (figlio diretto del riquadro) in fondo, a sinistra; prima l'azione principale (blu, o giallo per incassare). Chi cancella o chiude va a destra (`.a-destra`), contornato di rosso. |

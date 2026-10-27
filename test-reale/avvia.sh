@@ -135,7 +135,7 @@ if [ -n "${TIENI:-}" ]; then
   while :; do sleep 60; done
 fi
 
-# FOTO=cartella: niente prove, una foto per pagina a 1280 e 500 px (superadmin), e gli
+# FOTO=cartella: niente prove, una foto per pagina a 1280 e 500 px (FOTO_LARGHEZZE="390": quelle; sotto i 500 un telefono simulato) (superadmin), e gli
 # errori JavaScript di ognuna. Le foto hanno dati veri: la cartella va tenuta fuori da git.
 if [ -n "${FOTO:-}" ]; then
   mkdir -p "$FOTO"
@@ -201,7 +201,7 @@ PY
   done
 done
 for pagina in ${PAGINE_FOTO:-}; do
-  for larghezza in 1280 500; do
+  for larghezza in ${FOTO_LARGHEZZE:-1280 500}; do
     dir="$(dirname "$pagina")"; base="$(basename "$pagina" .html)"
     copia="$dir/foto-$base.html"
     nomefoto="$( [ "$dir" = "." ] && echo "$base" || echo "$dir-$base")"   # ricerca/index.html non copre index.html

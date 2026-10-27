@@ -5,6 +5,7 @@
 // Gli errori della pagina vanno su stderr.
 //
 //   node chrome.js <chrome> <url> [larghezza] [attesa massima in ms] [foto.png]
+// Una larghezza sotto i 500 px è un telefono simulato (390: alto 844).
 // Con foto.png, appena c'è il risultato salva la pagina intera (le foto di avvia.sh, FOTO=1).
 const { spawn } = require("child_process");
 const fs = require("fs");
@@ -35,6 +36,11 @@ setTimeout(() => fine("", 1), Number(attesa) + 15000);
   };
   await new Promise((ok) => (ws.onopen = ok));
   await manda("Runtime.enable");
+  // Sotto i 500 px (il minimo della finestra di Chrome headless) si simula il telefono: 390 è un
+  // iPhone, con la pagina che si comporta come su un telefono vero (mobile: true).
+  if (Number(larghezza) < 500) {
+    await manda("Emulation.setDeviceMetricsOverride", { width: Number(larghezza), height: 844, deviceScaleFactor: 1, mobile: true });
+  }
   await manda("Page.navigate", { url });
   const inizio = Date.now();
   while (Date.now() - inizio < Number(attesa)) {

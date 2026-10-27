@@ -172,8 +172,9 @@ async function proteggiPagina(alPronto) {
     return;
   }
 
-  const btnEsci = el("btnEsci");
-  if (btnEsci) {
+  preparaMenu();
+  // Esci sta due volte: in alto sul computer, in fondo al menu sul telefono.
+  for (const btnEsci of document.querySelectorAll(".voce-esci")) {
     btnEsci.addEventListener("click", async () => {
       // Come nel gestionale (logout in web/shared.js): uscire chiude anche il
       // "Vedi come", così al prossimo accesso si rientra sé stessi.
@@ -255,6 +256,7 @@ function disegnaBarra(accesso) {
     voce.hidden = !accesso.permissions.includes(voce.dataset.permesso);
   });
   scriviNomiBarra();
+  scriviUtente(accesso);
   window.addEventListener("resize", altezzaBarra);
   nomiBarra().catch(() => {});
 }
@@ -270,8 +272,10 @@ let NOMI_BARRA = (() => {
 
 function scriviNomiBarra() {
   document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
-    if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
-    voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+    // Il nome sta nello span accanto all'icona (nel gruppo, dentro summary).
+    const testo = voce.querySelector(":scope > span, :scope > summary > span") || voce;
+    if (voce.dataset.nome === undefined) voce.dataset.nome = testo.textContent;
+    testo.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
   });
   altezzaBarra();
 }
@@ -293,6 +297,58 @@ async function nomiBarra() {
 function altezzaBarra() {
   const barra = document.querySelector(".barra");
   if (barra) document.documentElement.style.setProperty("--barra-h", `${barra.offsetHeight}px`);
+}
+
+/**
+ * Il menu: la voce di questa pagina è già segnata nell'HTML; qui il suo nome
+ * nella barra del telefono, il pannello che «Menu» apre e chiude (Esc, una voce
+ * scelta e un tocco fuori lo chiudono) e il tema. Come in web/shared.js.
+ */
+function preparaMenu() {
+  const voce = document.querySelector('.barra-voci a[aria-current="page"]');
+  if (voce) document.querySelectorAll(".barra-pagina").forEach((x) => { x.textContent = voce.textContent.trim(); });
+  segnaTema();
+  const bottone = document.querySelector(".apri-menu");
+  if (!bottone) return;
+  const aperto = () => document.documentElement.classList.contains("menu-aperto");
+  bottone.addEventListener("click", () => apriMenu(!aperto()));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && aperto()) apriMenu(false); });
+  document.addEventListener("click", (e) => {
+    if (aperto() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) apriMenu(false);
+  });
+}
+
+function apriMenu(aperto) {
+  const bottone = document.querySelector(".apri-menu");
+  if (!bottone) return;
+  document.documentElement.classList.toggle("menu-aperto", aperto);
+  bottone.setAttribute("aria-expanded", String(aperto));
+  if (aperto) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
+  else bottone.focus();
+}
+
+/** Tema chiaro o scuro, ricordato nel browser come in web/shared.js. */
+function cambiaTema() {
+  const html = document.documentElement;
+  const scuro = html.dataset.tema !== "scuro";
+  if (scuro) html.dataset.tema = "scuro";
+  else delete html.dataset.tema;
+  try { localStorage.setItem("sciclub-tema", scuro ? "scuro" : ""); } catch (e) { /* storage negato */ }
+  segnaTema();
+}
+
+function segnaTema() {
+  const scuro = document.documentElement.dataset.tema === "scuro";
+  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(scuro)));
+}
+
+/** Chi è entrato, in alto a destra (e in fondo al menu sul telefono). */
+function scriviUtente(accesso) {
+  document.querySelectorAll(".barra-utente").forEach((x) => {
+    x.innerHTML = accesso
+      ? `<span class="chi">${esc(accesso.email || "")}</span><span class="ruolo">${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</span>`
+      : "";
+  });
 }
 
 /** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */

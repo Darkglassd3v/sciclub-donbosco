@@ -14,7 +14,7 @@
   --bordo: #7B8794;   /* solo per i campi: 3.7:1, il minimo per vederne il contorno è 3:1 */
   --filo: #D5DAE1;    /* divisori e contorni delle schede */
   --ok: #147A45; --ok-bg: #E4F3EA; --errore: #B3261E; --errore-bg: #FBE9E7;
-  --raggio: 12px; --raggio-card: 18px; --pillola: 980px;
+  --raggio: 4px; --raggio-card: 8px; --pillola: 4px;   /* Material (3.0), come web/brand.css */
   --ombra: 0 1px 2px rgba(20,32,46,.04), 0 8px 28px rgba(20,32,46,.06);
   --tocco: 48px;
 }
@@ -45,19 +45,20 @@ button, input, select {
   border-radius: var(--raggio); border: 2px solid var(--bordo);
   color: var(--testo); background: var(--superficie);
 }
-/* I pulsanti sono a pillola e senza contorno spesso: la forma cambia, il
- * bersaglio da 48px no. Il bordo marcato resta ai campi, che devono vedersi. */
-button { cursor: pointer; font-weight: 600; letter-spacing: -.01em;
+/* I pulsanti sono rettangoli Material in maiuscolo (3.0, come web/brand.css)
+ * e senza contorno spesso: il bersaglio da 48px resta. Il bordo marcato resta
+ * ai campi, che devono vedersi. */
+button { cursor: pointer; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
          padding: 0 20px; border-radius: var(--pillola); border-width: 1px; }
-.btn-blu { background: var(--blu); border-color: var(--blu); color: #fff; }
+.btn-blu { background: var(--blu-pieno); border-color: var(--blu-pieno); color: #fff; }
 .btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
 .btn-chiaro { color: var(--blu); border-color: var(--filo); }
 .btn-chiaro:hover { background: var(--blu-light); border-color: var(--blu-light); }
 /* Soci e Gite stanno su tutte e due le pagine, come due schede: quella
  * aperta è piena, così si sa dove si è senza leggere il titolo. */
-.btn-chiaro[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
-.btn-verde { background: var(--ok); border-color: var(--ok); color: #fff; }
-.btn-rosso { background: var(--errore); border-color: var(--errore); color: #fff; }
+.btn-chiaro[aria-current="page"] { background: var(--blu-pieno); border-color: var(--blu-pieno); color: #fff; }
+.btn-verde { background: var(--ok-pieno); border-color: var(--ok-pieno); color: #fff; }
+.btn-rosso { background: var(--errore-pieno); border-color: var(--errore-pieno); color: #fff; }
 
 /* Scelta dell'abbonamento: righe grandi con il prezzo ben visibile, al posto
  * di una tendina che sul telefono si legge male. */
@@ -122,7 +123,7 @@ ul.risultati li { margin-bottom: 12px; }
   min-height: 52px; padding: 0 12px; border-radius: var(--pillola);
   font-weight: 600; text-decoration: none; border: 1px solid transparent;
 }
-.contatti .chiama { background: var(--blu); color: #fff; }
+.contatti .chiama { background: var(--blu-pieno); color: #fff; }
 .contatti .whatsapp { background: #E4F3EA; color: #0B6B3A; border-color: #CBE6D6; }
 .contatti a:active { transform: translateY(1px); }
 
@@ -172,10 +173,10 @@ ul.risultati li { margin-bottom: 12px; }
 .conto .fatte  { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo-soft); }
 .conto .libere { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo); }
 .conto .libere.esaurito { color: var(--errore); }
-.progresso-gite { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
+.progresso-gite { height: 8px; border-radius: var(--pillola); background: var(--riga-alt);
          overflow: hidden; margin-top: 14px; }
 /* Il colore del giorno arriva da data-giorno (web/brand.css, "Giorni delle gite"). */
-.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu)); }
+.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu-pieno)); }
 
 /* --- Gite: azioni della scheda ------------------------------------------ */
 .azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -199,7 +200,7 @@ ul.risultati li { margin-bottom: 12px; }
 /* "Vedi come" del superadmin: la stessa fascia gialla del gestionale
  * (web/brand.css), fissa in fondo con il pulsante per tornare. */
 .fascia-vedi-come {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 95;
+  position: fixed; left: var(--menu-l, 0); right: 0; bottom: 0; z-index: 95;
   display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
   padding: 12px 16px; background: #FCCF02; color: #14202E;
   font-weight: 600; box-shadow: 0 -4px 12px rgba(0,0,0,.2);

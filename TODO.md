@@ -18,14 +18,20 @@
 
 ## Richieste nuove
 
-- [ ] **3.0: il sito sul telefono** (27/10, l'utente: «fai un bel controllo completo sulle feature
-      mobile, un bel /ecc:plan puntando sull'ottimizzazione della grafica mobile»). Da pianificare
-      e far approvare prima di scrivere codice. Segnalati con le foto: la barra in alto sul
-      telefono (menu a hamburger?); in Soci la fascia Totale / Residuo / «Salva il nuovo socio»
-      enorme, che copre mezzo schermo; in Riepilogo le tabelle illeggibili (nomi delle voci a una
-      parola per riga, numeri sopra il testo); in Social la testa del post (tipo, data, titolo,
-      «Pronto», Salva) che si accavalla e l'anteprima che esce dallo schermo. Poi tutte le altre
-      pagine.
+- [ ] **Codice in inglese, dopo il rilascio della 3.0** (27/10, l'utente: «voglio tutto in inglese,
+      dove non causa problemi con il db»; scelto: nomi e commenti, dopo la grafica). Funzioni,
+      variabili, classi CSS, id, nomi dei file di prova e commenti in inglese; le scritte per gli
+      utenti restano in italiano; i nomi del database sono già inglesi. Un passo a sé, con tutte le
+      prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
+      commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
+      resta in italiano.
+- [ ] **3.0: rilascio** (approvato dall'utente: «quando hai tutti i test verdi fai tutto, push,
+      build, deploy»). Fatti e committati su `3.0-SNAPSHOT`: menu (barra in alto blu con chi è
+      entrato, colonna a sinistra, gruppi Gestione e Social, pannello «Menu» sul telefono), stile
+      Material, tema scuro, telefono (Soci, Riepilogo, Utenti, Ruoli, Social, Impostazioni). Manca:
+      tutte le prove verdi, `/ecc:code-review` con le correzioni, poi il rilascio 3.0 con la
+      procedura di `docs/SVILUPPO.md` (passi 1-4; il passo 5 della 2.9 insieme: togliere i branch
+      `2.9` e `2.9-SNAPSHOT`).
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
@@ -60,9 +66,11 @@
   link (Instagram, e Facebook se la pagina ha lo sticker).
 - Testi nuovi in tutte le pagine e accessibilità (link sottolineati, lettore di schermo).
 - Il primo backup col file per Excel: aprire `dati-AAAA-MM-GG.7z` con 7-Zip e `soci.csv` in Excel.
-- Barra da admin e da superadmin sul PC del club: tutte le voci, «Cerca socio» compresa, ed
-  «Esci» in vista. Cerca socio: il prossimo numero tessera in cima e la ricerca per numero
-  («33», «rossi 33»). Soci: il numero tessera proposto è il primo campo del modulo.
+- Cerca socio: il prossimo numero tessera in cima e la ricerca per numero («33», «rossi 33»).
+  Soci: il numero tessera proposto è il primo campo del modulo.
+- 3.0 sul PC del club e su un telefono vero: il menu a colonna e i gruppi Gestione e Social, il
+  pannello «Menu» sul telefono, il tema scuro (luna in alto a destra) su ogni pagina, la fascia
+  di Soci su una riga, Riepilogo e Utenti a schede, la scheda del post in Social.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 

@@ -336,30 +336,79 @@ function setLoading(attivo) {
 }
 
 /**
- * Colora la voce della pagina aperta. La barra è identica in tutti i file
- * proprio per non spostare niente fra una pagina e l'altra: l'unica differenza
- * la mette qui il browser, e non cambia nessun ingombro.
+ * Segna la voce della pagina aperta nel menu e ne scrive il nome nella barra
+ * del telefono. Ogni pagina ha già nel suo HTML la voce segnata e il gruppo
+ * aperto (il menu non si muove al caricamento); qui si segue anche la sezione
+ * di Social scritta nell'indirizzo (#post, #grafiche, #impostazioni).
  */
 (function segnaPaginaCorrente() {
-  const attuale = location.pathname.split("/").pop() || "index.html";
-  document.addEventListener("DOMContentLoaded", () => {
-    const elenco = document.querySelector(".barra-voci");
-    if (!elenco) return;
-    // Le schede sotto la barra (le quattro di Gestione, quelle di Social) tengono accesa la voce della barra che apre la prima
-    // (data-voce, se no Gestione), e la loro scheda nella fila.
-    const scheda = document.querySelector(`.schede-gestione a[href="${attuale}"], .schede-social a[href="${attuale}"]`);
-    if (scheda) scheda.setAttribute("aria-current", "page");
-    const madre = scheda && (scheda.closest("[data-voce]")?.dataset.voce || "stagione.html");
-    const voce = elenco.querySelector(`a[href="${madre || attuale}"]`);
+  const segna = () => {
+    const voci = [...document.querySelectorAll(".barra-voci a[href]")];
+    if (!voci.length) return;
+    const attuale = location.pathname.split("/").pop() || "index.html";
+    const voce = voci.find((a) => a.getAttribute("href") === attuale + location.hash)
+      || voci.find((a) => a.getAttribute("href").split("#")[0] === attuale)
+      || document.querySelector('.barra-voci a[aria-current="page"]');   // un nome di file diverso: vale quella dell'HTML
     if (!voce) return;
+    voci.forEach((a) => { if (a !== voce) a.removeAttribute("aria-current"); });
     voce.setAttribute("aria-current", "page");
-
-    // Volutamente non si scorre l'elenco per portare in vista la voce attiva:
-    // sposterebbe la striscia di una quantità diversa su ogni pagina, cioè di
-    // nuovo pulsanti che cambiano posto. Su quale pagina si è lo dice il
-    // titolo grande subito sotto la barra, che non si muove mai.
-  });
+    if (voce.closest("details")) voce.closest("details").open = true;
+    const nome = voce.cloneNode(true);
+    nome.querySelectorAll(".conta").forEach((x) => x.remove());
+    document.querySelectorAll(".barra-pagina").forEach((x) => { x.textContent = nome.textContent.trim(); });
+  };
+  document.addEventListener("DOMContentLoaded", segna);
+  window.addEventListener("hashchange", segna);
 })();
+
+/**
+ * Il menu sul telefono è un pannello: «Menu» lo apre e lo chiude, come Esc,
+ * una voce scelta e un tocco fuori. Aperto, il fuoco va alla prima voce;
+ * chiuso, torna al pulsante.
+ */
+function apriMenu(aperto) {
+  const bottone = document.querySelector(".apri-menu");
+  if (!bottone) return;
+  document.documentElement.classList.toggle("menu-aperto", aperto);
+  bottone.setAttribute("aria-expanded", String(aperto));
+  if (aperto) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
+  else bottone.focus();
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const bottone = document.querySelector(".apri-menu");
+  if (!bottone) return;
+  const aperto = () => document.documentElement.classList.contains("menu-aperto");
+  bottone.addEventListener("click", () => apriMenu(!aperto()));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && aperto()) apriMenu(false); });
+  document.addEventListener("click", (e) => {
+    if (aperto() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) apriMenu(false);
+  });
+  segnaTema();
+});
+
+/** Tema chiaro o scuro, ricordato nel browser: lo script nell'head lo rimette prima del primo disegno. */
+function cambiaTema() {
+  const html = document.documentElement;
+  const scuro = html.dataset.tema !== "scuro";
+  if (scuro) html.dataset.tema = "scuro";
+  else delete html.dataset.tema;
+  try { localStorage.setItem("sciclub-tema", scuro ? "scuro" : ""); } catch (e) { /* storage negato: vale fino alla prossima pagina */ }
+  segnaTema();
+}
+
+function segnaTema() {
+  const scuro = document.documentElement.dataset.tema === "scuro";
+  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(scuro)));
+}
+
+/** Chi è entrato, in alto a destra (e in fondo al menu sul telefono): email e ruolo con cui si guarda il sito. */
+function scriviUtente(accesso) {
+  document.querySelectorAll(".barra-utente").forEach((x) => {
+    x.innerHTML = accesso
+      ? `<span class="chi">${esc(accesso.email || "")}</span><span class="ruolo">${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</span>`
+      : "";
+  });
+}
 
 /**
  * Le voci con data-permesso nascono nascoste nel markup e compaiono solo a
@@ -375,6 +424,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   for (const voce of voci) {
     voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
   }
+  scriviUtente(accesso);
   altezzaBarra();
   mostraVediCome(accesso);
   if (accesso) nomiBarra().catch(() => {});
@@ -407,8 +457,10 @@ let NOMI_BARRA = (() => {
 /** Scrive i nomi nella barra; il nome di sempre resta in data-nome per tornarci. */
 function scriviNomiBarra() {
   document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
-    if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
-    voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+    // Il nome sta nello span accanto all'icona (nel gruppo, dentro summary).
+    const testo = voce.querySelector(":scope > span, :scope > summary > span") || voce;
+    if (voce.dataset.nome === undefined) voce.dataset.nome = testo.textContent;
+    testo.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
   });
   altezzaBarra();
 }
