@@ -85,8 +85,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -120,8 +120,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -150,7 +150,7 @@
         <input class="input" id="cercaNucleo" type="search" placeholder="Cognome o nome di un componente del nucleo" autocomplete="off">
       </div>
       <label class="checkbox"><input type="checkbox" id="soloInsoluti" checked> Solo nuclei da incassare o a credito</label>
-      <button class="button is-link is-outlined" onclick="caricaDati()">Aggiorna</button>
+      <button class="button is-link is-outlined" onclick="loadData()">Aggiorna</button>
     </div>
   </div>
 
@@ -165,17 +165,17 @@
 
   // L'ultimo elenco caricato (nuclei, capofamiglia, familiari): la ricerca
   // lo filtra senza tornare al database.
-  let ultimi = [[], {}, []];
+  let lastOnes = [[], {}, []];
 
   (async function init() {
-    if (!(await requirePermesso("pagamenti"))) return;
-    el("soloInsoluti").addEventListener("change", caricaDati);
+    if (!(await requirePermission("pagamenti"))) return;
+    el("soloInsoluti").addEventListener("change", loadData);
     el("cercaNucleo").addEventListener("input", render);
-    await caricaDati();
+    await loadData();
 
     // Aggiornamento in tempo reale: se un altro operatore incassa da un altro
     // computer, la pagina si aggiorna da sola.
-    ascoltaSoci(() => caricaDati({ silenzioso: true }));
+    listenMembers(() => loadData({ silenzioso: true }));
   })();
 
   /**
@@ -183,11 +183,11 @@
    * nella 1.x era codice JS lato Apps Script che rileggeva tutto il foglio ad
    * ogni chiamata.
    */
-  async function caricaDati({ silenzioso = false } = {}) {
+  async function loadData({ silenzioso: quiet = false } = {}) {
     // Un altro operatore ha salvato mentre qui si scrive una modifica: il
     // ridisegno la cancellerebbe. Si aggiorna al prossimo giro.
-    if (silenzioso && document.querySelector(".riga-aperta")) return;
-    if (!silenzioso) setLoading(true);
+    if (quiet && document.querySelector(".riga-aperta")) return;
+    if (!quiet) setLoading(true);
     try {
       let query = sb
         .from("households")
@@ -204,21 +204,21 @@
       if (error) throw error;
 
       // I familiari a carico dei nuclei mostrati, in una sola query.
-      const idPaganti = nuclei.map((n) => n.head_id);
-      const familiari = (await perPezzi(idPaganti, (pezzo) => sb.from("members").select("*").in("payer_id", pezzo)))
+      const payerIds = nuclei.map((n) => n.head_id);
+      const familyMembers = (await inPieces(payerIds, (piece) => sb.from("members").select("*").in("payer_id", piece)))
         .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
 
-      ultimi = [nuclei, await caricaCapofamiglia(idPaganti), familiari];
+      lastOnes = [nuclei, await loadHouseholdHead(payerIds), familyMembers];
       render();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  async function caricaCapofamiglia(ids) {
-    const data = await perPezzi(ids, (pezzo) => sb.from("members").select("*").in("id", pezzo));
+  async function loadHouseholdHead(ids) {
+    const data = await inPieces(ids, (piece) => sb.from("members").select("*").in("id", piece));
     return Object.fromEntries(data.map((s) => [s.id, s]));
   }
 
@@ -227,55 +227,55 @@
    * insieme, con «Solo chi deve pagare» tolto, passavano gli 8 KB che il gateway di
    * Supabase accetta, e la lettura falliva (414).
    */
-  async function perPezzi(ids, leggi) {
-    const righe = [];
+  async function inPieces(ids, read) {
+    const rows = [];
     for (let i = 0; i < ids.length; i += 100) {
-      const { data, error } = await leggi(ids.slice(i, i + 100));
+      const { data, error } = await read(ids.slice(i, i + 100));
       if (error) throw error;
-      righe.push(...data);
+      rows.push(...data);
     }
-    return righe;
+    return rows;
   }
 
   function render() {
-    const [tutti, capofamiglia, familiari] = ultimi;
+    const [all, householdHead, familyMembers] = lastOnes;
 
     // Con centinaia di nuclei si scorreva a mano: una famiglia si trova per
     // il nome di chiunque ne faccia parte, in qualsiasi ordine.
     const termini = el("cercaNucleo").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const nuclei = termini.length
-      ? tutti.filter((n) => [n, ...familiari.filter((f) => f.payer_id === n.head_id)].some((p) => {
+      ? all.filter((n) => [n, ...familyMembers.filter((f) => f.payer_id === n.head_id)].some((p) => {
           const nome = `${p.last_name} ${p.first_name}`.toLowerCase();
           return termini.every((t) => nome.includes(t));
         }))
-      : tutti;
+      : all;
     // I riquadri seguono la ricerca, come «Nuclei»: le famiglie mostrate.
     // Da incassare e a credito separati: sommati, il credito di uno abbasserebbe il debito degli altri.
-    const saldi = nuclei.map((n) => parseFloat(n.household_balance || 0));
-    el("totalInsoluti").textContent = fmt(saldi.filter((x) => x > 0).reduce((a, b) => a + b, 0));
-    el("totalCredito").textContent = fmt(-saldi.filter((x) => x < 0).reduce((a, b) => a + b, 0));
-    const familiariMostrati = familiari.filter((f) => nuclei.some((n) => n.head_id === f.payer_id));
-    el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${tutti.length}` : tutti.length;
-    el("numFamiliari").textContent = termini.length ? `${familiariMostrati.length} di ${familiari.length}` : familiari.length;
+    const balances = nuclei.map((n) => parseFloat(n.household_balance || 0));
+    el("totalInsoluti").textContent = fmt(balances.filter((x) => x > 0).reduce((a, b) => a + b, 0));
+    el("totalCredito").textContent = fmt(-balances.filter((x) => x < 0).reduce((a, b) => a + b, 0));
+    const shownFamilyMembers = familyMembers.filter((f) => nuclei.some((n) => n.head_id === f.payer_id));
+    el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${all.length}` : all.length;
+    el("numFamiliari").textContent = termini.length ? `${shownFamilyMembers.length} di ${familyMembers.length}` : familyMembers.length;
 
-    const contenitore = el("displayArea");
+    const container = el("displayArea");
     if (!nuclei.length) {
-      contenitore.innerHTML = `<div class="notification is-light has-text-centered">${
+      container.innerHTML = `<div class="notification is-light has-text-centered">${
         termini.length ? "Nessun nucleo corrisponde alla ricerca." : "Nessun nucleo da visualizzare."}</div>`;
       return;
     }
 
-    contenitore.innerHTML = nuclei.map((nucleo) => {
-      const pagante = capofamiglia[nucleo.head_id];
-      const aCarico = familiari.filter((f) => f.payer_id === nucleo.head_id);
-      if (!pagante) return "";
-      const saldo = parseFloat(nucleo.household_balance || 0);
+    container.innerHTML = nuclei.map((household) => {
+      const payer = householdHead[household.head_id];
+      const dependant = familyMembers.filter((f) => f.payer_id === household.head_id);
+      if (!payer) return "";
+      const balance = parseFloat(household.household_balance || 0);
 
       return `
         <div class="riquadro unit-card">
           <div class="unit-header">
-            <span class="unit-title">${esc(nucleo.last_name)} ${esc(nucleo.first_name)}</span>
-            <span class="unit-badge">${aCarico.length ? aCarico.length + 1 + " persone" : "1 persona"} · Totale ${fmt(nucleo.household_total)}</span>
+            <span class="unit-title">${esc(household.last_name)} ${esc(household.first_name)}</span>
+            <span class="unit-badge">${dependant.length ? dependant.length + 1 + " persone" : "1 persona"} · Totale ${fmt(household.household_total)}</span>
           </div>
           <div class="tabella-scorrevole">
             <table class="custom-table a-schede">
@@ -283,23 +283,23 @@
                 <th>Socio</th><th class="num">Quota</th><th class="num">Già versato</th><th class="num">Da pagare</th>
               </tr></thead>
               <tbody>
-                ${rigaSocio(pagante, false)}
-                ${aCarico.map((f) => rigaSocio(f, true)).join("")}
+                ${memberRow(payer, false)}
+                ${dependant.map((f) => memberRow(f, true)).join("")}
               </tbody>
             </table>
           </div>
-          ${barraSaldo(nucleo.head_id, saldo, `${nucleo.last_name} ${nucleo.first_name}`)}
+          ${balanceBar(household.head_id, balance, `${household.last_name} ${household.first_name}`)}
         </div>`;
     }).join("");
 
-    contenitore.querySelectorAll("button[data-chiedi]").forEach((bottone) => {
-      bottone.addEventListener("click", () => chiediConferma(bottone.dataset.chiedi));
+    container.querySelectorAll("button[data-chiedi]").forEach((button) => {
+      button.addEventListener("click", () => askConfirmation(button.dataset.chiedi));
     });
-    contenitore.querySelectorAll("button[data-modifica]").forEach((bottone) => {
-      bottone.addEventListener("click", () => apriModifica(bottone.dataset.modifica));
+    container.querySelectorAll("button[data-modifica]").forEach((button) => {
+      button.addEventListener("click", () => openEdit(button.dataset.modifica));
     });
-    contenitore.querySelectorAll("button[data-storico]").forEach((bottone) => {
-      bottone.addEventListener("click", () => apriStorico(bottone.dataset.storico));
+    container.querySelectorAll("button[data-storico]").forEach((button) => {
+      button.addEventListener("click", () => openHistory(button.dataset.storico));
     });
   }
 
@@ -307,28 +307,28 @@
    * Riga del socio. Del socio qui si cambiano solo gli importi (Modifica
    * importi, con il motivo): il resto si fa dalla pagina Soci.
    */
-  function rigaSocio(socio, eFamiliare) {
-    const saldo = parseFloat(socio.balance || 0);
-    const dettagli = [socio.card_type, socio.family_discount,
-                      socio.pass_type, socio.preski_type, socio.course_type]
+  function memberRow(member, isFamilyMember) {
+    const balance = parseFloat(member.balance || 0);
+    const details = [member.card_type, member.family_discount,
+                      member.pass_type, member.preski_type, member.course_type]
       .filter((v) => v && v.toLowerCase() !== "no");
 
     return `
-      <tr class="${eFamiliare ? "row-dependent" : ""}" data-socio="${socio.id}">
+      <tr class="${isFamilyMember ? "row-dependent" : ""}" data-socio="${member.id}">
         <td>
-          <b>${esc(socio.last_name)} ${esc(socio.first_name)}</b>${eFamiliare ? '<span class="a-carico">a carico</span>' : ""}${
-            socio.total_manual ? '<span class="a-mano">totale a mano</span>' : ""}
-          <div class="dettagli-socio">${dettagli.map((d) => `<span>${esc(d)}</span>`).join("")}</div>
+          <b>${esc(member.last_name)} ${esc(member.first_name)}</b>${isFamilyMember ? '<span class="a-carico">a carico</span>' : ""}${
+            member.total_manual ? '<span class="a-mano">totale a mano</span>' : ""}
+          <div class="dettagli-socio">${details.map((d) => `<span>${esc(d)}</span>`).join("")}</div>
           <div class="azioni-socio">
-            <button type="button" class="button is-light" data-modifica="${socio.id}">Modifica importi</button>
-            <button type="button" class="button is-light" data-storico="${socio.id}">Storico</button>
+            <button type="button" class="button is-light" data-modifica="${member.id}">Modifica importi</button>
+            <button type="button" class="button is-light" data-storico="${member.id}">Storico</button>
           </div>
         </td>
-        <td class="num" data-etichetta="Quota">${fmt(socio.total)}</td>
-        <td class="num" data-etichetta="Già versato">${fmt(socio.paid)}</td>
-        ${saldo < 0
-          ? `<td class="num credito" data-etichetta="A credito" style="font-weight:700">${fmt(-saldo)}<small>a credito</small></td>`
-          : `<td class="num" data-etichetta="Da pagare" style="font-weight:700;color:${saldo > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(saldo)}</td>`}
+        <td class="num" data-etichetta="Quota">${fmt(member.total)}</td>
+        <td class="num" data-etichetta="Già versato">${fmt(member.paid)}</td>
+        ${balance < 0
+          ? `<td class="num credito" data-etichetta="A credito" style="font-weight:700">${fmt(-balance)}<small>a credito</small></td>`
+          : `<td class="num" data-etichetta="Da pagare" style="font-weight:700;color:${balance > 0 ? "var(--errore)" : "var(--ok)"}">${fmt(balance)}</td>`}
       </tr>`;
   }
 
@@ -337,21 +337,21 @@
    * (chiedi()) e non del browser: dice la cifra e il nome di chi paga, e non
    * si chiude da sola.
    */
-  function barraSaldo(idPagante, saldo, nome) {
+  function balanceBar(payerId, balance, nome) {
     // Ha versato più del dovuto: niente da incassare. Si restituisce con
     // Modifica importi (Già versato più basso, con il motivo nello storico).
-    if (saldo < 0) {
-      return `<div class="barra-saldo"><span class="a-credito">A credito: ${fmt(-saldo)}</span>
+    if (balance < 0) {
+      return `<div class="barra-saldo"><span class="a-credito">A credito: ${fmt(-balance)}</span>
         <span>Per il rimborso: <b>Modifica importi</b> sulla riga del socio, riducendo «Già versato».</span></div>`;
     }
-    if (saldo === 0) {
+    if (balance === 0) {
       return `<div class="barra-saldo"><span class="nucleo-saldato">Nucleo saldato</span></div>`;
     }
     return `
-      <div class="barra-saldo" id="barra_${idPagante}" data-nome="${esc(nome)}">
-        <span class="da-pagare">Da incassare: ${fmt(saldo)}</span>
+      <div class="barra-saldo" id="barra_${payerId}" data-nome="${esc(nome)}">
+        <span class="da-pagare">Da incassare: ${fmt(balance)}</span>
         <span class="azioni">
-          <button class="button is-evidenza" data-chiedi="${idPagante}">Incassa ${fmt(saldo)}</button>
+          <button class="button is-evidenza" data-chiedi="${payerId}">Incassa ${fmt(balance)}</button>
         </span>
       </div>`;
   }
@@ -360,120 +360,120 @@
   // Modifica degli importi (rimborsi, sconti) e storico
   // -------------------------------------------------------------------------
 
-  function socioDa(id) {
-    const [, capofamiglia, familiari] = ultimi;
-    return capofamiglia[id] || familiari.find((f) => f.id === id);
+  function memberFrom(id) {
+    const [, householdHead, familyMembers] = lastOnes;
+    return householdHead[id] || familyMembers.find((f) => f.id === id);
   }
 
   /** Apre sotto la riga del socio un riquadro: uno solo alla volta. */
-  function apriSotto(id, html) {
+  function openBelow(id, html) {
     document.querySelectorAll(".riga-aperta").forEach((r) => r.remove());
-    const riga = document.querySelector(`tr[data-socio="${id}"]`);
-    if (!riga) return null;
-    const sotto = document.createElement("tr");
-    sotto.className = "riga-aperta";
-    sotto.innerHTML = `<td colspan="4">${html}</td>`;
-    riga.after(sotto);
-    return sotto;
+    const row = document.querySelector(`tr[data-socio="${id}"]`);
+    if (!row) return null;
+    const below = document.createElement("tr");
+    below.className = "riga-aperta";
+    below.innerHTML = `<td colspan="4">${html}</td>`;
+    row.after(below);
+    return below;
   }
 
-  function apriModifica(id) {
-    const socio = socioDa(id);
-    if (!socio) return;
-    const sotto = apriSotto(id, `
+  function openEdit(id) {
+    const member = memberFrom(id);
+    if (!member) return;
+    const below = openBelow(id, `
       <div class="modifica-importi">
         <div><label class="label" for="quota_${id}">Quota (€)</label>
-          <input class="input" type="number" step="0.5" min="0" id="quota_${id}" value="${num(socio.total)}"></div>
+          <input class="input" type="number" step="0.5" min="0" id="quota_${id}" value="${num(member.total)}"></div>
         <div><label class="label" for="versato_${id}">Già versato (€)</label>
-          <input class="input" type="number" step="0.5" min="0" id="versato_${id}" value="${num(socio.paid)}"></div>
+          <input class="input" type="number" step="0.5" min="0" id="versato_${id}" value="${num(member.paid)}"></div>
         <div class="motivo"><label class="label" for="motivo_${id}">Motivo*</label>
           <input class="input" id="motivo_${id}" maxlength="200" autocomplete="off"
                  placeholder="Es. rimborso corso: 2 lezioni frequentate su 8"></div>
         <div class="azioni">
-          <button type="button" class="button is-success" data-salva>Salva ${esc(socio.last_name)} ${esc(socio.first_name)}</button>
+          <button type="button" class="button is-success" data-salva>Salva ${esc(member.last_name)} ${esc(member.first_name)}</button>
           <button type="button" class="button is-light" data-chiudi>Annulla</button>
         </div>
       </div>`);
-    sotto.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
-    sotto.querySelector("[data-salva]").addEventListener("click", () => salvaImporti(socio, sotto));
+    below.querySelector("[data-chiudi]").addEventListener("click", () => below.remove());
+    below.querySelector("[data-salva]").addEventListener("click", () => saveAmounts(member, below));
     el("motivo_" + id).focus();
   }
 
-  async function salvaImporti(socio, sotto) {
-    const quota = el("quota_" + socio.id).value;
-    const versato = el("versato_" + socio.id).value;
-    const motivo = el("motivo_" + socio.id).value.trim();
+  async function saveAmounts(member, below) {
+    const quota = el("quota_" + member.id).value;
+    const paidIn = el("versato_" + member.id).value;
+    const cause = el("motivo_" + member.id).value.trim();
     // Euro interi o con i 50 centesimi, da zero in su (step e min del campo).
-    const sbagliato = ["quota_", "versato_"].map((p) => el(p + socio.id)).find((c) => c.value === "" || !c.checkValidity());
-    if (sbagliato) {
-      segnaErrore(sbagliato, "Quota e importo versato: euro interi o con 50 centesimi (es. 12 o 12,50), non negativi.");
+    const wrong = ["quota_", "versato_"].map((p) => el(p + member.id)).find((c) => c.value === "" || !c.checkValidity());
+    if (wrong) {
+      markError(wrong, "Quota e importo versato: euro interi o con 50 centesimi (es. 12 o 12,50), non negativi.");
       return;
     }
-    if (!motivo) {
-      segnaErrore(el("motivo_" + socio.id), "Indicare il motivo, che sarà registrato nello storico del socio.");
+    if (!cause) {
+      markError(el("motivo_" + member.id), "Indicare il motivo, che sarà registrato nello storico del socio.");
       return;
     }
     setLoading(true);
     try {
       const { error } = await sb.rpc("set_amounts", {
-        member_id: socio.id, total: num(quota), paid: num(versato), reason: motivo,
+        member_id: member.id, total: num(quota), paid: num(paidIn), reason: cause,
       });
       if (error) throw error;
-      sotto.remove();
-      showToast(`${socio.last_name} ${socio.first_name}: importi salvati.`);
-      await caricaDati({ silenzioso: true });
+      below.remove();
+      showToast(`${member.last_name} ${member.first_name}: importi salvati.`);
+      await loadData({ silenzioso: true });
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
+      showToast(errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  async function apriStorico(id) {
+  async function openHistory(id) {
     setLoading(true);
     try {
       const { data, error } = await sb.rpc("amount_history", { member_id: id });
       if (error) throw error;
-      const quando = (t) => new Date(t).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
-      const cambio = (etichetta, prima, dopo) =>
-        num(prima) === num(dopo) ? "" : `${etichetta} ${fmt(prima)} → ${fmt(dopo)} · `;
-      const sotto = apriSotto(id, data.length
+      const when = (t) => new Date(t).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
+      const change = (label, before, after) =>
+        num(before) === num(after) ? "" : `${label} ${fmt(before)} → ${fmt(after)} · `;
+      const below = openBelow(id, data.length
         ? `<ul class="storico">${data.map((c) => `
-            <li><span class="quando">${quando(c.changed_at)}</span>
-              ${cambio("Quota", c.old_total, c.new_total)}${cambio("Versato", c.old_paid, c.new_paid)}
+            <li><span class="quando">${when(c.changed_at)}</span>
+              ${change("Quota", c.old_total, c.new_total)}${change("Versato", c.old_paid, c.new_paid)}
               ${esc(c.reason || "Modifica della scheda socio")}${c.changed_by ? ` · ${esc(c.changed_by)}` : ""}</li>`).join("")}
           </ul>
           <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`
         : `<p>Nessuna modifica degli importi registrata.</p>
           <button type="button" class="button is-light mt-3" data-chiudi>Chiudi</button>`);
-      sotto?.querySelector("[data-chiudi]").addEventListener("click", () => sotto.remove());
+      below?.querySelector("[data-chiudi]").addEventListener("click", () => below.remove());
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
+      showToast(errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  async function chiediConferma(idPagante) {
-    const barra = el("barra_" + idPagante);
-    if (!barra) return;
+  async function askConfirmation(payerId) {
+    const bar = el("barra_" + payerId);
+    if (!bar) return;
     // Il saldo di adesso, non quello di quando si è aperta la pagina: il
     // database incassa il saldo del momento, e la domanda deve dire quello.
     setLoading(true);
     const { data, error } = await sb.from("households").select("household_balance")
-      .eq("head_id", idPagante).maybeSingle();
+      .eq("head_id", payerId).maybeSingle();
     setLoading(false);
-    if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
-    const saldo = parseFloat(data?.household_balance || 0);
-    if (saldo <= 0) {
-      showToast(saldo < 0 ? "Il nucleo è a credito: nessun importo da incassare." : "Il nucleo risulta già saldato.");
-      await caricaDati({ silenzioso: true });
+    if (error) { showToast(errorMessage(error), "is-danger"); return; }
+    const balance = parseFloat(data?.household_balance || 0);
+    if (balance <= 0) {
+      showToast(balance < 0 ? "Il nucleo è a credito: nessun importo da incassare." : "Il nucleo risulta già saldato.");
+      await loadData({ silenzioso: true });
       return;
     }
-    barra.querySelector(".da-pagare").textContent = `Da incassare: ${fmt(saldo)}`;
-    const nome = barra.dataset.nome;
-    chiedi(barra.querySelector(".azioni"), `Confermare l'incasso di ${fmt(saldo)}${nome ? ` da ${nome}` : ""}?`,
-      "Conferma incasso", () => salda(idPagante, saldo), { pericolo: false });
+    bar.querySelector(".da-pagare").textContent = `Da incassare: ${fmt(balance)}`;
+    const nome = bar.dataset.nome;
+    ask(bar.querySelector(".azioni"), `Confermare l'incasso di ${fmt(balance)}${nome ? ` da ${nome}` : ""}?`,
+      "Conferma incasso", () => settle(payerId, balance), { pericolo: false });
   }
 
   /**
@@ -483,24 +483,24 @@
    * insieme, e non esiste il caso "metà famiglia risulta pagata" per una
    * connessione caduta a metà elenco.
    */
-  async function salda(idPagante, confermato) {
+  async function settle(payerId, confirmed) {
     setLoading(true);
     try {
       // La cifra della domanda: se intanto il saldo è cambiato, il database non incassa.
-      const { data, error } = await sb.rpc("settle_household", { head_id: idPagante, expected: confermato });
+      const { data, error } = await sb.rpc("settle_household", { head_id: payerId, expected: confirmed });
       if (error) throw error;
 
-      const esito = Array.isArray(data) ? data[0] : data;
-      showToast(esito && esito.members_settled
-        ? `Incasso registrato: ${fmt(esito.amount)}, ${esito.members_settled} soci saldati.`
+      const outcome = Array.isArray(data) ? data[0] : data;
+      showToast(outcome && outcome.members_settled
+        ? `Incasso registrato: ${fmt(outcome.amount)}, ${outcome.members_settled} soci saldati.`
         : "Il nucleo risultava già saldato.");
       // Con uno Storico o una Modifica aperti il ridisegno salta (li chiuderebbe):
       // almeno la barra del nucleo appena incassato dice che è saldato.
-      const barra = el("barra_" + idPagante);
-      if (barra) barra.outerHTML = barraSaldo(idPagante, 0, "");
-      await caricaDati({ silenzioso: true });
+      const bar = el("barra_" + payerId);
+      if (bar) bar.outerHTML = balanceBar(payerId, 0, "");
+      await loadData({ silenzioso: true });
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
+      showToast(errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }

@@ -9,53 +9,53 @@
 // - Socio nuovo: il totale è quello del listino.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
-  const ORDINARIA = "TESSERA ORDINARIA - REALE MUTUA NEVE", SOLO = "SOLO TESSERA - NO ASSICURAZIONE", CORSO = "CORSO SCI ADULTI";
-  const LISTINO = [
-    { category: "TESSERA", name: ORDINARIA, price: 40, insurance: "BASE", min_role: "utente" },
+  const ORDINARY = "TESSERA ORDINARIA - REALE MUTUA NEVE", SOLO = "SOLO TESSERA - NO ASSICURAZIONE", COURSE = "CORSO SCI ADULTI";
+  const PRICE_LIST = [
+    { category: "TESSERA", name: ORDINARY, price: 40, insurance: "BASE", min_role: "utente" },
     { category: "TESSERA", name: SOLO, price: 20, min_role: "utente" },
-    { category: "CORSO", name: CORSO, price: 210, min_role: "utente" },
+    { category: "CORSO", name: COURSE, price: 210, min_role: "utente" },
   ];
-  const SOCIO = { id: "S1", last_name: "ROSSI", first_name: "MARIO", phone: "333", card_type: ORDINARIA,
-    course_type: CORSO, course_day: "SABATO", total: 230, paid: 0, total_manual: false, updated_at: "1" };
-  const aggiornati = [];
-  FINTO.risposta = (t, r) => {
-    if (t === "prices") return LISTINO;
-    const scrittura = r.filtri.find((f) => f[0] === "update");
-    if (t === "members" && scrittura) { aggiornati.push(scrittura[1]); return [{ updated_at: "2" }]; }
-    const eq = (campo) => r.filtri.find((f) => f[0] === "eq" && f[1] === campo)?.[2];
-    if (t === "members" && eq("id") === "S1") return [SOCIO];
+  const MEMBER = { id: "S1", last_name: "ROSSI", first_name: "MARIO", phone: "333", card_type: ORDINARY,
+    course_type: COURSE, course_day: "SABATO", total: 230, paid: 0, total_manual: false, updated_at: "1" };
+  const updated = [];
+  FAKE.risposta = (t, r) => {
+    if (t === "prices") return PRICE_LIST;
+    const writing = r.filtri.find((f) => f[0] === "update");
+    if (t === "members" && writing) { updated.push(writing[1]); return [{ updated_at: "2" }]; }
+    const eq = (field) => r.filtri.find((f) => f[0] === "eq" && f[1] === field)?.[2];
+    if (t === "members" && eq("id") === "S1") return [MEMBER];
     return [];
   };
-  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
-  const scegli = (gruppo, nome) => el(gruppo).querySelector(`input[data-nome="${nome}"]`)?.click();
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const choose = (group, nome) => el(group).querySelector(`input[data-nome="${nome}"]`)?.click();
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const prova = (nome, vero, perche) => r.push(`${nome}=${vero ? "ok" : `NO(${perche})`}`);
+    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
 
-    await caricaSocio("S1");
-    await aspetta(300);
-    prova("aperto", totaleIndividuale() === 230, `totale ${totaleIndividuale()}`);
+    await loadMember("S1");
+    await wait(300);
+    test("aperto", individualTotal() === 230, `totale ${individualTotal()}`);
     el("f_totale_a_mano").click();
-    prova("aManoParteDaSalvato", num(el("f_totale_manuale").value) === 230, `campo ${el("f_totale_manuale").value}`);
+    test("aManoParteDaSalvato", num(el("f_totale_manuale").value) === 230, `campo ${el("f_totale_manuale").value}`);
     el("f_totale_a_mano").click();
-    scegli("f_tipologia_corso", "");
-    prova("toltoCorso", totaleIndividuale() === 20, `totale ${totaleIndividuale()}`);
-    scegli("f_tipologia_tessera", SOLO);
-    prova("cambiataTessera", totaleIndividuale() === 0, `totale ${totaleIndividuale()}`);
+    choose("f_tipologia_corso", "");
+    test("toltoCorso", individualTotal() === 20, `totale ${individualTotal()}`);
+    choose("f_tipologia_tessera", SOLO);
+    test("cambiataTessera", individualTotal() === 0, `totale ${individualTotal()}`);
 
-    await caricaSocio("S1");
-    await aspetta(300);
+    await loadMember("S1");
+    await wait(300);
     el("f_telefono").value = "3334";
-    await salva();
-    await aspetta(300);
+    await save();
+    await wait(300);
     document.querySelector("#finestraDomanda [data-si]")?.click();
-    await aspetta(600);
-    prova("salvatoUguale", aggiornati.length === 1 && aggiornati[0].total === 230, `salvati ${JSON.stringify(aggiornati.map((a) => a.total))}`);
+    await wait(600);
+    test("salvatoUguale", updated.length === 1 && updated[0].total === 230, `salvati ${JSON.stringify(updated.map((a) => a.total))}`);
 
     resetForm();
-    scegli("f_tipologia_tessera", ORDINARIA);
-    prova("nuovoDalListino", totaleIndividuale() === 40, `totale ${totaleIndividuale()}`);
+    choose("f_tipologia_tessera", ORDINARY);
+    test("nuovoDalListino", individualTotal() === 40, `totale ${individualTotal()}`);
     document.title = "RISULTATO " + r.join(" ");
   }, 500));
 }

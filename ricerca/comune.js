@@ -8,8 +8,8 @@
 // ---------------------------------------------------------------------------
 
 /** I pezzi utili di una ricerca, ripuliti da tutto ciò che non è un nome. */
-function pezzi(testoCercato) {
-  return String(testoCercato || "")
+function pieces(searchedText) {
+  return String(searchedText || "")
     .toLowerCase()
     .split(/[\s,]+/)
     .map((p) => p.replace(/[^a-zàèéìòóùç'’-]/g, ""))
@@ -22,8 +22,8 @@ function pezzi(testoCercato) {
  * tessera 21, come la salva Soci (numeroTessera() in web/index.html). Si
  * cercano uguali, non "che iniziano per": la tessera 12, non la 120.
  */
-function numeriTessera(testoCercato) {
-  return (String(testoCercato || "").match(/\d{1,15}/g) || []).map((n) => String(BigInt(n))).slice(0, 4);
+function cardNumbers(searchedText) {
+  return (String(searchedText || "").match(/\d{1,15}/g) || []).map((n) => String(BigInt(n))).slice(0, 4);
 }
 
 /**
@@ -32,10 +32,10 @@ function numeriTessera(testoCercato) {
  * direttivo ha sempre cercato. Anche all'inizio del cognome o del nome nella
  * chiave del nome, che ignora accenti e apostrofi.
  */
-function filtroPezzo(pezzo) {
-  const chiave = chiaveNome(pezzo);
-  return `last_name.ilike.${pezzo}%,first_name.ilike.${pezzo}%`
-    + (chiave ? `,name_key.like.${chiave}%,name_key.like.% ${chiave}%` : "");
+function pieceFilter(piece) {
+  const keyName = nameKey(piece);
+  return `last_name.ilike.${piece}%,first_name.ilike.${piece}%`
+    + (keyName ? `,name_key.like.${keyName}%,name_key.like.% ${keyName}%` : "");
 }
 
 /**
@@ -44,7 +44,7 @@ function filtroPezzo(pezzo) {
  * ("DANGELO MARIO"): così "d'angelo" trova DANGELO e "dangelo" trova
  * D'ANGELO. Uguale a chiaveNome() in web/shared.js.
  */
-function chiaveNome(t) {
+function nameKey(t) {
   return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
 }
 
@@ -53,15 +53,15 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) =>
 
 // Nel foglio di partenza "NO" voleva dire "niente": mostrarlo com'è farebbe
 // leggere "Abbonamento: NO" dove non c'è nessun abbonamento.
-const testo = (v) =>
+const text = (v) =>
   v === null || v === undefined || v === "" || String(v).trim().toUpperCase() === "NO"
     ? "—" : String(v);
 
 /** Evidenzia in giallo il pezzo cercato all'inizio della parola. */
-function evidenzia(parola, parti) {
-  const p = (parti || []).find((x) => String(parola).toLowerCase().startsWith(x));
-  if (!p) return esc(parola);
-  return "<mark>" + esc(String(parola).slice(0, p.length)) + "</mark>" + esc(String(parola).slice(p.length));
+function highlight(word, parts) {
+  const p = (parts || []).find((x) => String(word).toLowerCase().startsWith(x));
+  if (!p) return esc(word);
+  return "<mark>" + esc(String(word).slice(0, p.length)) + "</mark>" + esc(String(word).slice(p.length));
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ function evidenzia(parola, parti) {
 // ---------------------------------------------------------------------------
 
 // I colori stanno in web/brand.css ("Giorni delle gite"): basta data-giorno.
-const GIORNI = {
+const DAYS = {
   SABATO:   { nome: "Sabato" },
   DOMENICA: { nome: "Domenica" },
   MARTEDI:  { nome: "Martedì" },
@@ -82,8 +82,8 @@ const GIORNI = {
 };
 
 /** Il giorno di un abbonamento, ricavato dal nome dell'opzione di listino. */
-function giornoAbbonamento(tipoAbbonamento) {
-  const t = String(tipoAbbonamento || "").toUpperCase();
+function passDay(passType) {
+  const t = String(passType || "").toUpperCase();
   if (!/\d+\s*VIAGG/.test(t)) return null;
   if (t.includes("SABATO")) return "SABATO";
   if (t.includes("DOMENICA")) return "DOMENICA";
@@ -93,10 +93,10 @@ function giornoAbbonamento(tipoAbbonamento) {
 }
 
 /** L'etichetta colorata del giorno, o stringa vuota se il giorno non c'è. */
-function etichettaGiorno(giorno) {
-  const g = GIORNI[giorno];
+function dayLabel(dayKey) {
+  const g = DAYS[dayKey];
   if (!g) return "";
-  return `<span class="giorno-etichetta" data-giorno="${giorno}">${g.nome}</span>`;
+  return `<span class="giorno-etichetta" data-giorno="${dayKey}">${g.nome}</span>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,9 +111,9 @@ function etichettaGiorno(giorno) {
 // ha dieci e il prefisso lo deve ancora ricevere.
 // ---------------------------------------------------------------------------
 
-function numeroWhatsapp(telefono) {
-  if (!telefono) return null;
-  let n = String(telefono).replace(/[^\d+]/g, "");
+function whatsappNumber(phoneNumber) {
+  if (!phoneNumber) return null;
+  let n = String(phoneNumber).replace(/[^\d+]/g, "");
 
   if (n.startsWith("+")) n = n.slice(1);
   else if (n.startsWith("00")) n = n.slice(2);
@@ -123,21 +123,21 @@ function numeroWhatsapp(telefono) {
 }
 
 /** Il numero come si compone dal telefono: le cifre così come sono scritte. */
-function numeroChiamata(telefono) {
-  if (!telefono) return null;
-  const n = String(telefono).replace(/[^\d+]/g, "");
+function callNumber(phoneNumber) {
+  if (!phoneNumber) return null;
+  const n = String(phoneNumber).replace(/[^\d+]/g, "");
   return n.length >= 6 ? n : null;
 }
 
 /** I due pulsanti "Chiama" e "WhatsApp", o niente se manca il numero. */
-function contattiHtml(telefono) {
-  const chiamata = numeroChiamata(telefono);
-  const whatsapp = numeroWhatsapp(telefono);
-  if (!chiamata && !whatsapp) return "";
+function contactsHtml(phoneNumber) {
+  const call = callNumber(phoneNumber);
+  const whatsapp = whatsappNumber(phoneNumber);
+  if (!call && !whatsapp) return "";
 
   return `
     <div class="contatti">
-      ${chiamata ? `<a class="chiama" href="tel:${esc(chiamata)}">Chiama</a>` : ""}
+      ${call ? `<a class="chiama" href="tel:${esc(call)}">Chiama</a>` : ""}
       ${whatsapp ? `<a class="whatsapp" href="https://wa.me/${esc(whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
     </div>`;
 }
@@ -161,25 +161,25 @@ function el(id) {
  *
  * `alPronto` viene chiamata quando la sessione c'è.
  */
-async function proteggiPagina(alPronto) {
+async function protectPage(alPronto) {
   window.sb = window.supabase.createClient(
     window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
 
-  const questa = location.pathname.split("/").pop() || "index.html";
+  const thisPage = location.pathname.split("/").pop() || "index.html";
   const { data } = await sb.auth.getSession();
   if (!data.session) {
-    location.replace("../login.html?next=" + encodeURIComponent("ricerca/" + questa));
+    location.replace("../login.html?next=" + encodeURIComponent("ricerca/" + thisPage));
     return;
   }
 
-  preparaMenu();
+  prepareMenu();
   // Esci sta due volte: in alto sul computer, in fondo al menu sul telefono.
-  for (const btnEsci of document.querySelectorAll(".voce-esci")) {
-    btnEsci.addEventListener("click", async () => {
+  for (const btnExit of document.querySelectorAll(".voce-esci")) {
+    btnExit.addEventListener("click", async () => {
       // Come nel gestionale (logout in web/shared.js): uscire chiude anche il
       // "Vedi come", così al prossimo accesso si rientra sé stessi.
-      const accesso = await getAccesso().catch(() => null);
-      if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+      const access = await getAccess().catch(() => null);
+      if (access && access.real_role === "superadmin" && access.role !== "superadmin") {
         await sb.rpc("set_view_as", { role: null });
       }
       await sb.auth.signOut();
@@ -199,15 +199,15 @@ async function proteggiPagina(alPronto) {
 // condividono file.
 // ---------------------------------------------------------------------------
 
-let _accessoCache = null;
+let _accessCache = null;
 
 /** { email, role, real_role, permissions, change_password } di chi è collegato, o null. */
-async function getAccesso() {
-  if (_accessoCache) return _accessoCache;
+async function getAccess() {
+  if (_accessCache) return _accessCache;
   const { data, error } = await sb.rpc("my_access");
   if (error) throw error;
-  _accessoCache = (data && data[0]) || null;
-  return _accessoCache;
+  _accessCache = (data && data[0]) || null;
+  return _accessCache;
 }
 
 /**
@@ -217,24 +217,24 @@ async function getAccesso() {
  * Senza linea (sul pullman succede) si resta: la pagina gite lavora con la
  * coda, e il database controlla comunque ogni richiesta.
  */
-async function richiediPermesso(permesso) {
-  let accesso;
+async function requestPermission(permission) {
+  let access;
   try {
-    accesso = await getAccesso();
-  } catch (errore) {
-    if (erroreDiRete(errore)) return true;
-    throw errore;
+    access = await getAccess();
+  } catch (err) {
+    if (networkError(err)) return true;
+    throw err;
   }
-  if (accesso && accesso.change_password) {
+  if (access && access.change_password) {
     location.replace("../password.html");
     return false;
   }
-  if (accesso && accesso.permissions.includes(permesso)) {
-    disegnaBarra(accesso);
-    mostraVediCome(accesso);
+  if (access && access.permissions.includes(permission)) {
+    drawBar(access);
+    showViewAs(access);
     return true;
   }
-  location.replace(accesso ? "../index.html" : "../login.html?senza=1");
+  location.replace(access ? "../index.html" : "../login.html?senza=1");
   return false;
 }
 
@@ -245,20 +245,20 @@ async function richiediPermesso(permesso) {
  * rimette prima del primo disegno, così la barra non cambia passando da una
  * pagina all'altra.
  */
-function disegnaBarra(accesso) {
+function drawBar(access) {
   const html = document.documentElement;
-  html.dataset.ruolo = accesso.role;
-  html.dataset.permessi = accesso.permissions.join(" ");
+  html.dataset.ruolo = access.role;
+  html.dataset.permessi = access.permissions.join(" ");
   try {
-    localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: accesso.role, permissions: accesso.permissions }));
-  } catch (errore) { /* storage negato: la barra si aggiorna lo stesso qui sotto */ }
-  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
-    voce.hidden = !accesso.permissions.includes(voce.dataset.permesso);
+    localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: access.role, permissions: access.permissions }));
+  } catch (err) { /* storage negato: la barra si aggiorna lo stesso qui sotto */ }
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((item) => {
+    item.hidden = !access.permissions.includes(item.dataset.permesso);
   });
-  scriviNomiBarra();
-  scriviUtente(accesso);
-  window.addEventListener("resize", altezzaBarra);
-  nomiBarra().catch(() => {});
+  writeMenuLabels();
+  writeUser(access);
+  window.addEventListener("resize", barHeight);
+  menuLabels().catch(() => {});
 }
 
 /**
@@ -266,26 +266,26 @@ function disegnaBarra(accesso) {
  * nav_labels): come NOMI_BARRA, scriviNomiBarra() e nomiBarra() in
  * web/shared.js, con la stessa memoria nel browser ("sciclub-voci").
  */
-let NOMI_BARRA = (() => {
+let MENU_LABELS = (() => {
   try { return JSON.parse(localStorage.getItem("sciclub-voci")) || {}; } catch (e) { return {}; }
 })();
 
-function scriviNomiBarra() {
-  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
+function writeMenuLabels() {
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((item) => {
     // Il nome sta nello span accanto all'icona (nel gruppo, dentro summary).
-    const testo = voce.querySelector(":scope > span, :scope > summary > span") || voce;
-    if (voce.dataset.nome === undefined) voce.dataset.nome = testo.textContent;
-    testo.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+    const text = item.querySelector(":scope > span, :scope > summary > span") || item;
+    if (item.dataset.nome === undefined) item.dataset.nome = text.textContent;
+    text.textContent = MENU_LABELS[item.dataset.permesso] || item.dataset.nome;
   });
-  altezzaBarra();
+  barHeight();
 }
 
-async function nomiBarra() {
+async function menuLabels() {
   const { data, error } = await sb.from("nav_labels").select("key, label");
   if (error) throw error;
-  NOMI_BARRA = Object.fromEntries(data.map((r) => [r.key, r.label]));
-  try { localStorage.setItem("sciclub-voci", JSON.stringify(NOMI_BARRA)); } catch (e) { /* storage negato */ }
-  scriviNomiBarra();
+  MENU_LABELS = Object.fromEntries(data.map((r) => [r.key, r.label]));
+  try { localStorage.setItem("sciclub-voci", JSON.stringify(MENU_LABELS)); } catch (e) { /* storage negato */ }
+  writeMenuLabels();
 }
 
 /**
@@ -294,9 +294,9 @@ async function nomiBarra() {
  * sotto di lei deve seguirla. Si ricalcola con le voci, coi loro nomi e con
  * la finestra (disegnaBarra()). La stessa in web/shared.js.
  */
-function altezzaBarra() {
-  const barra = document.querySelector(".barra");
-  if (barra) document.documentElement.style.setProperty("--barra-h", `${barra.offsetHeight}px`);
+function barHeight() {
+  const bar = document.querySelector(".barra");
+  if (bar) document.documentElement.style.setProperty("--barra-h", `${bar.offsetHeight}px`);
 }
 
 /**
@@ -304,80 +304,80 @@ function altezzaBarra() {
  * nella barra del telefono, il pannello che «Menu» apre e chiude (Esc, una voce
  * scelta e un tocco fuori lo chiudono) e il tema. Come in web/shared.js.
  */
-function preparaMenu() {
-  const voce = document.querySelector('.barra-voci a[aria-current="page"]');
-  if (voce) document.querySelectorAll(".barra-pagina").forEach((x) => { x.textContent = voce.textContent.trim(); });
-  segnaTema();
-  const bottone = document.querySelector(".apri-menu");
-  if (!bottone) return;
-  const aperto = () => document.documentElement.classList.contains("menu-aperto");
-  bottone.addEventListener("click", () => apriMenu(!aperto()));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && aperto()) apriMenu(false); });
+function prepareMenu() {
+  const item = document.querySelector('.barra-voci a[aria-current="page"]');
+  if (item) document.querySelectorAll(".barra-pagina").forEach((x) => { x.textContent = item.textContent.trim(); });
+  markTheme();
+  const button = document.querySelector(".apri-menu");
+  if (!button) return;
+  const isOpen = () => document.documentElement.classList.contains("menu-aperto");
+  button.addEventListener("click", () => openMenu(!isOpen()));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && isOpen()) openMenu(false); });
   document.addEventListener("click", (e) => {
-    if (aperto() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) apriMenu(false);
+    if (isOpen() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) openMenu(false);
   });
 }
 
-function apriMenu(aperto) {
-  const bottone = document.querySelector(".apri-menu");
-  if (!bottone) return;
-  document.documentElement.classList.toggle("menu-aperto", aperto);
-  bottone.setAttribute("aria-expanded", String(aperto));
-  if (aperto) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
-  else bottone.focus();
+function openMenu(isOpen) {
+  const button = document.querySelector(".apri-menu");
+  if (!button) return;
+  document.documentElement.classList.toggle("menu-aperto", isOpen);
+  button.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
+  else button.focus();
 }
 
 /** Tema chiaro o scuro, ricordato nel browser come in web/shared.js. */
-function cambiaTema() {
+function toggleTheme() {
   const html = document.documentElement;
-  const scuro = html.dataset.tema !== "scuro";
-  if (scuro) html.dataset.tema = "scuro";
+  const dark = html.dataset.tema !== "scuro";
+  if (dark) html.dataset.tema = "scuro";
   else delete html.dataset.tema;
-  try { localStorage.setItem("sciclub-tema", scuro ? "scuro" : ""); } catch (e) { /* storage negato */ }
-  segnaTema();
+  try { localStorage.setItem("sciclub-tema", dark ? "scuro" : ""); } catch (e) { /* storage negato */ }
+  markTheme();
 }
 
-function segnaTema() {
-  const scuro = document.documentElement.dataset.tema === "scuro";
-  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(scuro)));
+function markTheme() {
+  const dark = document.documentElement.dataset.tema === "scuro";
+  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(dark)));
 }
 
 /** Chi è entrato, in alto a destra (e in fondo al menu sul telefono). */
-function scriviUtente(accesso) {
+function writeUser(access) {
   document.querySelectorAll(".barra-utente").forEach((x) => {
-    x.innerHTML = accesso
-      ? `<span class="chi">${esc(accesso.email || "")}</span><span class="ruolo">${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</span>`
+    x.innerHTML = access
+      ? `<span class="chi">${esc(access.email || "")}</span><span class="ruolo">${esc(ROLE_NAMES[access.role] || access.role)}</span>`
       : "";
   });
 }
 
 /** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */
-function cambiaTesto() {
+function toggleTextSize() {
   const html = document.documentElement;
-  const livello = (Number(html.dataset.testo || 0) + 1) % 3;
-  if (livello) html.dataset.testo = livello;
+  const level = (Number(html.dataset.testo || 0) + 1) % 3;
+  if (level) html.dataset.testo = level;
   else delete html.dataset.testo;
-  try { localStorage.setItem("sciclub-testo", livello); } catch (errore) {}
+  try { localStorage.setItem("sciclub-testo", level); } catch (err) {}
 }
 
 /** Come si chiamano i ruoli a schermo (gli stessi di NOMI_RUOLI in web/shared.js). */
-const NOMI_RUOLI = {
+const ROLE_NAMES = {
   superadmin: "Superadmin", admin: "Admin", tesoriere: "Tesoriere",
   assicurazione: "Assicurazione", gite: "Utente (ricerca e gite)", social: "Social",
 };
 
 /** Fascia gialla del "Vedi come", come nel gestionale (mostraVediCome in web/shared.js). */
-function mostraVediCome(accesso) {
-  if (accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
-  const fascia = document.createElement("div");
-  fascia.className = "fascia-vedi-come";
-  fascia.innerHTML = `Visualizzazione come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+function showViewAs(access) {
+  if (access.real_role !== "superadmin" || access.role === "superadmin") return;
+  const band = document.createElement("div");
+  band.className = "fascia-vedi-come";
+  band.innerHTML = `Visualizzazione come <b>${esc(ROLE_NAMES[access.role] || access.role)}</b>
     <button type="button" class="btn-chiaro">Torna alla vista superadmin</button>`;
-  fascia.querySelector("button").addEventListener("click", async () => {
+  band.querySelector("button").addEventListener("click", async () => {
     const { error } = await sb.rpc("set_view_as", { role: null });
     if (!error) location.replace("../gestione.html");
   });
-  document.body.append(fascia);
+  document.body.append(band);
 }
 
 /**
@@ -385,10 +385,10 @@ function mostraVediCome(accesso) {
  * I nomi del guasto cambiano da browser a browser: Chrome dice "Failed to
  * fetch", Safari "Load failed", Firefox "NetworkError".
  */
-function erroreDiRete(errore) {
+function networkError(err) {
   if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
-  const descrizione = String((errore && errore.message) || "");
-  return /failed to fetch|networkerror|network request failed|load failed/i.test(descrizione);
+  const descriptionText = String((err && err.message) || "");
+  return /failed to fetch|networkerror|network request failed|load failed/i.test(descriptionText);
 }
 
 /**
@@ -399,34 +399,34 @@ function erroreDiRete(errore) {
  * bloccherebbe la coda dietro di sé per sempre. Se il codice non c'è, non è
  * arrivata risposta: è la linea, e quella prima o poi torna.
  */
-function ritentabile(errore) {
+function retryable(err) {
   // La sessione scaduta è l'eccezione: con un nuovo accesso la stessa
   // richiesta passa, e buttarla perderebbe una gita fatta davvero.
-  if (erroreDiRete(errore) || sessioneScaduta(errore)) return true;
+  if (networkError(err) || sessionExpired(err)) return true;
   // Anche gli errori del database che passano da soli: non raggiungibile o pool
   // esaurito (PGRST000-003), tempo scaduto, troppe connessioni, riavvio,
   // conflitto fra transazioni. Riprovare è sicuro: ogni voce ha il suo client_id.
-  if (/^(PGRST00[0-3]|57014|53300|57P0[1-3]|40001|40P01)$/.test(errore?.code || "")) return true;
-  return !(errore && errore.code);
+  if (/^(PGRST00[0-3]|57014|53300|57P0[1-3]|40001|40P01)$/.test(err?.code || "")) return true;
+  return !(err && err.code);
 }
 
 /** Il token non vale più (scaduto o non valido): serve un nuovo accesso. */
-function sessioneScaduta(errore) {
-  return Boolean(errore) && (errore.status === 401 || /^PGRST30[123]$/.test(errore.code || ""));
+function sessionExpired(err) {
+  return Boolean(err) && (err.status === 401 || /^PGRST30[123]$/.test(err.code || ""));
 }
 
 /** Messaggio leggibile a partire da un errore Supabase. */
-function messaggioErrore(errore) {
-  if (!errore) return "Errore sconosciuto";
-  if (sessioneScaduta(errore)) {
+function errorMessage(err) {
+  if (!err) return "Errore sconosciuto";
+  if (sessionExpired(err)) {
     return "Sessione scaduta: esci e rientra.";
   }
   // "Failed to fetch" non dice niente a chi è sul pullman alle sette. Quello
   // che serve sapere è che è colpa della linea e che si può riprovare: la
   // gita porta con sé l'id della pressione, quindi un secondo tentativo non
   // la scala due volte nemmeno se il primo era arrivato.
-  if (erroreDiRete(errore)) {
+  if (networkError(err)) {
     return "Connessione assente o troppo debole: riprova.";
   }
-  return errore.message || String(errore);
+  return err.message || String(err);
 }

@@ -15,15 +15,15 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
-const radice = path.join(__dirname, "..");
+const root = path.join(__dirname, "..");
 const file = [
   ...fs.readdirSync(__dirname).filter((f) => /\.(html|js)$/.test(f)).map((f) => path.join(__dirname, f)),
-  ...fs.readdirSync(path.join(radice, "ricerca")).filter((f) => /\.(html|js)$/.test(f)).map((f) => path.join(radice, "ricerca", f)),
+  ...fs.readdirSync(path.join(root, "ricerca")).filter((f) => /\.(html|js)$/.test(f)).map((f) => path.join(root, "ricerca", f)),
 ].filter((f) => !/^test-|^config\.js$|^social-templates\.js$/.test(path.basename(f)));
 
 // Parole intere (anche con le lettere accentate), in qualunque maiuscola.
 const parole = (...p) => new RegExp(`(?<![\\p{L}])(${p.join("|")})(?![\\p{L}])`, "iu");
-const VIETATE = [
+const FORBIDDEN = [
   ["seconda persona", parole("premi", "scrivi", "scegli", "cerchi", "controlla", "guarda", "rifai", "riaprilo", "riaprila",
     "annullala", "annullalo", "mandal[aeio]", "riscaricale", "aggiungine", "toglila", "toglilo", "spuntala", "spuntalo",
     "compila", "inserisci", "sceglilo", "sai", "hai", "puoi", "devi", "vuoi", "ti", "tuo", "tua", "tuoi", "tue")],
@@ -31,42 +31,42 @@ const VIETATE = [
   ["parlato", parole("mandat[aeio]", "mandare", "manda", "escono", "uguali", "la volta dopo", "lo stesso\\?")],
 ];
 
-const riga = (testo, i) => testo.slice(0, i).split("\n").length;
-const spazi = (m) => m.replace(/[^\n]/g, " ");
+const row = (text, i) => text.slice(0, i).split("\n").length;
+const spaces = (m) => m.replace(/[^\n]/g, " ");
 
 /** Le stringhe di un pezzo di JS, coi commenti tolti (le righe restano al loro posto). */
-function stringheJs(js, inizio, testi) {
-  const pulito = js.replace(/\/\*[\s\S]*?\*\//g, spazi).replace(/(^|[\s;{}(),])\/\/[^\n]*/g, (m, p) => p + spazi(m.slice(p.length)));
-  for (const m of pulito.matchAll(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g)) {
-    testi.push([inizio + riga(js, m.index) - 1, m[0].slice(1, -1).replace(/<[^>]+>/g, " ")]);
+function jsStrings(js, start, texts) {
+  const clean = js.replace(/\/\*[\s\S]*?\*\//g, spaces).replace(/(^|[\s;{}(),])\/\/[^\n]*/g, (m, p) => p + spaces(m.slice(p.length)));
+  for (const m of clean.matchAll(/"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g)) {
+    texts.push([start + row(js, m.index) - 1, m[0].slice(1, -1).replace(/<[^>]+>/g, " ")]);
   }
 }
 
-function testiDi(f) {
-  const testo = fs.readFileSync(f, "utf8");
-  const testi = [];
-  if (f.endsWith(".js")) { stringheJs(testo, 1, testi); return testi; }
+function textsOf(f) {
+  const text = fs.readFileSync(f, "utf8");
+  const texts = [];
+  if (f.endsWith(".js")) { jsStrings(text, 1, texts); return texts; }
   let pos = 0;
-  for (const parte of testo.split(/(<script\b[^>]*>[\s\S]*?<\/script>)/)) {
-    if (parte.startsWith("<script")) stringheJs(parte, riga(testo, pos), testi);
+  for (const part of text.split(/(<script\b[^>]*>[\s\S]*?<\/script>)/)) {
+    if (part.startsWith("<script")) jsStrings(part, row(text, pos), texts);
     else {
-      const html = parte.replace(/<!--[\s\S]*?-->|<style[\s\S]*?<\/style>/g, spazi);
-      for (const m of html.matchAll(/(?:placeholder|aria-label|title|alt|data-etichetta)="([^"]+)"/g)) testi.push([riga(testo, pos + m.index), m[1]]);
-      for (const m of html.matchAll(/>([^<>]+)</g)) testi.push([riga(testo, pos + m.index), m[1]]);
+      const html = part.replace(/<!--[\s\S]*?-->|<style[\s\S]*?<\/style>/g, spaces);
+      for (const m of html.matchAll(/(?:placeholder|aria-label|title|alt|data-etichetta)="([^"]+)"/g)) texts.push([row(text, pos + m.index), m[1]]);
+      for (const m of html.matchAll(/>([^<>]+)</g)) texts.push([row(text, pos + m.index), m[1]]);
     }
-    pos += parte.length;
+    pos += part.length;
   }
-  return testi;
+  return texts;
 }
 
-const trovati = [];
+const found = [];
 for (const f of file) {
-  for (const [n, t] of testiDi(f)) {
-    for (const [tipo, re] of VIETATE) {
+  for (const [n, t] of textsOf(f)) {
+    for (const [typeName, re] of FORBIDDEN) {
       const m = t.match(re);
-      if (m) trovati.push(`${path.relative(radice, f)}:${n}: ${tipo} «${m[1]}» in «${t.replace(/\s+/g, " ").trim().slice(0, 110)}»`);
+      if (m) found.push(`${path.relative(root, f)}:${n}: ${typeName} «${m[1]}» in «${t.replace(/\s+/g, " ").trim().slice(0, 110)}»`);
     }
   }
 }
-assert.deepStrictEqual(trovati, [], `testi da riscrivere (${trovati.length}):\n${trovati.join("\n")}`);
+assert.deepStrictEqual(found, [], `testi da riscrivere (${found.length}):\n${found.join("\n")}`);
 console.log(`test-testi: ${file.length} file, nessun testo colloquiale`);

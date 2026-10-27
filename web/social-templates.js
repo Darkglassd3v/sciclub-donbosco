@@ -41,9 +41,9 @@ const CAT = {
   cal:     { label: "Calendario",          c: "#084C8D", ink: "#FCCF02", txt: "#084C8D" },
 };
 
-const MESI = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto",
+const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto",
               "settembre", "ottobre", "novembre", "dicembre"];
-const GIORNI = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+const DAYS = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
 
 /* Story: fasce coperte da Instagram (profilo in alto, risposta in basso), su 1920. */
 const SAFE = { top: 250, bottom: 340 };
@@ -53,7 +53,7 @@ const escS = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", 
 /* "*fino al 13 gennaio*": fra due asterischi quello che chi pubblica ha
  * evidenziato (pulsante Evidenzia del sottotesto; evidenzia(), nella K). Nel
  * testo del post gli asterischi si tolgono. */
-const senzaSegni = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
+const withoutSigns = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
 
 // Lo stile dei canvas, messo una volta nella pagina che disegna.
 (function stileSocial() {
@@ -74,30 +74,30 @@ const senzaSegni = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
 // Dati: dalla riga di social_events al modello che i disegni leggono
 // ---------------------------------------------------------------------------
 
-const giornoDi = (iso) => (iso ? new Date(`${iso}T12:00:00`) : null);
-const maiuscola = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const dayOf = (iso) => (iso ? new Date(`${iso}T12:00:00`) : null);
+const uppercase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** "Martedì 13 gennaio" */
-function dataLunga(iso) {
-  const d = giornoDi(iso);
-  return d ? `${maiuscola(GIORNI[d.getDay()])} ${d.getDate()} ${MESI[d.getMonth()]}` : null;
+function longDate(iso) {
+  const d = dayOf(iso);
+  return d ? `${uppercase(DAYS[d.getDay()])} ${d.getDate()} ${MONTHS[d.getMonth()]}` : null;
 }
 
 /** "entro giovedì 8/12": la scadenza delle iscrizioni, uguale nell'immagine e nel testo. */
-function entro(iso) {
-  const d = giornoDi(iso);
-  return d ? `entro ${GIORNI[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}` : "";
+function within(iso) {
+  const d = dayOf(iso);
+  return d ? `entro ${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}` : "";
 }
 
 /** "giovedì 14 gennaio": la scadenza scritta per esteso, nella K. */
-function giornoMese(iso) {
-  const d = giornoDi(iso);
-  return d ? `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}` : "";
+function dayOfMonth(iso) {
+  const d = dayOf(iso);
+  return d ? `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}` : "";
 }
 
 /** "13/01" */
-function dataCorta(iso) {
-  const d = giornoDi(iso);
+function shortDate(iso) {
+  const d = dayOf(iso);
   return d ? `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}` : "";
 }
 
@@ -105,74 +105,74 @@ function dataCorta(iso) {
  * come getDay()): la tabella trip_days, che la pagina carica e passa a
  * impostaColoriGita(). Finché non arriva, quelli di sempre, gli stessi degli
  * abbonamenti nel gestionale. */
-let COLORI_GITA = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
-function impostaColoriGita(colori) { COLORI_GITA = colori; }
+let TRIP_COLORS = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
+function setTripColors(colors) { TRIP_COLORS = colors; }
 
 /** Il colore di una gita viene dal giorno: "g2" se il martedì è un giorno di gita. */
-function categoriaGita(iso) {
-  const d = giornoDi(iso);
-  return d && COLORI_GITA[d.getDay()] ? `g${d.getDay()}` : "gita";
+function tripCategory(iso) {
+  const d = dayOf(iso);
+  return d && TRIP_COLORS[d.getDay()] ? `g${d.getDay()}` : "gita";
 }
 
 /* Scritta sul colore: bianca o blu scuro, quella che si legge meglio (sul
  * giallo il blu scuro, come nel resto del gestionale). */
-const inchiostro = (c) => (contrasto(c, "#FFFFFF") >= contrasto(c, "#06396A") ? "#FFFFFF" : "#06396A");
+const inkColor = (c) => (contrast(c, "#FFFFFF") >= contrast(c, "#06396A") ? "#FFFFFF" : "#06396A");
 
 /* Il colore scurito quanto basta per leggersi su bianco (4.5:1): il `txt`
  * delle categorie, perché il giallo su bianco non si leggerebbe. */
-function suBianco(c) {
-  if (contrasto(c, "#FFFFFF") >= 4.5) return c;
+function onWhite(c) {
+  if (contrast(c, "#FFFFFF") >= 4.5) return c;
   const n = parseInt(c.slice(1), 16), rgb = [n >> 16, (n >> 8) & 255, n & 255];
   for (let k = .95; k > 0; k -= .05) {
-    const scuro = "#" + rgb.map((v) => Math.round(v * k).toString(16).padStart(2, "0")).join("");
-    if (contrasto(scuro, "#FFFFFF") >= 4.5) return scuro;
+    const dark = "#" + rgb.map((v) => Math.round(v * k).toString(16).padStart(2, "0")).join("");
+    if (contrast(dark, "#FFFFFF") >= 4.5) return dark;
   }
   return "#000000";
 }
 
 /** La categoria `k` con i suoi colori; "g0"…"g6" sono i giorni di gita. */
-function categoria(k) {
+function categoryName(k) {
   const g = /^g(\d)$/.exec(k);
   if (!g) return CAT[k];
-  const c = COLORI_GITA[g[1]];
-  return { label: "Gita", day: maiuscola(GIORNI[g[1]].slice(0, 3)), c, ink: inchiostro(c), txt: suBianco(c) };
+  const c = TRIP_COLORS[g[1]];
+  return { label: "Gita", day: uppercase(DAYS[g[1]].slice(0, 3)), c, ink: inkColor(c), txt: onWhite(c) };
 }
 
 /** Categoria (colore) di un post del database. */
-function categoriaDi(ev) {
-  return ev.kind === "gita" ? categoriaGita(ev.event_date) : ev.kind;
+function categoryOf(ev) {
+  return ev.kind === "gita" ? tripCategory(ev.event_date) : ev.kind;
 }
 
 /** La parte della foto che si vede (photo_x, photo_y: 0–100, da sinistra e dall'alto), per object-position:
  *  vuote = "50% 45%", come prima che si potesse spostare. Solo numeri: finisce in uno style. */
-function posFoto(ev) {
+function photoPos(ev) {
   const n = (v, d) => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? d : Math.min(100, Math.max(0, Math.round(Number(v)))));
   return `${n(ev.photo_x, 50)}% ${n(ev.photo_y, 45)}%`;
 }
 
 /** Quanto è ingrandita la foto (photo_zoom, 100–300 %): vuoto = 1, la foto copre il riquadro e basta. */
-function zoomFoto(ev) {
+function zoomPhoto(ev) {
   const v = ev.photo_zoom;
   return v === null || v === undefined || v === "" || !Number.isFinite(Number(v)) ? 1 : Math.min(300, Math.max(100, Math.round(Number(v)))) / 100;
 }
 
 /** Dalla riga di social_events al modello dei disegni, nel formato chiesto. */
-function modelloPost(ev, fmt) {
-  const prezzi = (ev.prices || []).filter((p) => p && p[1]);
+function postTemplate(ev, fmt) {
+  const priceMap = (ev.prices || []).filter((p) => p && p[1]);
   const base = {
-    fmt, photo: ev.photo || null, pos: posFoto(ev), zoom: zoomFoto(ev), cat: categoriaDi(ev), iso: ev.event_date || null,
+    fmt: fmt, photo: ev.photo || null, pos: photoPos(ev), zoom: zoomPhoto(ev), cat: categoryOf(ev), iso: ev.event_date || null,
     hook: String(ev.hook || "").trim(),
-    prices: ev.show_price === false ? [] : prezzi, contatti: contattiDi(ev),
+    prices: ev.show_price === false ? [] : priceMap, contatti: contactsOf(ev),
   };
   if (ev.kind === "gita") {
     return {
-      ...base, kind: "gita", dest: ev.title, date: dataLunga(ev.event_date),
-      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: entro(ev.deadline), scadenza: giornoMese(ev.deadline),
+      ...base, kind: "gita", dest: ev.title, date: longDate(ev.event_date),
+      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: within(ev.deadline), scadenza: dayOfMonth(ev.deadline),
     };
   }
   return {
     ...base, kind: "evento", title: ev.title, sub: ev.subtitle || "",
-    date: dataLunga(ev.event_date), facts: fattiEvento(ev),
+    date: longDate(ev.event_date), facts: eventDone(ev),
   };
 }
 
@@ -180,16 +180,16 @@ function modelloPost(ev, fmt) {
  * hanno un campo loro nel form (prima l'ora finiva nei prezzi): diventano le
  * informazioni "Orario", "Dove" e "Iscrizioni", che la K sa dove mettere
  * (l'ora nella tessera, il luogo col segnaposto, le iscrizioni in fondo). */
-function fattiEvento(ev) {
+function eventDone(ev) {
   const ora = String(ev.event_time || "").trim().replace(/^ore\s*/i, ""), dove = String(ev.place || "").trim();
   // Un'informazione scritta a mano con lo stesso nome di un campo pieno (i post di prima) non si ripete.
-  const resto = (ev.facts || []).filter(([n]) => {
+  const rest = (ev.facts || []).filter(([n]) => {
     const t = String(n || "").trim();
-    return !(ora && ORARIO.test(t)) && !(dove && /^dove$/i.test(t)) && !(ev.deadline && ISCRIZIONI.test(t));
+    return !(ora && TIME.test(t)) && !(dove && /^dove$/i.test(t)) && !(ev.deadline && ENROLMENTS.test(t));
   });
   // "ore" solo davanti a un orario: "dalle 18 alle 20" resta com'è.
-  return [ora && ["Orario", /^\d/.test(ora) ? `ore ${ora}` : ora], dove && ["Dove", dove], ...resto,
-    ev.deadline && ["Iscrizioni", `entro ${giornoMese(ev.deadline)}`]].filter(Boolean);
+  return [ora && ["Orario", /^\d/.test(ora) ? `ore ${ora}` : ora], dove && ["Dove", dove], ...rest,
+    ev.deadline && ["Iscrizioni", `entro ${dayOfMonth(ev.deadline)}`]].filter(Boolean);
 }
 
 // ---------------------------------------------------------------------------
@@ -201,7 +201,7 @@ const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fil
 
 /* La coccarda verde del corso, una stella con lo sciatore, larga 210·k: il
  * contenuto (la stella e la scritta), il contenitore lo mette stellaNuova(). */
-function stellaCorso(k = 1) {
+function courseStar(k = 1) {
   const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
     const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
     return `${100 + r * Math.sin(a)},${100 - r * Math.cos(a)}`;
@@ -232,44 +232,44 @@ const icoTel = (px, col) => `<svg width="${px}" height="${px}" viewBox="0 0 24 2
  *   Così "il testo parte sempre dallo stesso punto" vale per i post che ci
  *   stanno, e un post pieno non rimpicciolisce il testo per tenere vuoto lo
  *   spazio in alto. */
-function fit(radice = document) {
-  let sborda = false;
-  radice.querySelectorAll("[data-fit]").forEach((el) => {
+function fit(root = document) {
+  let overflows = false;
+  root.querySelectorAll("[data-fit]").forEach((el) => {
     el.style.whiteSpace = "nowrap";
     let f = parseFloat(el.style.fontSize);
     while (el.scrollWidth > el.clientWidth && f > 40) el.style.fontSize = (f -= 2) + "px";
-    if (el.scrollWidth > el.clientWidth) sborda = true;
+    if (el.scrollWidth > el.clientWidth) overflows = true;
   });
-  radice.querySelectorAll("[data-righe]").forEach((el) => {
-    const righe = Number(el.dataset.righe);
+  root.querySelectorAll("[data-righe]").forEach((el) => {
+    const rows = Number(el.dataset.righe);
     let t = parseFloat(getComputedStyle(el).getPropertyValue("--t"));
     // La meta della gita che va a capo da sola prima stringe su una riga fino al corpo di due righe (data-due):
     // solo se neanche lì ci sta va a capo, a quel corpo, prima di stringere oltre.
-    const aCapo = () => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5;
-    if (el.dataset.due) while (aCapo() && t > Number(el.dataset.due)) el.style.setProperty("--t", (t = Math.max(t - 2, Number(el.dataset.due))) + "px");
-    const troppo = () => el.scrollWidth > el.clientWidth + 1
-      || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * righe + 2;
-    while (troppo() && t > 48) el.style.setProperty("--t", (t -= 2) + "px");
-    if (troppo()) sborda = true;
+    const newline = () => el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * 1.5;
+    if (el.dataset.due) while (newline() && t > Number(el.dataset.due)) el.style.setProperty("--t", (t = Math.max(t - 2, Number(el.dataset.due))) + "px");
+    const tooMuch = () => el.scrollWidth > el.clientWidth + 1
+      || el.offsetHeight > parseFloat(getComputedStyle(el).lineHeight) * rows + 2;
+    while (tooMuch() && t > 48) el.style.setProperty("--t", (t -= 2) + "px");
+    if (tooMuch()) overflows = true;
   });
-  radice.querySelectorAll("[data-adatta]").forEach((el) => {
+  root.querySelectorAll("[data-adatta]").forEach((el) => {
     const min = Number(el.dataset.adatta);
     let s = 1;
     // 6 px di tolleranza: come nelle proposte, l'ultima riga può entrare un poco nel margine in fondo.
-    const pieno = () => el.scrollHeight > el.clientHeight + 6;
+    const full = () => el.scrollHeight > el.clientHeight + 6;
     const scala = (v) => el.style.setProperty("--s", s = v);
-    while (pieno() && s > Math.max(min, .92)) scala(Math.round((s - .02) * 100) / 100);
-    if (pieno()) {
+    while (full() && s > Math.max(min, .92)) scala(Math.round((s - .02) * 100) / 100);
+    if (full()) {
       scala(1);
       for (const c of el.closest(".cv").querySelectorAll("[data-cede]")) {
-        if (!pieno()) break;
+        if (!full()) break;
         c.style.minHeight = "0"; c.style.height = "auto";
       }
     }
-    while (pieno() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
-    if (pieno()) sborda = true;
+    while (full() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
+    if (full()) overflows = true;
   });
-  return sborda;
+  return overflows;
 }
 
 /**
@@ -281,46 +281,46 @@ function fit(radice = document) {
 /** Come chiamare un post nell'elenco e nei nomi dei file: la meta della gita su una riga; per gli altri la prima riga
  *  del titolo, o del sottotesto se non ha titolo. */
 function nomePost(ev) {
-  if (ev.kind === "gita") return unaRiga(ev.title);
+  if (ev.kind === "gita") return oneRow(ev.title);
   return (String(ev.title || "").trim() || String(ev.subtitle || "").trim()).split("\n")[0].trim();
 }
 
 /** La meta della gita come la scrive chi pubblica, al massimo in due righe: righe vuote e spazi via, dalla terza in poi
  *  sulla seconda. */
-function righeMeta(testo) {
-  const righe = String(testo || "").split(/\r?\n/).map((r) => r.trim().replace(/\s+/g, " ")).filter(Boolean);
-  return righe.length > 2 ? [righe[0], righe.slice(1).join(" ")] : righe;
+function metaLines(text) {
+  const rows = String(text || "").split(/\r?\n/).map((r) => r.trim().replace(/\s+/g, " ")).filter(Boolean);
+  return rows.length > 2 ? [rows[0], rows.slice(1).join(" ")] : rows;
 }
 /** La meta su una riga sola: calendario del mese, testo del post, nome nell'elenco. */
-const unaRiga = (testo) => righeMeta(testo).join(" ");
+const oneRow = (text) => metaLines(text).join(" ");
 
-function mancanti(ev) {
-  const manca = [];
+function missingItems(ev) {
+  const missing = [];
   // Un post può essere solo un titolo o solo un sottotesto; la gita ha sempre la meta.
   if (ev.kind === "gita" ? !String(ev.title || "").trim() : !nomePost(ev)) {
-    manca.push(ev.kind === "gita" ? "la meta" : "il titolo o il sottotesto");
+    missing.push(ev.kind === "gita" ? "la meta" : "il titolo o il sottotesto");
   }
   if (ev.kind === "gita") {
-    if (!ev.event_date) manca.push("il giorno");
-    if (!(ev.stops || []).some(([t, l]) => t || l)) manca.push("le partenze");
+    if (!ev.event_date) missing.push("il giorno");
+    if (!(ev.stops || []).some(([t, l]) => t || l)) missing.push("le partenze");
     // Quota e scadenza sono facoltative (l'utente, 16/10): senza, il post è pronto lo stesso.
   } else if (ev.kind === "cena" || ev.kind === "gara") {
     // Corsi e servizi possono non avere un giorno; una cena o una gara no.
-    if (!ev.event_date) manca.push("la data");
+    if (!ev.event_date) missing.push("la data");
   } else if (ev.kind === "sponsor" && !ev.sponsor_id) {
-    manca.push("lo sponsor");
+    missing.push("lo sponsor");
   }
-  return manca;
+  return missing;
 }
 
 /** La rubrica della pagina (righe di social_contacts, già in ordine). */
-function impostaContatti(righe) {
-  SOCIAL.contatti = righe.filter((r) => r && r.name && r.phone)
+function setContacts(rows) {
+  SOCIAL.contatti = rows.filter((r) => r && r.name && r.phone)
     .map(({ id, name, phone, hours, is_default }) => ({ id, name, phone, hours: hours || "", is_default: !!is_default }));
 }
 
 /** I contatti di un post, nel suo ordine; gli id tolti dalla rubrica si saltano. */
-function contattiDi(ev) {
+function contactsOf(ev) {
   return (ev.contacts || []).map((id) => SOCIAL.contatti.find((c) => c.id === id)).filter(Boolean);
 }
 
@@ -351,9 +351,9 @@ function photo(w, h, src) {
 // post, 44 nella story, come nelle proposte).
 // ---------------------------------------------------------------------------
 
-const BLU = "#084C8D", GIALLO = "#FCCF02";
+const BLU = "#084C8D", YELLOW = "#FCCF02";
 
-(function stileNuovi() {
+(function newStyles() {
   if (typeof document === "undefined" || document.getElementById("stile-social-nuovi")) return;
   // z(): corpo che scende con --s ma non sotto il minimo; q(): misura che scende e basta.
   const z = (n) => `max(var(--min), calc(${n}px * var(--s)))`, q = (n) => `calc(${n}px * var(--s))`;
@@ -509,10 +509,10 @@ const BLU = "#084C8D", GIALLO = "#FCCF02";
 /* Il colore del post: le gite quello del loro giorno (trip_days), i corsi il
  * giallo (lo stesso delle domeniche), tutto il resto il blu del club. La
  * scritta sopra è bianca o blu, quella che si legge meglio. */
-const scrittaSu = (c) => (contrasto(c, "#FFFFFF") >= contrasto(c, BLU) ? "#FFFFFF" : BLU);
-function coloreNuovo(k) {
-  const c = k === "corso" ? GIALLO : /^g\d$/.test(k) ? categoria(k).c : BLU;
-  return { c, ink: scrittaSu(c) };
+const captionOn = (c) => (contrast(c, "#FFFFFF") >= contrast(c, BLU) ? "#FFFFFF" : BLU);
+function newColor(k) {
+  const c = k === "corso" ? YELLOW : /^g\d$/.test(k) ? categoryName(k).c : BLU;
+  return { c, ink: captionOn(c) };
 }
 
 /* Quello che chi pubblica ha evidenziato ("*fino al 13 gennaio*") finisce in
@@ -520,46 +520,46 @@ function coloreNuovo(k) {
  * Con `auto` (le informazioni) anche orari, prezzi e date ("ore 20:00",
  * "€ 30", "mercoledì 7 aprile", "14/01"); nel sottotesto no, decide chi
  * scrive. Il prezzo viene prima dell'orario: "12.50 €" è un prezzo. */
-const EVIDENZA = new RegExp(`€\\s?\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s?€|(?:ore\\s)?\\d{1,2}[:.]\\d{2}`
-  + `|(?:(?:${GIORNI.join("|")})\\s)?\\d{1,2}\\s(?:${MESI.join("|")})|\\d{1,2}\\/\\d{1,2}`, "gi");
-const evidenzia = (testo, auto = true) => String(testo ?? "").split(/(\*[^*\n]+\*)/).map((pezzo, i) => (i % 2
-  ? `<b>${escS(pezzo.slice(1, -1))}</b>` : auto ? escS(pezzo).replace(EVIDENZA, "<b>$&</b>") : escS(pezzo))).join("");
+const HIGHLIGHT = new RegExp(`€\\s?\\d+(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?\\s?€|(?:ore\\s)?\\d{1,2}[:.]\\d{2}`
+  + `|(?:(?:${DAYS.join("|")})\\s)?\\d{1,2}\\s(?:${MONTHS.join("|")})|\\d{1,2}\\/\\d{1,2}`, "gi");
+const highlight = (text, auto = true) => String(text ?? "").split(/(\*[^*\n]+\*)/).map((piece, i) => (i % 2
+  ? `<b>${escS(piece.slice(1, -1))}</b>` : auto ? escS(piece).replace(HIGHLIGHT, "<b>$&</b>") : escS(piece))).join("");
 
 /* Il titolo di un evento (la gita ha per titolo la meta, in postK()); un post
  * di solo sottotesto prende il nome del tipo ("Servizi"), così la grafica
  * resta quella e il sottotesto sta al suo posto. */
-const titoloNuovo = (s) => escS(String(s.title || "").trim() || categoria(s.cat).label);
+const newTitle = (s) => escS(String(s.title || "").trim() || categoryName(s.cat).label);
 
 /* Le informazioni che hanno un posto loro: l'orario (nella tessera della K) e
  * le iscrizioni (in fondo ai dati). */
-const ORARIO = /^(ora|orario|ore)$/i, ISCRIZIONI = /^iscrizion/i;
-const fattoDi = (fatti, re) => fatti.find(([n]) => re.test(String(n || "").trim()));
+const TIME = /^(ora|orario|ore)$/i, ENROLMENTS = /^iscrizion/i;
+const madeOf = (done, re) => done.find(([n]) => re.test(String(n || "").trim()));
 
-const partenze = (s) => (s.stops || []).filter(([t, l]) => t || l)
+const departures = (s) => (s.stops || []).filter(([t, l]) => t || l)
   .map(([t, l]) => [String(t || "").replace(/^ore\s*/i, ""), l || ""]);
 
 const icoMail = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>';
 
 /** In fondo a ogni post: come ci si iscrive (in negozio, via mail) e i telefoni scelti per il post, su una riga. */
-function iscrizioni(contatti = []) {
-  const tel = contatti.length ? `<span class="tel">${icoTel("1em", "currentColor")}${contatti.map((c) =>
+function enrolments(contactList = []) {
+  const tel = contactList.length ? `<span class="tel">${icoTel("1em", "currentColor")}${contactList.map((c) =>
     `<span>${escS(c.name)} <b>${escS(c.phone)}</b>${c.hours ? ` ${escS(c.hours)}` : ""}</span>`).join("")}</span>` : "";
-  return `<div class="isc">${icoMail}<div>${escS(contatti.length ? SOCIAL.iscrizioniTel : SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b></div>${tel}</div>`;
+  return `<div class="isc">${icoMail}<div>${escS(contactList.length ? SOCIAL.iscrizioniTel : SOCIAL.iscrizioni)}<b>${escS(SOCIAL.mail)}</b></div>${tel}</div>`;
 }
 
 const icoPin = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
 
-const logoNuovo = () => `<div class="logo-box"><img src="${SOCIAL.logoTondo}" alt=""></div>`;
+const newLogo = () => `<div class="logo-box"><img src="${SOCIAL.logoTondo}" alt=""></div>`;
 
 /** La coccarda del corso, appesa alla tessera; nella story più grande. */
-const stellaNuova = (story) => `<div class="stella" style="width:${210 * (story ? 1.25 : 1)}px;height:${210 * (story ? 1.25 : 1)}px">${stellaCorso(story ? 1.25 : 1)}</div>`;
+const newStar = (story) => `<div class="stella" style="width:${210 * (story ? 1.25 : 1)}px;height:${210 * (story ? 1.25 : 1)}px">${courseStar(story ? 1.25 : 1)}</div>`;
 
 /** Le gite del mese, una riga ciascuna: il giorno nel colore della gita, la meta, il corso (`corso`, l'HTML). */
-function righeMese(righe, breve, corso) {
-  return righe.map(([k, d, dest, c]) => {
-    const C = categoria(k), giorno = `${C.day} ${breve ? Number(String(d).slice(0, 2)) : d}`.trim();
-    return `<div><span class="giorno" style="background:${C.c};color:${scrittaSu(C.c)}">${escS(giorno)}</span>
-      <span class="meta">${escS(unaRiga(dest))}</span>${c ? corso : ""}</div>`;
+function monthRows(rows, short, courseItem) {
+  return rows.map(([k, d, dest, c]) => {
+    const C = categoryName(k), dayKey = `${C.day} ${short ? Number(String(d).slice(0, 2)) : d}`.trim();
+    return `<div><span class="giorno" style="background:${C.c};color:${captionOn(C.c)}">${escS(dayKey)}</span>
+      <span class="meta">${escS(oneRow(dest))}</span>${c ? courseItem : ""}</div>`;
   }).join("");
 }
 
@@ -568,37 +568,37 @@ function righeMese(righe, breve, corso) {
 /* Il fondo della K: la foto (o il blu notte), il velo, i piani, logo, tessera e
  * la colonna del testo; l'angolo (e nel giallo anche la finestra) ha la foto in
  * grigi col giallo sopra. `fine`: dove comincia il testo, se non quello della tavola. */
-function fondoK({ giallo, story, foto, pos, zoom, fine }, tessera, testo, isc, corso) {
-  const grigi = foto ? '<div class="grigi"></div><div class="tinta"></div>' : "";
+function bgK({ giallo: yellow, story, foto: picture, pos: pos, zoom, fine }, card, text, enr, courseItem) {
+  const greys = picture ? '<div class="grigi"></div><div class="tinta"></div>' : "";
   // Nell'angolo le zone scure della foto si schiariscono: con una foto buia (la cena) il giallo diventava quasi nero.
-  const angolo = foto ? '<div class="grigi"></div><div class="schiarisci"></div><div class="tinta"></div>' : "";
-  const finestra = giallo ? grigi : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
+  const corner = picture ? '<div class="grigi"></div><div class="schiarisci"></div><div class="tinta"></div>' : "";
+  const dialog = yellow ? greys : '<div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div>';
   // Nell'url() del CSS si codifica tutto tranne i caratteri di un data URL: virgolette, barre rovesce,
   // \f e \r chiuderebbero la stringa e il resto diventerebbe CSS (security review del 16/10).
-  const url = foto && escS(String(foto).replace(/[^A-Za-z0-9+/=:;,.%_-]/g, encodeURIComponent));
-  return `<div class="cv nuovo sk${story ? " story" : ""}${giallo ? " giallo" : ""}${foto ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${foto ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"};--zoom:${zoom || 1}` : ""}${fine ? `;--fine:${fine}px` : ""}">
-    ${foto ? `<img class="foto" src="${escS(foto)}" alt="">` : ""}
-    <div class="piano scuro"></div><div class="piano angolo">${angolo}</div><div class="piano cuneo"></div>
-    ${foto ? `<div class="piano finestra">${finestra}</div>${story ? `<div class="piano finestra fondo">${finestra}</div>` : ""}` : ""}
+  const url = picture && escS(String(picture).replace(/[^A-Za-z0-9+/=:;,.%_-]/g, encodeURIComponent));
+  return `<div class="cv nuovo sk${story ? " story" : ""}${yellow ? " giallo" : ""}${picture ? "" : " senza-foto"}" style="width:1080px;height:${story ? 1920 : 1350}px${picture ? `;--immagine:url(&quot;${url}&quot;);--pos:${pos || "50% 45%"};--zoom:${zoom || 1}` : ""}${fine ? `;--fine:${fine}px` : ""}">
+    ${picture ? `<img class="foto" src="${escS(picture)}" alt="">` : ""}
+    <div class="piano scuro"></div><div class="piano angolo">${corner}</div><div class="piano cuneo"></div>
+    ${picture ? `<div class="piano finestra">${dialog}</div>${story ? `<div class="piano finestra fondo">${dialog}</div>` : ""}` : ""}
     <div class="piano ombra"></div>
-    ${logoNuovo()}${tessera}
-    <div class="col">${testo}${isc}</div>${corso ? stellaNuova(story) : ""}</div>`;
+    ${newLogo()}${card}
+    <div class="col">${text}${enr}</div>${courseItem ? newStar(story) : ""}</div>`;
 }
 
 /** La tessera del "quando": giorno, numero, mese e l'ora (nella gita la partenza scelta, card_stop, o la prima). Senza data, niente tessera. */
-function tesseraK(s) {
-  const d = giornoDi(s.iso);
+function cardK(s) {
+  const d = dayOf(s.iso);
   if (!d) return "";
-  const p = partenze(s), scelta = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
-  const ora = s.kind === "gita" ? (scelta && scelta[0] ? `ore ${scelta[0]}` : "") : ((fattoDi(s.facts || [], ORARIO) || [])[1] || "");
+  const p = departures(s), choice = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
+  const ora = s.kind === "gita" ? (choice && choice[0] ? `ore ${choice[0]}` : "") : ((madeOf(s.facts || [], TIME) || [])[1] || "");
   const story = s.fmt === "story";
   // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
   // blu con le scritte bianche e la fascia dell'ora gialla, il martedì rossa; [fondo, scritte, fascia, sua scritta].
-  const c = s.kind === "gita" ? coloreNuovo(s.cat).c.toUpperCase() : GIALLO;
-  const T = c === GIALLO ? null : c === BLU ? [BLU, "#FFFFFF", GIALLO, BLU] : [c, scrittaSu(c), BLU, "#FFFFFF"];
-  const colori = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
-  return `<div class="tessera"${colori}><span data-fit style="font-size:${story ? 62 : 54}px">${GIORNI[d.getDay()]}</span><b>${d.getDate()}</b>
-    <span data-fit style="font-size:${story ? 78 : 66}px">${MESI[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
+  const c = s.kind === "gita" ? newColor(s.cat).c.toUpperCase() : YELLOW;
+  const T = c === YELLOW ? null : c === BLU ? [BLU, "#FFFFFF", YELLOW, BLU] : [c, captionOn(c), BLU, "#FFFFFF"];
+  const colors = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
+  return `<div class="tessera"${colors}><span data-fit style="font-size:${story ? 62 : 54}px">${DAYS[d.getDay()]}</span><b>${d.getDate()}</b>
+    <span data-fit style="font-size:${story ? 78 : 66}px">${MONTHS[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
 }
 
 /**
@@ -608,83 +608,83 @@ function tesseraK(s) {
  * nero, il resto in blu e nero (coloreNuovo).
  */
 function postK(s) {
-  const C = coloreNuovo(s.cat), gita = s.kind === "gita", story = s.fmt === "story";
+  const C = newColor(s.cat), trip = s.kind === "gita", story = s.fmt === "story";
   const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
-  const p = partenze(s);
-  const fatti = (s.facts || []).filter(([, v]) => String(v || "").trim());
-  const ora = fattoDi(fatti, ORARIO), dove = fattoDi(fatti, /^dove$/i), iscr = fattoDi(fatti, ISCRIZIONI);
-  const fatto = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${evidenzia(v)}`;
-  const entro = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
+  const p = departures(s);
+  const done = (s.facts || []).filter(([, v]) => String(v || "").trim());
+  const ora = madeOf(done, TIME), dove = madeOf(done, /^dove$/i), enrol = madeOf(done, ENROLMENTS);
+  const doneOne = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${highlight(v)}`;
+  const within = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
-  const righe = gita ? [
+  const rows = trip ? [
     // La nota facoltativa sotto la meta, in giallo ("Prova gratuita con i maestri").
-    s.nota && { html: `<p class="nota">${escS(senzaSegni(s.nota))}</p>` },
+    s.nota && { html: `<p class="nota">${escS(withoutSigns(s.nota))}</p>` },
     p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
       `<div class="fermata">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
-    s.scadenza && entro(s.scadenza),
+    s.scadenza && within(s.scadenza),
   ] : [
-    String(s.sub || "").trim() && evidenzia(String(s.sub).trim(), false),
-    dove && { html: `<p class="dove">${icoPin}<span>${evidenzia(dove[1])}</span></p>` },
+    String(s.sub || "").trim() && highlight(String(s.sub).trim(), false),
+    dove && { html: `<p class="dove">${icoPin}<span>${highlight(dove[1])}</span></p>` },
     // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
-    !s.iso && ora && fatto(ora),
-    ...fatti.filter((f) => f !== ora && f !== dove && f !== iscr).map(fatto),
+    !s.iso && ora && doneOne(ora),
+    ...done.filter((f) => f !== ora && f !== dove && f !== enrol).map(doneOne),
     quota,
-    iscr && entro(iscr[1]),
+    enrol && within(enrol[1]),
   ];
   const dest = String(s.dest || "").trim();
   // La meta va a capo dove l'ha scritto chi pubblica, o da sola se è più larga della riga; due righe al massimo,
   // poi scende (fit(), data-righe). Prima stava sempre su una riga e una meta lunga diventava piccola.
   // Su due righe scende a 104 (124 nella story, data-due): più grande della meta lunga stretta su una riga
   // (~90), ma lascia spazio a partenze, quota e scadenza (a 116/140 la story di una gita scendeva al 66%).
-  const meta = (testo) => {
-    const righe = righeMeta(testo), due = story ? 124 : 104;
-    return `<div data-righe="2" data-due="${due}" style="--t:${righe.length > 1 ? due : story ? 168 : 150}px">${righe.map(escS).join("<br>")}</div>`;
+  const meta = (text) => {
+    const rows = metaLines(text), due = story ? 124 : 104;
+    return `<div data-righe="2" data-due="${due}" style="--t:${rows.length > 1 ? due : story ? 168 : 150}px">${rows.map(escS).join("<br>")}</div>`;
   };
   // data-cede: se il testo non ci sta, la seconda riga tenuta per il titolo si libera prima di stringere tutto.
   // Nella gita il titolo è solo la meta: «Gita a» lo dice il gancio (l'utente: la riga in più era inutile).
-  const tit = gita
+  const tit = trip
     ? `<div class="tit meta" data-cede>${meta(dest)}</div>`
-    : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${titoloNuovo(s)}</div></div>`;
+    : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${newTitle(s)}</div></div>`;
   // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto. Nella gita, se è
   // vuoto, dice «Gita a» (non se la meta dice già "Gita…").
-  const gancio = escS(s.hook) || (gita && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
-  const testo = `<div class="testo" data-adatta=".6"><div class="gancio">${gancio}</div>${tit}
-    <div class="fatti">${righe.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
-  return fondoK({ giallo: C.c === GIALLO, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, tesseraK(s), testo, iscrizioni(s.contatti), gita && s.corso);
+  const hookText = escS(s.hook) || (trip && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
+  const text = `<div class="testo" data-adatta=".6"><div class="gancio">${hookText}</div>${tit}
+    <div class="fatti">${rows.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
+  return bgK({ giallo: C.c === YELLOW, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, cardK(s), text, enrolments(s.contatti), trip && s.corso);
 }
 
 /** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
-function meseK(titolo, righe, mese, story = false) {
-  const m = Number(String(mese || "").split("-")[1]);
-  const tessera = `<div class="tessera mese">${m ? `<span data-fit style="font-size:54px">${MESI[m - 1]}</span>` : ""}<b>${righe.length}</b>
-    <span data-fit style="font-size:66px">${righe.length === 1 ? "gita" : "gite"}</span></div>`;
+function monthK(titleText, rows, month, story = false) {
+  const m = Number(String(month || "").split("-")[1]);
+  const card = `<div class="tessera mese">${m ? `<span data-fit style="font-size:54px">${MONTHS[m - 1]}</span>` : ""}<b>${rows.length}</b>
+    <span data-fit style="font-size:66px">${rows.length === 1 ? "gita" : "gite"}</span></div>`;
   // Niente gancio: la tessera dice già mese e numero di gite, e con 13 gite serve tutto lo spazio.
-  const testo = `<div class="testo" data-adatta=".6">
-    <div class="tit"><div data-righe="2" style="--t:${story ? 120 : 104}px">${escS(titolo)}</div></div>
-    <div class="righe">${righeMese(righe, true, '<span class="corso">corso</span>')}</div></div>`;
-  return fondoK({ giallo: false, story, foto: null, fine: story ? 690 : 420 }, tessera, testo, iscrizioni(), false);
+  const text = `<div class="testo" data-adatta=".6">
+    <div class="tit"><div data-righe="2" style="--t:${story ? 120 : 104}px">${escS(titleText)}</div></div>
+    <div class="righe">${monthRows(rows, true, '<span class="corso">corso</span>')}</div></div>`;
+  return bgK({ giallo: false, story, foto: null, fine: story ? 690 : 420 }, card, text, enrolments(), false);
 }
 
 /** Post o story di una gita o di un evento (modello da modelloPost()): sempre la K. */
-function disegnaPost(s) { return postK(s); }
+function drawPost(s) { return postK(s); }
 
 /** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per la tessera. */
-function disegnaCalendario(titolo, righe, mese = "", story = false) { return meseK(titolo, righe, mese, story); }
+function drawCalendar(titleText, rows, month = "", story = false) { return monthK(titleText, rows, month, story); }
 
 /** Misure del post (non della story) e del calendario del mese: 4:5. */
-const misurePost = () => ({ w: 1080, h: 1350 });
+const postSizes = () => ({ w: 1080, h: 1350 });
 
 /** Copertina Facebook (820×312). */
-function disegnaCopertina(titolo, sotto) {
+function drawCover(titleText, below) {
   return `<div class="cv" style="width:820px;height:312px;background:#084C8D">
     <div class="abs" style="left:96px;right:96px;top:28px;bottom:28px;background:#fff;border-radius:22px;overflow:hidden">
       <div class="abs" style="left:0;top:0;bottom:0;width:190px;overflow:hidden">${photo(190, 240)}</div>
       <div class="abs" style="left:190px;top:0;bottom:0;border-left:4px dashed #C7D0DA"></div>
       <img class="logo abs" src="${SOCIAL.logo}" style="right:24px;top:20px;height:70px">
       <div class="abs" style="left:220px;right:24px;bottom:22px">
-        <div class="t-dest" style="font-size:54px;color:#084C8D">${escS(titolo)}</div>
-        <div style="font-size:17px;color:#5B6472;font-weight:600;margin-top:8px">${escS(sotto)}</div></div></div></div>`;
+        <div class="t-dest" style="font-size:54px;color:#084C8D">${escS(titleText)}</div>
+        <div style="font-size:17px;color:#5B6472;font-weight:600;margin-top:8px">${escS(below)}</div></div></div></div>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -698,14 +698,14 @@ function disegnaCopertina(titolo, sotto) {
 // ---------------------------------------------------------------------------
 
 /** "#432A09" mescolato col bianco (quota 0–1): le creste più chiare del fondo. */
-function schiarisci(hex, quota) {
+function lighten(hex, quota) {
   const n = parseInt(hex.slice(1), 16);
   const c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * quota));
   return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
 }
 
 /** Contrasto WCAG fra due colori "#rrggbb" (1–21). */
-function contrasto(a, b) {
+function contrast(a, b) {
   const lum = (hex) => {
     const n = parseInt(hex.slice(1), 16);
     const [r, g, bl] = [n >> 16, (n >> 8) & 255, n & 255].map((v) => {
@@ -719,95 +719,95 @@ function contrasto(a, b) {
 }
 
 /** Colori e loghi di uno sponsor, pronti per i disegni. */
-function marchio(sp) {
+function brand(sp) {
   return {
     nome: sp.name, livello: sp.level || "Sponsor",
     scuro: sp.color_dark, chiaro: sp.color_light, accento: sp.color_accent,
-    crinale: schiarisci(sp.color_dark, .1), crinaleFronte: schiarisci(sp.color_dark, .2),
+    crinale: lighten(sp.color_dark, .1), crinaleFronte: lighten(sp.color_dark, .2),
     logo: sp.logo, logoScuro: sp.logo_dark || null, alcol: !!sp.alcohol,
   };
 }
 
 /* Il logo per fondi scuri; se lo sponsor non l'ha dato, quello normale su un
  * riquadro chiaro, così resta leggibile. */
-function logoSuScuro(M, h) {
+function logoOnDark(M, h) {
   if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;display:block">`;
   if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
   return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;display:block"></span>`;
 }
-const logoSuChiaro = (M, h) => M.logo
+const logoOnLight = (M, h) => M.logo
   ? `<img src="${escS(M.logo)}" style="height:${h}px;display:block">`
   : `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
 
-const avvertenza = (M, px, extra = "") => M.alcol
+const warning = (M, px, extra = "") => M.alcol
   ? `<div style="font-size:${px}px;font-weight:500;opacity:.75;${extra}">${escS(SOCIAL.avvertenzaAlcol)}</div>` : "";
 
-const rombo = (col, em) => `<span style="display:inline-block;width:${em}em;height:${em}em;background:${col};transform:rotate(45deg);border-radius:.12em"></span>`;
+const diamond = (col, em) => `<span style="display:inline-block;width:${em}em;height:${em}em;background:${col};transform:rotate(45deg);border-radius:.12em"></span>`;
 
 /* Crinale: neve nell'accento, come i rombi del logo. */
-const crinale = (M, w, h, b = 0) => `<svg class="abs" style="left:0;bottom:${b}px" width="${w}" height="${h}" viewBox="0 0 1080 300" preserveAspectRatio="xMidYMax slice">
+const ridge = (M, w, h, b = 0) => `<svg class="abs" style="left:0;bottom:${b}px" width="${w}" height="${h}" viewBox="0 0 1080 300" preserveAspectRatio="xMidYMax slice">
   <polygon fill="${M.crinale}" points="0,170 200,70 360,150 560,20 760,140 900,60 1080,150 1080,300 0,300"/>
   <polygon fill="${M.crinaleFronte}" points="0,220 260,110 440,200 640,90 860,200 1080,120 1080,300 0,300"/>
   <polygon fill="${M.accento}" points="640,90 585,120 700,120"/>
   <polygon fill="${M.accento}" points="260,110 189,140 320,140"/></svg>`;
 
 /** Titolo su più righe: un a capo nel testo = una riga. Con `accento` l'ultima riga è colorata. */
-function righeTitolo(testo, accento) {
-  const righe = String(testo || "").split("\n").map(escS);
-  if (accento && righe.length > 1) righe[righe.length - 1] = `<span style="color:${accento}">${righe[righe.length - 1]}</span>`;
-  return righe.join("<br>");
+function titleLines(text, accent) {
+  const rows = String(text || "").split("\n").map(escS);
+  if (accent && rows.length > 1) rows[rows.length - 1] = `<span style="color:${accent}">${rows[rows.length - 1]}</span>`;
+  return rows.join("<br>");
 }
 
 /** Etichetta in alto: "MAIN SPONSOR · STAGIONE 2026/27". */
-const occhiello = (M, stagione) => `${escS(M.livello.toUpperCase())} · STAGIONE ${escS(stagione)}`;
+const lead = (M, seasonValue) => `${escS(M.livello.toUpperCase())} · STAGIONE ${escS(seasonValue)}`;
 
 /** I formati di una campagna: { chiave: { w, h, nome, breve, html } }. `c` = post di tipo sponsor.
  *  `breve` è il nome sul pulsante che sceglie l'anteprima nella pagina. */
-function formatiCampagna(c, sp, stagione) {
-  const M = marchio(sp);
-  const firma = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
+function campaignFormats(c, sp, seasonValue) {
+  const M = brand(sp);
+  const signature = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
     <img src="${SOCIAL.logo}" style="height:${96 * k}px;display:block">
     <span class="t-dest" style="font-size:${48 * k}px;color:${M.accento}">×</span>
-    ${logoSuChiaro(M, 84 * k)}</div>`;
-  const cta = c.cta ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:${M.accento};color:${M.scuro};border-radius:999px;font-weight:800;padding:.45em 1.1em;font-size:40px">${escS(c.cta)} ${rombo(M.scuro, .45)}</span>` : "";
+    ${logoOnLight(M, 84 * k)}</div>`;
+  const cta = c.cta ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:${M.accento};color:${M.scuro};border-radius:999px;font-weight:800;padding:.45em 1.1em;font-size:40px">${escS(c.cta)} ${diamond(M.scuro, .45)}</span>` : "";
   return {
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
     collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
-      <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${occhiello(M, stagione)}</div>
-      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${righeTitolo(c.title)}</div>
+      <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
+      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${titleLines(c.title)}</div>
       <div class="abs" style="left:80px;top:500px;right:120px;font-size:40px;font-weight:600;line-height:1.25">${escS(c.subtitle || "")}</div>
       <div class="abs" style="left:80px;top:700px">${cta}</div>
-      ${crinale(M, 1080, 420, 170)}
+      ${ridge(M, 1080, 420, 170)}
       <div class="abs" style="background:#fff;color:${M.scuro};left:0;right:0;bottom:0;height:190px;display:flex;align-items:center;justify-content:space-between;padding:0 80px">
-        ${firma(1)}${avvertenza(M, 22, "max-width:300px;text-align:right")}</div></div>` },
+        ${signature(1)}${warning(M, 22, "max-width:300px;text-align:right")}</div></div>` },
 
     /* Story: spazio libero per lo sticker link verso l'indirizzo con UTM. */
     story: { w: 1080, h: 1920, nome: "Story con spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
-      <div class="abs" style="left:0;right:0;top:320px;display:flex;justify-content:center">${logoSuScuro(M, 200)}</div>
-      <div class="abs t-dest" style="left:0;right:0;top:700px;text-align:center;font-size:130px">${righeTitolo(c.story_title || c.title, M.accento)}</div>
-      <div class="abs" style="left:120px;right:120px;top:1010px;text-align:center;font-size:42px;font-weight:600;line-height:1.3">${escS(sp.name)} è ${escS(M.livello.toLowerCase())}<br>dello Sci Club Don Bosco ${escS(stagione)}</div>
+      <div class="abs" style="left:0;right:0;top:320px;display:flex;justify-content:center">${logoOnDark(M, 200)}</div>
+      <div class="abs t-dest" style="left:0;right:0;top:700px;text-align:center;font-size:130px">${titleLines(c.story_title || c.title, M.accento)}</div>
+      <div class="abs" style="left:120px;right:120px;top:1010px;text-align:center;font-size:42px;font-weight:600;line-height:1.3">${escS(sp.name)} è ${escS(M.livello.toLowerCase())}<br>dello Sci Club Don Bosco ${escS(seasonValue)}</div>
       <div class="abs" style="left:50%;top:1180px;transform:translateX(-50%);width:560px;height:120px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:${M.accento}">sticker link qui ↗</div>
-      ${crinale(M, 1080, 520)}
-      ${avvertenza(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom + 20}px;text-align:center;color:${M.chiaro}`)}</div>` },
+      ${ridge(M, 1080, 520)}
+      ${warning(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom + 20}px;text-align:center;color:${M.chiaro}`)}</div>` },
 
     /* Post 1:1 chiaro, pagina del carosello "Grazie a chi ci sostiene". */
     grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello «Grazie a chi ci sostiene»", breve: "Grazie", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.chiaro};color:${M.scuro}">
       <div class="abs" style="left:80px;top:70px;padding:14px 22px;border-radius:28px;background:#fff"><img src="${SOCIAL.logo}" style="height:110px;display:block"></div>
-      <div class="abs" style="right:80px;top:120px;font-size:30px;font-weight:700;letter-spacing:.12em;color:#084C8D">STAGIONE ${escS(stagione)}</div>
+      <div class="abs" style="right:80px;top:120px;font-size:30px;font-weight:700;letter-spacing:.12em;color:#084C8D">STAGIONE ${escS(seasonValue)}</div>
       <div class="abs t-dest" style="left:80px;top:280px;font-size:112px">Grazie a chi<br>ci sostiene.</div>
-      <div class="abs" style="left:80px;right:80px;top:560px;height:300px;border-radius:28px;background:#fff;box-shadow:0 12px 40px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center">${logoSuChiaro(M, 190)}</div>
+      <div class="abs" style="left:80px;right:80px;top:560px;height:300px;border-radius:28px;background:#fff;box-shadow:0 12px 40px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center">${logoOnLight(M, 190)}</div>
       <div class="abs" style="left:80px;right:80px;bottom:80px;display:flex;justify-content:space-between;align-items:center;gap:24px">
-        <span style="font-size:34px;font-weight:700;white-space:nowrap">${rombo(M.accento, .55)}<span style="margin-left:16px">${escS(M.livello)}</span></span>
-        ${avvertenza(M, 22, "text-align:right")}</div></div>` },
+        <span style="font-size:34px;font-weight:700;white-space:nowrap">${diamond(M.accento, .55)}<span style="margin-left:16px">${escS(M.livello)}</span></span>
+        ${warning(M, 22, "text-align:right")}</div></div>` },
 
     /* Copertina FB: su mobile la foto profilo copre il basso a sinistra, lì non va testo. */
     cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
-      ${crinale(M, 820, 150)}
-      <div class="abs t-dest" style="left:44px;top:48px;font-size:58px">Stagione ${escS(stagione)}</div>
+      ${ridge(M, 820, 150)}
+      <div class="abs t-dest" style="left:44px;top:48px;font-size:58px">Stagione ${escS(seasonValue)}</div>
       <div class="abs" style="left:44px;top:120px;font-size:22px;font-weight:600">Gite, corsi e gare sociali · Iscrizioni aperte</div>
-      <div class="abs" style="right:44px;top:40px">${logoSuScuro(M, 96)}</div>
+      <div class="abs" style="right:44px;top:40px">${logoOnDark(M, 96)}</div>
       <div class="abs" style="right:44px;top:148px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
-      ${avvertenza(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },
+      ${warning(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },
   };
 }
 
@@ -816,70 +816,70 @@ function formatiCampagna(c, sp, stagione) {
 // ---------------------------------------------------------------------------
 
 /** "Sci Club" → "sciclub": per hashtag e utm_campaign. */
-const semplice = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "");
+const simple = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "");
 
 /** Indirizzo dello sponsor con i parametri UTM, per sapere quanti arrivano da noi. */
 /** L'indirizzo dello sponsor come URL (con https:// se manca), o null se non è un indirizzo. */
-function urlSponsor(testo) {
-  if (!testo) return null;
+function urlSponsor(text) {
+  if (!text) return null;
   try {
-    const url = new URL(/^https?:\/\//i.test(testo) ? testo : `https://${testo}`);
+    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
     // «www.santero it»: lo spazio passa nel percorso, ma il nome del sito ha un punto e niente spazi.
-    return /^[^\s.]+(\.[^\s.]+)+$/.test(url.hostname) && !/\s/.test(testo) ? url : null;
+    return /^[^\s.]+(\.[^\s.]+)+$/.test(url.hostname) && !/\s/.test(text) ? url : null;
   } catch {
     return null;
   }
 }
 
-function indirizzoUtm(sp, c, mezzo, stagione) {
+function utmAddress(sp, c, half, seasonValue) {
   // Scritto male: niente link, invece di rompere il testo e l'apertura dei post.
   const url = urlSponsor(sp.url);
   if (!url) return "";
   url.searchParams.set("utm_source", "instagram");
-  url.searchParams.set("utm_medium", mezzo);
-  url.searchParams.set("utm_campaign", `${semplice(sp.name)}-${semplice(stagione)}`);
-  url.searchParams.set("utm_content", semplice(c.title).slice(0, 40) || "post");
+  url.searchParams.set("utm_medium", half);
+  url.searchParams.set("utm_campaign", `${simple(sp.name)}-${simple(seasonValue)}`);
+  url.searchParams.set("utm_content", simple(c.title).slice(0, 40) || "post");
   return url.toString();
 }
 
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
-function testoPost(ev, sp, stagione) {
-  const tel = contattiDi(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
-  const prezzi = ev.show_price === false ? [] : (ev.prices || []).filter((p) => p && p[1]);
-  const quote = prezzi.map(([n, v]) => (n ? `${n} ${v}` : v)).join(" · ");
-  const righe = [];
+function postText(ev, sp, seasonValue) {
+  const tel = contactsOf(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
+  const priceMap = ev.show_price === false ? [] : (ev.prices || []).filter((p) => p && p[1]);
+  const quote = priceMap.map(([n, v]) => (n ? `${n} ${v}` : v)).join(" · ");
+  const rows = [];
   if (ev.kind === "sponsor" && sp) {
-    righe.push(String(ev.title || "").replace(/\n/g, " "));
-    if (ev.subtitle) righe.push("", ev.subtitle);
-    const link = indirizzoUtm(sp, ev, "post", stagione);
-    if (link) righe.push("", `👉 ${link}`);
-    if (sp.handle) righe.push(`@${sp.handle.replace(/^@/, "")}`);
-    if (sp.alcohol) righe.push("", SOCIAL.avvertenzaAlcol);
-    righe.push("", `#sciclubdonbosco #${semplice(sp.name)}`);
-    return righe.join("\n");
+    rows.push(String(ev.title || "").replace(/\n/g, " "));
+    if (ev.subtitle) rows.push("", ev.subtitle);
+    const link = utmAddress(sp, ev, "post", seasonValue);
+    if (link) rows.push("", `👉 ${link}`);
+    if (sp.handle) rows.push(`@${sp.handle.replace(/^@/, "")}`);
+    if (sp.alcohol) rows.push("", SOCIAL.avvertenzaAlcol);
+    rows.push("", `#sciclubdonbosco #${simple(sp.name)}`);
+    return rows.join("\n");
   }
   if (ev.kind === "gita") {
-    righe.push(`🚌 ${dataLunga(ev.event_date) || ""}: gita a ${unaRiga(ev.title)}!`);
-    if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
-    if (ev.course) righe.push("Nello stesso giorno c'è anche il corso.");
-    if ((ev.stops || []).length) righe.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
-    if (quote) righe.push(`Quota soci: ${quote}`);
-    if (ev.deadline) righe.push(`Iscrizioni ${entro(ev.deadline)}`);
+    rows.push(`🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
+    if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
+    if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
+    if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
+    if (quote) rows.push(`Quota soci: ${quote}`);
+    if (ev.deadline) rows.push(`Iscrizioni ${within(ev.deadline)}`);
   } else {
-    righe.push(`${ev.title}${ev.event_date ? ` · ${dataLunga(ev.event_date)}` : ""}`);
-    if (ev.subtitle) righe.push(senzaSegni(ev.subtitle));
-    if (quote) righe.push("", quote);
-    for (const [k, v] of fattiEvento(ev)) righe.push(`${k}: ${senzaSegni(v)}`);
+    rows.push(`${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
+    if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
+    if (quote) rows.push("", quote);
+    for (const [k, v] of eventDone(ev)) rows.push(`${k}: ${withoutSigns(v)}`);
   }
-  if (tel) righe.push("", `Info e iscrizioni: ${tel}`);
-  righe.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${semplice(ev.title)}` : ""}`);
-  return righe.join("\n");
+  if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
+  rows.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${simple(ev.title)}` : ""}`);
+  return rows.join("\n");
 }
 
 // Per node (web/test-social.js): le funzioni pure.
 if (typeof module !== "undefined") {
-  module.exports = { dataLunga, dataCorta, categoriaGita, categoria, impostaColoriGita, impostaContatti, contattiDi, inchiostro, modelloPost,
-                     contrasto, schiarisci, indirizzoUtm, urlSponsor, testoPost, semplice, mancanti, nomePost, SOCIAL,
-                     disegnaPost, disegnaCalendario, misurePost, evidenzia, coloreNuovo, giornoMese, posFoto, zoomFoto,
-                     formatiCampagna, disegnaCopertina, photo };
+  module.exports = { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, categoria: categoryName, impostaColoriGita: setTripColors, impostaContatti: setContacts, contattiDi: contactsOf, inchiostro: inkColor, modelloPost: postTemplate,
+                     contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
+                     disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
+                     formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo };
 }

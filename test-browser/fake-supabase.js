@@ -10,7 +10,7 @@
 // L'accesso: FINTO.email è l'email della sessione (null: senza); le chiamate di
 // auth (signInWithPassword, updateUser, signOut) finiscono in FINTO.auth. Le
 // callback del realtime (channel().on()) stanno in FINTO.realtime: la prova le chiama.
-window.FINTO = {
+window.FAKE = {
   ritardo: () => 20,
   risposta: () => [],
   rpc: {
@@ -23,42 +23,42 @@ window.FINTO = {
   realtime: [],
 };
 
-function Richiesta(tabella) {
-  this.tabella = tabella;
+function Request(table) {
+  this.tabella = table;
   this.filtri = [];
   this.colonne = "*";
   this.singola = false;
 }
 for (const nome of ["eq", "neq", "or", "ilike", "like", "not", "in", "is", "gte", "lte", "order", "limit", "range",
                     "insert", "update", "upsert", "delete"]) {
-  Richiesta.prototype[nome] = function (...argomenti) { this.filtri.push([nome, ...argomenti]); return this; };
+  Request.prototype[nome] = function (...argomenti) { this.filtri.push([nome, ...argomenti]); return this; };
 }
-Richiesta.prototype.select = function (colonne) { if (colonne) this.colonne = colonne; return this; };
-Richiesta.prototype.single = function () { this.singola = true; return this; };
+Request.prototype.select = function (columns) { if (columns) this.colonne = columns; return this; };
+Request.prototype.single = function () { this.singola = true; return this; };
 // Come supabase-js: la richiesta parte quando la si aspetta (await o then).
-Richiesta.prototype.then = function (ok, ko) {
+Request.prototype.then = function (ok, ko) {
   return new Promise((fine) => setTimeout(() => {
     const rpc = this.tabella.startsWith("rpc:") ? this.tabella.slice(4) : null;
-    let data = rpc && rpc in window.FINTO.rpc ? window.FINTO.rpc[rpc] : window.FINTO.risposta(this.tabella, this);
+    let data = rpc && rpc in window.FAKE.rpc ? window.FAKE.rpc[rpc] : window.FAKE.risposta(this.tabella, this);
     if (this.singola) data = Array.isArray(data) ? data[0] : data;
-    const error = window.FINTO.errore?.(this.tabella, this) || null;
+    const error = window.FAKE.errore?.(this.tabella, this) || null;
     fine({ data: error ? null : data, error });
-  }, window.FINTO.ritardo(this.tabella, this))).then(ok, ko);
+  }, window.FAKE.ritardo(this.tabella, this))).then(ok, ko);
 };
 
 window.supabase = {
   createClient: () => ({
     auth: {
-      getSession: async () => ({ data: { session: { user: { id: "prova", email: window.FINTO.email ?? undefined } } } }),
+      getSession: async () => ({ data: { session: { user: { id: "prova", email: window.FAKE.email ?? undefined } } } }),
       onAuthStateChange() {},
-      signOut: async (opzioni) => { window.FINTO.auth.push(["signOut", opzioni || {}]); return {}; },
-      signInWithPassword: async (dati) => { window.FINTO.auth.push(["signIn", dati]); return { error: null }; },
-      updateUser: async (dati) => { window.FINTO.auth.push(["updateUser", dati]); return { error: null }; },
+      signOut: async (options) => { window.FAKE.auth.push(["signOut", options || {}]); return {}; },
+      signInWithPassword: async (records) => { window.FAKE.auth.push(["signIn", records]); return { error: null }; },
+      updateUser: async (records) => { window.FAKE.auth.push(["updateUser", records]); return { error: null }; },
     },
-    from: (tabella) => new Richiesta(tabella),
+    from: (table) => new Request(table),
     // Come supabase-js: una richiesta, con .range() per tutteLeRighe().
-    rpc: (nome, parametri) => Object.assign(new Richiesta("rpc:" + nome), { parametri }),
-    channel: () => ({ on(tipo, filtro, callback) { window.FINTO.realtime.push(callback); return this; }, subscribe() { return this; } }),
+    rpc: (nome, parameters) => Object.assign(new Request("rpc:" + nome), { parametri: parameters }),
+    channel: () => ({ on(typeName, filter, callback) { window.FAKE.realtime.push(callback); return this; }, subscribe() { return this; } }),
     removeChannel() {},
   }),
 };

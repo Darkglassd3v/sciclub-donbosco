@@ -51,54 +51,54 @@
   // `next` arriva dall'indirizzo, quindi chiunque può scriverlo: si accetta
   // solo il nome di una pagina di questo sito (anche in ricerca/), mai un
   // indirizzo completo, che porterebbe altrove chi ha appena fatto l'accesso.
-  const richiesta = new URLSearchParams(location.search);
-  const next = richiesta.get("next");
-  const paginaChiesta = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
+  const request = new URLSearchParams(location.search);
+  const next = request.get("next");
+  const requestedPage = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
 
-  collegaMostraPassword();
+  bindShowPassword();
 
-  const errore = document.getElementById("errore");
-  function mostraErrore(testo) {
-    errore.textContent = testo;
-    errore.style.display = "block";
+  const err = document.getElementById("errore");
+  function showError(text) {
+    err.textContent = text;
+    err.style.display = "block";
   }
 
-  const SENZA_RUOLO = "Questo account non ha ancora un ruolo assegnato e non può accedere ad alcuna sezione. "
+  const WITHOUT_ROLE = "Questo account non ha ancora un ruolo assegnato e non può accedere ad alcuna sezione. "
     + "Rivolgersi all'amministratore degli utenti del club per l'assegnazione.";
   // Rimandato qui da una pagina perché l'account non ha un ruolo: la sessione
   // non serve a niente, si chiude.
-  if (richiesta.get("senza")) {
-    mostraErrore(SENZA_RUOLO);
-    getProfile().catch(() => null).then(chiudiVediCome).finally(() => sb.auth.signOut());
+  if (request.get("senza")) {
+    showError(WITHOUT_ROLE);
+    getProfile().catch(() => null).then(closeViewAs).finally(() => sb.auth.signOut());
   }
 
   /**
    * Dopo l'accesso: la pagina chiesta o quella del ruolo; senza ruolo si resta
    * qui. Con la password iniziale ancora da cambiare, prima si cambia quella.
    */
-  async function entra() {
-    const accesso = await getProfile();
-    const arrivo = paginaDiArrivo(accesso);
-    if (!arrivo) {
-      await chiudiVediCome(accesso);
+  async function enter() {
+    const access = await getProfile();
+    const landing = landingPage(access);
+    if (!landing) {
+      await closeViewAs(access);
       await sb.auth.signOut();
-      mostraErrore(SENZA_RUOLO);
+      showError(WITHOUT_ROLE);
       return;
     }
-    location.replace(accesso.change_password ? "password.html" : paginaChiesta || arrivo);
+    location.replace(access.change_password ? "password.html" : requestedPage || landing);
   }
 
   // Se la sessione è già valida si salta il login (ma non se si è appena
   // stati rimandati qui perché senza ruolo).
   sb.auth.getSession().then(({ data }) => {
-    if (data.session && !richiesta.get("senza")) entra().catch((e) => mostraErrore(messaggioErrore(e)));
+    if (data.session && !request.get("senza")) enter().catch((e) => showError(errorMessage(e)));
   });
 
-  document.getElementById("loginForm").addEventListener("submit", async (evento) => {
-    evento.preventDefault();
-    const bottone = document.getElementById("btnLogin");
-    errore.style.display = "none";
-    bottone.classList.add("is-loading");
+  document.getElementById("loginForm").addEventListener("submit", async (theEvent) => {
+    theEvent.preventDefault();
+    const button = document.getElementById("btnLogin");
+    err.style.display = "none";
+    button.classList.add("is-loading");
 
     const { error } = await sb.auth.signInWithPassword({
       email: document.getElementById("email").value.trim(),
@@ -106,12 +106,12 @@
     });
 
     if (error) {
-      bottone.classList.remove("is-loading");
-      mostraErrore("Accesso non riuscito: " + messaggioErrore(error));
+      button.classList.remove("is-loading");
+      showError("Accesso non riuscito: " + errorMessage(error));
       return;
     }
-    await entra().catch((e) => mostraErrore(messaggioErrore(e)));
-    bottone.classList.remove("is-loading");
+    await enter().catch((e) => showError(errorMessage(e)));
+    button.classList.remove("is-loading");
   });
 </script>
 </body>

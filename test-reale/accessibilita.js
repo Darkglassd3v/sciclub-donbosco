@@ -8,44 +8,44 @@
 {
   window.addEventListener("load", () => setTimeout(() => {
     const r = [];
-    const prova = (nome, sbagliati) => {
-      const tutti = [...new Set(sbagliati)];
-      r.push(`${nome}=${tutti.length ? `NO(${tutti.slice(0, 4).join(" / ")}${tutti.length > 4 ? ` e altri ${tutti.length - 4}` : ""})` : "ok"}`);
+    const test = (nome, wrongOnes) => {
+      const all = [...new Set(wrongOnes)];
+      r.push(`${nome}=${all.length ? `NO(${all.slice(0, 4).join(" / ")}${all.length > 4 ? ` e altri ${all.length - 4}` : ""})` : "ok"}`);
     };
     const descr = (x) => x.id ? `#${x.id}` : x.tagName.toLowerCase() + [...x.classList].map((c) => "." + c).join("");
 
     const zone = document.querySelectorAll("main, [role=main]").length;
-    prova("main", zone === 1 ? [] : [`${zone} zone principali`]);
+    test("main", zone === 1 ? [] : [`${zone} zone principali`]);
 
-    const campi = [...document.querySelectorAll("input, select, textarea")]
+    const fields = [...document.querySelectorAll("input, select, textarea")]
       .filter((c) => !["hidden", "submit", "button", "reset"].includes(c.type));
-    prova("campiConNome", campi.filter((c) => !(c.labels?.length || c.getAttribute("aria-label")?.trim()
+    test("campiConNome", fields.filter((c) => !(c.labels?.length || c.getAttribute("aria-label")?.trim()
       || c.getAttribute("aria-labelledby") || c.title?.trim())).map(descr));
 
-    prova("linkSottolineati", [...document.querySelectorAll("a[href]")].filter((a) => {
+    test("linkSottolineati", [...document.querySelectorAll("a[href]")].filter((a) => {
       if (a.closest(".button, .tag, nav, .barra-voci, .tabs") || a.classList.contains("button")) return false;
-      const blocco = a.closest("p, li, td, label, .help");
-      if (!blocco || blocco.textContent.trim() === a.textContent.trim()) return false;   // il link è tutto il testo
+      const block = a.closest("p, li, td, label, .help");
+      if (!block || block.textContent.trim() === a.textContent.trim()) return false;   // il link è tutto il testo
       return !getComputedStyle(a).textDecorationLine.includes("underline");
     }).map((a) => `${descr(a.closest("p, li, td, label, .help"))} «${a.textContent.trim().slice(0, 30)}»`));
 
-    const celle = [];
+    const cells = [];
     for (const t of document.querySelectorAll("table")) {
-      const riga = t.tHead?.rows[t.tHead.rows.length - 1];
-      if (!riga) continue;
-      const nomi = [];
-      for (const th of riga.cells) for (let i = 0; i < th.colSpan; i++) nomi.push(th.textContent.trim() || th.getAttribute("aria-label")?.trim() || "");
-      for (const parte of [...t.tBodies, t.tFoot].filter(Boolean)) {
-        for (const tr of parte.rows) {
+      const row = t.tHead?.rows[t.tHead.rows.length - 1];
+      if (!row) continue;
+      const names = [];
+      for (const th of row.cells) for (let i = 0; i < th.colSpan; i++) names.push(th.textContent.trim() || th.getAttribute("aria-label")?.trim() || "");
+      for (const part of [...t.tBodies, t.tFoot].filter(Boolean)) {
+        for (const tr of part.rows) {
           let col = 0;
           for (const td of tr.cells) {
-            if (td.tagName === "TD" && (td.textContent.trim() || td.children.length) && !nomi[col]) celle.push(`${descr(t)} colonna ${col + 1}`);
+            if (td.tagName === "TD" && (td.textContent.trim() || td.children.length) && !names[col]) cells.push(`${descr(t)} colonna ${col + 1}`);
             col += td.colSpan;
           }
         }
       }
     }
-    prova("celleConIntestazione", celle);
+    test("celleConIntestazione", cells);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 5000));

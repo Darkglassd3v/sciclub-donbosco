@@ -10,170 +10,170 @@ const path = require("path");
 
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
 // proteggiPagina(): si può caricare qui senza finta finestra.
-const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
-const { pezzi, numeriTessera, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-        giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile } =
-  (0, eval)(`(() => { ${sorgente}
-    return { pezzi, numeriTessera, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
-             giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile }; })()`);
+const source = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
+const { pieces, cardNumbers, pieceFilter, nameKey, highlight, whatsappNumber, callNumber, contactsHtml, text,
+        passDay, dayLabel, errorMessage, retryable } =
+  (0, eval)(`(() => { ${source}
+    return { pieces, cardNumbers, pieceFilter, nameKey, highlight, whatsappNumber, callNumber, contactsHtml, text,
+             passDay, dayLabel, errorMessage, retryable }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
 
 // Quello che ha chiesto il direttivo: si scrive l'inizio, non tutto.
-assert.deepStrictEqual(pezzi("cos"), ["cos"]);
-assert.deepStrictEqual(pezzi("fede"), ["fede"]);
-assert.deepStrictEqual(pezzi("cos fede"), ["cos", "fede"]);
-assert.deepStrictEqual(pezzi("  COSSETTA,  Federico "), ["cossetta", "federico"]);
+assert.deepStrictEqual(pieces("cos"), ["cos"]);
+assert.deepStrictEqual(pieces("fede"), ["fede"]);
+assert.deepStrictEqual(pieces("cos fede"), ["cos", "fede"]);
+assert.deepStrictEqual(pieces("  COSSETTA,  Federico "), ["cossetta", "federico"]);
 
 // Una lettera sola non cerca: restituirebbe mezzo archivio.
-assert.deepStrictEqual(pezzi("c"), []);
-assert.deepStrictEqual(pezzi(""), []);
-assert.deepStrictEqual(pezzi(null), []);
+assert.deepStrictEqual(pieces("c"), []);
+assert.deepStrictEqual(pieces(""), []);
+assert.deepStrictEqual(pieces(null), []);
 
 // Gli apostrofi dei cognomi restano, la punteggiatura e le cifre no.
-assert.deepStrictEqual(pezzi("d'ang"), ["d'ang"]);
-assert.deepStrictEqual(pezzi("ros%si"), ["rossi"]);
-assert.deepStrictEqual(pezzi("cos*,ni.eq.1"), ["cos", "nieq"]);
+assert.deepStrictEqual(pieces("d'ang"), ["d'ang"]);
+assert.deepStrictEqual(pieces("ros%si"), ["rossi"]);
+assert.deepStrictEqual(pieces("cos*,ni.eq.1"), ["cos", "nieq"]);
 
 // Al massimo quattro pezzi: oltre, la URL del filtro cresce senza servire.
-assert.strictEqual(pezzi("a1 bb cc dd ee ff").length, 4);
+assert.strictEqual(pieces("a1 bb cc dd ee ff").length, 4);
 
 // Il numero tessera si cerca come il nome: le cifre scritte sono numeri tessera, uguali e
 // non «che iniziano per» (si cerca la tessera 12, non la 120). "0021" è la tessera 21,
 // come la salva Soci (numeroTessera() in web/index.html); i nomi restano nei pezzi.
-assert.deepStrictEqual(numeriTessera("125"), ["125"]);
-assert.deepStrictEqual(numeriTessera("0021"), ["21"]);
-assert.deepStrictEqual(numeriTessera("rossi 125"), ["125"]);
-assert.deepStrictEqual(pezzi("rossi 125"), ["rossi"]);
-assert.deepStrictEqual(numeriTessera("7"), ["7"]);
-assert.deepStrictEqual(numeriTessera("rossi"), []);
-assert.deepStrictEqual(numeriTessera(null), []);
+assert.deepStrictEqual(cardNumbers("125"), ["125"]);
+assert.deepStrictEqual(cardNumbers("0021"), ["21"]);
+assert.deepStrictEqual(cardNumbers("rossi 125"), ["125"]);
+assert.deepStrictEqual(pieces("rossi 125"), ["rossi"]);
+assert.deepStrictEqual(cardNumbers("7"), ["7"]);
+assert.deepStrictEqual(cardNumbers("rossi"), []);
+assert.deepStrictEqual(cardNumbers(null), []);
 
 // Il filtro è quello di sempre: inizio della parola, nel cognome o nel nome.
-assert.strictEqual(filtroPezzo("cos"),
+assert.strictEqual(pieceFilter("cos"),
   "last_name.ilike.cos%,first_name.ilike.cos%,name_key.like.COS%,name_key.like.% COS%");
 
 // "d'angelo" trova anche DANGELO, e "dangelo" trova D'ANGELO: la chiave del
 // nome toglie apostrofi e accenti (norm_name() nel database).
-assert.strictEqual(chiaveNome("d'àngelo"), "DANGELO");
-assert.strictEqual(filtroPezzo("d'angelo"),
+assert.strictEqual(nameKey("d'àngelo"), "DANGELO");
+assert.strictEqual(pieceFilter("d'angelo"),
   "last_name.ilike.d'angelo%,first_name.ilike.d'angelo%,name_key.like.DANGELO%,name_key.like.% DANGELO%");
 
 // L'evidenziazione marca solo l'inizio della parola, e solo se corrisponde.
-assert.strictEqual(evidenzia("Cossetta", ["cos"]), "<mark>Cos</mark>setta");
-assert.strictEqual(evidenzia("Federico", ["cos"]), "Federico");
+assert.strictEqual(highlight("Cossetta", ["cos"]), "<mark>Cos</mark>setta");
+assert.strictEqual(highlight("Federico", ["cos"]), "Federico");
 
 // Ogni pezzo diventa un filtro a sé: concatenati sono in AND, quindi
 // "cos fede" chiede una riga che soddisfi entrambi.
-const filtri = pezzi("cos fede").map((p) => `cognome.ilike.${p}%,nome.ilike.${p}%`);
-assert.deepStrictEqual(filtri, [
+const filters = pieces("cos fede").map((p) => `cognome.ilike.${p}%,nome.ilike.${p}%`);
+assert.deepStrictEqual(filters, [
   "cognome.ilike.cos%,nome.ilike.cos%",
   "cognome.ilike.fede%,nome.ilike.fede%",
 ]);
 
 // --- "NO" vuol dire niente -------------------------------------------------
 
-assert.strictEqual(testo("NO"), "—");
-assert.strictEqual(testo(" no "), "—");
-assert.strictEqual(testo(""), "—");
-assert.strictEqual(testo(null), "—");
-assert.strictEqual(testo("STAGIONALE"), "STAGIONALE");
+assert.strictEqual(text("NO"), "—");
+assert.strictEqual(text(" no "), "—");
+assert.strictEqual(text(""), "—");
+assert.strictEqual(text(null), "—");
+assert.strictEqual(text("STAGIONALE"), "STAGIONALE");
 
 // --- Abbonamenti a viaggi --------------------------------------------------
 
 // I nomi arrivano dal listino così come sono scritti nel foglio.
-assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi SABATO"), "SABATO");
-assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi DOMENICA"), "DOMENICA");
-assert.strictEqual(giornoAbbonamento("Abbonamento 5 viaggi MARTEDÌ"), "MARTEDI");
-assert.strictEqual(giornoAbbonamento("abbonamento 10 viaggi jolly"), "JOLLY");
+assert.strictEqual(passDay("Abbonamento 5 viaggi SABATO"), "SABATO");
+assert.strictEqual(passDay("Abbonamento 5 viaggi DOMENICA"), "DOMENICA");
+assert.strictEqual(passDay("Abbonamento 5 viaggi MARTEDÌ"), "MARTEDI");
+assert.strictEqual(passDay("abbonamento 10 viaggi jolly"), "JOLLY");
 
 // Quello che non è un abbonamento a viaggi non prende nessun colore.
-assert.strictEqual(giornoAbbonamento("CORSO PRESCIISTICA"), null);
-assert.strictEqual(giornoAbbonamento("NO"), null);
-assert.strictEqual(giornoAbbonamento(null), null);
+assert.strictEqual(passDay("CORSO PRESCIISTICA"), null);
+assert.strictEqual(passDay("NO"), null);
+assert.strictEqual(passDay(null), null);
 
 // Il colore non è mai l'unica informazione: il nome del giorno resta scritto.
-assert.ok(etichettaGiorno("SABATO").includes("Sabato"), "manca il nome del giorno");
-assert.ok(etichettaGiorno("SABATO").includes('data-giorno="SABATO"'), "manca il giorno per il colore");
-assert.strictEqual(etichettaGiorno(null), "");
+assert.ok(dayLabel("SABATO").includes("Sabato"), "manca il nome del giorno");
+assert.ok(dayLabel("SABATO").includes('data-giorno="SABATO"'), "manca il giorno per il colore");
+assert.strictEqual(dayLabel(null), "");
 
 // --- Telefono --------------------------------------------------------------
 
 // I numeri in anagrafica sono scritti come capita.
-assert.strictEqual(numeroWhatsapp("380 340 9158"), "393803409158");
-assert.strictEqual(numeroWhatsapp("380-340-9158"), "393803409158");
-assert.strictEqual(numeroWhatsapp("+39 380 340 9158"), "393803409158");
-assert.strictEqual(numeroWhatsapp("0039 380 340 9158"), "393803409158");
-assert.strictEqual(numeroWhatsapp("393803409158"), "393803409158");
+assert.strictEqual(whatsappNumber("380 340 9158"), "393803409158");
+assert.strictEqual(whatsappNumber("380-340-9158"), "393803409158");
+assert.strictEqual(whatsappNumber("+39 380 340 9158"), "393803409158");
+assert.strictEqual(whatsappNumber("0039 380 340 9158"), "393803409158");
+assert.strictEqual(whatsappNumber("393803409158"), "393803409158");
 
 // Un fisso tiene lo zero iniziale anche col prefisso internazionale.
-assert.strictEqual(numeroWhatsapp("0141/123456"), "390141123456");
+assert.strictEqual(whatsappNumber("0141/123456"), "390141123456");
 
 // Un cellulare che comincia per 39 è un numero italiano da dieci cifre, non un
 // numero già internazionale: il prefisso gli va aggiunto lo stesso.
-assert.strictEqual(numeroWhatsapp("3931234567"), "393931234567");
+assert.strictEqual(whatsappNumber("3931234567"), "393931234567");
 
 // Numeri inutilizzabili: nessun link, invece di un link che apre WhatsApp a vuoto.
-assert.strictEqual(numeroWhatsapp(""), null);
-assert.strictEqual(numeroWhatsapp(null), null);
-assert.strictEqual(numeroWhatsapp("12"), null);
+assert.strictEqual(whatsappNumber(""), null);
+assert.strictEqual(whatsappNumber(null), null);
+assert.strictEqual(whatsappNumber("12"), null);
 
 // La chiamata usa le cifre così come sono scritte: il telefono sa comporle.
-assert.strictEqual(numeroChiamata("380 340 9158"), "3803409158");
-assert.strictEqual(numeroChiamata("+39 380 340 9158"), "+393803409158");
-assert.strictEqual(numeroChiamata("123"), null);
+assert.strictEqual(callNumber("380 340 9158"), "3803409158");
+assert.strictEqual(callNumber("+39 380 340 9158"), "+393803409158");
+assert.strictEqual(callNumber("123"), null);
 
 // Senza numero non compare nessun pulsante.
-assert.strictEqual(contattiHtml(null), "");
-const bottoni = contattiHtml("380 340 9158");
-assert.ok(bottoni.includes('href="tel:3803409158"'), "manca il link di chiamata");
-assert.ok(bottoni.includes("https://wa.me/393803409158"), "manca il link WhatsApp");
+assert.strictEqual(contactsHtml(null), "");
+const buttons = contactsHtml("380 340 9158");
+assert.ok(buttons.includes('href="tel:3803409158"'), "manca il link di chiamata");
+assert.ok(buttons.includes("https://wa.me/393803409158"), "manca il link WhatsApp");
 
 // --- Errori ----------------------------------------------------------------
 
 // Il guasto di rete ha un nome diverso per ogni browser, e nessuno dei tre
 // dice niente a chi sta caricando il pullman: conta sapere che è la linea e
 // che si può riprovare.
-const RETE = "Connessione assente o troppo debole: riprova.";
-assert.strictEqual(messaggioErrore({ name: "TypeError", message: "Failed to fetch" }), RETE);
-assert.strictEqual(messaggioErrore({ message: "Load failed" }), RETE);
-assert.strictEqual(messaggioErrore({ message: "NetworkError when attempting to fetch resource." }), RETE);
+const NETWORK = "Connessione assente o troppo debole: riprova.";
+assert.strictEqual(errorMessage({ name: "TypeError", message: "Failed to fetch" }), NETWORK);
+assert.strictEqual(errorMessage({ message: "Load failed" }), NETWORK);
+assert.strictEqual(errorMessage({ message: "NetworkError when attempting to fetch resource." }), NETWORK);
 
 // Un rifiuto del database invece va riportato così com'è: dice una cosa vera
 // sull'abbonamento, non sulla connessione.
 assert.strictEqual(
-  messaggioErrore({ message: "Abbonamento esaurito: non restano gite da scalare." }),
+  errorMessage({ message: "Abbonamento esaurito: non restano gite da scalare." }),
   "Abbonamento esaurito: non restano gite da scalare.");
-assert.strictEqual(messaggioErrore({ code: "PGRST301" }), "Sessione scaduta: esci e rientra.");
-assert.strictEqual(messaggioErrore(null), "Errore sconosciuto");
+assert.strictEqual(errorMessage({ code: "PGRST301" }), "Sessione scaduta: esci e rientra.");
+assert.strictEqual(errorMessage(null), "Errore sconosciuto");
 
 // --- Cosa si riprova a mandare ---------------------------------------------
 
 // Se il database ha risposto, la risposta non cambia riprovando: la gita esce
 // dalla coda, altrimenti resterebbe lì a bloccare tutte quelle dietro.
-assert.strictEqual(ritentabile({ code: "P0001", message: "Abbonamento esaurito: non restano gite da scalare." }), false);
-assert.strictEqual(ritentabile({ code: "42501", message: "permission denied" }), false);
+assert.strictEqual(retryable({ code: "P0001", message: "Abbonamento esaurito: non restano gite da scalare." }), false);
+assert.strictEqual(retryable({ code: "42501", message: "permission denied" }), false);
 // Tranne la sessione scaduta: dopo un nuovo accesso la stessa gita passa.
-assert.strictEqual(ritentabile({ code: "PGRST301" }), true);
-assert.strictEqual(ritentabile({ code: "PGRST303", message: "JWT expired" }), true);
-assert.strictEqual(messaggioErrore({ code: "PGRST303" }), "Sessione scaduta: esci e rientra.");
+assert.strictEqual(retryable({ code: "PGRST301" }), true);
+assert.strictEqual(retryable({ code: "PGRST303", message: "JWT expired" }), true);
+assert.strictEqual(errorMessage({ code: "PGRST303" }), "Sessione scaduta: esci e rientra.");
 
 // Se invece non è arrivata risposta è la linea, e quella torna.
-assert.strictEqual(ritentabile({ message: "Failed to fetch" }), true);
-assert.strictEqual(ritentabile({ message: "Load failed" }), true);
+assert.strictEqual(retryable({ message: "Failed to fetch" }), true);
+assert.strictEqual(retryable({ message: "Load failed" }), true);
 // Un guasto che non sappiamo leggere si riprova: perdere una gita è peggio
 // che riprovare a vuoto.
-assert.strictEqual(ritentabile({ message: "qualcosa di inatteso" }), true);
-assert.strictEqual(ritentabile(null), true);
+assert.strictEqual(retryable({ message: "qualcosa di inatteso" }), true);
+assert.strictEqual(retryable(null), true);
 // Errori del database che passano da soli: database non raggiungibile o pool
 // esaurito (PGRST000-003), tempo scaduto (57014), troppe connessioni, riavvio,
 // conflitto fra transazioni. Buttare la voce perderebbe una gita o una vendita.
 for (const code of ["PGRST000", "PGRST001", "PGRST002", "PGRST003", "57014", "53300", "57P01", "57P03", "40001", "40P01"]) {
-  assert.strictEqual(ritentabile({ code, message: "temporaneo" }), true, `${code} va riprovato`);
+  assert.strictEqual(retryable({ code, message: "temporaneo" }), true, `${code} va riprovato`);
 }
 // Un no vero resta un no: riprovare darebbe lo stesso esito.
 for (const code of ["23505", "P0001", "42501", "PGRST116"]) {
-  assert.strictEqual(ritentabile({ code, message: "no" }), false, `${code} non va riprovato`);
+  assert.strictEqual(retryable({ code, message: "no" }), false, `${code} non va riprovato`);
 }
 
 console.log("ok — ricerca");

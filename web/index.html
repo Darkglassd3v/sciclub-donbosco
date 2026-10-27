@@ -150,8 +150,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -185,8 +185,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -211,11 +211,11 @@
       <p class="tipo" id="tipoScheda">Nuovo socio</p>
       <p class="nome" id="nomeScheda" role="status">Compilare i campi e salvare</p>
       <p class="dati"><span id="datiScheda">Se la persona è già registrata, cercarla qui sopra per aprirne la scheda.</span>
-        <button type="button" class="chiudi" id="btnChiudiScheda" onclick="nuovoSocio()" hidden>Chiudi scheda</button></p>
+        <button type="button" class="chiudi" id="btnChiudiScheda" onclick="newMember()" hidden>Chiudi scheda</button></p>
     </div>
     <div id="azioniSocio">
-      <button type="button" class="button btn-scarica" id="btnScarica" onclick="scaricaScheda()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
-      <button type="button" class="button btn-elimina" id="btnElimina" onclick="chiediElimina()" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6l1 2h5v2H3V4h5l1-2Zm-4 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z"/></svg>Elimina</button>
+      <button type="button" class="button btn-scarica" id="btnScarica" onclick="downloadCard()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2h12v5H6V2Zm-2 6h16a2 2 0 0 1 2 2v7h-4v5H6v-5H2v-7a2 2 0 0 1 2-2Zm4 9v3h8v-5H8v2Zm10-6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></svg>Stampa</button>
+      <button type="button" class="button btn-elimina" id="btnElimina" onclick="askDelete()" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 2h6l1 2h5v2H3V4h5l1-2Zm-4 6h14l-1 14H6L5 8Zm4 3v8h2v-8H9Zm4 0v8h2v-8h-2Z"/></svg>Elimina</button>
     </div>
   </div>
 
@@ -359,7 +359,7 @@
               <input class="input" id="f_payerDisplay" placeholder="Cognome del familiare pagante…" autocomplete="off">
             </div>
             <div class="control">
-              <button type="button" class="button is-light" onclick="rimuoviPagante()" title="Rimuovi pagante" aria-label="Rimuovi pagante">✕</button>
+              <button type="button" class="button is-light" onclick="removePayer()" title="Rimuovi pagante" aria-label="Rimuovi pagante">✕</button>
             </div>
           </div>
           <input type="hidden" id="f_payer_id">
@@ -426,7 +426,7 @@
     <div class="columns is-mobile is-vcentered">
       <div class="column has-text-centered"><span class="val-label">Totale</span><span class="val-amount" id="v_totale">0€</span></div>
       <div class="column has-text-centered"><span class="val-label" id="l_saldo">Residuo</span><span class="val-amount" id="v_saldo" style="color:var(--giallo)">0€</span></div>
-      <div class="column is-5" id="zonaSalva"><button onclick="salva()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
+      <div class="column is-5" id="zonaSalva"><button onclick="save()" class="button is-warning is-large is-fullwidth has-text-weight-bold" id="btnSalva" style="white-space:normal;height:auto">Salva socio</button></div>
     </div>
   </div>
 </div>
@@ -437,53 +437,53 @@
 <script src="shared.js?v=20261028material"></script>
 <script src="codicefiscale.js?v=20261022testi"></script>
 <script>
-  let PREZZI = {};
-  let familiariACarico = [];
+  let PRICES = {};
+  let dependants = [];
   // Il capofamiglia che paga per il socio aperto, se ha l'agevolazione famiglia:
   // { nome, agevolazione, coperti } (coperti = lui e i familiari a carico senza
   // tessera, il socio aperto escluso). Vedi caricaCapofamiglia().
-  let capofamiglia = null;
-  let accesso = null; // chi è collegato (getProfile), per tessere riservate e Togli
+  let householdHead = null;
+  let access = null; // chi è collegato (getProfile), per tessere riservate e Togli
 
   // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
   // con le gite fatte), quelli aggiunti qui e non ancora salvati, e i pass_id
   // dei salvati da togliere al prossimo salvataggio. Si scrive tutto insieme
   // al socio, premendo Salva, come le altre voci.
-  let abbonamentiSalvati = [];
-  let abbonamentiNuovi = [];
-  let abbonamentiDaTogliere = new Set();
+  let savedPasses = [];
+  let newPasses = [];
+  let passesToRemove = new Set();
 
   // Il numero tessera messo dalla pagina, finché nessuno lo cambia a mano: se
   // al salvataggio risulta appena preso da un altro operatore, la pagina ne
   // propone un altro da sé. Uno scritto a mano invece non si tocca.
-  let numeroProposto = null;
+  let proposedNumber = null;
 
   // I numeri tessera già dati ({ id, card_number }) e da dove contare i liberi
   // (Impostazioni, settings.card_gaps_from): sotto, i posti del direttivo e della
   // famiglia, tenuti vuoti apposta. Letti quando si apre il modulo; null = non letti.
-  let tessereUsate = null;
-  let tessereDa = 1;
+  let usedCards = null;
+  let cardsFrom = 1;
 
   // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
   // cima e il pulsante Salva.
-  let socioAperto = null;
+  let openedMember = null;
 
   // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
   // firma(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
   // pagina chiedono prima di buttare via quello che si è scritto.
-  let salvato = "";
+  let savedOne = "";
 
   // Possibili doppioni che l'operatore ha detto essere un'altra persona: non
   // si ripropongono finché il modulo resta questo.
-  let doppioniScartati = new Set();
+  let discardedDuplicates = new Set();
 
   const el = (id) => document.getElementById(id);
-  const sceltaDi = (id) => el(id).querySelector("input:checked");
+  const choiceOf = (id) => el(id).querySelector("input:checked");
 
   // Le voci del listino sono gruppi di radio: il prezzo sta nel value e il
   // nome in data-nome. Al salvataggio serve il nome, per il totale il prezzo.
   // Gli abbonamenti non ci sono: se ne possono avere più d'uno (vedi sotto).
-  const SELECT_CATEGORIE = {
+  const CATEGORY_SELECT = {
     f_tipologia_tessera: "TESSERA",
     f_agevolazioni_famiglia: "FAMIGLIA",
     f_presciistica: "PRESCIISTICA",
@@ -491,72 +491,72 @@
   };
 
   (async function init() {
-    if (!(await requirePermesso("soci"))) return;
-    aggiornaFascia();
+    if (!(await requirePermission("soci"))) return;
+    updateBand();
     setLoading(true);
     try {
-      accesso = await getProfile();
+      access = await getProfile();
 
-      PREZZI = await caricaPrezzi();
-      Object.entries(SELECT_CATEGORIE).forEach(([id, categoria]) => riempiScelte(id, categoria));
-      riempiListinoAbbonamenti();
-      disegnaAbbonamenti();
+      PRICES = await loadPrices();
+      Object.entries(CATEGORY_SELECT).forEach(([id, categoryName]) => fillChoices(id, categoryName));
+      fillPassPriceList();
+      drawPasses();
 
-      const partenze = await caricaPartenze();
-      riempiPartenze("check_sabato", partenze.SABATO);
-      riempiPartenze("check_domenica", partenze.DOMENICA);
+      const departures = await loadDepartures();
+      fillDepartures("check_sabato", departures.SABATO);
+      fillDepartures("check_domenica", departures.DOMENICA);
 
-      Object.keys(SELECT_CATEGORIE).forEach((id) => el(id).addEventListener("change", ricalcola));
+      Object.keys(CATEGORY_SELECT).forEach((id) => el(id).addEventListener("change", recompute));
       // O la tessera o l'agevolazione famiglia, che la comprende: scelta l'una, l'altra si svuota.
-      el("f_tipologia_tessera").addEventListener("change", () => { selezionaPerNome("f_agevolazioni_famiglia", null); ricalcola(); });
+      el("f_tipologia_tessera").addEventListener("change", () => { selectByName("f_agevolazioni_famiglia", null); recompute(); });
       el("f_agevolazioni_famiglia").addEventListener("change", () => {
-        if (nomeSelezionato("f_agevolazioni_famiglia")) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
-        ricalcola();
+        if (selectedName("f_agevolazioni_famiglia")) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        recompute();
       });
       // Anche la presciistica con l'assicurazione comprende la tessera: scelta lei, la
       // tessera si svuota (e si spegne, aggiornaCopertura()).
       el("f_presciistica").addEventListener("change", () => {
-        if (voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
-        ricalcola();
+        if (chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        recompute();
       });
-      el("f_tipologia_corso").addEventListener("change", aggiornaGiornoCorso);
-      el("f_acconto").addEventListener("input", ricalcola);
-      el("f_totale_a_mano").addEventListener("change", () => { aggiornaTotaleMano({ daListino: true }); ricalcola(); });
-      el("f_totale_manuale").addEventListener("input", ricalcola);
-      el("searchInput").addEventListener("input", cercaSoci);
-      el("f_payerDisplay").addEventListener("input", cercaPagante);
+      el("f_tipologia_corso").addEventListener("change", updateCourseDay);
+      el("f_acconto").addEventListener("input", recompute);
+      el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
+      el("f_totale_manuale").addEventListener("input", recompute);
+      el("searchInput").addEventListener("input", searchMembers);
+      el("f_payerDisplay").addEventListener("input", searchPayer);
       // "change" e non "input": il controllo parte quando si lascia il campo,
       // non a ogni lettera, che a metà codice sarebbe sempre "sbagliato".
       ["f_codice_fiscale", "f_cognome", "f_nome", "f_data_nascita"].forEach((id) => {
-        el(id).addEventListener("change", controllaCF);
-        el(id).addEventListener("change", controllaDoppioni);
+        el(id).addEventListener("change", checkTaxCode);
+        el(id).addEventListener("change", checkDuplicates);
       });
       // Luogo e sesso servono al codice fiscale: il comune atteso e la data da rifare.
-      ["f_luogo_nascita", "f_provincia_nascita"].forEach((id) => el(id).addEventListener("change", controllaCF));
-      document.querySelectorAll("input[name=sessoCF]").forEach((r) => r.addEventListener("change", controllaCF));
-      el("btnCalcolaCF").addEventListener("click", calcolaCodiceFiscale);
+      ["f_luogo_nascita", "f_provincia_nascita"].forEach((id) => el(id).addEventListener("change", checkTaxCode));
+      document.querySelectorAll("input[name=sessoCF]").forEach((r) => r.addEventListener("change", checkTaxCode));
+      el("btnCalcolaCF").addEventListener("click", computeFiscalCode);
       // Il nome sul pulsante Salva e nella testata segue quello che si scrive.
-      el("f_cognome").addEventListener("input", aggiornaFascia);
-      el("f_nome").addEventListener("input", aggiornaFascia);
+      el("f_cognome").addEventListener("input", updateBand);
+      el("f_nome").addEventListener("input", updateBand);
       document.querySelectorAll("input[name=chiPaga]").forEach((r) => r.addEventListener("change", () => {
-        if (!r.value) { disabilitaSezionePagante(); return; }
-        abilitaSezionePagante();
+        if (!r.value) { disablePayerSection(); return; }
+        enablePayerSection();
         el("f_payerDisplay").focus();
       }));
-      window.addEventListener("beforeunload", (e) => { if (modificato()) { e.preventDefault(); e.returnValue = ""; } });
+      window.addEventListener("beforeunload", (e) => { if (modified()) { e.preventDefault(); e.returnValue = ""; } });
       el("f_numero_tessera").addEventListener("input", () => (el("notaTessera").hidden = true));
-      el("f_numero_tessera").addEventListener("input", mostraTessereLibere);
-      el("btnTogli").addEventListener("click", chiediTogli);
+      el("f_numero_tessera").addEventListener("input", showFreeCards);
+      el("btnTogli").addEventListener("click", askRemove);
       el("btnEliminaNo1").addEventListener("click", () => el("dlgElimina").close());
       el("btnEliminaNo2").addEventListener("click", () => el("dlgElimina2").close());
-      el("btnEliminaAvanti").addEventListener("click", confermaElimina);
-      el("btnEliminaSi").addEventListener("click", eliminaSocio);
+      el("btnEliminaAvanti").addEventListener("click", confirmDelete);
+      el("btnEliminaSi").addEventListener("click", deleteMember);
 
-      ricalcola();
-      await proponiNumeroTessera();
-      salvato = firma();
+      recompute();
+      await proposeCardNumber();
+      savedOne = signature();
     } catch (error) {
-      showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -567,31 +567,31 @@
    * parte senza scelta; le altre partono da "Nessuna", che form.reset()
    * ripristina da sé perché è la scelta di default.
    */
-  function riempiScelte(id, categoria) {
-    const obbligatoria = id === "f_tipologia_tessera";
-    const voci = obbligatoria ? [] : [{ name: "", price: 0, nessuna: true }];
-    voci.push(...(PREZZI[categoria] || []));
+  function fillChoices(id, categoryName) {
+    const required = id === "f_tipologia_tessera";
+    const items = required ? [] : [{ name: "", price: 0, nessuna: true }];
+    items.push(...(PRICES[categoryName] || []));
 
-    el(id).querySelector(".scelte-opzioni").replaceChildren(...voci.map((p) => {
+    el(id).querySelector(".scelte-opzioni").replaceChildren(...items.map((p) => {
       const radio = document.createElement("input");
       radio.type = "radio";
       radio.name = id;
       radio.value = p.price;
       radio.dataset.nome = p.name;
-      radio.required = obbligatoria;
+      radio.required = required;
       radio.defaultChecked = Boolean(p.nessuna);
 
       const nome = document.createElement("span");
       nome.textContent = p.nessuna ? "Nessuna" : p.active === false ? `${p.name} (non più nel listino)` : p.name;
 
-      const scelta = document.createElement("label");
-      scelta.className = "scelta";
-      scelta.append(radio, nome);
+      const choice = document.createElement("label");
+      choice.className = "scelta";
+      choice.append(radio, nome);
       if (!p.nessuna) {
-        const prezzo = document.createElement("span");
-        prezzo.className = "prezzo";
-        prezzo.textContent = fmt(p.price);
-        scelta.append(prezzo);
+        const priceValue = document.createElement("span");
+        priceValue.className = "prezzo";
+        priceValue.textContent = fmt(p.price);
+        choice.append(priceValue);
       }
       // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono a chi
       // non può assegnarle (tesseraConsentita, come card_allowed nel database). Restano però nel gruppo, nascoste
@@ -601,12 +601,12 @@
       // Così anche una voce spenta in Impostazioni (active false): il socio che l'ha
       // la vede e la tiene, nessun altro la sceglie. dataset.fisso: resta spenta
       // anche quando aggiornaCopertura() riaccende le tessere.
-      if ((categoria === "TESSERA" && !tesseraConsentita(p.min_role, accesso?.role)) || p.active === false) {
+      if ((categoryName === "TESSERA" && !allowedCard(p.min_role, access?.role)) || p.active === false) {
         radio.disabled = true;
         radio.dataset.fisso = "1";
-        scelta.classList.add("riservata");
+        choice.classList.add("riservata");
       }
-      return scelta;
+      return choice;
     }));
   }
 
@@ -615,18 +615,18 @@
    * Senza corso si svuota: un giorno rimasto lì da prima non deve far finire
    * il socio nei fogli dei corsisti.
    */
-  function aggiornaGiornoCorso() {
-    const conCorso = Boolean(nomeSelezionato("f_tipologia_corso"));
-    el("f_giorno_corso").hidden = !conCorso;
+  function updateCourseDay() {
+    const withCourse = Boolean(selectedName("f_tipologia_corso"));
+    el("f_giorno_corso").hidden = !withCourse;
     el("f_giorno_corso").querySelectorAll("input").forEach((r) => {
-      r.required = conCorso;
-      if (!conCorso) r.checked = false;
+      r.required = withCourse;
+      if (!withCourse) r.checked = false;
     });
   }
 
-  function riempiPartenze(contenitore, luoghi) {
-    el(contenitore).innerHTML = luoghi
-      .map((luogo) => `<label class="checkbox mr-3"><input type="checkbox" value="${esc(luogo)}"> ${esc(luogo)}</label>`)
+  function fillDepartures(container, places) {
+    el(container).innerHTML = places
+      .map((placeName) => `<label class="checkbox mr-3"><input type="checkbox" value="${esc(placeName)}"> ${esc(placeName)}</label>`)
       .join("");
   }
 
@@ -640,105 +640,105 @@
   // -------------------------------------------------------------------------
 
   /** Il listino degli abbonamenti a gite, ognuno con il suo "+ Aggiungi". */
-  function riempiListinoAbbonamenti() {
+  function fillPassPriceList() {
     // Solo gli abbonamenti a gite (con il numero di viaggi): gli altri non
     // avrebbero un conto di gite da mostrare.
-    const voci = (PREZZI.ABBONAMENTO || []).filter((p) => p.trips && p.active !== false);
-    el("listinoAbbonamenti").replaceChildren(...voci.map((p) => {
-      const riga = document.createElement("div");
-      riga.className = "scelta aggiungi";
-      riga.innerHTML = `<span class="nome">${esc(p.name)} ${etichettaGiorno(p.day)}</span><span class="prezzo">${fmt(p.price)}</span>`;
-      const aggiungi = document.createElement("button");
-      aggiungi.type = "button";
-      aggiungi.className = "button is-link is-outlined";
-      aggiungi.textContent = "+ Aggiungi";
-      aggiungi.addEventListener("click", () => aggiungiAbbonamento(p));
-      riga.append(aggiungi);
-      return riga;
+    const items = (PRICES.ABBONAMENTO || []).filter((p) => p.trips && p.active !== false);
+    el("listinoAbbonamenti").replaceChildren(...items.map((p) => {
+      const row = document.createElement("div");
+      row.className = "scelta aggiungi";
+      row.innerHTML = `<span class="nome">${esc(p.name)} ${dayLabel(p.day)}</span><span class="prezzo">${fmt(p.price)}</span>`;
+      const add = document.createElement("button");
+      add.type = "button";
+      add.className = "button is-link is-outlined";
+      add.textContent = "+ Aggiungi";
+      add.addEventListener("click", () => addPass(p));
+      row.append(add);
+      return row;
     }));
   }
 
   /** Quelli che entrano nel totale: i salvati non tolti, più i nuovi. */
-  function abbonamentiDaContare() {
-    return [...abbonamentiSalvati.filter((a) => !abbonamentiDaTogliere.has(a.pass_id)), ...abbonamentiNuovi];
+  function passesToCount() {
+    return [...savedPasses.filter((a) => !passesToRemove.has(a.pass_id)), ...newPasses];
   }
 
-  function aggiungiAbbonamento(voce) {
+  function addPass(item) {
     // client_id nasce qui e resta con la riga: se il salvataggio si
     // interrompe e si ripreme Salva, il database riconosce la stessa riga e
     // non vende l'abbonamento due volte.
-    abbonamentiNuovi.push({ client_id: crypto.randomUUID(), pass_type: voce.name, price: voce.price, trips: voce.trips, day: voce.day });
-    spostaTotaleMano(num(voce.price));
-    disegnaAbbonamenti();
-    ricalcola();
+    newPasses.push({ client_id: crypto.randomUUID(), pass_type: item.name, price: item.price, trips: item.trips, day: item.day });
+    moveManualTotal(num(item.price));
+    drawPasses();
+    recompute();
   }
 
-  function disegnaAbbonamenti() {
-    const righe = [];
+  function drawPasses() {
+    const rows = [];
 
-    abbonamentiSalvati.forEach((a) => {
-      const togliere = abbonamentiDaTogliere.has(a.pass_id);
+    savedPasses.forEach((a) => {
+      const toRemove = passesToRemove.has(a.pass_id);
       const li = document.createElement("li");
-      if (togliere) li.className = "nuovo";
-      const stato = togliere
+      if (toRemove) li.className = "nuovo";
+      const state = toRemove
         ? "sarà rimosso al salvataggio"
         : a.trips_left > 0
           ? `fatte ${a.trips_used} su ${a.trips_total} · restano ${a.trips_left}`
           : `fatte ${a.trips_used} su ${a.trips_total} · ESAURITO`;
-      li.innerHTML = `<span>${esc(a.pass_type)} ${etichettaGiorno(a.day)}</span><span class="gite">${stato}</span>`;
+      li.innerHTML = `<span>${esc(a.pass_type)} ${dayLabel(a.day)}</span><span class="gite">${state}</span>`;
       // Un abbonamento con gite già fatte non si toglie: sono gite vere, e il
       // database lo rifiuterebbe comunque.
       if (a.trips_used === 0) {
         const b = document.createElement("button");
         b.type = "button";
-        b.className = togliere ? "button is-light" : "button is-danger is-outlined";
-        b.textContent = togliere ? "Mantieni" : "Rimuovi";
+        b.className = toRemove ? "button is-light" : "button is-danger is-outlined";
+        b.textContent = toRemove ? "Mantieni" : "Rimuovi";
         b.addEventListener("click", () => {
-          if (togliere) abbonamentiDaTogliere.delete(a.pass_id);
-          else abbonamentiDaTogliere.add(a.pass_id);
-          spostaTotaleMano((togliere ? 1 : -1) * num(a.price));
-          disegnaAbbonamenti();
-          ricalcola();
+          if (toRemove) passesToRemove.delete(a.pass_id);
+          else passesToRemove.add(a.pass_id);
+          moveManualTotal((toRemove ? 1 : -1) * num(a.price));
+          drawPasses();
+          recompute();
         });
         li.append(b);
       }
-      righe.push(li);
+      rows.push(li);
     });
 
-    abbonamentiNuovi.forEach((a) => {
+    newPasses.forEach((a) => {
       const li = document.createElement("li");
       li.className = "nuovo";
-      li.innerHTML = `<span>${esc(a.pass_type)} ${etichettaGiorno(a.day)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
+      li.innerHTML = `<span>${esc(a.pass_type)} ${dayLabel(a.day)}</span><span class="gite">nuovo · ${a.trips} gite · da salvare</span>`;
       // Pagato sul pullman: la spunta somma il prezzo all'acconto qui sotto,
       // dove l'operatore lo vede e lo può correggere. Si salva con il resto.
-      const pagato = document.createElement("label");
-      pagato.className = "gia-pagato";
-      pagato.innerHTML = `<input type="checkbox"> già pagato`;
-      const casella = pagato.querySelector("input");
-      casella.checked = Boolean(a.pagato);
-      casella.addEventListener("change", () => segnaPagato(a, casella.checked));
+      const paidAmount = document.createElement("label");
+      paidAmount.className = "gia-pagato";
+      paidAmount.innerHTML = `<input type="checkbox"> già pagato`;
+      const cellBox = paidAmount.querySelector("input");
+      cellBox.checked = Boolean(a.pagato);
+      cellBox.addEventListener("change", () => markPaid(a, cellBox.checked));
       const b = document.createElement("button");
       b.type = "button";
       b.className = "button is-danger is-outlined";
       b.textContent = "Rimuovi";
       b.addEventListener("click", () => {
-        segnaPagato(a, false);
-        spostaTotaleMano(-num(a.price));
-        abbonamentiNuovi = abbonamentiNuovi.filter((x) => x !== a);
-        disegnaAbbonamenti();
-        ricalcola();
+        markPaid(a, false);
+        moveManualTotal(-num(a.price));
+        newPasses = newPasses.filter((x) => x !== a);
+        drawPasses();
+        recompute();
       });
-      li.append(pagato, b);
-      righe.push(li);
+      li.append(paidAmount, b);
+      rows.push(li);
     });
 
-    if (!righe.length) {
+    if (!rows.length) {
       const li = document.createElement("li");
       li.className = "vuoto";
       li.textContent = "Nessun abbonamento nella stagione in corso.";
-      righe.push(li);
+      rows.push(li);
     }
-    el("elencoAbbonamenti").replaceChildren(...righe);
+    el("elencoAbbonamenti").replaceChildren(...rows);
   }
 
   /**
@@ -746,23 +746,23 @@
    * all'acconto, o lo toglie se la spunta si toglie. L'acconto resta un campo
    * normale: si vede cosa è cambiato, e si può ancora correggere a mano.
    */
-  function segnaPagato(abbonamento, pagato) {
-    if (Boolean(abbonamento.pagato) === pagato) return;
-    abbonamento.pagato = pagato;
-    const acconto = num(el("f_acconto").value) + (pagato ? 1 : -1) * num(abbonamento.price);
-    el("f_acconto").value = Math.round(acconto * 100) / 100;
-    ricalcola();
+  function markPaid(pass, paidAmount) {
+    if (Boolean(pass.pagato) === paidAmount) return;
+    pass.pagato = paidAmount;
+    const deposit = num(el("f_acconto").value) + (paidAmount ? 1 : -1) * num(pass.price);
+    el("f_acconto").value = Math.round(deposit * 100) / 100;
+    recompute();
   }
 
-  async function caricaAbbonamenti(idSocio) {
-    const turno = turnoScheda;
-    abbonamentiNuovi = [];
-    abbonamentiDaTogliere = new Set();
-    const { data, error } = await sb.from("pass_status").select("*").eq("member_id", idSocio).order("created_at");
-    if (turno !== turnoScheda) return;  // nel frattempo si è aperta un'altra scheda
+  async function loadPasses(memberId) {
+    const turn = cardTurn;
+    newPasses = [];
+    passesToRemove = new Set();
+    const { data, error } = await sb.from("pass_status").select("*").eq("member_id", memberId).order("created_at");
+    if (turn !== cardTurn) return;  // nel frattempo si è aperta un'altra scheda
     if (error) throw error;
-    abbonamentiSalvati = data;
-    disegnaAbbonamenti();
+    savedPasses = data;
+    drawPasses();
   }
 
   // -------------------------------------------------------------------------
@@ -775,24 +775,24 @@
    * codice calcolato. L'avviso non dice il motivo: «Codice fiscale errato» e,
    * se si può, il codice proposto (mostraAvvisoCF).
    */
-  let turnoCF = 0;
-  async function controllaCF() {
-    const turno = ++turnoCF;
-    const scritto = el("f_codice_fiscale").value.trim();
+  let taxCodeTurn = 0;
+  async function checkTaxCode() {
+    const turn = ++taxCodeTurn;
+    const writtenOne = el("f_codice_fiscale").value.trim();
     // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
     // controllo più nuovo (vince quello): la risposta non serve più.
-    const vecchio = () => turno !== turnoCF || el("f_codice_fiscale").value.trim() !== scritto;
-    if (!scritto) {
+    const old = () => turn !== taxCodeTurn || el("f_codice_fiscale").value.trim() !== writtenOne;
+    if (!writtenOne) {
       // Campo vuoto: il codice dai dati, se ci sono tutti (il sesso anche dal nome).
-      const { anagrafica, mancano } = await datiPerCF();
-      const comune = !mancano.length && await comuneDelLuogo(anagrafica.luogo, 1);
-      if (vecchio()) return;
+      const { anagrafica: personalDetails, mancano: missingOnes } = await taxCodeData();
+      const municipality = !missingOnes.length && await placeMunicipality(personalDetails.luogo, 1);
+      if (old()) return;
       // Per un posto mai visto non si propone niente.
-      const proposto = comune && calcolaCF({ ...anagrafica, comune });
-      mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), proposto && { ok: false, suggerito: proposto }, controllaDoppioni);
+      const proposed = municipality && computeTaxCode({ ...personalDetails, comune: municipality });
+      showTaxCodeNotice(el("avvisoCF"), el("f_codice_fiscale"), proposed && { ok: false, suggerito: proposed }, checkDuplicates);
       return;
     }
-    const anagrafica = {
+    const personalDetails = {
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
       dataNascita: el("f_data_nascita").value,
@@ -803,32 +803,32 @@
     // Il comune serve solo per controllare un codice di 15 o 16 caratteri (uno
     // più corto o più lungo è errato e basta). Per dire che il comune di un
     // codice scritto è sbagliato servono almeno tre soci nati lì.
-    const lunghezza = normalizzaCF(scritto).length;
-    const comune = lunghezza === 15 || lunghezza === 16 ? await comuneDelLuogo(anagrafica.luogo, 3) : null;
-    if (vecchio()) return;
-    let esito = verificaCF(scritto, { ...anagrafica, comune });
+    const len = normalizeTaxCode(writtenOne).length;
+    const municipality = len === 15 || len === 16 ? await placeMunicipality(personalDetails.luogo, 3) : null;
+    if (old()) return;
+    let outcome = verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality });
     // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
     // con lo stesso nome. Solo per il giorno illeggibile (sessoProbabile): uno
     // leggibile dice il sesso meglio. La richiesta parte solo se un sesso
     // qualunque darebbe una proposta.
-    const nome = anagrafica.nome.trim().toUpperCase();
-    if (esito && !esito.ok && !esito.suggerito && !anagrafica.sesso && nome
-        && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: "M" })?.suggerito) {
-      const sesso = await sessoDelNome(nome);
-      if (vecchio()) return;
-      const conSesso = sesso && verificaCF(scritto, { ...anagrafica, comune, sessoProbabile: sesso });
-      if (conSesso?.suggerito) esito = conSesso;
+    const nome = personalDetails.nome.trim().toUpperCase();
+    if (outcome && !outcome.ok && !outcome.suggerito && !personalDetails.sesso && nome
+        && verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality, sessoProbabile: "M" })?.suggerito) {
+      const sex = await sexFromName(nome);
+      if (old()) return;
+      const withSex = sex && verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality, sessoProbabile: sex });
+      if (withSex?.suggerito) outcome = withSex;
     }
     // Sbagliato: con tutti i dati si propone il codice che ne viene, al posto
     // della correzione del solo codice scritto.
-    if (esito && !esito.ok) {
-      const { anagrafica: dati, mancano } = await datiPerCF();
-      const comuneDati = !mancano.length && await comuneDelLuogo(dati.luogo, 1);
-      if (vecchio()) return;
-      const calcolato = comuneDati && calcolaCF({ ...dati, comune: comuneDati });
-      if (calcolato && calcolato !== normalizzaCF(scritto)) esito = { ...esito, suggerito: calcolato };
+    if (outcome && !outcome.ok) {
+      const { anagrafica: records, mancano: missingOnes } = await taxCodeData();
+      const municipalityData = !missingOnes.length && await placeMunicipality(records.luogo, 1);
+      if (old()) return;
+      const computed = municipalityData && computeTaxCode({ ...records, comune: municipalityData });
+      if (computed && computed !== normalizeTaxCode(writtenOne)) outcome = { ...outcome, suggerito: computed };
     }
-    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), esito, controllaDoppioni);
+    showTaxCodeNotice(el("avvisoCF"), el("f_codice_fiscale"), outcome, checkDuplicates);
   }
 
   /**
@@ -836,48 +836,48 @@
    * prende dai soci con lo stesso nome (sessoDelNome); quello che manca torna in
    * `mancano`, come [campo, nome].
    */
-  async function datiPerCF() {
-    const anagrafica = {
+  async function taxCodeData() {
+    const personalDetails = {
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
       dataNascita: el("f_data_nascita").value,
       luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
       sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
     };
-    const mancano = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
+    const missingOnes = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
       .filter(([id]) => !el(id).value.trim()).map(([id, nome]) => [el(id), nome]);
-    const nome = anagrafica.nome.trim().toUpperCase();
-    if (!anagrafica.sesso && nome) anagrafica.sesso = await sessoDelNome(nome);
-    if (!anagrafica.sesso) mancano.push([document.querySelector("input[name=sessoCF]"), "sesso"]);
-    return { anagrafica, mancano };
+    const nome = personalDetails.nome.trim().toUpperCase();
+    if (!personalDetails.sesso && nome) personalDetails.sesso = await sexFromName(nome);
+    if (!personalDetails.sesso) missingOnes.push([document.querySelector("input[name=sessoCF]"), "sesso"]);
+    return { anagrafica: personalDetails, mancano: missingOnes };
   }
 
   /** «Calcola»: il codice fiscale dai dati della scheda, o quali dati mancano (bordati di rosso). */
-  async function calcolaCodiceFiscale() {
-    const turno = ++turnoCF;
-    const campo = el("f_codice_fiscale"), box = el("avvisoCF");
-    const { anagrafica, mancano } = await datiPerCF();
-    if (turno !== turnoCF) return;
-    if (mancano.length) {
-      mancano.forEach(([c]) => segnaCampo(c));
-      mostraAvvisoCF(box, campo, { ok: false, messaggio: `Dati mancanti per il calcolo: ${mancano.map(([, nome]) => nome).join(", ")}.` });
+  async function computeFiscalCode() {
+    const turn = ++taxCodeTurn;
+    const field = el("f_codice_fiscale"), box = el("avvisoCF");
+    const { anagrafica: personalDetails, mancano: missingOnes } = await taxCodeData();
+    if (turn !== taxCodeTurn) return;
+    if (missingOnes.length) {
+      missingOnes.forEach(([c]) => markField(c));
+      showTaxCodeNotice(box, field, { ok: false, messaggio: `Dati mancanti per il calcolo: ${missingOnes.map(([, nome]) => nome).join(", ")}.` });
       return;
     }
-    const comune = await comuneDelLuogo(anagrafica.luogo, 1);
-    if (turno !== turnoCF) return;
-    if (!comune) {
-      segnaCampo(el("f_luogo_nascita"));
-      mostraAvvisoCF(box, campo, { ok: false, messaggio: `Codice del comune di ${anagrafica.luogo} non disponibile: `
+    const municipality = await placeMunicipality(personalDetails.luogo, 1);
+    if (turn !== taxCodeTurn) return;
+    if (!municipality) {
+      markField(el("f_luogo_nascita"));
+      showTaxCodeNotice(box, field, { ok: false, messaggio: `Codice del comune di ${personalDetails.luogo} non disponibile: `
         + "nessun socio nato in quel comune ha il codice fiscale registrato. Copiarlo dalla tessera sanitaria." });
       return;
     }
-    const proposto = calcolaCF({ ...anagrafica, comune });
-    if (proposto === normalizzaCF(campo.value)) {
-      mostraAvvisoCF(box, campo, null);
+    const proposed = computeTaxCode({ ...personalDetails, comune: municipality });
+    if (proposed === normalizeTaxCode(field.value)) {
+      showTaxCodeNotice(box, field, null);
       showToast("Il codice fiscale inserito è coerente con i dati anagrafici.");
       return;
     }
-    mostraAvvisoCF(box, campo, { ok: false, suggerito: proposto }, controllaDoppioni);
+    showTaxCodeNotice(box, field, { ok: false, suggerito: proposed }, checkDuplicates);
   }
 
   /**
@@ -885,43 +885,43 @@
    * soci nati lì (comuneDaiCF), o null. Il socio aperto non conta: il suo
    * codice è quello da controllare.
    */
-  async function comuneDelLuogo(luogo, minimo) {
-    if (!luogo) return null;
+  async function placeMunicipality(placeName, minimum) {
+    if (!placeName) return null;
     // Solo lettere: la provincia finisce nel filtro or() di PostgREST.
-    const provincia = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
+    const provinceCode = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
     const id = el("f_id").value;
-    const codici = await codiciDeiSoci(`luogo|${luogo}|${provincia}|${id}`, () => {
+    const codes = await membersCodes(`luogo|${placeName}|${provinceCode}|${id}`, () => {
       // Il luogo si salva in maiuscolo e senza spazi ai lati (anche dal
       // caricamento da Excel): basta l'uguaglianza.
-      let richiesta = sb.from("members").select("tax_code").eq("birth_place", luogo).not("tax_code", "is", null).limit(50);
+      let request = sb.from("members").select("tax_code").eq("birth_place", placeName).not("tax_code", "is", null).limit(50);
       // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
-      if (provincia) richiesta = richiesta.or(`birth_province.eq.${provincia},birth_province.is.null`);
-      return id ? richiesta.neq("id", id) : richiesta;
+      if (provinceCode) request = request.or(`birth_province.eq.${provinceCode},birth_province.is.null`);
+      return id ? request.neq("id", id) : request;
     });
-    return codici && comuneDaiCF(codici, minimo);
+    return codes && municipalityFromCodes(codes, minimum);
   }
 
   /** Il sesso ricavato dai codici dei soci con lo stesso nome (sessoDaiCF), o null. */
-  async function sessoDelNome(nome) {
+  async function sexFromName(nome) {
     const id = el("f_id").value;
-    const codici = await codiciDeiSoci(`nome|${nome}|${id}`, () => {
-      const richiesta = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
-      return id ? richiesta.neq("id", id) : richiesta;
+    const codes = await membersCodes(`nome|${nome}|${id}`, () => {
+      const request = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
+      return id ? request.neq("id", id) : request;
     });
-    return codici && sessoDaiCF(codici);
+    return codes && sexFromCodes(codes);
   }
 
   // I codici fiscali già chiesti, per luogo o nome: il controllo riparte a ogni
   // campo lasciato, e la stessa domanda non va rifatta. Si svuota con la scheda.
-  const codiciGiaLetti = new Map();
+  const codesAlreadyRead = new Map();
   /** I codici fiscali della richiesta, una volta sola per chiave; null se non è andata. */
-  function codiciDeiSoci(chiave, richiesta) {
-    if (!codiciGiaLetti.has(chiave)) {
-      codiciGiaLetti.set(chiave, Promise.resolve(richiesta())
+  function membersCodes(keyName, request) {
+    if (!codesAlreadyRead.has(keyName)) {
+      codesAlreadyRead.set(keyName, Promise.resolve(request())
         .then(({ data, error }) => { if (error) throw error; return (data || []).map((r) => r.tax_code); })
-        .catch(() => { codiciGiaLetti.delete(chiave); return null; }));
+        .catch(() => { codesAlreadyRead.delete(keyName); return null; }));
     }
-    return codiciGiaLetti.get(chiave);
+    return codesAlreadyRead.get(keyName);
   }
 
   /**
@@ -929,17 +929,17 @@
    * numero già scritto (socio che ce l'ha, o scritto a mano) resta com'è.
    * Prima rilegge i numeri dati, per quelli liberi sotto il campo.
    */
-  async function proponiNumeroTessera() {
-    const campo = el("f_numero_tessera");
-    await caricaTessereUsate();
-    if (campo.value.trim()) return;
+  async function proposeCardNumber() {
+    const field = el("f_numero_tessera");
+    await loadUsedCards();
+    if (field.value.trim()) return;
     const { data, error } = await sb.rpc("next_card_number");
     // Senza proposta si scrive a mano, come prima: non vale un messaggio.
-    if (error || campo.value.trim()) return;
-    numeroProposto = String(data);
-    campo.value = numeroProposto;
+    if (error || field.value.trim()) return;
+    proposedNumber = String(data);
+    field.value = proposedNumber;
     el("notaTessera").hidden = false;
-    mostraTessereLibere();
+    showFreeCards();
   }
 
   /**
@@ -947,20 +947,20 @@
    * frattempo da un altro computer si vede al prossimo socio (il doppione lo
    * ferma comunque il database). Se la lettura non va, niente riga: è un aiuto.
    */
-  async function caricaTessereUsate() {
+  async function loadUsedCards() {
     try {
-      const [usate, impostazione] = await Promise.all([
-        tutteLeRighe(() => sb.from("members").select("id, card_number").not("card_number", "is", null).order("id")),
+      const [usedOnes, setting] = await Promise.all([
+        allRows(() => sb.from("members").select("id, card_number").not("card_number", "is", null).order("id")),
         sb.from("settings").select("value").eq("key", "card_gaps_from"),
       ]);
       // Senza l'impostazione si conterebbe da 1: i posti del direttivo sembrerebbero liberi.
-      if (impostazione.error || !impostazione.data?.length) throw impostazione.error;
-      tessereUsate = usate;
-      tessereDa = Number(impostazione.data[0].value);
+      if (setting.error || !setting.data?.length) throw setting.error;
+      usedCards = usedOnes;
+      cardsFrom = Number(setting.data[0].value);
     } catch {
-      tessereUsate = null;
+      usedCards = null;
     }
-    mostraTessereLibere();
+    showFreeCards();
   }
 
   /**
@@ -969,25 +969,25 @@
    * Il numero vecchio del socio aperto non conta: se lo cambia, torna libero.
    * Contano solo i numeri di sole cifre, come in next_card_number().
    */
-  function mostraTessereLibere() {
-    if (!tessereUsate) { el("tessereLibere").hidden = true; return; }
-    const numero = (v) => (/^\d{1,15}$/.test(v || "") ? Number(v) : null);
-    const altri = tessereUsate.filter((t) => t.id !== el("f_id").value).map((t) => t.card_number);
-    const presi = [...new Set([...altri, el("f_numero_tessera").value.trim()].map(numero))]
-      .filter((n) => n != null && n >= tessereDa).sort((a, b) => a - b);
+  function showFreeCards() {
+    if (!usedCards) { el("tessereLibere").hidden = true; return; }
+    const number = (v) => (/^\d{1,15}$/.test(v || "") ? Number(v) : null);
+    const otherOnes = usedCards.filter((t) => t.id !== el("f_id").value).map((t) => t.card_number);
+    const taken = [...new Set([...otherOnes, el("f_numero_tessera").value.trim()].map(number))]
+      .filter((n) => n != null && n >= cardsFrom).sort((a, b) => a - b);
     // Fra due numeri presi di fila, quelli in mezzo sono liberi: niente giro su ogni numero.
-    const liberi = [];
-    let prima = tessereDa - 1;
-    for (const n of presi) {
-      if (n > prima + 1) liberi.push(n === prima + 2 ? String(prima + 1) : `${prima + 1}–${n - 1}`);
-      prima = n;
+    const free = [];
+    let before = cardsFrom - 1;
+    for (const n of taken) {
+      if (n > before + 1) free.push(n === before + 2 ? String(before + 1) : `${before + 1}–${n - 1}`);
+      before = n;
     }
-    el("tessereLibere").textContent = `NUMERI TESSERA LIBERI PROPOSTI: ${liberi.join(", ")}`;
-    el("tessereLibere").hidden = !liberi.length;
+    el("tessereLibere").textContent = `NUMERI TESSERA LIBERI PROPOSTI: ${free.join(", ")}`;
+    el("tessereLibere").hidden = !free.length;
   }
 
   /** Numero tessera come va salvato: "0021" e "21" sono lo stesso numero. */
-  function numeroTessera() {
+  function cardNumber() {
     const v = el("f_numero_tessera").value.trim();
     return /^\d{1,15}$/.test(v) ? String(BigInt(v)) : v || null;
   }
@@ -997,20 +997,20 @@
    * lo ha preso nel frattempo un altro operatore: se ne propone un altro e
    * si chiede di risalvare. Se era scritto a mano, si dice e basta.
    */
-  async function numeroTesseraGiaUsato() {
-    const scritto = el("f_numero_tessera").value.trim();
-    const { data: libero } = await sb.rpc("next_card_number");
-    if (scritto === numeroProposto && libero) {
-      numeroProposto = String(libero);
-      el("f_numero_tessera").value = numeroProposto;
+  async function cardNumberAlreadyUsed() {
+    const writtenOne = el("f_numero_tessera").value.trim();
+    const { data: freeOne } = await sb.rpc("next_card_number");
+    if (writtenOne === proposedNumber && freeOne) {
+      proposedNumber = String(freeOne);
+      el("f_numero_tessera").value = proposedNumber;
       el("notaTessera").hidden = false;
-      showToast(`Il numero tessera ${scritto} è appena stato assegnato a un altro socio. `
-        + `È stato proposto il ${libero}: salvare di nuovo.`, "is-danger");
+      showToast(`Il numero tessera ${writtenOne} è appena stato assegnato a un altro socio. `
+        + `È stato proposto il ${freeOne}: salvare di nuovo.`, "is-danger");
     } else {
-      showToast(`Il numero tessera ${scritto} è già assegnato a un altro socio: indicarne uno diverso`
-        + (libero ? ` (il primo disponibile è ${libero}).` : "."), "is-danger");
+      showToast(`Il numero tessera ${writtenOne} è già assegnato a un altro socio: indicarne uno diverso`
+        + (freeOne ? ` (il primo disponibile è ${freeOne}).` : "."), "is-danger");
     }
-    await caricaTessereUsate();
+    await loadUsedCards();
   }
 
   // -------------------------------------------------------------------------
@@ -1018,14 +1018,14 @@
   // -------------------------------------------------------------------------
 
   /** Il totale come lo dà il listino: voci scelte più abbonamenti. */
-  function totaleDaListino() {
+  function priceListTotal() {
     // La presciistica con l'assicurazione comprende tessera, quota e assicurazione
     // (scheda di carta): la tessera non si somma. Quella «solo corso» no.
-    const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
-    const voci = Object.keys(SELECT_CATEGORIE)
-      .filter((id) => !(conPresciistica && id === "f_tipologia_tessera"))
-      .reduce((somma, id) => somma + (parseFloat(sceltaDi(id)?.value) || 0), 0);
-    return voci + abbonamentiDaContare().reduce((somma, a) => somma + num(a.price), 0);
+    const withPreski = Boolean(chosenItem("PRESCIISTICA", "f_presciistica")?.insurance);
+    const items = Object.keys(CATEGORY_SELECT)
+      .filter((id) => !(withPreski && id === "f_tipologia_tessera"))
+      .reduce((sum, id) => sum + (parseFloat(choiceOf(id)?.value) || 0), 0);
+    return items + passesToCount().reduce((sum, a) => sum + num(a.price), 0);
   }
 
   /**
@@ -1033,14 +1033,14 @@
    * pagare vale. Resta il suo, più la differenza delle voci cambiate coi prezzi di oggi
    * (listinoAllApertura: il listino delle sue voci quando si è aperto, vedi caricaSocio).
    */
-  const totaleCalcolato = () => (socioAperto?.listinoAllApertura == null ? totaleDaListino()
-    : num(socioAperto.total) + totaleDaListino() - socioAperto.listinoAllApertura);
+  const computedTotal = () => (openedMember?.listinoAllApertura == null ? priceListTotal()
+    : num(openedMember.total) + priceListTotal() - openedMember.listinoAllApertura);
 
-  const totaleAMano = () => el("f_totale_a_mano").checked;
+  const manualTotal = () => el("f_totale_a_mano").checked;
 
   /** Il totale che si salva: quello scritto a mano, se c'è la spunta. */
-  function totaleIndividuale() {
-    return totaleAMano() ? num(el("f_totale_manuale").value) : totaleCalcolato();
+  function individualTotal() {
+    return manualTotal() ? num(el("f_totale_manuale").value) : computedTotal();
   }
 
   /**
@@ -1048,30 +1048,30 @@
    * corregge; spenta torna al listino. Il campo resta visibile ma spento,
    * così si vede che c'è.
    */
-  function aggiornaTotaleMano({ daListino = false } = {}) {
-    const aMano = totaleAMano();
-    const campo = el("f_totale_manuale");
-    if (aMano && daListino) campo.value = Math.round(totaleCalcolato() * 100) / 100;
-    if (!aMano) campo.value = "";
-    campo.disabled = !aMano;
-    el("notaTotaleMano").hidden = !aMano;
+  function updateManualTotal({ daListino: fromPriceList = false } = {}) {
+    const manual = manualTotal();
+    const field = el("f_totale_manuale");
+    if (manual && fromPriceList) field.value = Math.round(computedTotal() * 100) / 100;
+    if (!manual) field.value = "";
+    field.disabled = !manual;
+    el("notaTotaleMano").hidden = !manual;
   }
 
   /** Abbonamento aggiunto o tolto con il totale a mano: il prezzo si somma o si toglie lì. */
-  function spostaTotaleMano(importo) {
-    if (!totaleAMano()) return;
-    const campo = el("f_totale_manuale");
-    campo.value = Math.round((num(campo.value) + importo) * 100) / 100;
+  function moveManualTotal(amount) {
+    if (!manualTotal()) return;
+    const field = el("f_totale_manuale");
+    field.value = Math.round((num(field.value) + amount) * 100) / 100;
   }
 
   /** Un saldo sotto zero è un credito: lo si dice a parole, come in Pagamenti ("-15 €" non si legge). */
-  const testoSaldo = (saldo) => (saldo < 0 ? `${fmt(-saldo)} a credito` : fmt(saldo));
+  const balanceText = (balance) => (balance < 0 ? `${fmt(-balance)} a credito` : fmt(balance));
   /** Rosso chi deve pagare, blu chi è a credito, verde chi è a posto. */
-  const coloreSaldo = (saldo) => (saldo > 0 ? "var(--errore)" : saldo < 0 ? "var(--blu)" : "var(--ok)");
+  const balanceColor = (balance) => (balance > 0 ? "var(--errore)" : balance < 0 ? "var(--blu)" : "var(--ok)");
 
   /** La voce del listino scelta nel gruppo, con assicurazione e persone, o undefined. */
-  const voceScelta = (categoria, idGruppo) => (PREZZI[categoria] || []).find((p) => p.name === nomeSelezionato(idGruppo));
-  const persone = (n) => (n === 1 ? "1 persona" : `${n} persone`);
+  const chosenItem = (categoryName, groupId) => (PRICES[categoryName] || []).find((p) => p.name === selectedName(groupId));
+  const people = (n) => (n === 1 ? "1 persona" : `${n} persone`);
 
   /**
    * Da dove viene la tessera di chi non la sceglie: l'agevolazione famiglia la
@@ -1079,22 +1079,22 @@
    * ({ famiglia: true }); la presciistica con l'assicurazione la comprende
    * ({ famiglia: false }). null = la tessera serve.
    */
-  function copertura() {
-    const propria = voceScelta("FAMIGLIA", "f_agevolazioni_famiglia");
-    if (propria) return { famiglia: true, agevolazione: propria };
-    const delCapo = el("pagaFamiliare").checked && capofamiglia
-      && (PREZZI.FAMIGLIA || []).find((p) => p.name === capofamiglia.agevolazione);
-    if (delCapo && capofamiglia.coperti < (delCapo.people || 1)) return { famiglia: true, agevolazione: delCapo, capo: capofamiglia };
-    if (voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) return { famiglia: false };
+  function cover() {
+    const own = chosenItem("FAMIGLIA", "f_agevolazioni_famiglia");
+    if (own) return { famiglia: true, agevolazione: own };
+    const ofHead = el("pagaFamiliare").checked && householdHead
+      && (PRICES.FAMIGLIA || []).find((p) => p.name === householdHead.agevolazione);
+    if (ofHead && householdHead.coperti < (ofHead.people || 1)) return { famiglia: true, agevolazione: ofHead, capo: householdHead };
+    if (chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) return { famiglia: false };
     return null;
   }
 
   /** Nucleo pieno: il capofamiglia ha l'agevolazione ma copre già tutte le sue persone. */
-  function nucleoPieno() {
-    if (!el("pagaFamiliare").checked || !capofamiglia || copertura()?.famiglia) return null;
-    const voce = (PREZZI.FAMIGLIA || []).find((p) => p.name === capofamiglia.agevolazione);
-    return voce ? `L'agevolazione di ${capofamiglia.nome} copre ${persone(voce.people || 1)} e il nucleo ne comprende già `
-      + `${capofamiglia.coperti}: selezionare una tessera o modificare l'agevolazione.` : null;
+  function fullHousehold() {
+    if (!el("pagaFamiliare").checked || !householdHead || cover()?.famiglia) return null;
+    const item = (PRICES.FAMIGLIA || []).find((p) => p.name === householdHead.agevolazione);
+    return item ? `L'agevolazione di ${householdHead.nome} copre ${people(item.people || 1)} e il nucleo ne comprende già `
+      + `${householdHead.coperti}: selezionare una tessera o modificare l'agevolazione.` : null;
   }
 
   /**
@@ -1102,47 +1102,47 @@
    * quante persone conta il nucleo del capofamiglia); la presciistica di chi è
    * coperto dall'agevolazione è solo il corso, quella degli altri ha l'assicurazione.
    */
-  function aggiornaCopertura() {
-    const c = copertura();
+  function updateCover() {
+    const c = cover();
     // Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Chi
     // le ha già tutte e due (prima del 22/10) la tiene, spenta.
-    const conPresciistica = Boolean(voceScelta("PRESCIISTICA", "f_presciistica")?.insurance);
-    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = conPresciistica || r.dataset.fisso === "1"; });
+    const withPreski = Boolean(chosenItem("PRESCIISTICA", "f_presciistica")?.insurance);
+    el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = withPreski || r.dataset.fisso === "1"; });
     el("f_tipologia_tessera").querySelector(".obbligo").hidden = Boolean(c);
-    const nota = el("notaFamiglia");
-    let testo = "", avviso = false;
+    const note = el("notaFamiglia");
+    let text = "", notice = false;
     if (c?.capo) {
-      testo = `Coperto dall'agevolazione di ${c.capo.nome} (${c.agevolazione.name}): la tessera non è necessaria.`;
+      text = `Coperto dall'agevolazione di ${c.capo.nome} (${c.agevolazione.name}): la tessera non è necessaria.`;
     } else if (c?.famiglia) {
-      const nucleo = 1 + familiariACarico.filter((f) => !f.card_type).length;
-      const previste = c.agevolazione.people || 1;
-      testo = `L'agevolazione comprende la tessera: nel nucleo ${persone(nucleo)} senza tessera, l'agevolazione ne prevede ${previste}.`;
-      avviso = nucleo !== previste;
-    } else if (nucleoPieno()) {
-      testo = nucleoPieno();
-      avviso = true;
+      const household = 1 + dependants.filter((f) => !f.card_type).length;
+      const expectedOnes = c.agevolazione.people || 1;
+      text = `L'agevolazione comprende la tessera: nel nucleo ${people(household)} senza tessera, l'agevolazione ne prevede ${expectedOnes}.`;
+      notice = household !== expectedOnes;
+    } else if (fullHousehold()) {
+      text = fullHousehold();
+      notice = true;
     }
-    nota.textContent = testo;
-    nota.hidden = !testo;
-    nota.classList.toggle("is-danger", avviso);
-    const famiglia = Boolean(c?.famiglia);
+    note.textContent = text;
+    note.hidden = !text;
+    note.classList.toggle("is-danger", notice);
+    const family = Boolean(c?.famiglia);
     el("f_presciistica").querySelectorAll("input").forEach((r) => {
-      const voce = (PREZZI.PRESCIISTICA || []).find((p) => p.name === r.dataset.nome);
-      r.closest("label").hidden = Boolean(voce) && !r.checked && (famiglia ? Boolean(voce.insurance) : !voce.insurance);
+      const item = (PRICES.PRESCIISTICA || []).find((p) => p.name === r.dataset.nome);
+      r.closest("label").hidden = Boolean(item) && !r.checked && (family ? Boolean(item.insurance) : !item.insurance);
     });
   }
 
-  function ricalcola() {
-    aggiornaCopertura();
-    el("notaPresciistica").hidden = !voceScelta("PRESCIISTICA", "f_presciistica")?.insurance;
-    const socioCorrente = { total: totaleIndividuale(), paid: el("f_acconto").value };
-    const { totale, saldo } = totaliNucleo(socioCorrente, familiariACarico);
-    el("v_totale").textContent = fmt(totale);
+  function recompute() {
+    updateCover();
+    el("notaPresciistica").hidden = !chosenItem("PRESCIISTICA", "f_presciistica")?.insurance;
+    const currentMember = { total: individualTotal(), paid: el("f_acconto").value };
+    const { totale: totalAmount, saldo: balance } = householdTotals(currentMember, dependants);
+    el("v_totale").textContent = fmt(totalAmount);
     // Nella barra la cifra resta da sola (su un telefono non ci sta altro): a credito lo dice l'etichetta.
-    el("l_saldo").textContent = saldo < 0 ? "A credito" : "Residuo";
-    el("v_saldo").textContent = fmt(Math.abs(saldo));
+    el("l_saldo").textContent = balance < 0 ? "A credito" : "Residuo";
+    el("v_saldo").textContent = fmt(Math.abs(balance));
     // Sul fondo scuro della barra: giallo deve, azzurro chiaro a credito, verde a posto.
-    el("v_saldo").style.color = saldo > 0 ? "var(--giallo)" : saldo < 0 ? "var(--blu-light)" : "#7BD8A6";
+    el("v_saldo").style.color = balance > 0 ? "var(--giallo)" : balance < 0 ? "var(--blu-light)" : "#7BD8A6";
   }
 
   // -------------------------------------------------------------------------
@@ -1154,7 +1154,7 @@
   // -------------------------------------------------------------------------
 
   /** Cognome e nome come sono scritti adesso nel modulo, in maiuscolo come si salvano. */
-  const nomeNelModulo = () =>
+  const nameInForm = () =>
     `${el("f_cognome").value} ${el("f_nome").value}`.trim().replace(/\s+/g, " ").toUpperCase();
 
   /**
@@ -1163,20 +1163,20 @@
    * cognome o nome il pulsante diceva ancora quello vecchio, e non si capiva
    * chi si stava per salvare. Il nome di prima resta scritto fra parentesi.
    */
-  function aggiornaFascia() {
-    const s = socioAperto;
-    const nome = nomeNelModulo();
-    const prima = s ? `${s.last_name} ${s.first_name}` : "";
+  function updateBand() {
+    const s = openedMember;
+    const nome = nameInForm();
+    const before = s ? `${s.last_name} ${s.first_name}` : "";
     el("tipoScheda").textContent = s ? "Scheda del socio" : "Nuovo socio";
     el("nomeScheda").innerHTML = s
-      ? esc(nome || prima) + (nome && nome !== prima ? ` <span class="era">(era ${esc(prima)})</span>` : "")
+      ? esc(nome || before) + (nome && nome !== before ? ` <span class="era">(era ${esc(before)})</span>` : "")
       : nome ? esc(nome) : "Compilare i campi e salvare";
     el("datiScheda").textContent = s
       ? [s.card_number ? `Tessera ${s.card_number}` : "Senza numero tessera",
          s.enrolled_at ? `iscritto il ${dataIt(s.enrolled_at)}` : ""].filter(Boolean).join(" · ") + " ·"
       : "Se la persona è già registrata, cercarla qui sopra per aprirne la scheda.";
     el("btnChiudiScheda").hidden = !s;
-    el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${prima}` : "Salva il nuovo socio";
+    el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${before}` : "Salva il nuovo socio";
     // Si elimina solo una scheda salvata, aperta.
     el("btnElimina").hidden = !s;
   }
@@ -1186,27 +1186,27 @@
    * tessera proposto dalla pagina non conta: arriva dal database un attimo
    * dopo l'apertura e non l'ha scritto nessuno.
    */
-  function firma() {
+  function signature() {
     // Il sesso (bottoni M/F) non si salva: serve solo alla proposta del codice fiscale.
-    const campi = [...el("memberForm").elements].filter((c) => c.name !== "sessoCF").map((c) =>
+    const fields = [...el("memberForm").elements].filter((c) => c.name !== "sessoCF").map((c) =>
       c.type === "radio" || c.type === "checkbox" ? c.checked
-        : c.id === "f_numero_tessera" && c.value === numeroProposto ? "" : c.value);
-    return JSON.stringify([campi, abbonamentiNuovi.length, [...abbonamentiDaTogliere]]);
+        : c.id === "f_numero_tessera" && c.value === proposedNumber ? "" : c.value);
+    return JSON.stringify([fields, newPasses.length, [...passesToRemove]]);
   }
 
-  const modificato = () => firma() !== salvato;
+  const modified = () => signature() !== savedOne;
 
   /** Domanda, in una finestra, prima di lasciare un modulo con modifiche non salvate. */
-  function lasciaModifiche(poi) {
-    if (!modificato()) { poi(); return; }
-    const domanda = socioAperto
-      ? `Le modifiche a ${socioAperto.last_name} ${socioAperto.first_name} non sono state salvate. Abbandonarle?`
+  function keepChanges(poi) {
+    if (!modified()) { poi(); return; }
+    const question = openedMember
+      ? `Le modifiche a ${openedMember.last_name} ${openedMember.first_name} non sono state salvate. Abbandonarle?`
       : "I dati inseriti per il nuovo socio non sono stati salvati. Abbandonarli?";
-    chiedi(el("azioniSocio"), domanda, "Abbandona le modifiche", poi);
+    ask(el("azioniSocio"), question, "Abbandona le modifiche", poi);
   }
 
-  const nuovoSocio = () => lasciaModifiche(resetForm);
-  const apriSocio = (id) => lasciaModifiche(() => caricaSocio(id));
+  const newMember = () => keepChanges(resetForm);
+  const openMember = (id) => keepChanges(() => loadMember(id));
 
   /**
    * La ricerca avviene sul database, non su una copia locale di tutti i soci:
@@ -1215,18 +1215,18 @@
    */
   // L'ultima ricerca scritta: ogni lettera manda una richiesta, e la risposta
   // di "RO" arrivata dopo quella di "ROSSI MA" copriva l'elenco giusto.
-  let turnoRicerca = 0, turnoPagante = 0;
+  let searchTurn = 0, payerTurn = 0;
 
-  async function cercaSoci() {
-    const turno = ++turnoRicerca;
+  async function searchMembers() {
+    const turn = ++searchTurn;
     const query = el("searchInput").value.trim();
     const box = el("searchResults");
     if (query.length < 2) { box.innerHTML = ""; return; }
 
-    const risultati = await cercaNelDatabase(query, 8);
-    if (turno !== turnoRicerca) return;
-    box.innerHTML = risultati.length
-      ? risultati.map((s) => `
+    const results = await searchDatabase(query, 8);
+    if (turn !== searchTurn) return;
+    box.innerHTML = results.length
+      ? results.map((s) => `
           <div class="result-item box p-2 mb-1" data-id="${esc(s.id)}">
             <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
             ${s.tax_code ? `<span class="tag is-light ml-2">${esc(s.tax_code)}</span>` : ""}
@@ -1234,31 +1234,31 @@
           </div>`).join("")
       : '<p class="help">Nessun risultato.</p>';
 
-    box.querySelectorAll(".result-item").forEach((riga) => {
-      riga.addEventListener("click", () => apriSocio(riga.dataset.id));
+    box.querySelectorAll(".result-item").forEach((row) => {
+      row.addEventListener("click", () => openMember(row.dataset.id));
     });
   }
 
-  async function cercaNelDatabase(query, limite, escludiId) {
+  async function searchDatabase(query, limitValue, excludeId) {
     const termini = query.split(/\s+/).filter(Boolean);
-    let richiesta = sb.from("members").select("*").limit(limite);
+    let request = sb.from("members").select("*").limit(limitValue);
 
     // Ogni termine deve comparire in cognome, nome o codice fiscale; o nella
     // chiave del nome, così "D'ANGELO" trova anche "DANGELO" e viceversa.
-    termini.forEach((termine) => {
+    termini.forEach((term) => {
       // Solo lettere, cifre, apostrofi e trattini: «%» e «*» fanno da jolly in PostgREST,
       // virgole, parentesi, virgolette e barre rompono or(). Un termine che resta vuoto
       // non filtra niente: si salta.
-      const t = termine.replace(/[^\p{L}\p{N}'’-]/gu, "");
+      const t = term.replace(/[^\p{L}\p{N}'’-]/gu, "");
       if (!t) return;
-      const chiave = chiaveNome(t);
-      richiesta = richiesta.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`
-        + (chiave ? `,name_key.like.%${chiave}%` : ""));
+      const keyName = nameKey(t);
+      request = request.or(`last_name.ilike.%${t}%,first_name.ilike.%${t}%,tax_code.ilike.%${t}%`
+        + (keyName ? `,name_key.like.%${keyName}%` : ""));
     });
-    if (escludiId) richiesta = richiesta.neq("id", escludiId);
+    if (excludeId) request = request.neq("id", excludeId);
 
-    const { data, error } = await richiesta.order("last_name").order("first_name");
-    if (error) { showToast(messaggioErrore(error), "is-danger"); return []; }
+    const { data, error } = await request.order("last_name").order("first_name");
+    if (error) { showToast(errorMessage(error), "is-danger"); return []; }
     return data;
   }
 
@@ -1277,47 +1277,47 @@
   // momento li ferma il database (members_no_double_insert in schema.sql).
   // -------------------------------------------------------------------------
 
-  const CAMPI_DOPPIONE = "id, last_name, first_name, birth_date, tax_code, city, card_number";
+  const DUPLICATE_FIELDS = "id, last_name, first_name, birth_date, tax_code, city, card_number";
 
-  async function cercaDoppioni() {
+  async function findDuplicates() {
     if (el("f_id").value) return [];
     const cf = el("f_codice_fiscale").value.trim().toUpperCase();
-    const cognome = chiaveNome(el("f_cognome").value), nome = chiaveNome(el("f_nome").value);
-    const nascita = el("f_data_nascita").value;
+    const surname = nameKey(el("f_cognome").value), nome = nameKey(el("f_nome").value);
+    const birth = el("f_data_nascita").value;
 
-    const richieste = [];
+    const requests = [];
     if (/^[A-Z0-9]{16}$/.test(cf)) {
-      richieste.push(sb.from("members").select(CAMPI_DOPPIONE).ilike("tax_code", cf).limit(5));
+      requests.push(sb.from("members").select(DUPLICATE_FIELDS).ilike("tax_code", cf).limit(5));
     }
-    if (cognome && nome) {
-      let r = sb.from("members").select(CAMPI_DOPPIONE).eq("name_key", `${cognome} ${nome}`);
+    if (surname && nome) {
+      let r = sb.from("members").select(DUPLICATE_FIELDS).eq("name_key", `${surname} ${nome}`);
       // Le schede d'archivio senza data restano: potrebbe essere la stessa persona.
-      if (nascita) r = r.or(`birth_date.eq.${nascita},birth_date.is.null`);
-      richieste.push(r.order("birth_date").limit(5));
+      if (birth) r = r.or(`birth_date.eq.${birth},birth_date.is.null`);
+      requests.push(r.order("birth_date").limit(5));
     }
 
-    const trovati = new Map();
-    for (const { data, error } of await Promise.all(richieste)) {
+    const found = new Map();
+    for (const { data, error } of await Promise.all(requests)) {
       if (error) throw error;
-      data.forEach((s) => trovati.set(s.id, s));
+      data.forEach((s) => found.set(s.id, s));
     }
-    return [...trovati.values()].filter((s) => !doppioniScartati.has(s.id));
+    return [...found.values()].filter((s) => !discardedDuplicates.has(s.id));
   }
 
   /** Lasciando cognome, nome, data o codice fiscale: l'avviso compare subito. */
-  function controllaDoppioni() {
+  function checkDuplicates() {
     // Durante la scrittura un errore di rete non vale un messaggio: il
     // controllo si ripete comunque premendo Salva.
-    cercaDoppioni().then(mostraDoppioni, () => {});
+    findDuplicates().then(showDuplicates, () => {});
   }
 
-  function mostraDoppioni(trovati) {
+  function showDuplicates(found) {
     const box = el("avvisoDoppioni");
     // Una risposta arrivata dopo aver aperto un socio non vale più.
-    if (el("f_id").value || !trovati.length) { box.hidden = true; return; }
+    if (el("f_id").value || !found.length) { box.hidden = true; return; }
     box.innerHTML = `
-      <p class="titolo">${trovati.length === 1 ? "Possibile scheda già presente in archivio" : "Possibili schede già presenti in archivio"}</p>
-      <ul>${trovati.map((s) => `
+      <p class="titolo">${found.length === 1 ? "Possibile scheda già presente in archivio" : "Possibili schede già presenti in archivio"}</p>
+      <ul>${found.map((s) => `
         <li><span><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>`
           + (s.birth_date ? ` · nascita ${dataIt(s.birth_date)}` : "")
           + (s.tax_code ? ` · ${esc(s.tax_code)}` : "")
@@ -1328,9 +1328,9 @@
       <p class="help mb-3">La scheda si apre con i dati salvati: quanto inserito qui non viene mantenuto.</p>
       <button type="button" class="button is-light" id="btnAltraPersona">No, è un'altra persona</button>`;
     // Scegliere la scheda è già la risposta: niente seconda domanda.
-    box.querySelectorAll("button[data-id]").forEach((b) => b.addEventListener("click", () => caricaSocio(b.dataset.id)));
+    box.querySelectorAll("button[data-id]").forEach((b) => b.addEventListener("click", () => loadMember(b.dataset.id)));
     el("btnAltraPersona").addEventListener("click", () => {
-      trovati.forEach((s) => doppioniScartati.add(s.id));
+      found.forEach((s) => discardedDuplicates.add(s.id));
       box.hidden = true;
     });
     box.hidden = false;
@@ -1341,18 +1341,18 @@
    * fermarsi (true). Lo chiede salva() prima della domanda e scrivi() subito
    * prima di scrivere: nel frattempo un altro operatore può averlo inserito.
    */
-  async function fermaSeDoppioni() {
-    const doppioni = await cercaDoppioni();
-    if (!doppioni.length) return false;
-    mostraDoppioni(doppioni);
+  async function stopIfDuplicates() {
+    const duplicates = await findDuplicates();
+    if (!duplicates.length) return false;
+    showDuplicates(duplicates);
     el("avvisoDoppioni").scrollIntoView({ block: "center" });
     showToast("La persona sembra già presente in archivio: aprirne la scheda "
       + "oppure selezionare «No, è un'altra persona» e salvare di nuovo.", "is-danger");
     return true;
   }
 
-  function nascondiDoppioni() {
-    doppioniScartati = new Set();
+  function hideDuplicates() {
+    discardedDuplicates = new Set();
     el("avvisoDoppioni").hidden = true;
   }
 
@@ -1362,7 +1362,7 @@
 
   // Colonna del form (suffisso di f_...) -> colonna del database. I campi
   // HTML restano in italiano, la tabella members no: questa mappa fa da ponte.
-  const CAMPI_TESTO = {
+  const TEXT_FIELDS = {
     cognome: "last_name", nome: "first_name", luogo_nascita: "birth_place",
     provincia_nascita: "birth_province", codice_fiscale: "tax_code", data_nascita: "birth_date",
     indirizzo: "address", citta: "city", provincia: "province", cap: "postal_code",
@@ -1370,7 +1370,7 @@
     numero_tessera: "card_number", acconto: "paid",
   };
 
-  const CAMPI_SELECT_DB = {
+  const DB_SELECT_FIELDS = {
     f_tipologia_tessera: "card_type",
     f_agevolazioni_famiglia: "family_discount",
     f_presciistica: "preski_type",
@@ -1381,103 +1381,103 @@
   // arrivano per forza in ordine: aprendo un socio e subito un altro, quelle
   // del primo arrivate dopo mettevano i suoi abbonamenti e familiari nella
   // scheda del secondo. Una risposta di un turno vecchio non scrive più niente.
-  let turnoScheda = 0;
+  let cardTurn = 0;
 
-  async function caricaSocio(id) {
-    const turno = ++turnoScheda;
-    const vecchia = () => turno !== turnoScheda;
+  async function loadMember(id) {
+    const turn = ++cardTurn;
+    const oldOne = () => turn !== cardTurn;
     setLoading(true);
     try {
-      const { data: socio, error } = await sb.from("members").select("*").eq("id", id).single();
-      if (vecchia()) return;
+      const { data: member, error } = await sb.from("members").select("*").eq("id", id).single();
+      if (oldOne()) return;
       if (error) throw error;
 
-      el("f_id").value = socio.id;
-      Object.entries(CAMPI_TESTO).forEach(([campo, colonna]) => {
-        el("f_" + campo).value = socio[colonna] ?? "";
+      el("f_id").value = member.id;
+      Object.entries(TEXT_FIELDS).forEach(([field, column]) => {
+        el("f_" + field).value = member[column] ?? "";
       });
 
-      Object.keys(SELECT_CATEGORIE).forEach((idSelect) =>
-        selezionaPerNome(idSelect, socio[CAMPI_SELECT_DB[idSelect]]));
-      el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === socio.course_day));
-      aggiornaGiornoCorso();
-      el("f_totale_a_mano").checked = Boolean(socio.total_manual);
-      aggiornaTotaleMano();
-      if (socio.total_manual) el("f_totale_manuale").value = num(socio.total);
-      spuntaPartenze("check_sabato", socio.saturday_departure);
-      spuntaPartenze("check_domenica", socio.sunday_departure);
+      Object.keys(CATEGORY_SELECT).forEach((idSelect) =>
+        selectByName(idSelect, member[DB_SELECT_FIELDS[idSelect]]));
+      el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === member.course_day));
+      updateCourseDay();
+      el("f_totale_a_mano").checked = Boolean(member.total_manual);
+      updateManualTotal();
+      if (member.total_manual) el("f_totale_manuale").value = num(member.total);
+      tickDepartures("check_sabato", member.saturday_departure);
+      tickDepartures("check_domenica", member.sunday_departure);
 
-      if (socio.payer_id) {
-        const { data: pagante, error: errorePagante } = await sb.from("members").select("last_name, first_name").eq("id", socio.payer_id).single();
+      if (member.payer_id) {
+        const { data: payer, error: payerError } = await sb.from("members").select("last_name, first_name").eq("id", member.payer_id).single();
         // Illeggibile: scheda non caricata tutta (vedi il catch), invece del suo id come nome.
-        if (errorePagante) throw errorePagante;
-        if (vecchia()) return;
-        await scegliPagante(socio.payer_id, pagante ? `${pagante.last_name} ${pagante.first_name}` : socio.payer_id);
-        if (vecchia()) return;
+        if (payerError) throw payerError;
+        if (oldOne()) return;
+        await choosePayer(member.payer_id, payer ? `${payer.last_name} ${payer.first_name}` : member.payer_id);
+        if (oldOne()) return;
       } else {
-        disabilitaSezionePagante();
+        disablePayerSection();
       }
 
-      await caricaFamiliari(socio.id);
-      await caricaAbbonamenti(socio.id);
-      if (vecchia()) return;
+      await loadFamily(member.id);
+      await loadPasses(member.id);
+      if (oldOne()) return;
 
       // Il superadmin può togliere dalla stagione chi ci è finito per sbaglio.
-      el("zonaTogli").hidden = !(socio.enrolled_at && accesso.permissions.includes("gestione"));
-      ripristinaTogli();
+      el("zonaTogli").hidden = !(member.enrolled_at && access.permissions.includes("gestione"));
+      restoreRemove();
 
       // Il sesso non si salva: aperto un altro socio, non deve restare quello di prima.
       document.querySelectorAll("input[name=sessoCF]").forEach((r) => { r.checked = false; });
-      controllaCF();
-      numeroProposto = null;
+      checkTaxCode();
+      proposedNumber = null;
       el("notaTessera").hidden = true;
-      await proponiNumeroTessera();
-      if (vecchia()) return;
+      await proposeCardNumber();
+      if (oldOne()) return;
 
       // Il totale a mano non ha un listino da cui partire: spenta la spunta, torna al listino.
-      if (!socio.total_manual) socio.listinoAllApertura = totaleDaListino();
-      socioAperto = socio;
-      aggiornaFascia();
-      nascondiDoppioni();
-      turnoRicerca++;
+      if (!member.total_manual) member.listinoAllApertura = priceListTotal();
+      openedMember = member;
+      updateBand();
+      hideDuplicates();
+      searchTurn++;
       el("searchInput").value = "";
       el("searchResults").innerHTML = "";
-      ricalcola();
-      salvato = firma();
+      recompute();
+      savedOne = signature();
       window.scrollTo(0, 0);
     } catch (error) {
-      if (vecchia()) return;
+      if (oldOne()) return;
       // A metà il modulo avrebbe l'id di questo socio e gli abbonamenti, il pagante,
       // i familiari di quello di prima: un Salva o un «Togli» toccherebbe l'altro.
       resetForm();
-      showToast(`Scheda non caricata (${messaggioErrore(error)}): riprovare ad aprirla.`, "is-danger");
+      showToast(`Scheda non caricata (${errorMessage(error)}): riprovare ad aprirla.`, "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  function selezionaPerNome(idSelect, nome) {
+  function selectByName(idSelect, nome) {
     const radios = [...el(idSelect).querySelectorAll("input")];
     radios.forEach((r) => (r.checked = r.defaultChecked));
     if (!nome) return;
-    const cercato = nome.toString().trim().toLowerCase();
-    const trovato = radios.find((r) => r.dataset.nome.trim().toLowerCase() === cercato);
-    if (trovato) trovato.checked = true;
+    const searched = nome.toString().trim().toLowerCase();
+    const foundOne = radios.find((r) => r.dataset.nome.trim().toLowerCase() === searched);
+    if (foundOne) foundOne.checked = true;
   }
 
-  function spuntaPartenze(contenitore, valore) {
+  function tickDepartures(container, theValue) {
     // Confronto sui valori e non con un selettore: un luogo con le virgolette lo romperebbe.
-    const scelte = (valore || "").split(",").map((v) => v.trim()).filter(Boolean);
+    const choices = (theValue || "").split(",").map((v) => v.trim()).filter(Boolean);
     // Un luogo spento in Impostazioni resta al socio che l'aveva (uno rinominato cambia
     // nei soci da sé, departures_rename() nel database): si
     // aggiunge, spuntato, e il Salva non lo toglie. Quelli del socio di prima vanno via.
-    el(contenitore).querySelectorAll("label[data-fuori]").forEach((l) => l.remove());
-    const presenti = [...el(contenitore).querySelectorAll("input[type=checkbox]")].map((c) => c.value);
-    for (const luogo of scelte.filter((s) => !presenti.includes(s))) {
-      el(contenitore).insertAdjacentHTML("beforeend",
-        `<label class="checkbox mr-3" data-fuori><input type="checkbox" value="${esc(luogo)}"> ${esc(luogo)} (non più fra le partenze)</label>`);
+    el(container).querySelectorAll("label[data-fuori]").forEach((l) => l.remove());
+    const presentOnes = [...el(container).querySelectorAll("input[type=checkbox]")].map((c) => c.value);
+    for (const placeName of choices.filter((s) => !presentOnes.includes(s))) {
+      el(container).insertAdjacentHTML("beforeend",
+        `<label class="checkbox mr-3" data-fuori><input type="checkbox" value="${esc(placeName)}"> ${esc(placeName)} (non più fra le partenze)</label>`);
     }
-    el(contenitore).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = scelte.includes(c.value)));
+    el(container).querySelectorAll("input[type=checkbox]").forEach((c) => (c.checked = choices.includes(c.value)));
   }
 
   // -------------------------------------------------------------------------
@@ -1485,115 +1485,115 @@
   // -------------------------------------------------------------------------
 
   /** "La paga un familiare": compare la ricerca del capofamiglia. */
-  function abilitaSezionePagante() {
+  function enablePayerSection() {
     el("pagaFamiliare").checked = true;
     el("payerSection").hidden = false;
   }
 
   /** "Paga da sé": nessun pagante. */
-  function disabilitaSezionePagante() {
+  function disablePayerSection() {
     document.querySelector("input[name=chiPaga][value='']").checked = true;
     el("payerSection").hidden = true;
     el("f_payerDisplay").value = "";
     el("f_payer_id").value = "";
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
-    capofamiglia = null;
-    ricalcola();
+    householdHead = null;
+    recompute();
   }
 
-  async function cercaPagante() {
-    const turno = ++turnoPagante;
+  async function searchPayer() {
+    const turn = ++payerTurn;
     const query = el("f_payerDisplay").value.trim();
     const box = el("payerResults");
     el("f_payer_id").value = "";
     el("payerConfirm").style.display = "none";
-    if (capofamiglia) { capofamiglia = null; ricalcola(); }
+    if (householdHead) { householdHead = null; recompute(); }
 
     if (query.length < 2) { box.style.display = "none"; return; }
 
-    const risultati = await cercaNelDatabase(query, 6, el("f_id").value || undefined);
-    if (turno !== turnoPagante) return;
-    if (!risultati.length) { box.style.display = "none"; return; }
+    const results = await searchDatabase(query, 6, el("f_id").value || undefined);
+    if (turn !== payerTurn) return;
+    if (!results.length) { box.style.display = "none"; return; }
 
     box.style.display = "block";
-    box.innerHTML = risultati.map((s) => `
+    box.innerHTML = results.map((s) => `
       <div class="result-item" data-id="${esc(s.id)}" data-nome="${esc(`${s.last_name} ${s.first_name}`)}">
         <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
         <span class="tag is-light ml-2">${esc(s.tax_code || "No CF")}</span>
       </div>`).join("");
 
-    box.querySelectorAll(".result-item").forEach((riga) => {
-      riga.addEventListener("click", () => scegliPagante(riga.dataset.id, riga.dataset.nome));
+    box.querySelectorAll(".result-item").forEach((row) => {
+      row.addEventListener("click", () => choosePayer(row.dataset.id, row.dataset.nome));
     });
   }
 
   /** Il familiare che paga: si legge la sua agevolazione famiglia e chi ne copre già. */
-  async function scegliPagante(id, nome) {
-    abilitaSezionePagante();
+  async function choosePayer(id, nome) {
+    enablePayerSection();
     el("f_payer_id").value = id;
     el("f_payerDisplay").value = nome;
     el("payerResults").style.display = "none";
-    confermaPagante(nome);
-    await caricaCapofamiglia(id);
+    confirmPayer(nome);
+    await loadHouseholdHead(id);
   }
 
-  async function caricaCapofamiglia(id) {
-    capofamiglia = null;
-    const turno = turnoScheda;
-    const [capo, nucleo] = await Promise.all([
+  async function loadHouseholdHead(id) {
+    householdHead = null;
+    const turn = cardTurn;
+    const [head, household] = await Promise.all([
       sb.from("members").select("id, last_name, first_name, family_discount").eq("id", id).single(),
       sb.from("members").select("id, card_type").eq("payer_id", id),
     ]);
-    if (turno !== turnoScheda || el("f_payer_id").value !== id) return;
-    const errore = capo.error || nucleo.error;
-    if (errore) { showToast(messaggioErrore(errore), "is-danger"); return; }
-    if (capo.data?.family_discount) {
-      capofamiglia = {
-        nome: `${capo.data.last_name} ${capo.data.first_name}`,
-        agevolazione: capo.data.family_discount,
-        coperti: 1 + nucleo.data.filter((f) => !f.card_type && f.id !== el("f_id").value).length,
+    if (turn !== cardTurn || el("f_payer_id").value !== id) return;
+    const err = head.error || household.error;
+    if (err) { showToast(errorMessage(err), "is-danger"); return; }
+    if (head.data?.family_discount) {
+      householdHead = {
+        nome: `${head.data.last_name} ${head.data.first_name}`,
+        agevolazione: head.data.family_discount,
+        coperti: 1 + household.data.filter((f) => !f.card_type && f.id !== el("f_id").value).length,
       };
     }
-    ricalcola();
+    recompute();
   }
 
-  function confermaPagante(nome) {
+  function confirmPayer(nome) {
     const p = el("payerConfirm");
     p.textContent = "✔ Pagante selezionato: " + nome;
     p.style.display = "block";
   }
 
-  function rimuoviPagante() {
-    turnoPagante++;
-    capofamiglia = null;
+  function removePayer() {
+    payerTurn++;
+    householdHead = null;
     el("f_payer_id").value = "";
     el("f_payerDisplay").value = "";
     el("payerResults").style.display = "none";
     el("payerConfirm").style.display = "none";
     // Senza il capofamiglia non c'è più la sua agevolazione: tessera di nuovo obbligatoria.
-    ricalcola();
+    recompute();
   }
 
   // -------------------------------------------------------------------------
   // Familiari a carico
   // -------------------------------------------------------------------------
 
-  async function caricaFamiliari(idSocio) {
+  async function loadFamily(memberId) {
     const panel = el("familyPanel");
-    familiariACarico = [];
+    dependants = [];
 
-    if (!idSocio) { panel.style.display = "none"; return; }
+    if (!memberId) { panel.style.display = "none"; return; }
 
-    const turno = turnoScheda;
-    const { data, error } = await sb.from("members").select("*").eq("payer_id", idSocio).order("last_name");
-    if (turno !== turnoScheda) return;  // nel frattempo si è aperta un'altra scheda
-    if (error) { showToast(messaggioErrore(error), "is-danger"); return; }
+    const turn = cardTurn;
+    const { data, error } = await sb.from("members").select("*").eq("payer_id", memberId).order("last_name");
+    if (turn !== cardTurn) return;  // nel frattempo si è aperta un'altra scheda
+    if (error) { showToast(errorMessage(error), "is-danger"); return; }
 
-    familiariACarico = data;
-    if (!data.length) { panel.style.display = "none"; ricalcola(); return; }
+    dependants = data;
+    if (!data.length) { panel.style.display = "none"; recompute(); return; }
 
-    const totali = totaliNucleo({ total: 0, paid: 0 }, data);
+    const totals = householdTotals({ total: 0, paid: 0 }, data);
     el("familyList").innerHTML = `
       <div class="tabella-scorrevole">
       <table class="table is-fullwidth is-hoverable custom-table mt-2">
@@ -1607,38 +1607,38 @@
               <td><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong></td>
               <td>${esc(s.card_number || "—")}</td>
               <td style="text-align:right">${fmt(s.total)}</td>
-              <td style="text-align:right;font-weight:bold;color:${coloreSaldo(num(s.balance))}">${testoSaldo(num(s.balance))}</td>
+              <td style="text-align:right;font-weight:bold;color:${balanceColor(num(s.balance))}">${balanceText(num(s.balance))}</td>
               <td><button type="button" class="button is-small is-link is-light" data-id="${s.id}">Modifica</button></td>
             </tr>`).join("")}
         </tbody>
         <tfoot><tr style="background:#d4edda;font-weight:bold">
           <td colspan="2">TOTALE NUCLEO (${data.length} familiari)</td>
-          <td style="text-align:right">${fmt(totali.totale)}</td>
-          <td style="text-align:right;color:${coloreSaldo(totali.saldo)}">${testoSaldo(totali.saldo)}</td>
+          <td style="text-align:right">${fmt(totals.totale)}</td>
+          <td style="text-align:right;color:${balanceColor(totals.saldo)}">${balanceText(totals.saldo)}</td>
           <td></td>
         </tr></tfoot>
       </table>
       </div>`;
 
     el("familyList").querySelectorAll("button[data-id]").forEach((b) => {
-      b.addEventListener("click", () => apriSocio(b.dataset.id));
+      b.addEventListener("click", () => openMember(b.dataset.id));
     });
 
     panel.style.display = "block";
-    ricalcola();
+    recompute();
   }
 
   // -------------------------------------------------------------------------
   // Salvataggio
   // -------------------------------------------------------------------------
 
-  function nomeSelezionato(idSelect) {
-    return sceltaDi(idSelect)?.dataset.nome || null;
+  function selectedName(idSelect) {
+    return choiceOf(idSelect)?.dataset.nome || null;
   }
 
-  function partenzeSelezionate(contenitore) {
-    const spuntate = Array.from(el(contenitore).querySelectorAll("input:checked")).map((c) => c.value);
-    return spuntate.length ? spuntate.join(", ") : null;
+  function selectedDepartures(container) {
+    const ticked = Array.from(el(container).querySelectorAll("input:checked")).map((c) => c.value);
+    return ticked.length ? ticked.join(", ") : null;
   }
 
   /**
@@ -1646,85 +1646,85 @@
    * per salvare, e solo al "Sì" la scrittura (scrivi()). Un socio salvato col
    * nome o il codice fiscale di un altro si notava solo dopo.
    */
-  async function salva() {
+  async function save() {
     const form = el("memberForm");
-    if (el("pagaFamiliare").checked && nomeSelezionato("f_agevolazioni_famiglia")) {
-      segnaErrore(el("f_agevolazioni_famiglia"), "L'agevolazione famiglia si assegna al capofamiglia: i familiari a carico ne sono già coperti.");
+    if (el("pagaFamiliare").checked && selectedName("f_agevolazioni_famiglia")) {
+      markError(el("f_agevolazioni_famiglia"), "L'agevolazione famiglia si assegna al capofamiglia: i familiari a carico ne sono già coperti.");
       return;
     }
-    if (!nomeSelezionato("f_tipologia_tessera") && nucleoPieno()) {
-      segnaErrore(el("f_tipologia_tessera"), nucleoPieno());
+    if (!selectedName("f_tipologia_tessera") && fullHousehold()) {
+      markError(el("f_tipologia_tessera"), fullHousehold());
       return;
     }
-    if (copertura()?.famiglia && voceScelta("PRESCIISTICA", "f_presciistica")?.insurance) {
-      segnaErrore(el("f_presciistica"), "L'agevolazione famiglia comprende già tessera e assicurazione: selezionare la presciistica senza assicurazione.");
+    if (cover()?.famiglia && chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) {
+      markError(el("f_presciistica"), "L'agevolazione famiglia comprende già tessera e assicurazione: selezionare la presciistica senza assicurazione.");
       return;
     }
     if (!form.checkValidity()) { form.reportValidity(); return; }
     // Senza questo controllo "La paga un familiare" senza nome si salvava
     // come "paga da sé", senza dire niente.
     if (el("pagaFamiliare").checked && !el("f_payer_id").value) {
-      segnaErrore(el("f_payerDisplay"), "Selezionare dall'elenco il familiare pagante, oppure indicare «A carico del socio».");
+      markError(el("f_payerDisplay"), "Selezionare dall'elenco il familiare pagante, oppure indicare «A carico del socio».");
       return;
     }
 
     // Un socio nuovo che forse è già in archivio: si propone la sua scheda
     // invece di farne un'altra (vedi cercaDoppioni()).
     if (!el("f_id").value) {
-      const bottone = el("btnSalva");
-      bottone.disabled = true;
+      const button = el("btnSalva");
+      button.disabled = true;
       setLoading(true);
       try {
-        if (await fermaSeDoppioni()) return;
+        if (await stopIfDuplicates()) return;
       } catch (error) {
-        showToast(messaggioErrore(error), "is-danger");
+        showToast(errorMessage(error), "is-danger");
         return;
       } finally {
-        bottone.disabled = false;
+        button.disabled = false;
         setLoading(false);
       }
     }
 
-    const dati = datiSalva();
-    chiedi(el("zonaSalva"), socioAperto ? "Salvare le modifiche al socio?" : "Salvare il nuovo socio?", "Salva", () => {
+    const records = saveData();
+    ask(el("zonaSalva"), openedMember ? "Salvare le modifiche al socio?" : "Salvare il nuovo socio?", "Salva", () => {
       // Per sicurezza: se fra la domanda e il "Sì" sono cambiati nome,
       // codice fiscale, luogo o data di nascita, si ricomincia, così la
       // risposta vale per quello che si salva davvero.
-      if (JSON.stringify(datiSalva()) !== JSON.stringify(dati)) { salva(); return; }
-      scrivi();
-    }, { pericolo: false, dettagli: dati });
+      if (JSON.stringify(saveData()) !== JSON.stringify(records)) { save(); return; }
+      write();
+    }, { pericolo: false, dettagli: records });
   }
 
   /** Luogo di nascita come si legge: "ASTI (AT)". Senza la città è "non scritto", anche con la provincia. */
-  const luogoNascita = (luogo, provincia) => {
-    const citta = String(luogo || "").trim().toUpperCase(), sigla = String(provincia || "").trim().toUpperCase();
-    return citta ? (sigla ? `${citta} (${sigla})` : citta) : "";
+  const birthPlace = (placeName, provinceCode) => {
+    const cityName = String(placeName || "").trim().toUpperCase(), abbrev = String(provinceCode || "").trim().toUpperCase();
+    return cityName ? (abbrev ? `${cityName} (${abbrev})` : cityName) : "";
   };
 
   /** I dati della domanda prima di salvare, dal modulo: chi è, uno per riga. */
-  function datiSalva() {
+  function saveData() {
     return [
-      ["Nome e cognome", nomeNelModulo()],
+      ["Nome e cognome", nameInForm()],
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
-      ["Luogo di nascita", luogoNascita(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
+      ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
       ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
     ];
   }
 
   /** Gli stessi dati della scheda salvata (per l'eliminazione: si elimina quella, non il modulo). */
-  const datiPersona = (s) => [
+  const personData = (s) => [
     ["Nome e cognome", `${s.last_name} ${s.first_name}`],
     ["Codice fiscale", s.tax_code || ""],
-    ["Luogo di nascita", luogoNascita(s.birth_place, s.birth_province)],
+    ["Luogo di nascita", birthPlace(s.birth_place, s.birth_province)],
     ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
   ];
 
-  const GITA_NEL_FRATTEMPO = "Socio NON salvato: sull'abbonamento da rimuovere è appena stata registrata una gita "
+  const TRIP_MEANWHILE = "Socio NON salvato: sull'abbonamento da rimuovere è appena stata registrata una gita "
     + "(dal pullman). Riaprire la scheda dalla ricerca: un abbonamento con gite effettuate non può essere rimosso.";
 
-  async function scrivi() {
-    const bottone = el("btnSalva");
-    bottone.disabled = true;
+  async function write() {
+    const button = el("btnSalva");
+    button.disabled = true;
     setLoading(true);
 
     // Il saldo non viene inviato: è una colonna generata dal database.
@@ -1732,7 +1732,7 @@
     // enrolled_at viene riscritta ad ogni salvataggio, come faceva la 1.x
     // con la colonna "Informazioni cronologiche": è così che un'anagrafica
     // d'archivio rientra nella stagione corrente quando la persona si re-iscrive.
-    const socio = {
+    const member = {
       enrolled_at: new Date().toISOString(),
       last_name: el("f_cognome").value.trim().toUpperCase(),
       first_name: el("f_nome").value.trim().toUpperCase(),
@@ -1746,18 +1746,18 @@
       postal_code: el("f_cap").value.trim() || null,
       phone: el("f_telefono").value.trim(),
       email: el("f_email").value.trim() || null,
-      card_type: nomeSelezionato("f_tipologia_tessera"),
-      family_discount: nomeSelezionato("f_agevolazioni_famiglia"),
+      card_type: selectedName("f_tipologia_tessera"),
+      family_discount: selectedName("f_agevolazioni_famiglia"),
       // pass_type non si manda: lo scrive il database dagli abbonamenti
       // (member_passes), vedi sotto.
-      preski_type: nomeSelezionato("f_presciistica"),
-      course_type: nomeSelezionato("f_tipologia_corso"),
-      course_day: sceltaDi("f_giorno_corso")?.value || null,
-      saturday_departure: partenzeSelezionate("check_sabato"),
-      sunday_departure: partenzeSelezionate("check_domenica"),
-      card_number: numeroTessera(),
-      total: totaleIndividuale(),
-      total_manual: totaleAMano(),
+      preski_type: selectedName("f_presciistica"),
+      course_type: selectedName("f_tipologia_corso"),
+      course_day: choiceOf("f_giorno_corso")?.value || null,
+      saturday_departure: selectedDepartures("check_sabato"),
+      sunday_departure: selectedDepartures("check_domenica"),
+      card_number: cardNumber(),
+      total: individualTotal(),
+      total_manual: manualTotal(),
       paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
     };
@@ -1769,15 +1769,15 @@
       let id = el("f_id").value;
       // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
       // altro operatore può aver inserito la stessa persona.
-      if (!id && await fermaSeDoppioni()) return;
+      if (!id && await stopIfDuplicates()) return;
       // Un abbonamento da togliere su cui intanto è stata segnata una gita (dal
       // pullman) non si cancella più: lo si guarda prima di scrivere, se no il socio
       // restava col totale già abbassato e l'abbonamento ancora lì.
-      if (id && abbonamentiDaTogliere.size) {
-        const { data: gite, error } = await sb.from("trip_uses").select("id").in("pass_id", [...abbonamentiDaTogliere]).limit(1);
+      if (id && passesToRemove.size) {
+        const { data: tripList, error } = await sb.from("trip_uses").select("id").in("pass_id", [...passesToRemove]).limit(1);
         if (error) throw error;
-        if (gite.length) {
-          showToast(GITA_NEL_FRATTEMPO, "is-danger");
+        if (tripList.length) {
+          showToast(TRIP_MEANWHILE, "is-danger");
           return;
         }
       }
@@ -1785,8 +1785,8 @@
         // Solo se nessuno l'ha cambiato da quando è aperto: Pagamenti, il
         // pannello gite e l'Assicurazione scrivono sullo stesso socio, e il
         // form intero cancellerebbe quello che hanno scritto nel frattempo.
-        let query = sb.from("members").update(socio).eq("id", id);
-        if (socioAperto?.updated_at) query = query.eq("updated_at", socioAperto.updated_at);
+        let query = sb.from("members").update(member).eq("id", id);
+        if (openedMember?.updated_at) query = query.eq("updated_at", openedMember.updated_at);
         const { data, error } = await query.select("updated_at");
         if (error) throw error;
         if (!data.length) {
@@ -1795,44 +1795,44 @@
             + "e ripetere le modifiche.", "is-danger");
           return;
         }
-        socioAperto.updated_at = data[0].updated_at;
+        openedMember.updated_at = data[0].updated_at;
       } else {
-        const { data, error } = await sb.from("members").insert(socio).select("id, updated_at").single();
+        const { data, error } = await sb.from("members").insert(member).select("id, updated_at").single();
         if (error) throw error;
         id = data.id;
         // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
         // Salva, va aggiornato, non inserito una seconda volta, e col blocco su
         // updated_at come ogni altra modifica.
         el("f_id").value = id;
-        socioAperto = { ...socio, id, updated_at: data.updated_at };
-        aggiornaFascia();
+        openedMember = { ...member, id, updated_at: data.updated_at };
+        updateBand();
       }
 
       // Ripetibile: la stessa client_id non diventa due righe, quindi un
       // Salva ripremuto dopo un errore non vende due volte lo stesso
       // abbonamento. Il totale del socio li conta già (totaleIndividuale).
-      if (abbonamentiNuovi.length) {
+      if (newPasses.length) {
         const { error } = await sb.from("member_passes").upsert(
-          abbonamentiNuovi.map((a) => ({ member_id: id, pass_type: a.pass_type, client_id: a.client_id })),
+          newPasses.map((a) => ({ member_id: id, pass_type: a.pass_type, client_id: a.client_id })),
           { onConflict: "client_id", ignoreDuplicates: true });
         if (error) throw error;
       }
-      if (abbonamentiDaTogliere.size) {
-        const { error } = await sb.from("member_passes").delete().in("id", [...abbonamentiDaTogliere]);
+      if (passesToRemove.size) {
+        const { error } = await sb.from("member_passes").delete().in("id", [...passesToRemove]);
         // La gita segnata proprio fra il controllo e qui.
-        if (error) throw error.code === "23503" ? new Error(GITA_NEL_FRATTEMPO) : error;
+        if (error) throw error.code === "23503" ? new Error(TRIP_MEANWHILE) : error;
       }
 
-      showToast(`${socio.last_name} ${socio.first_name}: socio salvato.`);
+      showToast(`${member.last_name} ${member.first_name}: socio salvato.`);
       resetForm();
     } catch (error) {
       if (error.code === "23505" && /members_card_number_key/.test(error.message || "")) {
-        await numeroTesseraGiaUsato();
+        await cardNumberAlreadyUsed();
       } else {
-        showToast(messaggioErrore(error), "is-danger");
+        showToast(errorMessage(error), "is-danger");
       }
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
       setLoading(false);
     }
   }
@@ -1840,38 +1840,38 @@
   function resetForm() {
     // Un controllo del codice fiscale, una scheda o una ricerca ancora in volo
     // sono di prima.
-    turnoCF++;
-    turnoScheda++;
-    turnoRicerca++;
-    codiciGiaLetti.clear();
+    taxCodeTurn++;
+    cardTurn++;
+    searchTurn++;
+    codesAlreadyRead.clear();
     el("memberForm").reset();
     // Le partenze fuori elenco aggiunte per il socio di prima (spuntaPartenze) vanno via.
-    spuntaPartenze("check_sabato", "");
-    spuntaPartenze("check_domenica", "");
-    aggiornaGiornoCorso();
-    aggiornaTotaleMano();
+    tickDepartures("check_sabato", "");
+    tickDepartures("check_domenica", "");
+    updateCourseDay();
+    updateManualTotal();
     el("f_id").value = "";
-    familiariACarico = [];
+    dependants = [];
     el("familyPanel").style.display = "none";
     el("searchInput").value = "";
     el("searchResults").innerHTML = "";
-    socioAperto = null;
-    aggiornaFascia();
-    nascondiDoppioni();
-    disabilitaSezionePagante();
-    abbonamentiSalvati = [];
-    abbonamentiNuovi = [];
-    abbonamentiDaTogliere = new Set();
-    disegnaAbbonamenti();
-    mostraAvvisoCF(el("avvisoCF"), el("f_codice_fiscale"), null);
+    openedMember = null;
+    updateBand();
+    hideDuplicates();
+    disablePayerSection();
+    savedPasses = [];
+    newPasses = [];
+    passesToRemove = new Set();
+    drawPasses();
+    showTaxCodeNotice(el("avvisoCF"), el("f_codice_fiscale"), null);
     el("zonaTogli").hidden = true;
-    ripristinaTogli();
-    numeroProposto = null;
+    restoreRemove();
+    proposedNumber = null;
     el("notaTessera").hidden = true;
-    ricalcola();
-    salvato = firma();
+    recompute();
+    savedOne = signature();
     window.scrollTo(0, 0);
-    proponiNumeroTessera();
+    proposeCardNumber();
   }
 
   // -------------------------------------------------------------------------
@@ -1883,19 +1883,19 @@
   // finestra del browser che si chiude con un Invio distratto.
   // -------------------------------------------------------------------------
 
-  function ripristinaTogli() {
+  function restoreRemove() {
     el("btnTogli").disabled = false;
   }
 
-  function chiediTogli() {
+  function askRemove() {
     const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
-    const acconto = num(el("f_acconto").value);
-    chiedi(el("azioniTogli"), `Rimuovere ${nome} dalla stagione?`
-      + (acconto > 0 ? ` L'acconto di ${fmt(acconto)} sarà sottratto dal totale incassato.` : ""),
-      "Rimuovi dalla stagione", togliDallaStagione);
+    const deposit = num(el("f_acconto").value);
+    ask(el("azioniTogli"), `Rimuovere ${nome} dalla stagione?`
+      + (deposit > 0 ? ` L'acconto di ${fmt(deposit)} sarà sottratto dal totale incassato.` : ""),
+      "Rimuovi dalla stagione", removeFromSeason);
   }
 
-  async function togliDallaStagione() {
+  async function removeFromSeason() {
     const nome = `${el("f_cognome").value} ${el("f_nome").value}`.trim();
     el("btnTogli").disabled = true;
     setLoading(true);
@@ -1905,8 +1905,8 @@
       showToast(`${nome} rimosso dalla stagione. I dati anagrafici restano registrati.`);
       resetForm();
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
-      ripristinaTogli();
+      showToast(errorMessage(error), "is-danger");
+      restoreRemove();
     } finally {
       setLoading(false);
     }
@@ -1925,38 +1925,38 @@
   // -------------------------------------------------------------------------
 
   /** I dati della scheda: il nome e le sezioni, come [titolo, [[etichetta, valore], ...]]. */
-  function datiScheda() {
+  function cardData() {
     // In maiuscolo come li scrive il salvataggio.
     const v = (id) => el(id).value.trim().toUpperCase();
-    const nascita = [v("f_luogo_nascita"), v("f_provincia_nascita") && `(${v("f_provincia_nascita")})`,
+    const birth = [v("f_luogo_nascita"), v("f_provincia_nascita") && `(${v("f_provincia_nascita")})`,
       el("f_data_nascita").value && `il ${dataIt(el("f_data_nascita").value)}`].filter(Boolean).join(" ");
-    const residenza = [v("f_indirizzo"), [el("f_cap").value.trim(), v("f_citta")].filter(Boolean).join(" "),
+    const residence = [v("f_indirizzo"), [el("f_cap").value.trim(), v("f_citta")].filter(Boolean).join(" "),
       v("f_provincia") && `(${v("f_provincia")})`].filter(Boolean).join(", ").replace(", (", " (");
-    const abbonamenti = [...abbonamentiSalvati.filter((a) => !abbonamentiDaTogliere.has(a.pass_id)), ...abbonamentiNuovi]
+    const passList = [...savedPasses.filter((a) => !passesToRemove.has(a.pass_id)), ...newPasses]
       .map((a) => a.pass_type).join(", ");
-    const corso = nomeSelezionato("f_tipologia_corso");
-    const giorno = sceltaDi("f_giorno_corso")?.value;
-    const totale = totaleIndividuale(), acconto = num(el("f_acconto").value);
-    const pagante = el("pagaFamiliare").checked && el("f_payerDisplay").value.trim();
-    const sezioni = [
+    const courseItem = selectedName("f_tipologia_corso");
+    const dayKey = choiceOf("f_giorno_corso")?.value;
+    const totalAmount = individualTotal(), deposit = num(el("f_acconto").value);
+    const payer = el("pagaFamiliare").checked && el("f_payerDisplay").value.trim();
+    const sections = [
       ["Anagrafica", [["Cognome", v("f_cognome")], ["Nome", v("f_nome")],
-        ["Nato/a a", nascita], ["Codice fiscale", v("f_codice_fiscale")]]],
-      ["Residenza e contatti", [["Residenza", residenza], ["Telefono", el("f_telefono").value.trim()],
+        ["Nato/a a", birth], ["Codice fiscale", v("f_codice_fiscale")]]],
+      ["Residenza e contatti", [["Residenza", residence], ["Telefono", el("f_telefono").value.trim()],
         ["Email", el("f_email").value.trim()]]],
-      ["Tessera", [["Numero tessera", numeroTessera()], ["Tessera", nomeSelezionato("f_tipologia_tessera")],
-        ["Agevolazione famiglia", nomeSelezionato("f_agevolazioni_famiglia")]]],
-      ["Gite e corsi", [["Abbonamenti", abbonamenti], ["Presciistica", nomeSelezionato("f_presciistica")],
-        ["Partenza della domenica", partenzeSelezionate("check_domenica")],
-        ["Partenza del sabato", partenzeSelezionate("check_sabato")],
-        ["Corso", corso && (giorno ? `${corso} · ${giorno.toLowerCase()}` : corso)]]],
-      ["Pagamento", [["Totale", fmt(totale) + (totaleAMano() ? " (scritto a mano)" : "")],
-        ["Acconto versato", fmt(acconto)],
-        totale - acconto < 0 ? ["A credito", fmt(acconto - totale)] : ["Da pagare", fmt(totale - acconto)],
-        ["Pagato da", pagante],
-        ["Familiari a carico", familiariACarico.map((f) => `${f.last_name} ${f.first_name}`).join(", ")]]],
+      ["Tessera", [["Numero tessera", cardNumber()], ["Tessera", selectedName("f_tipologia_tessera")],
+        ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")]]],
+      ["Gite e corsi", [["Abbonamenti", passList], ["Presciistica", selectedName("f_presciistica")],
+        ["Partenza della domenica", selectedDepartures("check_domenica")],
+        ["Partenza del sabato", selectedDepartures("check_sabato")],
+        ["Corso", courseItem && (dayKey ? `${courseItem} · ${dayKey.toLowerCase()}` : courseItem)]]],
+      ["Pagamento", [["Totale", fmt(totalAmount) + (manualTotal() ? " (scritto a mano)" : "")],
+        ["Acconto versato", fmt(deposit)],
+        totalAmount - deposit < 0 ? ["A credito", fmt(deposit - totalAmount)] : ["Da pagare", fmt(totalAmount - deposit)],
+        ["Pagato da", payer],
+        ["Familiari a carico", dependants.map((f) => `${f.last_name} ${f.first_name}`).join(", ")]]],
     ];
     // Le righe vuote non si scrivono, e nemmeno una sezione tutta vuota.
-    return sezioni.map(([t, righe]) => [t, righe.filter(([, val]) => val)]).filter(([, righe]) => righe.length);
+    return sections.map(([t, rows]) => [t, rows.filter(([, val]) => val)]).filter(([, rows]) => rows.length);
   }
 
   /**
@@ -1977,19 +1977,19 @@
     return { dati: canvas.toDataURL("image/jpeg", .9), proporzione: canvas.height / canvas.width };
   }
 
-  async function scaricaScheda() {
-    const nome = nomeNelModulo();
+  async function downloadCard() {
+    const nome = nameInForm();
     if (!nome) {
-      segnaErrore(el(el("f_cognome").value.trim() ? "f_nome" : "f_cognome"), "Inserire almeno cognome e nome prima di scaricare la scheda.");
+      markError(el(el("f_cognome").value.trim() ? "f_nome" : "f_cognome"), "Inserire almeno cognome e nome prima di scaricare la scheda.");
       return;
     }
-    const pulsante = el("btnScarica");
-    pulsante.classList.add("is-loading");
+    const theButton = el("btnScarica");
+    theButton.classList.add("is-loading");
     try {
-      await caricaPdf();
+      await loadPdf();
       const logo = await logoPdf().catch(() => null);
       const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
-      const BLU = [8, 76, 141], GRIGIO = [70, 70, 70], M = 16, L = 210 - 2 * M, FONDO = 297 - 18;
+      const BLU = [8, 76, 141], GREY = [70, 70, 70], M = 16, L = 210 - 2 * M, BACKGROUND = 297 - 18;
       let y = M;
 
       // Testata: logo, nome, riga blu.
@@ -1997,37 +1997,37 @@
       const xt = logo ? M + 40 : M;
       doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(0);
       doc.text(doc.splitTextToSize(nome, 210 - M - xt), xt, y + 9);
-      doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(...GRIGIO);
+      doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(...GREY);
       doc.text("Sci Club Don Bosco · scheda del socio", xt, y + 17);
       y += Math.max(logo ? 34 * logo.proporzione : 0, 20) + 3;
       doc.setDrawColor(...BLU).setLineWidth(.6).line(M, y, M + L, y);
       y += 8;
 
       // Sezioni: titolo blu in maiuscolo, poi etichetta a sinistra e valore in grassetto.
-      for (const [titolo, righe] of datiScheda()) {
-        if (y + 10 + 6 * righe.length > FONDO) { doc.addPage(); y = M; }
+      for (const [titleText, rows] of cardData()) {
+        if (y + 10 + 6 * rows.length > BACKGROUND) { doc.addPage(); y = M; }
         doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(...BLU);
-        doc.text(titolo.toUpperCase(), M, y);
+        doc.text(titleText.toUpperCase(), M, y);
         doc.setDrawColor(160).setLineWidth(.2).line(M, y + 1.6, M + L, y + 1.6);
         y += 7;
-        for (const [etichetta, valore] of righe) {
-          const righeValore = doc.setFont("helvetica", "bold").setFontSize(11).splitTextToSize(String(valore), L - 58);
-          if (y + 5.5 * righeValore.length > FONDO) { doc.addPage(); y = M; }
-          doc.setFont("helvetica", "normal").setFontSize(10.5).setTextColor(...GRIGIO).text(etichetta, M, y);
-          doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0).text(righeValore, M + 58, y);
-          y += 5.5 * righeValore.length + 1;
+        for (const [label, theValue] of rows) {
+          const valueLines = doc.setFont("helvetica", "bold").setFontSize(11).splitTextToSize(String(theValue), L - 58);
+          if (y + 5.5 * valueLines.length > BACKGROUND) { doc.addPage(); y = M; }
+          doc.setFont("helvetica", "normal").setFontSize(10.5).setTextColor(...GREY).text(label, M, y);
+          doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(0).text(valueLines, M + 58, y);
+          y += 5.5 * valueLines.length + 1;
         }
         y += 5;
       }
 
       // Piede: quando è stata fatta, e se i dati non sono ancora salvati.
-      const adesso = new Date();
-      if (y + 8 > FONDO) { doc.addPage(); y = M; }
+      const now = new Date();
+      if (y + 8 > BACKGROUND) { doc.addPage(); y = M; }
       doc.setDrawColor(160).setLineWidth(.2).line(M, y, M + L, y);
-      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(...GRIGIO);
-      doc.text(`Scheda compilata il ${adesso.toLocaleDateString("it-IT")} alle ${
-        adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
-        !el("f_id").value || modificato() ? " · dati non ancora salvati" : ""}`, M, y + 5);
+      doc.setFont("helvetica", "normal").setFontSize(9).setTextColor(...GREY);
+      doc.text(`Scheda compilata il ${now.toLocaleDateString("it-IT")} alle ${
+        now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}${
+        !el("f_id").value || modified() ? " · dati non ancora salvati" : ""}`, M, y + 5);
 
       // Nel nome del file niente accenti né spazi: ROSSI NICOLÒ → scheda-ROSSI-NICOLO.pdf
       const file = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -2035,7 +2035,7 @@
     } catch (e) {
       showToast("Scheda non scaricata: " + (e.message || e), "is-danger");
     } finally {
-      pulsante.classList.remove("is-loading");
+      theButton.classList.remove("is-loading");
     }
   }
 
@@ -2050,55 +2050,55 @@
   // -------------------------------------------------------------------------
 
   /** Perché la scheda aperta non si può eliminare, o "" se si può. */
-  function motivoNonEliminabile() {
-    const s = socioAperto;
+  function notDeletableReason() {
+    const s = openedMember;
     if (num(s.paid) !== 0) return `ha versato ${fmt(s.paid)}`;
-    if (familiariACarico.length) return "paga per dei familiari";
+    if (dependants.length) return "paga per dei familiari";
     if (s.insurance_list_id) return "è in una lista già inviata all'assicurazione";
-    if (abbonamentiSalvati.some((a) => a.trips_used > 0)) return "ha delle gite segnate";
+    if (savedPasses.some((a) => a.trips_used > 0)) return "ha delle gite segnate";
     return "";
   }
 
-  function chiediElimina() {
-    const s = socioAperto;
+  function askDelete() {
+    const s = openedMember;
     if (!s) return;
     const nome = `${s.last_name} ${s.first_name}`;
-    const motivo = motivoNonEliminabile();
-    if (motivo) {
-      showToast(`${nome} ${motivo}: la scheda non può essere eliminata.`, "is-danger");
+    const cause = notDeletableReason();
+    if (cause) {
+      showToast(`${nome} ${cause}: la scheda non può essere eliminata.`, "is-danger");
       return;
     }
     // I dati della scheda com'è salvata, non quelli del modulo: si elimina
     // quella, anche se nel frattempo qualcosa è stato cambiato.
-    const righe = [...datiPersona(s),
+    const rows = [...personData(s),
       ["Tessera", s.card_number ? `${s.card_number}${s.card_type ? ` · ${s.card_type}` : ""}` : "nessuna nella stagione in corso"]];
-    if (abbonamentiSalvati.length) righe.push(["Abbonamenti", `${abbonamentiSalvati.length}, eliminati con la scheda`]);
-    el("dlgEliminaChi").innerHTML = tabellaDati(righe);
+    if (savedPasses.length) rows.push(["Abbonamenti", `${savedPasses.length}, eliminati con la scheda`]);
+    el("dlgEliminaChi").innerHTML = dataTable(rows);
     el("dlgElimina").showModal();
     el("btnEliminaNo1").focus();
   }
 
-  function confermaElimina() {
-    const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
+  function confirmDelete() {
+    const nome = `${openedMember.last_name} ${openedMember.first_name}`;
     el("dlgElimina").close();
     el("dlgElimina2Nome").textContent = nome;
-    el("dlgElimina2Chi").innerHTML = tabellaDati(datiPersona(socioAperto).slice(1, 3));
+    el("dlgElimina2Chi").innerHTML = dataTable(personData(openedMember).slice(1, 3));
     el("btnEliminaSi").textContent = `Elimina definitivamente ${nome}`;
     el("dlgElimina2").showModal();
     el("btnEliminaNo2").focus();
   }
 
-  async function eliminaSocio() {
-    const nome = `${socioAperto.last_name} ${socioAperto.first_name}`;
+  async function deleteMember() {
+    const nome = `${openedMember.last_name} ${openedMember.first_name}`;
     el("dlgElimina2").close();
     setLoading(true);
     try {
-      const { error } = await sb.rpc("delete_member", { member_id: socioAperto.id });
+      const { error } = await sb.rpc("delete_member", { member_id: openedMember.id });
       if (error) throw error;
       showToast(`Scheda di ${nome} eliminata.`);
       resetForm();
     } catch (error) {
-      showToast(messaggioErrore(error), "is-danger");
+      showToast(errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }

@@ -23,7 +23,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
  * aprire. È così che un link solo, la radice del sito, va bene per tutti.
  * Il sito di ricerca sta in /ricerca/, accanto alle pagine del gestionale.
  */
-const PAGINE_DI_ARRIVO = [
+const LANDING_PAGES = [
   ["soci", "index.html"],
   ["pagamenti", "admin.html"],
   ["riepilogo", "riepilogo.html"],
@@ -40,8 +40,8 @@ const PAGINE_DI_ARRIVO = [
  * prima di ogni uscita (anche quella del login per un ruolo senza pagine), se
  * no la vista resta salvata nel database e vale al prossimo accesso.
  */
-async function chiudiVediCome(accesso) {
-  if (accesso && accesso.real_role === "superadmin" && accesso.role !== "superadmin") {
+async function closeViewAs(access) {
+  if (access && access.real_role === "superadmin" && access.role !== "superadmin") {
     await sb.rpc("set_view_as", { role: null });
   }
 }
@@ -50,8 +50,8 @@ async function chiudiVediCome(accesso) {
 async function requireAuth() {
   const { data } = await sb.auth.getSession();
   if (!data.session) {
-    const ritorno = encodeURIComponent(location.pathname.split("/").pop() || "index.html");
-    location.replace(`login.html?next=${ritorno}`);
+    const returnTo = encodeURIComponent(location.pathname.split("/").pop() || "index.html");
+    location.replace(`login.html?next=${returnTo}`);
     return null;
   }
   return data.session;
@@ -64,13 +64,13 @@ async function requireAuth() {
  * sé stessi.
  */
 async function logout() {
-  await chiudiVediCome(await getProfile().catch(() => null));
-  ricordaAccesso(null);
+  await closeViewAs(await getProfile().catch(() => null));
+  rememberAccess(null);
   await sb.auth.signOut();
   location.replace("login.html");
 }
 
-let _accessoCache = null;
+let _accessCache = null;
 
 /**
  * Chi è collegato: { email, role, real_role, permissions, change_password }.
@@ -80,14 +80,14 @@ let _accessoCache = null;
  * Cache in memoria per pagina.
  */
 async function getProfile() {
-  if (_accessoCache) return _accessoCache;
+  if (_accessCache) return _accessCache;
   const { data: { session } } = await sb.auth.getSession();
-  if (!session) { ricordaAccesso(null); return null; }
+  if (!session) { rememberAccess(null); return null; }
   const { data, error } = await sb.rpc("my_access");
   if (error) throw error;
-  _accessoCache = (data && data[0]) || null;
-  ricordaAccesso(_accessoCache);
-  return _accessoCache;
+  _accessCache = (data && data[0]) || null;
+  rememberAccess(_accessCache);
+  return _accessCache;
 }
 
 /**
@@ -96,16 +96,16 @@ async function getProfile() {
  * non compaiono a scatti. Stanno in localStorage per valere anche in una
  * scheda nuova. null li dimentica (logout, niente sessione).
  */
-function ricordaAccesso(accesso) {
+function rememberAccess(access) {
   try {
-    if (accesso) localStorage.setItem("sciclub-ruolo", JSON.stringify(
-      { role: accesso.role, permissions: accesso.permissions }));
+    if (access) localStorage.setItem("sciclub-ruolo", JSON.stringify(
+      { role: access.role, permissions: access.permissions }));
     else localStorage.removeItem("sciclub-ruolo");
   } catch (e) { /* storage negato: la barra si aggiorna come prima */ }
   const html = document.documentElement;
-  if (accesso) {
-    html.dataset.ruolo = accesso.role;
-    html.dataset.permessi = accesso.permissions.join(" ");
+  if (access) {
+    html.dataset.ruolo = access.role;
+    html.dataset.permessi = access.permissions.join(" ");
   } else {
     delete html.dataset.ruolo;
     delete html.dataset.permessi;
@@ -113,15 +113,15 @@ function ricordaAccesso(accesso) {
 }
 
 /** true se chi è collegato ha il permesso. */
-async function puo(permesso) {
-  const accesso = await getProfile();
-  return !!accesso && accesso.permissions.includes(permesso);
+async function can(permission) {
+  const access = await getProfile();
+  return !!access && access.permissions.includes(permission);
 }
 
 /** La pagina di arrivo di chi è collegato, o null se non può aprire niente. */
-function paginaDiArrivo(accesso) {
-  const voce = accesso && PAGINE_DI_ARRIVO.find(([permesso]) => accesso.permissions.includes(permesso));
-  return voce ? voce[1] : null;
+function landingPage(access) {
+  const item = access && LANDING_PAGES.find(([permission]) => access.permissions.includes(permission));
+  return item ? item[1] : null;
 }
 
 /**
@@ -132,31 +132,31 @@ function paginaDiArrivo(accesso) {
  * Chi ha ancora la password iniziale va a cambiarla, prima di tutto il resto.
  * Restituisce la sessione, o null se la pagina se ne sta andando.
  */
-async function requirePermesso(permesso) {
-  const sessione = await requireAuth();
-  if (!sessione) return null;
-  let accesso;
+async function requirePermission(permission) {
+  const currentSession = await requireAuth();
+  if (!currentSession) return null;
+  let access;
   try {
-    accesso = await getProfile();
+    access = await getProfile();
   } catch (error) {
     // Rete o database giù: nessuna pagina prende l'errore, e restava «Caricamento…» senza dire niente.
     setLoading(false);
-    showToast(`Impossibile leggere i permessi di accesso (${messaggioErrore(error)}). Ricaricare la pagina tra qualche istante.`, "is-danger");
+    showToast(`Impossibile leggere i permessi di accesso (${errorMessage(error)}). Ricaricare la pagina tra qualche istante.`, "is-danger");
     return null;
   }
-  if (accesso && accesso.change_password) {
+  if (access && access.change_password) {
     location.replace("password.html");
     return null;
   }
-  if (accesso && accesso.permissions.includes(permesso)) return sessione;
-  const arrivo = paginaDiArrivo(accesso);
-  location.replace(arrivo || "login.html?senza=1");
+  if (access && access.permissions.includes(permission)) return currentSession;
+  const landing = landingPage(access);
+  location.replace(landing || "login.html?senza=1");
   return null;
 }
 
-const OCCHIO_APERTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-const OCCHIO_CHIUSO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+const EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>'
   + '<line x1="1" y1="1" x2="23" y2="23"/></svg>';
 
@@ -165,21 +165,21 @@ const OCCHIO_CHIUSO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
  * in brand.css): data-mostra è l'id del campo. Chi vede poco scrive alla
  * cieca e sbaglia.
  */
-function collegaMostraPassword() {
-  document.querySelectorAll("[data-mostra]").forEach((bottone) => {
-    const campo = document.getElementById(bottone.dataset.mostra);
-    const disegna = () => {
-      const visibile = campo.type === "text";
-      bottone.innerHTML = visibile ? OCCHIO_CHIUSO : OCCHIO_APERTO;
-      bottone.setAttribute("aria-label", visibile ? "Nascondi la password" : "Mostra la password");
-      bottone.title = bottone.getAttribute("aria-label");
-      bottone.setAttribute("aria-pressed", String(visibile));
+function bindShowPassword() {
+  document.querySelectorAll("[data-mostra]").forEach((button) => {
+    const field = document.getElementById(button.dataset.mostra);
+    const draw = () => {
+      const visible = field.type === "text";
+      button.innerHTML = visible ? EYE_CLOSED : EYE_OPEN;
+      button.setAttribute("aria-label", visible ? "Nascondi la password" : "Mostra la password");
+      button.title = button.getAttribute("aria-label");
+      button.setAttribute("aria-pressed", String(visible));
     };
-    bottone.addEventListener("click", () => {
-      campo.type = campo.type === "password" ? "text" : "password";
-      disegna();
+    button.addEventListener("click", () => {
+      field.type = field.type === "password" ? "text" : "password";
+      draw();
     });
-    disegna();
+    draw();
   });
 }
 
@@ -188,8 +188,8 @@ function collegaMostraPassword() {
  * di card_allowed() nel database. 'utente' = tutti, 'admin' = admin e
  * superadmin, 'superadmin' = solo superadmin.
  */
-function tesseraConsentita(minRuolo, ruolo) {
-  return !minRuolo || minRuolo === "utente" || ruolo === "superadmin" || ruolo === minRuolo;
+function allowedCard(minRole, roleKey) {
+  return !minRole || minRole === "utente" || roleKey === "superadmin" || roleKey === minRole;
 }
 
 // ---------------------------------------------------------------------------
@@ -207,29 +207,29 @@ function tesseraConsentita(minRuolo, ruolo) {
  * che chi legge piano arrivasse in fondo, e il socio restava non salvato
  * senza che nessuno se ne accorgesse. Le conferme se ne vanno da sole.
  */
-function showToast(messaggio, tipo = "is-success") {
+function showToast(message, typeName = "is-success") {
   let toast = document.getElementById("statusToast");
   if (!toast) {
     toast = document.createElement("div");
     toast.id = "statusToast";
     document.body.appendChild(toast);
   }
-  const errore = tipo === "is-danger";
-  toast.textContent = messaggio;
-  toast.className = `notification ${tipo}`;
-  toast.setAttribute("role", errore ? "alert" : "status");
+  const err = typeName === "is-danger";
+  toast.textContent = message;
+  toast.className = `notification ${typeName}`;
+  toast.setAttribute("role", err ? "alert" : "status");
   toast.style.cssText =
     "display:block;position:fixed;top:calc(var(--barra-h, 68px) + 12px);left:50%;" +
     "transform:translateX(-50%);z-index:90;max-width:min(92vw,520px);text-align:center;" +
     "box-shadow:0 4px 12px rgba(0,0,0,.2);";
   clearTimeout(showToast._timer);
-  if (errore) {
-    const chiudi = document.createElement("button");
-    chiudi.type = "button";
-    chiudi.className = "button is-light is-fullwidth mt-3";
-    chiudi.textContent = "Chiudi";
-    chiudi.addEventListener("click", () => (toast.style.display = "none"));
-    toast.appendChild(chiudi);
+  if (err) {
+    const doClose = document.createElement("button");
+    doClose.type = "button";
+    doClose.className = "button is-light is-fullwidth mt-3";
+    doClose.textContent = "Chiudi";
+    doClose.addEventListener("click", () => (toast.style.display = "none"));
+    toast.appendChild(doClose);
     return;
   }
   showToast._timer = setTimeout(() => {
@@ -248,47 +248,47 @@ function showToast(messaggio, tipo = "is-success") {
 // ---------------------------------------------------------------------------
 
 /** Dove si vede il bordo: il campo, o per una scelta (radio, spunta) il suo gruppo. */
-function bordoDelCampo(campo) {
-  const scelta = campo.matches?.("input[type=radio], input[type=checkbox]");
-  return (scelta && campo.closest("fieldset, [role=radiogroup]")) || campo;
+function fieldBorder(field) {
+  const choice = field.matches?.("input[type=radio], input[type=checkbox]");
+  return (choice && field.closest("fieldset, [role=radiogroup]")) || field;
 }
 
 /** Il nome del campo come lo legge chi compila: la sua etichetta, senza l'asterisco. */
-function nomeDelCampo(campo) {
-  const bordo = bordoDelCampo(campo);
-  const testo = bordo.matches("fieldset") ? bordo.querySelector("legend")?.textContent
-    : (campo.id && document.querySelector(`label[for="${CSS.escape(campo.id)}"]`)?.textContent)
-      || campo.getAttribute("aria-label") || campo.placeholder;
-  return (testo || "").replace(/\*/g, "").replace(/\s+/g, " ").trim();
+function fieldName(field) {
+  const border = fieldBorder(field);
+  const text = border.matches("fieldset") ? border.querySelector("legend")?.textContent
+    : (field.id && document.querySelector(`label[for="${CSS.escape(field.id)}"]`)?.textContent)
+      || field.getAttribute("aria-label") || field.placeholder;
+  return (text || "").replace(/\*/g, "").replace(/\s+/g, " ").trim();
 }
 
 /** Bordo rosso sul campo (o sul suo gruppo) finché non lo si cambia; aria-invalid per chi usa il lettore di schermo. */
-function segnaCampo(campo) {
-  const bordo = bordoDelCampo(campo);
-  bordo.classList.add("campo-errore");
-  campo.setAttribute("aria-invalid", "true");
-  const togli = () => { bordo.classList.remove("campo-errore"); campo.removeAttribute("aria-invalid"); };
-  bordo.addEventListener("input", togli, { once: true });
-  bordo.addEventListener("change", togli, { once: true });
+function markField(field) {
+  const border = fieldBorder(field);
+  border.classList.add("campo-errore");
+  field.setAttribute("aria-invalid", "true");
+  const removeOne = () => { border.classList.remove("campo-errore"); field.removeAttribute("aria-invalid"); };
+  border.addEventListener("input", removeOne, { once: true });
+  border.addEventListener("change", removeOne, { once: true });
 }
 
 // I campi segnati nello stesso momento (un Salva ne trova più d'uno): si va al
 // primo e, se la pagina non ha già spiegato l'errore, un messaggio li nomina tutti.
-let campiDaMostrare = [];
-function vaiAiCampi(campi, giaDetto = false) {
-  if (!campiDaMostrare.length) {
+let fieldsToShow = [];
+function goToFields(fields, alreadySaid = false) {
+  if (!fieldsToShow.length) {
     setTimeout(() => {
-      const [primo] = campiDaMostrare;
-      const nomi = [...new Set(campiDaMostrare.map(nomeDelCampo).filter(Boolean))];
-      campiDaMostrare = [];
-      bordoDelCampo(primo).scrollIntoView({ block: "center" });
-      primo.focus({ preventScroll: true });
-      if (!vaiAiCampi.giaDetto) showToast(`Da completare o correggere: ${nomi.join(", ")}.`, "is-danger");
-      vaiAiCampi.giaDetto = false;
+      const [first] = fieldsToShow;
+      const names = [...new Set(fieldsToShow.map(fieldName).filter(Boolean))];
+      fieldsToShow = [];
+      fieldBorder(first).scrollIntoView({ block: "center" });
+      first.focus({ preventScroll: true });
+      if (!goToFields.giaDetto) showToast(`Da completare o correggere: ${names.join(", ")}.`, "is-danger");
+      goToFields.giaDetto = false;
     });
   }
-  campiDaMostrare.push(...campi);
-  if (giaDetto) vaiAiCampi.giaDetto = true;
+  fieldsToShow.push(...fields);
+  if (alreadySaid) goToFields.giaDetto = true;
 }
 
 /**
@@ -296,17 +296,17 @@ function vaiAiCampi(campi, giaDetto = false) {
  * lì e il messaggio lo spiega. `campo` può essere anche il gruppo (fieldset): il
  * fuoco va sulla sua prima scelta.
  */
-function segnaErrore(campo, messaggio) {
-  const fuoco = campo.matches("fieldset") ? campo.querySelector("input, select, textarea") || campo : campo;
-  segnaCampo(fuoco);
-  showToast(messaggio, "is-danger");
-  vaiAiCampi([fuoco], true);
+function markError(field, message) {
+  const focusTarget = field.matches("fieldset") ? field.querySelector("input, select, textarea") || field : field;
+  markField(focusTarget);
+  showToast(message, "is-danger");
+  goToFields([focusTarget], true);
 }
 
 // Quello che il browser non accetta: required vuoto, numero fuori da min/step...
-document.addEventListener("invalid", (evento) => {
-  segnaCampo(evento.target);
-  vaiAiCampi([evento.target]);
+document.addEventListener("invalid", (theEvent) => {
+  markField(theEvent.target);
+  goToFields([theEvent.target]);
 }, true);
 
 /**
@@ -315,12 +315,12 @@ document.addEventListener("invalid", (evento) => {
  * di ogni pagina la rimette prima del primo disegno, così il testo non
  * salta da piccolo a grande a ogni cambio di pagina.
  */
-function cambiaTesto() {
+function toggleTextSize() {
   const html = document.documentElement;
-  const livello = (Number(html.dataset.testo || 0) + 1) % 3;
-  if (livello) html.dataset.testo = livello;
+  const level = (Number(html.dataset.testo || 0) + 1) % 3;
+  if (level) html.dataset.testo = level;
   else delete html.dataset.testo;
-  try { localStorage.setItem("sciclub-testo", livello); } catch (e) {}
+  try { localStorage.setItem("sciclub-testo", level); } catch (e) {}
 }
 
 /**
@@ -330,9 +330,9 @@ function cambiaTesto() {
  * schermo sbiancava e poi tornava, e il contenuto sembrava ricaricarsi da
  * capo. Il filo dice la stessa cosa senza far sparire niente.
  */
-function setLoading(attivo) {
-  const filo = document.getElementById("avanzamento");
-  if (filo) filo.classList.toggle("attiva", !!attivo);
+function setLoading(active) {
+  const thread = document.getElementById("avanzamento");
+  if (thread) thread.classList.toggle("attiva", !!active);
 }
 
 /**
@@ -341,24 +341,24 @@ function setLoading(attivo) {
  * aperto (il menu non si muove al caricamento); qui si segue anche la sezione
  * di Social scritta nell'indirizzo (#post, #grafiche, #impostazioni).
  */
-(function segnaPaginaCorrente() {
-  const segna = () => {
-    const voci = [...document.querySelectorAll(".barra-voci a[href]")];
-    if (!voci.length) return;
-    const attuale = location.pathname.split("/").pop() || "index.html";
-    const voce = voci.find((a) => a.getAttribute("href") === attuale + location.hash)
-      || voci.find((a) => a.getAttribute("href").split("#")[0] === attuale)
+(function markCurrentPage() {
+  const mark = () => {
+    const items = [...document.querySelectorAll(".barra-voci a[href]")];
+    if (!items.length) return;
+    const current = location.pathname.split("/").pop() || "index.html";
+    const item = items.find((a) => a.getAttribute("href") === current + location.hash)
+      || items.find((a) => a.getAttribute("href").split("#")[0] === current)
       || document.querySelector('.barra-voci a[aria-current="page"]');   // un nome di file diverso: vale quella dell'HTML
-    if (!voce) return;
-    voci.forEach((a) => { if (a !== voce) a.removeAttribute("aria-current"); });
-    voce.setAttribute("aria-current", "page");
-    if (voce.closest("details")) voce.closest("details").open = true;
-    const nome = voce.cloneNode(true);
+    if (!item) return;
+    items.forEach((a) => { if (a !== item) a.removeAttribute("aria-current"); });
+    item.setAttribute("aria-current", "page");
+    if (item.closest("details")) item.closest("details").open = true;
+    const nome = item.cloneNode(true);
     nome.querySelectorAll(".conta").forEach((x) => x.remove());
     document.querySelectorAll(".barra-pagina").forEach((x) => { x.textContent = nome.textContent.trim(); });
   };
-  document.addEventListener("DOMContentLoaded", segna);
-  window.addEventListener("hashchange", segna);
+  document.addEventListener("DOMContentLoaded", mark);
+  window.addEventListener("hashchange", mark);
 })();
 
 /**
@@ -366,46 +366,46 @@ function setLoading(attivo) {
  * una voce scelta e un tocco fuori. Aperto, il fuoco va alla prima voce;
  * chiuso, torna al pulsante.
  */
-function apriMenu(aperto) {
-  const bottone = document.querySelector(".apri-menu");
-  if (!bottone) return;
-  document.documentElement.classList.toggle("menu-aperto", aperto);
-  bottone.setAttribute("aria-expanded", String(aperto));
-  if (aperto) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
-  else bottone.focus();
+function openMenu(isOpen) {
+  const button = document.querySelector(".apri-menu");
+  if (!button) return;
+  document.documentElement.classList.toggle("menu-aperto", isOpen);
+  button.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) document.querySelector(".barra-voci a:not([hidden]), .barra-voci summary")?.focus();
+  else button.focus();
 }
 document.addEventListener("DOMContentLoaded", () => {
-  const bottone = document.querySelector(".apri-menu");
-  if (!bottone) return;
-  const aperto = () => document.documentElement.classList.contains("menu-aperto");
-  bottone.addEventListener("click", () => apriMenu(!aperto()));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && aperto()) apriMenu(false); });
+  const button = document.querySelector(".apri-menu");
+  if (!button) return;
+  const isOpen = () => document.documentElement.classList.contains("menu-aperto");
+  button.addEventListener("click", () => openMenu(!isOpen()));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && isOpen()) openMenu(false); });
   document.addEventListener("click", (e) => {
-    if (aperto() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) apriMenu(false);
+    if (isOpen() && (!e.target.closest(".barra-voci, .apri-menu") || e.target.closest(".barra-voci a"))) openMenu(false);
   });
-  segnaTema();
+  markTheme();
 });
 
 /** Tema chiaro o scuro, ricordato nel browser: lo script nell'head lo rimette prima del primo disegno. */
-function cambiaTema() {
+function toggleTheme() {
   const html = document.documentElement;
-  const scuro = html.dataset.tema !== "scuro";
-  if (scuro) html.dataset.tema = "scuro";
+  const dark = html.dataset.tema !== "scuro";
+  if (dark) html.dataset.tema = "scuro";
   else delete html.dataset.tema;
-  try { localStorage.setItem("sciclub-tema", scuro ? "scuro" : ""); } catch (e) { /* storage negato: vale fino alla prossima pagina */ }
-  segnaTema();
+  try { localStorage.setItem("sciclub-tema", dark ? "scuro" : ""); } catch (e) { /* storage negato: vale fino alla prossima pagina */ }
+  markTheme();
 }
 
-function segnaTema() {
-  const scuro = document.documentElement.dataset.tema === "scuro";
-  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(scuro)));
+function markTheme() {
+  const dark = document.documentElement.dataset.tema === "scuro";
+  document.querySelectorAll(".voce-tema").forEach((b) => b.setAttribute("aria-pressed", String(dark)));
 }
 
 /** Chi è entrato, in alto a destra (e in fondo al menu sul telefono): email e ruolo con cui si guarda il sito. */
-function scriviUtente(accesso) {
+function writeUser(access) {
   document.querySelectorAll(".barra-utente").forEach((x) => {
-    x.innerHTML = accesso
-      ? `<span class="chi">${esc(accesso.email || "")}</span><span class="ruolo">${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</span>`
+    x.innerHTML = access
+      ? `<span class="chi">${esc(access.email || "")}</span><span class="ruolo">${esc(ROLE_NAMES[access.role] || access.role)}</span>`
       : "";
   });
 }
@@ -417,17 +417,17 @@ function scriviUtente(accesso) {
  * controlla il permesso da sé (requirePermesso), e il database le policy.
  */
 document.addEventListener("DOMContentLoaded", async () => {
-  const voci = document.querySelectorAll(".barra-voci [data-permesso]");
-  if (!voci.length) return;
-  scriviNomiBarra();
-  const accesso = await getProfile().catch(() => null);
-  for (const voce of voci) {
-    voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
+  const items = document.querySelectorAll(".barra-voci [data-permesso]");
+  if (!items.length) return;
+  writeMenuLabels();
+  const access = await getProfile().catch(() => null);
+  for (const item of items) {
+    item.hidden = !(access && access.permissions.includes(item.dataset.permesso));
   }
-  scriviUtente(accesso);
-  altezzaBarra();
-  mostraVediCome(accesso);
-  if (accesso) nomiBarra().catch(() => {});
+  writeUser(access);
+  barHeight();
+  showViewAs(access);
+  if (access) menuLabels().catch(() => {});
 });
 
 /**
@@ -437,11 +437,11 @@ document.addEventListener("DOMContentLoaded", async () => {
  * un'altezza fissa. Cambia solo con le voci, coi loro nomi e con la finestra
  * (anche lo zoom): si ricalcola lì. La stessa in ricerca/comune.js.
  */
-function altezzaBarra() {
-  const barra = document.querySelector(".barra");
-  if (barra) document.documentElement.style.setProperty("--barra-h", `${barra.offsetHeight}px`);
+function barHeight() {
+  const bar = document.querySelector(".barra");
+  if (bar) document.documentElement.style.setProperty("--barra-h", `${bar.offsetHeight}px`);
 }
-window.addEventListener("resize", altezzaBarra);
+window.addEventListener("resize", barHeight);
 
 /**
  * I nomi delle voci della barra scelti in Gestione > Ruoli (tabella
@@ -450,29 +450,29 @@ window.addEventListener("resize", altezzaBarra);
  * la pagina dopo li scrive subito invece di mostrare per un attimo quelli di
  * sempre. Gli stessi in ricerca/comune.js (i due siti non condividono file).
  */
-let NOMI_BARRA = (() => {
+let MENU_LABELS = (() => {
   try { return JSON.parse(localStorage.getItem("sciclub-voci")) || {}; } catch (e) { return {}; }
 })();
 
 /** Scrive i nomi nella barra; il nome di sempre resta in data-nome per tornarci. */
-function scriviNomiBarra() {
-  document.querySelectorAll(".barra-voci [data-permesso]").forEach((voce) => {
+function writeMenuLabels() {
+  document.querySelectorAll(".barra-voci [data-permesso]").forEach((item) => {
     // Il nome sta nello span accanto all'icona (nel gruppo, dentro summary).
-    const testo = voce.querySelector(":scope > span, :scope > summary > span") || voce;
-    if (voce.dataset.nome === undefined) voce.dataset.nome = testo.textContent;
-    testo.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
+    const text = item.querySelector(":scope > span, :scope > summary > span") || item;
+    if (item.dataset.nome === undefined) item.dataset.nome = text.textContent;
+    text.textContent = MENU_LABELS[item.dataset.permesso] || item.dataset.nome;
   });
-  altezzaBarra();
+  barHeight();
 }
 
 /** Rilegge i nomi dal database, li ricorda e li scrive nella barra. */
-async function nomiBarra() {
+async function menuLabels() {
   const { data, error } = await sb.from("nav_labels").select("key, label");
   if (error) throw error;
-  NOMI_BARRA = Object.fromEntries(data.map((r) => [r.key, r.label]));
-  try { localStorage.setItem("sciclub-voci", JSON.stringify(NOMI_BARRA)); } catch (e) { /* storage negato */ }
-  scriviNomiBarra();
-  return NOMI_BARRA;
+  MENU_LABELS = Object.fromEntries(data.map((r) => [r.key, r.label]));
+  try { localStorage.setItem("sciclub-voci", JSON.stringify(MENU_LABELS)); } catch (e) { /* storage negato */ }
+  writeMenuLabels();
+  return MENU_LABELS;
 }
 
 /**
@@ -481,28 +481,28 @@ async function nomiBarra() {
  * pulsante per tornare sé stesso. Senza, dopo un po' ci si dimenticherebbe
  * di averlo acceso e si crederebbe il sito guasto.
  */
-function mostraVediCome(accesso) {
-  if (!accesso || accesso.real_role !== "superadmin" || accesso.role === "superadmin") return;
-  const fascia = document.createElement("div");
-  fascia.className = "fascia-vedi-come";
-  fascia.setAttribute("role", "status");
-  fascia.innerHTML = `Visualizzazione come <b>${esc(NOMI_RUOLI[accesso.role] || accesso.role)}</b>
+function showViewAs(access) {
+  if (!access || access.real_role !== "superadmin" || access.role === "superadmin") return;
+  const band = document.createElement("div");
+  band.className = "fascia-vedi-come";
+  band.setAttribute("role", "status");
+  band.innerHTML = `Visualizzazione come <b>${esc(ROLE_NAMES[access.role] || access.role)}</b>
     <button type="button" class="button is-dark">Torna alla vista superadmin</button>`;
-  fascia.querySelector("button").addEventListener("click", () => vediCome(null));
-  document.body.append(fascia);
+  band.querySelector("button").addEventListener("click", () => viewAs(null));
+  document.body.append(band);
 }
 
 /** Guarda il sito come `ruolo` (null per tornare superadmin) e riparte dalla sua pagina. */
-async function vediCome(ruolo) {
-  const { error } = await sb.rpc("set_view_as", { role: ruolo });
-  if (error) { showToast("Impossibile cambiare vista: " + messaggioErrore(error), "is-danger"); return; }
-  _accessoCache = null;
-  const accesso = await getProfile();
-  location.href = ruolo ? paginaDiArrivo(accesso) || "index.html" : "gestione.html";
+async function viewAs(roleKey) {
+  const { error } = await sb.rpc("set_view_as", { role: roleKey });
+  if (error) { showToast("Impossibile cambiare vista: " + errorMessage(error), "is-danger"); return; }
+  _accessCache = null;
+  const access = await getProfile();
+  location.href = roleKey ? landingPage(access) || "index.html" : "gestione.html";
 }
 
 /** Come si chiamano i ruoli a schermo. */
-const NOMI_RUOLI = {
+const ROLE_NAMES = {
   superadmin: "Superadmin",
   admin: "Admin",
   tesoriere: "Tesoriere",
@@ -520,27 +520,27 @@ const NOMI_RUOLI = {
  * niente: chi ha il documento davanti decide. `dopo` viene chiamata quando il
  * codice proposto finisce nel campo.
  */
-function mostraAvvisoCF(box, campo, esito, dopo) {
-  if (!esito || esito.ok) {
+function showTaxCodeNotice(box, field, outcome, after) {
+  if (!outcome || outcome.ok) {
     box.hidden = true;
     box.replaceChildren();
     return;
   }
-  const riga = document.createElement("p");
-  riga.textContent = esito.messaggio || (campo.value.trim()
-    ? `Codice fiscale errato${esito.suggerito ? ", codice proposto:" : "."}` : "Codice proposto:");
-  box.replaceChildren(riga);
-  if (esito.suggerito) {
+  const row = document.createElement("p");
+  row.textContent = outcome.messaggio || (field.value.trim()
+    ? `Codice fiscale errato${outcome.suggerito ? ", codice proposto:" : "."}` : "Codice proposto:");
+  box.replaceChildren(row);
+  if (outcome.suggerito) {
     const usa = document.createElement("button");
     usa.type = "button";
     usa.className = "button is-link is-small";
-    usa.setAttribute("aria-label", `Usa il codice proposto ${esito.suggerito}`);
-    usa.innerHTML = `<code>${esc(esito.suggerito)}</code>`;
+    usa.setAttribute("aria-label", `Usa il codice proposto ${outcome.suggerito}`);
+    usa.innerHTML = `<code>${esc(outcome.suggerito)}</code>`;
     usa.addEventListener("click", () => {
-      campo.value = esito.suggerito;
+      field.value = outcome.suggerito;
       box.hidden = true;
       box.replaceChildren();
-      if (dopo) dopo();
+      if (after) after();
     });
     box.append(usa);
   }
@@ -564,7 +564,7 @@ function dataIt(iso) {
 
 // Intestazione della colonna e come si ricava dal socio. Un campo nuovo va
 // aggiunto anche a scaricaSoci() in riepilogo.html, che legge i soci.
-const COLONNE_ASSICURAZIONE = [
+const INSURANCE_COLUMNS = [
   ["Cognome", (s) => s.last_name],
   ["Nome", (s) => s.first_name],
   ["Data di nascita", (s) => dataIt(s.birth_date)],
@@ -584,22 +584,22 @@ const COLONNE_ASSICURAZIONE = [
  * con due clic di fila. `cosa` finisce nel messaggio d'errore ("per l'Excel").
  * Se il caricamento fallisce si può riprovare.
  */
-const _scriptInArrivo = {};
-function caricaScript(src, cosa, integrita) {
-  _scriptInArrivo[src] ??= new Promise((ok, ko) => {
+const _scriptLoading = {};
+function loadScript(src, what, integrity) {
+  _scriptLoading[src] ??= new Promise((ok, ko) => {
     const script = document.createElement("script");
     script.src = src;
     // Con l'impronta il browser rifiuta un file cambiato sul CDN.
-    if (integrita) { script.integrity = integrita; script.crossOrigin = "anonymous"; }
+    if (integrity) { script.integrity = integrity; script.crossOrigin = "anonymous"; }
     script.onload = ok;
     script.onerror = () => {
-      delete _scriptInArrivo[src];
+      delete _scriptLoading[src];
       script.remove();
-      ko(new Error(`impossibile scaricare il modulo ${cosa}: verificare la connessione e riprovare.`));
+      ko(new Error(`impossibile scaricare il modulo ${what}: verificare la connessione e riprovare.`));
     };
     document.head.append(script);
   });
-  return _scriptInArrivo[src];
+  return _scriptLoading[src];
 }
 
 // SheetJS si carica solo al primo clic, e serve due volte a stagione. Usata
@@ -609,9 +609,9 @@ function caricaScript(src, cosa, integrita) {
 // Dal 16/10/2026 è xlsx-js-style 1.2.0: la stessa SheetJS 0.18.5 (stessa
 // API, XLSX) che in più scrive gli stili delle celle, grassetto e corpo del
 // carattere; la versione Community non li scrive. Fissata con l'impronta.
-function caricaXlsx() {
+function loadXlsx() {
   if (window.XLSX) return Promise.resolve();
-  return caricaScript("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js", "per l'Excel",
+  return loadScript("https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js", "per l'Excel",
     "sha384-OUW9euuUyxyHcAhTqbhI+Iyb8LMssXt/cpz0yXhs9UWG2/R/uaWdakx/4cfww7Vb");
 }
 
@@ -622,23 +622,23 @@ function caricaXlsx() {
  * grandi sei colonne non stanno più in un A4 in verticale, e la data di
  * nascita e il telefono finivano su un secondo foglio di carta.
  */
-function scaricaExcelDaStampare(libro, file) {
-  for (const nome of libro.SheetNames) {
-    libro.Sheets[nome]["!margins"] = { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
+function downloadPrintableExcel(book, file) {
+  for (const nome of book.SheetNames) {
+    book.Sheets[nome]["!margins"] = { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 };
   }
-  const zip = XLSX.CFB.read(new Uint8Array(XLSX.write(libro, { type: "array", bookType: "xlsx" })), { type: "array" });
-  zip.FileIndex.forEach((voce, i) => {
+  const zip = XLSX.CFB.read(new Uint8Array(XLSX.write(book, { type: "array", bookType: "xlsx" })), { type: "array" });
+  zip.FileIndex.forEach((item, i) => {
     if (!/\/xl\/worksheets\/sheet\d+\.xml$/.test(zip.FullPaths[i])) return;
-    const xml = new TextDecoder().decode(voce.content)
+    const xml = new TextDecoder().decode(item.content)
       // sheetPr va per primo dentro worksheet, pageSetup subito dopo pageMargins (ordine dello standard).
       .replace(/(<worksheet[^>]*>)/, '$1<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>')
       .replace(/(<pageMargins[^>]*\/>)/, '$1<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>');
-    voce.content = new TextEncoder().encode(xml);
-    voce.size = voce.content.length;
+    item.content = new TextEncoder().encode(xml);
+    item.size = item.content.length;
   });
-  const dati = XLSX.CFB.write(zip, { fileType: "zip", type: "array" });
+  const records = XLSX.CFB.write(zip, { fileType: "zip", type: "array" });
   const link = document.createElement("a");
-  link.href = URL.createObjectURL(new Blob([dati], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  link.href = URL.createObjectURL(new Blob([records], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   link.download = file;
   document.body.append(link);
   link.click();
@@ -654,7 +654,7 @@ function dataExcel(iso) {
 }
 
 /** Lunghezza a schermo di una cella: una data vale "31/12/2026", non il numero di serie di Excel. */
-const lunghezzaCella = (v) => (v instanceof Date ? 10 : String(v ?? "").length);
+const cellLength = (v) => (v instanceof Date ? 10 : String(v ?? "").length);
 
 /**
  * Le larghezze delle colonne (!cols), dalla cella più lunga di ognuna: prima
@@ -663,12 +663,12 @@ const lunghezzaCella = (v) => (v instanceof Date ? 10 : String(v ?? "").length);
  * tutta la larghezza. `fattore` allarga per un corpo più grande dell'11,
  * `fattoreTesta` per l'intestazione (in grassetto e più grande dei dati).
  */
-function larghezzeColonne(righe, intestazione = 0, fattore = 1, fattoreTesta = fattore) {
-  const [testa = [], ...dati] = righe.slice(intestazione);
-  const colonne = Math.max(0, testa.length, ...dati.map((r) => r.length));
-  return Array.from({ length: colonne }, (_, c) => {
-    const larga = Math.max(lunghezzaCella(testa[c]) * fattoreTesta, ...dati.map((r) => lunghezzaCella(r[c]) * fattore));
-    return { wch: Math.min(50, Math.max(8, Math.ceil(larga) + 3)) };
+function columnWidths(rows, heading = 0, factor = 1, headFactor = factor) {
+  const [headerEl = [], ...records] = rows.slice(heading);
+  const columns = Math.max(0, headerEl.length, ...records.map((r) => r.length));
+  return Array.from({ length: columns }, (_, c) => {
+    const wide = Math.max(cellLength(headerEl[c]) * headFactor, ...records.map((r) => cellLength(r[c]) * factor));
+    return { wch: Math.min(50, Math.max(8, Math.ceil(wide) + 3)) };
   });
 }
 
@@ -679,52 +679,52 @@ function larghezzeColonne(righe, intestazione = 0, fattore = 1, fattoreTesta = f
  * righe prima di `intestazione` sono titoli: grassetto 18, unite su tutte le
  * colonne. `opzioni` passa ad aoa_to_sheet (dateNF).
  */
-function foglioLeggibile(righe, { intestazione = 0, ...opzioni } = {}) {
-  const foglio = XLSX.utils.aoa_to_sheet(righe, opzioni);
-  const cols = larghezzeColonne(righe, intestazione, 1.3, 1.5);
-  foglio["!cols"] = cols;
+function readableSheet(rows, { intestazione: heading = 0, ...options } = {}) {
+  const sheet = XLSX.utils.aoa_to_sheet(rows, options);
+  const cols = columnWidths(rows, heading, 1.3, 1.5);
+  sheet["!cols"] = cols;
   const font = { name: "Calibri", sz: 14 };
-  const stili = {
+  const styles = {
     titolo: { font: { ...font, sz: 18, bold: true, color: { rgb: "084C8D" } }, alignment: { vertical: "center" } },
     testa: { font: { ...font, sz: 15, bold: true, color: { rgb: "FFFFFF" } }, fill: { patternType: "solid", fgColor: { rgb: "084C8D" } },
       alignment: { vertical: "center" } },
     // A sinistra anche date e numeri: a destra una data toccava la colonna dopo.
     dati: { font, alignment: { vertical: "center", horizontal: "left" } },
   };
-  for (const [indirizzo, cella] of Object.entries(foglio)) {
-    if (indirizzo[0] === "!") continue;
-    const { r } = XLSX.utils.decode_cell(indirizzo);
-    const stile = stili[r < intestazione ? "titolo" : r === intestazione ? "testa" : "dati"];
+  for (const [addressText, cell] of Object.entries(sheet)) {
+    if (addressText[0] === "!") continue;
+    const { r } = XLSX.utils.decode_cell(addressText);
+    const stile = styles[r < heading ? "titolo" : r === heading ? "testa" : "dati"];
     // Il formato delle date (dateNF) va dentro lo stile, se no lo stile lo cancella.
-    cella.s = cella.z ? { ...stile, numFmt: cella.z } : stile;
+    cell.s = cell.z ? { ...stile, numFmt: cell.z } : stile;
   }
   // Altezze delle righe per il corpo più grande: Excel non le rifà da solo.
-  foglio["!rows"] = righe.map((_, r) => ({ hpt: r < intestazione ? 30 : r === intestazione ? 26 : 22 }));
-  if (intestazione > 0) {
-    foglio["!merges"] = Array.from({ length: intestazione }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } }));
+  sheet["!rows"] = rows.map((_, r) => ({ hpt: r < heading ? 30 : r === heading ? 26 : 22 }));
+  if (heading > 0) {
+    sheet["!merges"] = Array.from({ length: heading }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } }));
   }
-  return foglio;
+  return sheet;
 }
 
 // jsPDF per la scheda del socio, anche lui solo al primo clic.
-function caricaPdf() {
+function loadPdf() {
   if (window.jspdf) return Promise.resolve();
-  return caricaScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF",
+  return loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", "per il PDF",
     "sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk");
 }
 
 /** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
-async function scaricaExcel(righe, nome) {
-  if (!righe.length) { showToast("Nessun socio da scaricare."); return; }
-  await caricaXlsx();
-  const foglio = foglioLeggibile([
-    COLONNE_ASSICURAZIONE.map(([titolo]) => titolo),
-    ...righe.map((s) => COLONNE_ASSICURAZIONE.map(([, valore]) => valore(s) ?? "")),
+async function downloadExcel(rows, nome) {
+  if (!rows.length) { showToast("Nessun socio da scaricare."); return; }
+  await loadXlsx();
+  const sheet = readableSheet([
+    INSURANCE_COLUMNS.map(([titleText]) => titleText),
+    ...rows.map((s) => INSURANCE_COLUMNS.map(([, theValue]) => theValue(s) ?? "")),
   ]);
-  const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, foglio, "Soci");
-  XLSX.writeFile(libro, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
-  showToast(righe.length === 1 ? "Scaricato 1 socio." : `Scaricati ${righe.length} soci.`);
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, sheet, "Soci");
+  XLSX.writeFile(book, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast(rows.length === 1 ? "Scaricato 1 socio." : `Scaricati ${rows.length} soci.`);
 }
 
 /**
@@ -733,14 +733,14 @@ async function scaricaExcel(righe, nome) {
  * soci, non lontano) arriverebbe all'assicurazione senza che nessuno se ne
  * accorga. `crea` rifà la stessa richiesta, che deve avere un ordine stabile.
  */
-async function tutteLeRighe(crea) {
-  const PAGINA = 1000;
-  const righe = [];
-  for (let da = 0; ; da += PAGINA) {
-    const { data, error } = await crea().range(da, da + PAGINA - 1);
+async function allRows(create) {
+  const PAGE = 1000;
+  const rows = [];
+  for (let da = 0; ; da += PAGE) {
+    const { data, error } = await create().range(da, da + PAGE - 1);
     if (error) throw error;
-    righe.push(...data);
-    if (data.length < PAGINA) return righe;
+    rows.push(...data);
+    if (data.length < PAGE) return rows;
   }
 }
 
@@ -749,9 +749,9 @@ async function tutteLeRighe(crea) {
  * o stringa vuota. Colori in brand.css, "Giorni delle gite"; è la stessa di
  * etichettaGiorno() in ricerca/comune.js.
  */
-const NOMI_GIORNI = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
-function etichettaGiorno(giorno) {
-  return NOMI_GIORNI[giorno] ? `<span class="giorno-etichetta" data-giorno="${giorno}">${NOMI_GIORNI[giorno]}</span>` : "";
+const DAY_NAMES = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
+function dayLabel(dayKey) {
+  return DAY_NAMES[dayKey] ? `<span class="giorno-etichetta" data-giorno="${dayKey}">${DAY_NAMES[dayKey]}</span>` : "";
 }
 
 /**
@@ -760,7 +760,7 @@ function etichettaGiorno(giorno) {
  * members.name_key ("DANGELO MARIO"): ricerca e doppioni confrontano quella,
  * così la stessa persona scritta in due modi si trova.
  */
-function chiaveNome(t) {
+function nameKey(t) {
   return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
 }
 
@@ -780,30 +780,30 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(
  * niente (salvare, incassare): il "Sì" è blu invece che rosso.
  * Stile in brand.css (dialog.finestra.finestra-domanda).
  */
-function chiedi(dove, domanda, si, alSi, { pericolo = true, dettagli = null } = {}) {
+function ask(dove, question, si, alSi, { pericolo: danger = true, dettagli: details = null } = {}) {
   document.getElementById("finestraDomanda")?.remove();
-  const finestra = document.createElement("dialog");
-  finestra.id = "finestraDomanda";
-  finestra.className = "finestra finestra-domanda";
-  finestra.setAttribute("aria-labelledby", "finestraDomandaTesto");
-  finestra.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(domanda)}</p>
-    ${dettagli ? tabellaDati(dettagli) : ""}
+  const dialog = document.createElement("dialog");
+  dialog.id = "finestraDomanda";
+  dialog.className = "finestra finestra-domanda";
+  dialog.setAttribute("aria-labelledby", "finestraDomandaTesto");
+  dialog.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(question)}</p>
+    ${details ? dataTable(details) : ""}
     <div class="buttons">
       <button type="button" class="button is-medium" data-no>Annulla</button>
-      <button type="button" class="button is-medium ${pericolo ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>
+      <button type="button" class="button is-medium ${danger ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>
     </div>`;
-  const chiudi = () => {
-    finestra.close();
-    finestra.remove();
+  const doClose = () => {
+    dialog.close();
+    dialog.remove();
     dove?.querySelector("button:not([hidden]):not([disabled])")?.focus();
   };
-  finestra.querySelector("[data-si]").addEventListener("click", () => { chiudi(); alSi(); });
-  finestra.querySelector("[data-no]").addEventListener("click", chiudi);
+  dialog.querySelector("[data-si]").addEventListener("click", () => { doClose(); alSi(); });
+  dialog.querySelector("[data-no]").addEventListener("click", doClose);
   // Esc vale come Annulla.
-  finestra.addEventListener("cancel", (e) => { e.preventDefault(); chiudi(); });
-  document.body.append(finestra);
-  finestra.showModal();
-  finestra.querySelector("[data-no]").focus();
+  dialog.addEventListener("cancel", (e) => { e.preventDefault(); doClose(); });
+  document.body.append(dialog);
+  dialog.showModal();
+  dialog.querySelector("[data-no]").focus();
 }
 
 /**
@@ -813,9 +813,9 @@ function chiedi(dove, domanda, si, alSi, { pericolo = true, dettagli = null } = 
  * stavano in una frase sola ("Salvare ROSSI MARIO? Codice fiscale …, nascita
  * …") e non si leggevano.
  */
-function tabellaDati(righe) {
-  return `<table class="tabella-dati"><tbody>${righe.map(([etichetta, valore]) => `<tr><th scope="row">${esc(etichetta)}</th>
-    <td${valore ? "" : ' class="manca"'}>${valore ? esc(valore) : "non scritto"}</td></tr>`).join("")}</tbody></table>`;
+function dataTable(rows) {
+  return `<table class="tabella-dati"><tbody>${rows.map(([label, theValue]) => `<tr><th scope="row">${esc(label)}</th>
+    <td${theValue ? "" : ' class="manca"'}>${theValue ? esc(theValue) : "non scritto"}</td></tr>`).join("")}</tbody></table>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -842,16 +842,16 @@ function fmt(v) {
  * Saldo di un socio. Il database lo espone già come colonna generata: questa
  * funzione serve per l'anteprima nel form, prima che la riga venga salvata.
  */
-function saldoDi(socio) {
-  return num(socio.total) - num(socio.paid);
+function balanceOf(member) {
+  return num(member.total) - num(member.paid);
 }
 
 /** Totale, acconto e saldo di un capofamiglia più i suoi familiari a carico. */
-function totaliNucleo(capofamiglia, familiari = []) {
-  const righe = [capofamiglia, ...familiari].filter(Boolean);
-  const totale = righe.reduce((s, r) => s + num(r.total), 0);
-  const acconto = righe.reduce((s, r) => s + num(r.paid), 0);
-  return { totale, acconto, saldo: totale - acconto };
+function householdTotals(householdHead, familyMembers = []) {
+  const rows = [householdHead, ...familyMembers].filter(Boolean);
+  const totalAmount = rows.reduce((s, r) => s + num(r.total), 0);
+  const deposit = rows.reduce((s, r) => s + num(r.paid), 0);
+  return { totale: totalAmount, acconto: deposit, saldo: totalAmount - deposit };
 }
 
 // ---------------------------------------------------------------------------
@@ -864,7 +864,7 @@ function totaliNucleo(capofamiglia, familiari = []) {
  * l'assicurazione (card_price() nel database). Anche le voci spente (active false): un socio
  * che le ha già le tiene, e il suo totale non cambia; nuove non si scelgono.
  */
-async function caricaPrezzi() {
+async function loadPrices() {
   const { data, error } = await sb
     .from("prices")
     .select("category, name, price:card_price, min_role, trips, day, insurance, people, active")
@@ -874,15 +874,15 @@ async function caricaPrezzi() {
     .order("name");
   if (error) throw error;
 
-  const perCategoria = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], PRESCIISTICA: [], CORSO: [] };
+  const byCategory = { TESSERA: [], FAMIGLIA: [], ABBONAMENTO: [], PRESCIISTICA: [], CORSO: [] };
   data.forEach((p) => {
-    if (perCategoria[p.category]) perCategoria[p.category].push(p);
+    if (byCategory[p.category]) byCategory[p.category].push(p);
   });
-  return perCategoria;
+  return byCategory;
 }
 
 /** Luoghi di partenza: { SABATO: [...], DOMENICA: [...] } */
-async function caricaPartenze() {
+async function loadDepartures() {
   const { data, error } = await sb
     .from("departures")
     .select("day, place")
@@ -890,11 +890,11 @@ async function caricaPartenze() {
     .order("place");
   if (error) throw error;
 
-  const perGiorno = { SABATO: [], DOMENICA: [] };
+  const byDay = { SABATO: [], DOMENICA: [] };
   data.forEach((p) => {
-    if (perGiorno[p.day]) perGiorno[p.day].push(p.place);
+    if (byDay[p.day]) byDay[p.day].push(p.place);
   });
-  return perGiorno;
+  return byDay;
 }
 
 /**
@@ -902,29 +902,29 @@ async function caricaPartenze() {
  * operatore salva, la callback viene richiamata. Sostituisce il refresh
  * manuale della 1.x.
  */
-function ascoltaSoci(callback) {
+function listenMembers(callback) {
   // Un incasso cambia le righe di tutta la famiglia, cioè un evento per riga: si
   // aspetta che la raffica finisca e si ricarica una volta. E mai due insieme: una
   // lettura più vecchia che arriva dopo coprirebbe quella nuova.
-  let attesa = null, inCorso = false, ancora = false;
-  const ricarica = async () => {
-    if (inCorso) { ancora = true; return; }
-    inCorso = true;
+  let waiting = null, inProgress = false, still = false;
+  const reload = async () => {
+    if (inProgress) { still = true; return; }
+    inProgress = true;
     try { await callback(); } catch { /* la pagina dice da sé i suoi errori */ }
-    inCorso = false;
-    if (ancora) { ancora = false; ricarica(); }
+    inProgress = false;
+    if (still) { still = false; reload(); }
   };
   return sb
     .channel("soci-live")
     .on("postgres_changes", { event: "*", schema: "public", table: "members" }, () => {
-      clearTimeout(attesa);
-      attesa = setTimeout(ricarica, 400);
+      clearTimeout(waiting);
+      waiting = setTimeout(reload, 400);
     })
     .subscribe();
 }
 
 /** Errore leggibile a partire da un errore Supabase. */
-function messaggioErrore(error) {
+function errorMessage(error) {
   if (!error) return "Errore sconosciuto";
   if (error.code === "PGRST301" || error.status === 401) {
     return "Sessione scaduta: effettuare di nuovo l'accesso.";

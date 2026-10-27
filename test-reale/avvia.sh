@@ -14,7 +14,7 @@
 # e servi.py che serve le pagine e fa da Supabase sullo stesso indirizzo. Ogni
 # prova apre la pagina col suo ruolo già entrato (sessione nel localStorage) e
 # scrive l'esito nel titolo, come test-browser/esegui.sh. Se accanto alla prova
-# c'è un .sql, la sua riga (un json) arriva alla pagina come window.ATTESO:
+# c'è un .sql, la sua riga (un json) arriva alla pagina come window.EXPECTED:
 # quello che la pagina deve mostrare, calcolato dal database e non dalla pagina.
 # La produzione non si tocca: la pagina parla solo con 127.0.0.1.
 set -u
@@ -177,7 +177,7 @@ for script in "${PROVE[@]}"; do
   for pagina in $pagine; do
   dir="$(dirname "$pagina")"; base="$(basename "$pagina")"
   copia="$dir/prova-${script%.js}-$base"
-  inizio="<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione)); window.ATTESO = $atteso;</script>"
+  inizio="<script>localStorage.setItem('sb-127-auth-token', JSON.stringify($sessione)); window.EXPECTED = $atteso;</script>"
   # supabase-js vero (copia locale); la prova subito dopo, prima degli script della pagina.
   su="$( [ "$dir" = "." ] && echo "" || echo "../")"
   python3 - "$TMP/sito/$pagina" "$TMP/sito/$copia" "$inizio" "$su$script" "${su}supabase-locale.js" <<'PY'

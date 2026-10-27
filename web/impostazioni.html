@@ -70,8 +70,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -105,8 +105,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -222,14 +222,14 @@
   const el = (id) => document.getElementById(id);
 
   (async function init() {
-    if (!(await requirePermesso("gestione"))) return;
-    el("btnAggiungiPrezzo").addEventListener("click", aggiungiPrezzo);
-    el("btnAggiungiPartenza").addEventListener("click", aggiungiPartenza);
-    el("btnAggiungiAss").addEventListener("click", aggiungiAssicurazione);
-    el("btnSalvaTessereDa").addEventListener("click", salvaTessereDa);
+    if (!(await requirePermission("gestione"))) return;
+    el("btnAggiungiPrezzo").addEventListener("click", addPrice);
+    el("btnAggiungiPartenza").addEventListener("click", addDeparture);
+    el("btnAggiungiAss").addEventListener("click", addInsurance);
+    el("btnSalvaTessereDa").addEventListener("click", saveCardsFrom);
     // Il listino usa i nomi e i prezzi delle assicurazioni: prima loro.
-    await caricaAssicurazioni();
-    await Promise.all([caricaPrezziTutti(), caricaPartenzeTutte(), caricaTessereDa()]);
+    await loadInsurances();
+    await Promise.all([loadAllPrices(), loadAllDepartures(), loadCardsFrom()]);
   })();
 
   // ---------------------------------------------------------------------
@@ -242,29 +242,29 @@
   // rimettono a mano i valori di prima, la riga si spegne da sola.
   // ---------------------------------------------------------------------
 
-  function valoriRiga(riga) {
-    return JSON.stringify([...riga.querySelectorAll("input, select, textarea")]
+  function rowValues(row) {
+    return JSON.stringify([...row.querySelectorAll("input, select, textarea")]
       .map((c) => (c.type === "checkbox" ? c.checked : c.value)));
   }
 
-  function aggiornaStatoRiga(riga) {
-    const modificata = valoriRiga(riga) !== riga.dataset.salvato;
-    riga.classList.toggle("modificata", modificata);
-    const bottone = riga.querySelector("[data-salva]");
-    bottone.classList.toggle("is-warning", modificata);
-    bottone.textContent = modificata ? "Salva modifiche" : "Salva";
+  function updateRowStatus(row) {
+    const modifiedOne = rowValues(row) !== row.dataset.salvato;
+    row.classList.toggle("modificata", modifiedOne);
+    const button = row.querySelector("[data-salva]");
+    button.classList.toggle("is-warning", modifiedOne);
+    button.textContent = modifiedOne ? "Salva modifiche" : "Salva";
   }
 
   /** Fotografa i valori salvati della riga e la accende quando cambiano. */
-  function sorvegliaRiga(riga) {
-    riga.dataset.salvato = valoriRiga(riga);
-    riga.addEventListener("input", () => aggiornaStatoRiga(riga));
-    riga.addEventListener("change", () => aggiornaStatoRiga(riga));
+  function watchRow(row) {
+    row.dataset.salvato = rowValues(row);
+    row.addEventListener("input", () => updateRowStatus(row));
+    row.addEventListener("change", () => updateRowStatus(row));
   }
 
   /** Dopo aver disegnato una tabella: fotografa i valori salvati di ogni riga. */
-  function sorvegliaRighe(tabella) {
-    tabella.querySelectorAll("tr[data-id]").forEach(sorvegliaRiga);
+  function watchRows(table) {
+    table.querySelectorAll("tr[data-id]").forEach(watchRow);
   }
 
   // ---------------------------------------------------------------------
@@ -276,43 +276,43 @@
   // capo incollati diventano uno spazio al salvataggio.
   // ---------------------------------------------------------------------
 
-  const campoNome = (valore, attributo, etichetta) =>
-    `<textarea class="textarea campo-nome" ${attributo} rows="1" aria-label="${etichetta}">${esc(valore)}</textarea>`;
-  const nomePulito = (campo) => campo.value.replace(/\s+/g, " ").trim();
+  const nameField = (theValue, attribute, label) =>
+    `<textarea class="textarea campo-nome" ${attribute} rows="1" aria-label="${label}">${esc(theValue)}</textarea>`;
+  const cleanName = (field) => field.value.replace(/\s+/g, " ").trim();
 
-  function adatta(campo) {
-    campo.style.height = "auto";
-    campo.style.height = campo.scrollHeight + campo.offsetHeight - campo.clientHeight + "px";
+  function fitText(field) {
+    field.style.height = "auto";
+    field.style.height = field.scrollHeight + field.offsetHeight - field.clientHeight + "px";
   }
-  const adattaTutti = () => document.querySelectorAll("textarea.campo-nome").forEach(adatta);
-  window.addEventListener("resize", adattaTutti);
+  const fitAll = () => document.querySelectorAll("textarea.campo-nome").forEach(fitText);
+  window.addEventListener("resize", fitAll);
   // A+ cambia la grandezza del testo, e con lei le righe del nome.
-  new MutationObserver(adattaTutti).observe(document.documentElement, { attributes: true, attributeFilter: ["data-testo"] });
-  el("contenuto").addEventListener("input", (e) => { if (e.target.matches("textarea.campo-nome")) adatta(e.target); });
+  new MutationObserver(fitAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-testo"] });
+  el("contenuto").addEventListener("input", (e) => { if (e.target.matches("textarea.campo-nome")) fitText(e.target); });
   el("contenuto").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && e.target.matches("textarea.campo-nome")) e.preventDefault();
   });
 
   /** Prezzo in euro interi, anche 0; null se il campo è vuoto, negativo o coi centesimi. */
-  function leggiEuro(campo) {
-    const testo = campo.value.trim();
-    const euro = Number(testo);
+  function readEuro(field) {
+    const text = field.value.trim();
+    const euro = Number(text);
     // Euro interi o con i 50 centesimi, come in tutto il sito.
-    return testo !== "" && Number.isInteger(euro * 2) && euro >= 0 ? euro : null;
+    return text !== "" && Number.isInteger(euro * 2) && euro >= 0 ? euro : null;
   }
-  const AVVISO_EURO = "Inserire il prezzo in euro, intero o con 50 centesimi (es. 12 o 12,50; anche 0).";
+  const EURO_WARNING = "Inserire il prezzo in euro, intero o con 50 centesimi (es. 12 o 12,50; anche 0).";
 
   /** Salvataggio riuscito: quello che c'è a schermo è ora quello salvato. */
-  function segnaSalvata(riga) {
-    riga.dataset.salvato = valoriRiga(riga);
-    aggiornaStatoRiga(riga);
+  function markSaved(row) {
+    row.dataset.salvato = rowValues(row);
+    updateRowStatus(row);
   }
 
   // Lasciare la pagina con righe non salvate: il browser chiede conferma.
-  window.addEventListener("beforeunload", (evento) => {
+  window.addEventListener("beforeunload", (theEvent) => {
     if (document.querySelector("tr.modificata")) {
-      evento.preventDefault();
-      evento.returnValue = "";
+      theEvent.preventDefault();
+      theEvent.returnValue = "";
     }
   });
 
@@ -320,39 +320,39 @@
   // nel frattempo) non dà errore: torna senza righe. Senza questo controllo la
   // pagina diceva «salvato».
   // In Soci le partenze di un socio si salvano separate da virgola (spuntaPartenze()).
-  const SENZA_VIRGOLA = "Il luogo non può contenere virgole, che in Soci separano le partenze. Usare il trattino (es. ASTI - PIAZZA D'ARMI).";
-  const NON_SALVATO = "Modifica non salvata: la riga non esiste più o mancano i permessi per modificarla. Ricaricare la pagina.";
-  function scritta({ data, error }) {
+  const WITHOUT_COMMA = "Il luogo non può contenere virgole, che in Soci separano le partenze. Usare il trattino (es. ASTI - PIAZZA D'ARMI).";
+  const NOT_SAVED = "Modifica non salvata: la riga non esiste più o mancano i permessi per modificarla. Ricaricare la pagina.";
+  function caption({ data, error }) {
     if (error) throw error;
-    if (!data?.length) throw new Error(NON_SALVATO);
+    if (!data?.length) throw new Error(NOT_SAVED);
   }
 
   /** Con una riga gialla nella tabella non si aggiunge: rileggerla perderebbe le modifiche. */
-  function rigaDaSalvare(tabella) {
-    const aperta = el(tabella).querySelector("tr.modificata");
-    if (aperta) segnaErrore(aperta.querySelector("[data-salva]"),
+  function rowToSave(table) {
+    const openOne = el(table).querySelector("tr.modificata");
+    if (openOne) markError(openOne.querySelector("[data-salva]"),
       "Salvare prima le righe modificate (evidenziate in giallo): l'aggiunta ricarica la tabella e le modifiche andrebbero perse.");
-    return Boolean(aperta);
+    return Boolean(openOne);
   }
 
   // ---------------------------------------------------------------------
   // Numeri tessera liberi: da dove la pagina Soci li conta (settings.card_gaps_from)
   // ---------------------------------------------------------------------
 
-  async function caricaTessereDa() {
+  async function loadCardsFrom() {
     const { data, error } = await sb.from("settings").select("value").eq("key", "card_gaps_from");
-    if (error) { showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger"); return; }
+    if (error) { showToast("Errore di caricamento: " + errorMessage(error), "is-danger"); return; }
     el("tessereDa").value = data[0]?.value || "";
   }
 
-  async function salvaTessereDa() {
-    const valore = el("tessereDa").value.trim();
+  async function saveCardsFrom() {
+    const theValue = el("tessereDa").value.trim();
     // Come il vincolo settings_card_gaps_from_valid del database.
-    if (!/^[1-9]\d{0,8}$/.test(valore)) { segnaErrore(el("tessereDa"), "Inserire un numero intero maggiore o uguale a 1 (es. 21)."); return; }
+    if (!/^[1-9]\d{0,8}$/.test(theValue)) { markError(el("tessereDa"), "Inserire un numero intero maggiore o uguale a 1 (es. 21)."); return; }
     try {
-      scritta(await sb.from("settings").update({ value: valore }).eq("key", "card_gaps_from").select("key"));
-    } catch (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
-    showToast(`Numeri tessera liberi segnalati in Soci a partire dal ${valore}.`);
+      caption(await sb.from("settings").update({ value: theValue }).eq("key", "card_gaps_from").select("key"));
+    } catch (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    showToast(`Numeri tessera liberi segnalati in Soci a partire dal ${theValue}.`);
   }
 
   // ---------------------------------------------------------------------
@@ -363,37 +363,37 @@
   // Assicurazione finisce chi ce l'ha (prices.insurance) e quanto si somma
   // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto). Anche la
   // presciistica ne ha una: comprende tessera, quota e assicurazione.
-  let ASSICURAZIONI = [];
-  const conAssicurazione = (categoria) => ["TESSERA", "PRESCIISTICA", "FAMIGLIA"].includes(categoria);
+  let INSURANCES = [];
+  const withInsurance = (categoryName) => ["TESSERA", "PRESCIISTICA", "FAMIGLIA"].includes(categoryName);
   // Le agevolazioni famiglia pagano l'assicurazione per ogni persona, lette dal nome come fa il database.
-  const personeDelNome = (riga) => (riga.dataset.categoria === "FAMIGLIA"
-    && Number(nomePulito(riga.querySelector("[data-nome]")).toUpperCase().match(/(\d+)\s*PERSON/)?.[1])) || 1;
-  const opzioniAssicurazione = (scelta) => [{ code: "", name: "nessuna" }, ...ASSICURAZIONI].map((a) =>
-    `<option value="${esc(a.code)}" ${(scelta || "") === a.code ? "selected" : ""}>${esc(a.name)}${
+  const peopleFromName = (row) => (row.dataset.categoria === "FAMIGLIA"
+    && Number(cleanName(row.querySelector("[data-nome]")).toUpperCase().match(/(\d+)\s*PERSON/)?.[1])) || 1;
+  const insuranceOptions = (choice) => [{ code: "", name: "nessuna" }, ...INSURANCES].map((a) =>
+    `<option value="${esc(a.code)}" ${(choice || "") === a.code ? "selected" : ""}>${esc(a.name)}${
       a.code ? ` (${fmt(a.price)})` : ""}</option>`).join("");
 
   /** Il prezzo della riga in Soci: quota più assicurazione, se non la paga il club (card_price() nel database). */
-  function aggiornaPagaSocio(riga) {
-    const scritta = riga.querySelector("[data-paga]");
-    if (!scritta) return;
-    const codice = riga.querySelector("[data-assicurazione]")?.value;
-    const club = riga.querySelector("[data-pagata-club]");
-    if (club) club.closest("label").hidden = !codice;
-    const assicurazione = ASSICURAZIONI.find((a) => a.code === codice);
-    const quota = parseFloat(riga.querySelector("[data-prezzo]").value) || 0;
-    const perAssicurazione = assicurazione && !club?.checked ? num(assicurazione.price) * personeDelNome(riga) : 0;
-    scritta.textContent = fmt(quota + perAssicurazione);
+  function updatePaysForMember(row) {
+    const caption = row.querySelector("[data-paga]");
+    if (!caption) return;
+    const codeValue = row.querySelector("[data-assicurazione]")?.value;
+    const club = row.querySelector("[data-pagata-club]");
+    if (club) club.closest("label").hidden = !codeValue;
+    const insuranceItem = INSURANCES.find((a) => a.code === codeValue);
+    const quota = parseFloat(row.querySelector("[data-prezzo]").value) || 0;
+    const byInsurance = insuranceItem && !club?.checked ? num(insuranceItem.price) * peopleFromName(row) : 0;
+    caption.textContent = fmt(quota + byInsurance);
   }
 
-  function rigaPrezzo(p) {
+  function priceRow(p) {
     return `
       <tr data-id="${p.id}" data-categoria="${esc(p.category)}">
         <td data-etichetta="Categoria">${esc(p.category)}</td>
         <td data-etichetta="Ordine"><input class="input ordine" type="number" data-posizione min="1" step="1" value="${p.position ?? ""}" aria-label="Ordine"></td>
-        <td data-etichetta="Nome">${campoNome(p.name, "data-nome", "Nome")}</td>
+        <td data-etichetta="Nome">${nameField(p.name, "data-nome", "Nome")}</td>
         <td data-etichetta="Quota €"><input class="input" type="number" data-prezzo step="0.5" min="0" value="${p.price}" aria-label="Quota in euro"></td>
-        <td data-etichetta="Assicurazione">${conAssicurazione(p.category)
-          ? `<div class="select"><select data-assicurazione aria-label="Assicurazione">${opzioniAssicurazione(p.insurance)}</select></div>
+        <td data-etichetta="Assicurazione">${withInsurance(p.category)
+          ? `<div class="select"><select data-assicurazione aria-label="Assicurazione">${insuranceOptions(p.insurance)}</select></div>
              <label class="checkbox"><input type="checkbox" data-pagata-club ${p.insurance_paid === false ? "checked" : ""}> a carico del club</label>` : "—"}</td>
         <td data-etichetta="In Soci"><span class="paga-socio" data-paga></span></td>
         <td data-etichetta="Attiva"><input type="checkbox" data-attivo ${p.active ? "checked" : ""} aria-label="Attiva"></td>
@@ -401,7 +401,7 @@
       </tr>`;
   }
 
-  async function caricaPrezziTutti() {
+  async function loadAllPrices() {
     setLoading(true);
     try {
       const { data, error } = await sb
@@ -414,74 +414,74 @@
       if (error) throw error;
 
       el("tabellaPrezzi").innerHTML = data.length
-        ? data.map(rigaPrezzo).join("")
+        ? data.map(priceRow).join("")
         : '<tr><td colspan="8" class="vuota">Nessuna voce nel listino.</td></tr>';
-      el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((riga) => {
-        aggiornaPagaSocio(riga);
-        riga.addEventListener("input", () => aggiornaPagaSocio(riga));
-        riga.addEventListener("change", () => aggiornaPagaSocio(riga));
+      el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((row) => {
+        updatePaysForMember(row);
+        row.addEventListener("input", () => updatePaysForMember(row));
+        row.addEventListener("change", () => updatePaysForMember(row));
       });
 
-      el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((bottone) => {
-        bottone.addEventListener("click", () => salvaPrezzo(bottone.closest("tr")));
+      el("tabellaPrezzi").querySelectorAll("[data-salva]").forEach((button) => {
+        button.addEventListener("click", () => savePrice(button.closest("tr")));
       });
-      sorvegliaRighe(el("tabellaPrezzi"));
-      adattaTutti();
+      watchRows(el("tabellaPrezzi"));
+      fitAll();
     } catch (error) {
-      showToast("Errore di caricamento listino: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento listino: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  async function salvaPrezzo(riga) {
-    const id = riga.dataset.id;
-    const bottone = riga.querySelector("[data-salva]");
-    const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
-    if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
-    if (!nomePulito(riga.querySelector("[data-nome]"))) { segnaErrore(riga.querySelector("[data-nome]"), "Inserire il nome."); return; }
+  async function savePrice(row) {
+    const id = row.dataset.id;
+    const button = row.querySelector("[data-salva]");
+    const priceValue = readEuro(row.querySelector("[data-prezzo]"));
+    if (priceValue == null) { markError(row.querySelector("[data-prezzo]"), EURO_WARNING); return; }
+    if (!cleanName(row.querySelector("[data-nome]"))) { markError(row.querySelector("[data-nome]"), "Inserire il nome."); return; }
     const patch = {
-      name: nomePulito(riga.querySelector("[data-nome]")),
-      price: prezzo,
-      active: riga.querySelector("[data-attivo]").checked,
-      position: parseInt(riga.querySelector("[data-posizione]").value, 10) || null,
+      name: cleanName(row.querySelector("[data-nome]")),
+      price: priceValue,
+      active: row.querySelector("[data-attivo]").checked,
+      position: parseInt(row.querySelector("[data-posizione]").value, 10) || null,
     };
-    const assicurazione = riga.querySelector("[data-assicurazione]");
-    if (assicurazione) {
-      patch.insurance = assicurazione.value || null;
-      patch.insurance_paid = !riga.querySelector("[data-pagata-club]").checked;
+    const insuranceItem = row.querySelector("[data-assicurazione]");
+    if (insuranceItem) {
+      patch.insurance = insuranceItem.value || null;
+      patch.insurance_paid = !row.querySelector("[data-pagata-club]").checked;
     }
 
-    bottone.disabled = true;
+    button.disabled = true;
     try {
-      scritta(await sb.from("prices").update(patch).eq("id", id).select("id"));
-      segnaSalvata(riga);
+      caption(await sb.from("prices").update(patch).eq("id", id).select("id"));
+      markSaved(row);
       showToast("Voce aggiornata.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 
-  async function aggiungiPrezzo() {
-    if (rigaDaSalvare("tabellaPrezzi")) return;
-    const nome = nomePulito(el("nuovoNome"));
+  async function addPrice() {
+    if (rowToSave("tabellaPrezzi")) return;
+    const nome = cleanName(el("nuovoNome"));
     if (!nome) {
-      segnaErrore(el("nuovoNome"), "Inserire il nome.");
+      markError(el("nuovoNome"), "Inserire il nome.");
       return;
     }
-    const prezzo = leggiEuro(el("nuovoPrezzo"));
-    if (prezzo == null) { segnaErrore(el("nuovoPrezzo"), AVVISO_EURO); return; }
-    const bottone = el("btnAggiungiPrezzo");
-    bottone.disabled = true;
+    const priceValue = readEuro(el("nuovoPrezzo"));
+    if (priceValue == null) { markError(el("nuovoPrezzo"), EURO_WARNING); return; }
+    const button = el("btnAggiungiPrezzo");
+    button.disabled = true;
     try {
-      const categoria = el("nuovoCategoria").value;
+      const categoryName = el("nuovoCategoria").value;
       const { error } = await sb.from("prices").insert({
-        category: categoria,
+        category: categoryName,
         name: nome,
-        price: prezzo,
-        insurance: conAssicurazione(categoria) ? el("nuovoAssicurazione").value || null : null,
+        price: priceValue,
+        insurance: withInsurance(categoryName) ? el("nuovoAssicurazione").value || null : null,
         // In fondo alla sua categoria: l'ordine si cambia poi nella colonna Ordine.
         position: null,
       });
@@ -489,11 +489,11 @@
       el("nuovoNome").value = "";
       el("nuovoPrezzo").value = "";
       showToast("Voce aggiunta.");
-      await caricaPrezziTutti();
+      await loadAllPrices();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 
@@ -504,10 +504,10 @@
   // si ricava dal nome alla creazione e poi non cambia, anche rinominandola.
   // ---------------------------------------------------------------------
 
-  function rigaAssicurazione(a) {
+  function insuranceRow(a) {
     return `
       <tr data-id="${esc(a.code)}">
-        <td data-etichetta="Nome">${campoNome(a.name, "data-nome", "Nome")}</td>
+        <td data-etichetta="Nome">${nameField(a.name, "data-nome", "Nome")}</td>
         <td data-etichetta="Prezzo €"><input class="input" type="number" data-prezzo step="0.5" min="0" value="${a.price}" aria-label="Prezzo in euro"></td>
         <td><div class="buttons">
           <button type="button" class="button" data-salva>Salva</button>
@@ -516,34 +516,34 @@
       </tr>`;
   }
 
-  const RIGA_NESSUNA_ASS = '<tr><td colspan="3" class="vuota">Nessuna assicurazione registrata.</td></tr>';
+  const NO_INSURANCE_ROW = '<tr><td colspan="3" class="vuota">Nessuna assicurazione registrata.</td></tr>';
 
   /** Una riga della tabella: i pulsanti e la sorveglianza delle modifiche. */
-  function attivaRigaAssicurazione(riga) {
-    riga.querySelector("[data-salva]").addEventListener("click", () => salvaAssicurazione(riga));
-    riga.querySelector("[data-togli]").addEventListener("click", () => chiediTogliAssicurazione(riga));
-    sorvegliaRiga(riga);
+  function enableInsuranceRow(row) {
+    row.querySelector("[data-salva]").addEventListener("click", () => saveInsurance(row));
+    row.querySelector("[data-togli]").addEventListener("click", () => askRemoveInsurance(row));
+    watchRow(row);
   }
 
   /** All'apertura: elenco e tabella. Dopo, la tabella si cambia riga per riga (vedi dopoAssicurazioni). */
-  async function caricaAssicurazioni() {
+  async function loadInsurances() {
     try {
-      await leggiAssicurazioni();
-      el("nuovoAssicurazione").innerHTML = opzioniAssicurazione("");
-      el("tabellaAssicurazioni").innerHTML = ASSICURAZIONI.length
-        ? ASSICURAZIONI.map(rigaAssicurazione).join("")
-        : RIGA_NESSUNA_ASS;
-      el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach(attivaRigaAssicurazione);
-      adattaTutti();
+      await readInsurances();
+      el("nuovoAssicurazione").innerHTML = insuranceOptions("");
+      el("tabellaAssicurazioni").innerHTML = INSURANCES.length
+        ? INSURANCES.map(insuranceRow).join("")
+        : NO_INSURANCE_ROW;
+      el("tabellaAssicurazioni").querySelectorAll("tr[data-id]").forEach(enableInsuranceRow);
+      fitAll();
     } catch (error) {
-      showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento assicurazioni: " + errorMessage(error), "is-danger");
     }
   }
 
-  async function leggiAssicurazioni() {
+  async function readInsurances() {
     const { data, error } = await sb.from("insurances").select("code, name, price").order("price").order("name");
     if (error) throw error;
-    ASSICURAZIONI = data;
+    INSURANCES = data;
   }
 
   /**
@@ -551,100 +551,100 @@
    * prendono senza ridisegnare niente, così le righe gialle non salvate e la
    * scelta già fatta restano come sono.
    */
-  async function dopoAssicurazioni() {
+  async function afterInsurances() {
     try {
-      await leggiAssicurazioni();
+      await readInsurances();
     } catch (error) {
-      showToast("Errore di caricamento assicurazioni: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento assicurazioni: " + errorMessage(error), "is-danger");
       return;
     }
-    document.querySelectorAll("#nuovoAssicurazione, #tabellaPrezzi [data-assicurazione]").forEach((scelta) => {
-      scelta.innerHTML = opzioniAssicurazione(scelta.value);
+    document.querySelectorAll("#nuovoAssicurazione, #tabellaPrezzi [data-assicurazione]").forEach((choice) => {
+      choice.innerHTML = insuranceOptions(choice.value);
     });
-    el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((riga) => {
-      aggiornaPagaSocio(riga);
-      if (riga.dataset.salvato) aggiornaStatoRiga(riga);
+    el("tabellaPrezzi").querySelectorAll("tr[data-id]").forEach((row) => {
+      updatePaysForMember(row);
+      if (row.dataset.salvato) updateRowStatus(row);
     });
   }
 
-  async function salvaAssicurazione(riga) {
-    const nome = nomePulito(riga.querySelector("[data-nome]"));
-    if (!nome) { segnaErrore(riga.querySelector("[data-nome]"), "Inserire il nome dell'assicurazione."); return; }
-    const prezzo = leggiEuro(riga.querySelector("[data-prezzo]"));
-    if (prezzo == null) { segnaErrore(riga.querySelector("[data-prezzo]"), AVVISO_EURO); return; }
-    const bottone = riga.querySelector("[data-salva]");
-    bottone.disabled = true;
+  async function saveInsurance(row) {
+    const nome = cleanName(row.querySelector("[data-nome]"));
+    if (!nome) { markError(row.querySelector("[data-nome]"), "Inserire il nome dell'assicurazione."); return; }
+    const priceValue = readEuro(row.querySelector("[data-prezzo]"));
+    if (priceValue == null) { markError(row.querySelector("[data-prezzo]"), EURO_WARNING); return; }
+    const button = row.querySelector("[data-salva]");
+    button.disabled = true;
     try {
-      scritta(await sb.from("insurances")
-        .update({ name: nome, price: prezzo })
-        .eq("code", riga.dataset.id).select("code"));
-      segnaSalvata(riga);
+      caption(await sb.from("insurances")
+        .update({ name: nome, price: priceValue })
+        .eq("code", row.dataset.id).select("code"));
+      markSaved(row);
       showToast("Assicurazione aggiornata.");
-      await dopoAssicurazioni();
+      await afterInsurances();
     } catch (error) {
-      showToast("Errore: " + (error.code === "23505" ? "esiste già un'assicurazione con questo nome." : messaggioErrore(error)), "is-danger");
+      showToast("Errore: " + (error.code === "23505" ? "esiste già un'assicurazione con questo nome." : errorMessage(error)), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 
   // Togliere: due finestre, una dopo l'altra, come per eliminare un socio.
-  function chiediTogliAssicurazione(riga) {
-    const nome = ASSICURAZIONI.find((a) => a.code === riga.dataset.id)?.name || riga.dataset.id;
-    const usata = el("tabellaPrezzi").querySelector(`[data-assicurazione] option[value="${CSS.escape(riga.dataset.id)}"]:checked`);
-    if (usata) {
-      segnaErrore(usata.closest("select"), `${nome} è ancora abbinata a una tessera del listino: selezionare prima un'altra assicurazione per quella tessera.`);
+  function askRemoveInsurance(row) {
+    const nome = INSURANCES.find((a) => a.code === row.dataset.id)?.name || row.dataset.id;
+    const usedOne = el("tabellaPrezzi").querySelector(`[data-assicurazione] option[value="${CSS.escape(row.dataset.id)}"]:checked`);
+    if (usedOne) {
+      markError(usedOne.closest("select"), `${nome} è ancora abbinata a una tessera del listino: selezionare prima un'altra assicurazione per quella tessera.`);
       return;
     }
-    const dove = riga.querySelector(".buttons");
-    chiedi(dove, `Eliminare l'assicurazione ${nome}?`, "Prosegui", () =>
-      chiedi(dove, `Confermare l'eliminazione? ${nome} verrà rimossa dalle assicurazioni e non potrà essere ripristinata da questa pagina.`, `Elimina ${nome}`, () => togliAssicurazione(riga)));
+    const dove = row.querySelector(".buttons");
+    ask(dove, `Eliminare l'assicurazione ${nome}?`, "Prosegui", () =>
+      ask(dove, `Confermare l'eliminazione? ${nome} verrà rimossa dalle assicurazioni e non potrà essere ripristinata da questa pagina.`, `Elimina ${nome}`, () => removeInsurance(row)));
   }
 
-  async function togliAssicurazione(riga) {
+  async function removeInsurance(row) {
     try {
-      scritta(await sb.from("insurances").delete().eq("code", riga.dataset.id).select("code"));
-      riga.remove();
-      if (!el("tabellaAssicurazioni").querySelector("tr")) el("tabellaAssicurazioni").innerHTML = RIGA_NESSUNA_ASS;
+      caption(await sb.from("insurances").delete().eq("code", row.dataset.id).select("code"));
+      row.remove();
+      if (!el("tabellaAssicurazioni").querySelector("tr")) el("tabellaAssicurazioni").innerHTML = NO_INSURANCE_ROW;
       showToast("Assicurazione eliminata.");
-      await dopoAssicurazioni();
+      await afterInsurances();
     } catch (error) {
       // 23503: la usa ancora una voce del listino o una lista già mandata all'assicurazione.
       showToast("Eliminazione non riuscita: " + (error.code === "23503"
         ? "l'assicurazione è ancora usata da una voce del listino o da una lista già inviata."
-        : messaggioErrore(error)), "is-danger");
+        : errorMessage(error)), "is-danger");
     }
   }
 
-  async function aggiungiAssicurazione() {
-    if (rigaDaSalvare("tabellaAssicurazioni")) return;
-    const nome = nomePulito(el("nuovaAssNome"));
+  async function addInsurance() {
+    if (rowToSave("tabellaAssicurazioni")) return;
+    const nome = cleanName(el("nuovaAssNome"));
     // "Global Neve Sport" → GLOBAL_NEVE_SPORT: il codice resta questo anche rinominandola.
     const base = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
       .replace(/[^A-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!base) { segnaErrore(el("nuovaAssNome"), "Inserire il nome dell'assicurazione."); return; }
+    if (!base) { markError(el("nuovaAssNome"), "Inserire il nome dell'assicurazione."); return; }
     // "Global Neve-Sport" dà lo stesso codice di "Global Neve Sport": il secondo diventa _2.
-    let codice = base;
-    for (let n = 2; ASSICURAZIONI.some((a) => a.code === codice); n++) codice = `${base}_${n}`;
-    const prezzo = leggiEuro(el("nuovaAssPrezzo"));
-    if (prezzo == null) { segnaErrore(el("nuovaAssPrezzo"), AVVISO_EURO); return; }
-    const bottone = el("btnAggiungiAss");
-    bottone.disabled = true;
+    let codeValue = base;
+    for (let n = 2; INSURANCES.some((a) => a.code === codeValue); n++) codeValue = `${base}_${n}`;
+    const priceValue = readEuro(el("nuovaAssPrezzo"));
+    if (priceValue == null) { markError(el("nuovaAssPrezzo"), EURO_WARNING); return; }
+    const button = el("btnAggiungiAss");
+    button.disabled = true;
     try {
       const { error } = await sb.from("insurances")
-        .insert({ code: codice, name: nome, price: prezzo });
+        .insert({ code: codeValue, name: nome, price: priceValue });
       if (error) throw error;
       el("nuovaAssNome").value = "";
       el("nuovaAssPrezzo").value = "";
       el("tabellaAssicurazioni").querySelector("td.vuota")?.closest("tr").remove();
-      el("tabellaAssicurazioni").insertAdjacentHTML("beforeend", rigaAssicurazione({ code: codice, name: nome, price: prezzo }));
-      attivaRigaAssicurazione(el("tabellaAssicurazioni").lastElementChild);
+      el("tabellaAssicurazioni").insertAdjacentHTML("beforeend", insuranceRow({ code: codeValue, name: nome, price: priceValue }));
+      enableInsuranceRow(el("tabellaAssicurazioni").lastElementChild);
       showToast("Assicurazione aggiunta: ora è selezionabile per le tessere.");
-      await dopoAssicurazioni();
+      await afterInsurances();
     } catch (error) {
-      showToast("Errore: " + (error.code === "23505" ? "esiste già un'assicurazione con questo nome." : messaggioErrore(error)), "is-danger");
+      showToast("Errore: " + (error.code === "23505" ? "esiste già un'assicurazione con questo nome." : errorMessage(error)), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 
@@ -652,17 +652,17 @@
   // Partenze
   // ---------------------------------------------------------------------
 
-  function rigaPartenza(p) {
+  function departureRow(p) {
     return `
       <tr data-id="${p.id}">
         <td data-etichetta="Giorno">${esc(p.day)}</td>
-        <td data-etichetta="Luogo">${campoNome(p.place, "data-luogo", "Luogo")}</td>
+        <td data-etichetta="Luogo">${nameField(p.place, "data-luogo", "Luogo")}</td>
         <td data-etichetta="Attiva"><input type="checkbox" data-attivo ${p.active ? "checked" : ""} aria-label="Attiva"></td>
         <td><button type="button" class="button" data-salva>Salva</button></td>
       </tr>`;
   }
 
-  async function caricaPartenzeTutte() {
+  async function loadAllDepartures() {
     try {
       const { data, error } = await sb
         .from("departures")
@@ -672,63 +672,63 @@
       if (error) throw error;
 
       el("tabellaPartenze").innerHTML = data.length
-        ? data.map(rigaPartenza).join("")
+        ? data.map(departureRow).join("")
         : '<tr><td colspan="4" class="vuota">Nessuna partenza registrata.</td></tr>';
 
-      el("tabellaPartenze").querySelectorAll("[data-salva]").forEach((bottone) => {
-        bottone.addEventListener("click", () => salvaPartenza(bottone.closest("tr")));
+      el("tabellaPartenze").querySelectorAll("[data-salva]").forEach((button) => {
+        button.addEventListener("click", () => saveDeparture(button.closest("tr")));
       });
-      sorvegliaRighe(el("tabellaPartenze"));
-      adattaTutti();
+      watchRows(el("tabellaPartenze"));
+      fitAll();
     } catch (error) {
-      showToast("Errore di caricamento partenze: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento partenze: " + errorMessage(error), "is-danger");
     }
   }
 
-  async function salvaPartenza(riga) {
-    const id = riga.dataset.id;
-    const bottone = riga.querySelector("[data-salva]");
+  async function saveDeparture(row) {
+    const id = row.dataset.id;
+    const button = row.querySelector("[data-salva]");
     const patch = {
-      place: nomePulito(riga.querySelector("[data-luogo]")),
-      active: riga.querySelector("[data-attivo]").checked,
+      place: cleanName(row.querySelector("[data-luogo]")),
+      active: row.querySelector("[data-attivo]").checked,
     };
-    if (!patch.place) { segnaErrore(riga.querySelector("[data-luogo]"), "Inserire il luogo."); return; }
-    if (patch.place.includes(",")) { segnaErrore(riga.querySelector("[data-luogo]"), SENZA_VIRGOLA); return; }
-    bottone.disabled = true;
+    if (!patch.place) { markError(row.querySelector("[data-luogo]"), "Inserire il luogo."); return; }
+    if (patch.place.includes(",")) { markError(row.querySelector("[data-luogo]"), WITHOUT_COMMA); return; }
+    button.disabled = true;
     try {
-      scritta(await sb.from("departures").update(patch).eq("id", id).select("id"));
-      segnaSalvata(riga);
+      caption(await sb.from("departures").update(patch).eq("id", id).select("id"));
+      markSaved(row);
       showToast("Partenza aggiornata.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 
-  async function aggiungiPartenza() {
-    if (rigaDaSalvare("tabellaPartenze")) return;
-    const luogo = nomePulito(el("nuovoLuogo"));
-    if (!luogo) {
-      segnaErrore(el("nuovoLuogo"), "Inserire il luogo.");
+  async function addDeparture() {
+    if (rowToSave("tabellaPartenze")) return;
+    const placeName = cleanName(el("nuovoLuogo"));
+    if (!placeName) {
+      markError(el("nuovoLuogo"), "Inserire il luogo.");
       return;
     }
-    if (luogo.includes(",")) { segnaErrore(el("nuovoLuogo"), SENZA_VIRGOLA); return; }
-    const bottone = el("btnAggiungiPartenza");
-    bottone.disabled = true;
+    if (placeName.includes(",")) { markError(el("nuovoLuogo"), WITHOUT_COMMA); return; }
+    const button = el("btnAggiungiPartenza");
+    button.disabled = true;
     try {
       const { error } = await sb.from("departures").insert({
         day: el("nuovoGiorno").value,
-        place: luogo,
+        place: placeName,
       });
       if (error) throw error;
       el("nuovoLuogo").value = "";
       showToast("Partenza aggiunta.");
-      await caricaPartenzeTutte();
+      await loadAllDepartures();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
     }
   }
 </script>

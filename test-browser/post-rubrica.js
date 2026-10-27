@@ -7,19 +7,19 @@ const POST = {
   course: false, published_at: null, caption: null, card_stop: null, deadline: null,
 };
 
-FINTO.risposta = (t, r) => {
+FAKE.risposta = (t, r) => {
   if (t === "social_events") return r.colonne === "photo" ? [{ photo: null }] : [{ ...POST }];
   if (t === "social_contacts") return [{ id: "C1", name: "Cesare", phone: "333 1234567", hours: null, is_default: true }];
   return [];
 };
-FINTO.ritardo = (t) => (t === "social_contacts" ? 800 : 20);
+FAKE.ritardo = (t) => (t === "social_contacts" ? 800 : 20);
 
 window.addEventListener("load", () => setTimeout(async () => {
-  await apri(posts[0]);
+  await doOpen(posts[0]);
   await new Promise((ok) => setTimeout(ok, 2000));
-  const domanda = document.querySelector("dialog.finestra-domanda[open]");
-  const spunta = el("fContatti").querySelector("input:checked");
-  document.title = `RISULTATO domanda=${domanda ? `NO(${domanda.textContent.trim().slice(0, 60)})` : "ok"}`
-    + ` contatto=${spunta && spunta.value === "C1" ? "ok" : "NO(nessun contatto spuntato)"}`
-    + ` modificato=${modificato() ? "NO(risulta modificato)" : "ok"}`;
+  const question = document.querySelector("dialog.finestra-domanda[open]");
+  const tick = el("fContatti").querySelector("input:checked");
+  document.title = `RISULTATO domanda=${question ? `NO(${question.textContent.trim().slice(0, 60)})` : "ok"}`
+    + ` contatto=${tick && tick.value === "C1" ? "ok" : "NO(nessun contatto spuntato)"}`
+    + ` modificato=${modified() ? "NO(risulta modificato)" : "ok"}`;
 }, 200));
