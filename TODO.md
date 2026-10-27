@@ -3,10 +3,12 @@
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (23/10/2026)
+## Stato del repository (27/10/2026)
 
-- Branch di lavoro `2.9-SNAPSHOT` (le pagine online sono le sue), `dev` allineato a lui. La 2.8 è
-  rilasciata (tag `2.8`).
+- La 2.9 è rilasciata (tag `2.9`, online dal branch `2.9`), `dev` allineato al tag. Si lavora su
+  `3.0-SNAPSHOT`, dedicata al telefono. Al primo deploy da `3.0-SNAPSHOT` (passo 5 del rilascio in
+  `docs/SVILUPPO.md`): togliere `"2.9"` dai trigger di `deploy-pages.yml` e cancellare su GitHub i
+  branch `2.9` e `2.9-SNAPSHOT`.
 - Produzione: lo schema intero ci mette qualche minuto e tiene fermo il sito; di giorno solo le
   istruzioni nuove con `lock_timeout` (`docs/SVILUPPO.md`).
 - Backup: dump cifrato e `dati-AAAA-MM-GG.7z` per Excel, su GitHub, sul PC del club (timer
@@ -15,6 +17,15 @@
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
+
+- [ ] **3.0: il sito sul telefono** (27/10, l'utente: «fai un bel controllo completo sulle feature
+      mobile, un bel /ecc:plan puntando sull'ottimizzazione della grafica mobile»). Da pianificare
+      e far approvare prima di scrivere codice. Segnalati con le foto: la barra in alto sul
+      telefono (menu a hamburger?); in Soci la fascia Totale / Residuo / «Salva il nuovo socio»
+      enorme, che copre mezzo schermo; in Riepilogo le tabelle illeggibili (nomi delle voci a una
+      parola per riga, numeri sopra il testo); in Social la testa del post (tipo, data, titolo,
+      «Pronto», Salva) che si accavalla e l'anteprima che esce dallo schermo. Poi tutte le altre
+      pagine.
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
@@ -115,6 +126,8 @@
       quale è giusto prima di toccarlo.
 
 ## Da decidere
+
+- Bot Telegram per chiedere le informazioni di un socio (27/10, l'utente: «lo facciamo dopo»).
 
 - Soci, «Leggi la scheda» (23/10, rimandato dall'utente): foto della scheda di carta con la
   fotocamera, letta da Claude in una Edge Function (come `supabase/functions/crea-utente`), modulo
