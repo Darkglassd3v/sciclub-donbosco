@@ -15,74 +15,74 @@
 {
   window.addEventListener("load", () => setTimeout(() => {
     const r = [];
-    const prova = (nome, sbagliati) => {
-      const tutti = [...new Set(sbagliati)];
-      r.push(`${nome}=${tutti.length ? `NO(${tutti.slice(0, 4).join(" / ")}${tutti.length > 4 ? ` e altri ${tutti.length - 4}` : ""})` : "ok"}`);
+    const test = (nome, wrongOnes) => {
+      const all = [...new Set(wrongOnes)];
+      r.push(`${nome}=${all.length ? `NO(${all.slice(0, 4).join(" / ")}${all.length > 4 ? ` e altri ${all.length - 4}` : ""})` : "ok"}`);
     };
     const descr = (x) => (x.id ? `#${x.id}` : x.tagName.toLowerCase() + [...x.classList].slice(0, 2).map((c) => "." + c).join(""))
       + (x.textContent.trim() ? ` «${x.textContent.trim().replace(/\s+/g, " ").slice(0, 24)}»` : "");
-    const visibile = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== "hidden";
+    const visible = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== "hidden";
     // Nascosti apposta: fuori schermo di molto (l'anteprima che si fotografa) o solo per il lettore di schermo.
-    const apposta = (x) => x.closest(".is-sr-only, .fuori, [aria-hidden=true]");
+    const onPurpose = (x) => x.closest(".is-sr-only, .fuori, [aria-hidden=true]");
     const W = document.documentElement.clientWidth;
-    const elementi = [...document.querySelectorAll("body *")].filter((x) => visibile(x) && !apposta(x));
+    const elements = [...document.querySelectorAll("body *")].filter((x) => visible(x) && !onPurpose(x));
 
-    const fuori = elementi.filter((x) => {
+    const outside = elements.filter((x) => {
       const b = x.getBoundingClientRect();
       return b.width > 0 && ((b.right > W + 1 && b.left < W + 3000) || (b.left < -1 && b.right > -3000));
     });
     // Solo il più esterno: dentro una riga tagliata è tagliato tutto.
-    prova("dentro", fuori.filter((x) => !fuori.includes(x.parentElement)).map(descr));
+    test("dentro", outside.filter((x) => !outside.includes(x.parentElement)).map(descr));
 
     // Contenuto tagliato o da scorrere di lato dentro una scheda o una tabella (gli importi di
     // Pagamenti): esce dal primo contenitore che taglia (overflow non visible, anche clip, che non
     // scorre e quindi non si vede da scrollWidth).
-    const taglia = (x) => { for (let a = x.parentElement; a && a !== document.body; a = a.parentElement) if (getComputedStyle(a).overflowX !== "visible") return a; return null; };
-    const tagliati = elementi.filter((x) => {
-      const a = taglia(x);
+    const cut = (x) => { for (let a = x.parentElement; a && a !== document.body; a = a.parentElement) if (getComputedStyle(a).overflowX !== "visible") return a; return null; };
+    const cutOnes = elements.filter((x) => {
+      const a = cut(x);
       if (!a) return false;
       const b = x.getBoundingClientRect(), c = a.getBoundingClientRect();
       return b.width > 0 && (b.right > c.right + 1 || b.left < c.left - 1);
     });
-    prova("tagliati", tagliati.filter((x) => !tagliati.includes(x.parentElement)).map(descr));
+    test("tagliati", cutOnes.filter((x) => !cutOnes.includes(x.parentElement)).map(descr));
 
-    const barra = document.querySelector(".barra");
-    const fisse = elementi.filter((x) => x !== barra && getComputedStyle(x).position === "fixed" && x.getBoundingClientRect().height > 0
-      && !fuori.includes(x) && x.getBoundingClientRect().top < innerHeight);
-    const alte = (barra ? barra.offsetHeight : 0) + fisse.reduce((t, x) => t + x.getBoundingClientRect().height, 0);
-    prova("fasce", alte > 160 ? [`${Math.round(alte)} px (barra ${barra ? barra.offsetHeight : 0}${fisse.map((x) => `, ${descr(x).split(" ")[0]} ${Math.round(x.getBoundingClientRect().height)}`).join("")})`] : []);
+    const bar = document.querySelector(".barra");
+    const fixed = elements.filter((x) => x !== bar && getComputedStyle(x).position === "fixed" && x.getBoundingClientRect().height > 0
+      && !outside.includes(x) && x.getBoundingClientRect().top < innerHeight);
+    const tall = (bar ? bar.offsetHeight : 0) + fixed.reduce((t, x) => t + x.getBoundingClientRect().height, 0);
+    test("fasce", tall > 160 ? [`${Math.round(tall)} px (barra ${bar ? bar.offsetHeight : 0}${fixed.map((x) => `, ${descr(x).split(" ")[0]} ${Math.round(x.getBoundingClientRect().height)}`).join("")})`] : []);
 
-    const spezzate = [];
-    const giro = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = giro.nextNode(), quante = 0; n && quante < 6000; n = giro.nextNode()) {
+    const broken = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(), howMany = 0; n && howMany < 6000; n = walker.nextNode()) {
       const padre = n.parentElement;
-      if (!padre || !visibile(padre) || apposta(padre) || padre.closest("script, style, option, select")) continue;
+      if (!padre || !visible(padre) || onPurpose(padre) || padre.closest("script, style, option, select")) continue;
       for (const m of n.textContent.matchAll(/[^\s\-–—/]{4,}/gu)) {
-        quante++;
-        const intervallo = document.createRange();
-        intervallo.setStart(n, m.index);
-        intervallo.setEnd(n, m.index + m[0].length);
-        const righe = new Set([...intervallo.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top)));
-        if (righe.size > 1) spezzate.push(`«${m[0].slice(0, 24)}» in ${descr(padre).split(" ")[0]}`);
+        howMany++;
+        const range = document.createRange();
+        range.setStart(n, m.index);
+        range.setEnd(n, m.index + m[0].length);
+        const rows = new Set([...range.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top)));
+        if (rows.size > 1) broken.push(`«${m[0].slice(0, 24)}» in ${descr(padre).split(" ")[0]}`);
       }
     }
-    prova("parole", spezzate);
+    test("parole", broken);
 
-    const uscite = [];
+    const outflows = [];
     for (const td of document.querySelectorAll("td")) {
-      if (!visibile(td)) continue;
+      if (!visible(td)) continue;
       const c = td.getBoundingClientRect();
       for (const x of td.querySelectorAll("*")) {
-        if (!visibile(x)) continue;
+        if (!visible(x)) continue;
         const b = x.getBoundingClientRect();
-        if (b.left < c.left - 1 || b.right > c.right + 1) { uscite.push(descr(x)); break; }
+        if (b.left < c.left - 1 || b.right > c.right + 1) { outflows.push(descr(x)); break; }
       }
     }
-    prova("celle", uscite);
+    test("celle", outflows);
 
-    const piccoli = elementi.filter((x) => x.matches("button, .button, a.button, input[type=submit], input[type=button], [role=button], .barra-voci a")
+    const small = elements.filter((x) => x.matches("button, .button, a.button, input[type=submit], input[type=button], [role=button], .barra-voci a")
       && x.getBoundingClientRect().height < 44);
-    prova("pulsanti", piccoli.map((x) => `${descr(x)} ${Math.round(x.getBoundingClientRect().height)}px`));
+    test("pulsanti", small.map((x) => `${descr(x)} ${Math.round(x.getBoundingClientRect().height)}px`));
 
     document.title = "RISULTATO " + r.join(" ");
   }, 5000));

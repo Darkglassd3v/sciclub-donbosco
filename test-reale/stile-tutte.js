@@ -9,39 +9,39 @@
 {
   window.addEventListener("load", () => setTimeout(() => {
     const r = [];
-    const prova = (nome, sbagliati) => {
-      const tutti = [...new Set(sbagliati)];
-      r.push(`${nome}=${tutti.length ? `NO(${tutti.slice(0, 4).join(" / ")}${tutti.length > 4 ? ` e altri ${tutti.length - 4}` : ""})` : "ok"}`);
+    const test = (nome, wrongOnes) => {
+      const all = [...new Set(wrongOnes)];
+      r.push(`${nome}=${all.length ? `NO(${all.slice(0, 4).join(" / ")}${all.length > 4 ? ` e altri ${all.length - 4}` : ""})` : "ok"}`);
     };
     const descr = (x) => (x.id ? `#${x.id}` : x.tagName.toLowerCase() + [...x.classList].slice(0, 2).map((c) => "." + c).join(""))
       + (x.textContent.trim() ? ` «${x.textContent.trim().replace(/\s+/g, " ").slice(0, 20)}»` : "");
-    const visibile = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== "hidden" && !x.closest(".is-sr-only, .fuori");
+    const visible = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== "hidden" && !x.closest(".is-sr-only, .fuori");
     const H = innerHeight;
 
     const menu = document.querySelector(".barra-voci");
-    const voci = menu ? [...menu.querySelectorAll(":scope > a, :scope > details > summary")].filter(visibile) : [];
+    const items = menu ? [...menu.querySelectorAll(":scope > a, :scope > details > summary")].filter(visible) : [];
     const b = menu ? menu.getBoundingClientRect() : null;
-    const righe = new Set(voci.map((x) => Math.round(x.getBoundingClientRect().top)));
+    const rows = new Set(items.map((x) => Math.round(x.getBoundingClientRect().top)));
     // Le pagine prima dell'entrata (cambio della password) non hanno menu, apposta.
-    if (document.querySelector(".barra")) prova("menu", !b ? ["senza menu"] : [
+    if (document.querySelector(".barra")) test("menu", !b ? ["senza menu"] : [
       ...(b.left > 1 || b.bottom < H - 2 ? [`menu a ${Math.round(b.left)},${Math.round(b.top)} fino a ${Math.round(b.bottom)} su ${H}`] : []),
       ...(b.width < 220 || b.width > 280 ? [`largo ${Math.round(b.width)}`] : []),
-      ...(righe.size < voci.length ? [`${voci.length} voci su ${righe.size} righe`] : []),
+      ...(rows.size < items.length ? [`${items.length} voci su ${rows.size} righe`] : []),
     ]);
 
     // Le righe dell'elenco dei post di Social sono voci di un elenco (titolo e data), non pulsanti d'azione.
-    const pulsanti = [...document.querySelectorAll("button, .button, a.button, input[type=submit], input[type=button], [role=button]")]
-      .filter((x) => visibile(x) && !x.closest(".barra, .elenco-post"));
+    const theButtons = [...document.querySelectorAll("button, .button, a.button, input[type=submit], input[type=button], [role=button]")]
+      .filter((x) => visible(x) && !x.closest(".barra, .elenco-post"));
     // Un pulsante attaccato a un campo (Calcola accanto al codice fiscale) ha gli angoli di 4px solo verso l'esterno.
-    const raggio = (s) => Math.max(...["TopLeft", "TopRight", "BottomLeft", "BottomRight"].map((a) => parseFloat(s[`border${a}Radius`])));
-    prova("pulsanti", pulsanti.filter((x) => {
+    const radius = (s) => Math.max(...["TopLeft", "TopRight", "BottomLeft", "BottomRight"].map((a) => parseFloat(s[`border${a}Radius`])));
+    test("pulsanti", theButtons.filter((x) => {
       const s = getComputedStyle(x);
-      const r = x.closest(".has-addons") ? `${raggio(s)}px` : s.borderTopLeftRadius;
+      const r = x.closest(".has-addons") ? `${radius(s)}px` : s.borderTopLeftRadius;
       return r !== "4px" || x.getBoundingClientRect().height < 40 || (x.textContent.trim() && s.textTransform !== "uppercase");
     }).map((x) => { const s = getComputedStyle(x); return `${descr(x)} raggio ${s.borderTopLeftRadius} ${Math.round(x.getBoundingClientRect().height)}px ${s.textTransform}`; }));
 
-    const schede = [...document.querySelectorAll(".riquadro, .box, .card")].filter(visibile);
-    prova("schede", schede.filter((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopLeftRadius) > 8 || s.boxShadow === "none"; })
+    const recordCards = [...document.querySelectorAll(".riquadro, .box, .card")].filter(visible);
+    test("schede", recordCards.filter((x) => { const s = getComputedStyle(x); return parseFloat(s.borderTopLeftRadius) > 8 || s.boxShadow === "none"; })
       .map((x) => `${descr(x).split(" ")[0]} raggio ${getComputedStyle(x).borderTopLeftRadius}`));
 
     document.title = "RISULTATO " + r.join(" ");

@@ -5,33 +5,33 @@
 //   vuota: lo si dice.
 // my_access in errore dopo il cambio: la pagina resta qui invece di andare avanti.
 {
-  FINTO.errore = (t) => (t === "rpc:my_access" ? { message: "prova: resta qui" } : null);
-  const compila = () => {
+  FAKE.errore = (t) => (t === "rpc:my_access" ? { message: "prova: resta qui" } : null);
+  const fill = () => {
     document.getElementById("attuale").value = "donbosco26!";
     document.getElementById("nuova").value = "nuovapassword";
     document.getElementById("conferma").value = "nuovapassword";
   };
-  const invia = () => document.getElementById("formPassword").requestSubmit();
-  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const send = () => document.getElementById("formPassword").requestSubmit();
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => { try {
     const r = [];
-    const prova = (nome, vero, perche) => r.push(`${nome}=${vero ? "ok" : `NO(${perche})`}`);
-    compila();
-    invia();
-    await aspetta(400);
-    const fatti = FINTO.auth.map(([c, d]) => (c === "signOut" ? `signOut:${d.scope}` : c)).join(",");
-    prova("altreSessioniChiuse", /updateUser,signOut:others/.test(fatti), `chiamate ${fatti}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
+    fill();
+    send();
+    await wait(400);
+    const done = FAKE.auth.map(([c, d]) => (c === "signOut" ? `signOut:${d.scope}` : c)).join(",");
+    test("altreSessioniChiuse", /updateUser,signOut:others/.test(done), `chiamate ${done}`);
 
-    FINTO.auth.length = 0;
-    FINTO.email = null;
+    FAKE.auth.length = 0;
+    FAKE.email = null;
     // La pagina ha letto l'email all'apertura: si rifà come se non l'avesse ancora.
     email = null;
-    compila();
-    invia();
-    await aspetta(300);
-    const senza = document.getElementById("errore");
-    prova("senzaEmail", !FINTO.auth.some(([c]) => c === "signIn") && senza.style.display !== "none",
-      `chiamate ${FINTO.auth.map(([c]) => c).join(",")}, messaggio «${senza.textContent}»`);
+    fill();
+    send();
+    await wait(300);
+    const without = document.getElementById("errore");
+    test("senzaEmail", !FAKE.auth.some(([c]) => c === "signIn") && without.style.display !== "none",
+      `chiamate ${FAKE.auth.map(([c]) => c).join(",")}, messaggio «${without.textContent}»`);
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 150)})`; } }, 500));
 }

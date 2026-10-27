@@ -8,45 +8,45 @@
 //   si apre dentro lo schermo con tutte le voci, A+ ed Esci; Esc lo chiude e il fuoco torna al
 //   pulsante.
 {
-  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => { const r = []; try {
-    const esito = (nome, sbagliato) => r.push(`${nome}=${sbagliato ? `NO(${sbagliato})` : "ok"}`);
-    const menu = document.querySelector(".barra-voci"), bottone = document.querySelector(".apri-menu");
-    const dentro = (x) => { const b = x.getBoundingClientRect(); return b.width > 0 && b.left >= -1 && b.right <= innerWidth + 1; };
-    const pagina = location.pathname.split("/").pop().replace(/^prova-menu.*/, "");
+    const outcome = (nome, wrong) => r.push(`${nome}=${wrong ? `NO(${wrong})` : "ok"}`);
+    const menu = document.querySelector(".barra-voci"), button = document.querySelector(".apri-menu");
+    const inside = (x) => { const b = x.getBoundingClientRect(); return b.width > 0 && b.left >= -1 && b.right <= innerWidth + 1; };
+    const page = location.pathname.split("/").pop().replace(/^prova-menu.*/, "");
 
     // Chi è entrato: in alto sul computer, in fondo al menu aperto sul telefono.
     const nome = () => {
-      const utente = [...document.querySelectorAll(".barra-utente")].find((x) => x.getClientRects().length && dentro(x));
-      esito("nome", utente && utente.textContent.includes("prova@sciclub.it") && /superadmin/i.test(utente.textContent)
-        ? "" : `«${utente ? utente.textContent.trim() : "non si vede"}»`);
+      const user = [...document.querySelectorAll(".barra-utente")].find((x) => x.getClientRects().length && inside(x));
+      outcome("nome", user && user.textContent.includes("prova@sciclub.it") && /superadmin/i.test(user.textContent)
+        ? "" : `«${user ? user.textContent.trim() : "non si vede"}»`);
     };
     if (innerWidth > 768) nome();
 
-    const gruppi = [...menu.querySelectorAll("details.gruppo")];
-    const gestione = gruppi.find((g) => g.dataset.permesso === "gestione"), social = gruppi.find((g) => g.dataset.permesso === "social");
-    const aperta = document.querySelector('.barra-voci [aria-current="page"]');
+    const groups = [...menu.querySelectorAll("details.gruppo")];
+    const management = groups.find((g) => g.dataset.permesso === "gestione"), social = groups.find((g) => g.dataset.permesso === "social");
+    const openOne = document.querySelector('.barra-voci [aria-current="page"]');
     if (document.title.includes("Amministrazione") || location.pathname.includes("stagione")) {
-      esito("gruppi", gestione?.open && !social?.open && aperta?.closest("details") === gestione ? "" : `gestione ${gestione?.open}, social ${social?.open}, aperta «${aperta?.textContent.trim()}»`);
+      outcome("gruppi", management?.open && !social?.open && openOne?.closest("details") === management ? "" : `gestione ${management?.open}, social ${social?.open}, aperta «${openOne?.textContent.trim()}»`);
     } else {
-      esito("gruppi", gestione && social && !gestione.open && !social.open ? "" : `gestione ${gestione?.open}, social ${social?.open}`);
+      outcome("gruppi", management && social && !management.open && !social.open ? "" : `gestione ${management?.open}, social ${social?.open}`);
     }
 
     if (innerWidth > 768) {
       const b = menu.getBoundingClientRect();
-      esito("colonna", b.left <= 1 && b.width >= 220 && dentro(menu) && (!bottone || !bottone.getClientRects().length) ? "" : `menu a ${Math.round(b.left)} largo ${Math.round(b.width)}, pulsante ${bottone && bottone.getClientRects().length ? "visibile" : "nascosto"}`);
+      outcome("colonna", b.left <= 1 && b.width >= 220 && inside(menu) && (!button || !button.getClientRects().length) ? "" : `menu a ${Math.round(b.left)} largo ${Math.round(b.width)}, pulsante ${button && button.getClientRects().length ? "visibile" : "nascosto"}`);
     } else {
-      esito("chiuso", bottone && bottone.getAttribute("aria-expanded") === "false" && !dentro(menu) ? "" : `aria-expanded ${bottone?.getAttribute("aria-expanded")}, menu ${dentro(menu) ? "visibile" : "nascosto"}`);
-      bottone.click();
-      await aspetta(400);
+      outcome("chiuso", button && button.getAttribute("aria-expanded") === "false" && !inside(menu) ? "" : `aria-expanded ${button?.getAttribute("aria-expanded")}, menu ${inside(menu) ? "visibile" : "nascosto"}`);
+      button.click();
+      await wait(400);
       nome();
-      const voci = [...menu.querySelectorAll(":scope > a, :scope > details > summary, :scope button")].filter((x) => x.getClientRects().length);
-      const fuori = voci.filter((x) => !dentro(x)).map((x) => x.textContent.trim() || x.getAttribute("aria-label"));
-      esito("aperto", bottone.getAttribute("aria-expanded") === "true" && dentro(menu) && voci.length >= 12 && !fuori.length
-        ? "" : `aria-expanded ${bottone.getAttribute("aria-expanded")}, ${voci.length} voci, fuori ${fuori.join(" ")}`);
+      const items = [...menu.querySelectorAll(":scope > a, :scope > details > summary, :scope button")].filter((x) => x.getClientRects().length);
+      const outside = items.filter((x) => !inside(x)).map((x) => x.textContent.trim() || x.getAttribute("aria-label"));
+      outcome("aperto", button.getAttribute("aria-expanded") === "true" && inside(menu) && items.length >= 12 && !outside.length
+        ? "" : `aria-expanded ${button.getAttribute("aria-expanded")}, ${items.length} voci, fuori ${outside.join(" ")}`);
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-      await aspetta(400);
-      esito("esc", bottone.getAttribute("aria-expanded") === "false" && document.activeElement === bottone ? "" : `aria-expanded ${bottone.getAttribute("aria-expanded")}, fuoco su ${document.activeElement?.tagName}`);
+      await wait(400);
+      outcome("esc", button.getAttribute("aria-expanded") === "false" && document.activeElement === button ? "" : `aria-expanded ${button.getAttribute("aria-expanded")}, fuoco su ${document.activeElement?.tagName}`);
     }
   } catch (e) { r.push(`eccezione=NO(${String(e?.message || e).slice(0, 120)})`); }
     document.title = "RISULTATO " + r.join(" ");

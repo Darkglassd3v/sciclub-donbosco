@@ -25,7 +25,7 @@ post su Facebook e Instagram (16/10); niente pulsante «Prepara per Business Sui
     permesso `social`): Facebook `POST /{page}/photos`; Instagram `POST /{ig}/media` → attesa →
     `media_publish`; story facoltativa; esito per piattaforma, poi `published_at` e i link
   - **Pagina**: riquadro "Account social" in Impostazioni (collegato / da ricollegare); nel post
-    spunte Instagram, Facebook, Story e "Pubblica ora" con conferma (`chiedi()`): è pubblico e non si
+    spunte Instagram, Facebook, Story e "Pubblica ora" con conferma (`ask()`): è pubblico e non si
     annulla. Il giro a mano resta
   - **Limiti**: lo sticker link della story non si mette da API (quella story resta a mano); il token
     cade se si cambia password o si revoca l'accesso ("ricollega"); Meta chiude le versioni vecchie

@@ -19,13 +19,28 @@
 
 ## Richieste nuove
 
-- [ ] **Codice in inglese** (prossimo lavoro, su `3.0-SNAPSHOT`) (27/10, l'utente: «voglio tutto in inglese,
-      dove non causa problemi con il db»; scelto: nomi e commenti, dopo la grafica). Funzioni,
-      variabili, classi CSS, id, nomi dei file di prova e commenti in inglese; le scritte per gli
-      utenti restano in italiano; i nomi del database sono già inglesi. Un passo a sé, con tutte le
-      prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
-      commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
-      resta in italiano.
+- [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
+      con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
+      funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli
+      utenti; i valori del database (permessi `soci`/`pagamenti`/…, ruoli, giorni `SABATO`…,
+      categorie `TESSERA`…, chiavi di `nav_labels`); le chiavi di localStorage (`sciclub-*`: le
+      preferenze di chi usa il sito); i nomi delle pagine e la cartella `ricerca/` (indirizzi nei
+      segnalibri). Passi, ognuno con tutte le prove verdi e un commit:
+      1-2. FATTO il 27/10 (commit `7ac20ce`): 9.128 nomi di variabili e funzioni tradotti in tutti
+         i file JS/HTML/prove con lo strumento nello scratchpad della sessione (`traduci/`:
+         `tok.py`, `rinomina.py`, `glossario.json` 1.096 nomi). Proprietà (`x.nome`) e chiavi
+         (`{ nome: … }`) restano: così restano uguali database, funzione Edge (`ruolo`) e coda di
+         Gite. Dopo la review: corretti i nomi tradotti col senso sbagliato (`caption`, `real`,
+         `done`, `exit`…) e i commenti e i documenti che citavano le funzioni coi nomi vecchi.
+         Restano italiane le proprietà interne degli oggetti e alcuni nomi fuori glossario
+         (`coda`, `nome`, `ora`, `dove`…): da fare col passo 5;
+      3. classi CSS, id, attributi data-* (non i valori), variabili CSS (`--barra-h`…);
+      4. prove: nomi dei file, `FINTO`, il protocollo «RISULTATO … =NO(…)», `esegui.sh`,
+         `avvia.sh`; script (`esporta-tutto.sh` → anche `backup-db.yml`; `scarica-backup.sh` →
+         reinstallare il timer con `--installa`);
+      5. commenti in inglese in tutti i file (anche `schema.sql`: solo il file, la produzione
+         non si tocca);
+      6. regola in `CLAUDE.md`, `docs/SVILUPPO.md`, `PROJECT-CONTEXT.md`; review; push e deploy.
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
@@ -40,6 +55,8 @@
 
 ## Da provare sul sito vero
 
+- Pagamenti: numero tessera sotto il nome di ogni socio («Tessera n° …», o «Senza numero
+  tessera»), anche sul telefono, per la ricevuta di chi torna a pagare dopo l'acconto.
 - Soci: totale fisso coi prezzi nuovi (cambiando una voce cambia solo la differenza), «Calcola»
   del codice fiscale, numeri tessera liberi e prima tessera dal 21, presciistica con e senza
   assicurazione, agevolazione famiglia (capofamiglia con due familiari, un familiare col nucleo
@@ -75,9 +92,9 @@
       trovate, 9 con data di nascita diversa, 73 codici dei fogli che non passano il controllo.
 - [ ] Controllare LACHELLI: presciistica Total Sport (120) e totale 115.
 - [ ] Assicurazione: tracciato dell'Excel da definire con le specifiche dell'assicurazione.
-      `COLONNE_ASSICURAZIONE` in `web/shared.js` (colonne provvisorie), usate dalla pagina
+      `INSURANCE_COLUMNS` in `web/shared.js` (colonne provvisorie), usate dalla pagina
       Assicurazione e dal Riepilogo; campi nuovi anche in `insurance_members()`
-      (`supabase/schema.sql`) e in `scaricaSoci()` (`web/riepilogo.html`).
+      (`supabase/schema.sql`) e in `downloadMembers()` (`web/riepilogo.html`).
 
 ## Grafica
 

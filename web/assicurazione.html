@@ -77,8 +77,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -112,8 +112,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -215,169 +215,169 @@
   // "Polizza". shortcut: tracciato provvisorio, da rifare con le specifiche
   // dell'assicurazione (TODO).
   let TIPI = [];
-  const tipo = (kind) => TIPI.find((t) => t.kind === kind) || { kind, nome: kind, colonna: "Polizza" };
+  const typeName = (kind) => TIPI.find((t) => t.kind === kind) || { kind, nome: kind, colonna: "Polizza" };
 
-  let daAssicurare = [];   // tesserati ancora da assicurare, di tutti i tipi
-  let listeMandate = [];   // liste mandate in questa stagione
+  let toInsure = [];   // tesserati ancora da assicurare, di tutti i tipi
+  let sentLists = [];   // liste mandate in questa stagione
 
   // Gli ultimi Excel scaricati: { decorrenza, liste: [{ t, numero, soci }] }.
   // "Segna come assicurati" segna esattamente quei soci, con quei numeri e
   // quella decorrenza: quello che è partito.
-  let scaricato = null;
+  let downloadedOne = null;
 
-  const oggiIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
+  const todayIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
 
   (async function init() {
-    if (!(await requirePermesso("polizze"))) return;
-    el("decorrenza").value = oggiIso();
-    el("decorrenza").addEventListener("input", annullaScarico);
-    el("btnScarica").addEventListener("click", scaricaTutte);
-    el("btnSegna").addEventListener("click", chiediInvio);
+    if (!(await requirePermission("polizze"))) return;
+    el("decorrenza").value = todayIso();
+    el("decorrenza").addEventListener("input", cancelDownload);
+    el("btnScarica").addEventListener("click", downloadAll);
+    el("btnSegna").addEventListener("click", askSend);
     el("cerca").addEventListener("input", () => {
       // Una richiesta quando si smette di scrivere, non una per lettera.
-      clearTimeout(cerca.timer);
-      cerca.timer = setTimeout(cerca, 300);
+      clearTimeout(search.timer);
+      search.timer = setTimeout(search, 300);
     });
-    await carica();
+    await load();
   })();
 
-  async function carica() {
+  async function load() {
     setLoading(true);
     try {
-      const [soci, inviate, assicurazioni] = await Promise.all([
-        tutteLeRighe(() => sb.rpc("insurance_members")),
+      const [members, sent, insurances] = await Promise.all([
+        allRows(() => sb.rpc("insurance_members")),
         sb.rpc("insurance_sent_lists").then(({ data, error }) => { if (error) throw error; return data; }),
         sb.from("insurances").select("code, name").order("price").order("name")
           .then(({ data, error }) => { if (error) throw error; return data; }),
       ]);
-      TIPI = assicurazioni.map((a) => ({ kind: a.code, nome: a.name, colonna: a.code === "SPORT" ? "Tipo" : "Polizza" }));
-      daAssicurare = soci;
-      listeMandate = inviate;
-      disegna();
+      TIPI = insurances.map((a) => ({ kind: a.code, nome: a.name, colonna: a.code === "SPORT" ? "Tipo" : "Polizza" }));
+      toInsure = members;
+      sentLists = sent;
+      draw();
     } catch (error) {
       el("tipi").innerHTML = '<div class="riquadro">Elenco non disponibile.</div>';
-      showToast("Errore di caricamento: " + messaggioErrore(error), "is-danger");
+      showToast("Errore di caricamento: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  function disegna() {
-    disegnaProgressivi();
-    disegnaDaAssicurare();
-    disegnaListe();
+  function draw() {
+    drawProgressives();
+    drawToInsure();
+    drawLists();
   }
 
   const conCF = (s) => Boolean((s.tax_code || "").trim());
-  const quanti = (n, uno, tanti) => `${n} ${n === 1 ? uno : tanti}`;
+  const howManyOnes = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-  function ultimaLista(kind) {
-    return listeMandate.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
+  function lastList(kind) {
+    return sentLists.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
   }
 
   // -------------------------------------------------------------------------
   // Liste da mandare: un progressivo per tipo, una decorrenza, tutto insieme
   // -------------------------------------------------------------------------
 
-  const pronti = (t) => daAssicurare.filter((s) => s.insurance === t.kind && conCF(s));
+  const ready = (t) => toInsure.filter((s) => s.insurance === t.kind && conCF(s));
 
-  function disegnaProgressivi() {
+  function drawProgressives() {
     el("tipi").replaceChildren(...TIPI.map((t) => {
-      const soci = daAssicurare.filter((s) => s.insurance === t.kind);
-      const n = pronti(t).length;
-      const ultima = ultimaLista(t.kind);
+      const members = toInsure.filter((s) => s.insurance === t.kind);
+      const n = ready(t).length;
+      const lastOne = lastList(t.kind);
       // Dopo lo scarico si tengono i numeri del file, anche se la pagina si
       // ridisegna (un codice fiscale salvato nella lista).
-      const nelFile = scaricato?.liste.find((l) => l.t.kind === t.kind);
+      const inFile = downloadedOne?.liste.find((l) => l.t.kind === t.kind);
       const div = document.createElement("div");
       div.className = "progressivo";
       div.dataset.kind = t.kind;
       div.innerHTML = `
         <label class="label" for="numero_${t.kind}">${esc(t.nome)} n.</label>
         <input class="input numero" type="number" min="1" step="1" id="numero_${t.kind}"
-               value="${nelFile ? nelFile.numero : (ultima ? ultima.number + 1 : 1)}" ${n ? "" : "disabled"}>
-        <p class="conta">${n ? quanti(n, "da assicurare", "da assicurare") : "nessun socio da assicurare"}${
-          soci.length > n ? ` · <span class="senza">${soci.length - n} senza codice fiscale</span>` : ""}</p>`;
-      div.querySelector(".numero").addEventListener("input", annullaScarico);
+               value="${inFile ? inFile.numero : (lastOne ? lastOne.number + 1 : 1)}" ${n ? "" : "disabled"}>
+        <p class="conta">${n ? howManyOnes(n, "da assicurare", "da assicurare") : "nessun socio da assicurare"}${
+          members.length > n ? ` · <span class="senza">${members.length - n} senza codice fiscale</span>` : ""}</p>`;
+      div.querySelector(".numero").addEventListener("input", cancelDownload);
       return div;
     }));
-    const liste = TIPI.filter((t) => pronti(t).length);
-    const soci = liste.reduce((somma, t) => somma + pronti(t).length, 0);
-    el("btnScarica").disabled = !liste.length;
-    el("btnScarica").textContent = liste.length
-      ? `Scarica i file Excel (${quanti(liste.length, "lista", "liste")}, ${quanti(soci, "socio", "soci")})`
+    const lists = TIPI.filter((t) => ready(t).length);
+    const members = lists.reduce((sum, t) => sum + ready(t).length, 0);
+    el("btnScarica").disabled = !lists.length;
+    el("btnScarica").textContent = lists.length
+      ? `Scarica i file Excel (${howManyOnes(lists.length, "lista", "liste")}, ${howManyOnes(members, "socio", "soci")})`
       : "Nessun socio da assicurare";
   }
 
   /** Numeri o decorrenza cambiati dopo lo scarico: i file hanno quelli vecchi, vanno riscaricati. */
-  function annullaScarico() {
-    scaricato = null;
+  function cancelDownload() {
+    downloadedOne = null;
     el("btnSegna").disabled = true;
     el("passo").hidden = true;
   }
 
-  async function scaricaTutte() {
-    const decorrenza = el("decorrenza").value;
-    if (!decorrenza) { segnaErrore(el("decorrenza"), "Inserire la data di decorrenza."); return; }
-    const liste = [];
-    for (const t of TIPI.filter((x) => pronti(x).length)) {
+  async function downloadAll() {
+    const startDate = el("decorrenza").value;
+    if (!startDate) { markError(el("decorrenza"), "Inserire la data di decorrenza."); return; }
+    const lists = [];
+    for (const t of TIPI.filter((x) => ready(x).length)) {
       const input = el("numero_" + t.kind);
-      const numero = Number(input.value);
-      if (!Number.isInteger(numero) || numero < 1) {
-        segnaErrore(input, `Inserire il numero della lista ${t.nome} (minimo 1).`);
+      const number = Number(input.value);
+      if (!Number.isInteger(number) || number < 1) {
+        markError(input, `Inserire il numero della lista ${t.nome} (minimo 1).`);
         return;
       }
-      if (listeMandate.some((l) => l.kind === t.kind && l.number === numero)) {
-        segnaErrore(input, `La lista ${t.nome} n. ${numero} risulta già inviata: indicare un numero diverso.`);
+      if (sentLists.some((l) => l.kind === t.kind && l.number === number)) {
+        markError(input, `La lista ${t.nome} n. ${number} risulta già inviata: indicare un numero diverso.`);
         return;
       }
-      liste.push({ t, numero, soci: pronti(t) });
+      lists.push({ t, numero: number, soci: ready(t) });
     }
     setLoading(true);
     try {
-      for (const l of liste) await excelLista(l.t, l.numero, decorrenza, l.soci);
-      scaricato = { decorrenza, liste };
+      for (const l of lists) await excelList(l.t, l.numero, startDate, l.soci);
+      downloadedOne = { decorrenza: startDate, liste: lists };
       el("btnSegna").disabled = false;
-      el("passo").textContent = `Liste scaricate: ${descriviListe(liste)}, decorrenza ${dataIt(decorrenza)}. `
+      el("passo").textContent = `Liste scaricate: ${describeLists(lists)}, decorrenza ${dataIt(startDate)}. `
         + "Inviarle alla compagnia assicurativa, quindi confermare con «Segna come assicurati».";
       // Più file in un click: il browser può bloccare quelli dopo il primo (chiede di
       // consentire i download multipli). Uno per lista, da riscaricare da solo.
-      if (liste.length > 1) {
-        const pulsanti = document.createElement("span");
-        pulsanti.className = "buttons mt-2";
-        for (const l of liste) {
+      if (lists.length > 1) {
+        const theButtons = document.createElement("span");
+        theButtons.className = "buttons mt-2";
+        for (const l of lists) {
           const b = document.createElement("button");
           b.type = "button";
           b.className = "button is-small is-light";
           b.dataset.riscarica = l.t.kind;
           b.textContent = `Riscarica ${l.t.nome} n. ${l.numero}`;
-          b.addEventListener("click", () => excelLista(l.t, l.numero, decorrenza, l.soci)
-            .catch((e) => showToast("Errore: " + messaggioErrore(e), "is-danger")));
-          pulsanti.append(b);
+          b.addEventListener("click", () => excelList(l.t, l.numero, startDate, l.soci)
+            .catch((e) => showToast("Errore: " + errorMessage(e), "is-danger")));
+          theButtons.append(b);
         }
-        el("passo").append(" Se il browser ha scaricato un solo file, le altre liste sono disponibili qui: ", pulsanti);
+        el("passo").append(" Se il browser ha scaricato un solo file, le altre liste sono disponibili qui: ", theButtons);
       }
       el("passo").hidden = false;
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  const descriviListe = (liste) =>
-    liste.map((l) => `${l.t.nome} n. ${l.numero} (${quanti(l.soci.length, "socio", "soci")})`).join(", ");
+  const describeLists = (lists) =>
+    lists.map((l) => `${l.t.nome} n. ${l.numero} (${howManyOnes(l.soci.length, "socio", "soci")})`).join(", ");
 
-  function chiediInvio() {
-    if (!scaricato) return;
-    const n = scaricato.liste.reduce((somma, l) => somma + l.soci.length, 0);
-    chiedi(el("azioniInvio"),
-      `Confermare l'invio delle liste? ${descriviListe(scaricato.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`} con decorrenza ${dataIt(scaricato.decorrenza)}.`,
-      "Conferma invio", invia);
+  function askSend() {
+    if (!downloadedOne) return;
+    const n = downloadedOne.liste.reduce((sum, l) => sum + l.soci.length, 0);
+    ask(el("azioniInvio"),
+      `Confermare l'invio delle liste? ${describeLists(downloadedOne.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`} con decorrenza ${dataIt(downloadedOne.decorrenza)}.`,
+      "Conferma invio", send);
   }
 
-  async function invia() {
-    const file = scaricato;
+  async function send() {
+    const file = downloadedOne;
     setLoading(true);
     try {
       const { data, error } = await sb.rpc("insurance_send_all", {
@@ -387,11 +387,11 @@
         starts_on: file.decorrenza,
       });
       if (error) throw error;
-      annullaScarico();
+      cancelDownload();
       showToast(`Invio registrato: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
-      await carica();
+      await load();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -401,20 +401,20 @@
   // Excel come i fogli dell'assicurazione (legacy/dati26/)
   // -------------------------------------------------------------------------
 
-  async function excelLista(t, numero, decorrenza, soci) {
-    await caricaXlsx();
-    const righe = [
+  async function excelList(t, number, startDate, members) {
+    await loadXlsx();
+    const rows = [
       ["Nr.", "Decorrenza", t.colonna, "Cognome", "Nome", "Data di nascita", "Codice Fiscale", "Sci Club", "Nr. lista"],
-      ...soci.map((s, i) => [i + 1, dataExcel(decorrenza), t.nome, s.last_name, s.first_name,
-        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", numero]),
+      ...members.map((s, i) => [i + 1, dataExcel(startDate), t.nome, s.last_name, s.first_name,
+        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
     ];
-    const foglio = XLSX.utils.aoa_to_sheet(righe, { dateNF: "dd/mm/yyyy" });
+    const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });
     // Solo le larghezze, dal testo: il resto (foglio, colonne, date, niente
     // stili) resta come lo vuole l'assicurazione finché non dà il tracciato.
-    foglio["!cols"] = larghezzeColonne(righe);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, foglio, "Foglio1");
-    XLSX.writeFile(libro, `${numero} Lista ${t.nome}.xlsx`);
+    sheet["!cols"] = columnWidths(rows);
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Foglio1");
+    XLSX.writeFile(book, `${number} Lista ${t.nome}.xlsx`);
   }
 
   // -------------------------------------------------------------------------
@@ -423,65 +423,65 @@
 
   // A pagine di 25, una per tipo: con centinaia di tesserati la lista allungava
   // la pagina. Gli Excel e «Segna come assicurati» prendono sempre tutti.
-  const PER_PAGINA = 25;
-  const paginaDi = {};   // tipo → pagina mostrata, da 0
+  const PER_PAGE = 25;
+  const pageOf = {};   // tipo → pagina mostrata, da 0
 
-  function disegnaDaAssicurare() {
-    el("quanti").textContent = `(${daAssicurare.length})`;
-    const corpo = el("elencoDa");
-    if (!daAssicurare.length) {
-      corpo.innerHTML = '<tr><td colspan="5" class="vuota">Tutti i tesserati risultano assicurati.</td></tr>';
+  function drawToInsure() {
+    el("quanti").textContent = `(${toInsure.length})`;
+    const bodyText = el("elencoDa");
+    if (!toInsure.length) {
+      bodyText.innerHTML = '<tr><td colspan="5" class="vuota">Tutti i tesserati risultano assicurati.</td></tr>';
       return;
     }
     const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
     // Salva di una riga ridisegna la lista: i codici scritti e non salvati
     // nelle altre righe restano (cambiando pagina, invece, lo si chiede prima).
-    const scritti = new Map(codiciNonSalvati().map((tr) => [tr.dataset.id, tr.querySelector(".cf").value]));
-    corpo.replaceChildren(...TIPI.flatMap((t) => {
-      const soci = daAssicurare.filter((s) => s.insurance === t.kind).sort(perNome);
-      if (!soci.length) return [];
+    const written = new Map(unsavedCodes().map((tr) => [tr.dataset.id, tr.querySelector(".cf").value]));
+    bodyText.replaceChildren(...TIPI.flatMap((t) => {
+      const members = toInsure.filter((s) => s.insurance === t.kind).sort(perNome);
+      if (!members.length) return [];
       // Le righe rosse sono sparse fra le pagine: il titolo dice quante sono.
-      const senza = soci.filter((s) => !conCF(s)).length;
-      const pagine = Math.ceil(soci.length / PER_PAGINA);
+      const without = members.filter((s) => !conCF(s)).length;
+      const pages = Math.ceil(members.length / PER_PAGE);
       // Lista accorciata (codice salvato, liste segnate): l'ultima pagina che c'è.
-      const pagina = Math.min(paginaDi[t.kind] || 0, pagine - 1);
-      paginaDi[t.kind] = pagina;
-      const titolo = document.createElement("tr");
-      titolo.className = "gruppo";
-      titolo.dataset.kind = t.kind;
-      titolo.innerHTML = `<td colspan="5">${esc(t.nome)} · ${quanti(soci.length, "socio", "soci")}${
-        senza ? ` · ${senza} senza codice fiscale` : ""}</td>`;
-      const righe = soci.slice(pagina * PER_PAGINA, (pagina + 1) * PER_PAGINA).map((s) => riga(s, { conTipo: true }));
-      return [titolo, ...righe, ...(pagine > 1 ? [rigaPagine(t, pagina, pagine, soci.length)] : [])];
+      const page = Math.min(pageOf[t.kind] || 0, pages - 1);
+      pageOf[t.kind] = page;
+      const titleText = document.createElement("tr");
+      titleText.className = "gruppo";
+      titleText.dataset.kind = t.kind;
+      titleText.innerHTML = `<td colspan="5">${esc(t.nome)} · ${howManyOnes(members.length, "socio", "soci")}${
+        without ? ` · ${without} senza codice fiscale` : ""}</td>`;
+      const rows = members.slice(page * PER_PAGE, (page + 1) * PER_PAGE).map((s) => row(s, { conTipo: true }));
+      return [titleText, ...rows, ...(pages > 1 ? [pagesRow(t, page, pages, members.length)] : [])];
     }));
-    corpo.querySelectorAll("tr[data-id]").forEach((tr) => {
-      if (!scritti.has(tr.dataset.id)) return;
+    bodyText.querySelectorAll("tr[data-id]").forEach((tr) => {
+      if (!written.has(tr.dataset.id)) return;
       const cf = tr.querySelector(".cf");
-      cf.value = scritti.get(tr.dataset.id);
+      cf.value = written.get(tr.dataset.id);
       cf.dispatchEvent(new Event("change"));   // l'avviso del codice scritto
     });
   }
 
   /** Le righe della lista con un codice fiscale scritto e non ancora salvato. */
-  function codiciNonSalvati() {
+  function unsavedCodes() {
     return [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
-      const s = daAssicurare.find((d) => d.id === tr.dataset.id);
-      return s && normalizzaCF(tr.querySelector(".cf").value) !== normalizzaCF(s.tax_code);
+      const s = toInsure.find((d) => d.id === tr.dataset.id);
+      return s && normalizeTaxCode(tr.querySelector(".cf").value) !== normalizeTaxCode(s.tax_code);
     });
   }
 
   /** «‹ Indietro · 26–50 di 60 · Avanti ›», sotto il gruppo. */
-  function rigaPagine(t, pagina, pagine, totale) {
+  function pagesRow(t, page, pages, totalAmount) {
     const tr = document.createElement("tr");
     tr.className = "pagine";
     tr.dataset.kind = t.kind;
     tr.innerHTML = `<td colspan="5"><div class="buttons">
-      <button type="button" class="button" data-indietro ${pagina === 0 ? "disabled" : ""}>‹ Indietro</button>
-      <span class="pagine-testo">${pagina * PER_PAGINA + 1}–${Math.min((pagina + 1) * PER_PAGINA, totale)} di ${totale}</span>
-      <button type="button" class="button" data-avanti ${pagina === pagine - 1 ? "disabled" : ""}>Avanti ›</button>
+      <button type="button" class="button" data-indietro ${page === 0 ? "disabled" : ""}>‹ Indietro</button>
+      <span class="pagine-testo">${page * PER_PAGE + 1}–${Math.min((page + 1) * PER_PAGE, totalAmount)} di ${totalAmount}</span>
+      <button type="button" class="button" data-avanti ${page === pages - 1 ? "disabled" : ""}>Avanti ›</button>
     </div></td>`;
-    tr.querySelector("[data-indietro]").addEventListener("click", () => cambiaPagina(t, pagina - 1, "[data-indietro]"));
-    tr.querySelector("[data-avanti]").addEventListener("click", () => cambiaPagina(t, pagina + 1, "[data-avanti]"));
+    tr.querySelector("[data-indietro]").addEventListener("click", () => changePage(t, page - 1, "[data-indietro]"));
+    tr.querySelector("[data-avanti]").addEventListener("click", () => changePage(t, page + 1, "[data-avanti]"));
     return tr;
   }
 
@@ -490,74 +490,74 @@
    * salvato andrebbe perso, quindi prima lo si chiede. Poi si torna in cima al
    * gruppo, col fuoco sullo stesso pulsante (chi va avanti con la tastiera).
    */
-  function cambiaPagina(t, pagina, pulsante) {
-    const vai = () => {
-      paginaDi[t.kind] = pagina;
-      disegnaDaAssicurare();
+  function changePage(t, page, theButton) {
+    const go = () => {
+      pageOf[t.kind] = page;
+      drawToInsure();
       el("elencoDa").querySelector(`tr.gruppo[data-kind="${t.kind}"]`)?.scrollIntoView({ block: "start" });
       // All'ultima (o alla prima) pagina quel pulsante è spento: allora l'altro.
-      const pagine = el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`);
-      (pagine?.querySelector(`${pulsante}:not([disabled])`) || pagine?.querySelector("button:not([disabled])"))
+      const pages = el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`);
+      (pages?.querySelector(`${theButton}:not([disabled])`) || pages?.querySelector("button:not([disabled])"))
         ?.focus({ preventScroll: true });
     };
-    const nonSalvati = codiciNonSalvati().length;
-    if (!nonSalvati) { vai(); return; }
-    chiedi(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
-      `${nonSalvati === 1 ? "Un codice fiscale inserito non è stato salvato e andrà perso"
-        : `${nonSalvati} codici fiscali inseriti non sono stati salvati e andranno persi`}. Cambiare pagina comunque?`,
-      "Cambia pagina", vai);
+    const unsaved = unsavedCodes().length;
+    if (!unsaved) { go(); return; }
+    ask(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
+      `${unsaved === 1 ? "Un codice fiscale inserito non è stato salvato e andrà perso"
+        : `${unsaved} codici fiscali inseriti non sono stati salvati e andranno persi`}. Cambiare pagina comunque?`,
+      "Cambia pagina", go);
   }
 
   // -------------------------------------------------------------------------
   // Liste mandate
   // -------------------------------------------------------------------------
 
-  function disegnaListe() {
-    const corpo = el("elencoListe");
-    if (!listeMandate.length) {
-      corpo.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista inviata nella stagione in corso.</td></tr>';
+  function drawLists() {
+    const bodyText = el("elencoListe");
+    if (!sentLists.length) {
+      bodyText.innerHTML = '<tr><td colspan="4" class="vuota">Nessuna lista inviata nella stagione in corso.</td></tr>';
       return;
     }
-    corpo.replaceChildren(...listeMandate.map((l) => {
+    bodyText.replaceChildren(...sentLists.map((l) => {
       const tr = document.createElement("tr");
-      const ultima = ultimaLista(l.kind)?.id === l.id;
+      const lastOne = lastList(l.kind)?.id === l.id;
       tr.innerHTML = `
-        <td class="chi"><strong>${esc(tipo(l.kind).nome)} n. ${l.number}</strong></td>
+        <td class="chi"><strong>${esc(typeName(l.kind).nome)} n. ${l.number}</strong></td>
         <td data-etichetta="Decorrenza">${esc(dataIt(l.starts_on))}</td>
         <td data-etichetta="Soci">${l.members}</td>
         <td><div class="azioni-lista">
           <button type="button" class="button is-link is-light" data-riscarica>Riscarica</button>
-          ${ultima ? '<button type="button" class="button is-danger is-outlined" data-annulla>Annulla invio</button>' : ""}
+          ${lastOne ? '<button type="button" class="button is-danger is-outlined" data-annulla>Annulla invio</button>' : ""}
         </div></td>`;
-      tr.querySelector("[data-riscarica]").addEventListener("click", () => riscarica(l));
-      tr.querySelector("[data-annulla]")?.addEventListener("click", () => chiedi(tr.querySelector(".azioni-lista"),
-        `Annullare la lista ${tipo(l.kind).nome} n. ${l.number}? I ${l.members} soci della lista torneranno tra quelli da assicurare.`,
-        "Sì, annulla", () => annulla(l)));
+      tr.querySelector("[data-riscarica]").addEventListener("click", () => redownload(l));
+      tr.querySelector("[data-annulla]")?.addEventListener("click", () => ask(tr.querySelector(".azioni-lista"),
+        `Annullare la lista ${typeName(l.kind).nome} n. ${l.number}? I ${l.members} soci della lista torneranno tra quelli da assicurare.`,
+        "Sì, annulla", () => cancel(l)));
       return tr;
     }));
   }
 
-  async function riscarica(l) {
+  async function redownload(l) {
     setLoading(true);
     try {
-      const soci = await tutteLeRighe(() => sb.rpc("insurance_list_members", { list_id: l.id }));
-      await excelLista(tipo(l.kind), l.number, l.starts_on, soci);
+      const members = await allRows(() => sb.rpc("insurance_list_members", { list_id: l.id }));
+      await excelList(typeName(l.kind), l.number, l.starts_on, members);
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  async function annulla(l) {
+  async function cancel(l) {
     setLoading(true);
     try {
       const { error } = await sb.rpc("insurance_undo", { list_id: l.id });
       if (error) throw error;
-      showToast(`Lista ${tipo(l.kind).nome} n. ${l.number} annullata: i soci sono di nuovo da assicurare.`);
-      await carica();
+      showToast(`Lista ${typeName(l.kind).nome} n. ${l.number} annullata: i soci sono di nuovo da assicurare.`);
+      await load();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -573,17 +573,17 @@
    * la rimanda indietro. Nella lista dei da assicurare c'è la colonna del
    * tipo (conTipo); nella ricerca, `stato` dice se è già assicurato.
    */
-  function riga(s, { conTipo = false, stato = "" } = {}) {
+  function row(s, { conTipo: withType = false, stato: state = "" } = {}) {
     const tr = document.createElement("tr");
     tr.dataset.id = s.id;
-    const daAssicurareSenzaCF = conTipo && !conCF(s);
-    tr.classList.toggle("senza-cf", daAssicurareSenzaCF);
+    const toInsureWithoutTaxCode = withType && !conCF(s);
+    tr.classList.toggle("senza-cf", toInsureWithoutTaxCode);
     tr.innerHTML = `
       <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
         ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
-        ${stato ? `<span class="stato">${esc(stato)}</span>` : ""}
-        ${daAssicurareSenzaCF ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
-      ${conTipo ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(tipo(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
+        ${state ? `<span class="stato">${esc(state)}</span>` : ""}
+        ${toInsureWithoutTaxCode ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}</td>
+      ${withType ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(typeName(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
       <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
         ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
       <td class="campo-cf" data-etichetta="Codice fiscale">
@@ -593,52 +593,52 @@
       <td><button type="button" class="button is-link salva-riga">Salva</button></td>`;
 
     const cf = tr.querySelector(".cf");
-    const avviso = tr.querySelector(".avviso-cf");
+    const notice = tr.querySelector(".avviso-cf");
     cf.value = s.tax_code || "";
-    const controlla = () => mostraAvvisoCF(avviso, cf,
-      verificaCF(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date }));
-    cf.addEventListener("change", controlla);
-    controlla();
+    const check = () => showTaxCodeNotice(notice, cf,
+      verifyTaxCode(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date }));
+    cf.addEventListener("change", check);
+    check();
 
-    tr.querySelector(".salva-riga").addEventListener("click", () => salva(s, tr));
+    tr.querySelector(".salva-riga").addEventListener("click", () => save(s, tr));
     // Invio nel campo salva la riga: chi ricopia una lista va avanti con la
     // tastiera, senza cercare il pulsante col mouse.
-    cf.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); salva(s, tr); } });
+    cf.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); save(s, tr); } });
     return tr;
   }
 
-  async function salva(s, tr) {
-    const bottone = tr.querySelector(".salva-riga");
-    const codice = tr.querySelector(".cf").value;
-    bottone.disabled = true;
+  async function save(s, tr) {
+    const button = tr.querySelector(".salva-riga");
+    const codeValue = tr.querySelector(".cf").value;
+    button.disabled = true;
     setLoading(true);
     try {
-      const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codice });
+      const { error } = await sb.rpc("set_tax_code", { member_id: s.id, tax_code: codeValue });
       if (error) throw error;
       // Era in una lista appena scaricata: il file ha il codice di prima, e segnarlo
       // assicurato lo darebbe all'assicurazione sbagliato.
-      if (scaricato?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
-        annullaScarico();
+      if (downloadedOne?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
+        cancelDownload();
         showToast(`${s.last_name} ${s.first_name}: codice fiscale salvato. Il socio era in una lista già scaricata: scaricare di nuovo le liste prima dell'invio.`, "is-warning");
       } else {
         showToast(`${s.last_name} ${s.first_name}: codice fiscale salvato.`);
       }
       // Da assicurare: un codice aggiunto o tolto sposta il socio dentro o
       // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
-      const daElenco = daAssicurare.find((d) => d.id === s.id);
-      if (daElenco) {
-        daElenco.tax_code = normalizzaCF(codice) || null;
-        disegnaProgressivi();
-        disegnaDaAssicurare();
+      const fromList = toInsure.find((d) => d.id === s.id);
+      if (fromList) {
+        fromList.tax_code = normalizeTaxCode(codeValue) || null;
+        drawProgressives();
+        drawToInsure();
       } else {
-        s.tax_code = normalizzaCF(codice) || null;
+        s.tax_code = normalizeTaxCode(codeValue) || null;
         tr.querySelector(".cf").value = s.tax_code || "";
         tr.classList.add("salvata");
       }
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      bottone.disabled = false;
+      button.disabled = false;
       setLoading(false);
     }
   }
@@ -647,33 +647,33 @@
   // Cerca e correggi
   // -------------------------------------------------------------------------
 
-  let ultimaRicerca = 0;
+  let lastSearch = 0;
 
-  async function cerca() {
-    const testo = el("cerca").value.trim();
-    const corpo = el("elencoCerca");
+  async function search() {
+    const text = el("cerca").value.trim();
+    const bodyText = el("elencoCerca");
     // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
-    if (testo.replace(/\s/g, "").length < 2) { ultimaRicerca++; corpo.replaceChildren(); return; }
+    if (text.replace(/\s/g, "").length < 2) { lastSearch++; bodyText.replaceChildren(); return; }
 
-    const mia = ++ultimaRicerca;
+    const mia = ++lastSearch;
     try {
-      const { data, error } = await sb.rpc("insurance_search", { testo });
+      const { data, error } = await sb.rpc("insurance_search", { testo: text });
       if (error) throw error;
-      if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
+      if (mia !== lastSearch) return;   // ne è già partita una più recente
       if (!data.length) {
-        corpo.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione corrisponde alla ricerca.</td></tr>';
+        bodyText.innerHTML = '<tr><td class="vuota">Nessun tesserato della stagione corrisponde alla ricerca.</td></tr>';
         return;
       }
-      corpo.replaceChildren(...data.map((s) => riga(s, { stato: s.list_number
-        ? `Assicurato: ${tipo(s.insurance).nome} n. ${s.list_number}`
+      bodyText.replaceChildren(...data.map((s) => row(s, { stato: s.list_number
+        ? `Assicurato: ${typeName(s.insurance).nome} n. ${s.list_number}`
         : "Non ancora assicurato" })));
       if (data.length === 20) {
-        const altri = document.createElement("tr");
-        altri.innerHTML = '<td colspan="4" class="vuota">Potrebbero esserci altri risultati: precisare la ricerca.</td>';
-        corpo.append(altri);
+        const otherOnes = document.createElement("tr");
+        otherOnes.innerHTML = '<td colspan="4" class="vuota">Potrebbero esserci altri risultati: precisare la ricerca.</td>';
+        bodyText.append(otherOnes);
       }
     } catch (error) {
-      if (mia === ultimaRicerca) showToast("Errore nella ricerca: " + messaggioErrore(error), "is-danger");
+      if (mia === lastSearch) showToast("Errore nella ricerca: " + errorMessage(error), "is-danger");
     }
   }
 </script>

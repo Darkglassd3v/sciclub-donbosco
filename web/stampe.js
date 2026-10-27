@@ -6,36 +6,36 @@
  * partenze e i corsi; il martedì né l'una né l'altra cosa. Ogni giorno ha
  * anche il foglio jolly, che vale per tutti i giorni: al massimo tre fogli.
  */
-const GIORNI_STAMPA = {
+const PRINT_DAYS = {
   SABATO:   { nome: "Sabato",   giorni: ["SABATO"],   corsi: true, partenze: true },
   DOMENICA: { nome: "Domenica", giorni: ["DOMENICA"], corsi: true, partenze: true },
   MARTEDI:  { nome: "Martedì",  giorni: ["MARTEDI"] },
 };
 
 /** La colonna del socio con la partenza di quel giorno. */
-const COLONNA_PARTENZA = { SABATO: "saturday_departure", DOMENICA: "sunday_departure" };
+const DEPARTURE_COLUMN = { SABATO: "saturday_departure", DOMENICA: "sunday_departure" };
 
 /**
  * "  asti " → "ASTI". Le partenze sono scritte nel form con le caselle, ma
  * quelle arrivate dal vecchio foglio no: senza ripulirle, un refuso di
  * maiuscole o di spazi aprirebbe un gruppo a parte per una persona sola.
  */
-function nomePartenza(testo) {
-  return String(testo || "").trim().replace(/\s+/g, " ").toUpperCase();
+function departureName(text) {
+  return String(text || "").trim().replace(/\s+/g, " ").toUpperCase();
 }
 
 /**
  * Nome del foglio di lavoro Excel: "Partenza da NIZZA M." → "NIZZA M.". Excel
  * rifiuta [ ] : * ? / \ e più di 31 caratteri, e il file non si aprirebbe.
  */
-function nomeFoglioExcel(titolo, usati = null) {
-  const base = String(titolo || "").replace(/^Partenza da /, "").replace(/[[\]:*?/\\]/g, " ").trim().slice(0, 31) || "Foglio1";
-  if (!usati) return base;
+function excelSheetName(titleText, usedItems = null) {
+  const base = String(titleText || "").replace(/^Partenza da /, "").replace(/[[\]:*?/\\]/g, " ").trim().slice(0, 31) || "Foglio1";
+  if (!usedItems) return base;
   // Nello stesso file due fogli non possono chiamarsi uguale (anche a parte le
   // maiuscole): «ASTI/CENTRO» e «ASTI:CENTRO» diventano «ASTI CENTRO» e «ASTI CENTRO 2».
   let nome = base;
-  for (let n = 2; usati.has(nome.toLowerCase()); n++) nome = `${base.slice(0, 31 - String(n).length - 1).trim()} ${n}`;
-  usati.add(nome.toLowerCase());
+  for (let n = 2; usedItems.has(nome.toLowerCase()); n++) nome = `${base.slice(0, 31 - String(n).length - 1).trim()} ${n}`;
+  usedItems.add(nome.toLowerCase());
   return nome;
 }
 
@@ -45,9 +45,9 @@ function nomeFoglioExcel(titolo, usati = null) {
  * (giorno, foglio, nota, partenza) e non si capiva; la partenza resta nel nome
  * del foglio di lavoro (nomeFoglioExcel).
  */
-function titoloExcel(chiave, titolo) {
-  if (titolo === "Jolly") return "ABBONAMENTI JOLLY";
-  return `${titolo === "Corsisti" ? "CORSI" : "ABBONAMENTI"} ${GIORNI_STAMPA[chiave].nome.toUpperCase()}`;
+function excelTitle(keyName, titleText) {
+  if (titleText === "Jolly") return "ABBONAMENTI JOLLY";
+  return `${titleText === "Corsisti" ? "CORSI" : "ABBONAMENTI"} ${PRINT_DAYS[keyName].nome.toUpperCase()}`;
 }
 
 /**
@@ -55,9 +55,9 @@ function titoloExcel(chiave, titolo) {
  * "DOMENICA", "JOLLY"): "1/5", con due abbonamenti "5/5, 1/5". Sul pullman
  * si vede se ne ha ancora. Vuoto se non ne ha.
  */
-function giteFatte(abbonamenti, idSocio, giorni) {
-  return abbonamenti
-    .filter((a) => a.member_id === idSocio && giorni.includes(a.day) && a.trips_total)
+function tripsDone(passList, memberId, dayList) {
+  return passList
+    .filter((a) => a.member_id === memberId && dayList.includes(a.day) && a.trips_total)
     .map((a) => `${a.trips_used}/${a.trips_total}`).join(", ");
 }
 
@@ -69,23 +69,23 @@ const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.la
  * di quei giorni. Senza partenze (martedì), un gruppo solo senza titolo.
  * Dentro ogni gruppo, per cognome e nome, una riga per persona.
  */
-function gruppiPerPartenza(righe, conPartenze) {
-  if (!righe.length) return [];
-  const perPartenza = new Map();
-  for (const [socio, giorni] of righe) {
-    const luoghi = conPartenze
-      ? new Set(giorni.map((g) => nomePartenza(socio[COLONNA_PARTENZA[g]])).filter(Boolean))
+function groupsByDeparture(rows, withDepartures) {
+  if (!rows.length) return [];
+  const byDeparture = new Map();
+  for (const [member, dayList] of rows) {
+    const places = withDepartures
+      ? new Set(dayList.map((g) => departureName(member[DEPARTURE_COLUMN[g]])).filter(Boolean))
       : new Set();
-    for (const luogo of luoghi.size ? luoghi : [""]) {
-      if (!perPartenza.has(luogo)) perPartenza.set(luogo, new Map());
-      perPartenza.get(luogo).set(socio.id, socio);
+    for (const placeName of places.size ? places : [""]) {
+      if (!byDeparture.has(placeName)) byDeparture.set(placeName, new Map());
+      byDeparture.get(placeName).set(member.id, member);
     }
   }
-  return [...perPartenza.keys()]
+  return [...byDeparture.keys()]
     .sort((a, b) => (!a) - (!b) || a.localeCompare(b, "it"))
-    .map((luogo) => ({
-      titolo: luogo ? `Partenza da ${luogo}` : conPartenze ? "Senza partenza" : "",
-      soci: [...perPartenza.get(luogo).values()].sort(perNome),
+    .map((placeName) => ({
+      titolo: placeName ? `Partenza da ${placeName}` : withDepartures ? "Senza partenza" : "",
+      soci: [...byDeparture.get(placeName).values()].sort(perNome),
     }));
 }
 
@@ -100,26 +100,26 @@ function gruppiPerPartenza(righe, conPartenze) {
  * pass_status (member_id, day). Un foglio senza nessuno resta, con i gruppi
  * vuoti: la pagina lo stampa con "Nessuno", così si sa che non manca.
  */
-function fogliDelGiorno(chiave, soci, abbonamenti) {
-  const g = GIORNI_STAMPA[chiave];
+function daySheets(keyName, members, passList) {
+  const g = PRINT_DAYS[keyName];
   if (!g) return [];
-  const giorniDi = new Map();   // socio -> giorni dei suoi abbonamenti
-  for (const a of abbonamenti) {
-    if (!giorniDi.has(a.member_id)) giorniDi.set(a.member_id, new Set());
-    giorniDi.get(a.member_id).add(a.day);
+  const daysOf = new Map();   // socio -> giorni dei suoi abbonamenti
+  for (const a of passList) {
+    if (!daysOf.has(a.member_id)) daysOf.set(a.member_id, new Set());
+    daysOf.get(a.member_id).add(a.day);
   }
-  const fogli = [];
+  const sheets = [];
   if (g.corsi) {
-    fogli.push({ titolo: "Corsisti", righe: soci
+    sheets.push({ titolo: "Corsisti", righe: members
       // «NO» nei fogli vecchi vuol dire niente corso, come nelle viste del database.
       .filter((s) => s.course_type && s.course_type.toUpperCase() !== "NO" && g.giorni.includes(s.course_day))
       .map((s) => [s, [s.course_day]]) });
   }
-  fogli.push({ titolo: "Abbonamenti 5 gite", gite: g.giorni, righe: soci
-    .map((s) => [s, g.giorni.filter((d) => giorniDi.get(s.id)?.has(d))])
-    .filter(([, giorni]) => giorni.length) });
-  fogli.push({ titolo: "Jolly", nota: "valido per tutti i giorni", gite: ["JOLLY"], righe: soci
-    .filter((s) => giorniDi.get(s.id)?.has("JOLLY"))
+  sheets.push({ titolo: "Abbonamenti 5 gite", gite: g.giorni, righe: members
+    .map((s) => [s, g.giorni.filter((d) => daysOf.get(s.id)?.has(d))])
+    .filter(([, dayList]) => dayList.length) });
+  sheets.push({ titolo: "Jolly", nota: "valido per tutti i giorni", gite: ["JOLLY"], righe: members
+    .filter((s) => daysOf.get(s.id)?.has("JOLLY"))
     .map((s) => [s, g.giorni]) });
-  return fogli.map(({ titolo, nota, gite, righe }) => ({ titolo, nota, gite, gruppi: gruppiPerPartenza(righe, g.partenze) }));
+  return sheets.map(({ titolo: titleText, nota: note, gite: tripList, righe: rows }) => ({ titolo: titleText, nota: note, gite: tripList, gruppi: groupsByDeparture(rows, g.partenze) }));
 }

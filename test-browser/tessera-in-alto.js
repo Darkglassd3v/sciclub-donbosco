@@ -4,10 +4,10 @@
 {
   window.addEventListener("load", () => setTimeout(() => {
     const r = [];
-    const numero = el("f_numero_tessera"), cognome = el("f_cognome");
-    const sopra = !!(numero.compareDocumentPosition(cognome) & Node.DOCUMENT_POSITION_FOLLOWING);
-    r.push(`primoCampo=${sopra ? "ok" : "NO(il numero tessera viene dopo il cognome)"}`);
-    r.push(`proposto=${numero.value === "100" && !el("notaTessera").hidden ? "ok" : `NO(«${numero.value}», nota ${el("notaTessera").hidden ? "nascosta" : "visibile"})`}`);
+    const number = el("f_numero_tessera"), surname = el("f_cognome");
+    const above = !!(number.compareDocumentPosition(surname) & Node.DOCUMENT_POSITION_FOLLOWING);
+    r.push(`primoCampo=${above ? "ok" : "NO(il numero tessera viene dopo il cognome)"}`);
+    r.push(`proposto=${number.value === "100" && !el("notaTessera").hidden ? "ok" : `NO(«${number.value}», nota ${el("notaTessera").hidden ? "nascosta" : "visibile"})`}`);
     document.title = "RISULTATO " + r.join(" ");
   }, 1500));
 }

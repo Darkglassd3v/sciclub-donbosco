@@ -7,43 +7,43 @@
 //   bordano il campo e ci portano.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
-  const LISTINO = [{ category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" }];
-  FINTO.risposta = (t) => (t === "prices" ? LISTINO : []);
+  const PRICE_LIST = [{ category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" }];
+  FAKE.risposta = (t) => (t === "prices" ? PRICE_LIST : []);
 
-  const aspetta = (ms) => new Promise((fine) => setTimeout(fine, ms));
-  const rosso = (id) => el(id).classList.contains("campo-errore");
+  const wait = (ms) => new Promise((fine) => setTimeout(fine, ms));
+  const red = (id) => el(id).classList.contains("campo-errore");
   // Si vede: tutto dentro la finestra.
-  const visibile = (id) => { const r = el(id).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; };
+  const visible = (id) => { const r = el(id).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; };
   const toast = () => el("statusToast")?.textContent || "";
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const prova = (nome, vero, perche) => r.push(`${nome}=${vero ? "ok" : `NO(${perche})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
 
     window.scrollTo(0, document.body.scrollHeight);
-    await salva();
-    await aspetta(300);
-    prova("obbligatoriRossi", rosso("f_cognome") && rosso("f_nome") && rosso("f_telefono"),
-      `cognome ${rosso("f_cognome")}, nome ${rosso("f_nome")}, telefono ${rosso("f_telefono")}`);
-    prova("sceltaRossa", rosso("f_tipologia_tessera"), "il gruppo Tipologia tessera non è bordato");
-    prova("scorreAlPrimo", visibile("f_cognome") && document.activeElement === el("f_cognome"),
-      `si vede ${visibile("f_cognome")}, fuoco su ${document.activeElement?.id}`);
-    prova("diceQuali", /Cognome/.test(toast()) && /Telefono/.test(toast()), `messaggio «${toast()}»`);
+    await save();
+    await wait(300);
+    test("obbligatoriRossi", red("f_cognome") && red("f_nome") && red("f_telefono"),
+      `cognome ${red("f_cognome")}, nome ${red("f_nome")}, telefono ${red("f_telefono")}`);
+    test("sceltaRossa", red("f_tipologia_tessera"), "il gruppo Tipologia tessera non è bordato");
+    test("scorreAlPrimo", visible("f_cognome") && document.activeElement === el("f_cognome"),
+      `si vede ${visible("f_cognome")}, fuoco su ${document.activeElement?.id}`);
+    test("diceQuali", /Cognome/.test(toast()) && /Telefono/.test(toast()), `messaggio «${toast()}»`);
 
     el("f_cognome").value = "Rossi";
     el("f_cognome").dispatchEvent(new Event("input", { bubbles: true }));
-    prova("toltoScrivendo", !rosso("f_cognome") && rosso("f_nome") && !el("f_cognome").hasAttribute("aria-invalid")
-      && el("f_nome").getAttribute("aria-invalid") === "true", `cognome ${rosso("f_cognome")}, nome ${rosso("f_nome")}`);
+    test("toltoScrivendo", !red("f_cognome") && red("f_nome") && !el("f_cognome").hasAttribute("aria-invalid")
+      && el("f_nome").getAttribute("aria-invalid") === "true", `cognome ${red("f_cognome")}, nome ${red("f_nome")}`);
 
     el("f_nome").value = "Mario";
     el("f_telefono").value = "333";
     [...el("f_tipologia_tessera").querySelectorAll("input")][0].click();
     el("pagaFamiliare").click();
     window.scrollTo(0, 0);
-    await salva();
-    await aspetta(300);
-    prova("erroreDellaPagina", rosso("f_payerDisplay") && visibile("f_payerDisplay"),
-      `bordato ${rosso("f_payerDisplay")}, si vede ${visibile("f_payerDisplay")}`);
+    await save();
+    await wait(300);
+    test("erroreDellaPagina", red("f_payerDisplay") && visible("f_payerDisplay"),
+      `bordato ${red("f_payerDisplay")}, si vede ${visible("f_payerDisplay")}`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

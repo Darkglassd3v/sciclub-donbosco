@@ -7,12 +7,12 @@
 {
   window.addEventListener("load", () => setTimeout(() => { try {
     const r = [];
-    const prova = (nome, vero, perche) => r.push(`${nome}=${vero ? "ok" : `NO(${perche})`}`);
-    const larghe = [...document.querySelectorAll(".tabella-scorrevole")].filter((c) => c.scrollWidth > c.clientWidth + 1);
-    prova("nienteScorrimento", !larghe.length, `${larghe.length} tabelle scorrono di lato a ${innerWidth} px`);
-    if (ATTESO?.gratis) {
-      const riga = [...el("tTess").querySelectorAll("tr")].find((tr) => tr.cells[0]?.textContent.includes(ATTESO.gratis));
-      prova("gratisZero", riga?.cells[2]?.textContent.includes("0,00"), `prezzo «${riga?.cells[2]?.textContent.trim()}»`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
+    const wideOnes = [...document.querySelectorAll(".tabella-scorrevole")].filter((c) => c.scrollWidth > c.clientWidth + 1);
+    test("nienteScorrimento", !wideOnes.length, `${wideOnes.length} tabelle scorrono di lato a ${innerWidth} px`);
+    if (EXPECTED?.gratis) {
+      const row = [...el("tTess").querySelectorAll("tr")].find((tr) => tr.cells[0]?.textContent.includes(EXPECTED.gratis));
+      test("gratisZero", row?.cells[2]?.textContent.includes("0,00"), `prezzo «${row?.cells[2]?.textContent.trim()}»`);
     }
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 150)})`; } }, 4000));

@@ -194,8 +194,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -229,8 +229,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -281,7 +281,7 @@
         <div class="griglia-post">
           <div>
             <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nel post:
-                 ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
+                 sortFields() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
             <section class="parte" aria-labelledby="pCampi">
               <h3 id="pCampi">Contenuto del post</h3>
               <p class="occhiello mb-2">I campi seguono l'ordine di lettura del post.</p>
@@ -568,38 +568,38 @@
 
   let posts = [];        // righe di social_events
   let sponsors = [];     // righe di sponsors
-  let aperto = null;     // il post nel form (riga salvata, o {} se nuovo)
-  let salvato = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
-  let testoAuto = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
-  let foto = null;       // la foto del post aperto (data URL ridotto)
-  let fotoX = null, fotoY = null, fotoZoom = null;  // photo_x, photo_y, photo_zoom del post aperto; null = come prima
+  let isOpen = null;     // il post nel form (riga salvata, o {} se nuovo)
+  let savedOne = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
+  let autoText = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
+  let picture = null;       // la foto del post aperto (data URL ridotto)
+  let photoX = null, photoY = null, photoZoom = null;  // photo_x, photo_y, photo_zoom del post aperto; null = come prima
 
   /** "2026/27": la stagione a cui appartiene oggi (parte a settembre). */
-  function stagioneDi(data = new Date()) {
-    const anno = data.getMonth() >= 8 ? data.getFullYear() : data.getFullYear() - 1;
-    return `${anno}/${String(anno + 1).slice(2)}`;
+  function seasonOf(data = new Date()) {
+    const year = data.getMonth() >= 8 ? data.getFullYear() : data.getFullYear() - 1;
+    return `${year}/${String(year + 1).slice(2)}`;
   }
-  const STAGIONE = stagioneDi();
+  const SEASON = seasonOf();
 
   (async function init() {
-    if (!(await requirePermesso("social"))) return;
-    el("copTitolo").value = `Stagione ${STAGIONE}`;
-    collegaForm();
-    collegaSponsor();
-    el("calTitolo").addEventListener("input", disegnaCalendarioMese);
-    el("calMese").addEventListener("change", () => { el("calTitolo").value = titoloMese(el("calMese").value); disegnaCalendarioMese(); });
-    for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", disegnaCopertinaFb);
-    collegaGiorni();
-    collegaRubrica();
-    window.addEventListener("hashchange", mostraSezione);
-    mostraSezione();
-    await Promise.all([caricaPost(), caricaSponsor(), caricaLuoghi(), caricaGiorniGita(), caricaContatti()]);
+    if (!(await requirePermission("social"))) return;
+    el("copTitolo").value = `Stagione ${SEASON}`;
+    bindForm();
+    bindSponsors();
+    el("calTitolo").addEventListener("input", drawMonthCalendar);
+    el("calMese").addEventListener("change", () => { el("calTitolo").value = monthTitle(el("calMese").value); drawMonthCalendar(); });
+    for (const id of ["copTitolo", "copSotto"]) el(id).addEventListener("input", drawFbCover);
+    bindDays();
+    bindContactBook();
+    window.addEventListener("hashchange", showSection);
+    showSection();
+    await Promise.all([loadPosts(), loadSponsors(), loadPlaces(), loadTripDays(), loadContacts()]);
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
-    disegnaElenco();
-    disegnaCalendarioMese();
-    disegnaCopertinaFb();
-    disegnaRiassunti();
+    drawList();
+    drawMonthCalendar();
+    drawFbCover();
+    drawSummaries();
   })();
 
   // ---------------------------------------------------------------------
@@ -609,34 +609,34 @@
   // Grafiche: un segnalibro vecchio arriva ancora al posto giusto.
   // ---------------------------------------------------------------------
 
-  const SEZIONI = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
-  const FRASI = {
+  const SECTIONS = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
+  const PHRASES = {
     post: "I post da preparare e quelli pubblicati: si compilano i dati e il post si disegna da solo.",
     grafiche: "Calendario delle gite e copertina, pronti da scaricare.",
     impostazioni: "Sponsor, contatti e giorni delle gite che i post usano.",
   };
-  const MODULI = { sponsor: "impostazioni", contatti: "impostazioni", giorni: "impostazioni", calendario: "grafiche", copertina: "grafiche" };
+  const MODULES = { sponsor: "impostazioni", contatti: "impostazioni", giorni: "impostazioni", calendario: "grafiche", copertina: "grafiche" };
 
   /** [sezione, modulo]: il modulo ("sponsor", "contatti", "giorni") c'è solo dentro Impostazioni. */
   function dove() {
     const h = location.hash.slice(1);
-    if (h in SEZIONI) return [h, null];
-    if (h in MODULI) return [MODULI[h], MODULI[h] === "impostazioni" ? h : null];
+    if (h in SECTIONS) return [h, null];
+    if (h in MODULES) return [MODULES[h], MODULES[h] === "impostazioni" ? h : null];
     return ["post", null];
   }
 
-  function mostraSezione() {
+  function showSection() {
     const [s, modulo] = dove();
     document.querySelectorAll("[data-sezione]").forEach((x) => { x.hidden = x.dataset.sezione !== s; });
     document.querySelectorAll("[data-modulo]").forEach((x) => { x.hidden = x.dataset.modulo !== modulo; });
     el("riassunti").hidden = !!modulo;
-    el("titoloSezione").textContent = SEZIONI[s];
-    el("fraseSezione").textContent = FRASI[s];
+    el("titoloSezione").textContent = SECTIONS[s];
+    el("fraseSezione").textContent = PHRASES[s];
     // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
     // (fit() non vede niente da restringere): si rifanno ora che si vedono.
-    if (s === "post" && !el("editor").hidden) ridisegna();
-    if (s === "grafiche") { disegnaCalendarioMese(); disegnaCopertinaFb(); }
-    if (s === "impostazioni") disegnaRiassunti();
+    if (s === "post" && !el("editor").hidden) redraw();
+    if (s === "grafiche") { drawMonthCalendar(); drawFbCover(); }
+    if (s === "impostazioni") drawSummaries();
     window.scrollTo(0, 0);
   }
 
@@ -644,7 +644,7 @@
    * Impostazioni in breve: sponsor, contatti e giorni come sono adesso, ognuno
    * col pulsante che apre il suo modulo.
    */
-  function disegnaRiassunti() {
+  function drawSummaries() {
     el("riassuntoSponsor").innerHTML = sponsors.length ? sponsors.map((s) => {
       const n = posts.filter((p) => p.sponsor_id === s.id).length;
       return `<li><span class="logo-sponsor">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ""}</span>
@@ -655,7 +655,7 @@
       `<li><span class="chi"><b>${esc(c.name)}</b><small>${esc(c.phone)}${c.hours ? ` · ${esc(c.hours)}` : ""}</small></span>
         ${c.is_default ? '<span class="stato pronto">Proposto</span>' : ""}</li>`).join("")
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
-    el("riassuntoGiorni").innerHTML = SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")
+    el("riassuntoGiorni").innerHTML = WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("")
       || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
   }
 
@@ -664,46 +664,46 @@
   // ---------------------------------------------------------------------
 
   // L'elenco senza le foto: sono nel database in base64, circa 250 KB l'una, e con 50 post la pagina
-  // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (apri()).
-  const COLONNE_ELENCO = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
+  // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
+  const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
     + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop";
 
-  async function caricaPost() {
-    const { data, error } = await sb.from("social_events").select(COLONNE_ELENCO)
+  async function loadPosts() {
+    const { data, error } = await sb.from("social_events").select(LIST_COLUMNS)
       .order("event_date", { ascending: true, nullsFirst: false }).order("created_at");
-    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     posts = data;
-    disegnaElenco();
-    riempiMesi();
+    drawList();
+    fillMonths();
   }
 
-  async function caricaSponsor() {
+  async function loadSponsors() {
     const { data, error } = await sb.from("sponsors").select("*").order("name");
-    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     sponsors = data;
-    const scelto = el("fSponsor").value;
+    const chosenOne = el("fSponsor").value;
     el("fSponsor").innerHTML = sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
-    if (scelto) el("fSponsor").value = scelto;
+    if (chosenOne) el("fSponsor").value = chosenOne;
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
-    apriSponsor(el("sScegli").value);
+    openSponsor(el("sScegli").value);
   }
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
-  async function caricaGiorniGita() {
+  async function loadTripDays() {
     const { data, error } = await sb.from("trip_days").select("weekday, color");
-    if (error) showToast("Giorni delle gite non caricati, in uso i colori predefiniti: " + messaggioErrore(error), "is-danger");
-    else impostaColoriGita(mappaColori(data));
-    apriGiorni();
+    if (error) showToast("Giorni delle gite non caricati, in uso i colori predefiniti: " + errorMessage(error), "is-danger");
+    else setTripColors(colorMap(data));
+    openDays();
   }
   /** La rubrica dei contatti (social_contacts), da cui ogni post sceglie i suoi. */
-  async function caricaContatti() {
+  async function loadContacts() {
     const { data, error } = await sb.from("social_contacts").select("id, name, phone, hours, is_default").order("position");
-    if (error) { showToast("Contatti non caricati, i post saranno privi di recapiti telefonici: " + messaggioErrore(error), "is-danger"); return; }
-    impostaContatti(data);
-    if (!rubricaModificata()) apriRubrica(data);
+    if (error) { showToast("Contatti non caricati, i post saranno privi di recapiti telefonici: " + errorMessage(error), "is-danger"); return; }
+    setContacts(data);
+    if (!contactsModified()) openContactBook(data);
     // Il post aperto prima che la rubrica arrivasse: rifatto con i suoi contatti.
-    if (aperto && !modificato()) apri(aperto);
+    if (isOpen && !modified()) doOpen(isOpen);
   }
 
   // ---------------------------------------------------------------------
@@ -714,82 +714,82 @@
   // salva, btnSalva, ...).
   // ---------------------------------------------------------------------
 
-  let rubricaSalvata = "[]";  // la rubrica com'era all'ultimo salvataggio, per "Salva modifiche"
+  let contactsSaved = "[]";  // la rubrica com'era all'ultimo salvataggio, per "Salva modifiche"
 
-  function collegaRubrica() {
+  function bindContactBook() {
     el("btnAggiungiContatto").addEventListener("click", () => {
-      aggiungiContatto();
+      addContact();
       el("righeContatti").lastElementChild.querySelector("input").focus();
-      aggiornaRubrica();
+      updateContactBook();
     });
-    el("righeContatti").addEventListener("input", aggiornaRubrica);
+    el("righeContatti").addEventListener("input", updateContactBook);
     el("righeContatti").addEventListener("click", (e) => {
-      const b = e.target.closest("button"), riga = b && b.closest(".riga-contatto");
-      if (!riga) return;
-      if (b.classList.contains("sali")) { riga.previousElementSibling.before(riga); b.focus(); }
-      else riga.remove();
-      aggiornaRubrica();
+      const b = e.target.closest("button"), row = b && b.closest(".riga-contatto");
+      if (!row) return;
+      if (b.classList.contains("sali")) { row.previousElementSibling.before(row); b.focus(); }
+      else row.remove();
+      updateContactBook();
     });
-    el("btnSalvaRubrica").addEventListener("click", salvaRubrica);
+    el("btnSalvaRubrica").addEventListener("click", saveContacts);
   }
 
   /** Una riga; `id` c'è per i contatti già salvati. */
-  function aggiungiContatto({ id = "", name = "", phone = "", hours = "", is_default = false } = {}) {
-    const riga = document.createElement("div");
-    riga.className = "riga-contatto";
-    riga.dataset.id = id;
-    riga.innerHTML = `<input class="input" value="${esc(name)}" placeholder="Nome (es. Segreteria)" aria-label="Nome">
+  function addContact({ id = "", name = "", phone = "", hours = "", is_default = false } = {}) {
+    const row = document.createElement("div");
+    row.className = "riga-contatto";
+    row.dataset.id = id;
+    row.innerHTML = `<input class="input" value="${esc(name)}" placeholder="Nome (es. Segreteria)" aria-label="Nome">
       <input class="input" type="tel" value="${esc(phone)}" placeholder="Telefono" aria-label="Telefono">
       <input class="input" value="${esc(hours || "")}" placeholder="Orari (facoltativo)" aria-label="Orari per chiamare">
       <label class="spunta"><input type="checkbox" ${is_default ? "checked" : ""}> <span>Proposto</span></label>
       <button type="button" class="button is-light sali" aria-label="Sposta su" title="Sposta su">↑</button>
       <button type="button" class="button is-light" aria-label="Togli questo contatto" title="Togli">✕</button>`;
-    el("righeContatti").append(riga);
+    el("righeContatti").append(row);
   }
 
-  function apriRubrica(righe) {
+  function openContactBook(rows) {
     el("righeContatti").innerHTML = "";
-    righe.forEach(aggiungiContatto);
-    if (!righe.length) aggiungiContatto({ is_default: true });
-    rubricaSalvata = JSON.stringify(rubricaDaForm());
-    aggiornaRubrica();
+    rows.forEach(addContact);
+    if (!rows.length) addContact({ is_default: true });
+    contactsSaved = JSON.stringify(contactsFromForm());
+    updateContactBook();
   }
 
   /** Le righe compilate almeno in parte, nell'ordine della pagina. */
-  const rubricaDaForm = () => [...el("righeContatti").children].map((r) => {
+  const contactsFromForm = () => [...el("righeContatti").children].map((r) => {
     const [name, phone, hours] = [...r.querySelectorAll("input.input")].map((i) => i.value.trim());
     return { id: r.dataset.id, name, phone, hours: hours || null, is_default: r.querySelector("input[type=checkbox]").checked };
   }).filter((c) => c.name || c.phone || c.hours).map((c, position) => ({ ...c, position }));
-  const rubricaModificata = () => JSON.stringify(rubricaDaForm()) !== rubricaSalvata;
+  const contactsModified = () => JSON.stringify(contactsFromForm()) !== contactsSaved;
 
   /** Avviso per le righe a metà, "Salva modifiche". */
-  function aggiornaRubrica() {
-    const mezze = rubricaDaForm().filter((c) => !c.name || !c.phone).length;
-    el("avvisoRubrica").hidden = !mezze;
-    el("avvisoRubrica").textContent = `${mezze === 1 ? "Un contatto è privo" : `${mezze} contatti sono privi`} di nome o telefono: completare entrambi i campi.`;
-    const m = rubricaModificata();
+  function updateContactBook() {
+    const halves = contactsFromForm().filter((c) => !c.name || !c.phone).length;
+    el("avvisoRubrica").hidden = !halves;
+    el("avvisoRubrica").textContent = `${halves === 1 ? "Un contatto è privo" : `${halves} contatti sono privi`} di nome o telefono: completare entrambi i campi.`;
+    const m = contactsModified();
     el("btnSalvaRubrica").textContent = m ? "Salva modifiche" : "Salva contatti";
     el("btnSalvaRubrica").classList.toggle("salva-modifiche", m);
   }
 
   /** Prima di salvare: se un contatto tolto sta su post non pubblicati, lo si chiede. */
-  function salvaRubrica() {
-    const righe = rubricaDaForm();
-    if (righe.some((c) => !c.name || !c.phone)) {
+  function saveContacts() {
+    const rows = contactsFromForm();
+    if (rows.some((c) => !c.name || !c.phone)) {
       // Il primo nome o telefono vuoto di una riga cominciata.
-      const vuoto = [...el("righeContatti").children].map((riga) => [...riga.querySelectorAll("input.input")])
-        .filter((campi) => campi.some((c) => c.value.trim())).flatMap((campi) => campi.slice(0, 2)).find((c) => !c.value.trim());
-      segnaErrore(vuoto, "Ogni contatto richiede nome e telefono.");
+      const emptyOne = [...el("righeContatti").children].map((row) => [...row.querySelectorAll("input.input")])
+        .filter((fields) => fields.some((c) => c.value.trim())).flatMap((fields) => fields.slice(0, 2)).find((c) => !c.value.trim());
+      markError(emptyOne, "Ogni contatto richiede nome e telefono.");
       return;
     }
     const inUso = {};  // id → quanti post non pubblicati lo mostrano
     for (const p of posts) if (!p.published_at) for (const id of p.contacts || []) inUso[id] = (inUso[id] || 0) + 1;
-    const restano = new Set(righe.map((c) => c.id));
-    const tolti = JSON.parse(rubricaSalvata).filter((c) => c.id && !restano.has(c.id) && inUso[c.id]);
-    if (!tolti.length) { scriviRubrica(righe); return; }
-    const quanti = tolti.reduce((n, c) => n + inUso[c.id], 0);
-    chiedi(el("azioniRubrica"), `${tolti.map((c) => c.name).join(", ")} ${tolti.length === 1 ? "è" : "sono"} su ${quanti === 1 ? "un post" : `${quanti} post`} non ancora pubblicat${quanti === 1 ? "o" : "i"}: rimuover${tolti.length === 1 ? "lo" : "li"} anche da lì?`,
-      "Rimuovi", () => scriviRubrica(righe));
+    const left = new Set(rows.map((c) => c.id));
+    const removedItems = JSON.parse(contactsSaved).filter((c) => c.id && !left.has(c.id) && inUso[c.id]);
+    if (!removedItems.length) { writeContacts(rows); return; }
+    const howManyOnes = removedItems.reduce((n, c) => n + inUso[c.id], 0);
+    ask(el("azioniRubrica"), `${removedItems.map((c) => c.name).join(", ")} ${removedItems.length === 1 ? "è" : "sono"} su ${howManyOnes === 1 ? "un post" : `${howManyOnes} post`} non ancora pubblicat${howManyOnes === 1 ? "o" : "i"}: rimuover${removedItems.length === 1 ? "lo" : "li"} anche da lì?`,
+      "Rimuovi", () => writeContacts(rows));
   }
 
   /**
@@ -798,98 +798,98 @@
    * riprovare non li duplica), poi via quelli non più in pagina. I post che li
    * avevano li ignorano (l'id non si trova più).
    */
-  async function scriviRubrica(righe) {
+  async function writeContacts(rows) {
     setLoading(true);
     try {
-      const vecchi = righe.filter((c) => c.id), nuovi = righe.filter((c) => !c.id);
-      if (vecchi.length) {
-        const { error } = await sb.from("social_contacts").upsert(vecchi);
+      const oldOnes = rows.filter((c) => c.id), newOnes = rows.filter((c) => !c.id);
+      if (oldOnes.length) {
+        const { error } = await sb.from("social_contacts").upsert(oldOnes);
         if (error) throw error;
       }
-      if (nuovi.length) {
-        const { data, error } = await sb.from("social_contacts").insert(nuovi.map(({ id, ...c }) => c)).select("id");
+      if (newOnes.length) {
+        const { data, error } = await sb.from("social_contacts").insert(newOnes.map(({ id, ...c }) => c)).select("id");
         if (error) throw error;
-        const senzaId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input.input")].some((i) => i.value.trim()));
-        data.forEach((d, i) => { nuovi[i].id = senzaId[i].dataset.id = d.id; });
+        const withoutId = [...el("righeContatti").children].filter((r) => !r.dataset.id && [...r.querySelectorAll("input.input")].some((i) => i.value.trim()));
+        data.forEach((d, i) => { newOnes[i].id = withoutId[i].dataset.id = d.id; });
       }
       // Solo quelli tolti qui, fra quelli letti all'apertura: un contatto che un altro
       // ha appena aggiunto non è in pagina, e «tutti quelli che non ci sono» lo cancellava.
-      const tolti = JSON.parse(rubricaSalvata).map((c) => c.id).filter((id) => id && !righe.some((c) => c.id === id));
-      if (tolti.length) {
-        const { error } = await sb.from("social_contacts").delete().in("id", tolti);
+      const removedItems = JSON.parse(contactsSaved).map((c) => c.id).filter((id) => id && !rows.some((c) => c.id === id));
+      if (removedItems.length) {
+        const { error } = await sb.from("social_contacts").delete().in("id", removedItems);
         if (error) throw error;
       }
-      apriRubrica(righe);
+      openContactBook(rows);
       showToast("Contatti salvati.");
       // Il riassunto, le spunte del post e i telefoni nelle immagini prendono
-      // la rubrica nuova. Non caricaContatti(): riaprirebbe il post e
+      // la rubrica nuova. Non loadContacts(): riaprirebbe il post e
       // porterebbe via da qui.
-      impostaContatti(righe);
-      disegnaRiassunti();
-      if (aperto) disegnaSceltaContatti([...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value));
+      setContacts(rows);
+      drawSummaries();
+      if (isOpen) drawContactChoice([...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value));
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
-  const mappaColori = (righe) => Object.fromEntries(righe.filter((r) => r.color).map((r) => [r.weekday, r.color]));
+  const colorMap = (rows) => Object.fromEntries(rows.filter((r) => r.color).map((r) => [r.weekday, r.color]));
 
   /** I luoghi di partenza del gestionale, come suggerimenti nel form. */
-  async function caricaLuoghi() {
+  async function loadPlaces() {
     const { data } = await sb.from("departures").select("place").eq("active", true);
-    const luoghi = [...new Set((data || []).map((d) => d.place))].sort();
-    const lista = document.createElement("datalist");
-    lista.id = "luoghi";
-    lista.innerHTML = luoghi.map((l) => `<option value="${esc(l)}">`).join("");
-    document.body.append(lista);
+    const places = [...new Set((data || []).map((d) => d.place))].sort();
+    const listItems = document.createElement("datalist");
+    listItems.id = "luoghi";
+    listItems.innerHTML = places.map((l) => `<option value="${esc(l)}">`).join("");
+    document.body.append(listItems);
   }
 
   // ---------------------------------------------------------------------
   // Elenco
   // ---------------------------------------------------------------------
 
-  const NOMI_TIPO = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
+  const TYPE_NAMES = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
   let vista = "dafare";  // l'elenco mostra i post da fare o quelli già pubblicati
 
-  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (mancanti()). */
-  function stato(p) {
+  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (missingItems()). */
+  function state(p) {
     if (p.published_at) return `<span class="stato uscito">✓ Pubblicato ${new Date(p.published_at).toLocaleDateString("it-IT")}</span>`;
-    return mancanti(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
+    return missingItems(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
   }
 
-  function disegnaElenco() {
+  function drawList() {
     const daFare = posts.filter((p) => !p.published_at);
     el("contaDaFare").textContent = daFare.length ? `${daFare.length} da fare` : "";
     document.querySelectorAll("[data-vista]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.vista === vista));
     // posts arriva in ordine di data; i pubblicati si leggono dal più recente.
-    const visibili = vista === "dafare" ? daFare : posts.filter((p) => p.published_at).reverse();
-    const mesi = new Map();
-    for (const p of visibili) {
+    const visibleOnes = vista === "dafare" ? daFare : posts.filter((p) => p.published_at).reverse();
+    const months = new Map();
+    for (const p of visibleOnes) {
       const m = p.event_date ? p.event_date.slice(0, 7) : "";
-      if (!mesi.has(m)) mesi.set(m, []);
-      mesi.get(m).push(p);
+      if (!months.has(m)) months.set(m, []);
+      months.get(m).push(p);
     }
     // Quelli senza data (corsi, servizi) sempre in fondo.
-    const gruppi = [...mesi].sort(([a], [b]) => (!a) - (!b));
-    el("elencoPost").innerHTML = visibili.length ? gruppi.map(([m, righe]) => `
-      <li class="mese">${m ? `${maiuscola(MESI[Number(m.slice(5)) - 1])} ${m.slice(0, 4)}` : "Senza data"}</li>
-      ${righe.map(rigaElenco).join("")}`).join("")
+    const groups = [...months].sort(([a], [b]) => (!a) - (!b));
+    el("elencoPost").innerHTML = visibleOnes.length ? groups.map(([m, rows]) => `
+      <li class="mese">${m ? `${uppercase(MONTHS[Number(m.slice(5)) - 1])} ${m.slice(0, 4)}` : "Senza data"}</li>
+      ${rows.map(listRow).join("")}`).join("")
       : `<li class="occhiello pt-3">${vista === "dafare" ? "Nessun post da fare." : "Nessun post pubblicato."}</li>`;
     el("elencoPost").querySelectorAll("button[data-id]").forEach((b) =>
-      b.addEventListener("click", () => apri(posts.find((p) => p.id === b.dataset.id))));
+      b.addEventListener("click", () => doOpen(posts.find((p) => p.id === b.dataset.id))));
   }
 
   /** Una riga: il giorno (nel colore della gita), il titolo, il tipo e lo stato. */
-  function rigaElenco(p) {
-    const d = giornoDi(p.event_date);
-    const C = p.kind === "gita" && d ? categoria(categoriaGita(p.event_date)) : null;
+  function listRow(p) {
+    const d = dayOf(p.event_date);
+    const C = p.kind === "gita" && d ? categoryName(tripCategory(p.event_date)) : null;
     const sponsor = p.kind === "sponsor" ? " · " + esc((sponsors.find((s) => s.id === p.sponsor_id) || {}).name || "") : "";
-    return `<li><button type="button" data-id="${p.id}" ${aperto && aperto.id === p.id ? 'aria-current="true"' : ""}>
+    return `<li><button type="button" data-id="${p.id}" ${isOpen && isOpen.id === p.id ? 'aria-current="true"' : ""}>
       <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
-        ? `<span class="sett">${maiuscola(GIORNI[d.getDay()].slice(0, 3))}</span><span class="gm">${dataCorta(p.event_date)}</span>` : "—"}</span>
+        ? `<span class="sett">${uppercase(DAYS[d.getDay()].slice(0, 3))}</span><span class="gm">${shortDate(p.event_date)}</span>` : "—"}</span>
       <span class="quale">${esc(nomePost(p) || "(senza titolo)")}
-        <small>${esc(NOMI_TIPO[p.kind])}${sponsor} ${stato(p)}</small></span>
+        <small>${esc(TYPE_NAMES[p.kind])}${sponsor} ${state(p)}</small></span>
     </button></li>`;
   }
 
@@ -897,71 +897,71 @@
   // Form del post
   // ---------------------------------------------------------------------
 
-  const gruppo = (tipo) => (tipo === "gita" || tipo === "sponsor" ? tipo : "evento");
+  const group = (typeName) => (typeName === "gita" || typeName === "sponsor" ? typeName : "evento");
 
   /** Righe modificabili (partenze, prezzi, informazioni): [[a, b], ...]. */
-  const SEGNAPOSTI = { fFermate: ["6:30", "Luogo"], fPrezzi: ["Etichetta", "€ 25"], fInfo: ["Voce", "Valore"] };
-  function aggiungiRiga(id, [a, b] = ["", ""]) {
-    const riga = document.createElement("div");
-    riga.className = "riga";
-    riga.innerHTML = `<input class="input" value="${esc(a ?? "")}" placeholder="${SEGNAPOSTI[id][0]}">
-      <input class="input" value="${esc(b ?? "")}" placeholder="${SEGNAPOSTI[id][1]}" ${id === "fFermate" ? 'list="luoghi"' : ""}>
+  const PLACEHOLDERS = { fFermate: ["6:30", "Luogo"], fPrezzi: ["Etichetta", "€ 25"], fInfo: ["Voce", "Valore"] };
+  function addRow(id, [a, b] = ["", ""]) {
+    const row = document.createElement("div");
+    row.className = "riga";
+    row.innerHTML = `<input class="input" value="${esc(a ?? "")}" placeholder="${PLACEHOLDERS[id][0]}">
+      <input class="input" value="${esc(b ?? "")}" placeholder="${PLACEHOLDERS[id][1]}" ${id === "fFermate" ? 'list="luoghi"' : ""}>
       ${id === "fFermate" ? `<label class="sotto-data"><input type="radio" name="partenzaTessera"${el(id).children.length ? "" : " checked"}> sotto la data</label>` : ""}
       <button type="button" class="button is-light" aria-label="Togli questa riga">✕</button>`;
-    riga.querySelector("button").addEventListener("click", () => { riga.remove(); cambiato(); });
-    el(id).append(riga);
+    row.querySelector("button").addEventListener("click", () => { row.remove(); changed(); });
+    el(id).append(row);
   }
-  function partenzaScelta() {
+  function chosenDeparture() {
     const r = el("fFermate").querySelector("input[name=partenzaTessera]:checked");
     return r ? r.closest(".riga").querySelectorAll("input.input")[1].value.trim() || null : null;
   }
-  function righeDi(id) {
+  function rowsOf(id) {
     return [...el(id).querySelectorAll(".riga")].map((r) => [...r.querySelectorAll("input.input")].map((i) => i.value.trim()))
       .filter(([a, b]) => a || b);
   }
 
-  function collegaForm() {
+  function bindForm() {
     document.querySelectorAll("[data-nuovo]").forEach((b) =>
-      b.addEventListener("click", () => { el("menuNuovo").open = false; apri({ kind: b.dataset.nuovo }); }));
+      b.addEventListener("click", () => { el("menuNuovo").open = false; doOpen({ kind: b.dataset.nuovo }); }));
     document.querySelectorAll("[data-vista]").forEach((b) =>
-      b.addEventListener("click", () => { vista = b.dataset.vista; disegnaElenco(); }));
-    el("fTipo").addEventListener("change", () => { mostraCampi(); cambiato(); });
+      b.addEventListener("click", () => { vista = b.dataset.vista; drawList(); }));
+    el("fTipo").addEventListener("change", () => { showFields(); changed(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
-      b.addEventListener("click", () => { aggiungiRiga(b.dataset.aggiungi); cambiato(); }));
+      b.addEventListener("click", () => { addRow(b.dataset.aggiungi); changed(); }));
     el("editor").addEventListener("input", (e) => {
-      if (e.target.id !== "testoPost") { cambiato(); return; }
-      segnaTestoAMano();
-      segnaModifiche();
+      if (e.target.id !== "testoPost") { changed(); return; }
+      markManualText();
+      markChanges();
     });
     el("fFoto").addEventListener("change", async () => {
       const file = el("fFoto").files[0];
       if (!file) return;
       el("fFoto").value = "";
       try {
-        foto = await riduciImmagine(file, 1080, "image/jpeg");
+        picture = await shrinkImage(file, 1080, "image/jpeg");
       } catch (e) {
         showToast("Impossibile aprire l'immagine: usare una foto JPEG o PNG.", "is-danger");
         return;
       }
-      fotoX = fotoY = fotoZoom = null;  // una foto nuova parte dal centro
-      cambiato();
+      photoX = photoY = photoZoom = null;  // una foto nuova parte dal centro
+      changed();
     });
-    el("btnTogliFoto").addEventListener("click", () => { foto = null; fotoX = fotoY = fotoZoom = null; cambiato(); });
-    collegaSpostaFoto();
-    el("btnEvidenzia").addEventListener("click", evidenziaSelezione);
-    el("btnSalva").addEventListener("click", salva);
-    el("btnRigenera").addEventListener("click", () => { aggiornaTestoPost(true); segnaModifiche(); el("testoPost").focus(); });
-    el("btnCopia").addEventListener("click", copiaTesto);
-    el("btnPubblicato").addEventListener("click", segnaPubblicato);
-    el("btnElimina").addEventListener("click", elimina);
-    el("btnDuplica").addEventListener("click", duplica);
-    el("calGita").addEventListener("click", sceltaCalGita);
+    el("btnTogliFoto").addEventListener("click", () => { picture = null; photoX = photoY = photoZoom = null; changed(); });
+    bindMovePhoto();
+    el("btnEvidenzia").addEventListener("click", highlightSelection);
+    el("btnSalva").addEventListener("click", save);
+    el("btnRigenera").addEventListener("click", () => { updatePostText(true); markChanges(); el("testoPost").focus(); });
+    el("btnCopia").addEventListener("click", copyText);
+    el("btnPubblicato").addEventListener("click", markPublished);
+    el("btnElimina").addEventListener("click", remove);
+    el("btnDuplica").addEventListener("click", duplicate);
+    el("calGita").addEventListener("click", tripCalendarChoice);
     // La colonna dell'anteprima si ferma sotto la testata del post, che è
     // alta quanto vuole il testo (A+, "Manca: ...").
     new ResizeObserver(() => el("editor").style.setProperty("--testa", el("testaPost").offsetHeight + "px")).observe(el("testaPost"));
     // Uscire con il post o i giorni modificati e non salvati: il browser chiede conferma.
     window.addEventListener("beforeunload", (e) => {
-      if (modificato() || giorniModificati() || rubricaModificata()) { e.preventDefault(); e.returnValue = ""; }
+      if (modified() || changedDays() || contactsModified()) { e.preventDefault(); e.returnValue = ""; }
     });
   }
 
@@ -970,29 +970,29 @@
    * riga per riga (un'evidenza non va a capo) e con gli spazi fuori. Se la
    * selezione tocca parole già evidenziate, toglie quelle evidenze per intero:
    * togliere solo l'asterisco selezionato ne lasciava uno spaiato, che nel
-   * post si vedeva. Il post disegna le evidenze (evidenzia()
+   * post si vedeva. Il post disegna le evidenze (highlight()
    * in social-templates.js).
    */
-  function evidenziaSelezione() {
+  function highlightSelection() {
     const t = el("fSottotitolo"), v = t.value, a = t.selectionStart, b = t.selectionEnd;
     if (a === b) { showToast("Selezionare prima, nel sottotesto, le parole da evidenziare.", "is-warning"); t.focus(); return; }
-    const toccate = [...v.matchAll(/\*[^*\n]+\*/g)].filter((m) => m.index < b && m.index + m[0].length > a);
-    if (toccate.length) {
-      const inizio = toccate[0].index, fine = toccate.at(-1).index + toccate.at(-1)[0].length;
-      t.setRangeText(v.slice(inizio, fine).replace(/\*([^*\n]+)\*/g, "$1"), inizio, fine, "select");
+    const touched = [...v.matchAll(/\*[^*\n]+\*/g)].filter((m) => m.index < b && m.index + m[0].length > a);
+    if (touched.length) {
+      const start = touched[0].index, fine = touched.at(-1).index + touched.at(-1)[0].length;
+      t.setRangeText(v.slice(start, fine).replace(/\*([^*\n]+)\*/g, "$1"), start, fine, "select");
     } else {
       t.setRangeText(v.slice(a, b).split("\n").map((r) => r.replace(/^(\s*)(.*?)(\s*)$/,
-        (x, prima, parole, dopo) => (parole ? `${prima}*${parole}*${dopo}` : x))).join("\n"), a, b, "select");
+        (x, before, parole, after) => (parole ? `${before}*${parole}*${after}` : x))).join("\n"), a, b, "select");
     }
     t.focus();
     t.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  const NOMI_NUOVO = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
+  const NEW_NAMES = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
                        servizi: "Nuovo post dei servizi", sponsor: "Nuova campagna sponsor" };
 
   /** Il post aperto al posto del riquadro "scegli un post", o viceversa. */
-  function mostraEditor(si) {
+  function showEditor(si) {
     el("editor").hidden = !si;
     el("nessunPost").hidden = si;
   }
@@ -1003,35 +1003,35 @@
    * il 10% con Maiuscole. Spostare a destra la foto vuol dire mostrarne di più la parte sinistra:
    * per questo la freccia a destra abbassa photo_x.
    */
-  function collegaSpostaFoto() {
+  function bindMovePhoto() {
     const b = el("btnSposta");
-    const attivo = (si) => { b.setAttribute("aria-pressed", String(si)); b.textContent = si ? "Fine spostamento" : "Sposta la foto"; };
-    const limita = (v, min, max) => Math.min(max, Math.max(min, v));
-    const zoom = (d) => { fotoZoom = limita((fotoZoom ?? 100) + d, 100, 300); if (fotoZoom === 100) fotoZoom = null; cambiato(); };
-    const mosse = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
-    const muovi = (tasto, passo) => {
-      fotoX = limita((fotoX ?? 50) + mosse[tasto][0] * passo, 0, 100);
-      fotoY = limita((fotoY ?? 45) + mosse[tasto][1] * passo, 0, 100);
-      cambiato();
+    const active = (si) => { b.setAttribute("aria-pressed", String(si)); b.textContent = si ? "Fine spostamento" : "Sposta la foto"; };
+    const limit = (v, min, max) => Math.min(max, Math.max(min, v));
+    const zoom = (d) => { photoZoom = limit((photoZoom ?? 100) + d, 100, 300); if (photoZoom === 100) photoZoom = null; changed(); };
+    const moves = { ArrowLeft: [1, 0], ArrowRight: [-1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+    const move = (pressedKey, step) => {
+      photoX = limit((photoX ?? 50) + moves[pressedKey][0] * step, 0, 100);
+      photoY = limit((photoY ?? 45) + moves[pressedKey][1] * step, 0, 100);
+      changed();
     };
-    b.addEventListener("click", () => attivo(b.getAttribute("aria-pressed") !== "true"));
+    b.addEventListener("click", () => active(b.getAttribute("aria-pressed") !== "true"));
     // Cliccando +, − o una freccia la modalità resta accesa e la tastiera torna su «Sposta la foto».
-    b.addEventListener("blur", (e) => { if (!el("posFoto").contains(e.relatedTarget)) attivo(false); });
-    const eTorna = (fai) => () => { const acceso = b.getAttribute("aria-pressed") === "true"; fai(); if (acceso) b.focus(); };
+    b.addEventListener("blur", (e) => { if (!el("posFoto").contains(e.relatedTarget)) active(false); });
+    const andBack = (make) => () => { const isOn = b.getAttribute("aria-pressed") === "true"; make(); if (isOn) b.focus(); };
     b.addEventListener("keydown", (e) => {
       if (b.getAttribute("aria-pressed") !== "true") return;
-      if (mosse[e.key]) muovi(e.key, e.shiftKey ? 10 : 2);
+      if (moves[e.key]) move(e.key, e.shiftKey ? 10 : 2);
       else if (e.key === "+" || e.key === "=") zoom(10);
       else if (e.key === "-") zoom(-10);
-      else if (e.key === "Enter" || e.key === "Escape") attivo(false);
+      else if (e.key === "Enter" || e.key === "Escape") active(false);
       else return;
       e.preventDefault();
     });
-    el("btnZoomPiu").addEventListener("click", eTorna(() => zoom(10)));
-    el("btnZoomMeno").addEventListener("click", eTorna(() => zoom(-10)));
+    el("btnZoomPiu").addEventListener("click", andBack(() => zoom(10)));
+    el("btnZoomMeno").addEventListener("click", andBack(() => zoom(-10)));
     el("posFoto").querySelectorAll("[data-mossa]").forEach((f) =>
-      f.addEventListener("click", eTorna(() => muovi(f.dataset.mossa, 4))));
-    el("btnFotoCentro").addEventListener("click", () => { fotoX = fotoY = fotoZoom = null; cambiato(); });
+      f.addEventListener("click", andBack(() => move(f.dataset.mossa, 4))));
+    el("btnFotoCentro").addEventListener("click", () => { photoX = photoY = photoZoom = null; changed(); });
   }
 
   /**
@@ -1041,39 +1041,39 @@
    * cambia), la nota gialla della gita (vale per quella gita), lo stato «pubblicato» e il testo
    * scritto a mano (si rifà dai dati).
    */
-  function duplica() {
-    if (!aperto || !aperto.id) return;
-    const { id, created_at, updated_at, ...dati } = aperto;
-    apri({ ...dati, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
-      subtitle: dati.kind === "gita" ? null : dati.subtitle, published_at: null, caption: null });
-    if (aperto.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
+  function duplicate() {
+    if (!isOpen || !isOpen.id) return;
+    const { id, created_at, updated_at, ...records } = isOpen;
+    doOpen({ ...records, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
+      subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null });
+    if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
     // La gita sceglie il giorno nel calendario: il campo data è nascosto.
-    const giorno = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");
-    if (giorno) giorno.focus();
+    const dayKey = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");
+    if (dayKey) dayKey.focus();
   }
 
   let aperture = 0;  // l'ultimo post chiesto: se se ne apre un altro mentre arriva la foto, vince l'ultimo
-  async function apri(post) {
-    if (modificato()) {
-      chiedi(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Abbandonarle e aprire l'altro?",
-        "Abbandona le modifiche", () => { salvato = firma(); apri(post); });
+  async function doOpen(post) {
+    if (modified()) {
+      ask(el("azioniNuovo"), "Il post aperto ha modifiche non salvate. Abbandonarle e aprire l'altro?",
+        "Abbandona le modifiche", () => { savedOne = signature(); doOpen(post); });
       return;
     }
-    const turno = ++aperture;
+    const turn = ++aperture;
     // La foto non è nell'elenco: arriva prima di riempire il modulo, così salvare non la cancella.
     if (post.id && !("photo" in post)) {
       setLoading(true);
       const { data, error } = await sb.from("social_events").select("photo").eq("id", post.id).single();
       setLoading(false);
-      if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
+      if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
       post.photo = data.photo;
-      if (turno !== aperture) return;
+      if (turn !== aperture) return;
     }
-    aperto = post;
-    if (dove()[0] !== "post") history.replaceState(null, "", "#post"), mostraSezione();
-    const tipo = post.kind || "gita";
-    el("fTipo").value = tipo;
+    isOpen = post;
+    if (dove()[0] !== "post") history.replaceState(null, "", "#post"), showSection();
+    const typeName = post.kind || "gita";
+    el("fTipo").value = typeName;
     el("fData").value = post.event_date || "";
     el("fTitolo").value = post.title || "";
     el("fSottotitolo").value = post.subtitle || "";
@@ -1087,29 +1087,29 @@
     el("fDove").value = post.place || "";
     el("fCorso").checked = !!post.course;
     el("fMostraPrezzo").checked = post.show_price !== false;
-    foto = post.photo || null;
-    fotoX = post.photo_x ?? null; fotoY = post.photo_y ?? null; fotoZoom = post.photo_zoom ?? null;
-    meseGita = (post.event_date || new Date().toISOString()).slice(0, 7);
+    picture = post.photo || null;
+    photoX = post.photo_x ?? null; photoY = post.photo_y ?? null; photoZoom = post.photo_zoom ?? null;
+    tripMonth = (post.event_date || new Date().toISOString()).slice(0, 7);
     for (const id of ["fFermate", "fPrezzi", "fInfo"]) el(id).innerHTML = "";
-    (post.stops || []).forEach((r) => aggiungiRiga("fFermate", r));
-    const scelta = [...el("fFermate").querySelectorAll(".riga")].find((r) => post.card_stop && r.querySelectorAll("input.input")[1].value.trim() === post.card_stop);
-    if (scelta) scelta.querySelector("input[name=partenzaTessera]").checked = true;
-    (post.prices || []).forEach((r) => aggiungiRiga("fPrezzi", r));
-    (post.facts || []).forEach((r) => aggiungiRiga("fInfo", r));
-    if (!post.id && !(post.stops || []).length) aggiungiRiga("fFermate");
+    (post.stops || []).forEach((r) => addRow("fFermate", r));
+    const choice = [...el("fFermate").querySelectorAll(".riga")].find((r) => post.card_stop && r.querySelectorAll("input.input")[1].value.trim() === post.card_stop);
+    if (choice) choice.querySelector("input[name=partenzaTessera]").checked = true;
+    (post.prices || []).forEach((r) => addRow("fPrezzi", r));
+    (post.facts || []).forEach((r) => addRow("fInfo", r));
+    if (!post.id && !(post.stops || []).length) addRow("fFermate");
     // Un post nuovo parte dai contatti proposti nella rubrica.
-    disegnaSceltaContatti(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
-    formato = 0;
-    mostraEditor(true);
-    mostraCampi();
-    ridisegna();
-    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
-    el("testoPost").value = post.caption || testoAuto;
-    segnaTestoAMano();
-    salvato = firma();
-    segnaModifiche();
-    aggiornaTesta();
-    disegnaElenco();
+    drawContactChoice(post.id ? post.contacts || [] : SOCIAL.contatti.filter((c) => c.is_default).map((c) => c.id));
+    format = 0;
+    showEditor(true);
+    showFields();
+    redraw();
+    autoText = postText(daForm(), sponsorDi(daForm()), SEASON);
+    el("testoPost").value = post.caption || autoText;
+    markManualText();
+    savedOne = signature();
+    markChanges();
+    updateHeader();
+    drawList();
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -1118,70 +1118,70 @@
    * tessera con data e ora a destra, poi gancio, titolo e i dati nei
    * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
    * davvero (non con CSS order), così anche il tasto Tab li segue. */
-  const ORDINE_CAMPI = {
+  const FIELD_ORDER = {
     gita: ["corso", "giorno", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
     evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
-  const ORDINE_SPONSOR = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
+  const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
 
-  function ordinaCampi() {
-    const g = gruppo(el("fTipo").value), box = el("campiPost");
-    const ordine = g === "sponsor" ? ORDINE_SPONSOR : ORDINE_CAMPI[g];
-    const campi = ordine.map((nome) => box.querySelector(`[data-campo="${nome}"]`));
+  function sortFields() {
+    const g = group(el("fTipo").value), box = el("campiPost");
+    const order = g === "sponsor" ? SPONSOR_ORDER : FIELD_ORDER[g];
+    const fields = order.map((nome) => box.querySelector(`[data-campo="${nome}"]`));
     // Già in fila: niente da spostare (spostare un campo gli toglie il cursore).
-    const ora = [...box.children].filter((c) => campi.includes(c));
-    if (ora.every((c, i) => c === campi[i])) return;
-    for (const c of campi) box.append(c);
+    const ora = [...box.children].filter((c) => fields.includes(c));
+    if (ora.every((c, i) => c === fields[i])) return;
+    for (const c of fields) box.append(c);
   }
 
-  function mostraCampi() {
-    const g = gruppo(el("fTipo").value);
-    ordinaCampi();
+  function showFields() {
+    const g = group(el("fTipo").value);
+    sortFields();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (ogni a capo inizia una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
       : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
-    if (g !== "sponsor" && !el("fPrezzi").children.length) aggiungiRiga("fPrezzi");
+    if (g !== "sponsor" && !el("fPrezzi").children.length) addRow("fPrezzi");
     if (g === "sponsor" && !sponsors.length) showToast("Aggiungere prima uno sponsor in Impostazioni.", "is-warning");
   }
 
   /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
-  function aggiornaTesta() {
-    const p = { ...daForm(), published_at: aperto && aperto.published_at }, quando = dataLunga(p.event_date);
-    el("occhielloPost").textContent = `${NOMI_TIPO[p.kind]}${quando ? ` · ${quando}` : ""}`;
-    el("titoloEditor").textContent = nomePost(p) || NOMI_NUOVO[p.kind] || "Nuovo post";
-    el("statoPost").innerHTML = stato(p);
-    const manca = p.published_at ? [] : mancanti(p);
-    el("mancaCosa").hidden = !manca.length;
-    el("mancaCosa").textContent = `Manca: ${manca.join(", ")}.`;
+  function updateHeader() {
+    const p = { ...daForm(), published_at: isOpen && isOpen.published_at }, when = longDate(p.event_date);
+    el("occhielloPost").textContent = `${TYPE_NAMES[p.kind]}${when ? ` · ${when}` : ""}`;
+    el("titoloEditor").textContent = nomePost(p) || NEW_NAMES[p.kind] || "Nuovo post";
+    el("statoPost").innerHTML = state(p);
+    const missing = p.published_at ? [] : missingItems(p);
+    el("mancaCosa").hidden = !missing.length;
+    el("mancaCosa").textContent = `Manca: ${missing.join(", ")}.`;
   }
 
   /** Il form com'è adesso, nella forma di una riga di social_events. */
   function daForm() {
-    const tipo = el("fTipo").value, g = gruppo(tipo);
-    const prezzi = righeDi("fPrezzi").map(([a, b]) => (g === "gita" ? [null, b || a] : [a || null, b]));
+    const typeName = el("fTipo").value, g = group(typeName);
+    const priceMap = rowsOf("fPrezzi").map(([a, b]) => (g === "gita" ? [null, b || a] : [a || null, b]));
     return {
-      kind: tipo,
+      kind: typeName,
       event_date: el("fData").value || null,
       title: el("fTitolo").value.trim(),
       subtitle: el("fSottotitolo").value.trim() || null,
       hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
-      prices: g === "sponsor" ? [] : prezzi,
+      prices: g === "sponsor" ? [] : priceMap,
       show_price: el("fMostraPrezzo").checked,
-      stops: g === "gita" ? righeDi("fFermate") : [],
+      stops: g === "gita" ? rowsOf("fFermate") : [],
       // La partenza scritta sotto la data, per luogo (resta giusta se le righe cambiano ordine); vuota = la prima.
-      card_stop: g === "gita" ? partenzaScelta() : null,
-      facts: g === "evento" ? righeDi("fInfo") : [],
+      card_stop: g === "gita" ? chosenDeparture() : null,
+      facts: g === "evento" ? rowsOf("fInfo") : [],
       deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,
       place: g === "evento" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
-      photo: g === "sponsor" ? null : foto,
-      photo_x: g === "sponsor" || !foto ? null : fotoX,
-      photo_y: g === "sponsor" || !foto ? null : fotoY,
-      photo_zoom: g === "sponsor" || !foto ? null : fotoZoom,
+      photo: g === "sponsor" ? null : picture,
+      photo_x: g === "sponsor" || !picture ? null : photoX,
+      photo_y: g === "sponsor" || !picture ? null : photoY,
+      photo_zoom: g === "sponsor" || !picture ? null : photoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
@@ -1190,15 +1190,15 @@
       // solo quello scritto a mano: confrontare il testo salvato con quello
       // dei dati non basta, perché cambia anche da solo (formato della data,
       // numero in rubrica) e sembrava corretto a mano.
-      caption: el("testoPost").value === testoAuto ? null : el("testoPost").value,
+      caption: el("testoPost").value === autoText ? null : el("testoPost").value,
     };
   }
   const sponsorDi = (post) => sponsors.find((s) => s.id === post.sponsor_id) || null;
 
-  const firma = () => JSON.stringify(daForm());
-  const modificato = () => !el("editor").hidden && firma() !== salvato;
-  function segnaModifiche() {
-    const m = modificato();
+  const signature = () => JSON.stringify(daForm());
+  const modified = () => !el("editor").hidden && signature() !== savedOne;
+  function markChanges() {
+    const m = modified();
     el("btnSalva").textContent = m ? "Salva modifiche" : "Salva";
     el("btnSalva").classList.toggle("salva-modifiche", m);
   }
@@ -1207,102 +1207,102 @@
    * è quello scritto dalla pagina. Corretto a mano resta com'è, e la pagina lo
    * dice: "Rifai dai dati" (forza) lo riporta al testo automatico.
    */
-  function aggiornaTestoPost(forza) {
-    const aMano = el("testoPost").value !== testoAuto;
-    testoAuto = testoPost(daForm(), sponsorDi(daForm()), STAGIONE);
-    if (forza || !aMano) el("testoPost").value = testoAuto;
-    segnaTestoAMano();
+  function updatePostText(force) {
+    const manual = el("testoPost").value !== autoText;
+    autoText = postText(daForm(), sponsorDi(daForm()), SEASON);
+    if (force || !manual) el("testoPost").value = autoText;
+    markManualText();
   }
 
-  function segnaTestoAMano() {
-    const ta = el("testoPost"), aMano = ta.value !== testoAuto;
-    el("testoAMano").hidden = !aMano;
-    el("btnRigenera").hidden = !aMano;
+  function markManualText() {
+    const ta = el("testoPost"), manual = ta.value !== autoText;
+    el("testoAMano").hidden = !manual;
+    el("btnRigenera").hidden = !manual;
     // Alto quanto il testo: tutto in vista, senza scorrere dentro il riquadro.
     // (field-sizing: content qui resta all'altezza minima di Bulma.)
     ta.style.height = "auto";
     ta.style.height = ta.scrollHeight + ta.offsetHeight - ta.clientHeight + "px";
   }
 
-  function cambiato() {
-    ridisegna();
-    aggiornaTestoPost();
-    segnaModifiche();
-    aggiornaTesta();
+  function changed() {
+    redraw();
+    updatePostText();
+    markChanges();
+    updateHeader();
   }
 
   // Salva premuto due volte prima che arrivi la risposta: il secondo inseriva un altro post.
-  let salvaInCorso = false;
-  async function salva() {
-    if (salvaInCorso) return;
-    const riga = daForm();
+  let saving = false;
+  async function save() {
+    if (saving) return;
+    const row = daForm();
     // Un post può essere solo sottotesto; la gita ha sempre la meta.
-    if (riga.kind === "gita" ? !riga.title : !nomePost(riga)) {
-      segnaErrore(el("fTitolo"), riga.kind === "gita" ? "Inserire la meta." : "Inserire il titolo o il sottotesto.");
+    if (row.kind === "gita" ? !row.title : !nomePost(row)) {
+      markError(el("fTitolo"), row.kind === "gita" ? "Inserire la meta." : "Inserire il titolo o il sottotesto.");
       return;
     }
-    if (riga.kind === "gita" && !riga.event_date) { segnaErrore(el("fData"), "Selezionare il giorno della gita nel calendario: ne determina anche il colore."); return; }
-    if (riga.kind === "sponsor" && !riga.sponsor_id) { segnaErrore(el("fSponsor"), "Selezionare lo sponsor."); return; }
+    if (row.kind === "gita" && !row.event_date) { markError(el("fData"), "Selezionare il giorno della gita nel calendario: ne determina anche il colore."); return; }
+    if (row.kind === "sponsor" && !row.sponsor_id) { markError(el("fSponsor"), "Selezionare lo sponsor."); return; }
     // Prezzi in euro interi o con i 50 centesimi («€ 12,50»; «€ 1.200» sono migliaia).
-    const centesimi = (testo) => [...testo.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
-    const prezzoSbagliato = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
-      .find((c) => c && centesimi(c.value));
-    if (prezzoSbagliato) { segnaErrore(prezzoSbagliato, "Il prezzo deve essere in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
-    salvaInCorso = true;
+    const cents = (text) => [...text.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
+    const wrongPrice = [...el("fPrezzi").querySelectorAll(".riga")].map((r) => r.querySelectorAll("input.input")[1])
+      .find((c) => c && cents(c.value));
+    if (wrongPrice) { markError(wrongPrice, "Il prezzo deve essere in euro interi o con 50 centesimi (es. € 12 o € 12,50)."); return; }
+    saving = true;
     setLoading(true);
     try {
-      const { data, error } = aperto && aperto.id
-        ? await sb.from("social_events").update(riga).eq("id", aperto.id).select().single()
-        : await sb.from("social_events").insert(riga).select().single();
+      const { data, error } = isOpen && isOpen.id
+        ? await sb.from("social_events").update(row).eq("id", isOpen.id).select().single()
+        : await sb.from("social_events").insert(row).select().single();
       if (error) throw error;
-      aperto = data;
-      salvato = firma();
-      segnaModifiche();
-      aggiornaTesta();
-      await caricaPost();
+      isOpen = data;
+      savedOne = signature();
+      markChanges();
+      updateHeader();
+      await loadPosts();
       showToast("Post salvato.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
-      salvaInCorso = false;
+      saving = false;
       setLoading(false);
     }
   }
 
-  async function segnaPubblicato() {
-    if (!aperto || !aperto.id) { showToast("Salvare prima il post.", "is-warning"); return; }
-    const quando = aperto.published_at ? null : new Date().toISOString();
-    const { data, error } = await sb.from("social_events").update({ published_at: quando }).eq("id", aperto.id).select().single();
-    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
-    aperto = data;
-    aggiornaPubblicato();
-    aggiornaTesta();
-    await caricaPost();
-    showToast(quando ? "Post segnato come pubblicato." : "Segno di pubblicazione rimosso.");
+  async function markPublished() {
+    if (!isOpen || !isOpen.id) { showToast("Salvare prima il post.", "is-warning"); return; }
+    const when = isOpen.published_at ? null : new Date().toISOString();
+    const { data, error } = await sb.from("social_events").update({ published_at: when }).eq("id", isOpen.id).select().single();
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    isOpen = data;
+    updatePublished();
+    updateHeader();
+    await loadPosts();
+    showToast(when ? "Post segnato come pubblicato." : "Segno di pubblicazione rimosso.");
   }
-  function aggiornaPubblicato() {
-    const uscito = !!(aperto && aperto.published_at);
-    el("btnPubblicato").textContent = uscito
-      ? `Pubblicato il ${new Date(aperto.published_at).toLocaleDateString("it-IT")} · rimuovi il segno`
+  function updatePublished() {
+    const exited = !!(isOpen && isOpen.published_at);
+    el("btnPubblicato").textContent = exited
+      ? `Pubblicato il ${new Date(isOpen.published_at).toLocaleDateString("it-IT")} · rimuovi il segno`
       : "Segna come pubblicato";
-    el("btnPubblicato").classList.toggle("is-light", uscito);
+    el("btnPubblicato").classList.toggle("is-light", exited);
   }
 
-  function elimina() {
-    if (!aperto || !aperto.id) { salvato = firma(); aperto = null; mostraEditor(false); disegnaElenco(); return; }
-    chiedi(el("azioniElimina"), "Eliminare il post? L'operazione non è reversibile.", "Elimina", eliminaDavvero);
+  function remove() {
+    if (!isOpen || !isOpen.id) { savedOne = signature(); isOpen = null; showEditor(false); drawList(); return; }
+    ask(el("azioniElimina"), "Eliminare il post? L'operazione non è reversibile.", "Elimina", reallyDelete);
   }
 
-  async function eliminaDavvero() {
-    const { error } = await sb.from("social_events").delete().eq("id", aperto.id);
-    if (error) { showToast("Errore: " + messaggioErrore(error), "is-danger"); return; }
-    aperto = null;
-    mostraEditor(false);
-    await caricaPost();
+  async function reallyDelete() {
+    const { error } = await sb.from("social_events").delete().eq("id", isOpen.id);
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    isOpen = null;
+    showEditor(false);
+    await loadPosts();
     showToast("Post eliminato.");
   }
 
-  async function copiaTesto() {
+  async function copyText() {
     try {
       await navigator.clipboard.writeText(el("testoPost").value);
       showToast("Testo copiato: pronto da incollare su Instagram o Facebook.");
@@ -1323,113 +1323,113 @@
    * dell'export. `fuori`: disegnato ma fuori dallo schermo (vedi .fuori).
    * Restituisce la figura e la promessa di sapere se sborda.
    */
-  function anteprima(dove, { html, w, h, nome, file }, larghezza, { fuori = false, pulsante = true } = {}) {
-    const k = larghezza / w;
-    const figura = document.createElement("figure");
-    figura.className = "anteprima" + (fuori ? " fuori" : "");
-    figura.innerHTML = `<figcaption>${esc(nome)} · ${w}×${h}</figcaption>
+  function preview(dove, { html, w, h, nome, file }, widthPx, { fuori: outside = false, pulsante: theButton = true } = {}) {
+    const k = widthPx / w;
+    const figure = document.createElement("figure");
+    figure.className = "anteprima" + (outside ? " fuori" : "");
+    figure.innerHTML = `<figcaption>${esc(nome)} · ${w}×${h}</figcaption>
       <div class="cornice" style="width:${w * k}px;height:${h * k}px"><div class="scala" style="transform:scale(${k})">${html}</div></div>
       <p class="sborda" hidden>Un testo supera lo spazio disponibile: accorciarlo.</p>
-      ${pulsante ? '<button type="button" class="button is-small is-link mt-2">Scarica PNG</button>' : ""}`;
-    dove.append(figura);
-    const canvas = figura.querySelector(".cv");
-    const sborda = document.fonts.ready.then(() => {
-      const s = fit(figura);
-      figura.querySelector(".sborda").hidden = !s;
+      ${theButton ? '<button type="button" class="button is-small is-link mt-2">Scarica PNG</button>' : ""}`;
+    dove.append(figure);
+    const canvas = figure.querySelector(".cv");
+    const overflows = document.fonts.ready.then(() => {
+      const s = fit(figure);
+      figure.querySelector(".sborda").hidden = !s;
       return s;
     });
-    if (pulsante) figura.querySelector("button").addEventListener("click", () => scaricaPng(canvas, file));
-    return { figura, sborda };
+    if (theButton) figure.querySelector("button").addEventListener("click", () => downloadPng(canvas, file));
+    return { figura: figure, sborda: overflows };
   }
 
-  let formato = 0;        // quale anteprima del post aperto si vede (Post, Story, ...)
-  let giroAnteprime = 0;  // l'ultimo ridisegno: gli avvisi di uno più vecchio non contano
+  let format = 0;        // quale anteprima del post aperto si vede (Post, Story, ...)
+  let previewRound = 0;  // l'ultimo ridisegno: gli avvisi di uno più vecchio non contano
 
   /**
    * Anteprime del post aperto, una per formato: si vede quella scelta con i
    * pulsanti sopra, le altre restano disegnate fuori dallo schermo. L'avviso
    * "un testo è troppo lungo" le dice tutte, anche quelle che non si vedono.
    */
-  function ridisegna() {
-    const post = daForm(), dove = el("anteprime"), giro = ++giroAnteprime;
+  function redraw() {
+    const post = daForm(), dove = el("anteprime"), round = ++previewRound;
     for (const id of ["anteprime", "formati", "scarica"]) el(id).innerHTML = "";
     el("sbordaTutti").hidden = true;
-    if (post.kind === "gita") disegnaCalGita();
-    el("btnTogliFoto").hidden = !foto;
-    el("btnDuplica").hidden = !(aperto && aperto.id);
-    el("posFoto").hidden = !foto;
-    el("statoFoto").textContent = foto ? `Ingrandita al ${fotoZoom ?? 100}%.` : "";
-    aggiornaPubblicato();
+    if (post.kind === "gita") drawTripCalendar();
+    el("btnTogliFoto").hidden = !picture;
+    el("btnDuplica").hidden = !(isOpen && isOpen.id);
+    el("posFoto").hidden = !picture;
+    el("statoFoto").textContent = picture ? `Ingrandita al ${photoZoom ?? 100}%.` : "";
+    updatePublished();
     const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
     el("linkUtm").hidden = !sp || !sp.url;
     if (sp && sp.url) {
-      const link = indirizzoUtm(sp, post, "story", STAGIONE);
+      const link = utmAddress(sp, post, "story", SEASON);
       el("linkUtm").innerHTML = `Link per lo sticker della story: <a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>
         <button type="button" class="button is-small is-light mt-2" id="btnCopiaLink">Copia link</button>`;
       el("btnCopiaLink").addEventListener("click", () => navigator.clipboard.writeText(link).then(() => showToast("Link copiato.")));
     }
-    const lista = formatiPost(post);
-    el("formati").hidden = lista.length < 2;
-    el("senzaAnteprima").hidden = lista.length > 0;
+    const listItems = postFormats(post);
+    el("formati").hidden = listItems.length < 2;
+    el("senzaAnteprima").hidden = listItems.length > 0;
     el("senzaAnteprima").textContent = { gita: "L'anteprima compare dopo l'inserimento di meta e giorno.",
       sponsor: "Le anteprime compaiono dopo la scelta dello sponsor." }[post.kind] || "L'anteprima compare dopo l'inserimento del titolo.";
-    if (!lista.length) return;
-    formato = Math.min(formato, lista.length - 1);
-    const disegnati = lista.map((f, i) =>
+    if (!listItems.length) return;
+    format = Math.min(format, listItems.length - 1);
+    const drawn = listItems.map((f, i) =>
       // 320px: ci sta nella colonna di 22rem accanto ai campi, barra di scorrimento compresa.
-      anteprima(dove, f, Math.round(Math.min(320, 400 * f.w / f.h)), { fuori: i !== formato, pulsante: false }));
-    el("formati").innerHTML = lista.map((f, i) => `<button type="button" aria-pressed="${i === formato}" title="${esc(f.nome)}">${esc(f.breve)}</button>`).join("");
+      preview(dove, f, Math.round(Math.min(320, 400 * f.w / f.h)), { fuori: i !== format, pulsante: false }));
+    el("formati").innerHTML = listItems.map((f, i) => `<button type="button" aria-pressed="${i === format}" title="${esc(f.nome)}">${esc(f.breve)}</button>`).join("");
     el("formati").querySelectorAll("button").forEach((b, i) => b.addEventListener("click", () => {
-      formato = i;
-      disegnati.forEach(({ figura }, j) => figura.classList.toggle("fuori", j !== i));
+      format = i;
+      drawn.forEach(({ figura: figure }, j) => figure.classList.toggle("fuori", j !== i));
       el("formati").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", j === i));
     }));
     // Un pulsante per immagine: scaricarle tutte con uno solo fa chiedere al
     // browser il permesso per i download multipli, e quella domanda spaventa.
-    el("scarica").innerHTML = lista.map((f) => `<button type="button" class="button is-link">${esc(f.scarica)}</button>`).join("");
+    el("scarica").innerHTML = listItems.map((f) => `<button type="button" class="button is-link">${esc(f.scarica)}</button>`).join("");
     el("scarica").querySelectorAll("button").forEach((b, i) =>
-      b.addEventListener("click", () => scaricaPng(disegnati[i].figura.querySelector(".cv"), lista[i].file)));
-    Promise.all(disegnati.map((d) => d.sborda)).then((esiti) => {
-      if (giro !== giroAnteprime) return;
-      const lunghi = lista.filter((f, i) => esiti[i]).map((f) => f.breve);
-      el("sbordaTutti").hidden = !lunghi.length;
-      el("sbordaTutti").textContent = `Un testo supera lo spazio disponibile (${lunghi.join(", ")}): accorciarlo.`;
+      b.addEventListener("click", () => downloadPng(drawn[i].figura.querySelector(".cv"), listItems[i].file)));
+    Promise.all(drawn.map((d) => d.sborda)).then((outcomes) => {
+      if (round !== previewRound) return;
+      const long = listItems.filter((f, i) => outcomes[i]).map((f) => f.breve);
+      el("sbordaTutti").hidden = !long.length;
+      el("sbordaTutti").textContent = `Un testo supera lo spazio disponibile (${long.join(", ")}): accorciarlo.`;
     });
   }
 
   /** Le immagini del post: [{ html, w, h, nome, breve, scarica, file }]; nessuna finché mancano i dati minimi. */
-  function formatiPost(post) {
+  function postFormats(post) {
     if (post.kind === "sponsor") {
       const sp = sponsorDi(post);
-      return sp ? Object.entries(formatiCampagna(post, sp, STAGIONE)).map(([chiave, f]) =>
-        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${semplice(sp.name)}-${chiave}.png` })) : [];
+      return sp ? Object.entries(campaignFormats(post, sp, SEASON)).map(([keyName, f]) =>
+        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${simple(sp.name)}-${keyName}.png` })) : [];
     }
     if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
-    const nomeFile = (fmt) => `${post.event_date || "post"}-${semplice(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
+    const nomeFile = (fmt) => `${post.event_date || "post"}-${simple(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
     return [
-      { html: disegnaPost(modelloPost(post, "post")), ...misurePost(), nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
-      { html: disegnaPost(modelloPost(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
+      { html: drawPost(postTemplate(post, "post")), ...postSizes(), nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
+      { html: drawPost(postTemplate(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
     ];
   }
 
   // html-to-image si carica al primo export, come SheetJS per l'Excel.
-  let _pngInArrivo = null;
-  function caricaHtmlToImage() {
+  let _pngLoading = null;
+  function loadHtmlToImage() {
     if (window.htmlToImage) return Promise.resolve();
-    _pngInArrivo ??= new Promise((ok, ko) => {
+    _pngLoading ??= new Promise((ok, ko) => {
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
       script.onload = ok;
-      script.onerror = () => { _pngInArrivo = null; script.remove(); ko(new Error("impossibile scaricare il modulo per le immagini: verificare la connessione.")); };
+      script.onerror = () => { _pngLoading = null; script.remove(); ko(new Error("impossibile scaricare il modulo per le immagini: verificare la connessione.")); };
       document.head.append(script);
     });
-    return _pngInArrivo;
+    return _pngLoading;
   }
 
-  async function scaricaPng(canvas, nome) {
+  async function downloadPng(canvas, nome) {
     setLoading(true);
     try {
-      await caricaHtmlToImage();
+      await loadHtmlToImage();
       await document.fonts.ready;
       const png = await htmlToImage.toPng(canvas, { pixelRatio: 1, cacheBust: true });
       const a = document.createElement("a");
@@ -1437,42 +1437,42 @@
       a.download = nome;
       a.click();
     } catch (error) {
-      showToast("Errore nella generazione del PNG: " + messaggioErrore(error), "is-danger");
+      showToast("Errore nella generazione del PNG: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
   /** Foto o logo scelti dal disco, ridotti: nel database va un'immagine leggera. */
-  function riduciImmagine(file, massimo, tipo) {
+  function shrinkImage(file, maximum, typeName) {
     return new Promise((ok, ko) => {
-      const lettore = new FileReader();
-      lettore.onerror = () => ko(lettore.error);
-      lettore.onload = () => {
+      const reader = new FileReader();
+      reader.onerror = () => ko(reader.error);
+      reader.onload = () => {
         // Il logo SVG resta com'è: è già leggero e si ingrandisce senza sgranare. La foto diventa sempre
         // JPEG, anche da SVG: il database accetta solo foto jpeg, png e webp.
-        if (file.type === "image/svg+xml" && tipo === "image/png") { ok(lettore.result); return; }
+        if (file.type === "image/svg+xml" && typeName === "image/png") { ok(reader.result); return; }
         const img = new Image();
         img.onerror = () => ko(new Error("immagine non leggibile"));
         img.onload = () => {
           // Un SVG senza misure proprie si apre a 150×150 (0×0 in qualche browser): si ingrandisce senza sgranare,
           // quindi va al massimo; una foto non si ingrandisce mai.
-          const w = img.naturalWidth || massimo, h = img.naturalHeight || massimo;
-          const k = file.type === "image/svg+xml" ? massimo / Math.max(w, h) : Math.min(1, massimo / Math.max(w, h));
+          const w = img.naturalWidth || maximum, h = img.naturalHeight || maximum;
+          const k = file.type === "image/svg+xml" ? maximum / Math.max(w, h) : Math.min(1, maximum / Math.max(w, h));
           const c = document.createElement("canvas");
           c.width = Math.round(w * k);
           c.height = Math.round(h * k);
           const g = c.getContext("2d");
           // Nel JPEG il trasparente diventerebbe nero: sotto va il bianco.
-          if (tipo === "image/jpeg") { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
+          if (typeName === "image/jpeg") { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); }
           g.drawImage(img, 0, 0, c.width, c.height);
-          const url = c.toDataURL(tipo, .85);
+          const url = c.toDataURL(typeName, .85);
           // Un canvas troppo grande per il browser esce vuoto ("data:,").
           if (url.startsWith("data:image/")) ok(url); else ko(new Error("immagine troppo grande"));
         };
-        img.src = lettore.result;
+        img.src = reader.result;
       };
-      lettore.readAsDataURL(file);
+      reader.readAsDataURL(file);
     });
   }
 
@@ -1480,12 +1480,12 @@
   // Giorno della gita e giorni di gita
   // ---------------------------------------------------------------------
 
-  const SETTIMANA = [1, 2, 3, 4, 5, 6, 0];  // da lunedì, come i calendari italiani
-  let meseGita = "";                        // "2027-01": il mese mostrato nel calendario della gita
+  const WEEK = [1, 2, 3, 4, 5, 6, 0];  // da lunedì, come i calendari italiani
+  let tripMonth = "";                        // "2027-01": il mese mostrato nel calendario della gita
 
   /** "Martedì" nel suo colore (quello salvato, o `c` dal form non ancora salvato). */
-  const campione = (g, c = COLORI_GITA[g]) =>
-    `<span class="campione" style="background:${c};color:${inchiostro(c)}">${maiuscola(GIORNI[g])}</span>`;
+  const sample = (g, c = TRIP_COLORS[g]) =>
+    `<span class="campione" style="background:${c};color:${inkColor(c)}">${uppercase(DAYS[g])}</span>`;
 
   /**
    * Il calendario della gita, al posto del campo data libero: un mese alla
@@ -1493,108 +1493,108 @@
    * lo stesso (una gita spostata per la neve). Il pallino segna i giorni con
    * già un'altra gita salvata. Scrive in fData, da cui il form legge la data.
    */
-  function disegnaCalGita() {
-    const scelta = el("fData").value, [a, m] = meseGita.split("-").map(Number);
-    const vuote = (new Date(a, m - 1, 1).getDay() + 6) % 7, giorni = new Date(a, m, 0).getDate();
-    const altre = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (aperto && aperto.id))
+  function drawTripCalendar() {
+    const choice = el("fData").value, [a, m] = tripMonth.split("-").map(Number);
+    const emptyOnes = (new Date(a, m - 1, 1).getDay() + 6) % 7, dayList = new Date(a, m, 0).getDate();
+    const others = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (isOpen && isOpen.id))
       .map((p) => [p.event_date, nomePost(p)]));
-    const celle = Array(vuote).fill("<span></span>");
-    for (let n = 1; n <= giorni; n++) {
-      const iso = `${meseGita}-${String(n).padStart(2, "0")}`, cat = categoriaGita(iso), gia = altre.get(iso);
-      const C = categoria(cat), diGita = cat !== "gita";
-      const nome = `${dataLunga(iso)}${diGita ? ", giorno di gita" : ""}${gia ? `, c'è già la gita ${gia}` : ""}`;
-      celle.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === scelta}" aria-label="${esc(nome)}"
-        ${gia ? `title="C'è già: ${esc(gia)}"` : ""} ${diGita ? `class="di-gita" style="background:${C.c};color:${C.ink}"` : ""}>${n}${gia ? '<span class="occupato"></span>' : ""}</button>`);
+    const cells = Array(emptyOnes).fill("<span></span>");
+    for (let n = 1; n <= dayList; n++) {
+      const iso = `${tripMonth}-${String(n).padStart(2, "0")}`, cat = tripCategory(iso), already = others.get(iso);
+      const C = categoryName(cat), ofTrip = cat !== "gita";
+      const nome = `${longDate(iso)}${ofTrip ? ", giorno di gita" : ""}${already ? `, c'è già la gita ${already}` : ""}`;
+      cells.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === choice}" aria-label="${esc(nome)}"
+        ${already ? `title="C'è già: ${esc(already)}"` : ""} ${ofTrip ? `class="di-gita" style="background:${C.c};color:${C.ink}"` : ""}>${n}${already ? '<span class="occupato"></span>' : ""}</button>`);
     }
     // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
-    const fuori = scelta && categoriaGita(scelta) === "gita", gia = altre.get(scelta);
-    const esito = !scelta ? "Selezionare il giorno: quelli colorati sono i giorni di gita."
-      : fuori ? `${dataLunga(scelta)} non è un giorno di gita: il post userà il blu del club.`
-      : `✓ ${dataLunga(scelta)}`;
+    const outside = choice && tripCategory(choice) === "gita", already = others.get(choice);
+    const outcome = !choice ? "Selezionare il giorno: quelli colorati sono i giorni di gita."
+      : outside ? `${longDate(choice)} non è un giorno di gita: il post userà il blu del club.`
+      : `✓ ${longDate(choice)}`;
     el("calGita").innerHTML = `
       <div class="testa">
         <button type="button" class="button is-light" data-mese="-1" aria-label="Mese prima">‹</button>
-        <span aria-live="polite">${maiuscola(MESI[m - 1])} ${a}</span>
+        <span aria-live="polite">${uppercase(MONTHS[m - 1])} ${a}</span>
         <button type="button" class="button is-light" data-mese="1" aria-label="Mese dopo">›</button>
       </div>
-      <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${celle.join("")}</div>
-      <p class="esito ${fuori ? "fuori" : ""}">${esc(esito)}${gia ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(gia)}.</span>` : ""}</p>
-      <div class="legenda">${SETTIMANA.filter((g) => COLORI_GITA[g]).map((g) => campione(g)).join("")}
+      <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${cells.join("")}</div>
+      <p class="esito ${outside ? "fuori" : ""}">${esc(outcome)}${already ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(already)}.</span>` : ""}</p>
+      <div class="legenda">${WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("")}
         <a href="#giorni">Modifica giorni e colori</a></div>`;
   }
 
-  function sceltaCalGita(e) {
+  function tripCalendarChoice(e) {
     const b = e.target.closest("button");
     if (!b) return;
     if (b.dataset.mese) {
-      const [a, m] = meseGita.split("-").map(Number), d = new Date(a, m - 1 + Number(b.dataset.mese), 1);
-      meseGita = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      disegnaCalGita();
+      const [a, m] = tripMonth.split("-").map(Number), d = new Date(a, m - 1 + Number(b.dataset.mese), 1);
+      tripMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      drawTripCalendar();
     } else {
       el("fData").value = b.dataset.giorno;
-      cambiato();
+      changed();
     }
     // Il calendario è rifatto da capo: il fuoco torna sul pulsante premuto.
     el("calGita").querySelector(b.dataset.mese ? `[data-mese="${b.dataset.mese}"]` : `[data-giorno="${b.dataset.giorno}"]`).focus();
   }
 
-  let giorniSalvati = "";  // i giorni com'erano all'ultimo salvataggio, per "Salva modifiche"
+  let savedDays = "";  // i giorni com'erano all'ultimo salvataggio, per "Salva modifiche"
 
-  function collegaGiorni() {
-    el("righeGiorni").innerHTML = SETTIMANA.map((g) => `<div class="riga-giorno">
-        <label class="spunta"><input type="checkbox" id="gg${g}"> ${maiuscola(GIORNI[g])}</label>
-        <input class="input" type="color" id="gc${g}" aria-label="Colore delle gite: ${GIORNI[g]}">
+  function bindDays() {
+    el("righeGiorni").innerHTML = WEEK.map((g) => `<div class="riga-giorno">
+        <label class="spunta"><input type="checkbox" id="gg${g}"> ${uppercase(DAYS[g])}</label>
+        <input class="input" type="color" id="gc${g}" aria-label="Colore delle gite: ${DAYS[g]}">
         <span id="gp${g}"></span></div>`).join("");
     el("righeGiorni").addEventListener("input", (e) => {
       // Un giorno appena spuntato parte dal blu del club.
-      if (e.target.type === "checkbox" && e.target.checked && !COLORI_GITA[e.target.id.slice(2)]) el(`gc${e.target.id.slice(2)}`).value = "#084C8D";
-      aggiornaGiorni();
+      if (e.target.type === "checkbox" && e.target.checked && !TRIP_COLORS[e.target.id.slice(2)]) el(`gc${e.target.id.slice(2)}`).value = "#084C8D";
+      updateDays();
     });
-    el("btnSalvaGiorni").addEventListener("click", salvaGiorni);
+    el("btnSalvaGiorni").addEventListener("click", saveDays);
   }
 
-  function apriGiorni() {
-    for (const g of SETTIMANA) {
-      el(`gg${g}`).checked = !!COLORI_GITA[g];
-      el(`gc${g}`).value = COLORI_GITA[g] || "#084C8D";
+  function openDays() {
+    for (const g of WEEK) {
+      el(`gg${g}`).checked = !!TRIP_COLORS[g];
+      el(`gc${g}`).value = TRIP_COLORS[g] || "#084C8D";
     }
-    giorniSalvati = JSON.stringify(giorniDaForm());
-    aggiornaGiorni();
+    savedDays = JSON.stringify(daysFromForm());
+    updateDays();
   }
 
-  const giorniDaForm = () => SETTIMANA.map((g) => ({ weekday: g, color: el(`gg${g}`).checked ? el(`gc${g}`).value.toUpperCase() : null }));
-  const giorniModificati = () => JSON.stringify(giorniDaForm()) !== giorniSalvati;
+  const daysFromForm = () => WEEK.map((g) => ({ weekday: g, color: el(`gg${g}`).checked ? el(`gc${g}`).value.toUpperCase() : null }));
+  const changedDays = () => JSON.stringify(daysFromForm()) !== savedDays;
 
   /** Campioni accanto ai colori, avviso se la scritta non si legge, "Salva modifiche". */
-  function aggiornaGiorni() {
-    const deboli = [];
-    for (const { weekday: g, color } of giorniDaForm()) {
+  function updateDays() {
+    const weak = [];
+    for (const { weekday: g, color } of daysFromForm()) {
       el(`gc${g}`).disabled = !color;
-      el(`gp${g}`).innerHTML = color ? campione(g, color) : "";
-      if (color && contrasto(color, inchiostro(color)) < 4.5) deboli.push(GIORNI[g]);
+      el(`gp${g}`).innerHTML = color ? sample(g, color) : "";
+      if (color && contrast(color, inkColor(color)) < 4.5) weak.push(DAYS[g]);
     }
-    el("avvisoGiorni").hidden = !deboli.length;
-    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${deboli.join(", ")} il testo è poco leggibile. Scegliere un colore più scuro o più chiaro.`;
-    const m = giorniModificati();
+    el("avvisoGiorni").hidden = !weak.length;
+    el("avvisoGiorni").textContent = `Attenzione: sul colore di ${weak.join(", ")} il testo è poco leggibile. Scegliere un colore più scuro o più chiaro.`;
+    const m = changedDays();
     el("btnSalvaGiorni").textContent = m ? "Salva modifiche" : "Salva giorni e colori";
     el("btnSalvaGiorni").classList.toggle("salva-modifiche", m);
   }
 
-  async function salvaGiorni() {
-    const righe = giorniDaForm();
+  async function saveDays() {
+    const rows = daysFromForm();
     setLoading(true);
     try {
-      const { error } = await sb.from("trip_days").upsert(righe);
+      const { error } = await sb.from("trip_days").upsert(rows);
       if (error) throw error;
-      impostaColoriGita(mappaColori(righe));
-      giorniSalvati = JSON.stringify(righe);
-      aggiornaGiorni();
-      disegnaCalendarioMese();
-      disegnaElenco();
-      if (!el("editor").hidden) ridisegna();
+      setTripColors(colorMap(rows));
+      savedDays = JSON.stringify(rows);
+      updateDays();
+      drawMonthCalendar();
+      drawList();
+      if (!el("editor").hidden) redraw();
       showToast("Giorni e colori delle gite salvati.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -1609,9 +1609,9 @@
    * suo ordine: il post mostra quelli spuntati. Un id del post che la rubrica
    * non ha più si perde al prossimo salvataggio.
    */
-  function disegnaSceltaContatti(scelti) {
+  function drawContactChoice(chosen) {
     el("fContatti").innerHTML = SOCIAL.contatti.length
-      ? SOCIAL.contatti.map((c) => `<label class="spunta"><input type="checkbox" value="${esc(c.id)}" ${scelti.includes(c.id) ? "checked" : ""}>
+      ? SOCIAL.contatti.map((c) => `<label class="spunta"><input type="checkbox" value="${esc(c.id)}" ${chosen.includes(c.id) ? "checked" : ""}>
           <span>${esc(c.name)} ${esc(c.phone)}${c.hours ? ` <small>${esc(c.hours)}</small>` : ""}</span></label>`).join("")
       : '<span class="avviso-contrasto">La rubrica è vuota: aggiungere i contatti in Impostazioni.</span>';
   }
@@ -1621,74 +1621,74 @@
   // ---------------------------------------------------------------------
 
   // Il titolo proposto dice cos'è: "Calendario di gennaio".
-  const titoloMese = (mese) => (mese ? `Calendario di ${MESI[Number(mese.slice(5, 7)) - 1]}` : "");
+  const monthTitle = (month) => (month ? `Calendario di ${MONTHS[Number(month.slice(5, 7)) - 1]}` : "");
 
-  function riempiMesi() {
-    const mesi = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
-    const prima = el("calMese").value;
-    el("calMese").innerHTML = mesi.length
-      ? mesi.map((m) => `<option value="${m}">${maiuscola(MESI[Number(m.slice(5, 7)) - 1])} ${m.slice(0, 4)}</option>`).join("")
+  function fillMonths() {
+    const months = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
+    const before = el("calMese").value;
+    el("calMese").innerHTML = months.length
+      ? months.map((m) => `<option value="${m}">${uppercase(MONTHS[Number(m.slice(5, 7)) - 1])} ${m.slice(0, 4)}</option>`).join("")
       : '<option value="">Nessuna gita salvata</option>';
-    const oggi = new Date().toISOString().slice(0, 7);
-    el("calMese").value = mesi.includes(prima) ? prima : mesi.find((m) => m >= oggi) || mesi[0] || "";
-    if (!mesi.includes(prima)) el("calTitolo").value = titoloMese(el("calMese").value);
-    disegnaCalendarioMese();
+    const today = new Date().toISOString().slice(0, 7);
+    el("calMese").value = months.includes(before) ? before : months.find((m) => m >= today) || months[0] || "";
+    if (!months.includes(before)) el("calTitolo").value = monthTitle(el("calMese").value);
+    drawMonthCalendar();
   }
 
-  function disegnaCalendarioMese() {
-    const dove = el("anteprimaCalendario"), mese = el("calMese").value;
+  function drawMonthCalendar() {
+    const dove = el("anteprimaCalendario"), month = el("calMese").value;
     dove.innerHTML = "";
-    if (!mese) return;
-    const righe = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(mese))
+    if (!month) return;
+    const rows = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(month))
       .sort((a, b) => a.event_date.localeCompare(b.event_date))
-      .map((p) => [categoriaGita(p.event_date), dataCorta(p.event_date), p.title, p.course]);
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese), ...misurePost(), nome: "Calendario", file: `calendario-${mese}.png` }, 360);
-    anteprima(dove, { html: disegnaCalendario(el("calTitolo").value, righe, mese, true), w: 1080, h: 1920, nome: "Calendario, story", file: `calendario-${mese}-story.png` }, 360);
+      .map((p) => [tripCategory(p.event_date), shortDate(p.event_date), p.title, p.course]);
+    preview(dove, { html: drawCalendar(el("calTitolo").value, rows, month), ...postSizes(), nome: "Calendario", file: `calendario-${month}.png` }, 360);
+    preview(dove, { html: drawCalendar(el("calTitolo").value, rows, month, true), w: 1080, h: 1920, nome: "Calendario, story", file: `calendario-${month}-story.png` }, 360);
   }
 
-  function disegnaCopertinaFb() {
+  function drawFbCover() {
     const dove = el("anteprimaCopertina");
     dove.innerHTML = "";
-    anteprima(dove, { html: disegnaCopertina(el("copTitolo").value, el("copSotto").value), w: 820, h: 312, nome: "Copertina", file: "copertina-facebook.png" }, 620);
+    preview(dove, { html: drawCover(el("copTitolo").value, el("copSotto").value), w: 820, h: 312, nome: "Copertina", file: "copertina-facebook.png" }, 620);
   }
 
   // ---------------------------------------------------------------------
   // Sponsor
   // ---------------------------------------------------------------------
 
-  let loghiNuovi = {};  // loghi scelti e non ancora salvati: { logo, logo_dark }
+  let newLogos = {};  // loghi scelti e non ancora salvati: { logo, logo_dark }
 
-  function collegaSponsor() {
-    el("sScegli").addEventListener("change", () => apriSponsor(el("sScegli").value));
+  function bindSponsors() {
+    el("sScegli").addEventListener("change", () => openSponsor(el("sScegli").value));
     // "Modifica" e "+ Aggiungi" nel riassunto: il modulo si apre con quello sponsor.
     el("riassunti").addEventListener("click", (e) => {
       const a = e.target.closest("[data-sponsor]");
       if (!a) return;
       el("sScegli").value = a.dataset.sponsor;
-      apriSponsor(a.dataset.sponsor);
+      openSponsor(a.dataset.sponsor);
     });
-    for (const [id, campo] of [["sLogo", "logo"], ["sLogoScuro", "logo_dark"]]) {
+    for (const [id, field] of [["sLogo", "logo"], ["sLogoScuro", "logo_dark"]]) {
       el(id).addEventListener("change", async () => {
         const file = el(id).files[0];
         if (!file) return;
         el(id).value = "";
         try {
-          loghiNuovi[campo] = await riduciImmagine(file, 600, "image/png");
+          newLogos[field] = await shrinkImage(file, 600, "image/png");
         } catch (e) {
           showToast("Impossibile aprire il logo: usare un file PNG o SVG.", "is-danger");
           return;
         }
-        anteprimaSponsor();
+        sponsorPreview();
       });
     }
-    for (const id of ["sScuro", "sChiaro", "sAccento", "sNome", "sLivello"]) el(id).addEventListener("input", anteprimaSponsor);
-    el("btnSalvaSponsor").addEventListener("click", salvaSponsor);
-    el("btnEliminaSponsor").addEventListener("click", chiediEliminaSponsor);
+    for (const id of ["sScuro", "sChiaro", "sAccento", "sNome", "sLivello"]) el(id).addEventListener("input", sponsorPreview);
+    el("btnSalvaSponsor").addEventListener("click", saveSponsor);
+    el("btnEliminaSponsor").addEventListener("click", askDeleteSponsor);
   }
 
-  function apriSponsor(id) {
+  function openSponsor(id) {
     const sp = sponsors.find((s) => s.id === id) || {};
-    loghiNuovi = {};
+    newLogos = {};
     el("sNome").value = sp.name || "";
     el("sLivello").value = sp.level || "Main sponsor";
     el("sUrl").value = sp.url || "";
@@ -1698,7 +1698,7 @@
     el("sAccento").value = sp.color_accent || "#FCCF02";
     el("sAlcol").checked = !!sp.alcohol;
     el("btnEliminaSponsor").hidden = !sp.id;
-    anteprimaSponsor();
+    sponsorPreview();
   }
 
   /**
@@ -1706,33 +1706,33 @@
    * nel database, nella stessa istruzione): la domanda dice quante sono e
    * quante sono già uscite, così non si cancella senza saperlo.
    */
-  function chiediEliminaSponsor() {
+  function askDeleteSponsor() {
     const sp = sponsors.find((s) => s.id === el("sScegli").value);
     if (!sp) return;
-    const campagne = posts.filter((p) => p.sponsor_id === sp.id);
-    const uscite = campagne.filter((p) => p.published_at).length;
-    const quante = campagne.length === 1 ? "la sua campagna" : `le sue ${campagne.length} campagne`;
-    const domanda = campagne.length
-      ? `Eliminare ${sp.name} e ${quante}${uscite ? ` (${uscite} già pubblicat${uscite === 1 ? "a" : "e"})` : ""}? L'operazione non è reversibile.`
+    const campaigns = posts.filter((p) => p.sponsor_id === sp.id);
+    const outflows = campaigns.filter((p) => p.published_at).length;
+    const howMany = campaigns.length === 1 ? "la sua campagna" : `le sue ${campaigns.length} campagne`;
+    const question = campaigns.length
+      ? `Eliminare ${sp.name} e ${howMany}${outflows ? ` (${outflows} già pubblicat${outflows === 1 ? "a" : "e"})` : ""}? L'operazione non è reversibile.`
       : `Eliminare ${sp.name}? L'operazione non è reversibile.`;
-    chiedi(el("azioniSponsor"), domanda, "Elimina", () => eliminaSponsor(sp, campagne));
+    ask(el("azioniSponsor"), question, "Elimina", () => deleteSponsor(sp, campaigns));
   }
 
-  async function eliminaSponsor(sp, campagne) {
+  async function deleteSponsor(sp, campaigns) {
     setLoading(true);
     try {
       const { error } = await sb.from("sponsors").delete().eq("id", sp.id);
       if (error) throw error;
       // Il post aperto era una delle sue campagne: non esiste più.
-      if (aperto && campagne.some((c) => c.id === aperto.id)) {
-        aperto = null;
-        mostraEditor(false);
+      if (isOpen && campaigns.some((c) => c.id === isOpen.id)) {
+        isOpen = null;
+        showEditor(false);
       }
       el("sScegli").value = "";
-      await Promise.all([caricaPost(), caricaSponsor()]);
-      showToast(`${sp.name} eliminato${campagne.length ? ", con le sue campagne" : ""}.`);
+      await Promise.all([loadPosts(), loadSponsors()]);
+      showToast(`${sp.name} eliminato${campaigns.length ? ", con le sue campagne" : ""}.`);
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -1745,8 +1745,8 @@
       level: el("sLivello").value,
       url: el("sUrl").value.trim() || null,
       handle: el("sHandle").value.trim().replace(/^@/, "") || null,
-      logo: loghiNuovi.logo ?? sp.logo ?? null,
-      logo_dark: loghiNuovi.logo_dark ?? sp.logo_dark ?? null,
+      logo: newLogos.logo ?? sp.logo ?? null,
+      logo_dark: newLogos.logo_dark ?? sp.logo_dark ?? null,
       color_dark: el("sScuro").value.toUpperCase(),
       color_light: el("sChiaro").value.toUpperCase(),
       color_accent: el("sAccento").value.toUpperCase(),
@@ -1755,35 +1755,35 @@
   }
 
   /** Loghi sui due fondi e contrasto dei colori: si vede subito se il marchio regge. */
-  function anteprimaSponsor() {
-    const sp = sponsorDaForm(), M = marchio(sp);
+  function sponsorPreview() {
+    const sp = sponsorDaForm(), M = brand(sp);
     el("anteprimaLoghi").innerHTML = `
-      <div style="background:${sp.color_light};padding:18px 26px;border-radius:12px">${logoSuChiaro(M, 70)}</div>
-      <div style="background:${sp.color_dark};padding:18px 26px;border-radius:12px">${logoSuScuro(M, 70)}</div>`;
-    const problemi = [];
-    if (contrasto(sp.color_light, sp.color_dark) < 4.5) problemi.push("il testo chiaro sul fondo scuro è poco leggibile");
-    if (contrasto(sp.color_accent, sp.color_dark) < 3) problemi.push("il colore d'accento sul fondo scuro è poco visibile");
-    el("avvisoContrasto").hidden = !problemi.length;
-    el("avvisoContrasto").textContent = problemi.length ? `Attenzione: ${problemi.join("; ")}. Scegliere colori più contrastati.` : "";
+      <div style="background:${sp.color_light};padding:18px 26px;border-radius:12px">${logoOnLight(M, 70)}</div>
+      <div style="background:${sp.color_dark};padding:18px 26px;border-radius:12px">${logoOnDark(M, 70)}</div>`;
+    const problems = [];
+    if (contrast(sp.color_light, sp.color_dark) < 4.5) problems.push("il testo chiaro sul fondo scuro è poco leggibile");
+    if (contrast(sp.color_accent, sp.color_dark) < 3) problems.push("il colore d'accento sul fondo scuro è poco visibile");
+    el("avvisoContrasto").hidden = !problems.length;
+    el("avvisoContrasto").textContent = problems.length ? `Attenzione: ${problems.join("; ")}. Scegliere colori più contrastati.` : "";
   }
 
-  async function salvaSponsor() {
-    const riga = sponsorDaForm(), id = el("sScegli").value;
-    if (!riga.name) { segnaErrore(el("sNome"), "Inserire il nome dello sponsor."); return; }
-    if (riga.url && !urlSponsor(riga.url)) { segnaErrore(el("sUrl"), "Indirizzo non valido: usare il formato santero.it o https://www.santero.it."); return; }
+  async function saveSponsor() {
+    const row = sponsorDaForm(), id = el("sScegli").value;
+    if (!row.name) { markError(el("sNome"), "Inserire il nome dello sponsor."); return; }
+    if (row.url && !urlSponsor(row.url)) { markError(el("sUrl"), "Indirizzo non valido: usare il formato santero.it o https://www.santero.it."); return; }
     setLoading(true);
     try {
       const { data, error } = id
-        ? await sb.from("sponsors").update(riga).eq("id", id).select().single()
-        : await sb.from("sponsors").insert(riga).select().single();
+        ? await sb.from("sponsors").update(row).eq("id", id).select().single()
+        : await sb.from("sponsors").insert(row).select().single();
       if (error) throw error;
-      await caricaSponsor();
+      await loadSponsors();
       el("sScegli").value = data.id;
-      apriSponsor(data.id);
-      if (!el("editor").hidden) ridisegna();
+      openSponsor(data.id);
+      if (!el("editor").hidden) redraw();
       showToast("Sponsor salvato.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }

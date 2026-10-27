@@ -11,23 +11,23 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
-const ECCEZIONI = { "bilancio.html": ["saldoInizio", "mPrezzo"] };
-const sbagliati = [];
+const EXCEPTIONS = { "bilancio.html": ["saldoInizio", "mPrezzo"] };
+const wrongOnes = [];
 for (const file of fs.readdirSync(__dirname).filter((f) => f.endsWith(".html"))) {
-  const testo = fs.readFileSync(path.join(__dirname, file), "utf8");
-  for (const [campo] of testo.matchAll(/<input\b[^>]*type="number"[^>]*>/g)) {
-    const id = campo.match(/\bid="([^"]+)"/)?.[1] || campo.match(/data-[a-z-]+/)?.[0] || campo.slice(0, 60);
-    if ((ECCEZIONI[file] || []).includes(id)) continue;
-    const passo = campo.match(/\bstep="([^"]+)"/)?.[1];
-    if (passo !== "0.5" && passo !== "1") sbagliati.push(`${file} ${id}: step=${passo ?? "(nessuno)"}`);
+  const text = fs.readFileSync(path.join(__dirname, file), "utf8");
+  for (const [field] of text.matchAll(/<input\b[^>]*type="number"[^>]*>/g)) {
+    const id = field.match(/\bid="([^"]+)"/)?.[1] || field.match(/data-[a-z-]+/)?.[0] || field.slice(0, 60);
+    if ((EXCEPTIONS[file] || []).includes(id)) continue;
+    const step = field.match(/\bstep="([^"]+)"/)?.[1];
+    if (step !== "0.5" && step !== "1") wrongOnes.push(`${file} ${id}: step=${step ?? "(nessuno)"}`);
   }
 }
-assert.deepStrictEqual(sbagliati, [], "campi numerici che non vanno a 0,5 o a 1:\n  " + sbagliati.join("\n  "));
+assert.deepStrictEqual(wrongOnes, [], "campi numerici che non vanno a 0,5 o a 1:\n  " + wrongOnes.join("\n  "));
 
 // Le eccezioni prendono i centesimi davvero.
-const bilancio = fs.readFileSync(path.join(__dirname, "bilancio.html"), "utf8");
-for (const id of ECCEZIONI["bilancio.html"]) {
-  const campo = bilancio.match(new RegExp(`<input\\b[^>]*\\bid="${id}"[^>]*>`))?.[0] || "";
-  assert.ok(/\bstep="0\.01"/.test(campo), `bilancio.html ${id}: deve prendere i centesimi (step 0.01): ${campo}`);
+const budget = fs.readFileSync(path.join(__dirname, "bilancio.html"), "utf8");
+for (const id of EXCEPTIONS["bilancio.html"]) {
+  const field = budget.match(new RegExp(`<input\\b[^>]*\\bid="${id}"[^>]*>`))?.[0] || "";
+  assert.ok(/\bstep="0\.01"/.test(field), `bilancio.html ${id}: deve prendere i centesimi (step 0.01): ${field}`);
 }
 console.log("test-importi: tutto a posto");

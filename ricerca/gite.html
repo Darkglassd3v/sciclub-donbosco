@@ -22,8 +22,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -57,8 +57,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -116,16 +116,16 @@
 (() => {
   "use strict";
 
-  let abbonamenti = [];       // gli abbonamenti della stagione, come li vede il database
-  let giornoScelto = "";      // "" = tutti
+  let passList = [];       // gli abbonamenti della stagione, come li vede il database
+  let chosenDay = "";      // "" = tutti
 
   // Assegnazione abbonamento (vedi in fondo): voci di listino che questo
   // operatore può scegliere, e soci trovati che non hanno ancora un
   // abbonamento.
-  let opzioniAbbonamento = [];
-  let senzaAbbonamento = [];
+  let passOptions = [];
+  let withoutPass = [];
 
-  const lista = () => el("risultati");
+  const listItems = () => el("risultati");
 
   // -------------------------------------------------------------------------
   // Coda delle gite da inviare
@@ -146,16 +146,16 @@
   // riapertura.
   // -------------------------------------------------------------------------
 
-  const CHIAVE_CODA = "sciclub-gite-da-inviare";
+  const QUEUE_KEY = "sciclub-gite-da-inviare";
 
-  let coda = leggiCoda();
-  let inviando = false;
-  let attesaRitentativo = 0;  // ms del prossimo tentativo, 0 = nessuna attesa in corso
-  let timerRitentativo = null;
-  let timerScomparsa = null;
+  let coda = readQueue();
+  let sending = false;
+  let retryWait = 0;  // ms del prossimo tentativo, 0 = nessuna attesa in corso
+  let retryTimer = null;
+  let fadeTimer = null;
 
   /** Id univoco della pressione, per rendere ripetibile la chiamata. */
-  function nuovoId() {
+  function newId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     // Pagina aperta in http o browser vecchio: basta che due pressioni non
     // ottengano mai lo stesso id.
@@ -165,34 +165,34 @@
     });
   }
 
-  function leggiCoda() {
+  function readQueue() {
     // localStorage può mancare del tutto (navigazione privata, cookie
     // bloccati): la pagina deve funzionare lo stesso, solo senza memoria fra
     // una apertura e l'altra.
     try {
-      const salvato = JSON.parse(localStorage.getItem(CHIAVE_CODA) || "[]");
-      return Array.isArray(salvato) ? salvato : [];
-    } catch (errore) {
+      const savedOne = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+      return Array.isArray(savedOne) ? savedOne : [];
+    } catch (err) {
       return [];
     }
   }
 
-  function salvaCoda() {
+  function saveQueue() {
     try {
-      localStorage.setItem(CHIAVE_CODA, JSON.stringify(coda));
-    } catch (errore) {
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(coda));
+    } catch (err) {
       // Spazio finito o storage negato: la coda resta buona in memoria.
     }
   }
 
-  function togliDallaCoda(voceId) {
-    coda = coda.filter((v) => v.id !== voceId);
-    salvaCoda();
+  function removeFromQueue(itemId) {
+    coda = coda.filter((v) => v.id !== itemId);
+    saveQueue();
   }
 
   /** Quante gite di questo socio non sono ancora arrivate al database. */
-  function inAttesa(socioId) {
-    return coda.filter((v) => v.socio === socioId && v.tipo !== "abbonamento").length;
+  function isPending(theMemberId) {
+    return coda.filter((v) => v.socio === theMemberId && v.tipo !== "abbonamento").length;
   }
 
   /**
@@ -201,63 +201,63 @@
    * ad ogni pressione fatta senza linea, e sembrerebbe che il tocco non abbia
    * funzionato.
    */
-  function conAttesa(a) {
-    const quante = inAttesa(a.member_id);
+  function withPending(a) {
+    const howMany = isPending(a.member_id);
     // Abbonamenti comprati sul pullman e non ancora arrivati: le loro gite si
     // possono già segnare, altrimenti chi ha appena ricomprato resterebbe
     // ESAURITO finché non torna la linea. Le schede «in invio» li contano già.
-    const nuovi = a.inInvio ? [] : coda.filter((v) => v.tipo === "abbonamento" && v.socio === a.member_id);
-    if (!quante && !nuovi.length) return a;
-    const piu = nuovi.reduce((somma, v) => somma + (v.trips || 0), 0);
+    const newOnes = a.inInvio ? [] : coda.filter((v) => v.tipo === "abbonamento" && v.socio === a.member_id);
+    if (!howMany && !newOnes.length) return a;
+    const more = newOnes.reduce((sum, v) => sum + (v.trips || 0), 0);
     return Object.assign({}, a, {
-      trips_total: a.trips_total + piu,
-      trips_used: a.trips_used + quante,
-      trips_left: Math.max(0, a.trips_left + piu - quante),
-      days: [...new Set([...(a.days || [a.day]), ...nuovi.map((v) => v.day)])],
-      passes: (a.passes || 1) + nuovi.length,
+      trips_total: a.trips_total + more,
+      trips_used: a.trips_used + howMany,
+      trips_left: Math.max(0, a.trips_left + more - howMany),
+      days: [...new Set([...(a.days || [a.day]), ...newOnes.map((v) => v.day)])],
+      passes: (a.passes || 1) + newOnes.length,
     });
   }
 
   /** La riga che dice quante gite devono ancora partire. */
-  function aggiornaDaInviare(appenaFinito) {
-    const riga = el("daInviare");
-    clearTimeout(timerScomparsa);
+  function updateToSend(justFinished) {
+    const row = el("daInviare");
+    clearTimeout(fadeTimer);
 
     if (coda.length) {
-      riga.textContent = coda.length === 1
+      row.textContent = coda.length === 1
         ? "1 gita in attesa di invio: sarà inviata al ritorno della connessione."
         : `${coda.length} gite in attesa di invio: saranno inviate al ritorno della connessione.`;
-      riga.className = "da-inviare";
-      riga.hidden = false;
+      row.className = "da-inviare";
+      row.hidden = false;
       return;
     }
 
-    if (appenaFinito) {
-      riga.textContent = "Tutte le gite sono state inviate.";
-      riga.className = "da-inviare inviate";
-      riga.hidden = false;
-      timerScomparsa = setTimeout(() => { riga.hidden = true; }, 4000);
+    if (justFinished) {
+      row.textContent = "Tutte le gite sono state inviate.";
+      row.className = "da-inviare inviate";
+      row.hidden = false;
+      fadeTimer = setTimeout(() => { row.hidden = true; }, 4000);
       return;
     }
 
-    riga.hidden = true;
+    row.hidden = true;
   }
 
   // La stagione aperta la decide il database (current_season(): quella dopo l'ultima
   // chiusa), non il 1° settembre del calendario. Letta una volta.
-  let stagioneLetta = null;
-  function stagioneAperta() {
-    stagioneLetta ??= sb.rpc("current_season").then(({ data, error }) => {
-      if (error) { stagioneLetta = null; throw error; }
+  let seasonRead = null;
+  function openSeason() {
+    seasonRead ??= sb.rpc("current_season").then(({ data, error }) => {
+      if (error) { seasonRead = null; throw error; }
       return data;
     });
-    return stagioneLetta;
+    return seasonRead;
   }
 
-  function messaggio(testoMsg, classe) {
+  function message(msgText, cls) {
     const a = el("avviso");
-    a.textContent = testoMsg;
-    a.className = "avviso " + classe;
+    a.textContent = msgText;
+    a.className = "avviso " + cls;
     a.hidden = false;
   }
 
@@ -268,11 +268,11 @@
   // una volta e si filtrano qui. Nessuna query ad ogni lettera digitata.
   // -------------------------------------------------------------------------
 
-  async function caricaAbbonamenti() {
+  async function loadPasses() {
     const { data, error } = await sb
       .from("trip_passes").select("*").order("last_name").order("first_name");
     if (error) throw error;
-    abbonamenti = conProvvisori(data);
+    passList = withProvisional(data);
   }
 
   /**
@@ -281,23 +281,23 @@
    * partono dopo l'abbonamento perché la coda va in ordine. Chi è già arrivato
    * al database non viene duplicato.
    */
-  function conProvvisori(elenco) {
+  function withProvisional(list) {
     const inCoda = coda
-      .filter((v) => v.tipo === "abbonamento" && !elenco.some((a) => a.member_id === v.socio))
+      .filter((v) => v.tipo === "abbonamento" && !list.some((a) => a.member_id === v.socio))
       .map((v) => ({
         member_id: v.socio, last_name: v.cognome || v.chi || "", first_name: v.nome_socio || "",
         pass_name: v.nome, day: v.day, trips_total: v.trips || 0, trips_used: 0,
         trips_left: v.trips || 0, inInvio: true,
       }));
-    return elenco.concat(inCoda).sort((a, b) =>
+    return list.concat(inCoda).sort((a, b) =>
       `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
   }
 
-  async function caricaGite(socioId) {
+  async function loadTrips(theMemberId) {
     const { data, error } = await sb
       .from("trip_uses").select("id, trip_date")
-      .eq("member_id", socioId)
-      .eq("season", await stagioneAperta())
+      .eq("member_id", theMemberId)
+      .eq("season", await openSeason())
       .order("trip_date", { ascending: false });
     if (error) throw error;
     return data;
@@ -316,19 +316,19 @@
    * compare sotto ognuno dei suoi giorni. Le voci ancora in coda e le pagine
    * servite da un database vecchio hanno solo day.
    */
-  function filtrati() {
-    const parti = pezzi(el("q").value);
+  function filtered() {
+    const parts = pieces(el("q").value);
     const conJolly = el("conJolly").checked;
 
-    return abbonamenti.filter((a) => {
-      const giorni = conAttesa(a).days || [a.day];
-      if (giornoScelto && giornoScelto !== "JOLLY") {
-        const suoGiorno = giorni.includes(giornoScelto) || (conJolly && giorni.includes("JOLLY"));
-        if (!suoGiorno) return false;
-      } else if (giornoScelto === "JOLLY" && !giorni.includes("JOLLY")) {
+    return passList.filter((a) => {
+      const dayList = withPending(a).days || [a.day];
+      if (chosenDay && chosenDay !== "JOLLY") {
+        const ownDay = dayList.includes(chosenDay) || (conJolly && dayList.includes("JOLLY"));
+        if (!ownDay) return false;
+      } else if (chosenDay === "JOLLY" && !dayList.includes("JOLLY")) {
         return false;
       }
-      return parti.every((p) =>
+      return parts.every((p) =>
         String(a.last_name).toLowerCase().startsWith(p) || String(a.first_name).toLowerCase().startsWith(p));
     });
   }
@@ -337,33 +337,33 @@
   // Disegno
   // -------------------------------------------------------------------------
 
-  function schedaHtml(a, parti) {
-    const finito = a.trips_left <= 0;
-    const usati = a.trips_total - a.trips_left;
-    const percento = a.trips_total ? Math.round((usati / a.trips_total) * 100) : 0;
+  function cardHtml(a, parts) {
+    const finished = a.trips_left <= 0;
+    const usedItems = a.trips_total - a.trips_left;
+    const percent = a.trips_total ? Math.round((usedItems / a.trips_total) * 100) : 0;
 
     return `
       <div class="scheda" id="scheda_${a.member_id}">
         <div class="nomi">
-          <span>${evidenzia(a.last_name, parti)} ${evidenzia(a.first_name, parti)}</span>
-          ${(a.days || [a.day]).map(etichettaGiorno).join("")}
+          <span>${highlight(a.last_name, parts)} ${highlight(a.first_name, parts)}</span>
+          ${(a.days || [a.day]).map(dayLabel).join("")}
           ${a.passes > 1 ? `<span>${a.passes} abbonamenti</span>` : ""}
           ${a.inInvio ? '<span class="in-invio">in invio</span>' : ""}
         </div>
 
         <div class="conto">
-          <span class="fatte">${usati}/${a.trips_total}</span>
-          <span class="libere ${finito ? "esaurito" : ""}">
-            ${finito ? "ESAURITO" : "LIBERE " + a.trips_left}
+          <span class="fatte">${usedItems}/${a.trips_total}</span>
+          <span class="libere ${finished ? "esaurito" : ""}">
+            ${finished ? "ESAURITO" : "LIBERE " + a.trips_left}
           </span>
         </div>
-        <div class="progresso-gite" data-giorno="${esc(a.day || "")}"><span style="width:${percento}%"></span></div>
+        <div class="progresso-gite" data-giorno="${esc(a.day || "")}"><span style="width:${percent}%"></span></div>
 
         <div class="azioni-pannello" style="margin-top:14px">
-          <button class="btn-verde grande" data-segna="${a.member_id}" ${finito ? "disabled" : ""}>
+          <button class="btn-verde grande" data-segna="${a.member_id}" ${finished ? "disabled" : ""}>
             ＋ Registra una gita
           </button>
-          <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usati})</button>
+          <button class="btn-chiaro" data-registro="${a.member_id}">Gite fatte (${usedItems})</button>
           <button class="btn-chiaro" data-nuovo="${a.member_id}">＋ Nuovo abbonamento</button>
         </div>
 
@@ -371,31 +371,31 @@
       </div>`;
   }
 
-  function disegna() {
-    const parti = pezzi(el("q").value);
-    const elenco = filtrati();
+  function draw() {
+    const parts = pieces(el("q").value);
+    const list = filtered();
 
-    aggiornaDaInviare();
+    updateToSend();
 
-    el("conteggio").textContent = elenco.length === 1
-      ? "1 abbonamento" : `${elenco.length} abbonamenti`;
+    el("conteggio").textContent = list.length === 1
+      ? "1 abbonamento" : `${list.length} abbonamenti`;
     el("conteggio").hidden = false;
 
-    if (!elenco.length) {
-      lista().innerHTML = "";
-      messaggio("Nessun abbonamento con questi filtri.", "avviso-vuoto");
+    if (!list.length) {
+      listItems().innerHTML = "";
+      message("Nessun abbonamento con questi filtri.", "avviso-vuoto");
       return;
     }
     el("avviso").hidden = true;
     // conAttesa: a schermo il contatore comprende anche le gite ancora in coda.
-    lista().innerHTML = elenco.map((a) => `<li>${schedaHtml(conAttesa(a), parti)}</li>`).join("");
+    listItems().innerHTML = list.map((a) => `<li>${cardHtml(withPending(a), parts)}</li>`).join("");
 
-    lista().querySelectorAll("[data-segna]").forEach((b) =>
-      b.addEventListener("click", () => segna(b.dataset.segna, b)));
-    lista().querySelectorAll("[data-registro]").forEach((b) =>
-      b.addEventListener("click", () => apriRegistro(b.dataset.registro)));
-    lista().querySelectorAll("[data-nuovo]").forEach((b) =>
-      b.addEventListener("click", () => apriNuovoAbbonamento(b.dataset.nuovo)));
+    listItems().querySelectorAll("[data-segna]").forEach((b) =>
+      b.addEventListener("click", () => mark(b.dataset.segna, b)));
+    listItems().querySelectorAll("[data-registro]").forEach((b) =>
+      b.addEventListener("click", () => openLog(b.dataset.registro)));
+    listItems().querySelectorAll("[data-nuovo]").forEach((b) =>
+      b.addEventListener("click", () => openNewPass(b.dataset.nuovo)));
   }
 
   // -------------------------------------------------------------------------
@@ -411,30 +411,30 @@
   // sotto al dito.
   // -------------------------------------------------------------------------
 
-  function confermaNellaScheda(socioId, testoMsg) {
-    const zona = el("zona_" + socioId);
-    if (zona) zona.innerHTML = `<p class="avviso avviso-ok">${esc(testoMsg)}</p>`;
+  function confirmInCard(theMemberId, msgText) {
+    const zone = el("zona_" + theMemberId);
+    if (zone) zone.innerHTML = `<p class="avviso avviso-ok">${esc(msgText)}</p>`;
   }
 
-  function segna(socioId, bottone) {
-    if (bottone.disabled) return;
+  function mark(theMemberId, button) {
+    if (button.disabled) return;
 
     // L'id nasce qui, con la pressione, e resta lo stesso per tutti i
     // tentativi di invio: è così che un reinvio non diventa una seconda gita.
     // Il giorno scelto nel pannello viaggia con la gita: con più abbonamenti
     // il database scala da quello di quel giorno (vedi use_trip), anche se
     // la gita parte più tardi, quando torna la linea.
-    coda.push({ id: nuovoId(), socio: socioId, giorno: giornoScelto || null });
-    salvaCoda();
+    coda.push({ id: newId(), socio: theMemberId, giorno: chosenDay || null });
+    saveQueue();
 
-    disegna();
-    const a = abbonamenti.find((x) => x.member_id === socioId);
-    const residuo = a ? conAttesa(a).trips_left : null;
-    confermaNellaScheda(socioId, residuo === 0
+    draw();
+    const a = passList.find((x) => x.member_id === theMemberId);
+    const remaining = a ? withPending(a).trips_left : null;
+    confirmInCard(theMemberId, remaining === 0
       ? "Gita registrata. Era l'ultima: abbonamento esaurito."
-      : `Gita registrata. Gite rimanenti: ${residuo === null ? "—" : residuo}.`);
+      : `Gita registrata. Gite rimanenti: ${remaining === null ? "—" : remaining}.`);
 
-    svuotaCoda();
+    clearQueue();
   }
 
   // -------------------------------------------------------------------------
@@ -451,59 +451,59 @@
    * viene avvisato, col nome del socio, perché con più gite in coda un
    * messaggio senza nome non dice a chi si riferisce.
    */
-  async function svuotaCoda() {
-    if (inviando || !coda.length) return;
-    inviando = true;
-    clearTimeout(timerRitentativo);
+  async function clearQueue() {
+    if (sending || !coda.length) return;
+    sending = true;
+    clearTimeout(retryTimer);
 
-    // I rifiuti si mostrano alla fine, non appena capitano: disegna() ripulisce
+    // I rifiuti si mostrano alla fine, non appena capitano: draw() ripulisce
     // l'avviso, e un messaggio scritto durante il giro sparirebbe col primo
     // ridisegno senza che nessuno l'abbia letto.
-    const rifiutate = [];
+    const rejected = [];
 
     try {
       while (coda.length) {
-        const voce = coda[0];
+        const item = coda[0];
         try {
-          if (voce.tipo === "abbonamento") {
-            await inviaAbbonamento(voce);
+          if (item.tipo === "abbonamento") {
+            await sendPass(item);
           } else {
             // Le voci segnate con la versione precedente non hanno il giorno:
             // senza, il database scala dal primo abbonamento con gite libere.
             const { error } = await sb.rpc("use_trip", {
-              member_id: voce.socio, client_id: voce.id, ...(voce.giorno ? { day: voce.giorno } : {}),
+              member_id: item.socio, client_id: item.id, ...(item.giorno ? { day: item.giorno } : {}),
             });
             if (error) throw error;
           }
-          togliDallaCoda(voce.id);
-          attesaRitentativo = 0;
-        } catch (errore) {
-          if (ritentabile(errore)) {
-            if (sessioneScaduta(errore)) {
-              messaggio(messaggioErrore(errore) + " Le gite registrate restano sul telefono e saranno inviate in seguito.", "avviso-errore");
+          removeFromQueue(item.id);
+          retryWait = 0;
+        } catch (err) {
+          if (retryable(err)) {
+            if (sessionExpired(err)) {
+              message(errorMessage(err) + " Le gite registrate restano sul telefono e saranno inviate in seguito.", "avviso-errore");
             }
-            programmaRitentativo();
+            scheduleRetry();
             return;
           }
-          const chi = abbonamenti.find((x) => x.member_id === voce.socio);
-          const nome = voce.chi || (chi ? `${chi.last_name} ${chi.first_name}` : "");
-          togliDallaCoda(voce.id);
-          rifiutate.push((nome ? `${nome}: ` : "") + messaggioErrore(errore));
+          const chi = passList.find((x) => x.member_id === item.socio);
+          const nome = item.chi || (chi ? `${chi.last_name} ${chi.first_name}` : "");
+          removeFromQueue(item.id);
+          rejected.push((nome ? `${nome}: ` : "") + errorMessage(err));
         }
-        aggiornaDaInviare();
+        updateToSend();
       }
 
       // Coda vuota: si rileggono i totali veri, che ora comprendono tutto.
-      await caricaAbbonamenti();
-      disegna();
-      aggiornaDaInviare(rifiutate.length === 0);
-    } catch (errore) {
+      await loadPasses();
+      draw();
+      updateToSend(rejected.length === 0);
+    } catch (err) {
       // Qui può fallire solo la rilettura finale: le gite sono già scritte, e
       // dirlo come errore farebbe segnare tutto una seconda volta.
-      disegna();
+      draw();
     } finally {
-      if (rifiutate.length) messaggio(rifiutate.join(" · "), "avviso-errore");
-      inviando = false;
+      if (rejected.length) message(rejected.join(" · "), "avviso-errore");
+      sending = false;
     }
   }
 
@@ -516,7 +516,7 @@
    * andava persa. L'id della voce rende ripetibile l'invio: un reinvio
    * (risposta persa per strada) non vende un secondo abbonamento.
    */
-  async function inviaAbbonamento(v) {
+  async function sendPass(v) {
     const { error } = await sb.rpc("add_pass", {
       member_id: v.socio, pass_type: v.nome, paid: Boolean(v.pagato), client_id: v.id,
     });
@@ -524,81 +524,81 @@
   }
 
   /** Riprova più tardi, aspettando ogni volta un po' di più: 3s, 6s, 12s… fino a un minuto. */
-  function programmaRitentativo() {
-    attesaRitentativo = attesaRitentativo ? Math.min(attesaRitentativo * 2, 60000) : 3000;
-    clearTimeout(timerRitentativo);
-    timerRitentativo = setTimeout(svuotaCoda, attesaRitentativo);
+  function scheduleRetry() {
+    retryWait = retryWait ? Math.min(retryWait * 2, 60000) : 3000;
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(clearQueue, retryWait);
   }
 
   // -------------------------------------------------------------------------
   // Gite già fatte
   // -------------------------------------------------------------------------
 
-  async function apriRegistro(socioId) {
-    const zona = el("zona_" + socioId);
-    if (!zona) return;
+  async function openLog(theMemberId) {
+    const zone = el("zona_" + theMemberId);
+    if (!zone) return;
 
     // Le gite ancora in coda non sono nel database, ma vanno mostrate lo
     // stesso: una segnata senza linea sembrerebbe sparita, e soprattutto non
     // ci sarebbe modo di annullarla prima che parta.
-    const attesa = coda.filter((v) => v.socio === socioId && v.tipo !== "abbonamento");
+    const waiting = coda.filter((v) => v.socio === theMemberId && v.tipo !== "abbonamento");
 
     // Senza linea lo storico non si legge, ma le gite in coda sì: sono qui
     // sul telefono, e sono proprio quelle che può servire annullare adesso.
     // Rinunciare ad aprire il registro toglierebbe l'unico modo di correggere
     // una pressione sbagliata fatta sul pullman.
-    let gite = [];
-    let letturaFallita = false;
+    let tripList = [];
+    let readFailed = false;
     try {
-      gite = await caricaGite(socioId);
-    } catch (errore) {
-      letturaFallita = true;
+      tripList = await loadTrips(theMemberId);
+    } catch (err) {
+      readFailed = true;
     }
 
-    const righeAttesa = attesa.map((v) => `
+    const pendingRows = waiting.map((v) => `
       <li>
         <span class="quando">Oggi</span>
         <span class="chi">da inviare</span>
         <button class="btn-chiaro" data-scarta="${v.id}">Annulla</button>
       </li>`).join("");
 
-    const righeSalvate = gite.map((g) => `
+    const savedRows = tripList.map((g) => `
       <li>
         <span class="quando">${new Date(g.trip_date).toLocaleDateString("it-IT")}</span>
         <span class="chi">1 gita</span>
         <button class="btn-chiaro" data-annulla="${g.id}">Annulla</button>
       </li>`).join("");
 
-    const corpo = (attesa.length || gite.length)
-      ? `<ul class="registro">${righeAttesa}${righeSalvate}</ul>`
-      : letturaFallita ? "" : `<p class="aiuto">Nessuna gita registrata.</p>`;
+    const bodyText = (waiting.length || tripList.length)
+      ? `<ul class="registro">${pendingRows}${savedRows}</ul>`
+      : readFailed ? "" : `<p class="aiuto">Nessuna gita registrata.</p>`;
 
-    const nota = letturaFallita
+    const note = readFailed
       ? `<p class="aiuto">Le gite già inviate non sono visibili: connessione assente.</p>`
       : "";
 
-    zona.innerHTML = `${corpo}${nota}
+    zone.innerHTML = `${bodyText}${note}
       <div class="azioni-pannello" style="margin-top:12px">
         <button class="btn-chiaro" data-chiudi-registro>Chiudi</button>
       </div>`;
 
-    zona.querySelectorAll("[data-annulla]").forEach((b) =>
-      b.addEventListener("click", () => annulla(b.dataset.annulla, socioId)));
-    zona.querySelectorAll("[data-scarta]").forEach((b) =>
-      b.addEventListener("click", () => scarta(b.dataset.scarta, socioId)));
-    const chiudi = zona.querySelector("[data-chiudi-registro]");
-    if (chiudi) chiudi.addEventListener("click", () => { zona.innerHTML = ""; });
+    zone.querySelectorAll("[data-annulla]").forEach((b) =>
+      b.addEventListener("click", () => cancel(b.dataset.annulla, theMemberId)));
+    zone.querySelectorAll("[data-scarta]").forEach((b) =>
+      b.addEventListener("click", () => discard(b.dataset.scarta, theMemberId)));
+    const doClose = zone.querySelector("[data-chiudi-registro]");
+    if (doClose) doClose.addEventListener("click", () => { zone.innerHTML = ""; });
   }
 
-  async function annulla(gitaId, socioId) {
+  async function cancel(tripId, theMemberId) {
     try {
-      const { error } = await sb.rpc("cancel_trip", { trip_id: gitaId });
+      const { error } = await sb.rpc("cancel_trip", { trip_id: tripId });
       if (error) throw error;
-      await caricaAbbonamenti();
-      disegna();
-      await apriRegistro(socioId);
-    } catch (errore) {
-      messaggio(messaggioErrore(errore), "avviso-errore");
+      await loadPasses();
+      draw();
+      await openLog(theMemberId);
+    } catch (err) {
+      message(errorMessage(err), "avviso-errore");
     }
   }
 
@@ -606,10 +606,10 @@
    * Toglie dalla coda una gita che non è ancora partita: non c'è niente da
    * annullare sul database, perché non ci è mai arrivata.
    */
-  function scarta(voceId, socioId) {
-    togliDallaCoda(voceId);
-    disegna();
-    apriRegistro(socioId);
+  function discard(itemId, theMemberId) {
+    removeFromQueue(itemId);
+    draw();
+    openLog(theMemberId);
   }
 
   // -------------------------------------------------------------------------
@@ -624,11 +624,11 @@
   // listino (min_role) vale solo per le tessere, quindi qui compaiono tutti.
   // -------------------------------------------------------------------------
 
-  const MAX_SENZA = 20;
-  let timerRicerca = null;
-  let ultimaRicerca = 0;   // scarta le risposte arrivate in ritardo
+  const MAX_WITHOUT = 20;
+  let searchTimer = null;
+  let lastSearch = 0;   // scarta le risposte arrivate in ritardo
 
-  async function caricaOpzioniAbbonamento() {
+  async function loadPassOptions() {
     const { data, error } = await sb
       .from("prices")
       .select("name, price, trips, day")
@@ -637,17 +637,17 @@
       .not("trips", "is", null)   // solo abbonamenti a gite: gli altri non c'entrano con questa pagina
       .order("name");
     if (error) throw error;
-    opzioniAbbonamento = data;
+    passOptions = data;
   }
 
-  async function cercaSenzaAbbonamento() {
-    const parti = pezzi(el("q").value);
+  async function searchWithoutPass() {
+    const parts = pieces(el("q").value);
     // Senza ricerca scritta l'elenco resta chiuso: sono migliaia di soci, e
     // qui interessa solo la persona che si ha davanti.
-    if (!parti.length || !opzioniAbbonamento.length) {
-      ultimaRicerca++;   // quella ancora in viaggio non ridisegna il campo vuoto
-      senzaAbbonamento = [];
-      disegnaSenza();
+    if (!parts.length || !passOptions.length) {
+      lastSearch++;   // quella ancora in viaggio non ridisegna il campo vuoto
+      withoutPass = [];
+      drawWithout();
       return;
     }
 
@@ -662,44 +662,44 @@
       // Nel foglio di partenza "NO" voleva dire "niente abbonamento": vale
       // come il campo vuoto.
       .or("pass_type.is.null,pass_type.eq.NO");
-    for (const pezzo of parti) {
-      query = query.or(filtroPezzo(pezzo, false));
+    for (const piece of parts) {
+      query = query.or(pieceFilter(piece, false));
     }
 
-    const mia = ++ultimaRicerca;
+    const mia = ++lastSearch;
     try {
-      const { data, error } = await query.order("last_name").order("first_name").limit(MAX_SENZA);
+      const { data, error } = await query.order("last_name").order("first_name").limit(MAX_WITHOUT);
       if (error) throw error;
-      if (mia !== ultimaRicerca) return;   // ne è già partita una più recente
+      if (mia !== lastSearch) return;   // ne è già partita una più recente
       // Chi ha l'abbonamento ancora in coda (senza linea) per il database non l'ha
       // ancora: un secondo click glielo venderebbe due volte.
-      senzaAbbonamento = data.filter((s) => !coda.some((v) => v.tipo === "abbonamento" && v.socio === s.id));
-      disegnaSenza();
-    } catch (errore) {
-      if (mia !== ultimaRicerca) return;
+      withoutPass = data.filter((s) => !coda.some((v) => v.tipo === "abbonamento" && v.socio === s.id));
+      drawWithout();
+    } catch (err) {
+      if (mia !== lastSearch) return;
       // Non è un errore che merita il messaggio in cima: l'elenco principale
       // funziona lo stesso, e senza linea non si assegna niente comunque.
-      senzaAbbonamento = [];
-      disegnaSenza();
+      withoutPass = [];
+      drawWithout();
     }
   }
 
-  function schedaSenzaHtml(s, parti) {
+  function cardWithoutHtml(s, parts) {
     // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
-    const opzioni = opzioniAbbonamento
+    const options = passOptions
       .map((v) => `<label class="scelta">
           <input type="radio" name="abb_${s.id}" value="${esc(v.name)}">
-          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
+          <span>${esc(v.name)} ${dayLabel(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
         </label>`)
       .join("");
 
     return `
       <div class="scheda" id="senza_${s.id}">
         <div class="nomi">
-          <span>${evidenzia(s.last_name, parti)} ${evidenzia(s.first_name, parti)}</span>
+          <span>${highlight(s.last_name, parts)} ${highlight(s.first_name, parts)}</span>
         </div>
         <div style="margin-top:12px">
-          <fieldset class="scelte" data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${opzioni}</fieldset>
+          <fieldset class="scelte" data-scelta="${s.id}" aria-label="Abbonamento da assegnare">${options}</fieldset>
         </div>
         <div class="azioni-pannello" style="margin-top:10px">
           <button class="btn-verde" data-assegna="${s.id}" data-pagato="1">Assegna · pagato</button>
@@ -709,14 +709,14 @@
       </div>`;
   }
 
-  function disegnaSenza() {
-    const parti = pezzi(el("q").value);
-    el("titoloSenza").hidden = !senzaAbbonamento.length;
-    el("senzaAbbonamento").innerHTML = senzaAbbonamento
-      .map((s) => `<li>${schedaSenzaHtml(s, parti)}</li>`).join("");
+  function drawWithout() {
+    const parts = pieces(el("q").value);
+    el("titoloSenza").hidden = !withoutPass.length;
+    el("senzaAbbonamento").innerHTML = withoutPass
+      .map((s) => `<li>${cardWithoutHtml(s, parts)}</li>`).join("");
 
     el("senzaAbbonamento").querySelectorAll("[data-assegna]").forEach((b) =>
-      b.addEventListener("click", () => assegna(b.dataset.assegna, b, b.dataset.pagato === "1")));
+      b.addEventListener("click", () => assign(b.dataset.assegna, b, b.dataset.pagato === "1")));
   }
 
   /**
@@ -724,42 +724,42 @@
    * torna, con le stesse regole delle gite. Il prezzo viene dal listino, come
    * nel form soci; "pagato" lo somma anche all'acconto.
    */
-  function assegna(socioId, bottone, pagato = false) {
-    const socio = senzaAbbonamento.find((s) => s.id === socioId);
-    const scelta = el("senzaAbbonamento").querySelector(`input[name="abb_${socioId}"]:checked`);
-    if (!socio) return;
-    if (!scelta) {
-      const esito = el("esito_" + socioId);
-      if (esito) esito.innerHTML = `<p class="avviso avviso-errore">Selezionare prima l'abbonamento.</p>`;
+  function assign(theMemberId, button, paidAmount = false) {
+    const member = withoutPass.find((s) => s.id === theMemberId);
+    const choice = el("senzaAbbonamento").querySelector(`input[name="abb_${theMemberId}"]:checked`);
+    if (!member) return;
+    if (!choice) {
+      const outcome = el("esito_" + theMemberId);
+      if (outcome) outcome.innerHTML = `<p class="avviso avviso-errore">Selezionare prima l'abbonamento.</p>`;
       return;
     }
 
-    const voce = opzioniAbbonamento.find((v) => v.name === scelta.value);
-    if (!voce) return;
+    const item = passOptions.find((v) => v.name === choice.value);
+    if (!item) return;
 
-    bottone.disabled = true;
-    accodaAbbonamento(socio, voce, pagato);
+    button.disabled = true;
+    queuePass(member, item, paidAmount);
 
     // Passa subito all'elenco principale, «in invio»: le gite gli si segnano
     // anche senza linea e partono dopo l'abbonamento.
-    senzaAbbonamento = senzaAbbonamento.filter((s) => s.id !== socioId);
-    abbonamenti = conProvvisori(abbonamenti);
-    disegnaSenza();
-    disegna();
-    messaggio(`Abbonamento «${voce.name}» a ${socio.last_name} ${socio.first_name}: in invio.`, "avviso-ok");
-    svuotaCoda();
+    withoutPass = withoutPass.filter((s) => s.id !== theMemberId);
+    passList = withProvisional(passList);
+    drawWithout();
+    draw();
+    message(`Abbonamento «${item.name}» a ${member.last_name} ${member.first_name}: in invio.`, "avviso-ok");
+    clearQueue();
   }
 
   /** Mette in coda la vendita di un abbonamento: la manda add_pass, anche più tardi. */
-  function accodaAbbonamento(socio, voce, pagato) {
+  function queuePass(member, item, paidAmount) {
     coda.push({
-      id: nuovoId(), tipo: "abbonamento", socio: socio.id,
-      chi: `${socio.last_name} ${socio.first_name}`,
-      cognome: socio.last_name, nome_socio: socio.first_name,
-      nome: voce.name, prezzo: Number(voce.price || 0), pagato,
-      trips: Number(voce.trips || 0), day: voce.day,
+      id: newId(), tipo: "abbonamento", socio: member.id,
+      chi: `${member.last_name} ${member.first_name}`,
+      cognome: member.last_name, nome_socio: member.first_name,
+      nome: item.name, prezzo: Number(item.price || 0), pagato: paidAmount,
+      trips: Number(item.trips || 0), day: item.day,
     });
-    salvaCoda();
+    saveQueue();
   }
 
   // -------------------------------------------------------------------------
@@ -771,24 +771,24 @@
   // segnare subito (vedi conAttesa).
   // -------------------------------------------------------------------------
 
-  function apriNuovoAbbonamento(socioId) {
-    const zona = el("zona_" + socioId);
-    const a = abbonamenti.find((x) => x.member_id === socioId);
-    if (!zona || !a) return;
-    if (!opzioniAbbonamento.length) {
-      zona.innerHTML = `<p class="avviso avviso-errore">Listino non caricato: è necessaria la connessione almeno una volta. Ricaricare la pagina quando la rete è disponibile.</p>`;
+  function openNewPass(theMemberId) {
+    const zone = el("zona_" + theMemberId);
+    const a = passList.find((x) => x.member_id === theMemberId);
+    if (!zone || !a) return;
+    if (!passOptions.length) {
+      zone.innerHTML = `<p class="avviso avviso-errore">Listino non caricato: è necessaria la connessione almeno una volta. Ricaricare la pagina quando la rete è disponibile.</p>`;
       return;
     }
     // Nessuna scelta già fatta: un abbonamento sbagliato è un addebito sbagliato.
-    const opzioni = opzioniAbbonamento
+    const options = passOptions
       .map((v) => `<label class="scelta">
-          <input type="radio" name="nuovo_${socioId}" value="${esc(v.name)}">
-          <span>${esc(v.name)} ${etichettaGiorno(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
+          <input type="radio" name="nuovo_${theMemberId}" value="${esc(v.name)}">
+          <span>${esc(v.name)} ${dayLabel(v.day)}</span><span class="prezzo">${esc(v.price)} €</span>
         </label>`)
       .join("");
-    zona.innerHTML = `
+    zone.innerHTML = `
       <div style="margin-top:12px">
-        <fieldset class="scelte" aria-label="Nuovo abbonamento">${opzioni}</fieldset>
+        <fieldset class="scelte" aria-label="Nuovo abbonamento">${options}</fieldset>
       </div>
       <div class="azioni-pannello" style="margin-top:10px">
         <button class="btn-verde" data-vendi="1">Aggiungi · pagato</button>
@@ -796,76 +796,76 @@
         <button class="btn-chiaro" data-chiudi-nuovo>Chiudi</button>
       </div>
       <div data-esito-nuovo></div>`;
-    zona.querySelector("[data-chiudi-nuovo]").addEventListener("click", () => { zona.innerHTML = ""; });
-    zona.querySelectorAll("[data-vendi]").forEach((b) => b.addEventListener("click", () => {
-      const scelta = zona.querySelector(`input[name="nuovo_${socioId}"]:checked`);
-      const voce = scelta && opzioniAbbonamento.find((v) => v.name === scelta.value);
-      if (!voce) {
-        zona.querySelector("[data-esito-nuovo]").innerHTML =
+    zone.querySelector("[data-chiudi-nuovo]").addEventListener("click", () => { zone.innerHTML = ""; });
+    zone.querySelectorAll("[data-vendi]").forEach((b) => b.addEventListener("click", () => {
+      const choice = zone.querySelector(`input[name="nuovo_${theMemberId}"]:checked`);
+      const item = choice && passOptions.find((v) => v.name === choice.value);
+      if (!item) {
+        zone.querySelector("[data-esito-nuovo]").innerHTML =
           `<p class="avviso avviso-errore">Selezionare prima l'abbonamento.</p>`;
         return;
       }
-      accodaAbbonamento({ id: socioId, last_name: a.last_name, first_name: a.first_name }, voce, b.dataset.vendi === "1");
-      disegna();
-      confermaNellaScheda(socioId, `Abbonamento «${voce.name}» ${b.dataset.vendi === "1" ? "pagato" : "da pagare"}: in invio. `
+      queuePass({ id: theMemberId, last_name: a.last_name, first_name: a.first_name }, item, b.dataset.vendi === "1");
+      draw();
+      confirmInCard(theMemberId, `Abbonamento «${item.name}» ${b.dataset.vendi === "1" ? "pagato" : "da pagare"}: in invio. `
         + "Le gite del socio possono già essere registrate.");
-      svuotaCoda();
+      clearQueue();
     }));
   }
 
   // -------------------------------------------------------------------------
 
-  async function avvia() {
+  async function startPage() {
     try {
-      if (!(await richiediPermesso("gite"))) return;
-    } catch (errore) {
-      messaggio(messaggioErrore(errore), "avviso-errore");
+      if (!(await requestPermission("gite"))) return;
+    } catch (err) {
+      message(errorMessage(err), "avviso-errore");
       return;
     }
-    el("q").addEventListener("input", disegna);
+    el("q").addEventListener("input", draw);
     // La ricerca fra i soci senza abbonamento va sul database, quindi non
     // parte ad ogni tasto: 200ms come la ricerca di ricerca/index.html.
     el("q").addEventListener("input", () => {
-      clearTimeout(timerRicerca);
-      timerRicerca = setTimeout(cercaSenzaAbbonamento, 200);
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(searchWithoutPass, 200);
     });
-    el("conJolly").addEventListener("change", disegna);
+    el("conJolly").addEventListener("change", draw);
 
     el("giorni").querySelectorAll("button").forEach((b) => {
       b.addEventListener("click", () => {
-        giornoScelto = b.dataset.giorno;
+        chosenDay = b.dataset.giorno;
         el("giorni").querySelectorAll("button").forEach((x) =>
           x.setAttribute("aria-pressed", String(x === b)));
         // La scelta sul Jolly ha senso solo quando si è chiesto un giorno preciso.
-        el("rigaJolly").hidden = !giornoScelto || giornoScelto === "JOLLY";
-        disegna();
+        el("rigaJolly").hidden = !chosenDay || chosenDay === "JOLLY";
+        draw();
       });
     });
 
     // La linea è tornata: si riparte subito, senza aspettare il timer.
     window.addEventListener("online", () => {
-      attesaRitentativo = 0;
-      svuotaCoda();
+      retryWait = 0;
+      clearQueue();
     });
 
     try {
-      await caricaAbbonamenti();
-      disegna();
+      await loadPasses();
+      draw();
       // Dopo il primo disegno: se il listino non si carica (o il ruolo non
       // permette di assegnare niente) la pagina deve funzionare lo stesso per
       // quello che serve di più, cioè segnare le gite.
-      await caricaOpzioniAbbonamento();
-    } catch (errore) {
-      messaggio(messaggioErrore(errore), "avviso-errore");
+      await loadPassOptions();
+    } catch (err) {
+      message(errorMessage(err), "avviso-errore");
     }
 
     // Gite rimaste in coda da un'apertura precedente — pagina chiusa mentre
     // non c'era campo — partono adesso.
-    aggiornaDaInviare();
-    svuotaCoda();
+    updateToSend();
+    clearQueue();
   }
 
-  proteggiPagina(avvia);
+  protectPage(startPage);
 })();
 </script>
 </body>

@@ -9,30 +9,30 @@
 {
   // Un altro operatore fa una tessera mentre la pagina è aperta: dalla seconda lettura in poi
   // next_card_number() risponde col numero dopo. Il prossimo in cima deve seguirlo.
-  const fetchVero = window.fetch.bind(window);
-  let letture = 0;
-  window.fetch = (url, ...resto) => (String(url).includes("/rpc/next_card_number") && letture++ > 0
-    ? Promise.resolve(new Response(JSON.stringify(ATTESO.prossima + 1), { status: 200, headers: { "Content-Type": "application/json" } }))
-    : fetchVero(url, ...resto));
-  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const realFetch = window.fetch.bind(window);
+  let reads = 0;
+  window.fetch = (url, ...rest) => (String(url).includes("/rpc/next_card_number") && reads++ > 0
+    ? Promise.resolve(new Response(JSON.stringify(EXPECTED.prossima + 1), { status: 200, headers: { "Content-Type": "application/json" } }))
+    : realFetch(url, ...rest));
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => { try {
     const r = [];
-    const prossima = document.getElementById("prossimaTessera");
-    r.push(`prossima=${prossima && !prossima.hidden && prossima.textContent.includes(String(ATTESO.prossima)) ? "ok"
-      : `NO(atteso ${ATTESO.prossima}, c'è «${prossima ? (prossima.hidden ? "nascosto" : prossima.textContent.trim()) : "niente"}»)`}`);
+    const next = document.getElementById("prossimaTessera");
+    r.push(`prossima=${next && !next.hidden && next.textContent.includes(String(EXPECTED.prossima)) ? "ok"
+      : `NO(atteso ${EXPECTED.prossima}, c'è «${next ? (next.hidden ? "nascosto" : next.textContent.trim()) : "niente"}»)`}`);
     const q = document.getElementById("q");
-    q.value = ATTESO.numero;
+    q.value = EXPECTED.numero;
     q.dispatchEvent(new Event("input", { bubbles: true }));
-    await aspetta(2500);
-    r.push(`prossimaAggiornata=${prossima && prossima.textContent.includes(String(ATTESO.prossima + 1)) ? "ok"
-      : `NO(dopo la ricerca c'è ancora «${prossima ? prossima.textContent.trim() : "niente"}», atteso ${ATTESO.prossima + 1})`}`);
-    const voci = [...document.querySelectorAll("#risultati > li")].map((li) => li.textContent.replace(/\s+/g, " ").trim());
-    r.push(`perNumero=${voci.length === 1 && voci[0].includes(ATTESO.cognome) ? "ok"
-      : `NO(tessera ${ATTESO.numero} di ${ATTESO.cognome}: ${voci.length} risultati${voci.length ? ", " + voci[0].slice(0, 60) : ""})`}`);
+    await wait(2500);
+    r.push(`prossimaAggiornata=${next && next.textContent.includes(String(EXPECTED.prossima + 1)) ? "ok"
+      : `NO(dopo la ricerca c'è ancora «${next ? next.textContent.trim() : "niente"}», atteso ${EXPECTED.prossima + 1})`}`);
+    const items = [...document.querySelectorAll("#risultati > li")].map((li) => li.textContent.replace(/\s+/g, " ").trim());
+    r.push(`perNumero=${items.length === 1 && items[0].includes(EXPECTED.cognome) ? "ok"
+      : `NO(tessera ${EXPECTED.numero} di ${EXPECTED.cognome}: ${items.length} risultati${items.length ? ", " + items[0].slice(0, 60) : ""})`}`);
     // La barra (ricerca/comune.js): --barra-h è la sua altezza vera, come in web/shared.js.
     const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--barra-h"));
-    const barra = document.querySelector(".barra").offsetHeight;
-    r.push(`altezzaBarra=${Math.abs(h - barra) <= 1 ? "ok" : `NO(--barra-h ${h}, barra ${barra})`}`);
+    const bar = document.querySelector(".barra").offsetHeight;
+    r.push(`altezzaBarra=${Math.abs(h - bar) <= 1 ? "ok" : `NO(--barra-h ${h}, barra ${bar})`}`);
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 150)})`; } }, 2500));
 }

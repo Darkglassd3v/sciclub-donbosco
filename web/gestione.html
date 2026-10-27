@@ -69,8 +69,8 @@
     </a>
     <span class="barra-pagina" aria-hidden="true"></span>
     <div class="barra-azioni">
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <span class="barra-utente"></span>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
@@ -104,8 +104,8 @@
     </details>
     <div class="menu-fondo">
       <span class="barra-utente"></span>
-      <button type="button" class="voce-tema" onclick="cambiaTema()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
-      <button type="button" class="voce-testo" onclick="cambiaTesto()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
+      <button type="button" class="voce-tema" onclick="toggleTheme()" aria-label="Tema scuro" aria-pressed="false" title="Tema chiaro o scuro"><svg class="icona luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg><svg class="icona sole" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button type="button" class="voce-testo" onclick="toggleTextSize()" aria-label="Grandezza del testo" title="Grandezza del testo"></button>
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
@@ -177,8 +177,8 @@
   // "gite"). L'ultimo valore dice se apre l'anagrafica dei soci: con soci,
   // pagamenti, riepilogo, cerca, gite e stampe si legge members, con polizze i
   // codici fiscali dei tesserati (policy e funzioni insurance_* in
-  // supabase/schema.sql). Il nome è quello della barra (nomiBarra() in shared.js).
-  const PERMESSI = [
+  // supabase/schema.sql). Il nome è quello della barra (menuLabels() in shared.js).
+  const PERMISSIONS = [
     ["soci", "Soci", "Iscrizione e modifica dei soci, vendita di abbonamenti dalla scheda.", true],
     ["pagamenti", "Pagamenti", "Incassi dai nuclei familiari e modifica degli importi (rimborsi e sconti).", true],
     ["riepilogo", "Riepilogo", "Dati riepilogativi della stagione ed elenco Excel dei tesserati.", true],
@@ -192,131 +192,131 @@
   ];
   // Il nome a schermo: quello scelto per la barra, se c'è (la voce Stagioni chiuse non è nella barra).
   // Con un shared.js vecchio ancora nella cache del browser NOMI_BARRA e
-  // nomiBarra() non ci sono: la pagina va lo stesso, coi nomi di sempre.
-  const nomiScelti = () => (typeof NOMI_BARRA === "object" && NOMI_BARRA) || {};
-  const nomeSezione = (p, nome) => nomiScelti()[p] || nome;
-  const nomePermesso = (p) => {
-    const voce = PERMESSI.find((x) => x[0] === p);
-    return voce ? nomeSezione(p, voce[1]) : p;
+  // menuLabels() non ci sono: la pagina va lo stesso, coi nomi di sempre.
+  const chosenNames = () => (typeof MENU_LABELS === "object" && MENU_LABELS) || {};
+  const sectionName = (p, nome) => chosenNames()[p] || nome;
+  const permissionName = (p) => {
+    const item = PERMISSIONS.find((x) => x[0] === p);
+    return item ? sectionName(p, item[1]) : p;
   };
-  const DATI_PERSONALI = new Set(PERMESSI.filter((p) => p[3]).map((p) => p[0]));
+  const PERSONAL_DATA = new Set(PERMISSIONS.filter((p) => p[3]).map((p) => p[0]));
 
   // [{ role, permissions, defaults }] dal database, e per ruolo i permessi salvati.
-  let matrice = [];
-  let salvati = {};
+  let matrix = [];
+  let saved = {};
 
   (async function init() {
-    if (!(await requirePermesso("gestione"))) return;
+    if (!(await requirePermission("gestione"))) return;
     el("vediRuolo").innerHTML = ["admin", "tesoriere", "assicurazione", "gite", "social"]
-      .map((r) => `<option value="${r}">${esc(NOMI_RUOLI[r])}</option>`).join("");
-    el("btnVedi").addEventListener("click", () => vediCome(el("vediRuolo").value));
+      .map((r) => `<option value="${r}">${esc(ROLE_NAMES[r])}</option>`).join("");
+    el("btnVedi").addEventListener("click", () => viewAs(el("vediRuolo").value));
 
-    el("tabellaPermessi").addEventListener("change", aggiornaStato);
-    el("btnAnnullaPermessi").addEventListener("click", disegnaMatrice);
-    el("btnRipristina").addEventListener("click", ripristina);
-    el("btnSalvaPermessi").addEventListener("click", chiediSalvataggio);
-    el("btnSalvaNomi").addEventListener("click", salvaNomi);
+    el("tabellaPermessi").addEventListener("change", updateStatus);
+    el("btnAnnullaPermessi").addEventListener("click", drawMatrix);
+    el("btnRipristina").addEventListener("click", restore);
+    el("btnSalvaPermessi").addEventListener("click", askSave);
+    el("btnSalvaNomi").addEventListener("click", saveNames);
     try {
-      if (typeof nomiBarra === "function") await nomiBarra().catch(() => {});
-      disegnaNomi();
-      await caricaPermessi();
+      if (typeof menuLabels === "function") await menuLabels().catch(() => {});
+      drawNames();
+      await loadPermissions();
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     }
   })();
 
-  async function caricaPermessi() {
+  async function loadPermissions() {
     const [m, h] = await Promise.all([sb.rpc("role_grants_matrix"), sb.rpc("role_grant_history")]);
     if (m.error) throw m.error;
     if (h.error) throw h.error;
-    matrice = m.data;
-    salvati = Object.fromEntries(matrice.map((r) => [r.role, new Set(r.permissions)]));
-    disegnaMatrice();
-    disegnaStorico(h.data);
+    matrix = m.data;
+    saved = Object.fromEntries(matrix.map((r) => [r.role, new Set(r.permissions)]));
+    drawMatrix();
+    drawHistory(h.data);
   }
 
-  function disegnaMatrice() {
+  function drawMatrix() {
     el("tabellaPermessi").innerHTML = `
-      <thead><tr><th>Sezione</th>${matrice.map((r) => `<th>${esc(NOMI_RUOLI[r.role])}</th>`).join("")}</tr></thead>
-      <tbody>${PERMESSI.map(([p, nome0, descr, dati]) => { const nome = nomeSezione(p, nome0); return `<tr>
-        <th scope="row">${esc(nome)}${dati ? ' <span class="tag-dati">dati personali</span>' : ""}<span class="descr">${esc(descr)}</span></th>
-        ${matrice.map((r) => `<td><label class="cella"><input type="checkbox" data-ruolo="${r.role}" data-permesso="${p}"
-            aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}><span class="ruolo-telefono" aria-hidden="true">${esc(NOMI_RUOLI[r.role])}</span></label></td>`).join("")}
+      <thead><tr><th>Sezione</th>${matrix.map((r) => `<th>${esc(ROLE_NAMES[r.role])}</th>`).join("")}</tr></thead>
+      <tbody>${PERMISSIONS.map(([p, nome0, descr, records]) => { const nome = sectionName(p, nome0); return `<tr>
+        <th scope="row">${esc(nome)}${records ? ' <span class="tag-dati">dati personali</span>' : ""}<span class="descr">${esc(descr)}</span></th>
+        ${matrix.map((r) => `<td><label class="cella"><input type="checkbox" data-ruolo="${r.role}" data-permesso="${p}"
+            aria-label="${esc(ROLE_NAMES[r.role])}: ${esc(nome)}"${saved[r.role].has(p) ? " checked" : ""}><span class="ruolo-telefono" aria-hidden="true">${esc(ROLE_NAMES[r.role])}</span></label></td>`).join("")}
       </tr>`; }).join("")}
       <tr><th scope="row">Gestione<span class="descr">Amministrazione, Utenti, Impostazioni e questa pagina.</span></th>
-        <td colspan="${matrice.length}" class="solo-super">Riservata al superadmin</td></tr>
+        <td colspan="${matrix.length}" class="solo-super">Riservata al superadmin</td></tr>
       </tbody>`;
-    aggiornaStato();
+    updateStatus();
   }
 
-  const caselle = () => [...el("tabellaPermessi").querySelectorAll("input[data-ruolo]")];
+  const boxes = () => [...el("tabellaPermessi").querySelectorAll("input[data-ruolo]")];
 
   /** Per ruolo, i permessi spuntati adesso. */
-  function scelti() {
-    const m = Object.fromEntries(matrice.map((r) => [r.role, []]));
-    caselle().filter((c) => c.checked).forEach((c) => m[c.dataset.ruolo].push(c.dataset.permesso));
+  function chosen() {
+    const m = Object.fromEntries(matrix.map((r) => [r.role, []]));
+    boxes().filter((c) => c.checked).forEach((c) => m[c.dataset.ruolo].push(c.dataset.permesso));
     return m;
   }
 
   /** I ruoli con spunte diverse da quelle salvate: [{ ruolo, aggiunti, tolti }]. */
-  function differenze() {
-    const m = scelti();
-    return matrice.map((r) => ({
+  function differences() {
+    const m = chosen();
+    return matrix.map((r) => ({
       ruolo: r.role,
-      aggiunti: m[r.role].filter((p) => !salvati[r.role].has(p)),
-      tolti: [...salvati[r.role]].filter((p) => !m[r.role].includes(p)),
+      aggiunti: m[r.role].filter((p) => !saved[r.role].has(p)),
+      tolti: [...saved[r.role]].filter((p) => !m[r.role].includes(p)),
     })).filter((d) => d.aggiunti.length || d.tolti.length);
   }
 
-  function aggiornaStato() {
-    caselle().forEach((c) => c.closest("td").classList.toggle("cambiata",
-      c.checked !== salvati[c.dataset.ruolo].has(c.dataset.permesso)));
-    const cambi = differenze().length > 0;
-    el("btnSalvaPermessi").disabled = !cambi;
-    el("btnSalvaPermessi").classList.toggle("is-warning", cambi);
-    el("btnAnnullaPermessi").disabled = !cambi;
+  function updateStatus() {
+    boxes().forEach((c) => c.closest("td").classList.toggle("cambiata",
+      c.checked !== saved[c.dataset.ruolo].has(c.dataset.permesso)));
+    const changes = differences().length > 0;
+    el("btnSalvaPermessi").disabled = !changes;
+    el("btnSalvaPermessi").classList.toggle("is-warning", changes);
+    el("btnAnnullaPermessi").disabled = !changes;
   }
 
   /** "Utente (ricerca e gite) accede a Soci e non accede più a Gite" */
-  function frase(ruolo, aggiunti, tolti) {
-    const nomi = (lista) => lista.map(nomePermesso).join(", ");
-    const parti = [];
-    if (aggiunti.length) parti.push(`accede a ${nomi(aggiunti)}`);
-    if (tolti.length) parti.push(`non accede più a ${nomi(tolti)}`);
-    return `${NOMI_RUOLI[ruolo] || ruolo} ${parti.join(" e ")}`;
+  function phrase(roleKey, added, removedItems) {
+    const names = (listItems) => listItems.map(permissionName).join(", ");
+    const parts = [];
+    if (added.length) parts.push(`accede a ${names(added)}`);
+    if (removedItems.length) parts.push(`non accede più a ${names(removedItems)}`);
+    return `${ROLE_NAMES[roleKey] || roleKey} ${parts.join(" e ")}`;
   }
 
   /** I permessi di partenza nelle spunte: si salvano solo con Salva. */
-  function ripristina() {
-    const partenza = Object.fromEntries(matrice.map((r) => [r.role, r.defaults]));
-    caselle().forEach((c) => { c.checked = partenza[c.dataset.ruolo].includes(c.dataset.permesso); });
-    aggiornaStato();
-    showToast(differenze().length ? "Permessi predefiniti ripristinati: verificare e salvare."
+  function restore() {
+    const departure = Object.fromEntries(matrix.map((r) => [r.role, r.defaults]));
+    boxes().forEach((c) => { c.checked = departure[c.dataset.ruolo].includes(c.dataset.permesso); });
+    updateStatus();
+    showToast(differences().length ? "Permessi predefiniti ripristinati: verificare e salvare."
                                   : "I permessi corrispondono già a quelli predefiniti.", "is-warning");
   }
 
   /** Prima di salvare, la frase con cosa cambia; i dati personali in evidenza. */
-  function chiediSalvataggio() {
-    const diff = differenze();
+  function askSave() {
+    const diff = differences();
     if (!diff.length) return;
-    const datiNuovi = diff.some((d) => d.aggiunti.some((p) => DATI_PERSONALI.has(p)));
-    chiedi(el("azioniPermessi"),
-      diff.map((d) => frase(d.ruolo, d.aggiunti, d.tolti)).join("; ") + "."
-        + (datiNuovi ? " Attenzione: il ruolo avrà accesso ai dati personali dei soci." : "") + " Salvare?",
-      "Salva", salvaPermessi);
+    const newData = diff.some((d) => d.aggiunti.some((p) => PERSONAL_DATA.has(p)));
+    ask(el("azioniPermessi"),
+      diff.map((d) => phrase(d.ruolo, d.aggiunti, d.tolti)).join("; ") + "."
+        + (newData ? " Attenzione: il ruolo avrà accesso ai dati personali dei soci." : "") + " Salvare?",
+      "Salva", savePermissions);
   }
 
-  async function salvaPermessi() {
-    const m = scelti();
-    const grants = Object.fromEntries(differenze().map((d) => [d.ruolo, m[d.ruolo]]));
+  async function savePermissions() {
+    const m = chosen();
+    const grants = Object.fromEntries(differences().map((d) => [d.ruolo, m[d.ruolo]]));
     setLoading(true);
     try {
       const { error } = await sb.rpc("set_role_grants", { grants });
       if (error) throw error;
-      await caricaPermessi();
+      await loadPermissions();
       showToast("Permessi salvati: si applicano all'apertura successiva di ogni pagina.");
     } catch (error) {
-      showToast("Errore: " + messaggioErrore(error), "is-danger");
+      showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
@@ -327,60 +327,60 @@
   // sempre (quello scritto nelle pagine) in grigio quando è vuoto.
   // ---------------------------------------------------------------------
 
-  const VOCI_BARRA = [
+  const MENU_ITEMS = [
     ["soci", "Soci"], ["pagamenti", "Pagamenti"], ["riepilogo", "Riepilogo"], ["cerca", "Cerca socio"],
     ["gite", "Gite"], ["stampe", "Stampe"], ["polizze", "Assicurazione"], ["bilancio", "Bilancio"],
     ["social", "Social"], ["gestione", "Gestione"],
   ];
 
-  function disegnaNomi() {
-    el("tabellaNomi").innerHTML = VOCI_BARRA.map(([chiave, sempre]) => `<tr>
-      <th scope="row"><label for="nome_${chiave}">${esc(sempre)}</label></th>
-      <td><input class="input" id="nome_${chiave}" data-chiave="${chiave}" maxlength="20"
-        placeholder="${esc(sempre)}" value="${esc(nomiScelti()[chiave] || "")}"></td></tr>`).join("");
+  function drawNames() {
+    el("tabellaNomi").innerHTML = MENU_ITEMS.map(([keyName, always]) => `<tr>
+      <th scope="row"><label for="nome_${keyName}">${esc(always)}</label></th>
+      <td><input class="input" id="nome_${keyName}" data-chiave="${keyName}" maxlength="20"
+        placeholder="${esc(always)}" value="${esc(chosenNames()[keyName] || "")}"></td></tr>`).join("");
   }
 
-  async function salvaNomi() {
-    const campi = [...el("tabellaNomi").querySelectorAll("input[data-chiave]")];
-    const scritti = campi.map((c) => ({ key: c.dataset.chiave, label: c.value.trim() }));
+  async function saveNames() {
+    const fields = [...el("tabellaNomi").querySelectorAll("input[data-chiave]")];
+    const written = fields.map((c) => ({ key: c.dataset.chiave, label: c.value.trim() }));
     setLoading(true);
     try {
-      const vuoti = scritti.filter((n) => !n.label).map((n) => n.key);
-      if (vuoti.length) {
-        const { error } = await sb.from("nav_labels").delete().in("key", vuoti);
+      const emptyItems = written.filter((n) => !n.label).map((n) => n.key);
+      if (emptyItems.length) {
+        const { error } = await sb.from("nav_labels").delete().in("key", emptyItems);
         if (error) throw error;
       }
-      const pieni = scritti.filter((n) => n.label);
-      if (pieni.length) {
-        const { error } = await sb.from("nav_labels").upsert(pieni);
+      const fullOnes = written.filter((n) => n.label);
+      if (fullOnes.length) {
+        const { error } = await sb.from("nav_labels").upsert(fullOnes);
         if (error) throw error;
       }
-      if (typeof nomiBarra === "function") await nomiBarra();
-      disegnaNomi();
+      if (typeof menuLabels === "function") await menuLabels();
+      drawNames();
       // Con spunte non ancora salvate la matrice resta com'è: i nomi nuovi si vedono al prossimo disegno.
-      if (!differenze().length) disegnaMatrice();
+      if (!differences().length) drawMatrix();
       showToast("Nomi salvati: visibili all'apertura successiva di ogni pagina.");
     } catch (error) {
-      showToast("Nomi non salvati: " + messaggioErrore(error), "is-danger");
+      showToast("Nomi non salvati: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
   }
 
-  function disegnaStorico(righe) {
-    const quando = (t) => new Date(t).toLocaleString("it-IT",
+  function drawHistory(rows) {
+    const when = (t) => new Date(t).toLocaleString("it-IT",
       { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-    el("storicoPermessi").innerHTML = righe.length
-      ? righe.map((h) => `<li><span class="quando">${quando(h.changed_at)}</span>${esc(h.changed_by || "")}:
-          ${esc(frase(h.role, h.added, h.removed))}</li>`).join("")
+    el("storicoPermessi").innerHTML = rows.length
+      ? rows.map((h) => `<li><span class="quando">${when(h.changed_at)}</span>${esc(h.changed_by || "")}:
+          ${esc(phrase(h.role, h.added, h.removed))}</li>`).join("")
       : "<li>Nessuna modifica: sono in uso i permessi predefiniti.</li>";
   }
 
   // Lasciare la pagina con spunte non salvate: il browser chiede conferma.
-  window.addEventListener("beforeunload", (evento) => {
-    if (matrice.length && differenze().length) {
-      evento.preventDefault();
-      evento.returnValue = "";
+  window.addEventListener("beforeunload", (theEvent) => {
+    if (matrix.length && differences().length) {
+      theEvent.preventDefault();
+      theEvent.returnValue = "";
     }
   });
 </script>
