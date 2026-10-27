@@ -18,6 +18,13 @@
 
 ## Richieste nuove
 
+- [ ] **Codice in inglese, dopo il rilascio della 3.0** (27/10, l'utente: «voglio tutto in inglese,
+      dove non causa problemi con il db»; scelto: nomi e commenti, dopo la grafica). Funzioni,
+      variabili, classi CSS, id, nomi dei file di prova e commenti in inglese; le scritte per gli
+      utenti restano in italiano; i nomi del database sono già inglesi. Un passo a sé, con tutte le
+      prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
+      commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
+      resta in italiano.
 - [ ] **3.0: stile Material in tutto il sito, telefono, tema scuro** (27/10, approvato
       dall'utente; immagine di riferimento: pannello Material con menu a sinistra, pulsanti
       rettangolari in maiuscolo, gruppi di scelte attaccati, schede bianche con ombra). Colori del
