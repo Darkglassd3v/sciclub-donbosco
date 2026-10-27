@@ -56,7 +56,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
 
     const nome = row("tabellaPrezzi", 1)?.querySelector("[data-nome]");
     test("nomeIntero", nome?.value === LONG && whole(nome), `«${nome?.value}» ${sizes(nome)}`);

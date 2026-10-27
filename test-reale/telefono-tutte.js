@@ -53,8 +53,8 @@
     test("fasce", tall > 160 ? [`${Math.round(tall)} px (barra ${bar ? bar.offsetHeight : 0}${fixed.map((x) => `, ${descr(x).split(" ")[0]} ${Math.round(x.getBoundingClientRect().height)}`).join("")})`] : []);
 
     const broken = [];
-    const round = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    for (let n = round.nextNode(), howMany = 0; n && howMany < 6000; n = round.nextNode()) {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(), howMany = 0; n && howMany < 6000; n = walker.nextNode()) {
       const padre = n.parentElement;
       if (!padre || !visible(padre) || onPurpose(padre) || padre.closest("script, style, option, select")) continue;
       for (const m of n.textContent.matchAll(/[^\s\-–—/]{4,}/gu)) {

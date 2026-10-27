@@ -56,7 +56,7 @@ window.supabase = {
       updateUser: async (records) => { window.FAKE.auth.push(["updateUser", records]); return { error: null }; },
     },
     from: (table) => new Request(table),
-    // Come supabase-js: una richiesta, con .range() per tutteLeRighe().
+    // Come supabase-js: una richiesta, con .range() per allRows().
     rpc: (nome, parameters) => Object.assign(new Request("rpc:" + nome), { parametri: parameters }),
     channel: () => ({ on(typeName, filter, callback) { window.FAKE.realtime.push(callback); return this; }, subscribe() { return this; } }),
     removeChannel() {},

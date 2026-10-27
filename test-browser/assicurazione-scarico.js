@@ -14,7 +14,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     const downloaded = [];
     excelList = async (t, n) => { downloaded.push(`${t.kind}:${n}`); };
     el("decorrenza").value = "2026-11-15";

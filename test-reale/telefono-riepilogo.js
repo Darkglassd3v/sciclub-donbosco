@@ -7,7 +7,7 @@
 {
   window.addEventListener("load", () => setTimeout(() => { try {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     const wideOnes = [...document.querySelectorAll(".tabella-scorrevole")].filter((c) => c.scrollWidth > c.clientWidth + 1);
     test("nienteScorrimento", !wideOnes.length, `${wideOnes.length} tabelle scorrono di lato a ${innerWidth} px`);
     if (EXPECTED?.gratis) {

@@ -8,7 +8,7 @@
   window.addEventListener("unhandledrejection", (e) => errors.push(String(e.reason?.message || e.reason)));
   window.addEventListener("load", () => setTimeout(async () => { try {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     const choices = document.querySelectorAll("#sez-tessera input, #f_presciistica input, #f_tipologia_corso option").length;
     const { data: items } = await sb.from("prices").select("id").eq("active", true);
     test("ruolo", (await getProfile())?.role === "superadmin", "my_access non dà superadmin");

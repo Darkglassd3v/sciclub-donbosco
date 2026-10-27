@@ -177,7 +177,7 @@
   // "gite"). L'ultimo valore dice se apre l'anagrafica dei soci: con soci,
   // pagamenti, riepilogo, cerca, gite e stampe si legge members, con polizze i
   // codici fiscali dei tesserati (policy e funzioni insurance_* in
-  // supabase/schema.sql). Il nome è quello della barra (nomiBarra() in shared.js).
+  // supabase/schema.sql). Il nome è quello della barra (menuLabels() in shared.js).
   const PERMISSIONS = [
     ["soci", "Soci", "Iscrizione e modifica dei soci, vendita di abbonamenti dalla scheda.", true],
     ["pagamenti", "Pagamenti", "Incassi dai nuclei familiari e modifica degli importi (rimborsi e sconti).", true],
@@ -192,7 +192,7 @@
   ];
   // Il nome a schermo: quello scelto per la barra, se c'è (la voce Stagioni chiuse non è nella barra).
   // Con un shared.js vecchio ancora nella cache del browser NOMI_BARRA e
-  // nomiBarra() non ci sono: la pagina va lo stesso, coi nomi di sempre.
+  // menuLabels() non ci sono: la pagina va lo stesso, coi nomi di sempre.
   const chosenNames = () => (typeof MENU_LABELS === "object" && MENU_LABELS) || {};
   const sectionName = (p, nome) => chosenNames()[p] || nome;
   const permissionName = (p) => {

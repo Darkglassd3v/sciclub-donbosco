@@ -8,7 +8,7 @@
   const $ = (s) => document.querySelector(s);
   window.addEventListener("load", () => setTimeout(async () => { try {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!EXPECTED?.idSenza || !EXPECTED?.idPass) { document.title = "RISULTATO dati=NO(mancano i soci di prova nella copia)"; return; }
     $("#q").value = EXPECTED.cognome;
     $("#q").dispatchEvent(new Event("input", { bubbles: true }));

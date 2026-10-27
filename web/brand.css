@@ -57,7 +57,7 @@
 
 /* --- Tema scuro (3.0) ----------------------------------------------------
  * Chiesto dall'utente il 27/10/2026: il pulsante con la luna in alto lo accende
- * (cambiaTema() in shared.js e comune.js), il browser lo ricorda e lo script
+ * (toggleTheme() in shared.js e comune.js), il browser lo ricorda e lo script
  * nell'head lo rimette prima del primo disegno. Gli stessi nomi dei colori con
  * valori scuri: il blu, il verde e il rosso come scritte schiariscono (il blu
  * del logo sul fondo scuro non si legge), come fondo restano pieni (--*-pieno).
@@ -115,7 +115,7 @@ html[data-tema="scuro"] .sezione.pagamento { --tinta: #2A1D14; }
 html[data-tema="scuro"] img[src*="lettere-blu"] { background: #fff; border-radius: var(--raggio-card); padding: 6px; }
 
 html { font-size: 17px; background: var(--sfondo); }  /* Bulma lo fa bianco: sotto una pagina corta si vedeva una fascia bianca */
-/* Pulsante A+ della barra (cambiaTesto() in shared.js): le misure delle
+/* Pulsante A+ della barra (toggleTextSize() in shared.js): le misure delle
  * pagine sono in rem, quindi crescono insieme testo, campi e tabelle. */
 html[data-testo="1"] { font-size: 19px; }
 html[data-testo="2"] { font-size: 21px; }
@@ -199,7 +199,7 @@ textarea:focus-visible,
 .select:not(.is-multiple) { height: auto; }
 .select:not(.is-multiple):not(.is-loading)::after { border-color: var(--blu); }
 
-/* Campo con un errore (segnaCampo() in shared.js): bordo rosso finché non lo si
+/* Campo con un errore (markField() in shared.js): bordo rosso finché non lo si
  * cambia. Un gruppo di scelte (radio) si borda tutto intorno. */
 .campo-errore.input, .campo-errore.textarea, .select select.campo-errore, input.campo-errore {
   border-color: var(--errore) !important;
@@ -269,10 +269,10 @@ dialog.finestra h2 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.022e
 dialog.finestra .buttons { margin-top: 20px; }
 @media screen and (max-width: 768px) { dialog.finestra { padding: 22px 18px; } }
 
-/* La domanda di chiedi() (shared.js): una frase sola, grande. */
+/* La domanda di ask() (shared.js): una frase sola, grande. */
 dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 0; }
 
-/* I dati di chi si salva o si elimina (tabellaDati() in shared.js): una riga
+/* I dati di chi si salva o si elimina (dataTable() in shared.js): una riga
  * per dato, valori grandi e in grassetto, i mancanti in rosso. */
 .tabella-dati { width: 100%; margin: 18px 0 4px; border-collapse: collapse; border: 2px solid var(--filo); border-radius: var(--raggio); }
 .tabella-dati th, .tabella-dati td { padding: 12px 16px; border-bottom: 1px solid var(--filo); vertical-align: top; text-align: left; }
@@ -399,7 +399,7 @@ body { margin: 0; }
  * prima andava su due righe o nascondeva "Esci"). Gestione e Social sono
  * gruppi che si aprono e chiudono. Sul telefono la colonna è un pannello che
  * apre il pulsante «Menu». --barra-h è l'altezza della barra in alto
- * (altezzaBarra() in shared.js e comune.js): sotto ci si attaccano le strisce
+ * (barHeight() in shared.js e comune.js): sotto ci si attaccano le strisce
  * delle sezioni. --menu-l è la larghezza della colonna, 0 sul telefono: le
  * fasce fisse in fondo (Totale di Soci, "Vedi come") partono da lì. */
 :root { --barra-h: 64px; --menu-l: 240px; }

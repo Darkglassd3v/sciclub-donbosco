@@ -276,7 +276,7 @@
     // Totale netto: entrate meno uscite.
     const totalAmount = data.reduce((s, m) => s + (m.kind === "USCITA" ? -1 : 1) * num(m.amount), 0);
     el("elencoMovimenti").innerHTML = data.map((m) => {
-      const exit = m.kind === "USCITA";
+      const isOutflow = m.kind === "USCITA";
       return `
         <tr>
           <td data-etichetta="Data">${new Date(m.entry_date + "T00:00").toLocaleDateString("it-IT")}</td>
@@ -284,7 +284,7 @@
           <td data-etichetta="Descrizione">${esc(m.description)}</td>
           <td class="num" data-etichetta="Quantità">${num(m.quantity).toLocaleString("it-IT")}</td>
           <td class="num" data-etichetta="Prezzo">${fmt(m.unit_price)}</td>
-          <td class="num ${exit ? "uscita" : "entrata"}" data-etichetta="Importo">${exit ? "−" : "+"} ${fmt(m.amount)}</td>
+          <td class="num ${isOutflow ? "uscita" : "entrata"}" data-etichetta="Importo">${isOutflow ? "−" : "+"} ${fmt(m.amount)}</td>
           <td class="azioni" data-id="${m.id}">${deleteButton()}</td>
         </tr>`;
     }).join("") + `

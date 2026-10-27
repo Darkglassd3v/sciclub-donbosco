@@ -8,7 +8,7 @@
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!FAKE.realtime.length) { document.title = "RISULTATO realtime=NO(nessuna iscrizione al realtime)"; return; }
     const theEvent = () => FAKE.realtime.forEach((cb) => cb({ eventType: "UPDATE" }));
     let before = reads;

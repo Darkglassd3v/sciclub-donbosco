@@ -6,7 +6,7 @@
   FAKE.risposta = (t, r) => { if (t === "members" && r.filtri.some((f) => f[0] === "or")) filters.push(...r.filtri.filter((f) => f[0] === "or").map((f) => f[1])); return []; };
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     await searchDatabase('ro*ss"i\\', 8);
     test("senzaJolly", filters.length === 1 && !/[*"\\]/.test(filters[0]), `filtri ${JSON.stringify(filters)}`);
     filters.length = 0;

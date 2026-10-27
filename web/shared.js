@@ -242,7 +242,7 @@ function showToast(message, typeName = "is-success") {
 //
 // Vale per tutto il sito. Un campo che il browser non accetta quando si prova
 // a salvare (required, min, step...: l'evento "invalid") e un campo che una
-// pagina segnala con segnaErrore() prendono il bordo rosso finché non li si
+// pagina segnala con markError() prendono il bordo rosso finché non li si
 // cambia; la pagina scorre al primo e il fuoco ci va. Prima l'errore era solo
 // un messaggio in alto, e il campo non si trovava.
 // ---------------------------------------------------------------------------
@@ -512,7 +512,7 @@ const ROLE_NAMES = {
 };
 
 /**
- * Avviso sotto un campo codice fiscale, a partire dall'esito di verificaCF()
+ * Avviso sotto un campo codice fiscale, a partire dall'esito di verifyTaxCode()
  * (codicefiscale.js): solo «Codice fiscale errato» (o, a campo vuoto, «Codice
  * proposto») e il codice proposto, che è un pulsante: il click lo scrive nel
  * campo. Il motivo non si dice: chi compila vuole il codice giusto, non la
@@ -552,7 +552,7 @@ function showTaxCodeNotice(box, field, outcome, after) {
 //
 // L'elenco completo, per chi ha il permesso riepilogo: il ruolo assicurazione
 // non lo può scaricare. Le liste per l'assicurazione, con il loro tracciato,
-// le fa la pagina Assicurazione (excelLista()).
+// le fa la pagina Assicurazione (excelList()).
 // ---------------------------------------------------------------------------
 
 /** "2026-01-31" → "31/01/2026". */
@@ -563,7 +563,7 @@ function dataIt(iso) {
 }
 
 // Intestazione della colonna e come si ricava dal socio. Un campo nuovo va
-// aggiunto anche a scaricaSoci() in riepilogo.html, che legge i soci.
+// aggiunto anche a downloadMembers() in riepilogo.html, che legge i soci.
 const INSURANCE_COLUMNS = [
   ["Cognome", (s) => s.last_name],
   ["Nome", (s) => s.first_name],
@@ -747,7 +747,7 @@ async function allRows(create) {
 /**
  * L'etichetta colorata di un giorno di gita (SABATO, DOMENICA, MARTEDI, JOLLY),
  * o stringa vuota. Colori in brand.css, "Giorni delle gite"; è la stessa di
- * etichettaGiorno() in ricerca/comune.js.
+ * dayLabel() in ricerca/comune.js.
  */
 const DAY_NAMES = { SABATO: "Sabato", DOMENICA: "Domenica", MARTEDI: "Martedì", JOLLY: "Jolly" };
 function dayLabel(dayKey) {

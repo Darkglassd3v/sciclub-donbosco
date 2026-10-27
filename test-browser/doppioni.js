@@ -1,5 +1,5 @@
 // Soci (index.html): un socio nuovo che è già in archivio non si scrive.
-// salva() mostra l'avviso invece della domanda di conferma; scrivi(), chiamata
+// save() mostra l'avviso invece della domanda di conferma; write(), chiamata
 // subito prima di scrivere, si ferma anche lei e non manda niente al database.
 let writings = 0;
 

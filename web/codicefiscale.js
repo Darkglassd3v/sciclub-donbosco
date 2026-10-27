@@ -238,15 +238,15 @@ function verifyTaxCode(codeValue, personalDetails = {}) {
 
   const data = readDate(personalDetails.dataNascita);
   if (data && validDay) {
-    const waiting = dateCode(data, female);
-    const caption = parts.anno + parts.mese + parts.giorno;
-    if (caption !== waiting) {
+    const expectedDate = dateCode(data, female);
+    const writtenDate = parts.anno + parts.mese + parts.giorno;
+    if (writtenDate !== expectedDate) {
       // Data giusta ma col sesso opposto a quello scelto: lo si dice, se no
       // "la data non torna" con la data giusta sotto gli occhi non si capisce.
-      problems.push(dateCode(data, femaleInCode) === caption
+      problems.push(dateCode(data, femaleInCode) === writtenDate
         ? `Nel codice il giorno (${parts.giorno}) corrisponde a ${femaleInCode ? "una donna (giorno più 40)" : "un uomo"}, ma il sesso indicato è ${chosenSex}: verificare sulla tessera sanitaria.`
         : `La data di nascita non corrisponde a quella della scheda (${String(data.giorno).padStart(2, "0")}/${String(data.mese).padStart(2, "0")}/${data.anno}).`);
-      correct.data = waiting;
+      correct.data = expectedDate;
     }
   } else if (!dateForm) {
     problems.push("La data di nascita nel codice (caratteri dal 7° all'11°) non è valida.");

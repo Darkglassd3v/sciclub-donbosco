@@ -261,7 +261,7 @@ assert.strictEqual(dayOfMonth(null), "");
   const read = (nome) => (0, eval)(`(${page.match(new RegExp(`const ${nome} = (\\{[^\\n]*\\}|\\{[\\s\\S]*?\\n  \\});`))[1]})`);
   const order = read("FIELD_ORDER");
   for (const g of ["gita", "evento"]) assert.ok(Array.isArray(order[g]), `manca ORDINE_CAMPI.${g}`);
-  // Ogni nome dell'ordine è un campo del form: ordinaCampi() lo cerca per
+  // Ogni nome dell'ordine è un campo del form: sortFields() lo cerca per
   // data-campo, e uno che non c'è finirebbe nel form come la scritta "null".
   const fields = new Set([...page.matchAll(/data-campo="([A-Za-z]+)"/g)].map((m) => m[1]));
   const sponsor = (0, eval)(page.match(/const SPONSOR_ORDER = (\[[^\]]*\]);/)[1]);

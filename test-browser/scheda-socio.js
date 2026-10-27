@@ -31,7 +31,7 @@ FAKE.ritardo = (t, r) => {
 };
 
 const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
-const outcome = (real, detail) => (real ? "ok" : `NO(${String(detail).trim().replace(/\s+/g, " ")})`);
+const outcome = (passed, detail) => (passed ? "ok" : `NO(${String(detail).trim().replace(/\s+/g, " ")})`);
 
 window.addEventListener("load", () => setTimeout(async () => {
   loadMember("A");

@@ -31,7 +31,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!pages("BASE")) { document.title = `RISULTATO pagine=NO(nessuna riga tr.pagine, ${rows("B").length} righe Base)`; return; }
 
     const baseTitle = [...document.querySelectorAll("#elencoDa tr.gruppo")].find((t) => t.textContent.includes("REALE MUTUA NEVE"));

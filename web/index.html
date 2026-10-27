@@ -95,7 +95,7 @@
     /* Sul colore chiaro i campi e le scelte restano bianchi. */
     .partenze { padding: .5rem; background: var(--superficie); border: 1px solid var(--filo); border-radius: var(--raggio); }
 
-    /* Finestre dell'eliminazione: chi si elimina in una tabellina (tabellaDati() in shared.js). */
+    /* Finestre dell'eliminazione: chi si elimina in una tabellina (dataTable() in shared.js). */
     .elimina-avviso { font-size: 1.2rem; }
     #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
@@ -203,7 +203,7 @@
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
   </div>
 
-  <!-- Chi c'è nel modulo (aggiornaFascia()). Niente "Nuovo socio": dopo il
+  <!-- Chi c'è nel modulo (updateBand()). Niente "Nuovo socio": dopo il
        salvataggio il modulo si svuota da solo, e "Chiudi scheda" lascia un
        socio aperto senza salvarlo. -->
   <div class="riquadro testata-scheda">
@@ -441,7 +441,7 @@
   let dependants = [];
   // Il capofamiglia che paga per il socio aperto, se ha l'agevolazione famiglia:
   // { nome, agevolazione, coperti } (coperti = lui e i familiari a carico senza
-  // tessera, il socio aperto escluso). Vedi caricaCapofamiglia().
+  // tessera, il socio aperto escluso). Vedi loadHouseholdHead().
   let householdHead = null;
   let access = null; // chi è collegato (getProfile), per tessere riservate e Togli
 
@@ -469,7 +469,7 @@
   let openedMember = null;
 
   // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
-  // firma(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
+  // signature(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
   // pagina chiedono prima di buttare via quello che si è scritto.
   let savedOne = "";
 
@@ -514,7 +514,7 @@
         recompute();
       });
       // Anche la presciistica con l'assicurazione comprende la tessera: scelta lei, la
-      // tessera si svuota (e si spegne, aggiornaCopertura()).
+      // tessera si svuota (e si spegne, updateCover()).
       el("f_presciistica").addEventListener("change", () => {
         if (chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
         recompute();
@@ -595,12 +595,12 @@
       }
       // Le tessere riservate (es. "TESSERA DIRETTIVO") non compaiono a chi
       // non può assegnarle (tesseraConsentita, come card_allowed nel database). Restano però nel gruppo, nascoste
-      // e disabilitate: se un socio le ha già selezionaPerNome() le trova
+      // e disabilitate: se un socio le ha già selectByName() le trova
       // comunque e il valore non sparisce al primo salvataggio fatto da chi
       // non ha il permesso di sceglierle.
       // Così anche una voce spenta in Impostazioni (active false): il socio che l'ha
       // la vede e la tiene, nessun altro la sceglie. dataset.fisso: resta spenta
-      // anche quando aggiornaCopertura() riaccende le tessere.
+      // anche quando updateCover() riaccende le tessere.
       if ((categoryName === "TESSERA" && !allowedCard(p.min_role, access?.role)) || p.active === false) {
         radio.disabled = true;
         radio.dataset.fisso = "1";
@@ -1272,7 +1272,7 @@
   // cognome e nome (con la stessa data di nascita, se scritta), e propone di
   // aprire quella scheda: si rinnova quella, non se ne crea un'altra.
   // Cognome e nome si confrontano con la chiave del nome (members.name_key,
-  // chiaveNome()), che ignora accenti, spazi e apostrofi: "D'ANGELO" trova
+  // nameKey()), che ignora accenti, spazi e apostrofi: "D'ANGELO" trova
   // "DANGELO". Due operatori che inseriscono la stessa persona nello stesso
   // momento li ferma il database (members_no_double_insert in schema.sql).
   // -------------------------------------------------------------------------
@@ -1338,7 +1338,7 @@
 
   /**
    * Un socio nuovo che forse è già in archivio: mostra le sue schede e dice di
-   * fermarsi (true). Lo chiede salva() prima della domanda e scrivi() subito
+   * fermarsi (true). Lo chiede save() prima della domanda e write() subito
    * prima di scrivere: nel frattempo un altro operatore può averlo inserito.
    */
   async function stopIfDuplicates() {
@@ -1643,7 +1643,7 @@
 
   /**
    * Premendo Salva: prima i controlli, poi una domanda che dice chi si sta
-   * per salvare, e solo al "Sì" la scrittura (scrivi()). Un socio salvato col
+   * per salvare, e solo al "Sì" la scrittura (write()). Un socio salvato col
    * nome o il codice fiscale di un altro si notava solo dopo.
    */
   async function save() {
@@ -1669,7 +1669,7 @@
     }
 
     // Un socio nuovo che forse è già in archivio: si propone la sua scheda
-    // invece di farne un'altra (vedi cercaDoppioni()).
+    // invece di farne un'altra (vedi findDuplicates()).
     if (!el("f_id").value) {
       const button = el("btnSalva");
       button.disabled = true;

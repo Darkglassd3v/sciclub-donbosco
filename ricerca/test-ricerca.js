@@ -9,7 +9,7 @@ const fs = require("fs");
 const path = require("path");
 
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
-// proteggiPagina(): si può caricare qui senza finta finestra.
+// protectPage(): si può caricare qui senza finta finestra.
 const source = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
 const { pieces, cardNumbers, pieceFilter, nameKey, highlight, whatsappNumber, callNumber, contactsHtml, text,
         passDay, dayLabel, errorMessage, retryable } =
@@ -40,7 +40,7 @@ assert.strictEqual(pieces("a1 bb cc dd ee ff").length, 4);
 
 // Il numero tessera si cerca come il nome: le cifre scritte sono numeri tessera, uguali e
 // non «che iniziano per» (si cerca la tessera 12, non la 120). "0021" è la tessera 21,
-// come la salva Soci (numeroTessera() in web/index.html); i nomi restano nei pezzi.
+// come la salva Soci (cardNumber() in web/index.html); i nomi restano nei pezzi.
 assert.deepStrictEqual(cardNumbers("125"), ["125"]);
 assert.deepStrictEqual(cardNumbers("0021"), ["21"]);
 assert.deepStrictEqual(cardNumbers("rossi 125"), ["125"]);

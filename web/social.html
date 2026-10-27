@@ -281,7 +281,7 @@
         <div class="griglia-post">
           <div>
             <!-- Un campo per ogni cosa del post, nell'ordine in cui si legge nel post:
-                 ordinaCampi() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
+                 sortFields() li mette in fila (ORDINE_CAMPI), data-campo li nomina. -->
             <section class="parte" aria-labelledby="pCampi">
               <h3 id="pCampi">Contenuto del post</h3>
               <p class="occhiello mb-2">I campi seguono l'ordine di lettura del post.</p>
@@ -664,7 +664,7 @@
   // ---------------------------------------------------------------------
 
   // L'elenco senza le foto: sono nel database in base64, circa 250 KB l'una, e con 50 post la pagina
-  // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (apri()).
+  // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
     + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop";
 
@@ -822,7 +822,7 @@
       openContactBook(rows);
       showToast("Contatti salvati.");
       // Il riassunto, le spunte del post e i telefoni nelle immagini prendono
-      // la rubrica nuova. Non caricaContatti(): riaprirebbe il post e
+      // la rubrica nuova. Non loadContacts(): riaprirebbe il post e
       // porterebbe via da qui.
       setContacts(rows);
       drawSummaries();
@@ -852,7 +852,7 @@
   const TYPE_NAMES = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
   let vista = "dafare";  // l'elenco mostra i post da fare o quelli già pubblicati
 
-  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (mancanti()). */
+  /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (missingItems()). */
   function state(p) {
     if (p.published_at) return `<span class="stato uscito">✓ Pubblicato ${new Date(p.published_at).toLocaleDateString("it-IT")}</span>`;
     return missingItems(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
@@ -970,7 +970,7 @@
    * riga per riga (un'evidenza non va a capo) e con gli spazi fuori. Se la
    * selezione tocca parole già evidenziate, toglie quelle evidenze per intero:
    * togliere solo l'asterisco selezionato ne lasciava uno spaiato, che nel
-   * post si vedeva. Il post disegna le evidenze (evidenzia()
+   * post si vedeva. Il post disegna le evidenze (highlight()
    * in social-templates.js).
    */
   function highlightSelection() {
@@ -1046,7 +1046,7 @@
     const { id, created_at, updated_at, ...records } = isOpen;
     doOpen({ ...records, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
       subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null });
-    if (isOpen.id) return;  // modifiche non salvate: apri() ha chiesto prima, la copia parte dopo
+    if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
     // La gita sceglie il giorno nel calendario: il campo data è nascosto.
     const dayKey = el("fData").offsetParent ? el("fData") : el("calGita").querySelector("button");

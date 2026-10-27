@@ -24,7 +24,7 @@ FAKE.risposta = (t, r) => {
 let step = "inizio";
 window.addEventListener("load", () => setTimeout(async () => { try {
   const r = [];
-  const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+  const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
   step = "apri"; await doOpen(post({}));

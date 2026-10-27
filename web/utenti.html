@@ -222,7 +222,7 @@
     // scroll del dito non deve arrivare al database.
     //
     // Il pulsante si ricerca ogni volta perché la cella viene riscritta (dopo
-    // un errore di Rimuovi): ci pensa collegaAzioni() a riagganciarlo.
+    // un errore di Rimuovi): ci pensa bindActions() a riagganciarlo.
     select.addEventListener("change", () => {
       const confirmIt = row.querySelector("[data-conferma]");
       if (confirmIt) confirmIt.disabled = select.value === row.dataset.ruoloSalvato;

@@ -7,7 +7,7 @@
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => { try {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!EXPECTED?.pass) { document.title = "RISULTATO dati=NO(nessun socio per l'abbonamento di prova)"; return; }
     await loadMember(EXPECTED.id);
     await wait(1500);

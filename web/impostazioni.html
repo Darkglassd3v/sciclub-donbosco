@@ -17,7 +17,7 @@
     .tabella-costi th { text-align: left; padding: 8px 6px; color: var(--testo-soft);
                          font-weight: 600; font-size: .875rem; border-bottom: 1px solid var(--filo); }
     .tabella-costi td { padding: 8px 6px; border-top: 1px solid var(--filo); vertical-align: middle; }
-    /* Nomi interi: il campo va a capo e cresce col testo (vedi adatta()). */
+    /* Nomi interi: il campo va a capo e cresce col testo (vedi fitText()). */
     .tabella-costi .campo-nome { min-width: 11rem; min-height: 0; resize: none; overflow: hidden; }
     .tabella-costi .select, .tabella-costi .select select { width: 100%; }
     .tabella-costi input[type="checkbox"] { width: 1.25rem; height: 1.25rem; vertical-align: middle; }
@@ -319,10 +319,10 @@
   // Un update o delete che il database non applica (riga negata dalla RLS, o tolta
   // nel frattempo) non dà errore: torna senza righe. Senza questo controllo la
   // pagina diceva «salvato».
-  // In Soci le partenze di un socio si salvano separate da virgola (spuntaPartenze()).
+  // In Soci le partenze di un socio si salvano separate da virgola (tickDepartures()).
   const WITHOUT_COMMA = "Il luogo non può contenere virgole, che in Soci separano le partenze. Usare il trattino (es. ASTI - PIAZZA D'ARMI).";
   const NOT_SAVED = "Modifica non salvata: la riga non esiste più o mancano i permessi per modificarla. Ricaricare la pagina.";
-  function caption({ data, error }) {
+  function checkSaved({ data, error }) {
     if (error) throw error;
     if (!data?.length) throw new Error(NOT_SAVED);
   }
@@ -350,7 +350,7 @@
     // Come il vincolo settings_card_gaps_from_valid del database.
     if (!/^[1-9]\d{0,8}$/.test(theValue)) { markError(el("tessereDa"), "Inserire un numero intero maggiore o uguale a 1 (es. 21)."); return; }
     try {
-      caption(await sb.from("settings").update({ value: theValue }).eq("key", "card_gaps_from").select("key"));
+      checkSaved(await sb.from("settings").update({ value: theValue }).eq("key", "card_gaps_from").select("key"));
     } catch (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     showToast(`Numeri tessera liberi segnalati in Soci a partire dal ${theValue}.`);
   }
@@ -374,15 +374,15 @@
 
   /** Il prezzo della riga in Soci: quota più assicurazione, se non la paga il club (card_price() nel database). */
   function updatePaysForMember(row) {
-    const caption = row.querySelector("[data-paga]");
-    if (!caption) return;
+    const payCell = row.querySelector("[data-paga]");
+    if (!payCell) return;
     const codeValue = row.querySelector("[data-assicurazione]")?.value;
     const club = row.querySelector("[data-pagata-club]");
     if (club) club.closest("label").hidden = !codeValue;
     const insuranceItem = INSURANCES.find((a) => a.code === codeValue);
     const quota = parseFloat(row.querySelector("[data-prezzo]").value) || 0;
     const byInsurance = insuranceItem && !club?.checked ? num(insuranceItem.price) * peopleFromName(row) : 0;
-    caption.textContent = fmt(quota + byInsurance);
+    payCell.textContent = fmt(quota + byInsurance);
   }
 
   function priceRow(p) {
@@ -454,7 +454,7 @@
 
     button.disabled = true;
     try {
-      caption(await sb.from("prices").update(patch).eq("id", id).select("id"));
+      checkSaved(await sb.from("prices").update(patch).eq("id", id).select("id"));
       markSaved(row);
       showToast("Voce aggiornata.");
     } catch (error) {
@@ -575,7 +575,7 @@
     const button = row.querySelector("[data-salva]");
     button.disabled = true;
     try {
-      caption(await sb.from("insurances")
+      checkSaved(await sb.from("insurances")
         .update({ name: nome, price: priceValue })
         .eq("code", row.dataset.id).select("code"));
       markSaved(row);
@@ -603,7 +603,7 @@
 
   async function removeInsurance(row) {
     try {
-      caption(await sb.from("insurances").delete().eq("code", row.dataset.id).select("code"));
+      checkSaved(await sb.from("insurances").delete().eq("code", row.dataset.id).select("code"));
       row.remove();
       if (!el("tabellaAssicurazioni").querySelector("tr")) el("tabellaAssicurazioni").innerHTML = NO_INSURANCE_ROW;
       showToast("Assicurazione eliminata.");
@@ -696,7 +696,7 @@
     if (patch.place.includes(",")) { markError(row.querySelector("[data-luogo]"), WITHOUT_COMMA); return; }
     button.disabled = true;
     try {
-      caption(await sb.from("departures").update(patch).eq("id", id).select("id"));
+      checkSaved(await sb.from("departures").update(patch).eq("id", id).select("id"));
       markSaved(row);
       showToast("Partenza aggiornata.");
     } catch (error) {

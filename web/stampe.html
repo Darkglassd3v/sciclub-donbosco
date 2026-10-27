@@ -151,7 +151,7 @@
     const dayName = PRINT_DAYS[keyName].nome;
     const today = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
     const book = XLSX.utils.book_new();
-    const usedNames = new Set();   // nomeFoglioExcel(): due fogli uguali fermerebbero lo scarico
+    const usedNames = new Set();   // excelSheetName(): due fogli uguali fermerebbero lo scarico
     let howManyOnes = 0;
     for (const g of sheet.gruppi) {
       howManyOnes += g.soci.length;
@@ -164,7 +164,7 @@
         ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", dataExcel(s.birth_date),
           ...tripList(s), s.phone || ""]),
       ];
-      // Il titolo in grassetto su tutta la riga, poi le colonne: vedi foglioLeggibile().
+      // Il titolo in grassetto su tutta la riga, poi le colonne: vedi readableSheet().
       const work = readableSheet(rows, { intestazione: 1, dateNF: "dd/mm/yyyy" });
       XLSX.utils.book_append_sheet(book, work, excelSheetName(g.titolo || sheet.titolo, usedNames));
     }

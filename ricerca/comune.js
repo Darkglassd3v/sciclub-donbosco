@@ -19,7 +19,7 @@ function pieces(searchedText) {
 
 /**
  * I numeri tessera scritti nella ricerca, senza gli zeri davanti: "0021" è la
- * tessera 21, come la salva Soci (numeroTessera() in web/index.html). Si
+ * tessera 21, come la salva Soci (cardNumber() in web/index.html). Si
  * cercano uguali, non "che iniziano per": la tessera 12, non la 120.
  */
 function cardNumbers(searchedText) {
@@ -42,7 +42,7 @@ function pieceFilter(piece) {
  * Le sole lettere A-Z, senza accenti e apostrofi: "d'angelo" → "DANGELO". È
  * norm_name() di schema.sql, con cui il database riempie members.name_key
  * ("DANGELO MARIO"): così "d'angelo" trova DANGELO e "dangelo" trova
- * D'ANGELO. Uguale a chiaveNome() in web/shared.js.
+ * D'ANGELO. Uguale a nameKey() in web/shared.js.
  */
 function nameKey(t) {
   return String(t ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
@@ -145,7 +145,7 @@ function contactsHtml(phoneNumber) {
 // ---------------------------------------------------------------------------
 // Pagina
 //
-// Da qui in giù serve il browser. Le pagine chiamano proteggiPagina() e da
+// Da qui in giù serve il browser. Le pagine chiamano protectPage() e da
 // quel momento hanno `sb` pronto.
 // ---------------------------------------------------------------------------
 
@@ -241,7 +241,7 @@ async function requestPermission(permission) {
 /**
  * La barra in cima è quella del gestionale (web/brand.css): le voci si
  * vedono secondo i permessi, e ruolo e permessi si ricordano per la prossima
- * pagina come fa ricordaAccesso() in web/shared.js. Lo script nell'head li
+ * pagina come fa rememberAccess() in web/shared.js. Lo script nell'head li
  * rimette prima del primo disegno, così la barra non cambia passando da una
  * pagina all'altra.
  */
@@ -263,7 +263,7 @@ function drawBar(access) {
 
 /**
  * I nomi delle voci della barra scelti in Gestione > Ruoli (tabella
- * nav_labels): come NOMI_BARRA, scriviNomiBarra() e nomiBarra() in
+ * nav_labels): come NOMI_BARRA, writeMenuLabels() e menuLabels() in
  * web/shared.js, con la stessa memoria nel browser ("sciclub-voci").
  */
 let MENU_LABELS = (() => {
@@ -292,7 +292,7 @@ async function menuLabels() {
  * L'altezza vera della barra in --barra-h: sul computer la barra va su due
  * righe quando le voci non ci stanno (brand.css), e quello che si attacca
  * sotto di lei deve seguirla. Si ricalcola con le voci, coi loro nomi e con
- * la finestra (disegnaBarra()). La stessa in web/shared.js.
+ * la finestra (drawBar()). La stessa in web/shared.js.
  */
 function barHeight() {
   const bar = document.querySelector(".barra");
@@ -351,7 +351,7 @@ function writeUser(access) {
   });
 }
 
-/** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */
+/** Pulsante A+ della barra: come toggleTextSize() in web/shared.js, tre grandezze e poi si torna alla normale. */
 function toggleTextSize() {
   const html = document.documentElement;
   const level = (Number(html.dataset.testo || 0) + 1) % 3;

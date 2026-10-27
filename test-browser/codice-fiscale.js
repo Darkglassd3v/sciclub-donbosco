@@ -31,7 +31,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     FROM_ASTI = [cf("BIANCHI", "LUCA", "1970-05-05", "M"), cf("VERDI", "ANNA", "1975-03-08", "F"), cf("NERI", "PIA", "1990-12-24", "F")];
     MARIO = [cf("GIALLI", "MARIO", "1960-02-02", "M"), cf("BLU", "MARIO", "1985-07-07", "M")];
     if (!el("btnCalcolaCF")) { document.title = "RISULTATO pulsante=NO(manca #btnCalcolaCF)"; return; }

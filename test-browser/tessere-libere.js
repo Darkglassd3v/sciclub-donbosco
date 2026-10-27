@@ -40,7 +40,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!row()) { document.title = "RISULTATO riga=NO(manca #tessereLibere)"; return; }
 
     test("proposto", el("f_numero_tessera").value === "38" && free() === "36",

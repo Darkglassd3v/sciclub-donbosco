@@ -55,7 +55,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!note() || typeof choosePayer !== "function") {
       document.title = `RISULTATO base=NO(manca #notaFamiglia o scegliPagante())`;
       return;

@@ -1,7 +1,7 @@
 // Soci (index.html): la presciistica comprende tessera, quota e assicurazione.
 // - Due voci nel listino: «CORSO PRESCIISTICA» 90 (70 + Base 20) e «CORSO
 //   PRESCIISTICA - REALE TOTAL SPORT» 120 (75 + Sport 45). Il finto dà già
-//   card_price in `price`, come la select di caricaPrezzi().
+//   card_price in `price`, come la select di loadPrices().
 // - Con la presciistica la tessera non si somma (la comprende), e sotto la
 //   tessera lo dice una nota; tolta la presciistica la tessera conta di nuovo.
 // - Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Le
@@ -42,7 +42,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
 
     test("senzaScelta", !el("f_assicurazione"), "c'è ancora la scelta dell'assicurazione a parte");
     if (!note()) { document.title = "RISULTATO " + r.concat("nota=NO(manca #notaPresciistica)").join(" "); return; }

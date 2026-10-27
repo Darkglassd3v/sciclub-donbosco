@@ -1012,7 +1012,7 @@ alter table public.prices add constraint prices_min_role_only_card
 comment on column public.prices.min_role is 'Chi vede/sceglie questa voce (solo category=TESSERA): utente = tutti, admin = admin e superadmin, superadmin = solo superadmin.';
 
 -- true se chi chiama può assegnare una tessera con quel min_role. La stessa
--- regola la ripete la pagina Soci (tesseraConsentita() in web/shared.js) per
+-- regola la ripete la pagina Soci (allowedCard() in web/shared.js) per
 -- non mostrare le voci che il database rifiuterebbe.
 create or replace function public.card_allowed(min_role text)
 returns boolean
@@ -1399,7 +1399,7 @@ as $$
              and m.insurance_list_id is null) t
    where t.tipo is not null
    -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
-   -- l'altra (la pagina legge a blocchi di 1000, vedi tutteLeRighe()).
+   -- l'altra (la pagina legge a blocchi di 1000, vedi allRows()).
    order by t.tipo, t.last_name, t.first_name, t.id;
 $$;
 
@@ -3524,7 +3524,7 @@ drop function if exists public.has_role(text);
 -- scritti e non trovava la stessa persona scritta in due modi. La colonna
 -- name_key ("DANGELO MARIO") è generata dal database e la usano la ricerca e
 -- il controllo dei doppioni della pagina; la stessa regola, per il testo che
--- si cerca, è chiaveNome() in web/shared.js.
+-- si cerca, è nameKey() in web/shared.js.
 -- ---------------------------------------------------------------------------
 
 create or replace function public.norm_name(t text)

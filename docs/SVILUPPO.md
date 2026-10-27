@@ -96,10 +96,10 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   `season_breakdown` e azzera i dati di stagione dei soci.
 - Ruoli: `superadmin`, `admin`, `tesoriere`, `assicurazione`, `gite` ("Utente"), `social`;
   permessi in `role_permissions()` e nella matrice di Gestione > Ruoli (`role_grants`); le
-  pagine li controllano con `requirePermesso()`. Dettagli in `docs/ACCOUNT.md`. Dalla 2.8 una
+  pagine li controllano con `requirePermission()`. Dettagli in `docs/ACCOUNT.md`. Dalla 2.8 una
   voce della barra = un permesso: `cerca` (Cerca socio), `gite` (pannello gite: solo lui segna le
   gite e vende abbonamenti dal telefono), `stampe`; prima `gite` le apriva tutte e tre. I nomi
-  delle voci si cambiano in Gestione > Ruoli (`nav_labels`, `nomiBarra()` in `shared.js` e
+  delle voci si cambiano in Gestione > Ruoli (`nav_labels`, `menuLabels()` in `shared.js` e
   `ricerca/comune.js`); senza nome vale quello scritto nelle pagine.
 - Password iniziale da cambiare: riga in `pending_password_changes` (la mettono i trigger su
   `auth.users` e `reset_password()`, la toglie il cambio vero della password); `my_access()` la
@@ -112,13 +112,13 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Corpo 17px e **pulsante A+** nella barra di ogni pagina `web/` (17/19/21px su
   `html[data-testo]`): le misure delle pagine vanno in **rem**; barra e menu restano in px.
 - Dalla 3.0: barra in alto e menu a colonna a sinistra (blu, `--barra-h` e `--menu-l` in
-  `brand.css`); sul telefono il menu è un pannello («Menu», `apriMenu()`). L'HTML della barra e
+  `brand.css`); sul telefono il menu è un pannello («Menu», `openMenu()`). L'HTML della barra e
   del menu è uguale in tutte le 13 pagine, con la voce aperta già segnata: si cambia in tutte
   insieme. Stile Material (4px pulsanti e campi, 8px schede, pulsanti in maiuscolo) e tema
-  scuro (`html[data-tema="scuro"]`, `cambiaTema()`, `--blu-pieno`/`--ok-pieno`/`--errore-pieno`
+  scuro (`html[data-tema="scuro"]`, `toggleTheme()`, `--blu-pieno`/`--ok-pieno`/`--errore-pieno`
   per i fondi sotto le scritte bianche). Prove: `test-browser/menu.js`,
   `test-reale/stile-tutte.js`, `telefono-tutte.js` (390 px), `scuro-tutte.js`.
-- Conferme sempre in una finestra sopra la pagina (`chiedi()` in `shared.js` o `<dialog
+- Conferme sempre in una finestra sopra la pagina (`ask()` in `shared.js` o `<dialog
   class="finestra">`), mai `confirm()`: un browser che blocca le finestre risponde "no" da solo.
 - Pagina Soci: si salva solo se la scheda non è cambiata da quando è aperta (`updated_at`
   letto all'apertura); se Pagamenti, il pannello gite o l'Assicurazione l'hanno toccata, avviso
@@ -137,8 +137,8 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
 - Logo: `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
-- Post social: una sola grafica, **K · Piani** (`postK`, `meseK` in `web/social-templates.js`; il
-  disegno d'origine in `grafica/proposte-post-social/`), post 4:5 (`misurePost()`) e story. Le altre
+- Post social: una sola grafica, **K · Piani** (`postK`, `monthK` in `web/social-templates.js`; il
+  disegno d'origine in `grafica/proposte-post-social/`), post 4:5 (`postSizes()`) e story. Le altre
   (Ritocco, Montagna, Biglietto, Calendario, Divano) e la scelta in Impostazioni sono state tolte il
   15/10/2026: la riga `style` di `social_settings` resta nel database ma non si legge più. Il testo
   resta grande: post almeno 34 px su 1080, story 44 (misurato). Il titolo è sempre alto due righe e il
@@ -146,27 +146,27 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   poi prende lo spazio vuoto (`data-cede`: la seconda riga del titolo se non serve) e solo dopo
   abbassa tutto insieme (`--s`, `data-adatta`) fino ai corpi minimi. Il gancio ("Alzati dal divano!")
   è `social_events.hook`, scritto post per post. Gli eventi hanno Ora, Dove e Iscrizioni entro
-  (`event_time`, `place`, `deadline`: `fattiEvento()`); nel sottotesto il pulsante Evidenzia mette le
-  parole fra asterischi (`evidenzia()` le disegna, `senzaSegni()` le toglie nel testo del post). Il
-  form segue l'ordine del post (`ORDINE_CAMPI` in `social.html`). Logo in alto a sinistra e coccarda
-  del corso (`stellaCorso()`) all'angolo basso della tessera della data, uguali in post e story.
-  La foto si sposta col pulsante «Sposta la foto» (frecce, + e −: `collegaSpostaFoto()` in
-  `social.html`) in `social_events.photo_x`, `photo_y` (0–100, vuoti = 50% 45%: `posFoto()`) e
-  `photo_zoom` (100–300, vuoto = 100: `zoomFoto()`), uguali per post e story, nelle variabili
+  (`event_time`, `place`, `deadline`: `eventFacts()`); nel sottotesto il pulsante Evidenzia mette le
+  parole fra asterischi (`highlight()` le disegna, `withoutSigns()` le toglie nel testo del post). Il
+  form segue l'ordine del post (`FIELD_ORDER` in `social.html`). Logo in alto a sinistra e coccarda
+  del corso (`courseStar()`) all'angolo basso della tessera della data, uguali in post e story.
+  La foto si sposta col pulsante «Sposta la foto» (frecce, + e −: `bindMovePhoto()` in
+  `social.html`) in `social_events.photo_x`, `photo_y` (0–100, vuoti = 50% 45%: `photoPos()`) e
+  `photo_zoom` (100–300, vuoto = 100: `zoomPhoto()`), uguali per post e story, nelle variabili
   `--pos` e `--zoom` di foto, finestra e grigi. Senza ingrandire, una foto orizzontale nel post si
   sposta solo ai lati (object-fit: cover). La partenza sotto la data è `card_stop` (per luogo;
   vuota = la prima). «Duplica questo post» apre una copia non salvata senza giorno, scadenza, foto,
   stato «pubblicato» e testo scritto a mano. La gita può avere una nota in giallo sotto la meta
   (`subtitle`, es. «Prova gratuita con i maestri»); quota e scadenza della gita sono facoltative
-  (`mancanti()` non le chiede). `photo` accetta solo data URL d'immagine (check nel database) e
+  (`missingItems()` non le chiede). `photo` accetta solo data URL d'immagine (check nel database) e
   nell'`url()` del CSS si codifica tutto tranne i caratteri di un data URL. La meta della gita va su
-  due righe (a capo scritti o da sola, `righeMeta()`; `data-due` in `fit()`): su una riga 150 (168
-  nella story), su due 104 (124); fuori dal post l'a capo diventa uno spazio (`unaRiga()`).
+  due righe (a capo scritti o da sola, `metaLines()`; `data-due` in `fit()`): su una riga 150 (168
+  nella story), su due 104 (124); fuori dal post l'a capo diventa uno spazio (`oneRow()`).
 - Dopo ogni modifica ai post, controllare post, story e calendario contro la
   versione online: nessuna informazione saliente (corso, scadenza, prezzi, partenze, telefoni) deve
   sparire o rimpicciolirsi.
-- Conferme con dati di una persona: `tabellaDati()` in `shared.js` (anche come `dettagli` di
-  `chiedi()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
+- Conferme con dati di una persona: `dataTable()` in `shared.js` (anche come `dettagli` di
+  `ask()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 
 ### Testi
 
@@ -197,7 +197,7 @@ telefono) e da `test-reale/accessibilita.js` (ogni pagina coi dati veri) e
   mai `<th></th>`.
 - I link dentro una frase sono sottolineati (brand.css): il blu sul testo scuro non basta.
 - Testo con contrasto almeno 4,5:1 (3:1 se grande): niente `has-text-grey` di Bulma sul bianco.
-- Le conferme sono `<dialog>` con `showModal()` (`chiedi()` in shared.js): il fuoco resta dentro,
+- Le conferme sono `<dialog>` con `showModal()` (`ask()` in shared.js): il fuoco resta dentro,
   Esc vale come Annulla, il fuoco torna dove era.
 
 ## Provare le pagine senza login
@@ -261,7 +261,7 @@ le lancia il deploy.
   `member_insurance(m)` dà l'assicurazione di un socio (presciistica, tessera, agevolazione sua o
   del capofamiglia) per le liste; `card_holder(m)` dice chi è tesserato (Riepilogo, Gite,
   `admin_summary`). `card_counts` e `close_season()` contano le agevolazioni e non la tessera
-  compresa nella presciistica con l'assicurazione. In Soci (`copertura()`) la tessera è
+  compresa nella presciistica con l'assicurazione. In Soci (`cover()`) la tessera è
   obbligatoria solo per chi non è coperto; il nucleo si conta e un familiare oltre le persone
   dell'agevolazione deve avere la tessera; chi è coperto dall'agevolazione ha la presciistica
   «solo corso» (CORSO PRESCIISTICA - FAMIGLIA, 50 €).
@@ -280,7 +280,7 @@ le lancia il deploy.
 - Rimborso: riduce il pagato del socio. Lo possono fare tesoriere e admin, con lo storico delle modifiche.
 - Totale manuale: segnato come manuale, il form non lo ricalcola più.
 - Totale di un socio già salvato (22/10): non segue i prezzi nuovi del listino, quello fatto pagare
-  vale. Cambiando una voce cambia solo la differenza, coi prezzi di oggi (`totaleCalcolato()` in Soci).
+  vale. Cambiando una voce cambia solo la differenza, coi prezzi di oggi (`computedTotal()` in Soci).
 - Codici fiscali dai fogli di dati26 (`legacy/dati26/`): si correggono su tutte le righe della persona, anche quelle
   vecchie. Prima un controllo che non scrive niente, poi il backup, poi la correzione.
   Se il CF dei fogli è diverso da quello del database vince quello dei fogli; i CF dei fogli si

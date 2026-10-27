@@ -22,7 +22,7 @@
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const test = (nome, real, why) => r.push(`${nome}=${real ? "ok" : `NO(${why})`}`);
+    const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     el("f_cognome").value = "Prova"; el("f_nome").value = "Uno"; el("f_telefono").value = "333";
     [...el("f_tipologia_tessera").querySelectorAll("input")][0].click();
 

@@ -7,7 +7,7 @@
 // proposte Biglietto, Calendario e Divano) e i prototipi (social/templates.html,
 // social/confronto.html, social/export.sh) sono nella storia di git. Ogni
 // funzione restituisce l'HTML di un canvas a misura reale (post e calendario
-// 1080×1350 (misurePost()), story 1080×1920, collab 1080×1350, copertina
+// 1080×1350 (postSizes()), story 1080×1920, collab 1080×1350, copertina
 // 820×312); lo stile che serve è tutto qui, così la pagina che lo usa non deve
 // sapere niente.
 // Colori del club da docs/brand-guidelines.md.
@@ -15,11 +15,11 @@
 const SOCIAL = {
   // Relativo alla pagina che disegna.
   logo: "logo-ufficiale-trasparente-lettere-blu.svg",
-  // Il logo ufficiale, blu, nel cerchio: quello dei post e delle story (logoNuovo()), sull'angolo giallo.
+  // Il logo ufficiale, blu, nel cerchio: quello dei post e delle story (newLogo()), sull'angolo giallo.
   logoTondo: "logo-ufficiale-blu-tondo.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
-  // che la pagina carica e passa a impostaContatti(). Ogni post sceglie i suoi
-  // (ev.contacts, id in ordine): contattiDi().
+  // che la pagina carica e passa a setContacts(). Ogni post sceglie i suoi
+  // (ev.contacts, id in ordine): contactsOf().
   // [{ id, name: "Marco", phone: "333 000 0000", hours: "dopo le 18" }, ...]
   contatti: [],
   avvertenzaAlcol: "Bevi responsabilmente. Vietata la vendita ai minori di 18 anni.",
@@ -51,7 +51,7 @@ const SAFE = { top: 250, bottom: 340 };
 const escS = (s) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 
 /* "*fino al 13 gennaio*": fra due asterischi quello che chi pubblica ha
- * evidenziato (pulsante Evidenzia del sottotesto; evidenzia(), nella K). Nel
+ * evidenziato (pulsante Evidenzia del sottotesto; highlight(), nella K). Nel
  * testo del post gli asterischi si tolgono. */
 const withoutSigns = (s) => String(s ?? "").replace(/\*([^*\n]+)\*/g, "$1");
 
@@ -103,7 +103,7 @@ function shortDate(iso) {
 
 /* I giorni di gita e il loro colore, per giorno della settimana (0 = domenica,
  * come getDay()): la tabella trip_days, che la pagina carica e passa a
- * impostaColoriGita(). Finché non arriva, quelli di sempre, gli stessi degli
+ * setTripColors(). Finché non arriva, quelli di sempre, gli stessi degli
  * abbonamenti nel gestionale. */
 let TRIP_COLORS = { 2: "#B3261E", 6: "#084C8D", 0: "#FCCF02" };
 function setTripColors(colors) { TRIP_COLORS = colors; }
@@ -172,7 +172,7 @@ function postTemplate(ev, fmt) {
   }
   return {
     ...base, kind: "evento", title: ev.title, sub: ev.subtitle || "",
-    date: longDate(ev.event_date), facts: eventDone(ev),
+    date: longDate(ev.event_date), facts: eventFacts(ev),
   };
 }
 
@@ -180,7 +180,7 @@ function postTemplate(ev, fmt) {
  * hanno un campo loro nel form (prima l'ora finiva nei prezzi): diventano le
  * informazioni "Orario", "Dove" e "Iscrizioni", che la K sa dove mettere
  * (l'ora nella tessera, il luogo col segnaposto, le iscrizioni in fondo). */
-function eventDone(ev) {
+function eventFacts(ev) {
   const ora = String(ev.event_time || "").trim().replace(/^ore\s*/i, ""), dove = String(ev.place || "").trim();
   // Un'informazione scritta a mano con lo stesso nome di un campo pieno (i post di prima) non si ripete.
   const rest = (ev.facts || []).filter(([n]) => {
@@ -196,11 +196,11 @@ function eventDone(ev) {
 // Pezzi comuni
 // ---------------------------------------------------------------------------
 
-/* Sciatore: segno del corso, nella coccarda (stellaCorso()). */
+/* Sciatore: segno del corso, nella coccarda (courseStar()). */
 const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff"><circle cx="16" cy="4" r="2.2"/><path d="M4 21.5l17-5.2-.5-1.4-4 1.2-1.9-4.8 2.6-2.2-2.7-3.4-5.4 2.6.8 1.6 3.6-1.7 1.1 1.4-3.4 2.9 2.2 5.5-9.6 2.9z"/></svg>`;
 
 /* La coccarda verde del corso, una stella con lo sciatore, larga 210·k: il
- * contenuto (la stella e la scritta), il contenitore lo mette stellaNuova(). */
+ * contenuto (la stella e la scritta), il contenitore lo mette newStar(). */
 function courseStar(k = 1) {
   const d = 210 * k, pts = Array.from({ length: 28 }, (_, i) => {
     const a = Math.PI * i / 14, r = i % 2 ? 84 : 100;
@@ -276,7 +276,7 @@ function fit(root = document) {
  * Cosa manca a un post per essere pronto da pubblicare, a parole ("la
  * meta"): vuoto = pronto. La usano l'elenco (Pronto / Da completare) e la
  * testata del post aperto, così dicono la stessa cosa. Salvare si può lo
- * stesso: salva() blocca solo meta, giorno della gita e sponsor.
+ * stesso: save() blocca solo meta, giorno della gita e sponsor.
  */
 /** Come chiamare un post nell'elenco e nei nomi dei file: la meta della gita su una riga; per gli altri la prima riga
  *  del titolo, o del sottotesto se non ha titolo. */
@@ -533,7 +533,7 @@ const newTitle = (s) => escS(String(s.title || "").trim() || categoryName(s.cat)
 /* Le informazioni che hanno un posto loro: l'orario (nella tessera della K) e
  * le iscrizioni (in fondo ai dati). */
 const TIME = /^(ora|orario|ore)$/i, ENROLMENTS = /^iscrizion/i;
-const madeOf = (done, re) => done.find(([n]) => re.test(String(n || "").trim()));
+const findFact = (facts, re) => facts.find(([n]) => re.test(String(n || "").trim()));
 
 const departures = (s) => (s.stops || []).filter(([t, l]) => t || l)
   .map(([t, l]) => [String(t || "").replace(/^ore\s*/i, ""), l || ""]);
@@ -590,7 +590,7 @@ function cardK(s) {
   const d = dayOf(s.iso);
   if (!d) return "";
   const p = departures(s), choice = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
-  const ora = s.kind === "gita" ? (choice && choice[0] ? `ore ${choice[0]}` : "") : ((madeOf(s.facts || [], TIME) || [])[1] || "");
+  const ora = s.kind === "gita" ? (choice && choice[0] ? `ore ${choice[0]}` : "") : ((findFact(s.facts || [], TIME) || [])[1] || "");
   const story = s.fmt === "story";
   // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
   // blu con le scritte bianche e la fascia dell'ora gialla, il martedì rossa; [fondo, scritte, fascia, sua scritta].
@@ -611,9 +611,9 @@ function postK(s) {
   const C = newColor(s.cat), trip = s.kind === "gita", story = s.fmt === "story";
   const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
   const p = departures(s);
-  const done = (s.facts || []).filter(([, v]) => String(v || "").trim());
-  const ora = madeOf(done, TIME), dove = madeOf(done, /^dove$/i), enrol = madeOf(done, ENROLMENTS);
-  const doneOne = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${highlight(v)}`;
+  const facts = (s.facts || []).filter(([, v]) => String(v || "").trim());
+  const ora = findFact(facts, TIME), dove = findFact(facts, /^dove$/i), enrol = findFact(facts, ENROLMENTS);
+  const factText = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${highlight(v)}`;
   const within = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
   const rows = trip ? [
@@ -627,8 +627,8 @@ function postK(s) {
     String(s.sub || "").trim() && highlight(String(s.sub).trim(), false),
     dove && { html: `<p class="dove">${icoPin}<span>${highlight(dove[1])}</span></p>` },
     // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
-    !s.iso && ora && doneOne(ora),
-    ...done.filter((f) => f !== ora && f !== dove && f !== enrol).map(doneOne),
+    !s.iso && ora && factText(ora),
+    ...facts.filter((f) => f !== ora && f !== dove && f !== enrol).map(factText),
     quota,
     enrol && within(enrol[1]),
   ];
@@ -666,7 +666,7 @@ function monthK(titleText, rows, month, story = false) {
   return bgK({ giallo: false, story, foto: null, fine: story ? 690 : 420 }, card, text, enrolments(), false);
 }
 
-/** Post o story di una gita o di un evento (modello da modelloPost()): sempre la K. */
+/** Post o story di una gita o di un evento (modello da postTemplate()): sempre la K. */
 function drawPost(s) { return postK(s); }
 
 /** Calendario del mese: righe [categoria, "DD/MM", meta, corso]; `mese` "2027-01" per la tessera. */
@@ -869,7 +869,7 @@ function postText(ev, sp, seasonValue) {
     rows.push(`${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (quote) rows.push("", quote);
-    for (const [k, v] of eventDone(ev)) rows.push(`${k}: ${withoutSigns(v)}`);
+    for (const [k, v] of eventFacts(ev)) rows.push(`${k}: ${withoutSigns(v)}`);
   }
   if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
   rows.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${simple(ev.title)}` : ""}`);
