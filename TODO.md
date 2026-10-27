@@ -5,10 +5,11 @@
 
 ## Stato del repository (27/10/2026)
 
-- La 2.9 è rilasciata (tag `2.9`, online dal branch `2.9`), `dev` allineato al tag. Si lavora su
-  `3.0-SNAPSHOT`, dedicata al telefono. Al primo deploy da `3.0-SNAPSHOT` (passo 5 del rilascio in
-  `docs/SVILUPPO.md`): togliere `"2.9"` dai trigger di `deploy-pages.yml` e cancellare su GitHub i
-  branch `2.9` e `2.9-SNAPSHOT`.
+- Online `3.0-SNAPSHOT` (stile Material, menu a colonna, tema scuro, telefono), `dev` allineato a
+  lui; niente tag 3.0 (tolto: si resta su `3.0-SNAPSHOT`). La 2.9 è nel tag `2.9`. Su GitHub
+  restano i branch `2.9` e `2.9-SNAPSHOT`, già dentro il tag: cancellarli lo fa l'utente
+  (`git push origin --delete refs/heads/2.9 refs/heads/2.9-SNAPSHOT`, a Claude il comando è
+  bloccato dai permessi).
 - Produzione: lo schema intero ci mette qualche minuto e tiene fermo il sito; di giorno solo le
   istruzioni nuove con `lock_timeout` (`docs/SVILUPPO.md`).
 - Backup: dump cifrato e `dati-AAAA-MM-GG.7z` per Excel, su GitHub, sul PC del club (timer
@@ -18,20 +19,13 @@
 
 ## Richieste nuove
 
-- [ ] **Codice in inglese, dopo il rilascio della 3.0** (27/10, l'utente: «voglio tutto in inglese,
+- [ ] **Codice in inglese** (prossimo lavoro, su `3.0-SNAPSHOT`) (27/10, l'utente: «voglio tutto in inglese,
       dove non causa problemi con il db»; scelto: nomi e commenti, dopo la grafica). Funzioni,
       variabili, classi CSS, id, nomi dei file di prova e commenti in inglese; le scritte per gli
       utenti restano in italiano; i nomi del database sono già inglesi. Un passo a sé, con tutte le
       prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
       commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
       resta in italiano.
-- [ ] **3.0: rilascio** (approvato dall'utente: «quando hai tutti i test verdi fai tutto, push,
-      build, deploy»). Fatti e committati su `3.0-SNAPSHOT`: menu (barra in alto blu con chi è
-      entrato, colonna a sinistra, gruppi Gestione e Social, pannello «Menu» sul telefono), stile
-      Material, tema scuro, telefono (Soci, Riepilogo, Utenti, Ruoli, Social, Impostazioni). Manca:
-      tutte le prove verdi, `/ecc:code-review` con le correzioni, poi il rilascio 3.0 con la
-      procedura di `docs/SVILUPPO.md` (passi 1-4; il passo 5 della 2.9 insieme: togliere i branch
-      `2.9` e `2.9-SNAPSHOT`).
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
