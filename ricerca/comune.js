@@ -18,6 +18,15 @@ function pezzi(testoCercato) {
 }
 
 /**
+ * I numeri tessera scritti nella ricerca, senza gli zeri davanti: "0021" è la
+ * tessera 21, come la salva Soci (numeroTessera() in web/index.html). Si
+ * cercano uguali, non "che iniziano per": la tessera 12, non la 120.
+ */
+function numeriTessera(testoCercato) {
+  return (String(testoCercato || "").match(/\d{1,15}/g) || []).map((n) => String(BigInt(n))).slice(0, 4);
+}
+
+/**
  * Il filtro per un pezzo di ricerca: la corrispondenza è all'inizio della
  * parola, si scrive "cos" e si trova Cossetta, che è il modo in cui il
  * direttivo ha sempre cercato. Anche all'inizio del cognome o del nome nella

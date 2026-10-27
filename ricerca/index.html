@@ -6,7 +6,7 @@
   <title>Ricerca Socio — Sci Club Don Bosco</title>
   <link rel="icon" type="image/svg+xml" href="logo-ufficiale-trasparente-lettere-blu.svg">
   <link rel="stylesheet" href="../brand.css?v=20261027barra">
-  <link rel="stylesheet" href="stile.css?v=20261016d">
+  <link rel="stylesheet" href="stile.css?v=20261027tessera">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
 <body>
@@ -41,14 +41,19 @@
   <header class="testata">
     <h1>Ricerca Socio</h1>
   </header>
-  <p class="occhiello">Ricerca di un socio e consultazione di tessera, abbonamenti e recapito telefonico.</p>
+  <p class="occhiello">Ricerca di un socio per nome o numero tessera e consultazione di tessera, abbonamenti e recapito telefonico.</p>
+
+  <!-- In stagione si riparte da qui: lo stesso numero che propone Soci. Solo a chi fa le
+       tessere (mostraProssimaTessera()). -->
+  <p class="prossima-tessera" id="prossimaTessera" hidden></p>
 
   <div class="cerca">
-    <label for="q">Ricerca per cognome o nome</label>
+    <label for="q">Ricerca per cognome, nome o numero tessera</label>
     <input id="q" type="search" autocomplete="off" autocapitalize="off" spellcheck="false"
-           placeholder="Cognome o nome">
+           placeholder="Cognome, nome o numero tessera">
     <p class="suggerimento" id="suggerimento">
-      È sufficiente inserire le prime lettere. Più termini restringono i risultati.
+      È sufficiente inserire le prime lettere del cognome o del nome, oppure il numero tessera.
+      Più termini restringono i risultati.
     </p>
   </div>
 
@@ -61,7 +66,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261022testi"></script>
+<script src="comune.js?v=20261027tessera"></script>
 <script>
 (() => {
   "use strict";
@@ -87,13 +92,17 @@
   // -------------------------------------------------------------------------
 
   async function cerca(testoCercato) {
-    const parti = pezzi(testoCercato);
-    if (!parti.length) return null;
+    const parti = pezzi(testoCercato), numeri = numeriTessera(testoCercato);
+    if (!parti.length && !numeri.length) return null;
 
     let query = sb.from("members").select(CAMPI);
-    // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome.
+    // Filtri concatenati = AND: ogni pezzo deve trovare posto in cognome o nome,
+    // ogni numero è il numero tessera ("rossi 33" è Rossi con la tessera 33).
     for (const p of parti) {
       query = query.or(filtroPezzo(p));
+    }
+    for (const n of numeri) {
+      query = query.eq("card_number", n);
     }
     const { data, error } = await query
       .order("last_name").order("first_name")
@@ -129,6 +138,21 @@
       </div>`;
   }
 
+  /**
+   * In cima, il prossimo numero tessera (next_card_number(), lo stesso che
+   * propone Soci). Solo a chi ha Soci: gli altri non leggono le impostazioni
+   * (card_gaps_from), e a inizio stagione vedrebbero 1 invece del primo numero
+   * dopo i posti del direttivo.
+   */
+  async function mostraProssimaTessera() {
+    const accesso = await getAccesso();
+    if (!accesso || !accesso.permissions.includes("soci")) return;
+    const { data, error } = await sb.rpc("next_card_number");
+    if (error || data == null) return;
+    el("prossimaTessera").innerHTML = `Prossimo numero tessera: <strong>${esc(data)}</strong>`;
+    el("prossimaTessera").hidden = false;
+  }
+
   function svuota() {
     lista().innerHTML = "";
     conteggio().hidden = true;
@@ -159,12 +183,13 @@
       return;
     }
 
+    mostraProssimaTessera().catch(() => {});   // è un aiuto: senza, la ricerca funziona lo stesso
     el("q").focus();
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
       clearTimeout(attesa);
       // Il campo svuotato conta come una ricerca nuova: quella ancora in viaggio non ridisegna.
-      if (pezzi(testoCercato).length === 0) { ultima++; svuota(); return; }
+      if (!pezzi(testoCercato).length && !numeriTessera(testoCercato).length) { ultima++; svuota(); return; }
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;
