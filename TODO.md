@@ -31,7 +31,11 @@
       1. impianto: sul computer una barra in alto larga quanto lo schermo (logo, nome del club, a
          destra il tema chiaro/scuro, A+, il nome di chi è entrato e Esci) e il menu a colonna a
          sinistra, blu del club, una voce per riga con l'icona; sul telefono la barra in alto ha
-         «☰ Menu» e il nome della pagina, il menu si apre come pannello;
+         «☰ Menu» e il nome della pagina, il menu si apre come pannello. Gestione e Social sono
+         gruppi che si aprono e chiudono (freccia, come nell'immagine del 27/10): Gestione in
+         Amministrazione, Utenti, Impostazioni, Ruoli e permessi; Social in Post (col numero da
+         fare), Grafiche, Impostazioni. Al loro posto spariscono le schede in cima alle pagine
+         (`.schede-gestione`, `.schede-social`);
       2. pulsanti, gruppi di scelte (Da fare / Pubblicati, giorni delle gite, schede di Gestione e
          Social), schede ed etichette con le regole di Material in `brand.css` e
          `ricerca/stile.css`, al posto di pillole, rettangoli da 8 px e riquadri da 18 px;
