@@ -23,6 +23,13 @@
       dopo che hanno dato un acconto bisogna emettere una ricevuta che abbia il numero
       tessera»). Nella riga del socio, accanto al nome e ben visibile (anche sul telefono);
       senza numero, la riga lo dice. Con TDD, dopo il commit dei nomi in inglese.
+      Dove riprendere (27/10): 1) le prove sulla copia del database dopo la rinomina erano in
+      corso; se verdi, commit di tutti i file di `web/`, `ricerca/`, `test-browser/`,
+      `test-reale/` toccati dalla rinomina (non `test-browser/pagamenti-tessera.js`); 2) commit
+      RED di `test-browser/pagamenti-tessera.js` (già scritto, già in `esegui.sh` a 1280 e 500
+      px; deve dare «conNumero=NO senzaNumero=NO»); 3) GREEN: in `memberRow()` di
+      `web/admin.html` uno `<span class="numero-tessera">` accanto al nome, «Tessera n° 33» o
+      «Senza numero tessera»; prove, push, deploy, `dev`.
 - [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
       con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
       funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli
