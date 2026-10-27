@@ -35,12 +35,13 @@
     .tabella-costi .checkbox { margin-top: 6px; }
     /* Quando la tabella non ci sta (telefono, o un portatile stretto ora che c'è il
      * menu a sinistra) ogni voce è una scheda: niente tabella da scorrere di lato.
-     * Si decide sullo spazio della tabella, non sulla larghezza dello schermo.
+     * Si decide sullo spazio della tabella, non sulla larghezza dello schermo, con
+     * margine per i caratteri più larghi di altri computer (DejaVu sui server di GitHub).
      * Dalla 3.0 i campi corti stanno su tre colonne (prima uno sotto l'altro, e la
      * pagina sul telefono era lunga 12.000 px): il nome, l'assicurazione e i
      * pulsanti più larghi. */
     .tabella-scorrevole:has(> .tabella-costi) { container-type: inline-size; }
-    @container (max-width: 920px) {
+    @container (max-width: 1000px) {
       .tabella-costi thead { display: none; }
       .tabella-costi, .tabella-costi tbody { display: block; width: 100%; }
       .tabella-costi tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense;
