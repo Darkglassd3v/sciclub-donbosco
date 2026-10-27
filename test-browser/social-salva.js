@@ -57,5 +57,10 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await doOpen(post({ title: "Altra", event_date: "2026-12-20" }));
   await wait(200);
   test("sponsorSvuotato", !el("fSponsor").value, `fSponsor «${el("fSponsor").value}»`);
+
+  // The PNG export library comes from the CDN: with integrity the browser refuses a changed file.
+  step = "png"; loadHtmlToImage().catch(() => {});
+  const pngScript = document.querySelector('script[src*="html-to-image"]');
+  test("pngIntegrity", !!pngScript?.integrity, pngScript ? "no integrity" : "script not found");
   document.title = "RISULTATO " + r.join(" ");
 } catch (e) { document.title = `RISULTATO eccezione=NO(${step}: ${String(e?.message || e).slice(0, 120)} ${String(e?.stack || "").split("\n")[1]?.trim().slice(0, 80)})`; } }, 400));

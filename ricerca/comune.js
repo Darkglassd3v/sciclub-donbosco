@@ -250,7 +250,9 @@ function drawBar(access) {
   html.dataset.ruolo = access.role;
   html.dataset.permessi = access.permissions.join(" ");
   try {
-    localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: access.role, permissions: access.permissions }));
+    // Same shape as rememberAccess() in web/shared.js: those pages show email and role from here.
+    localStorage.setItem("sciclub-ruolo", JSON.stringify({ role: access.role, permissions: access.permissions,
+      email: access.email || "", roleName: ROLE_NAMES[access.role] || access.role }));
   } catch (err) { /* storage negato: la barra si aggiorna lo stesso qui sotto */ }
   document.querySelectorAll(".barra-voci [data-permesso]").forEach((item) => {
     item.hidden = !access.permissions.includes(item.dataset.permesso);

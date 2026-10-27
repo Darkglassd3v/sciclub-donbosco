@@ -45,7 +45,11 @@ create or replace function auth.uid() returns uuid language sql stable as $$
 $$;
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated; end if;
+  -- anon too, as on Supabase: the API without login.
+  if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon; end if;
 end $$;
+-- As on Supabase: every new function in public is executable by anon.
+alter default privileges in schema public grant execute on functions to anon;
 grant usage on schema auth, public to authenticated;
 SQL
 
@@ -87,6 +91,27 @@ do $$ begin
          'un account di prima deve cambiare la password';
 end $$;
 delete from auth.users where email like 'vecchio-%' or email = 'esistente@test';
+SQL
+
+# No function in public is for callers without login, and every security definer
+# function pins search_path (an object named like a public one cannot be slipped in).
+psql_ <<'SQL'
+do $$
+declare
+  open_to_anon text;
+  loose_path   text;
+begin
+  select string_agg(p.oid::regprocedure::text, ', ' order by 1) into open_to_anon
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute');
+  select string_agg(p.oid::regprocedure::text, ', ' order by 1) into loose_path
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.prosecdef
+     and not coalesce(p.proconfig, '{}') @> array['search_path=""'];
+  assert open_to_anon is null and loose_path is null,
+         format('callable without login: %s | security definer without search_path '''': %s',
+                coalesce(open_to_anon, '-'), coalesce(loose_path, '-'));
+end $$;
 SQL
 
 psql_ <<'SQL'
@@ -941,6 +966,16 @@ begin
     exception when others then
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
+    -- Anche con lista vuota il permesso si controlla per primo, non la validazione array.
+    begin
+      perform public.insurance_send_all(array[]::text[], array[]::int[], array[]::uuid[]);
+      raise exception 'ASSERZIONE: insurance_send_all con lista vuota senza permesso non ha dato errore';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+      if sqlerrm not like '%permesso%' then
+        raise exception 'ASSERZIONE: insurance_send_all senza permesso ha dato errore di validazione, non di permesso: %', sqlerrm;
+      end if;
+    end;
     assert (select count(*) from public.insurance_search('bianchi')) = 0, 'senza permesso polizze cerca i tesserati';
     assert (select count(*) from public.insurance_sent_lists()) = 0, 'senza permesso polizze vede le liste';
     begin
@@ -1054,6 +1089,44 @@ do $$ begin
             from public.insurance_sent_lists() where (kind, number) in (('BASE', 10), ('SPORT', 1)))
          = 'BASE10@2026-12-01,SPORT1@2026-12-01', 'liste insieme sbagliate';
 end $$;
+
+-- members: RLS picks rows, not columns. Admin ('soci' without 'polizze' and 'gestione')
+-- cannot put a member in a list already sent to the insurer, cannot take a member out
+-- of the season (remove_from_season is superadmin only), and its amount changes on a
+-- member not enrolled still reach member_amount_changes.
+reset role;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code) values
+  ('aaaaaaaa-0000-0000-0000-0000000ad001', 'VERDI', 'ENROLLED', now(), 'PROVA TESSERA ORDINARIA', 'VRDNRL80A01F205X'),
+  ('aaaaaaaa-0000-0000-0000-0000000ad002', 'VERDI', 'NOTENROLLED', null, null, null);
+set role authenticated;
+do $$
+declare
+  sent_list uuid;
+begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  sent_list := (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000010');
+  assert sent_list is not null, 'setup: member 10 should be in the BASE list 10';
+  begin
+    update public.members set insurance_list_id = sent_list where id = 'aaaaaaaa-0000-0000-0000-0000000ad001';
+    raise exception 'ASSERZIONE: admin without polizze put a member in a list already sent';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  begin
+    update public.members set enrolled_at = null, total = 0, paid = 0 where id = 'aaaaaaaa-0000-0000-0000-0000000ad001';
+    raise exception 'ASSERZIONE: admin took a member out of the season without remove_from_season';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  update public.members set total = 50, paid = 50 where id = 'aaaaaaaa-0000-0000-0000-0000000ad002';
+end $$;
+reset role;
+do $$ begin
+  assert exists (select 1 from public.member_amount_changes
+                  where member_id = 'aaaaaaaa-0000-0000-0000-0000000ad002' and new_paid = 50),
+         'amount change on a member not enrolled is missing from member_amount_changes';
+end $$;
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000ad001', 'aaaaaaaa-0000-0000-0000-0000000ad002');
 
 -- La presciistica comprende tessera, quota e assicurazione: la sua voce del
 -- listino dice quale (prices.insurance), e vale al posto di quella della

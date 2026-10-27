@@ -19,6 +19,35 @@
 
 ## Richieste nuove
 
+- [ ] **Menu che lampeggia: provare sul sito** (27/10, online `2a27fc6`). Corretto: una graffa
+      in più in `brand.css` scartava la regola che mostra subito le voci; il menu ora ha la sua
+      transizione fra pagine e resta fermo; email, ruolo, nomi scelti in Gestione > Ruoli
+      («Fogli pullman») e nome della pagina ci sono prima del primo disegno; logo della barra con
+      larghezza fissa (in Firefox saltava). Prova: Ctrl+Shift+R, poi cambiare voce più volte.
+      Chrome/Edge/Safari: menu fermo, sfuma solo il contenuto. Firefox 158 la transizione non ce
+      l'ha: la pagina cambia come prima, ma barra e menu restano uguali. Se lampeggia ancora si
+      passa al piano B: `app.html` con barra e menu disegnati una volta e le pagine dentro un
+      iframe (da gestire: indirizzo e tasto Indietro, link fra pagine, login/uscita fuori dal
+      riquadro, tema e A+, fasce fisse, menu del telefono).
+- [ ] **Pubblicare la funzione Edge `crea-utente`** (tocca all'utente: su questo PC non c'è la CLI
+      `supabase`): `supabase functions deploy crea-utente`, oppure dalla dashboard (Edge
+      Functions > crea-utente, incollare `supabase/functions/crea-utente/index.ts`). Novità: il
+      permesso si legge con `my_access()` e il token di chi chiama, quindi un superadmin con la
+      password iniziale ancora da cambiare o in «vedi come» non crea account. Finché non è
+      pubblicata, online gira la vecchia: funziona come prima.
+- [ ] **Da decidere: «soci» senza «pagamenti»**. Oggi chi ha il permesso soci scrive anche il
+      versato (campo Acconto del form Soci, colonna `paid`); lo storico lo registra, senza motivo.
+      Con i ruoli di partenza non cambia niente (admin li ha tutti e due). Un ruolo con soci ma
+      senza pagamenti deve poter scrivere il versato? Se no: trigger che rifiuta il cambio di
+      `paid` senza `pagamenti` e campo Acconto spento nel form.
+- [ ] **Da decidere: utente `monitor`** (audit 27/10). In produzione c'è ancora, con `bypassrls`
+      e `pg_read_all_data`: legge tutto, anche `auth.users` con gli hash delle password. Lo usa
+      `supabase/scripts/controlli.sh`; il suo script (`crea_monitor.sql`) dice «togliere a fine
+      campagna». Toglierlo, o limitarlo alla lettura delle tabelle di `public`.
+- [ ] **Da controllare nella dashboard Supabase**: registrazione libera spenta (Authentication >
+      «Allow new users to sign up», vedi `docs/ACCOUNT.md`). Dal repository non si vede. Se fosse
+      accesa, chi si registra non vede niente (nessun ruolo), ma l'account resta.
+
 - [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
       con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
       funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli

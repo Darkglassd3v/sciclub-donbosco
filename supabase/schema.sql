@@ -1572,6 +1572,9 @@ declare
   totale int := 0;
   i int;
 begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di mandare le liste dell''assicurazione.';
+  end if;
   if coalesce(array_length(insurance_send_all.kinds, 1), 0) = 0
      or array_length(insurance_send_all.kinds, 1) <> coalesce(array_length(insurance_send_all.list_numbers, 1), 0) then
     raise exception 'Nessuna lista da mandare.';
@@ -1733,6 +1736,37 @@ drop trigger if exists check_card_type_role on public.members;
 create trigger check_card_type_role
   before insert or update on public.members
   for each row execute function public.check_card_type_role();
+
+-- members_update asks only for 'soci', and RLS picks rows, not columns. Two columns
+-- belong to other permissions: insurance_list_id to 'polizze' (insurance_send/undo),
+-- and taking a member out of the season (enrolled_at back to null, amounts not logged)
+-- to 'gestione' (close_season, remove_from_season). Without a logged-in user (SQL
+-- Editor, service_role) nothing is checked, as everywhere else.
+create or replace function public.check_member_guarded_columns()
+returns trigger
+language plpgsql
+as $$
+begin
+  if auth.uid() is null then
+    return new;
+  end if;
+  if ((tg_op = 'INSERT' and new.insurance_list_id is not null)
+      or (tg_op = 'UPDATE' and new.insurance_list_id is distinct from old.insurance_list_id))
+     and not public.can('polizze') then
+    raise exception 'Solo chi gestisce le polizze può cambiare la lista dell''assicurazione di un socio.';
+  end if;
+  if tg_op = 'UPDATE' and old.enrolled_at is not null and new.enrolled_at is null
+     and not public.can('gestione') then
+    raise exception 'Solo il superadmin può togliere un socio dalla stagione.';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists check_member_guarded_columns on public.members;
+create trigger check_member_guarded_columns
+  before insert or update on public.members
+  for each row execute function public.check_member_guarded_columns();
 
 -- Fino alla 2.5 il numero di polizza lo scriveva solo l'assicurazione
 -- (trigger check_policy_number). Il numero non c'è più: chi è assicurato
@@ -2047,7 +2081,7 @@ returns numeric
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select h.bank_closing from public.season_history h
    where public.can('bilancio') and h.season < before order by h.season desc limit 1;
@@ -2580,7 +2614,9 @@ as $$
 begin
   -- La chiusura della stagione e "Togli dalla stagione" azzerano gli importi
   -- di tutti: non sono modifiche di un socio, e riempirebbero lo storico.
-  if new.enrolled_at is null then
+  -- Only those (superadmin, or SQL Editor without a user): anyone else changing the
+  -- amounts of a member not enrolled is logged too.
+  if new.enrolled_at is null and (auth.uid() is null or public.can('gestione')) then
     return new;
   end if;
   if new.total is distinct from old.total or new.paid is distinct from old.paid then
@@ -3700,6 +3736,24 @@ $$;
 
 revoke execute on function public.restore_member(uuid) from public;
 comment on function public.restore_member is 'Rimette un socio eliminato con delete_member(), con abbonamenti e storico. Solo dall''SQL Editor.';
+
+-- No function in public is for callers without login. Postgres gives execute on new
+-- functions to public and Supabase also to anon, and the per-function revokes above
+-- missed some: this block covers every function, also those added later, as long as
+-- it stays near the end. Only restore_member (right below) is closed to authenticated.
+revoke execute on all functions in schema public from public;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke execute on all functions in schema public from anon;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    grant execute on all functions in schema public to authenticated;
+  end if;
+  -- service_role (Edge Functions, dashboard) may have relied on public too.
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on all functions in schema public to service_role;
+  end if;
+end $$;
 
 -- anon e authenticated ci sono su Supabase, non nel Postgres dei test.
 do $$
