@@ -3749,6 +3749,10 @@ do $$ begin
   if exists (select 1 from pg_roles where rolname = 'authenticated') then
     grant execute on all functions in schema public to authenticated;
   end if;
+  -- service_role (Edge Functions, dashboard) may have relied on public too.
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant execute on all functions in schema public to service_role;
+  end if;
 end $$;
 
 -- anon e authenticated ci sono su Supabase, non nel Postgres dei test.

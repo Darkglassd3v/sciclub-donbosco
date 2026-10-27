@@ -75,8 +75,11 @@ Deno.serve(async (richiesta) => {
         global: { headers: { Authorization: `Bearer ${gettone}` } },
       },
     );
-    const { data: access } = await callerClient.rpc("my_access")
+    const { data: access, error: accessError } = await callerClient.rpc("my_access")
       .maybeSingle<{ permissions: string[] | null; change_password: boolean }>();
+    if (accessError) {
+      return risposta({ errore: `Permessi non leggibili: ${accessError.message}` }, 500);
+    }
     if (!access?.permissions?.includes("gestione") || access.change_password) {
       return risposta({ errore: "Solo un superadmin può creare account." }, 403);
     }
