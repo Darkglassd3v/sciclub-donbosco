@@ -1,8 +1,8 @@
 // PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html ricerca/index.html ricerca/gite.html
 // Lo stile della 3.0 (27/10/2026, l'immagine di riferimento dell'utente: Material), uguale in
 // tutte le pagine, sul computer:
-// - menu: una colonna a sinistra, alta quanto lo schermo, larga 220-280 px, con le voci una sotto
-//   l'altra (mai due voci sulla stessa riga);
+// - menu: una colonna a sinistra, fino in fondo allo schermo, larga 220-280 px, con le voci una
+//   sotto l'altra (mai due voci sulla stessa riga);
 // - pulsanti: rettangoli con gli angoli di 4 px, alti almeno 40 px, scritta in maiuscolo (le
 //   pillole tonde e i rettangoli da 8 px di prima convivevano nella stessa pagina);
 // - schede: angoli di al massimo 8 px e un'ombra (elevazione), come le card dell'immagine.
@@ -18,12 +18,13 @@
     const visibile = (x) => x.getClientRects().length && getComputedStyle(x).visibility !== "hidden" && !x.closest(".is-sr-only, .fuori");
     const H = innerHeight;
 
-    const barra = document.querySelector(".barra"), voci = [...document.querySelectorAll(".barra-voci > *")].filter(visibile);
-    const b = barra ? barra.getBoundingClientRect() : null;
+    const menu = document.querySelector(".barra-voci");
+    const voci = menu ? [...menu.querySelectorAll(":scope > a, :scope > details > summary")].filter(visibile) : [];
+    const b = menu ? menu.getBoundingClientRect() : null;
     const righe = new Set(voci.map((x) => Math.round(x.getBoundingClientRect().top)));
-    prova("menu", !b ? ["senza barra"] : [
-      ...(b.left > 1 || b.height < H - 2 ? [`barra a ${Math.round(b.left)},${Math.round(b.top)} alta ${Math.round(b.height)} su ${H}`] : []),
-      ...(b.width < 220 || b.width > 280 ? [`larga ${Math.round(b.width)}`] : []),
+    prova("menu", !b ? ["senza menu"] : [
+      ...(b.left > 1 || b.bottom < H - 2 ? [`menu a ${Math.round(b.left)},${Math.round(b.top)} fino a ${Math.round(b.bottom)} su ${H}`] : []),
+      ...(b.width < 220 || b.width > 280 ? [`largo ${Math.round(b.width)}`] : []),
       ...(righe.size < voci.length ? [`${voci.length} voci su ${righe.size} righe`] : []),
     ]);
 
