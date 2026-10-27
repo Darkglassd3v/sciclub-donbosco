@@ -32,6 +32,9 @@
     .a-carico { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
                 background: var(--blu-light); color: var(--blu-dark); font-size: .9375rem; font-weight: 600; }
     .dettagli-socio { display: flex; flex-direction: column; margin-top: 4px; color: var(--testo-soft); font-size: .9375rem; }
+    /* Il numero tessera va sulla ricevuta di chi torna a pagare dopo l'acconto. */
+    .numero-tessera { margin-top: 2px; font-weight: 600; }
+    .numero-tessera.senza { font-weight: 400; color: var(--testo-soft); }
 
     /* La riga del pagamento sta in fondo alla famiglia, larga e da sola: è
      * l'unica cosa che si può fare in questa pagina. */
@@ -318,6 +321,9 @@
         <td>
           <b>${esc(member.last_name)} ${esc(member.first_name)}</b>${isFamilyMember ? '<span class="a-carico">a carico</span>' : ""}${
             member.total_manual ? '<span class="a-mano">totale a mano</span>' : ""}
+          ${member.card_number
+            ? `<div class="numero-tessera">Tessera n° ${esc(member.card_number)}</div>`
+            : '<div class="numero-tessera senza">Senza numero tessera</div>'}
           <div class="dettagli-socio">${details.map((d) => `<span>${esc(d)}</span>`).join("")}</div>
           <div class="azioni-socio">
             <button type="button" class="button is-light" data-modifica="${member.id}">Modifica importi</button>
