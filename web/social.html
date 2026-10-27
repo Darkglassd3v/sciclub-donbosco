@@ -59,6 +59,17 @@
     .testa-post .occhiello-post { color: var(--testo-soft); font-weight: 600; font-size: .9375rem; }
     .testa-post h2 { margin: 0; font-size: 1.75rem; }
     .testa-post .manca-cosa { color: var(--giallo-dark); font-weight: 600; font-size: .9375rem; }
+    /* Sul telefono (3.0) la testa resta bassa: titolo su una riga sola (intero nel
+     * campo qui sotto), stato e Salva sulla riga dopo. Prima titolo grande su tre
+     * righe, «Pronto» e Salva accanto: 240 px su 844, e si accavallavano. */
+    @media screen and (max-width: 768px) {
+      .testa-post { flex-wrap: wrap; gap: 6px 12px; margin: -20px -20px 16px; padding: 10px 20px; }
+      .testa-post .titoli { flex: 1 1 100%; }
+      .testa-post .occhiello-post { font-size: .875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .testa-post h2 { font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .testa-post #statoPost { flex: 1; min-width: 0; }
+      .testa-post #btnSalva { min-height: 44px; }
+    }
     .griglia-post { display: grid; grid-template-columns: minmax(0, 1fr) 22rem; gap: 24px; align-items: start; }
     .parte { margin-bottom: 26px; }
     .parte h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 10px; }

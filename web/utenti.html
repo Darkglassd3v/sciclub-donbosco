@@ -19,7 +19,10 @@
     /* Sul telefono (schede, brand.css): l'email su una riga sua, intera; il ruolo a destra della sua etichetta. */
     @media (max-width: 600px) {
       .tabella-utenti td:first-child { font-weight: 600; overflow-wrap: anywhere; }
-      .tabella-utenti td[data-etichetta] select { width: auto; max-width: 60%; }
+      .tabella-utenti td[data-etichetta] select { width: auto; max-width: 75%; }
+      /* I pulsanti in fila, da sinistra, e a capo solo se non ci stanno. */
+      .tabella-utenti .azioni { display: flex; flex-wrap: wrap; gap: 8px; text-align: left; }
+      .tabella-utenti .azioni button { margin: 0; }
     }
     /* Un'email lunga va a capo dove serve: tenuta su una riga allargava la
        tabella oltre il riquadro e i pulsanti finivano fuori dallo schermo. */
