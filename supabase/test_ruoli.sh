@@ -941,6 +941,16 @@ begin
     exception when others then
       if sqlerrm like 'ASSERZIONE:%' then raise; end if;
     end;
+    -- Anche con lista vuota il permesso si controlla per primo, non la validazione array.
+    begin
+      perform public.insurance_send_all(array[]::text[], array[]::int[], array[]::uuid[]);
+      raise exception 'ASSERZIONE: insurance_send_all con lista vuota senza permesso non ha dato errore';
+    exception when others then
+      if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+      if sqlerrm not like '%permesso%' then
+        raise exception 'ASSERZIONE: insurance_send_all senza permesso ha dato errore di validazione, non di permesso: %', sqlerrm;
+      end if;
+    end;
     assert (select count(*) from public.insurance_search('bianchi')) = 0, 'senza permesso polizze cerca i tesserati';
     assert (select count(*) from public.insurance_sent_lists()) = 0, 'senza permesso polizze vede le liste';
     begin

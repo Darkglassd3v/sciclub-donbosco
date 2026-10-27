@@ -1572,6 +1572,9 @@ declare
   totale int := 0;
   i int;
 begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di mandare le liste dell''assicurazione.';
+  end if;
   if coalesce(array_length(insurance_send_all.kinds, 1), 0) = 0
      or array_length(insurance_send_all.kinds, 1) <> coalesce(array_length(insurance_send_all.list_numbers, 1), 0) then
     raise exception 'Nessuna lista da mandare.';
