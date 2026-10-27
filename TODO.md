@@ -18,14 +18,26 @@
 
 ## Richieste nuove
 
-- [ ] **3.0: il sito sul telefono** (27/10, l'utente: «fai un bel controllo completo sulle feature
-      mobile, un bel /ecc:plan puntando sull'ottimizzazione della grafica mobile»). Da pianificare
-      e far approvare prima di scrivere codice. Segnalati con le foto: la barra in alto sul
-      telefono (menu a hamburger?); in Soci la fascia Totale / Residuo / «Salva il nuovo socio»
-      enorme, che copre mezzo schermo; in Riepilogo le tabelle illeggibili (nomi delle voci a una
-      parola per riga, numeri sopra il testo); in Social la testa del post (tipo, data, titolo,
-      «Pronto», Salva) che si accavalla e l'anteprima che esce dallo schermo. Poi tutte le altre
-      pagine.
+- [ ] **3.0: il sito sul telefono** (27/10, piano approvato dall'utente: menu col pulsante «Menu»,
+      fascia di Soci su una riga sempre in fondo). Controllo a 390 px sulla copia del database:
+      Bilancio, Stagione, Cerca socio, Gite, Fogli pullman e Password a posto. Passi, ognuno con
+      un commit RED e uno GREEN:
+      0. prove a 390 px: `test-reale/chrome.js` simula il telefono sotto i 500 px
+         (`Emulation.setDeviceMetricsOverride`), `FOTO_LARGHEZZE` in `avvia.sh`; una prova per
+         tutte le pagine: niente fuori schermo, fasce fisse al massimo il 15% dell'altezza, parole
+         non spezzate a metà, pulsanti alti almeno 44 px;
+      1. menu: sul telefono logo, nome della pagina e «☰ Menu»; il pannello ha tutte le voci in
+         pulsanti grandi su due colonne, A+ ed Esci in fondo; sul computer la barra resta com'è;
+      2. Soci: fascia Totale / Residuo / Salva su una riga, circa 64 px invece di 200;
+      3. tabelle come schede sul telefono (`table.a-schede`, `brand.css:147`): Riepilogo (oggi la
+         voce va su 6 righe e il numero ci finisce sopra), Utenti (email spezzata una lettera alla
+         volta, pulsanti fuori), Gestione > Ruoli (spunte fuori schermo; una scheda per sezione) e
+         Voci del menu; importi di Pagamenti tagliati a destra;
+      4. Social, scheda del post: titolo su una riga sua e più piccolo, sotto «Pronto» e Salva;
+         anteprima larga quanto lo schermo;
+      5. Impostazioni (pagina lunga 12.000 px) e Assicurazione: campi corti affiancati;
+      6. foto a 390 px prima e dopo, Lighthouse in modalità telefono, tutte le prove,
+         `/ecc:code-review`, rilascio 3.0 (`docs/SVILUPPO.md`).
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
