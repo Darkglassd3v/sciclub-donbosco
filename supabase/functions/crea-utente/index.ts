@@ -16,7 +16,7 @@
 // Da pubblicare una volta sola (vedi docs/ACCOUNT.md):
 //   supabase functions deploy crea-utente
 //
-// SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY le mette Supabase da sé
+// SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY le mette Supabase da sé
 // nell'ambiente della funzione: non vanno impostate né committate.
 //
 // Dalla 2.5 crea solo l'account, senza ruolo (cioè senza accesso): il ruolo
@@ -64,9 +64,20 @@ Deno.serve(async (richiesta) => {
       return risposta({ errore: "Sessione non valida: rifai il login." }, 401);
     }
 
-    const { data: profilo } = await amministratore
-      .from("profiles").select("role").eq("user_id", chiamante.user.id).maybeSingle();
-    if (!profilo || profilo.role !== "superadmin") {
+    // The caller's rights as the database gives them (my_access, read with the
+    // caller's own token like the pages do): 'gestione' is only the superadmin's,
+    // and a pending initial password or "view as" give no rights, as with can().
+    const callerClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      {
+        auth: { persistSession: false, autoRefreshToken: false },
+        global: { headers: { Authorization: `Bearer ${gettone}` } },
+      },
+    );
+    const { data: access } = await callerClient.rpc("my_access")
+      .maybeSingle<{ permissions: string[] | null; change_password: boolean }>();
+    if (!access?.permissions?.includes("gestione") || access.change_password) {
       return risposta({ errore: "Solo un superadmin può creare account." }, 403);
     }
 

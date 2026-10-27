@@ -1413,17 +1413,10 @@
   }
 
   // html-to-image si carica al primo export, come SheetJS per l'Excel.
-  let _pngLoading = null;
   function loadHtmlToImage() {
     if (window.htmlToImage) return Promise.resolve();
-    _pngLoading ??= new Promise((ok, ko) => {
-      const script = document.createElement("script");
-      script.src = "https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js";
-      script.onload = ok;
-      script.onerror = () => { _pngLoading = null; script.remove(); ko(new Error("impossibile scaricare il modulo per le immagini: verificare la connessione.")); };
-      document.head.append(script);
-    });
-    return _pngLoading;
+    return loadScript("https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js", "per le immagini",
+      "sha384-UbfRVKN3/elS1r7JcK2FhmPP+KlJ4CvYwbyYD7tH+uTkbT9bNJr9eJeQ0FoFbAgz");
   }
 
   async function downloadPng(canvas, nome) {
