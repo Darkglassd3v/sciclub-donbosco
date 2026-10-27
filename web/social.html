@@ -25,24 +25,24 @@
     .menu-nuovo { display: grid; gap: 8px; margin-top: 10px; }
     .menu-nuovo .button { justify-content: flex-start; }
     .vista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 14px 0 4px;
-      border: 2px solid var(--filo); border-radius: 999px; }
-    .vista button { min-height: 42px; border: 0; border-radius: 999px; background: none; color: var(--blu);
-      font: inherit; font-weight: 700; cursor: pointer; }
+      border: 2px solid var(--filo); border-radius: var(--pillola); }
+    .vista button { min-height: 44px; border: 0; border-radius: var(--pillola); background: none; color: var(--blu);
+      font: inherit; font-weight: 700; cursor: pointer;  text-transform: uppercase; letter-spacing: .04em; }
     .vista button[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .elenco-post { list-style: none; margin: 0; padding: 0; }
     .elenco-post .mese { margin: 14px 0 4px; font-size: .9375rem; font-weight: 700; color: var(--testo-soft); }
     .elenco-post li button { width: 100%; display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; align-items: center;
-      text-align: left; background: none; border: 0; border-radius: 12px; padding: 8px; cursor: pointer; font: inherit; color: inherit; }
+      text-align: left; background: none; border: 0; border-radius: var(--raggio); padding: 8px; cursor: pointer; font: inherit; color: inherit; }
     .elenco-post li button:hover { background: var(--blu-light); }
     .elenco-post li button[aria-current="true"] { background: var(--blu-light); box-shadow: inset 0 0 0 2px var(--blu); }
     /* Il giorno nel colore della gita, come nei post e nel calendario. */
     .elenco-post .giorno { display: flex; flex-direction: column; align-items: center; justify-content: center;
-      width: 3.4rem; height: 3.4rem; border-radius: 12px; background: var(--riga-alt); line-height: 1.1; font-weight: 800; }
+      width: 3.4rem; height: 3.4rem; border-radius: var(--raggio); background: var(--riga-alt); line-height: 1.1; font-weight: 800; }
     .giorno .sett { font-size: .8rem; font-weight: 700; }
     .giorno .gm { font-size: 1.05rem; letter-spacing: -.02em; }
     .elenco-post .quale { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-weight: 600; }
     .elenco-post .quale small { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-weight: 500; color: var(--testo-soft); }
-    .stato { display: inline-flex; align-items: center; min-height: 1.6rem; padding: 0 .6em; border-radius: 999px;
+    .stato { display: inline-flex; align-items: center; min-height: 1.6rem; padding: 0 .6em; border-radius: var(--pillola);
       font-size: .875rem; font-weight: 700; white-space: nowrap; }
     .stato.pronto { background: var(--blu-light); color: var(--blu-dark); }
     .stato.manca { background: var(--giallo-light); color: var(--giallo-dark); }
@@ -74,9 +74,9 @@
     /* L'avviso delle anteprime lo dà la riga sotto, per tutti i formati. */
     .lato .sborda { display: none; }
     .formati { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; align-self: flex-start;
-      border: 2px solid var(--filo); border-radius: 999px; background: #fff; }
-    .formati button { min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--blu);
-      font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer; }
+      border: 2px solid var(--filo); border-radius: var(--pillola); background: #fff; }
+    .formati button { min-height: 44px; padding: 0 14px; border: 0; border-radius: var(--pillola); background: none; color: var(--blu);
+      font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer;  text-transform: uppercase; letter-spacing: .04em; }
     .formati button[aria-pressed="true"] { background: var(--blu); color: #fff; }
     .scarica { display: grid; gap: 8px; }
     /* Le anteprime non scelte restano disegnate, fuori dallo schermo: fit()
@@ -144,7 +144,7 @@
     .cal-gita .esito.fuori { color: var(--errore); }
     .legenda { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
     .legenda .campione { font-size: .95rem; }
-    .campione { display: inline-block; border-radius: 999px; padding: 3px 14px; font-weight: 700; }
+    .campione { display: inline-block; border-radius: var(--pillola); padding: 3px 14px; font-weight: 700; }
     .riga-giorno { display: grid; grid-template-columns: 12rem 5rem 1fr; gap: 14px; align-items: center; padding: 6px 0; border-top: 1px solid var(--filo); }
     .riga-giorno input[type="color"] { height: 2.5em; padding: 2px; }
     .riga-giorno input[type="color"]:disabled { visibility: hidden; }

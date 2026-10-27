@@ -22,17 +22,22 @@
     const voci = menu ? [...menu.querySelectorAll(":scope > a, :scope > details > summary")].filter(visibile) : [];
     const b = menu ? menu.getBoundingClientRect() : null;
     const righe = new Set(voci.map((x) => Math.round(x.getBoundingClientRect().top)));
-    prova("menu", !b ? ["senza menu"] : [
+    // Le pagine prima dell'entrata (cambio della password) non hanno menu, apposta.
+    if (document.querySelector(".barra")) prova("menu", !b ? ["senza menu"] : [
       ...(b.left > 1 || b.bottom < H - 2 ? [`menu a ${Math.round(b.left)},${Math.round(b.top)} fino a ${Math.round(b.bottom)} su ${H}`] : []),
       ...(b.width < 220 || b.width > 280 ? [`largo ${Math.round(b.width)}`] : []),
       ...(righe.size < voci.length ? [`${voci.length} voci su ${righe.size} righe`] : []),
     ]);
 
+    // Le righe dell'elenco dei post di Social sono voci di un elenco (titolo e data), non pulsanti d'azione.
     const pulsanti = [...document.querySelectorAll("button, .button, a.button, input[type=submit], input[type=button], [role=button]")]
-      .filter((x) => visibile(x) && !x.closest(".barra"));
+      .filter((x) => visibile(x) && !x.closest(".barra, .elenco-post"));
+    // Un pulsante attaccato a un campo (Calcola accanto al codice fiscale) ha gli angoli di 4px solo verso l'esterno.
+    const raggio = (s) => Math.max(...["TopLeft", "TopRight", "BottomLeft", "BottomRight"].map((a) => parseFloat(s[`border${a}Radius`])));
     prova("pulsanti", pulsanti.filter((x) => {
       const s = getComputedStyle(x);
-      return s.borderTopLeftRadius !== "4px" || x.getBoundingClientRect().height < 40 || (x.textContent.trim() && s.textTransform !== "uppercase");
+      const r = x.closest(".has-addons") ? `${raggio(s)}px` : s.borderTopLeftRadius;
+      return r !== "4px" || x.getBoundingClientRect().height < 40 || (x.textContent.trim() && s.textTransform !== "uppercase");
     }).map((x) => { const s = getComputedStyle(x); return `${descr(x)} raggio ${s.borderTopLeftRadius} ${Math.round(x.getBoundingClientRect().height)}px ${s.textTransform}`; }));
 
     const schede = [...document.querySelectorAll(".riquadro, .box, .card")].filter(visibile);

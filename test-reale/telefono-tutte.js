@@ -47,7 +47,7 @@
     prova("tagliati", tagliati.filter((x) => !tagliati.includes(x.parentElement)).map(descr));
 
     const barra = document.querySelector(".barra");
-    const fisse = elementi.filter((x) => getComputedStyle(x).position === "fixed" && x.getBoundingClientRect().height > 0
+    const fisse = elementi.filter((x) => x !== barra && getComputedStyle(x).position === "fixed" && x.getBoundingClientRect().height > 0
       && !fuori.includes(x) && x.getBoundingClientRect().top < innerHeight);
     const alte = (barra ? barra.offsetHeight : 0) + fisse.reduce((t, x) => t + x.getBoundingClientRect().height, 0);
     prova("fasce", alte > 160 ? [`${Math.round(alte)} px (barra ${barra ? barra.offsetHeight : 0}${fisse.map((x) => `, ${descr(x).split(" ")[0]} ${Math.round(x.getBoundingClientRect().height)}`).join("")})`] : []);

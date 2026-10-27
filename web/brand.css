@@ -38,9 +38,11 @@
   --errore:  #B3261E;
   --errore-bg:#FBE9E7;
 
-  --raggio: 12px;
-  --raggio-card: 18px;
-  --pillola: 980px;
+  /* Stile Material (3.0): angoli di 4px per pulsanti, campi ed etichette, 8px
+   * per schede e finestre. --pillola resta il nome storico, ora è un rettangolo. */
+  --raggio: 4px;
+  --raggio-card: 8px;
+  --pillola: 4px;
   --ombra: 0 1px 2px rgba(20, 32, 46, .04), 0 8px 28px rgba(20, 32, 46, .06);
   --tocco: 48px;  /* altezza minima di ogni cosa cliccabile */
   --aria: 44px;   /* distanza fra una sezione e la successiva */
@@ -108,7 +110,7 @@ textarea:focus-visible,
 .campo-password .occhio {
   position: absolute; top: 0; right: 0; width: 3rem; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  padding: 0; border: 0; background: none; border-radius: var(--raggio-card);
+  padding: 0; border: 0; background: none; border-radius: var(--raggio);
   color: var(--testo-soft); cursor: pointer;
 }
 .campo-password .occhio:hover { color: var(--testo); }
@@ -166,13 +168,14 @@ fieldset.campo-errore, [role="radiogroup"].campo-errore {
 .campo-admin { background: var(--giallo-light); }
 
 /* --- Pulsanti -----------------------------------------------------------
- * A pillola, senza maiuscolo e senza ombra. Restano alti 48px: la forma è
- * cambiata, il bersaglio no. */
+ * Material (3.0): rettangoli da 4px con la scritta in maiuscolo, come il menu.
+ * Restano alti 48px (42 i piccoli): la forma è cambiata, il bersaglio no. */
 .button {
   min-height: var(--tocco);
   font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -.01em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
   border-radius: var(--pillola);
   border-width: 1px;
   padding-left: 1.25em;
@@ -180,7 +183,7 @@ fieldset.campo-errore, [role="radiogroup"].campo-errore {
   box-shadow: none;
   transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
-.button.is-small { min-height: 42px; font-size: .9375rem; }
+.button.is-small { min-height: 44px; font-size: .9375rem; }   /* 44: il minimo per il dito */
 /* Bulma dà ai pulsanti piccoli un raggio di 2px con una regola più specifica
  * di .button: senza questa restavano gli unici quadrati della pagina. */
 .button.is-small:not(.is-rounded) { border-radius: var(--pillola); }
@@ -588,14 +591,16 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  * (Tutti) il pulsante è blu notte. */
 .giorno-filtro { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco);
                  padding: 0 18px; border: 0; border-radius: var(--pillola); background: var(--giorno, var(--testo));
-                 color: var(--giorno-su, #fff); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer; }
+                 color: var(--giorno-su, #fff); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+                 text-transform: uppercase; letter-spacing: .04em; }
 .giorno-filtro:hover { filter: brightness(.92); }
 .giorno-filtro[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--superficie), 0 0 0 6px var(--testo); }
 .giorno-filtro[aria-pressed="true"]::before { content: "\2713"; font-weight: 800; }
 
 .giorno-azione { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 8px 26px;
                  border: 0; border-radius: var(--pillola); background: var(--giorno); color: var(--giorno-su);
-                 font: inherit; font-size: 1.1rem; font-weight: 700; line-height: 1.3; text-align: center; cursor: pointer; }
+                 font: inherit; font-size: 1.1rem; font-weight: 700; line-height: 1.3; text-align: center; cursor: pointer;
+                 text-transform: uppercase; letter-spacing: .04em; }
 .giorno-azione:hover { filter: brightness(.92); }
 .giorno-azione:disabled { opacity: .55; cursor: progress; }
 
@@ -678,7 +683,7 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
  * schermo leggono la parola, non le lettere). overflow: clip e non hidden,
  * che spegnerebbe lo sticky della striscia. */
 .sezione { --colore: var(--blu); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
-           border: 2px solid var(--colore); box-shadow: none; }
+           border: 2px solid var(--colore); box-shadow: var(--ombra); }
 .sezione.tessera { --colore: #147A45; --tinta: #EAF5EE; }
 .sezione.gite { --colore: #5B2A86; --tinta: #F3EEF8; }
 .sezione.pagamento { --colore: #B4400B; --tinta: #FCF0E8; }

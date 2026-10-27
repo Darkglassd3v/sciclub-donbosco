@@ -14,7 +14,7 @@
   --bordo: #7B8794;   /* solo per i campi: 3.7:1, il minimo per vederne il contorno è 3:1 */
   --filo: #D5DAE1;    /* divisori e contorni delle schede */
   --ok: #147A45; --ok-bg: #E4F3EA; --errore: #B3261E; --errore-bg: #FBE9E7;
-  --raggio: 12px; --raggio-card: 18px; --pillola: 980px;
+  --raggio: 4px; --raggio-card: 8px; --pillola: 4px;   /* Material (3.0), come web/brand.css */
   --ombra: 0 1px 2px rgba(20,32,46,.04), 0 8px 28px rgba(20,32,46,.06);
   --tocco: 48px;
 }
@@ -45,9 +45,10 @@ button, input, select {
   border-radius: var(--raggio); border: 2px solid var(--bordo);
   color: var(--testo); background: var(--superficie);
 }
-/* I pulsanti sono a pillola e senza contorno spesso: la forma cambia, il
- * bersaglio da 48px no. Il bordo marcato resta ai campi, che devono vedersi. */
-button { cursor: pointer; font-weight: 600; letter-spacing: -.01em;
+/* I pulsanti sono rettangoli Material in maiuscolo (3.0, come web/brand.css)
+ * e senza contorno spesso: il bersaglio da 48px resta. Il bordo marcato resta
+ * ai campi, che devono vedersi. */
+button { cursor: pointer; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
          padding: 0 20px; border-radius: var(--pillola); border-width: 1px; }
 .btn-blu { background: var(--blu); border-color: var(--blu); color: #fff; }
 .btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
