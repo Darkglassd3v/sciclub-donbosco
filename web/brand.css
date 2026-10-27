@@ -782,3 +782,10 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
 @media screen and (max-height: 560px) {
   .sezione > .striscia { position: static; }
 }
+
+/* Stampa dal browser: barra e menu fissi finirebbero su ogni foglio, con la
+ * pagina spostata a destra della colonna. Sul foglio solo il contenuto. */
+@media print {
+  .barra, .barra-voci { display: none !important; }
+  body:has(> .barra-voci) { padding: 0; }
+}
