@@ -1,23 +1,58 @@
-// Barra (brand.css) con tutte le voci. Il superadmin (dieci voci) e l'admin con tutti i
-// permessi tranne Gestione vedono anche «Cerca socio». A 1280 px ogni voce, «A+» ed «Esci»
-// compresi, sta dentro la barra, anche coi nomi scelti in Ruoli che ha la produzione
-// («Fogli pullman» al posto di «Stampe»). Più stretto (schermo piccolo, zoom al 125%) la
-// barra scorre di lato, e allora la barra di scorrimento si vede: nascosta, chi usa il mouse
-// non saprebbe che «Esci» c'è.
+// Barra (brand.css) con tutte le voci: il superadmin (dieci voci) e l'admin con tutti i permessi
+// tranne Gestione, coi nomi scelti in Ruoli della produzione («Fogli pullman» al posto di
+// «Stampe»). Richiesta del 27/10: barra più alta, larga quanto lo schermo se serve, voci che
+// partono dal centro e vanno a capo invece di essere tagliate, pulsanti chiari e facili da
+// premere, in stile Material (angoli poco arrotondati).
+// Sul computer (oltre 768 px):
+// - nessuna voce tagliata o fuori schermo, «Cerca socio» compresa, e niente scorrimento di lato:
+//   con qualunque carattere (sui server di GitHub è più largo) le voci vanno su due righe;
+// - ogni riga di voci è centrata; con una riga sola che ci sta, al centro dello schermo;
+// - pulsanti alti almeno 48 px, con gli angoli arrotondati al massimo di 12 px;
+// - --barra-h è l'altezza vera della barra: le strisce delle sezioni (sticky) si attaccano sotto.
+// Sul telefono (fino a 768 px): una riga sola, che scorre di lato con la barra di scorrimento.
 {
   FINTO.risposta = (t) => (t === "nav_labels" ? [{ key: "stampe", label: "Fogli pullman" }] : []);
-  window.addEventListener("load", () => setTimeout(() => {
+  const aspetta = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
-    const html = document.documentElement, nav = document.querySelector(".barra-voci");
-    const largo = innerWidth >= 1260;
-    const prova = (nome) => {
-      const n = nav.getBoundingClientRect();
+    const html = document.documentElement, barra = document.querySelector(".barra"), nav = document.querySelector(".barra-voci");
+    const telefono = innerWidth <= 768;
+    const esito = (nome, sbagliati) => r.push(`${nome}=${sbagliati.length ? `NO(${sbagliati.join(", ")})` : "ok"}`);
+    const prova = (ruolo) => {
       const visibili = [...nav.children].filter((x) => x.getClientRects().length);
-      const fuori = visibili.filter((x) => { const b = x.getBoundingClientRect(); return b.right > n.right + 1 || b.left < n.left - 1; })
-        .map((x) => x.textContent.trim() || "A+");
-      r.push(`${nome}Cerca=${visibili.some((x) => x.classList.contains("voce-cerca")) ? "ok" : "NO(nascosta)"}`);
-      if (largo) r.push(`${nome}Dentro=${fuori.length ? `NO(fuori ${fuori.join(", ")})` : "ok"}`);
-      else r.push(`${nome}Scorre=${!fuori.length || nav.offsetHeight > nav.clientHeight ? "ok" : `NO(fuori ${fuori.join(", ")} senza barra di scorrimento)`}`);
+      const nomeDi = (x) => x.textContent.trim() || "A+";
+      const n = nav.getBoundingClientRect();
+      r.push(`${ruolo}Cerca=${visibili.some((x) => x.classList.contains("voce-cerca")) ? "ok" : "NO(nascosta)"}`);
+      const tagliate = visibili.filter((x) => {
+        const b = x.getBoundingClientRect();
+        return b.right > Math.min(n.right, html.clientWidth) + 1 || b.left < Math.max(n.left, 0) - 1;
+      }).map(nomeDi);
+      // Le righe: voci con lo stesso bordo in alto.
+      const righe = [];
+      for (const x of visibili) {
+        const b = x.getBoundingClientRect();
+        const riga = righe.find((g) => Math.abs(g.top - b.top) < 4);
+        if (riga) { riga.left = Math.min(riga.left, b.left); riga.right = Math.max(riga.right, b.right); }
+        else righe.push({ top: b.top, left: b.left, right: b.right });
+      }
+      if (telefono) {
+        esito(`${ruolo}UnaRiga`, righe.length === 1 ? [] : [`${righe.length} righe`]);
+        esito(`${ruolo}Scorre`, !tagliate.length || nav.offsetHeight > nav.clientHeight ? [] : [`fuori ${tagliate.join(" ")} senza barra di scorrimento`]);
+        return;
+      }
+      esito(`${ruolo}Tutte`, [...tagliate.map((t) => `${t} tagliata`), ...(nav.scrollWidth > nav.clientWidth + 1 ? ["scorre di lato"] : [])]);
+      const centroNav = (n.left + n.right) / 2;
+      const logo = document.querySelector(".barra-marchio").getBoundingClientRect().right;
+      esito(`${ruolo}Centrate`, righe.flatMap((g, i) => {
+        const centro = (g.left + g.right) / 2;
+        if (Math.abs(centro - centroNav) > 2) return [`riga ${i + 1} a ${Math.round(centro)}, barra a ${Math.round(centroNav)}`];
+        if (righe.length === 1 && g.left > logo && Math.abs(centro - html.clientWidth / 2) > 2) return [`riga a ${Math.round(centro)}, schermo a ${Math.round(html.clientWidth / 2)}`];
+        return [];
+      }));
+      esito(`${ruolo}Pulsanti`, visibili.filter((x) => x.offsetHeight < 48 || parseFloat(getComputedStyle(x).borderTopLeftRadius) > 12)
+        .map((x) => `${nomeDi(x)} ${x.offsetHeight}px raggio ${getComputedStyle(x).borderTopLeftRadius}`));
+      const h = parseFloat(getComputedStyle(html).getPropertyValue("--barra-h"));
+      esito(`${ruolo}Altezza`, Math.abs(h - barra.offsetHeight) <= 1 ? [] : [`--barra-h ${h}, barra ${barra.offsetHeight}`]);
     };
     r.push(`nomeRuoli=${[...nav.children].some((x) => x.textContent.trim() === "Fogli pullman") ? "ok" : "NO(nome di Ruoli non scritto)"}`);
     prova("superadmin");
@@ -25,6 +60,7 @@
     html.dataset.ruolo = "admin";
     html.dataset.permessi = html.dataset.permessi.split(" ").filter((p) => p !== "gestione").join(" ");
     document.querySelector('.barra-voci [data-permesso="gestione"]').hidden = true;
+    await aspetta(200);   // il ResizeObserver che scrive --barra-h arriva dopo il ridisegno
     prova("admin");
     document.title = "RISULTATO " + r.join(" ");
   }, 1500));

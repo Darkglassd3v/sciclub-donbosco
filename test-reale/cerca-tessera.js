@@ -18,6 +18,10 @@
     const voci = [...document.querySelectorAll("#risultati > li")].map((li) => li.textContent.replace(/\s+/g, " ").trim());
     r.push(`perNumero=${voci.length === 1 && voci[0].includes(ATTESO.cognome) ? "ok"
       : `NO(tessera ${ATTESO.numero} di ${ATTESO.cognome}: ${voci.length} risultati${voci.length ? ", " + voci[0].slice(0, 60) : ""})`}`);
+    // La barra (ricerca/comune.js): --barra-h è la sua altezza vera, come in web/shared.js.
+    const h = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--barra-h"));
+    const barra = document.querySelector(".barra").offsetHeight;
+    r.push(`altezzaBarra=${Math.abs(h - barra) <= 1 ? "ok" : `NO(--barra-h ${h}, barra ${barra})`}`);
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 150)})`; } }, 2500));
 }
