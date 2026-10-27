@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Ricerca Socio — Sci Club Don Bosco</title>
   <link rel="icon" type="image/svg+xml" href="logo-ufficiale-trasparente-lettere-blu.svg">
-  <link rel="stylesheet" href="../brand.css?v=20261027barra">
+  <link rel="stylesheet" href="../brand.css?v=20261027barranuova">
   <link rel="stylesheet" href="stile.css?v=20261027tessera">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
 </head>
@@ -66,7 +66,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="comune.js?v=20261027tessera"></script>
+<script src="comune.js?v=20261027barra"></script>
 <script>
 (() => {
   "use strict";
@@ -144,11 +144,14 @@
    * (card_gaps_from), e a inizio stagione vedrebbero 1 invece del primo numero
    * dopo i posti del direttivo.
    */
+  let letturaTessera = 0;
   async function mostraProssimaTessera() {
+    const mia = ++letturaTessera;
     const accesso = await getAccesso();
     if (!accesso || !accesso.permissions.includes("soci")) return;
     const { data, error } = await sb.rpc("next_card_number");
-    if (error || data == null) return;
+    // Una lettura arrivata dopo una più recente non riscrive un numero vecchio.
+    if (mia !== letturaTessera || error || data == null) return;
     el("prossimaTessera").innerHTML = `Prossimo numero tessera: <strong>${esc(data)}</strong>`;
     el("prossimaTessera").hidden = false;
   }
@@ -183,7 +186,10 @@
       return;
     }
 
-    mostraProssimaTessera().catch(() => {});   // è un aiuto: senza, la ricerca funziona lo stesso
+    // È un aiuto: senza, la ricerca funziona lo stesso. Si rilegge a ogni ricerca e tornando
+    // sulla pagina: intanto un altro operatore può aver fatto una tessera.
+    mostraProssimaTessera().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) mostraProssimaTessera().catch(() => {}); });
     el("q").focus();
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
@@ -193,6 +199,7 @@
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;
+        mostraProssimaTessera().catch(() => {});
         try {
           const soci = await cerca(testoCercato);
           if (mio !== ultima) return;

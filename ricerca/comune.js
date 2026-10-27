@@ -255,6 +255,7 @@ function disegnaBarra(accesso) {
     voce.hidden = !accesso.permissions.includes(voce.dataset.permesso);
   });
   scriviNomiBarra();
+  window.addEventListener("resize", altezzaBarra);
   nomiBarra().catch(() => {});
 }
 
@@ -272,6 +273,7 @@ function scriviNomiBarra() {
     if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
     voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
   });
+  altezzaBarra();
 }
 
 async function nomiBarra() {
@@ -280,6 +282,17 @@ async function nomiBarra() {
   NOMI_BARRA = Object.fromEntries(data.map((r) => [r.key, r.label]));
   try { localStorage.setItem("sciclub-voci", JSON.stringify(NOMI_BARRA)); } catch (e) { /* storage negato */ }
   scriviNomiBarra();
+}
+
+/**
+ * L'altezza vera della barra in --barra-h: sul computer la barra va su due
+ * righe quando le voci non ci stanno (brand.css), e quello che si attacca
+ * sotto di lei deve seguirla. Si ricalcola con le voci, coi loro nomi e con
+ * la finestra (disegnaBarra()). La stessa in web/shared.js.
+ */
+function altezzaBarra() {
+  const barra = document.querySelector(".barra");
+  if (barra) document.documentElement.style.setProperty("--barra-h", `${barra.offsetHeight}px`);
 }
 
 /** Pulsante A+ della barra: come cambiaTesto() in web/shared.js, tre grandezze e poi si torna alla normale. */

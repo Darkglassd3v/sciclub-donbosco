@@ -190,7 +190,9 @@ modifica i soci, l'admin modifica i soci ma non vede il Bilancio.
 
 Dalla 2.6 il superadmin decide cosa vede ogni ruolo in **Gestione > Ruoli e permessi**: una
 matrice di spunte (tabella `role_grants`, ogni cambio registrato in `role_grant_changes`). Il
-superadmin vede sempre tutto e Gestione non si assegna. La tabella qui sotto è la partenza.
+superadmin vede sempre tutto e Gestione non si assegna. La tabella qui sotto è la partenza: in
+produzione, dal 27/10/2026, l'admin ha tutti i permessi tranne Gestione (Bilancio, Storico e
+Assicurazione compresi).
 
 | Ruolo | Chi è | Arriva su | Può fare |
 |---|---|---|---|
