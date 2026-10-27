@@ -183,7 +183,10 @@
       return;
     }
 
-    mostraProssimaTessera().catch(() => {});   // è un aiuto: senza, la ricerca funziona lo stesso
+    // È un aiuto: senza, la ricerca funziona lo stesso. Si rilegge a ogni ricerca e tornando
+    // sulla pagina: intanto un altro operatore può aver fatto una tessera.
+    mostraProssimaTessera().catch(() => {});
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) mostraProssimaTessera().catch(() => {}); });
     el("q").focus();
     el("q").addEventListener("input", (e) => {
       const testoCercato = e.target.value;
@@ -193,6 +196,7 @@
 
       attesa = setTimeout(async () => {
         const mio = ++ultima;
+        mostraProssimaTessera().catch(() => {});
         try {
           const soci = await cerca(testoCercato);
           if (mio !== ultima) return;
