@@ -110,6 +110,7 @@
       <button type="button" class="voce-esci" onclick="logout()"><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg><span>Esci</span></button>
     </div>
 </nav>
+<script>/* Menu names chosen in Gestione > Ruoli, remembered by shared.js (menuLabels), written before the first paint; the page name on the phone follows the open item. */try{const v=JSON.parse(localStorage.getItem("sciclub-voci"))||{};for(const i of document.querySelectorAll(".barra-voci [data-permesso]")){const t=i.querySelector(":scope > span, :scope > summary > span")||i;if(i.dataset.nome===undefined)i.dataset.nome=t.textContent;if(v[i.dataset.permesso])t.textContent=v[i.dataset.permesso]}const c=document.querySelector(".barra-voci a[aria-current=\"page\"]");if(c){const n=c.cloneNode(true);n.querySelectorAll(".conta").forEach((x)=>x.remove());for(const p of document.querySelectorAll(".barra-pagina"))p.textContent=n.textContent.trim()}}catch(e){}</script>
 
 <div class="container-main" role="main">
   <h1 class="title is-4" id="titolo">Bilancio</h1>
