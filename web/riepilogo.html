@@ -32,13 +32,21 @@
     .total-row td { font-weight: 700; border-top: 2px solid var(--testo-soft); }
     /* Sul telefono le quattro colonne stanno nello schermo: una colonna fuori
      * (il Totale) non si vedeva. La voce va a capo, gli importi no. */
+    /* Sul telefono ogni riga è una scheda (3.0): la voce su una riga intera, sotto
+     * quanti, il prezzo e il totale. In quattro colonne strette la voce andava su
+     * sei righe e il numero le finiva sopra. */
     @media (max-width: 600px) {
       .rtable { min-width: 0; }
-      .rtable th, .rtable td { padding-left: 4px; padding-right: 4px; }
-      .rtable td { font-size: 1.05rem; padding-top: 12px; padding-bottom: 12px; }
-      .rtable th:nth-child(2) { width: 2.8rem; }
-      .rtable th:nth-child(3) { width: 5.6rem; }
-      .rtable th:nth-child(4) { width: 7rem; }
+      .rtable thead { display: none; }
+      .rtable, .rtable tbody { display: block; width: 100%; }
+      .rtable tr { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 6px 12px;
+                   padding: 10px 12px; border-top: 1px solid var(--filo); }
+      .rtable td { display: block; padding: 0; border: 0; font-size: 1.05rem; }
+      .rtable td:nth-child(1) { grid-column: 1 / -1; font-weight: 600; }
+      .rtable td:nth-child(3) { text-align: left; color: var(--testo-soft); }
+      .rtable td:nth-child(3)::before { content: "× "; }
+      .rtable td:nth-child(4) { text-align: right; font-weight: 700; }
+      .total-row td:nth-child(3)::before { content: none; }
       .total-row td:nth-child(4) { font-size: 1.2rem; }
     }
     .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }

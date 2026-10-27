@@ -504,6 +504,8 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
 
 @media screen and (max-width: 768px) {
   :root { --barra-h: 56px; --menu-l: 0px; }
+  /* Un pulsante con la scritta lunga va a capo invece di uscire dallo schermo. */
+  .button { white-space: normal; height: auto; }
   .barra-dentro { height: 56px; gap: 10px; padding: 0 10px; }
   .apri-menu { display: inline-flex; }
   .barra-marchio img { height: 38px; }

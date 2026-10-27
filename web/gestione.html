@@ -30,6 +30,24 @@
     /* Spunta cambiata e non ancora salvata, come le righe di Impostazioni. */
     .tabella-permessi td.cambiata { background: var(--giallo-light); }
     .tabella-permessi .solo-super { color: var(--testo-soft); padding: 10px 8px; }
+    .tabella-permessi .ruolo-telefono { display: none; }
+    /* Sul telefono (3.0) una scheda per sezione: nome e descrizione su una riga
+     * intera, sotto le spunte col nome del ruolo accanto. Le colonne dei ruoli
+     * uscivano dallo schermo. Così anche le voci del menu: nome sopra, campo largo. */
+    @media (max-width: 600px) {
+      .tabella-permessi { min-width: 0; }
+      .tabella-permessi thead { display: none; }
+      .tabella-permessi, .tabella-permessi tbody { display: block; width: 100%; }
+      .tabella-permessi tr { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+                             border-top: 1px solid var(--filo); padding: 6px 0; }
+      .tabella-permessi tbody th, .tabella-permessi td.solo-super { grid-column: 1 / -1; border: 0; }
+      .tabella-permessi td { border: 0; }
+      .tabella-permessi .cella { justify-content: flex-start; gap: 10px; padding: 0 8px; }
+      .tabella-permessi .ruolo-telefono { display: inline; }
+      .tabella-nomi, .tabella-nomi tbody, .tabella-nomi tr, .tabella-nomi th, .tabella-nomi td { display: block; width: 100%; }
+      .tabella-nomi th { padding: 10px 0 4px; }
+      .tabella-nomi input { width: 100%; }
+    }
     .tag-dati { display: inline-block; margin-left: 6px; padding: 1px 10px; border-radius: var(--pillola);
                 background: var(--errore-bg); color: var(--errore); font-size: .875rem; font-weight: 600; white-space: nowrap; }
 
@@ -223,7 +241,7 @@
       <tbody>${PERMESSI.map(([p, nome0, descr, dati]) => { const nome = nomeSezione(p, nome0); return `<tr>
         <th scope="row">${esc(nome)}${dati ? ' <span class="tag-dati">dati personali</span>' : ""}<span class="descr">${esc(descr)}</span></th>
         ${matrice.map((r) => `<td><label class="cella"><input type="checkbox" data-ruolo="${r.role}" data-permesso="${p}"
-            aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}></label></td>`).join("")}
+            aria-label="${esc(NOMI_RUOLI[r.role])}: ${esc(nome)}"${salvati[r.role].has(p) ? " checked" : ""}><span class="ruolo-telefono" aria-hidden="true">${esc(NOMI_RUOLI[r.role])}</span></label></td>`).join("")}
       </tr>`; }).join("")}
       <tr><th scope="row">Gestione<span class="descr">Amministrazione, Utenti, Impostazioni e questa pagina.</span></th>
         <td colspan="${matrice.length}" class="solo-super">Riservata al superadmin</td></tr>

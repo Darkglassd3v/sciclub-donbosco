@@ -109,13 +109,21 @@
     .avviso-doppioni li span { flex: 1 1 20rem; }
 
     @media screen and (max-width: 768px) {
-      .container-main { padding-bottom: 220px; }
+      .container-main { padding-bottom: 100px; }
       .testata-scheda { padding-left: 20px; padding-right: 20px; }
       .testata-scheda .nome { font-size: 1.5rem; }
-      .total-box .columns { display: flex; flex-wrap: wrap; }
-      /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: senza il
-       * selettore lungo il pulsante restava stretto, su tre righe. */
-      .total-box .columns.is-mobile > .column.is-5 { width: 100%; flex: none; margin-top: 10px; }
+      /* Sul telefono la fascia è una riga sola, alta circa 64px (3.0): Totale e
+       * Residuo piccoli a sinistra, Salva a destra. Prima erano tre righe che
+       * coprivano un quarto dello schermo. */
+      .total-box { padding: 8px 10px; }
+      .total-box .container { max-width: none; }
+      .total-box .columns { display: flex; flex-wrap: nowrap; align-items: center; margin: 0; }
+      .total-box .columns > .column { flex: 0 0 auto; padding: 0 6px; }
+      /* .columns.is-mobile di Bulma vince su .total-box .column.is-5: serve il selettore lungo. */
+      .total-box .columns.is-mobile > .column.is-5 { flex: 1 1 auto; width: auto; min-width: 0; }
+      .total-box .val-label { font-size: .8rem; }
+      .total-box .val-amount { font-size: 1.1rem; margin-top: 0; white-space: nowrap; }
+      .total-box #btnSalva { min-height: 48px; padding: 4px 10px; font-size: 1rem; line-height: 1.2; }
     }
 
     /* Schermo basso (zoom al 150-200%, telefono in orizzontale): la barra
