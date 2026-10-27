@@ -49,6 +49,9 @@
   link (Instagram, e Facebook se la pagina ha lo sticker).
 - Testi nuovi in tutte le pagine e accessibilità (link sottolineati, lettore di schermo).
 - Il primo backup col file per Excel: aprire `dati-AAAA-MM-GG.7z` con 7-Zip e `soci.csv` in Excel.
+- Barra da admin e da superadmin sul PC del club: tutte le voci, «Cerca socio» compresa, ed
+  «Esci» in vista. Cerca socio: il prossimo numero tessera in cima e la ricerca per numero
+  («33», «rossi 33»). Soci: il numero tessera proposto è il primo campo del modulo.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
