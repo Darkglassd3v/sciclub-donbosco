@@ -7,6 +7,10 @@
 // there. The first load fills the browser memory like any page; the reload is measured.
 {
   FAKE.ritardo = () => 300;
+  // A menu name chosen in Gestione > Ruoli, as in production (stampe: "Fogli pullman").
+  const answer = FAKE.risposta;
+  FAKE.risposta = (table, request) => table === "nav_labels" ? [{ key: "stampe", label: "Fogli pullman" }] : answer(table, request);
+  const label = (x) => x.dataset.permesso ? `«${(x.querySelector(":scope > span, :scope > summary > span") || x).textContent.trim()}»` : "";
   const shown = (x) => {
     const b = x.getBoundingClientRect();
     return b.width > 0 && b.right > 0 && b.left < innerWidth && getComputedStyle(x).visibility !== "hidden";
@@ -17,7 +21,7 @@
       const b = x.getBoundingClientRect();
       return `${(typeof x.className === "string" && x.className.split(" ")[0]) || x.tagName.toLowerCase()}`
         + `${x.dataset.permesso ? `(${x.dataset.permesso})` : ""}:${Math.round(b.left)},${Math.round(b.top)},${Math.round(b.width)}x${Math.round(b.height)}`
-        + (x.classList.contains("barra-pagina") ? `«${x.textContent.trim()}»` : "");
+        + (x.classList.contains("barra-pagina") ? `«${x.textContent.trim()}»` : label(x));
     });
   if (!sessionStorage.getItem("bar-steady")) {
     window.addEventListener("load", () => setTimeout(() => {
