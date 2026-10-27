@@ -110,8 +110,14 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Token in `web/brand.css` (ricopiati in `ricerca/stile.css`, i due siti non condividono
   file); contrasti in `docs/brand-guidelines.md`. Focus = anello blu scuro 3px + alone giallo.
 - Corpo 17px e **pulsante A+** nella barra di ogni pagina `web/` (17/19/21px su
-  `html[data-testo]`): le misure delle pagine vanno in **rem**; la barra resta in px e non deve
-  andare a capo.
+  `html[data-testo]`): le misure delle pagine vanno in **rem**; barra e menu restano in px.
+- Dalla 3.0: barra in alto e menu a colonna a sinistra (blu, `--barra-h` e `--menu-l` in
+  `brand.css`); sul telefono il menu è un pannello («Menu», `apriMenu()`). L'HTML della barra e
+  del menu è uguale in tutte le 13 pagine, con la voce aperta già segnata: si cambia in tutte
+  insieme. Stile Material (4px pulsanti e campi, 8px schede, pulsanti in maiuscolo) e tema
+  scuro (`html[data-tema="scuro"]`, `cambiaTema()`, `--blu-pieno`/`--ok-pieno`/`--errore-pieno`
+  per i fondi sotto le scritte bianche). Prove: `test-browser/menu.js`,
+  `test-reale/stile-tutte.js`, `telefono-tutte.js` (390 px), `scuro-tutte.js`.
 - Conferme sempre in una finestra sopra la pagina (`chiedi()` in `shared.js` o `<dialog
   class="finestra">`), mai `confirm()`: un browser che blocca le finestre risponde "no" da solo.
 - Pagina Soci: si salva solo se la scheda non è cambiata da quando è aperta (`updated_at`

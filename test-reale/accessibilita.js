@@ -23,7 +23,7 @@
       || c.getAttribute("aria-labelledby") || c.title?.trim())).map(descr));
 
     prova("linkSottolineati", [...document.querySelectorAll("a[href]")].filter((a) => {
-      if (a.closest(".button, .tag, nav, .barra-voci, .tabs, .schede-gestione, .schede-social") || a.classList.contains("button")) return false;
+      if (a.closest(".button, .tag, nav, .barra-voci, .tabs") || a.classList.contains("button")) return false;
       const blocco = a.closest("p, li, td, label, .help");
       if (!blocco || blocco.textContent.trim() === a.textContent.trim()) return false;   // il link è tutto il testo
       return !getComputedStyle(a).textDecorationLine.includes("underline");
