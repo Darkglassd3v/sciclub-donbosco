@@ -6,7 +6,7 @@
   <title>Bilancio — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
   <link rel="stylesheet" href="brand.css?v=20261028material">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     /* Il saldo attuale è la risposta alla domanda "quanto c'è in banca": va visto per primo. */
     .kpi.evidenza { border: 2px solid var(--blu); }
@@ -36,12 +36,12 @@
     .tipo-movimento .scelte-tipo { display: flex; flex-wrap: wrap; gap: 12px; }
     .riga-movimento .tipo-movimento label { display: inline-flex; align-items: center; gap: 12px; min-height: 56px; min-width: 12rem;
                             padding: 10px 22px; border: 2px solid currentColor; border-radius: var(--raggio);
-                            background: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+                            background: var(--superficie); font-size: 1.2rem; font-weight: 700; cursor: pointer; }
     .tipo-movimento input { width: 24px; height: 24px; margin: 0; accent-color: currentColor; }
     .tipo-movimento .tipo-entrata { color: var(--ok); }
     .tipo-movimento .tipo-uscita { color: var(--errore); }
-    .tipo-movimento .tipo-entrata:has(input:checked) { background: var(--ok); color: #fff; }
-    .tipo-movimento .tipo-uscita:has(input:checked) { background: var(--errore); color: #fff; }
+    .tipo-movimento .tipo-entrata:has(input:checked) { background: var(--ok-pieno); color: #fff; }
+    .tipo-movimento .tipo-uscita:has(input:checked) { background: var(--errore-pieno); color: #fff; }
     .tipo-movimento label:has(input:checked) input { accent-color: #fff; }
     .riga-movimento label { font-size: .875rem; }
     .importo-anteprima { color: var(--testo-soft); margin-top: 10px; }

@@ -50,15 +50,15 @@ button, input, select {
  * ai campi, che devono vedersi. */
 button { cursor: pointer; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
          padding: 0 20px; border-radius: var(--pillola); border-width: 1px; }
-.btn-blu { background: var(--blu); border-color: var(--blu); color: #fff; }
+.btn-blu { background: var(--blu-pieno); border-color: var(--blu-pieno); color: #fff; }
 .btn-blu:hover { background: var(--blu-dark); border-color: var(--blu-dark); }
 .btn-chiaro { color: var(--blu); border-color: var(--filo); }
 .btn-chiaro:hover { background: var(--blu-light); border-color: var(--blu-light); }
 /* Soci e Gite stanno su tutte e due le pagine, come due schede: quella
  * aperta è piena, così si sa dove si è senza leggere il titolo. */
-.btn-chiaro[aria-current="page"] { background: var(--blu); border-color: var(--blu); color: #fff; }
-.btn-verde { background: var(--ok); border-color: var(--ok); color: #fff; }
-.btn-rosso { background: var(--errore); border-color: var(--errore); color: #fff; }
+.btn-chiaro[aria-current="page"] { background: var(--blu-pieno); border-color: var(--blu-pieno); color: #fff; }
+.btn-verde { background: var(--ok-pieno); border-color: var(--ok-pieno); color: #fff; }
+.btn-rosso { background: var(--errore-pieno); border-color: var(--errore-pieno); color: #fff; }
 
 /* Scelta dell'abbonamento: righe grandi con il prezzo ben visibile, al posto
  * di una tendina che sul telefono si legge male. */
@@ -123,7 +123,7 @@ ul.risultati li { margin-bottom: 12px; }
   min-height: 52px; padding: 0 12px; border-radius: var(--pillola);
   font-weight: 600; text-decoration: none; border: 1px solid transparent;
 }
-.contatti .chiama { background: var(--blu); color: #fff; }
+.contatti .chiama { background: var(--blu-pieno); color: #fff; }
 .contatti .whatsapp { background: #E4F3EA; color: #0B6B3A; border-color: #CBE6D6; }
 .contatti a:active { transform: translateY(1px); }
 
@@ -173,10 +173,10 @@ ul.risultati li { margin-bottom: 12px; }
 .conto .fatte  { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo-soft); }
 .conto .libere { font-size: 2.2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1; color: var(--testo); }
 .conto .libere.esaurito { color: var(--errore); }
-.progresso-gite { height: 8px; border-radius: var(--pillola); background: #E8E8ED;
+.progresso-gite { height: 8px; border-radius: var(--pillola); background: var(--riga-alt);
          overflow: hidden; margin-top: 14px; }
 /* Il colore del giorno arriva da data-giorno (web/brand.css, "Giorni delle gite"). */
-.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu)); }
+.progresso-gite span { display: block; height: 100%; background: var(--giorno, var(--blu-pieno)); }
 
 /* --- Gite: azioni della scheda ------------------------------------------ */
 .azioni-pannello { display: flex; gap: 10px; flex-wrap: wrap; }

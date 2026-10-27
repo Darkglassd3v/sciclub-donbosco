@@ -38,6 +38,13 @@
   --errore:  #B3261E;
   --errore-bg:#FBE9E7;
 
+  /* Gli stessi colori come fondo sotto una scritta bianca. Di giorno uguali; nel
+   * tema scuro restano pieni, mentre --blu, --ok ed --errore schiariscono per
+   * leggersi come scritte sul fondo scuro. */
+  --blu-pieno:    #084C8D;
+  --ok-pieno:     #147A45;
+  --errore-pieno: #B3261E;
+
   /* Stile Material (3.0): angoli di 4px per pulsanti, campi ed etichette, 8px
    * per schede e finestre. --pillola resta il nome storico, ora è un rettangolo. */
   --raggio: 4px;
@@ -47,6 +54,65 @@
   --tocco: 48px;  /* altezza minima di ogni cosa cliccabile */
   --aria: 44px;   /* distanza fra una sezione e la successiva */
 }
+
+/* --- Tema scuro (3.0) ----------------------------------------------------
+ * Chiesto dall'utente il 27/10/2026: il pulsante con la luna in alto lo accende
+ * (cambiaTema() in shared.js e comune.js), il browser lo ricorda e lo script
+ * nell'head lo rimette prima del primo disegno. Gli stessi nomi dei colori con
+ * valori scuri: il blu, il verde e il rosso come scritte schiariscono (il blu
+ * del logo sul fondo scuro non si legge), come fondo restano pieni (--*-pieno).
+ * Contrasti controllati da test-reale/scuro-tutte.js. */
+html[data-tema="scuro"] {
+  color-scheme: dark;
+  --blu:          #8DBBEA;
+  --blu-dark:     #B5D3F3;
+  --blu-light:    #1D3550;
+  --blu-pieno:    #1F5C99;
+  --giallo-dark:  #F1D46A;
+  --giallo-light: #3A3216;
+  --sfondo:       #0E141B;
+  --superficie:   #18212C;
+  --riga-alt:     #212C39;
+  --testo:        #E7ECF2;
+  --testo-soft:   #AEB9C6;
+  --bordo:        #7E8B9A;
+  --filo:         #354353;
+  --ok:           #6BD49A;
+  --ok-bg:        #163626;
+  --ok-pieno:     #1D7A4A;
+  --errore:       #FF8A80;
+  --errore-bg:    #3E2020;
+  --errore-pieno: #B83A30;
+  --ombra: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 24px rgba(0, 0, 0, .35);
+}
+/* Barra e menu: un blu notte, più scuro del blu pieno dei pulsanti. */
+html[data-tema="scuro"] :is(.barra, .barra-voci) { background: #10263F; }
+/* Bulma scrive bianchi e grigi fissi: qui seguono i colori del tema. :where()
+ * tiene bassa la precedenza, così i pulsanti colorati restano colorati. */
+:where(html[data-tema="scuro"]) :is(body, .title, .subtitle, .label, strong, .table, .table th, .table td, .content, .checkbox, .radio, label) { color: var(--testo); }
+:where(html[data-tema="scuro"]) :is(.input, .textarea, .select select, .table, .box, .card, .notification, dialog) { background-color: var(--superficie); color: var(--testo); }
+:where(html[data-tema="scuro"]) :is(.input, .textarea, .select select) { border-color: var(--bordo); }
+:where(html[data-tema="scuro"]) :is(.input, .textarea)::placeholder { color: #8C99A8; }
+:where(html[data-tema="scuro"]) :is(.input, .textarea, .select select)[disabled] { background-color: var(--riga-alt); color: var(--testo-soft); }
+:where(html[data-tema="scuro"]) .button { background-color: var(--superficie); color: var(--testo); border-color: var(--bordo); }
+:where(html[data-tema="scuro"]) .tag:not(.is-info):not(.is-success):not(.is-danger):not(.is-warning) { background-color: var(--riga-alt); color: var(--testo); }
+:where(html[data-tema="scuro"]) .tag.is-info.is-light { background-color: var(--blu-light); color: var(--blu); }
+:where(html[data-tema="scuro"]) .table tr:hover { background-color: var(--riga-alt); }
+/* Bulma colora le celle con "table th": serve almeno la stessa precedenza. */
+:where(html[data-tema="scuro"]) table :is(th, td) { color: var(--testo); }
+/* Pulsanti spenti, «Esci» a testo e i rossi chiari di Bulma hanno colori fissi più precisi. */
+html[data-tema="scuro"] .button[disabled] { background-color: var(--riga-alt); border-color: var(--filo); color: var(--testo-soft); }
+html[data-tema="scuro"] .button.is-text { background: transparent; color: var(--testo); }
+html[data-tema="scuro"] .button.is-danger.is-light { background: var(--errore-bg); border-color: var(--errore-bg); color: var(--errore); }
+/* Il giallo dei campi da compilare a mano, in versione scura. */
+:where(html[data-tema="scuro"]) .campo-admin { background-color: var(--giallo-light); }
+/* Le tinte chiare delle sezioni colorate, scure; la striscia in testa resta piena. */
+html[data-tema="scuro"] .sezione { --tinta: #152131; }
+html[data-tema="scuro"] .sezione.tessera { --tinta: #13261C; }
+html[data-tema="scuro"] .sezione.gite { --tinta: #20192B; }
+html[data-tema="scuro"] .sezione.pagamento { --tinta: #2A1D14; }
+/* Il logo a lettere blu (accesso, cambio password) su un tondo chiaro. */
+html[data-tema="scuro"] img[src*="lettere-blu"] { background: #fff; border-radius: var(--raggio-card); padding: 6px; }
 
 html { font-size: 17px; background: var(--sfondo); }  /* Bulma lo fa bianco: sotto una pagina corta si vedeva una fascia bianca */
 /* Pulsante A+ della barra (cambiaTesto() in shared.js): le misure delle
@@ -220,35 +286,35 @@ dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-he
 }
 
 .button.is-link, .button.is-primary, .button.is-info {
-  background: var(--blu); border-color: var(--blu); color: #fff;
+  background: var(--blu-pieno); border-color: var(--blu-pieno); color: #fff;
 }
 .button.is-link:hover, .button.is-primary:hover, .button.is-info:hover {
-  background: var(--blu-dark); border-color: var(--blu-dark); color: #fff;
+  background: color-mix(in srgb, var(--blu-pieno) 80%, #000); border-color: transparent; color: #fff;
 }
 .button.is-light {
   background: var(--superficie); border: 1px solid var(--filo); color: var(--blu);
 }
 .button.is-light:hover { background: var(--blu-light); border-color: var(--blu-light); color: var(--blu-dark); }
 
-.button.is-success { background: var(--ok); border-color: var(--ok); color: #fff; }
+.button.is-success { background: var(--ok-pieno); border-color: var(--ok-pieno); color: #fff; }
 .button.is-success:hover { background: #0F5C34; border-color: #0F5C34; }
 
 /* Il giallo pieno regge solo testo blu scuro (5.7:1). */
 .button.is-warning, .button.is-evidenza {
-  background: var(--giallo); border-color: var(--giallo); color: var(--blu-dark);
+  background: var(--giallo); border-color: var(--giallo); color: #06396A;   /* blu scuro fisso: anche nel tema scuro */
 }
 .button.is-warning:hover, .button.is-evidenza:hover { background: #E6BC00; border-color: #E6BC00; }
 
-.button.is-danger { background: var(--errore); border-color: var(--errore); color: #fff; }
+.button.is-danger { background: var(--errore-pieno); border-color: var(--errore-pieno); color: #fff; }
 .button.is-danger.is-outlined {
   background: var(--superficie); border: 1px solid var(--errore); color: var(--errore);
 }
-.button.is-danger.is-outlined:hover { background: var(--errore); color: #fff; }
+.button.is-danger.is-outlined:hover { background: var(--errore-pieno); color: #fff; }
 /* Senza questa il contorno restava del viola di Bulma, come i link. */
 .button.is-link.is-outlined {
   background: var(--superficie); border: 1px solid var(--blu); color: var(--blu);
 }
-.button.is-link.is-outlined:hover { background: var(--blu); color: #fff; }
+.button.is-link.is-outlined:hover { background: var(--blu-pieno); color: #fff; }
 
 /* --- Familiari a carico ------------------------------------------------
  * Titolo dentro il riquadro Pagamento dei Soci: le sezioni del modulo ora
@@ -270,8 +336,8 @@ dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-he
 .notification { font-size: 1rem; border-radius: var(--raggio); }
 /* Il rosso e il verde di Bulma col testo bianco stanno a 3.6:1 e 2.1:1: un
  * errore che non si riesce a leggere è peggio di nessun avviso. */
-.notification.is-danger:not(.is-light)  { background: var(--errore); color: #fff; }
-.notification.is-success:not(.is-light) { background: var(--ok); color: #fff; }
+.notification.is-danger:not(.is-light)  { background: var(--errore-pieno); color: #fff; }
+.notification.is-success:not(.is-light) { background: var(--ok-pieno); color: #fff; }
 
 /* --- Tabelle ------------------------------------------------------------
  * Divisori sottili al posto dei bordi marcati; intestazioni in tondo minuscolo
@@ -344,7 +410,7 @@ body { margin: 0; }
    * uguale e al suo posto. */
   font-size: 17px;
   /* Blu come il menu: barra e colonna si leggono come un pezzo solo, il menu. */
-  background: var(--blu);
+  background: var(--blu-pieno);
   color: #fff;
   box-shadow: 0 2px 6px rgba(20, 32, 46, .3);
 }
@@ -417,7 +483,7 @@ html[data-tema="scuro"] .voce-tema .sole { display: block; }
   flex-direction: column;
   gap: 2px;
   padding: 12px 10px;
-  background: var(--blu);
+  background: var(--blu-pieno);
 }
 body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
 
@@ -440,7 +506,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
 }
 .barra-voci a:hover, .barra-voci summary:hover { background: rgba(255, 255, 255, .14); color: #fff; }
 .barra-voci :focus-visible { outline: 3px solid var(--giallo); outline-offset: 1px; }
-.barra-voci a[aria-current="page"] { background: var(--giallo); color: var(--blu); }
+.barra-voci a[aria-current="page"] { background: var(--giallo); color: #084C8D; }
 .barra-voci summary { list-style: none; }
 .barra-voci summary::-webkit-details-marker { display: none; }
 /* La freccia del gruppo: in giù chiuso, in su aperto. */
@@ -464,8 +530,8 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
   font-size: 17px;
   font-weight: 500;
 }
-.barra-voci .conta { margin-left: auto; padding: 0 8px; border-radius: 4px; background: var(--giallo); color: var(--blu); font-size: 14px; font-weight: 700; }
-.barra-voci a[aria-current="page"] .conta { background: var(--blu); color: #fff; }
+.barra-voci .conta { margin-left: auto; padding: 0 8px; border-radius: 4px; background: var(--giallo); color: #084C8D; font-size: 14px; font-weight: 700; }
+.barra-voci a[aria-current="page"] .conta { background: var(--blu-pieno); color: #fff; }
 .barra-voci .conta:empty { display: none; }
 /* Chi è entrato, tema, A+ ed Esci in fondo al menu: solo sul telefono. */
 .menu-fondo { display: none; }
@@ -577,10 +643,10 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  *   .giorno-azione     pulsante pieno del colore del giorno.
  * Basta data-giorno="SABATO" (DOMENICA, MARTEDI, JOLLY) sull'elemento: le
  * variabili qui sotto le leggono tutte e tre, e la barretta delle gite. */
-[data-giorno="SABATO"]   { --giorno: var(--blu);    --giorno-su: #fff;               --giorno-chiaro: var(--blu-light);    --giorno-scuro: var(--blu-dark); }
-[data-giorno="DOMENICA"] { --giorno: var(--giallo); --giorno-su: var(--giallo-dark); --giorno-chiaro: var(--giallo-light); --giorno-scuro: var(--giallo-dark); }
-[data-giorno="MARTEDI"]  { --giorno: var(--errore); --giorno-su: #fff;               --giorno-chiaro: var(--errore-bg);    --giorno-scuro: var(--errore); }
-[data-giorno="JOLLY"]    { --giorno: var(--ok);     --giorno-su: #fff;               --giorno-chiaro: var(--ok-bg);        --giorno-scuro: var(--ok); }
+[data-giorno="SABATO"]   { --giorno: var(--blu-pieno);    --giorno-su: #fff;               --giorno-chiaro: var(--blu-light);    --giorno-scuro: var(--blu-dark); }
+[data-giorno="DOMENICA"] { --giorno: var(--giallo); --giorno-su: #6B5200; --giorno-chiaro: var(--giallo-light); --giorno-scuro: var(--giallo-dark); }
+[data-giorno="MARTEDI"]  { --giorno: var(--errore-pieno); --giorno-su: #fff;               --giorno-chiaro: var(--errore-bg);    --giorno-scuro: var(--errore); }
+[data-giorno="JOLLY"]    { --giorno: var(--ok-pieno);     --giorno-su: #fff;               --giorno-chiaro: var(--ok-bg);        --giorno-scuro: var(--ok); }
 
 .giorno-etichetta { display: inline-flex; align-items: center; padding: 3px 12px; border-radius: var(--pillola);
                     background: var(--giorno-chiaro, var(--riga-alt)); color: var(--giorno-scuro, var(--testo));
@@ -592,7 +658,7 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  * quello scelto si riconosce dall'anello scuro e dalla spunta. Senza giorno
  * (Tutti) il pulsante è blu notte. */
 .giorno-filtro { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--tocco);
-                 padding: 0 18px; border: 0; border-radius: var(--pillola); background: var(--giorno, var(--testo));
+                 padding: 0 18px; border: 0; border-radius: var(--pillola); background: var(--giorno, #14202E);
                  color: var(--giorno-su, #fff); font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
                  text-transform: uppercase; letter-spacing: .04em; }
 .giorno-filtro:hover { filter: brightness(.92); }
@@ -684,7 +750,7 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
  * Il nome si scrive normale: il maiuscolo lo mette il CSS (i lettori di
  * schermo leggono la parola, non le lettere). overflow: clip e non hidden,
  * che spegnerebbe lo sticky della striscia. */
-.sezione { --colore: var(--blu); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
+.sezione { --colore: var(--blu-pieno); --tinta: #EEF4FA; padding: 0; overflow: clip; background: var(--tinta);
            border: 2px solid var(--colore); box-shadow: var(--ombra); }
 .sezione.tessera { --colore: #147A45; --tinta: #EAF5EE; }
 .sezione.gite { --colore: #5B2A86; --tinta: #F3EEF8; }
@@ -701,7 +767,7 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
 .sezione > .striscia .cosa::before { content: "·"; margin: 0 12px; opacity: .7; }
 .sezione > .corpo { padding: 24px 28px 28px; }
 /* Sul colore chiaro le tabelle restano bianche. */
-.sezione .tabella-scorrevole { background: #fff; border-radius: var(--raggio); }
+.sezione .tabella-scorrevole { background: var(--superficie); border-radius: var(--raggio); }
 /* Un pulsante con una scritta lunga va a capo: overflow: clip lo taglierebbe al bordo. */
 .sezione > .corpo .button { max-width: 100%; white-space: normal; height: auto; }
 

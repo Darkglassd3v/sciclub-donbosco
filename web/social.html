@@ -10,7 +10,7 @@
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,600;0,700;0,800;1,800&display=swap">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
      * post i campi accanto all'anteprima. */
@@ -28,7 +28,7 @@
       border: 2px solid var(--filo); border-radius: var(--pillola); }
     .vista button { min-height: 44px; border: 0; border-radius: var(--pillola); background: none; color: var(--blu);
       font: inherit; font-weight: 700; cursor: pointer;  text-transform: uppercase; letter-spacing: .04em; }
-    .vista button[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .vista button[aria-pressed="true"] { background: var(--blu-pieno); color: #fff; }
     .elenco-post { list-style: none; margin: 0; padding: 0; }
     .elenco-post .mese { margin: 14px 0 4px; font-size: .9375rem; font-weight: 700; color: var(--testo-soft); }
     .elenco-post li button { width: 100%; display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; align-items: center;
@@ -53,7 +53,7 @@
     .vuoto { text-align: center; padding: 64px 24px; color: var(--testo-soft); font-size: 1.15rem; }
     #editor { container-type: inline-size; }
     .testa-post { position: sticky; top: var(--barra-h); z-index: 5; display: flex; align-items: center; gap: 16px;
-      margin: -24px -24px 20px; padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--filo);
+      margin: -24px -24px 20px; padding: 16px 24px; background: var(--superficie); border-bottom: 1px solid var(--filo);
       border-radius: var(--raggio-card) var(--raggio-card) 0 0; }
     .testa-post .titoli { flex: 1; min-width: 0; }
     .testa-post .occhiello-post { color: var(--testo-soft); font-weight: 600; font-size: .9375rem; }
@@ -85,10 +85,10 @@
     /* L'avviso delle anteprime lo dà la riga sotto, per tutti i formati. */
     .lato .sborda { display: none; }
     .formati { display: flex; flex-wrap: wrap; gap: 4px; padding: 3px; align-self: flex-start;
-      border: 2px solid var(--filo); border-radius: var(--pillola); background: #fff; }
+      border: 2px solid var(--filo); border-radius: var(--pillola); background: var(--superficie); }
     .formati button { min-height: 44px; padding: 0 14px; border: 0; border-radius: var(--pillola); background: none; color: var(--blu);
       font: inherit; font-size: .9375rem; font-weight: 700; cursor: pointer;  text-transform: uppercase; letter-spacing: .04em; }
-    .formati button[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .formati button[aria-pressed="true"] { background: var(--blu-pieno); color: #fff; }
     .scarica { display: grid; gap: 8px; }
     /* Le anteprime non scelte restano disegnate, fuori dallo schermo: fit()
      * le deve misurare e il pulsante le deve poter scaricare. */
@@ -104,7 +104,7 @@
     .campi { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
     .campi .campo-largo { grid-column: 1 / -1; }
     /* Frecce della foto: col mouse e col dito, senza tastiera. */
-    .pos-foto #btnSposta[aria-pressed="true"] { background: var(--blu); color: #fff; }
+    .pos-foto #btnSposta[aria-pressed="true"] { background: var(--blu-pieno); color: #fff; }
     .righe-editor .riga { display: flex; gap: 8px; margin-bottom: 6px; }
     .righe-editor .riga input:first-child { max-width: 11rem; }
     /* Quale partenza va sotto la data, nella tessera del post. */
@@ -147,7 +147,7 @@
     .cal-gita .griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .cal-gita .nome-giorno { text-align: center; font-weight: 600; color: var(--testo-soft); }
     .cal-gita .griglia button { position: relative; aspect-ratio: 1; border: 1px solid var(--filo); border-radius: 8px;
-      background: #fff; color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
+      background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
     .cal-gita .griglia button.di-gita { border-color: transparent; font-weight: 800; }
     .cal-gita .griglia button[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #14202E; z-index: 1; }
     .cal-gita .occupato { position: absolute; bottom: 4px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: currentColor; }

@@ -6,9 +6,9 @@
   <title>Utenti — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
   <link rel="stylesheet" href="brand.css?v=20261028material">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; align-items: center; justify-content: center; }
+    #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
 
     .tabella-utenti { width: 100%; border-collapse: collapse; }

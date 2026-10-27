@@ -6,20 +6,20 @@
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
   <link rel="stylesheet" href="brand.css?v=20261028material">
-  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t}catch(e){}</script>
+  <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ")}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     body { margin: 0; }
     /* Numeri tessera forse dimenticati: si devono vedere. */
     #tessereLibere { color: var(--errore); font-weight: 600; }
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,.92); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
+    #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
 
     /* La barra dei totali resta incollata in basso, ma smette di sembrare una
      * barra di stato: fondo scuro pieno, un filo giallo e basta. */
-    .total-box { position: fixed; bottom: 0; left: var(--menu-l, 0); right: 0; background: var(--testo); color: #fff; padding: 18px 15px; z-index: 1000; border-top: 3px solid var(--giallo); }
+    .total-box { position: fixed; bottom: 0; left: var(--menu-l, 0); right: 0; background: #14202E; color: #fff; padding: 18px 15px; z-index: 1000; border-top: 3px solid var(--giallo); }
     .val-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
     .val-amount { font-size: 2.1rem; font-weight: 700; letter-spacing: -.022em; display: block; line-height: 1; margin-top: 4px; }
 
-    .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: #fff; border-bottom: 1px solid var(--filo); }
+    .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: var(--superficie); border-bottom: 1px solid var(--filo); }
     .result-item:hover { background: var(--blu-light); }
     /* I tag di Bulma sono a 12px: codice fiscale e tessera servono a
      * distinguere due omonimi, devono leggersi come il nome. */
@@ -31,7 +31,7 @@
      * della scelta dell'abbonamento in ricerca/stile.css. */
     .scelte { border: 0; padding: 0; margin: 0 0 1.75rem; min-width: 0; }
     .scelte-opzioni { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 8px; }
-    .scelta { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 16px; background: #fff;
+    .scelta { display: flex; align-items: center; gap: 14px; min-height: 56px; padding: 10px 16px; background: var(--superficie);
               border: 2px solid var(--bordo); border-radius: var(--raggio); cursor: pointer; font-size: 1.05rem; line-height: 1.3; }
     .scelta:hover { border-color: var(--blu); }
     .scelta input { width: 24px; height: 24px; margin: 0; flex: none; accent-color: var(--blu); }
@@ -52,8 +52,8 @@
     .abbonamenti li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-height: 56px; padding: 10px 16px;
                       margin-bottom: 8px; border: 2px solid var(--blu); border-radius: var(--raggio); background: var(--blu-light);
                       font-size: 1.05rem; line-height: 1.3; }
-    .abbonamenti li.nuovo { border-style: dashed; background: #fff; }
-    .abbonamenti li.vuoto { border: 2px dashed var(--filo); background: #fff; }
+    .abbonamenti li.nuovo { border-style: dashed; background: var(--superficie); }
+    .abbonamenti li.vuoto { border: 2px dashed var(--filo); background: var(--superficie); }
     .abbonamenti .gite { font-weight: 700; }
     .abbonamenti .gia-pagato { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco);
                                margin-left: auto; font-weight: 600; cursor: pointer; }
@@ -68,7 +68,7 @@
     .label { margin-bottom: .3rem; }
     .totale-mano { display: flex; align-items: center; gap: 8px; min-height: 1.5rem; margin-bottom: .3rem; font-weight: 600; }
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
-    #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: #fff; box-shadow: var(--ombra); }
+    #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: var(--superficie); box-shadow: var(--ombra); }
 
     /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
      * (scarica la scheda in PDF) ed Elimina. Prima era una fascia gialla o blu incollata sotto la barra,
@@ -86,14 +86,14 @@
     #azioniSocio { display: flex; flex-wrap: wrap; gap: 12px; }
     #azioniSocio .button { min-height: 52px; font-size: 1.1rem; font-weight: 700; gap: 10px; border: 0; padding: 0 22px; }
     #azioniSocio .button svg { flex: none; }
-    .btn-scarica { background: var(--blu); color: #fff; }
+    .btn-scarica { background: var(--blu-pieno); color: #fff; }
     .btn-scarica:hover, .btn-scarica:focus { background: var(--blu-dark); color: #fff; }
-    .btn-elimina { background: var(--errore); color: #fff; }
+    .btn-elimina { background: var(--errore-pieno); color: #fff; }
     .btn-elimina:hover, .btn-elimina:focus { background: #8E1D17; color: #fff; }
 
     /* Sezioni colorate (.sezione, .striscia, .corpo): in brand.css, uguali in tutto il sito. */
     /* Sul colore chiaro i campi e le scelte restano bianchi. */
-    .partenze { padding: .5rem; background: #fff; border: 1px solid var(--filo); border-radius: var(--raggio); }
+    .partenze { padding: .5rem; background: var(--superficie); border: 1px solid var(--filo); border-radius: var(--raggio); }
 
     /* Finestre dell'eliminazione: chi si elimina in una tabellina (tabellaDati() in shared.js). */
     .elimina-avviso { font-size: 1.2rem; }
