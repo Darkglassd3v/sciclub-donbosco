@@ -434,7 +434,9 @@ body { margin: 0; }
 }
 .barra-marchio:hover { color: #fff; }
 /* Il logo tondo, bianco col bordo giallo: quello a lettere blu sul blu non si vedrebbe. */
-.barra-marchio img { height: 46px; width: auto; display: block; }
+/* Width set too (the logo is square): Firefox sizes the image only once it is decoded,
+ * and with width: auto the name next to it jumped 46px at every page. */
+.barra-marchio img { height: 46px; width: 46px; display: block; }
 .barra-pagina, .apri-menu { display: none; }
 
 .barra-azioni { margin-left: auto; display: flex; align-items: center; gap: 8px; }
@@ -585,7 +587,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
   .button { white-space: normal; height: auto; }
   .barra-dentro { height: 56px; gap: 10px; padding: 0 10px; }
   .apri-menu { display: inline-flex; }
-  .barra-marchio img { height: 38px; }
+  .barra-marchio img { height: 38px; width: 38px; }
   .barra-marchio span, .barra-azioni { display: none; }
   .barra-pagina { display: block; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                   font-size: 18px; font-weight: 700; color: #fff; }
@@ -701,6 +703,16 @@ body:has(.fascia-vedi-come) { padding-bottom: 80px; }
  * Dove il browser non lo supporta si ricarica come prima. */
 @view-transition { navigation: auto; }
 .barra { view-transition-name: barra; }
+/* The side menu too: without a name it was part of the content and faded out and back
+ * in at every click. Bar and menu are the same on every page (test-browser/bar-steady.js),
+ * so they are not animated: the new page's ones are simply there. */
+.barra-voci { view-transition-name: menu; }
+::view-transition-old(barra), ::view-transition-old(menu) { display: none; }
+::view-transition-group(barra), ::view-transition-group(menu),
+::view-transition-new(barra), ::view-transition-new(menu) { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
 
 /* --- Impianto delle pagine ------------------------------------------------
  * docs/brand-guidelines.md, sezione 6. Ogni pagina ha la stessa larghezza (la
