@@ -364,9 +364,11 @@ body { margin: 0; }
   gap: 6px;
   margin-left: auto;
   overflow-x: auto;
-  scrollbar-width: none;
+  /* Quando le voci non ci stanno (schermo stretto, zoom) la barra di
+   * scorrimento si vede: nascosta, chi usa il mouse non saprebbe che a destra
+   * ci sono altre voci ed "Esci". Sottile, e solo quando serve. */
+  scrollbar-width: thin;
 }
-.barra-voci::-webkit-scrollbar { display: none; }
 
 .barra-voci a, .barra-voci button {
   display: inline-flex;
@@ -394,8 +396,9 @@ body { margin: 0; }
  * tranne Gestione): in maiuscolo non ci stanno accanto al nome del club, ed
  * "Esci" finirebbe fuori schermo. Resta il logo, il nome si toglie, la barra
  * si allarga a 1280px invece dei 1180px delle pagine, e le voci si stringono
- * (17px invece di 18, meno spazio dentro e fra l'una e l'altra): così a
- * 1280px ci stanno tutte (test-browser/barra-voci.js).
+ * (16px invece di 18, meno spazio dentro e fra l'una e l'altra): così a
+ * 1280px ci stanno tutte, anche coi nomi più lunghi scelti in Ruoli
+ * ("Fogli pullman"; test-browser/barra-voci.js).
  * Un limite e non "nessun limite": sugli schermi larghi la barra resta
  * centrata, invece di mandare il logo tutto a sinistra e le voci a destra. */
 html[data-ruolo="superadmin"] .barra-marchio span,
@@ -407,7 +410,7 @@ html[data-ruolo="admin"] .barra-voci { gap: 4px; }
 html[data-ruolo="superadmin"] .barra-voci a,
 html[data-ruolo="superadmin"] .barra-voci button,
 html[data-ruolo="admin"] .barra-voci a,
-html[data-ruolo="admin"] .barra-voci button { padding: 0 7px; font-size: 17px; letter-spacing: .01em; }
+html[data-ruolo="admin"] .barra-voci button { padding: 0 7px; font-size: 16px; letter-spacing: 0; }
 
 /* A+ diventa A− all'ultima grandezza: premendolo si torna al testo normale. */
 .barra-voci .voce-testo { font-weight: 700; letter-spacing: 0; }
