@@ -144,11 +144,14 @@
    * (card_gaps_from), e a inizio stagione vedrebbero 1 invece del primo numero
    * dopo i posti del direttivo.
    */
+  let letturaTessera = 0;
   async function mostraProssimaTessera() {
+    const mia = ++letturaTessera;
     const accesso = await getAccesso();
     if (!accesso || !accesso.permissions.includes("soci")) return;
     const { data, error } = await sb.rpc("next_card_number");
-    if (error || data == null) return;
+    // Una lettura arrivata dopo una più recente non riscrive un numero vecchio.
+    if (mia !== letturaTessera || error || data == null) return;
     el("prossimaTessera").innerHTML = `Prossimo numero tessera: <strong>${esc(data)}</strong>`;
     el("prossimaTessera").hidden = false;
   }
