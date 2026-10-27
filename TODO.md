@@ -26,10 +26,14 @@
       categorie `TESSERA`…, chiavi di `nav_labels`); le chiavi di localStorage (`sciclub-*`: le
       preferenze di chi usa il sito); i nomi delle pagine e la cartella `ricerca/` (indirizzi nei
       segnalibri). Passi, ognuno con tutte le prove verdi e un commit:
-      1. strumento di traduzione dei nomi (tokenizzatore JS in Python, nello scratchpad) e
-         glossario; prima le funzioni e le variabili di `shared.js`, `ricerca/comune.js`,
-         `codicefiscale.js`, `stampe.js`, `social-templates.js` e dei loro chiamanti;
-      2. funzioni e variabili interne a ogni pagina;
+      1-2. FATTO in locale il 27/10 (commit dopo le prove sulla copia): 9.128 nomi di variabili e
+         funzioni tradotti in tutti i file JS/HTML/prove con lo strumento nello scratchpad della
+         sessione (`traduci/`: `tok.py` tokenizzatore, `rinomina.py`, `glossario.json` 1.096 nomi,
+         `applica.sh` rifà tutto da capo con le correzioni a mano). Regole: proprietà (`x.nome`) e
+         chiavi (`{ nome: … }`) restano, le abbreviate si espandono (`{ testo: text }`): così
+         restano uguali database, funzione Edge (`ruolo`) e coda di Gite. A mano: `window.EXPECTED`
+         in `avvia.sh`, i nomi dentro gli `eval` delle prove node. Prove node e browser verdi.
+         Restano italiane le proprietà interne degli oggetti: da fare a parte, scegliendole;
       3. classi CSS, id, attributi data-* (non i valori), variabili CSS (`--barra-h`…);
       4. prove: nomi dei file, `FINTO`, il protocollo «RISULTATO … =NO(…)», `esegui.sh`,
          `avvia.sh`; script (`esporta-tutto.sh` → anche `backup-db.yml`; `scarica-backup.sh` →
