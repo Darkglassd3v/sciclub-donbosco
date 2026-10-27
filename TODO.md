@@ -18,26 +18,37 @@
 
 ## Richieste nuove
 
-- [ ] **3.0: il sito sul telefono** (27/10, piano approvato dall'utente: menu col pulsante «Menu»,
-      fascia di Soci su una riga sempre in fondo). Controllo a 390 px sulla copia del database:
-      Bilancio, Stagione, Cerca socio, Gite, Fogli pullman e Password a posto. Passi, ognuno con
-      un commit RED e uno GREEN:
-      0. prove a 390 px: `test-reale/chrome.js` simula il telefono sotto i 500 px
-         (`Emulation.setDeviceMetricsOverride`), `FOTO_LARGHEZZE` in `avvia.sh`; una prova per
-         tutte le pagine: niente fuori schermo, fasce fisse al massimo il 15% dell'altezza, parole
-         non spezzate a metà, pulsanti alti almeno 44 px;
-      1. menu: sul telefono logo, nome della pagina e «☰ Menu»; il pannello ha tutte le voci in
-         pulsanti grandi su due colonne, A+ ed Esci in fondo; sul computer la barra resta com'è;
-      2. Soci: fascia Totale / Residuo / Salva su una riga, circa 64 px invece di 200;
-      3. tabelle come schede sul telefono (`table.a-schede`, `brand.css:147`): Riepilogo (oggi la
-         voce va su 6 righe e il numero ci finisce sopra), Utenti (email spezzata una lettera alla
-         volta, pulsanti fuori), Gestione > Ruoli (spunte fuori schermo; una scheda per sezione) e
-         Voci del menu; importi di Pagamenti tagliati a destra;
-      4. Social, scheda del post: titolo su una riga sua e più piccolo, sotto «Pronto» e Salva;
+- [ ] **3.0: stile Material in tutto il sito, telefono, tema scuro** (27/10, approvato
+      dall'utente; immagine di riferimento: pannello Material con menu a sinistra, pulsanti
+      rettangolari in maiuscolo, gruppi di scelte attaccati, schede bianche con ombra). Colori del
+      club (blu, giallo, rosso, verde), misure grandi (pulsanti alti almeno 44 px sul telefono).
+      Passi, ognuno con un commit RED e uno GREEN:
+      0. prove: `test-reale/chrome.js` simula il telefono sotto i 500 px; `telefono-tutte.js`
+         (390 px, tutte le pagine: niente fuori schermo o tagliato, fasce fisse al massimo 160 px,
+         parole intere, niente fuori dalle celle, pulsanti alti almeno 44 px) e `stile-tutte.js`
+         (computer: menu a colonna, pulsanti rettangolari da 4 px in maiuscolo, schede da 8 px con
+         ombra);
+      1. impianto: sul computer una barra in alto larga quanto lo schermo (logo, nome del club, a
+         destra il tema chiaro/scuro, A+, il nome di chi è entrato e Esci) e il menu a colonna a
+         sinistra, blu del club, una voce per riga con l'icona; sul telefono la barra in alto ha
+         «☰ Menu» e il nome della pagina, il menu si apre come pannello;
+      2. pulsanti, gruppi di scelte (Da fare / Pubblicati, giorni delle gite, schede di Gestione e
+         Social), schede ed etichette con le regole di Material in `brand.css` e
+         `ricerca/stile.css`, al posto di pillole, rettangoli da 8 px e riquadri da 18 px;
+      3. tema scuro: variabili di colore in `brand.css`, i componenti di Bulma coperti, scelta
+         ricordata nel browser e messa prima del primo disegno (script nell'head delle pagine),
+         contrasti controllati anche al buio;
+      4. Soci: fascia Totale / Residuo / Salva su una riga, circa 64 px invece di 200;
+      5. tabelle come schede sul telefono (`table.a-schede`, `brand.css:147`): Riepilogo (la voce
+         va su 6 righe e il numero ci finisce sopra), Utenti (email spezzata, pulsanti fuori),
+         Gestione > Ruoli (spunte fuori schermo; una scheda per sezione) e Voci del menu; importi di
+         Pagamenti tagliati a destra;
+      6. Social, scheda del post: titolo su una riga sua e più piccolo, sotto «Pronto» e Salva;
          anteprima larga quanto lo schermo;
-      5. Impostazioni (pagina lunga 12.000 px) e Assicurazione: campi corti affiancati;
-      6. foto a 390 px prima e dopo, Lighthouse in modalità telefono, tutte le prove,
-         `/ecc:code-review`, rilascio 3.0 (`docs/SVILUPPO.md`).
+      7. Impostazioni (pagina lunga 12.000 px) e Assicurazione: campi corti affiancati;
+      8. foto a 1280 e 390 px prima e dopo, chiaro e scuro, Lighthouse, tutte le prove,
+         `/ecc:code-review`, rilascio 3.0 (`docs/SVILUPPO.md`); aggiornare
+         `docs/brand-guidelines.md` (oggi dice pillole e niente maiuscolo).
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
