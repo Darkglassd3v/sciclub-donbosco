@@ -295,6 +295,10 @@ dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-he
   background: var(--superficie); border: 1px solid var(--filo); color: var(--blu);
 }
 .button.is-light:hover { background: var(--blu-light); border-color: var(--blu-light); color: var(--blu-dark); }
+/* «Blu chiaro» (Riscarica, Modifica, Duplica): la regola di Bulma per is-link.is-light
+ * è più precisa di .button.is-link e lasciava il suo lilla, anche nel tema scuro. */
+.button.is-link.is-light { background: var(--blu-light); border-color: var(--blu-light); color: var(--blu); }
+.button.is-link.is-light:hover { background: color-mix(in srgb, var(--blu-light) 85%, var(--blu)); color: var(--blu); }
 
 .button.is-success { background: var(--ok-pieno); border-color: var(--ok-pieno); color: #fff; }
 .button.is-success:hover { background: #0F5C34; border-color: #0F5C34; }
