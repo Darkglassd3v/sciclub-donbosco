@@ -158,7 +158,7 @@ Base 17px invece dei consueti 16: un punto in più si legge, non si nota.
 
 Mai `text-transform: uppercase`: si legge più lentamente e non aggiunge
 informazione. I titoli si distinguono per corpo e peso, non per maiuscolo.
-Unica eccezione le voci della barra di navigazione (18px, 600, tracking
+Unica eccezione le voci della barra di navigazione (18px, 700, tracking
 `.03em`): sono poche parole sempre uguali, e in maiuscolo si trovano prima.
 I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
@@ -252,6 +252,11 @@ Le misure servono a chi ha la vista lunga e il mouse impreciso.
 
 Raggi: 12px sui campi, 18px sulle schede, pillola sui pulsanti e sulle etichette.
 
+Le voci della barra di navigazione (dal 27/10/2026) sono pulsanti in stile Material: alti
+52px (48 sul telefono), angoli di 8px, fondo #E7EFF7 con scritta #084C8D e un'ombra
+leggera; sotto il mouse #D3E2F2, premuti #C1D5EB; la pagina aperta piena #084C8D con
+scritta bianca; Gestione in #B3261E su #FBE9E7.
+
 Il pulsante che cancella non è mai adiacente a quello che salva.
 
 ### Campi
@@ -279,8 +284,8 @@ lasciati, e cambia solo il contenuto. Mockup: «Impianto delle pagine»
 (proposta del 01/10/2026).
 
 ```
-barra (68px, ferma)
-└─ .container-main    larga come la barra: max 1180px (1280 per il superadmin), margini 18px (16 sul telefono)
+barra (ferma, larga quanto lo schermo: 76px, più alta se le voci vanno su due righe)
+└─ .container-main    max 1180px (1280 per il superadmin), margini 18px (16 sul telefono)
    ├─ .schede-gestione / .schede-social   solo nelle sezioni con più pagine
    ├─ h1.title.is-4
    ├─ p.occhiello     una frase: a cosa serve la pagina
@@ -290,7 +295,8 @@ barra (68px, ferma)
 
 | Regola | Misure |
 |--------|--------|
-| **Una larghezza sola** | `.container-main` max 1180px (= barra; 1280 per il superadmin, che ha la barra più larga), allineata al logo. Nessuna pagina ha una larghezza sua. Le pagine Gite e Cerca socio usano `.wrap` con le stesse misure. |
+| **Una larghezza sola** | `.container-main` max 1180px (1280 per il superadmin), centrata. Nessuna pagina ha una larghezza sua. Le pagine Gite e Cerca socio usano `.wrap` con le stesse misure. |
+| **Barra** | Larga quanto lo schermo: il logo a sinistra, le voci centrate sullo schermo finché c'è posto, poi si allungano verso destra e sul computer vanno a capo (mai tagliate). Sul telefono una riga sola che scorre di lato. L'altezza vera è in `--barra-h` (`altezzaBarra()` in `web/shared.js` e `ricerca/comune.js`): ci si attaccano sotto le strisce delle sezioni. |
 | **Testata fissa** | 24px sotto la barra; schede, 16px; titolo 32px (26 sul telefono); occhiello in #4A5361, 8px sotto il titolo, 24px prima del contenuto. |
 | **Schede** | Un solo componente `.schede` per Gestione e Social: pillole da 48px, bordo #D5DAE1, la scheda aperta blu piena (`aria-current="page"`). |
 | **Riquadri** | Un solo `.riquadro`: bianco, raggio 18px, ombra `--ombra`, padding 28px (20 sul telefono), 24px fra uno e l'altro, sempre largo quanto la pagina. Dentro: `h2` (22px, 600), frase facoltativa `.occhiello`, contenuto, `.azioni`. |

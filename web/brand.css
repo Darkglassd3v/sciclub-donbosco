@@ -319,71 +319,85 @@ body { margin: 0; }
  * quello sbagliato. Qui le voci ci sono sempre tutte, nello stesso ordine, e
  * quella della pagina aperta è solo colorata.
  *
- * L'altezza è fissa e dichiarata (--barra-h): la barra non cresce, non va a
- * capo e non si muove quando il contenuto sotto si ricarica. Su schermo
- * stretto l'elenco scorre di lato invece di andare a capo, che è ciò che la
- * faceva cambiare altezza. */
-:root { --barra-h: 68px; }
+ * Larga quanto lo schermo (27/10): il logo a sinistra, le voci in un gruppo
+ * al centro che si allarga verso i lati quando sono tante. Sul computer, se
+ * non ci stanno su una riga (tante voci, nomi lunghi scelti in Ruoli, un
+ * carattere più largo su un altro computer, lo zoom), vanno a capo e la barra
+ * si alza: la riga fissa di prima le tagliava, ed "Esci" spariva. L'altezza
+ * vera la scrive seguiAltezzaBarra() (web/shared.js, ricerca/comune.js) in
+ * --barra-h, e sotto ci si attaccano le strisce delle sezioni. Sul telefono
+ * resta una riga sola che scorre di lato: due righe ruberebbero mezzo schermo. */
+:root { --barra-h: 77px; }
 
 .barra {
   position: sticky;
   top: 0;
   z-index: 100;
-  /* La barra resta in px anche col testo ingrandito: più grande non ci
-   * starebbe su una riga, e deve restare sempre uguale e al suo posto. */
+  /* La barra resta in px anche col testo ingrandito: deve restare sempre
+   * uguale e al suo posto. */
   font-size: 17px;
   background: var(--superficie);
   border-bottom: 1px solid var(--filo);
 }
 
+/* Tre colonne: il logo, le voci, e una vuota che fa da contrappeso al logo,
+ * così le voci stanno al centro dello schermo finché c'è posto. Quando sono
+ * tante, la colonna vuota si stringe fino a sparire e le voci prendono tutto
+ * lo spazio, poi vanno a capo. */
 .barra-dentro {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 18px;
-  height: var(--barra-h);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) auto 1fr;
   align-items: center;
-  gap: 18px;
+  column-gap: 18px;
+  min-height: 76px;
+  padding: 0 18px;
 }
 
 .barra-marchio {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 0 0 auto;
+  justify-self: start;
+  white-space: nowrap;
   text-decoration: none;
   color: var(--testo);
   font-weight: 600;
   letter-spacing: -.02em;
 }
 .barra-marchio img { height: 40px; width: auto; display: block; }
+/* Superadmin e admin hanno quasi tutte le voci: il logo basta, e il posto del
+ * nome va alle voci. */
+html[data-ruolo="superadmin"] .barra-marchio span,
+html[data-ruolo="admin"] .barra-marchio span { display: none; }
 
 .barra-voci {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  overflow-x: auto;
-  /* Quando le voci non ci stanno (schermo stretto, zoom) la barra di
-   * scorrimento si vede: nascosta, chi usa il mouse non saprebbe che a destra
-   * ci sono altre voci ed "Esci". Sottile, e solo quando serve. */
-  scrollbar-width: thin;
+  gap: 8px;
+  padding: 10px 0;
 }
 
+/* Pulsanti come in Material: rettangoli con gli angoli appena arrotondati,
+ * fondo azzurro e un'ombra leggera, così si vede che si premono; più scuri
+ * sotto il mouse, ancora di più premuti. Pieno blu quello della pagina aperta. */
 .barra-voci a, .barra-voci button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   white-space: nowrap;
   flex: 0 0 auto;
-  height: var(--tocco);
-  padding: 0 16px;
-  border: 1px solid var(--filo);
-  border-radius: 999px;
-  background: var(--superficie);
+  min-height: 52px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--blu-light);
   color: var(--blu);
+  box-shadow: 0 1px 2px rgba(8, 76, 141, .2);
   font: inherit;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   /* Unica eccezione al tondo minuscolo: le voci della barra sono poche e
    * sempre le stesse, in maiuscolo si trovano a colpo d'occhio. Il tracking
    * largo evita che le lettere si impastino. */
@@ -391,42 +405,29 @@ body { margin: 0; }
   letter-spacing: .03em;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color .15s, box-shadow .15s;
 }
-/* Il superadmin ha dieci voci più A+ ed Esci, l'admin fino a nove (tutte
- * tranne Gestione): in maiuscolo non ci stanno accanto al nome del club, ed
- * "Esci" finirebbe fuori schermo. Resta il logo, il nome si toglie, la barra
- * si allarga a 1280px invece dei 1180px delle pagine, e le voci si stringono
- * (16px invece di 18, meno spazio dentro e fra l'una e l'altra): così a
- * 1280px ci stanno tutte, anche coi nomi più lunghi scelti in Ruoli
- * ("Fogli pullman"; test-browser/barra-voci.js).
- * Un limite e non "nessun limite": sugli schermi larghi la barra resta
- * centrata, invece di mandare il logo tutto a sinistra e le voci a destra. */
-html[data-ruolo="superadmin"] .barra-marchio span,
-html[data-ruolo="admin"] .barra-marchio span { display: none; }
-html[data-ruolo="superadmin"] .barra-dentro,
-html[data-ruolo="admin"] .barra-dentro { max-width: 1280px; }
-html[data-ruolo="superadmin"] .barra-voci,
-html[data-ruolo="admin"] .barra-voci { gap: 4px; }
-html[data-ruolo="superadmin"] .barra-voci a,
-html[data-ruolo="superadmin"] .barra-voci button,
-html[data-ruolo="admin"] .barra-voci a,
-html[data-ruolo="admin"] .barra-voci button { padding: 0 7px; font-size: 16px; letter-spacing: 0; }
 
 /* A+ diventa A− all'ultima grandezza: premendolo si torna al testo normale. */
-.barra-voci .voce-testo { font-weight: 700; letter-spacing: 0; }
+.barra-voci .voce-testo { letter-spacing: 0; }
 .barra-voci .voce-testo::before { content: "A+"; }
 html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 .barra-voci a:hover, .barra-voci button:hover {
-  background: var(--blu-light);
-  border-color: var(--blu-light);
+  background: #D3E2F2;
+  box-shadow: 0 2px 6px rgba(8, 76, 141, .25);
 }
-.barra-voci [aria-current="page"] {
+.barra-voci a:active, .barra-voci button:active {
+  background: #C1D5EB;
+  box-shadow: none;
+}
+.barra-voci [aria-current="page"],
+.barra-voci [aria-current="page"]:hover {
   background: var(--blu);
-  border-color: var(--blu);
   color: #fff;
 }
 /* La voce da superadmin (Gestione) si distingue anche da qui. */
-.barra-voci .voce-rischiosa { color: var(--errore); }
+.barra-voci .voce-rischiosa { color: var(--errore); background: var(--errore-bg); }
+.barra-voci .voce-rischiosa:hover { background: #F6D5D1; }
 /* display:inline-flex qui sopra vincerebbe sull'attributo hidden. */
 .barra-voci [hidden] { display: none; }
 /* Schede di Gestione (Amministrazione, Utenti, Impostazioni, Ruoli):
@@ -494,11 +495,14 @@ html[data-testo="2"] .barra-voci .voce-testo::before { content: "A\2212"; }
 }
 
 @media screen and (max-width: 768px) {
-  :root { --barra-h: 60px; }
-  .barra-dentro { padding: 0 12px; gap: 10px; }
+  :root { --barra-h: 65px; }
+  .barra-dentro { grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; min-height: 64px; padding: 0 12px; }
   .barra-marchio img { height: 32px; }
   .barra-marchio span { display: none; }
-  .barra-voci a, .barra-voci button { height: 44px; padding: 0 14px; font-size: 17px; }
+  /* Una riga sola che scorre di lato, con la barra di scorrimento sottile: si vede che
+   * a destra ci sono altre voci. */
+  .barra-voci { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: thin; padding: 8px 0; }
+  .barra-voci a, .barra-voci button { min-height: 48px; padding: 0 14px; font-size: 17px; }
 }
 
 /* Schermo basso (portatile con lo zoom al 150-200%, telefono in orizzontale):

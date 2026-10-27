@@ -375,9 +375,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   for (const voce of voci) {
     voce.hidden = !(accesso && accesso.permissions.includes(voce.dataset.permesso));
   }
+  altezzaBarra();
   mostraVediCome(accesso);
   if (accesso) nomiBarra().catch(() => {});
 });
+
+/**
+ * L'altezza vera della barra in --barra-h: sul computer la barra va su due
+ * righe quando le voci non ci stanno (brand.css), e le strisce delle sezioni,
+ * gli avvisi e la testa dei post si attaccano sotto di lei, non sotto
+ * un'altezza fissa. Cambia solo con le voci, coi loro nomi e con la finestra
+ * (anche lo zoom): si ricalcola lì. La stessa in ricerca/comune.js.
+ */
+function altezzaBarra() {
+  const barra = document.querySelector(".barra");
+  if (barra) document.documentElement.style.setProperty("--barra-h", `${barra.offsetHeight}px`);
+}
+window.addEventListener("resize", altezzaBarra);
 
 /**
  * I nomi delle voci della barra scelti in Gestione > Ruoli (tabella
@@ -396,6 +410,7 @@ function scriviNomiBarra() {
     if (voce.dataset.nome === undefined) voce.dataset.nome = voce.textContent;
     voce.textContent = NOMI_BARRA[voce.dataset.permesso] || voce.dataset.nome;
   });
+  altezzaBarra();
 }
 
 /** Rilegge i nomi dal database, li ricorda e li scrive nella barra. */
