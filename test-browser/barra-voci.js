@@ -6,7 +6,8 @@
 // Sul computer (oltre 768 px):
 // - nessuna voce tagliata o fuori schermo, «Cerca socio» compresa, e niente scorrimento di lato:
 //   con qualunque carattere (sui server di GitHub è più largo) le voci vanno su due righe;
-// - ogni riga di voci è centrata; con una riga sola che ci sta, al centro dello schermo;
+// - ogni riga di voci è centrata; con una riga sola, al centro dello schermo se c'è posto accanto
+//   al logo, se no si allunga verso destra;
 // - pulsanti alti almeno 48 px, con gli angoli arrotondati al massimo di 12 px;
 // - --barra-h è l'altezza vera della barra: le strisce delle sezioni (sticky) si attaccano sotto.
 // Sul telefono (fino a 768 px): una riga sola, che scorre di lato con la barra di scorrimento.
@@ -46,7 +47,9 @@
       esito(`${ruolo}Centrate`, righe.flatMap((g, i) => {
         const centro = (g.left + g.right) / 2;
         if (Math.abs(centro - centroNav) > 2) return [`riga ${i + 1} a ${Math.round(centro)}, barra a ${Math.round(centroNav)}`];
-        if (righe.length === 1 && g.left > logo && Math.abs(centro - html.clientWidth / 2) > 2) return [`riga a ${Math.round(centro)}, schermo a ${Math.round(html.clientWidth / 2)}`];
+        // Al centro dello schermo quando c'è posto fra il logo e il bordo; se no si allunga verso destra.
+        const posto = html.clientWidth / 2 - (g.right - g.left) / 2 >= logo + 18;
+        if (righe.length === 1 && posto && Math.abs(centro - html.clientWidth / 2) > 2) return [`riga a ${Math.round(centro)}, schermo a ${Math.round(html.clientWidth / 2)}`];
         return [];
       }));
       esito(`${ruolo}Pulsanti`, visibili.filter((x) => x.offsetHeight < 48 || parseFloat(getComputedStyle(x).borderTopLeftRadius) > 12)
@@ -60,7 +63,9 @@
     html.dataset.ruolo = "admin";
     html.dataset.permessi = html.dataset.permessi.split(" ").filter((p) => p !== "gestione").join(" ");
     document.querySelector('.barra-voci [data-permesso="gestione"]').hidden = true;
-    await aspetta(200);   // il ResizeObserver che scrive --barra-h arriva dopo il ridisegno
+    // Le voci cambiano senza ricaricare: la pagina ricalcola l'altezza come quando cambia la finestra.
+    window.dispatchEvent(new Event("resize"));
+    await aspetta(100);
     prova("admin");
     document.title = "RISULTATO " + r.join(" ");
   }, 1500));
