@@ -19,17 +19,6 @@
 
 ## Richieste nuove
 
-- [ ] **Pagamenti: il numero tessera di ogni socio** (27/10, l'utente: «quando vengono a pagare
-      dopo che hanno dato un acconto bisogna emettere una ricevuta che abbia il numero
-      tessera»). Nella riga del socio, accanto al nome e ben visibile (anche sul telefono);
-      senza numero, la riga lo dice. Con TDD, dopo il commit dei nomi in inglese.
-      Dove riprendere (27/10): 1) le prove sulla copia del database dopo la rinomina erano in
-      corso; se verdi, commit di tutti i file di `web/`, `ricerca/`, `test-browser/`,
-      `test-reale/` toccati dalla rinomina (non `test-browser/pagamenti-tessera.js`); 2) commit
-      RED di `test-browser/pagamenti-tessera.js` (già scritto, già in `esegui.sh` a 1280 e 500
-      px; deve dare «conNumero=NO senzaNumero=NO»); 3) GREEN: in `memberRow()` di
-      `web/admin.html` uno `<span class="numero-tessera">` accanto al nome, «Tessera n° 33» o
-      «Senza numero tessera»; prove, push, deploy, `dev`.
 - [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
       con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
       funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli
@@ -37,14 +26,14 @@
       categorie `TESSERA`…, chiavi di `nav_labels`); le chiavi di localStorage (`sciclub-*`: le
       preferenze di chi usa il sito); i nomi delle pagine e la cartella `ricerca/` (indirizzi nei
       segnalibri). Passi, ognuno con tutte le prove verdi e un commit:
-      1-2. FATTO in locale il 27/10 (commit dopo le prove sulla copia): 9.128 nomi di variabili e
-         funzioni tradotti in tutti i file JS/HTML/prove con lo strumento nello scratchpad della
-         sessione (`traduci/`: `tok.py` tokenizzatore, `rinomina.py`, `glossario.json` 1.096 nomi,
-         `applica.sh` rifà tutto da capo con le correzioni a mano). Regole: proprietà (`x.nome`) e
-         chiavi (`{ nome: … }`) restano, le abbreviate si espandono (`{ testo: text }`): così
-         restano uguali database, funzione Edge (`ruolo`) e coda di Gite. A mano: `window.EXPECTED`
-         in `avvia.sh`, i nomi dentro gli `eval` delle prove node. Prove node e browser verdi.
-         Restano italiane le proprietà interne degli oggetti: da fare a parte, scegliendole;
+      1-2. FATTO il 27/10 (commit `7ac20ce`): 9.128 nomi di variabili e funzioni tradotti in tutti
+         i file JS/HTML/prove con lo strumento nello scratchpad della sessione (`traduci/`:
+         `tok.py`, `rinomina.py`, `glossario.json` 1.096 nomi). Proprietà (`x.nome`) e chiavi
+         (`{ nome: … }`) restano: così restano uguali database, funzione Edge (`ruolo`) e coda di
+         Gite. Dopo la review: corretti i nomi tradotti col senso sbagliato (`caption`, `real`,
+         `done`, `exit`…) e i commenti e i documenti che citavano le funzioni coi nomi vecchi.
+         Restano italiane le proprietà interne degli oggetti e alcuni nomi fuori glossario
+         (`coda`, `nome`, `ora`, `dove`…): da fare col passo 5;
       3. classi CSS, id, attributi data-* (non i valori), variabili CSS (`--barra-h`…);
       4. prove: nomi dei file, `FINTO`, il protocollo «RISULTATO … =NO(…)», `esegui.sh`,
          `avvia.sh`; script (`esporta-tutto.sh` → anche `backup-db.yml`; `scarica-backup.sh` →
@@ -66,6 +55,8 @@
 
 ## Da provare sul sito vero
 
+- Pagamenti: numero tessera sotto il nome di ogni socio («Tessera n° …», o «Senza numero
+  tessera»), anche sul telefono, per la ricevuta di chi torna a pagare dopo l'acconto.
 - Soci: totale fisso coi prezzi nuovi (cambiando una voce cambia solo la differenza), «Calcola»
   del codice fiscale, numeri tessera liberi e prima tessera dal 21, presciistica con e senza
   assicurazione, agevolazione famiglia (capofamiglia con due familiari, un familiare col nucleo
@@ -101,9 +92,9 @@
       trovate, 9 con data di nascita diversa, 73 codici dei fogli che non passano il controllo.
 - [ ] Controllare LACHELLI: presciistica Total Sport (120) e totale 115.
 - [ ] Assicurazione: tracciato dell'Excel da definire con le specifiche dell'assicurazione.
-      `COLONNE_ASSICURAZIONE` in `web/shared.js` (colonne provvisorie), usate dalla pagina
+      `INSURANCE_COLUMNS` in `web/shared.js` (colonne provvisorie), usate dalla pagina
       Assicurazione e dal Riepilogo; campi nuovi anche in `insurance_members()`
-      (`supabase/schema.sql`) e in `scaricaSoci()` (`web/riepilogo.html`).
+      (`supabase/schema.sql`) e in `downloadMembers()` (`web/riepilogo.html`).
 
 ## Grafica
 
