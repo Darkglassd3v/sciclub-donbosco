@@ -19,6 +19,10 @@
 
 ## Richieste nuove
 
+- [ ] **Pagamenti: il numero tessera di ogni socio** (27/10, l'utente: «quando vengono a pagare
+      dopo che hanno dato un acconto bisogna emettere una ricevuta che abbia il numero
+      tessera»). Nella riga del socio, accanto al nome e ben visibile (anche sul telefono);
+      senza numero, la riga lo dice. Con TDD, dopo il commit dei nomi in inglese.
 - [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
       con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
       funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli
