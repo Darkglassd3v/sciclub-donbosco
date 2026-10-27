@@ -19,13 +19,24 @@
 
 ## Richieste nuove
 
-- [ ] **Codice in inglese** (prossimo lavoro, su `3.0-SNAPSHOT`) (27/10, l'utente: «voglio tutto in inglese,
-      dove non causa problemi con il db»; scelto: nomi e commenti, dopo la grafica). Funzioni,
-      variabili, classi CSS, id, nomi dei file di prova e commenti in inglese; le scritte per gli
-      utenti restano in italiano; i nomi del database sono già inglesi. Un passo a sé, con tutte le
-      prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
-      commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
-      resta in italiano.
+- [ ] **Codice in inglese** (27/10, l'utente: «voglio tutto in inglese, dove non causa problemi
+      con il db»; scelto: nomi e commenti; avviato su `3.0-SNAPSHOT`). Circa 24.500 righe: 410
+      funzioni, 780 variabili, 300 classi CSS, 320 id. Restano in italiano: le scritte per gli
+      utenti; i valori del database (permessi `soci`/`pagamenti`/…, ruoli, giorni `SABATO`…,
+      categorie `TESSERA`…, chiavi di `nav_labels`); le chiavi di localStorage (`sciclub-*`: le
+      preferenze di chi usa il sito); i nomi delle pagine e la cartella `ricerca/` (indirizzi nei
+      segnalibri). Passi, ognuno con tutte le prove verdi e un commit:
+      1. strumento di traduzione dei nomi (tokenizzatore JS in Python, nello scratchpad) e
+         glossario; prima le funzioni e le variabili di `shared.js`, `ricerca/comune.js`,
+         `codicefiscale.js`, `stampe.js`, `social-templates.js` e dei loro chiamanti;
+      2. funzioni e variabili interne a ogni pagina;
+      3. classi CSS, id, attributi data-* (non i valori), variabili CSS (`--barra-h`…);
+      4. prove: nomi dei file, `FINTO`, il protocollo «RISULTATO … =NO(…)», `esegui.sh`,
+         `avvia.sh`; script (`esporta-tutto.sh` → anche `backup-db.yml`; `scarica-backup.sh` →
+         reinstallare il timer con `--installa`);
+      5. commenti in inglese in tutti i file (anche `schema.sql`: solo il file, la produzione
+         non si tocca);
+      6. regola in `CLAUDE.md`, `docs/SVILUPPO.md`, `PROJECT-CONTEXT.md`; review; push e deploy.
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
