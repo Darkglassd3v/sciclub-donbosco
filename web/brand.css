@@ -402,7 +402,9 @@ body { margin: 0; }
  * (barHeight() in shared.js e comune.js): sotto ci si attaccano le strisce
  * delle sezioni. --menu-l è la larghezza della colonna, 0 sul telefono: le
  * fasce fisse in fondo (Totale di Soci, "Vedi come") partono da lì. */
-:root { --barra-h: 64px; --menu-l: 240px; }
+/* --barra-h counts .barra-dentro (64px) plus the 2px of the progress line inside the
+ * bar: with the real height from the start, barHeight() does not move the page. */
+:root { --barra-h: 66px; --menu-l: 240px; }
 
 .barra {
   position: fixed;
@@ -439,8 +441,13 @@ body { margin: 0; }
 /* Chi è entrato: l'email e sotto il ruolo con cui guarda il sito. */
 .barra-utente { display: flex; flex-direction: column; align-items: flex-end; min-width: 0; padding: 0 8px; line-height: 1.25; }
 .barra-utente:empty { display: none; }
-.barra-utente .chi { font-weight: 600; color: #fff; }
-.barra-utente .ruolo { font-size: 14px; color: #D6E4F2; }
+/* Before my_access answers, who is logged in comes from the last visit: the head script
+ * puts email and role in --chi and --ruolo, so the bar does not move when the answer comes. */
+html[data-chi] .barra-utente:empty { display: flex; }
+html[data-chi] .barra-utente:empty::before { content: var(--chi); }
+html[data-chi] .barra-utente:empty::after { content: var(--ruolo); }
+.barra-utente .chi, .barra-utente:empty::before { font-weight: 600; color: #fff; }
+.barra-utente .ruolo, .barra-utente:empty::after { font-size: 14px; color: #D6E4F2; }
 
 /* Tema, A+, Esci e Menu: pulsanti Material, rettangoli da 4px alti 44, bianchi
  * sul blu della barra e del menu. */
@@ -573,7 +580,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
 }
 
 @media screen and (max-width: 768px) {
-  :root { --barra-h: 56px; --menu-l: 0px; }
+  :root { --barra-h: 58px; --menu-l: 0px; }
   /* Un pulsante con la scritta lunga va a capo invece di uscire dallo schermo. */
   .button { white-space: normal; height: auto; }
   .barra-dentro { height: 56px; gap: 10px; padding: 0 10px; }
@@ -601,7 +608,6 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
   .menu-fondo .barra-utente .chi { color: #fff; }
   .menu-fondo .barra-utente .ruolo { color: #D6E4F2; }
   .menu-fondo .voce-esci { margin-left: auto; }
-}
 }
 
 

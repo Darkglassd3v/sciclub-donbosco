@@ -95,11 +95,14 @@ async function getProfile() {
  * li scrive su <html> prima del primo disegno (vedi brand.css), così le voci
  * non compaiono a scatti. Stanno in localStorage per valere anche in una
  * scheda nuova. null li dimentica (logout, niente sessione).
+ * Email and role name too: the head script shows them in the user box (brand.css,
+ * --chi and --ruolo) before my_access answers.
  */
 function rememberAccess(access) {
   try {
     if (access) localStorage.setItem("sciclub-ruolo", JSON.stringify(
-      { role: access.role, permissions: access.permissions }));
+      { role: access.role, permissions: access.permissions,
+        email: access.email || "", roleName: ROLE_NAMES[access.role] || access.role }));
     else localStorage.removeItem("sciclub-ruolo");
   } catch (e) { /* storage negato: la barra si aggiorna come prima */ }
   const html = document.documentElement;
@@ -109,6 +112,7 @@ function rememberAccess(access) {
   } else {
     delete html.dataset.ruolo;
     delete html.dataset.permessi;
+    delete html.dataset.chi;
   }
 }
 
