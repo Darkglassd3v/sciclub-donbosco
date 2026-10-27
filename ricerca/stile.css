@@ -127,6 +127,10 @@ ul.risultati li { margin-bottom: 12px; }
 .contatti a:active { transform: translateY(1px); }
 
 /* --- Avvisi ------------------------------------------------------------- */
+/* Il prossimo numero tessera, in cima: in stagione si riparte da qui. Il verde della tessera. */
+.prossima-tessera { margin: 4px 0 18px; padding: 14px 18px; border-radius: var(--raggio);
+                    background: var(--ok-bg); color: var(--testo); font-size: 1.15rem; }
+.prossima-tessera strong { color: var(--ok); font-size: 1.5rem; margin-left: 6px; }
 .avviso { padding: 16px 18px; border-radius: var(--raggio); margin-top: 16px; font-weight: 600; }
 .avviso-errore { background: var(--errore-bg); color: var(--errore); }
 .avviso-vuoto  { background: var(--giallo-light); color: var(--giallo-dark); }

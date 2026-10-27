@@ -49,6 +49,9 @@
   link (Instagram, e Facebook se la pagina ha lo sticker).
 - Testi nuovi in tutte le pagine e accessibilità (link sottolineati, lettore di schermo).
 - Il primo backup col file per Excel: aprire `dati-AAAA-MM-GG.7z` con 7-Zip e `soci.csv` in Excel.
+- Barra da admin e da superadmin sul PC del club: tutte le voci, «Cerca socio» compresa, ed
+  «Esci» in vista. Cerca socio: il prossimo numero tessera in cima e la ricerca per numero
+  («33», «rossi 33»). Soci: il numero tessera proposto è il primo campo del modulo.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
@@ -112,6 +115,12 @@
       quale è giusto prima di toccarlo.
 
 ## Da decidere
+
+- Soci, «Leggi la scheda» (23/10, rimandato dall'utente): foto della scheda di carta con la
+  fotocamera, letta da Claude in una Edge Function (come `supabase/functions/crea-utente`), modulo
+  compilato senza salvare, totale ricontrollato col listino. Circa 3 centesimi a scheda, serve un
+  account Anthropic e una riga nell'informativa privacy (le foto vanno ad Anthropic, negli USA).
+  Prima una prova con 2-3 schede finte fotografate dal portatile.
 
 - Bilancio, voce Sponsor: basta il nome scritto a mano, o serve il legame con l'elenco degli
   sponsor di Social (colonna nuova; oggi chi ha il bilancio non legge quell'elenco)?

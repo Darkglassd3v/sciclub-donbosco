@@ -11,10 +11,10 @@ const path = require("path");
 // comune.js definisce funzioni pure in cima e tocca il browser solo dentro
 // proteggiPagina(): si può caricare qui senza finta finestra.
 const sorgente = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
-const { pezzi, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+const { pezzi, numeriTessera, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
         giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile } =
   (0, eval)(`(() => { ${sorgente}
-    return { pezzi, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
+    return { pezzi, numeriTessera, filtroPezzo, chiaveNome, evidenzia, numeroWhatsapp, numeroChiamata, contattiHtml, testo,
              giornoAbbonamento, etichettaGiorno, messaggioErrore, ritentabile }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
@@ -37,6 +37,17 @@ assert.deepStrictEqual(pezzi("cos*,ni.eq.1"), ["cos", "nieq"]);
 
 // Al massimo quattro pezzi: oltre, la URL del filtro cresce senza servire.
 assert.strictEqual(pezzi("a1 bb cc dd ee ff").length, 4);
+
+// Il numero tessera si cerca come il nome: le cifre scritte sono numeri tessera, uguali e
+// non «che iniziano per» (si cerca la tessera 12, non la 120). "0021" è la tessera 21,
+// come la salva Soci (numeroTessera() in web/index.html); i nomi restano nei pezzi.
+assert.deepStrictEqual(numeriTessera("125"), ["125"]);
+assert.deepStrictEqual(numeriTessera("0021"), ["21"]);
+assert.deepStrictEqual(numeriTessera("rossi 125"), ["125"]);
+assert.deepStrictEqual(pezzi("rossi 125"), ["rossi"]);
+assert.deepStrictEqual(numeriTessera("7"), ["7"]);
+assert.deepStrictEqual(numeriTessera("rossi"), []);
+assert.deepStrictEqual(numeriTessera(null), []);
 
 // Il filtro è quello di sempre: inizio della parola, nel cognome o nel nome.
 assert.strictEqual(filtroPezzo("cos"),
