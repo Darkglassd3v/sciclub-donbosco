@@ -25,41 +25,13 @@
       prove come rete, poi un rilascio. Alla fine cambiare la regola in `CLAUDE.md` («Interfaccia,
       commenti e variabili JS in italiano») e in `docs/SVILUPPO.md`. Fino ad allora il codice nuovo
       resta in italiano.
-- [ ] **3.0: stile Material in tutto il sito, telefono, tema scuro** (27/10, approvato
-      dall'utente; immagine di riferimento: pannello Material con menu a sinistra, pulsanti
-      rettangolari in maiuscolo, gruppi di scelte attaccati, schede bianche con ombra). Colori del
-      club (blu, giallo, rosso, verde), misure grandi (pulsanti alti almeno 44 px sul telefono).
-      Passi, ognuno con un commit RED e uno GREEN:
-      0. prove: `test-reale/chrome.js` simula il telefono sotto i 500 px; `telefono-tutte.js`
-         (390 px, tutte le pagine: niente fuori schermo o tagliato, fasce fisse al massimo 160 px,
-         parole intere, niente fuori dalle celle, pulsanti alti almeno 44 px) e `stile-tutte.js`
-         (computer: menu a colonna, pulsanti rettangolari da 4 px in maiuscolo, schede da 8 px con
-         ombra);
-      1. impianto: sul computer una barra in alto larga quanto lo schermo (logo, nome del club, a
-         destra il tema chiaro/scuro, A+, il nome di chi è entrato e Esci) e il menu a colonna a
-         sinistra, blu del club, una voce per riga con l'icona; sul telefono la barra in alto ha
-         «☰ Menu» e il nome della pagina, il menu si apre come pannello. Gestione e Social sono
-         gruppi che si aprono e chiudono (freccia, come nell'immagine del 27/10): Gestione in
-         Amministrazione, Utenti, Impostazioni, Ruoli e permessi; Social in Post (col numero da
-         fare), Grafiche, Impostazioni. Al loro posto spariscono le schede in cima alle pagine
-         (`.schede-gestione`, `.schede-social`);
-      2. pulsanti, gruppi di scelte (Da fare / Pubblicati, giorni delle gite, schede di Gestione e
-         Social), schede ed etichette con le regole di Material in `brand.css` e
-         `ricerca/stile.css`, al posto di pillole, rettangoli da 8 px e riquadri da 18 px;
-      3. tema scuro: variabili di colore in `brand.css`, i componenti di Bulma coperti, scelta
-         ricordata nel browser e messa prima del primo disegno (script nell'head delle pagine),
-         contrasti controllati anche al buio;
-      4. Soci: fascia Totale / Residuo / Salva su una riga, circa 64 px invece di 200;
-      5. tabelle come schede sul telefono (`table.a-schede`, `brand.css:147`): Riepilogo (la voce
-         va su 6 righe e il numero ci finisce sopra), Utenti (email spezzata, pulsanti fuori),
-         Gestione > Ruoli (spunte fuori schermo; una scheda per sezione) e Voci del menu; importi di
-         Pagamenti tagliati a destra;
-      6. Social, scheda del post: titolo su una riga sua e più piccolo, sotto «Pronto» e Salva;
-         anteprima larga quanto lo schermo;
-      7. Impostazioni (pagina lunga 12.000 px) e Assicurazione: campi corti affiancati;
-      8. foto a 1280 e 390 px prima e dopo, chiaro e scuro, Lighthouse, tutte le prove,
-         `/ecc:code-review`, rilascio 3.0 (`docs/SVILUPPO.md`); aggiornare
-         `docs/brand-guidelines.md` (oggi dice pillole e niente maiuscolo).
+- [ ] **3.0: rilascio** (approvato dall'utente: «quando hai tutti i test verdi fai tutto, push,
+      build, deploy»). Fatti e committati su `3.0-SNAPSHOT`: menu (barra in alto blu con chi è
+      entrato, colonna a sinistra, gruppi Gestione e Social, pannello «Menu» sul telefono), stile
+      Material, tema scuro, telefono (Soci, Riepilogo, Utenti, Ruoli, Social, Impostazioni). Manca:
+      tutte le prove verdi, `/ecc:code-review` con le correzioni, poi il rilascio 3.0 con la
+      procedura di `docs/SVILUPPO.md` (passi 1-4; il passo 5 della 2.9 insieme: togliere i branch
+      `2.9` e `2.9-SNAPSHOT`).
 
 - [ ] **Attivare la copia dei backup su Google Drive** (la fa chi ha l'account Google del club):
       `docs/BACKUP.md`, «Attivare la copia su Google Drive». Fino ad allora le copie sono su GitHub
@@ -94,9 +66,11 @@
   link (Instagram, e Facebook se la pagina ha lo sticker).
 - Testi nuovi in tutte le pagine e accessibilità (link sottolineati, lettore di schermo).
 - Il primo backup col file per Excel: aprire `dati-AAAA-MM-GG.7z` con 7-Zip e `soci.csv` in Excel.
-- Barra da admin e da superadmin sul PC del club: tutte le voci, «Cerca socio» compresa, ed
-  «Esci» in vista. Cerca socio: il prossimo numero tessera in cima e la ricerca per numero
-  («33», «rossi 33»). Soci: il numero tessera proposto è il primo campo del modulo.
+- Cerca socio: il prossimo numero tessera in cima e la ricerca per numero («33», «rossi 33»).
+  Soci: il numero tessera proposto è il primo campo del modulo.
+- 3.0 sul PC del club e su un telefono vero: il menu a colonna e i gruppi Gestione e Social, il
+  pannello «Menu» sul telefono, il tema scuro (luna in alto a destra) su ogni pagina, la fascia
+  di Soci su una riga, Riepilogo e Utenti a schede, la scheda del post in Social.
 
 ## Da fare prima delle iscrizioni di massa (da metà novembre)
 
