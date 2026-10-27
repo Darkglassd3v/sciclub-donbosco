@@ -26,10 +26,27 @@
     }, 1200));
   } else {
     const first = snap();
+    // Going to another page, bar and menu stay still and only the content changes: the
+    // page opts into the cross-document view transition and names bar and menu, once each
+    // (a name used twice makes the browser skip the transition).
+    const transition = () => {
+      // Browsers without cross-document view transitions (Firefox 158) drop the rule:
+      // there pages change as before, with bar and menu already steady (above).
+      if (typeof CSSViewTransitionRule === "undefined") return "n/a";
+      const rule = [...document.styleSheets].some((sheet) => {
+        try { return [...sheet.cssRules].some((r) => /^@view-transition\b/.test(r.cssText) && /navigation:\s*auto/.test(r.cssText)); }
+        catch (e) { return false; }   // cross-origin sheet (Bulma)
+      });
+      const names = [...document.querySelectorAll("*")].map((x) => getComputedStyle(x).viewTransitionName).filter((n) => n && n !== "none");
+      const once = (n) => names.filter((x) => x === n).length === 1;
+      const wrong = [!rule && "no @view-transition", !once("barra") && "barra", !once("menu") && "menu",
+        new Set(names).size !== names.length && `doubles ${names.join(",")}`].filter(Boolean);
+      return wrong.length ? `NO(${wrong.join(" ")})` : "ok";
+    };
     window.addEventListener("load", () => setTimeout(() => {
       const last = snap();
       const changed = [...last.filter((x) => !first.includes(x)), ...first.filter((x) => !last.includes(x)).map((x) => `gone:${x}`)];
-      document.title = `RISULTATO steady=${changed.length ? `NO(${changed.join(" ")})` : "ok"}`;
+      document.title = `RISULTATO steady=${changed.length ? `NO(${changed.join(" ")})` : "ok"} transition=${transition()}`;
     }, 1500));
   }
 }
