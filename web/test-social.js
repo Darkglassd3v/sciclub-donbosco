@@ -269,6 +269,8 @@ assert.strictEqual(dayOfMonth(null), "");
   for (const [dove, list] of [...Object.entries(order), ["ORDINE_SPONSOR", sponsor]]) {
     for (const nome of list) assert.ok(fields.has(nome), `${dove}: "${nome}" non è un data-campo di social.html`);
   }
+  // Un titolo solo per tutte le grafiche: il campo «Titolo della story» non c'è più (28/10).
+  assert.ok(!/id="fTitoloStory"/.test(page) && !sponsor.includes("titoloStory"), "il campo «Titolo della story» c'è ancora");
 }
 
 // --- Classi che la pagina (Bulma) ha già: nel post prenderebbero colori e margini di Bulma ---
@@ -331,11 +333,23 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
     assert.ok(!/<script|<img src=x|onerror="|<b>|<i>/.test(html), `${k}: un testo dello sponsor è diventato HTML`);
     assert.ok(html.includes(SOCIAL.avvertenzaAlcol), `${k}: sponsor alcolico senza avvertenza`);
   }
-  // Il titolo va a capo riga per riga; nella story l'ultima riga ha il colore d'accento.
-  assert.ok(f.collab.html.includes("Riga 1<br>&lt;b&gt;Riga 2&lt;/b&gt;"));
-  assert.ok(f.story.html.includes(`Riga 1<br><span style="color:${santero.color_accent}">&lt;b&gt;Riga 2&lt;/b&gt;</span>`));
-  assert.ok(f.collab.html.includes("&lt;i&gt;Vai&lt;/i&gt;"), "il pulsante della campagna manca");
-  assert.ok(f.story.html.includes("Main &quot;x&quot;".toLowerCase()), "il livello dello sponsor non è nella story");
+  // Gli stessi testi in tutte le grafiche (richiesta del 28/10): il titolo con l'ultima riga (o
+  // l'unica) nel colore d'accento, il testo del post e il pulsante; niente titolo della story né
+  // frasi fisse («Grazie a chi ci sostiene», «… è sponsor dello Sci Club», «Iscrizioni aperte»).
+  const accentRow = `Riga 1<br><span style="color:${santero.color_accent}">&lt;b&gt;Riga 2&lt;/b&gt;</span>`;
+  const all = campaignFormats({ ...c, photo: "data:image/jpeg;base64,AAAA" }, santero, "2026/27");
+  for (const [k, { html }] of [...Object.entries(f), ...Object.entries(all)]) {
+    assert.ok(html.includes(accentRow), `${k}: manca il titolo con l'ultima riga nel colore d'accento`);
+    assert.ok(html.includes("&lt;script&gt;x&lt;/script&gt;"), `${k}: manca il testo del post`);
+    assert.ok(html.includes("&lt;i&gt;Vai&lt;/i&gt;"), `${k}: manca il pulsante`);
+    assert.ok(!/Grazie a chi|Iscrizioni aperte|dello Sci Club Don Bosco/.test(html), `${k}: c'è ancora una frase fissa`);
+  }
+  const oneRow = campaignFormats({ ...c, title: "Solo titolo", story_title: "Vecchio", photo: "data:image/jpeg;base64,AAAA" }, santero, "2026/27");
+  for (const [k, { html }] of Object.entries(oneRow)) {
+    assert.ok(html.includes(`<span style="color:${santero.color_accent}">Solo titolo</span>`), `${k}: titolo su una riga senza il colore d'accento`);
+    assert.ok(!html.includes("Vecchio"), `${k}: usa ancora il titolo della story`);
+  }
+  assert.ok(f.story.html.includes("MAIN &quot;X&quot;"), "il livello dello sponsor non è nella story");
   // Senza logo per fondi scuri, quello normale su un riquadro chiaro; senza logo, il nome.
   assert.ok(f.story.html.includes(`background:${santero.color_light}`) && f.story.html.includes('src="&quot; onerror=&quot;alert(1)"'));
   const withDark = campaignFormats(c, { ...santero, logo: "a.png", logo_dark: "b.png" }, "2026/27");
@@ -344,12 +358,6 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   assert.ok(withoutLogo.cover.html.includes("958 Santero"), "senza logo deve comparire il nome");
   assert.ok(!withoutLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
-  assert.ok(campaignFormats({ ...c, story_title: "Solo story" }, santero, "2026/27").story.html.includes("Solo story"));
-  // Il titolo della story su una riga sola: è anche l'ultima, quindi nel colore d'accento (come dice il form).
-  const oneRow = campaignFormats({ ...c, story_title: "Solo story", photo: "data:image/jpeg;base64,AAAA" }, santero, "2026/27");
-  for (const k of ["story", "fotoStory"]) {
-    assert.ok(oneRow[k].html.includes(`<span style="color:${santero.color_accent}">Solo story</span>`), `${k}: titolo su una riga senza il colore d'accento`);
-  }
 }
 {
   const cop = drawCover("<b>Stagione</b>", "Gite & corsi");
