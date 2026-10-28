@@ -1,8 +1,8 @@
 # Piano: Social «Campagne» (immagini degli sponsor, inserzioni Meta, spese)
 
 Richiesta del 28/10/2026, piano scritto lo stesso giorno. **Stato (28/10): fatto in locale con
-TDD, grafica B «Piani K» scelta dall'utente (senza bordo bianco attorno all'immagine). Da
-pubblicare: schema in produzione, poi push.** Esito in fondo, «Esito TDD».
+TDD, grafica B «Piani K» scelta dall'utente (senza bordo bianco attorno all'immagine). Pubblicato
+il 28/10: schema in produzione (solo le istruzioni nuove, con `lock_timeout`), poi il sito.** Esito in fondo, «Esito TDD».
 
 ## Cosa si vuole
 
