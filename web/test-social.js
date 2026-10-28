@@ -345,6 +345,11 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   assert.ok(!withoutLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
   assert.ok(campaignFormats({ ...c, story_title: "Solo story" }, santero, "2026/27").story.html.includes("Solo story"));
+  // Il titolo della story su una riga sola: è anche l'ultima, quindi nel colore d'accento (come dice il form).
+  const oneRow = campaignFormats({ ...c, story_title: "Solo story", photo: "data:image/jpeg;base64,AAAA" }, santero, "2026/27");
+  for (const k of ["story", "fotoStory"]) {
+    assert.ok(oneRow[k].html.includes(`<span style="color:${santero.color_accent}">Solo story</span>`), `${k}: titolo su una riga senza il colore d'accento`);
+  }
 }
 {
   const cop = drawCover("<b>Stagione</b>", "Gite & corsi");
