@@ -177,6 +177,9 @@ insert into public.ledger_entries (kind, category, quantity, unit_price) values 
 insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
 insert into public.sponsors (id, name, alcohol) values ('cccccccc-5555-0000-0000-000000000001', 'PROVA SPONSOR', true);
 insert into public.social_events (kind, title, sponsor_id) values ('sponsor', 'PROVA CAMPAGNA', 'cccccccc-5555-0000-0000-000000000001');
+-- La spesa delle inserzioni Meta della campagna, in Bilancio col collegamento al post.
+insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id)
+select 'USCITA', 'Pubblicità Meta', 1, 20, id from public.social_events where title = 'PROVA CAMPAGNA';
 insert into public.social_contacts (name, phone) values ('PROVA CONTATTO', '333 000 0000');
 
 -- Una prova della matrice: `leggi` è riuscita se trova almeno una riga,
@@ -239,6 +242,8 @@ begin
     ('leggi',  'select 1 from public.member_passes',                             'SSSxSxx'),
     ('leggi',  'select 1 from public.trip_uses',                                 'SSSxSxx'),
     ('leggi',  'select 1 from public.ledger_entries',                            'SxSxxxx'),
+    -- Le spese di una campagna restano dati di Bilancio: chi ha solo social non le vede.
+    ('leggi',  'select 1 from public.ledger_entries where social_event_id is not null', 'SxSxxxx'),
     ('leggi',  'select 1 from public.season_history',                            'SxSxxxx'),
     ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
     ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
@@ -252,6 +257,7 @@ begin
     ('leggi',  'select 1 from public.social_contacts',                           'SxxxxSx'),
     ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
+    ('scrivi', 'update public.social_events set ad_text = ''Testo'', ad_headline = ''Titolo'', ad_description = ''Descrizione'', ad_cta = ''Scopri di più''', 'SxxxxSx'),
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
@@ -266,6 +272,7 @@ begin
     ('scrivi', 'insert into public.member_passes (member_id, pass_type) values (' || m || ', ''PROVA 10 VIAGGI SABATO'')', 'SSxxxxx'),
     ('scrivi', 'insert into public.trip_uses (member_id) values (' || m || ')',   'xxxxxxx'),
     ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price) values (''USCITA'', ''PROVA'', 1, 1)', 'SxSxxxx'),
+    ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id) select ''USCITA'', ''Pubblicità Meta'', 1, 1, id from public.social_events where kind = ''sponsor'' limit 1', 'SxSxxxx'),
     ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
     ('leggi',  'select 1 from public.settings',                                  'SSxxxxx'),
     ('scrivi', 'update public.settings set value = value',                        'Sxxxxxx'),
@@ -534,6 +541,9 @@ do $$ begin
     ('sponsor', 'CAMPAGNA 1', 'cccccccc-5555-0000-0000-000000000002', now()),
     ('sponsor', 'CAMPAGNA 2', 'cccccccc-5555-0000-0000-000000000002', null);
   insert into public.social_events (kind, title, event_date) values ('gita', 'GITA CHE RESTA', current_date);
+  -- La spesa di una campagna eliminata resta in Bilancio, senza collegamento.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id)
+  select 'USCITA', 'SPESA CAMPAGNA 1', 1, 15, id from public.social_events where title = 'CAMPAGNA 1';
 
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);   -- admin
   delete from public.sponsors where id = 'cccccccc-5555-0000-0000-000000000002';
@@ -546,6 +556,8 @@ do $$ begin
   assert (select count(*) from public.social_events where title in ('CAMPAGNA 1', 'CAMPAGNA 2')) = 0,
          'le campagne dello sponsor eliminato sono rimaste';
   assert (select count(*) from public.social_events where title = 'GITA CHE RESTA') = 1, 'eliminato un post che non c''entrava';
+  assert (select count(*) from public.ledger_entries where category = 'SPESA CAMPAGNA 1' and social_event_id is null) = 1,
+         'eliminata la campagna, la sua spesa doveva restare in Bilancio senza collegamento';
   assert (select count(*) from public.social_events where sponsor_id = 'cccccccc-5555-0000-0000-000000000001') = 1,
          'eliminata la campagna di un altro sponsor';
 end $$;
