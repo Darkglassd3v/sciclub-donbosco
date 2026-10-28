@@ -83,12 +83,17 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const dt = new DataTransfer();
   dt.items.add(new File([blob], "auto.jpg", { type: "image/jpeg" }));
   el("fFoto").files = dt.files;
+  // La riduzione vera (FileReader, decodifica) va in tempo reale e il tempo virtuale di
+  // Chrome headless la scavalca: si guarda a quanti pixel la pagina la chiede, poi
+  // l'immagine si mette già pronta.
+  let asked = null;
+  const realShrink = shrinkImage;
+  window.shrinkImage = (file, maximum, typeName) => { asked = maximum; return new Promise(() => {}); };
   el("fFoto").dispatchEvent(new Event("change", { bubbles: true }));
-  await wait(800);
-  const photo = daForm().photo;
-  const img = new Image();
-  if (photo) { img.src = photo; await img.decode(); }
-  test("immagine1920", img.naturalWidth === 1920, photo ? `${img.naturalWidth}px` : "nessuna immagine nel post");
+  window.shrinkImage = realShrink;
+  test("immagine1920", asked === 1920, `chiesta a ${asked} px`);
+  picture = c.toDataURL("image/jpeg", .5);
+  changed();
   test("senzaSposta", !visible(el("posFoto")), "comandi per spostare l'immagine visibili");
   test("posizioneVuota", daForm().photo_x === null && daForm().photo_zoom === null, JSON.stringify([daForm().photo_x, daForm().photo_zoom]));
   await wait(500);

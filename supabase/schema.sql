@@ -3507,6 +3507,25 @@ comment on column public.social_events.photo_zoom is 'Ingrandimento della foto n
 alter table public.social_events add column if not exists card_stop text;
 comment on column public.social_events.card_stop is 'Luogo della partenza mostrata sotto la data nel post (es. "Montegrosso"); vuoto = la prima.';
 
+-- Inserzione Meta di una campagna (Social > Campagne): i testi da copiare in
+-- Gestione inserzioni. Facoltativi; i limiti consigliati da Meta li conta la pagina.
+alter table public.social_events add column if not exists ad_text text;
+alter table public.social_events add column if not exists ad_headline text;
+alter table public.social_events add column if not exists ad_description text;
+alter table public.social_events add column if not exists ad_cta text;
+comment on column public.social_events.ad_text is 'Inserzione Meta: testo principale.';
+comment on column public.social_events.ad_headline is 'Inserzione Meta: titolo.';
+comment on column public.social_events.ad_description is 'Inserzione Meta: descrizione.';
+comment on column public.social_events.ad_cta is 'Inserzione Meta: invito all''azione (es. "Scopri di più").';
+
+-- Spese e rimborsi delle inserzioni di una campagna: movimenti di Bilancio
+-- collegati al post. Eliminata la campagna, il movimento resta nei conti senza
+-- collegamento. Chi li vede e li scrive non cambia: il permesso bilancio.
+alter table public.ledger_entries add column if not exists social_event_id uuid
+  references public.social_events (id) on delete set null;
+create index if not exists ledger_entries_social_event_idx on public.ledger_entries (social_event_id);
+comment on column public.ledger_entries.social_event_id is 'La campagna social a cui si riferisce il movimento (spesa o rimborso delle inserzioni Meta); vuoto = nessuna.';
+
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()
 returns trigger language plpgsql set search_path = public as $$

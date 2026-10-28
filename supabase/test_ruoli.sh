@@ -176,7 +176,7 @@ insert into public.ledger_entries (kind, category, quantity, unit_price) values 
 -- calendario (current_season() è quella dopo l'ultima chiusa).
 insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
 insert into public.sponsors (id, name, alcohol) values ('cccccccc-5555-0000-0000-000000000001', 'PROVA SPONSOR', true);
-insert into public.social_events (kind, title, sponsor_id) values ('sponsor', 'PROVA CAMPAGNA', 'cccccccc-5555-0000-0000-000000000001');
+insert into public.social_events (id, kind, title, sponsor_id) values ('dddddddd-5555-0000-0000-000000000001', 'sponsor', 'PROVA CAMPAGNA', 'cccccccc-5555-0000-0000-000000000001');
 -- La spesa delle inserzioni Meta della campagna, in Bilancio col collegamento al post.
 insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id)
 select 'USCITA', 'Pubblicità Meta', 1, 20, id from public.social_events where title = 'PROVA CAMPAGNA';
@@ -272,7 +272,8 @@ begin
     ('scrivi', 'insert into public.member_passes (member_id, pass_type) values (' || m || ', ''PROVA 10 VIAGGI SABATO'')', 'SSxxxxx'),
     ('scrivi', 'insert into public.trip_uses (member_id) values (' || m || ')',   'xxxxxxx'),
     ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price) values (''USCITA'', ''PROVA'', 1, 1)', 'SxSxxxx'),
-    ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id) select ''USCITA'', ''Pubblicità Meta'', 1, 1, id from public.social_events where kind = ''sponsor'' limit 1', 'SxSxxxx'),
+    -- Il tesoriere non vede i post social, ma collega la spesa alla campagna (la pagina gli dà l'id).
+    ('scrivi', 'insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id) values (''USCITA'', ''Pubblicità Meta'', 1, 1, ''dddddddd-5555-0000-0000-000000000001'')', 'SxSxxxx'),
     ('scrivi', 'update public.prices set price = price',                          'Sxxxxxx'),
     ('leggi',  'select 1 from public.settings',                                  'SSxxxxx'),
     ('scrivi', 'update public.settings set value = value',                        'Sxxxxxx'),

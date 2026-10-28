@@ -842,6 +842,17 @@ function utmAddress(sp, c, half, seasonValue) {
   return url.toString();
 }
 
+/** I «Parametri URL» di un'inserzione Meta: {{site_source_name}} (fb, ig, ...) lo riempie Meta. */
+function adUrlParams(sp, c, seasonValue) {
+  return `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=${simple(sp.name)}-${simple(seasonValue)}`
+    + `&utm_content=${simple(c.title).slice(0, 40) || "post"}`;
+}
+
+// Lunghezze consigliate da Meta per le inserzioni: oltre, nel feed il testo si taglia.
+const META_LIMITS = { ad_text: 125, ad_headline: 40, ad_description: 30 };
+// Gli inviti all'azione di Gestione inserzioni, come li scrive Meta in italiano.
+const META_CTAS = ["Scopri di più", "Acquista ora", "Prenota ora", "Iscriviti", "Contattaci"];
+
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
 function postText(ev, sp, seasonValue) {
   const tel = contactsOf(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
@@ -855,7 +866,8 @@ function postText(ev, sp, seasonValue) {
     if (link) rows.push("", `👉 ${link}`);
     if (sp.handle) rows.push(`@${sp.handle.replace(/^@/, "")}`);
     if (sp.alcohol) rows.push("", SOCIAL.avvertenzaAlcol);
-    rows.push("", `#sciclubdonbosco #${simple(sp.name)}`);
+    // Una campagna è pubblicità: si dichiara (#adv).
+    rows.push("", `#adv #sciclubdonbosco #${simple(sp.name)}`);
     return rows.join("\n");
   }
   if (ev.kind === "gita") {
@@ -881,5 +893,6 @@ if (typeof module !== "undefined") {
   module.exports = { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, categoria: categoryName, impostaColoriGita: setTripColors, impostaContatti: setContacts, contattiDi: contactsOf, inchiostro: inkColor, modelloPost: postTemplate,
                      contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
-                     formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo };
+                     formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
+                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS };
 }
