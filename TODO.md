@@ -25,13 +25,12 @@
       in `supabase/migration/doppioni-2026-10-28/DA-CONTROLLARE.md`, fuori da git perché ha nomi
       di soci: qui niente dati personali, il repository è pubblico.
 
-- [ ] **Social: menu «Campagne» per gli sponsor, immagini degli sponsor, inserzioni Meta** (28/10,
-      piano pronto, aspetta il sì dell'utente): `docs/PIANO_CAMPAGNE.md`. Cinque fasi: voce
-      Campagne separata da Post; immagine dello sponsor con grafiche nuove disegnate con
-      `/ui-ux-pro-max:design` (prima tre abbozzi 4:5, poi il set della scelta); scheda «Inserzione
-      Meta» da copiare in Gestione inserzioni; spese e rimborsi in Bilancio collegati alla
-      campagna; verifica e rilascio. Dall'utente: sì al piano, un'immagine vera di uno sponsor per
-      le bozze, conferma su `#adv` nel testo delle campagne.
+- [ ] **Social «Campagne»: fatto in locale, da pubblicare** (28/10). Voce Campagne, immagine dello
+      sponsor con la grafica B «Piani K», scheda «Inserzione Meta», spese e rimborsi in Bilancio
+      collegati alla campagna, `#adv` nel testo. Prima lo schema in produzione (backup, solo le
+      istruzioni nuove con `lock_timeout`: colonne `ad_*` di `social_events`,
+      `ledger_entries.social_event_id`), poi il push: la pagina chiede le colonne nuove e senza
+      lo schema non carica i post. Dettagli ed esito dei test in `docs/PIANO_CAMPAGNE.md`.
 
 - [ ] **Menu che lampeggia: provare sul sito** (27/10, online `2a27fc6`). Corretto: una graffa
       in più in `brand.css` scartava la regola che mostra subito le voci; il menu ora ha la sua

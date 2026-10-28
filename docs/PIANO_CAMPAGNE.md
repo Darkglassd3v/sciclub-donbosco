@@ -1,7 +1,8 @@
 # Piano: Social «Campagne» (immagini degli sponsor, inserzioni Meta, spese)
 
-Richiesta del 28/10/2026, piano scritto lo stesso giorno. **Stato: aspetta il sì dell'utente;
-nessun codice scritto.** Grafiche da disegnare con `/ui-ux-pro-max:design`.
+Richiesta del 28/10/2026, piano scritto lo stesso giorno. **Stato (28/10): fatto in locale con
+TDD, grafica B «Piani K» scelta dall'utente (senza bordo bianco attorno all'immagine). Da
+pubblicare: schema in produzione, poi push.** Esito in fondo, «Esito TDD».
 
 ## Cosa si vuole
 
@@ -156,3 +157,31 @@ Fasi 3 e 4 piccole.
 1. Sì al piano (o cosa cambiare).
 2. Un'immagine vera di uno sponsor per le bozze (se non c'è, una foto neutra di prova).
 3. Conferma su `#adv` nel testo delle campagne.
+
+## Esito TDD (28/10/2026)
+
+Commit: `38159f5` test in rosso, `efb2bf3` verde senza i formati con l'immagine, `0b5cea4` grafica B.
+
+| Cosa è garantito | Prova | Rosso | Verde |
+|---|---|---|---|
+| Voce Campagne nel menu e conteggi separati Post/Campagne | `test-browser/campagne.js` voceMenu, contaCampagne, contaPost | manca `filtroSponsor` | ok |
+| #campagne solo sponsor, filtro per sponsor, #post il resto; una campagna si apre in #campagne | campagne.js soloCampagne, filtro, postSenzaCampagne, apreInCampagne, nuovaCampagna | idem | ok |
+| Immagine dello sponsor: campo visibile, ridotta a 1920 px, senza comandi per spostarla | campagne.js campoImmagine, immagine1920, senzaSposta, posizioneVuota | idem | ok |
+| Tre formati con l'immagine intera, nessun testo sopra | campagne.js formatiImmagine, immagineScoperta; `web/test-social.js` | «0 formati con l'immagine» | ok |
+| Inserzione Meta: campi salvati, contatore oltre il limite, parametri URL, 18+ per gli alcolici | campagne.js contatore, campiMeta, parametri, alcol18; test-social.js `adUrlParams` | idem | ok |
+| `#adv` nel testo delle campagne, non in quello delle gite | test-social.js | assert | ok |
+| Spese: totali e movimento in Bilancio dopo la conferma; senza `bilancio` niente riquadro né lettura | campagne.js totali, chiedeConferma, movimento; `campagne-solo-social.js` | idem | ok |
+| Database: colonne ad_*, collegamento on delete set null, permessi invariati | `supabase/test_ruoli.sh` | manca `social_event_id` | «tutto a posto» |
+
+Review indipendente (agente code-reviewer sul diff): nessun problema critico o alto; corretti
+tutti i medi e i bassi con TDD (`bc26036` rosso, poi verde): errore dell'importo dentro la
+finestra delle spese e «1.250» rifiutato; i campi dell'inserzione non ridisegnano le immagini;
+contatori legati ai campi; titolo troppo lungo con avviso; «Copia il sito» spento senza
+indirizzo; domande di eliminazione che dicono che le spese restano in Bilancio; «Duplica» tiene
+l'immagine dello sponsor; un'immagine pronta dopo l'apertura di un altro post non ci finisce
+dentro; riquadro vuoto di Campagne. Prove in `test-browser/campagne-modifiche.js`.
+
+Comandi: `node web/test-social.js`, `bash test-browser/esegui.sh` (45 prove), `bash supabase/test_ruoli.sh`.
+Differenze dal piano: un solo pulsante «Scarica» per immagine (scaricarle tutte insieme fa chiedere al
+browser il permesso dei download multipli, scelta già fatta per i post); l'immagine dello sponsor
+diventa sempre JPEG (un PNG a 1920 px peserebbe troppo nel database).

@@ -418,24 +418,24 @@
 
             <!-- Inserzione Meta della campagna: i testi da copiare in Gestione inserzioni,
                  col contatore sui limiti consigliati da Meta (LIMITI in social-templates.js). -->
-            <section class="parte" aria-labelledby="pMeta" data-per="sponsor">
+            <section class="parte" aria-labelledby="pMeta" data-per="sponsor" id="parteMeta">
               <h3 id="pMeta">Inserzione Meta</h3>
               <p class="occhiello mb-2">Da copiare in Gestione inserzioni. Le immagini sono quelle dell'anteprima: quadrata e 4:5 per il feed, la storia per storie e reel.</p>
               <div class="campi">
                 <div class="field campo-largo">
                   <label class="label" for="fAdText">Testo principale</label>
-                  <textarea class="textarea" id="fAdText" rows="3"></textarea>
-                  <p class="help conta-caratteri" data-conta-per="fAdText"></p>
+                  <textarea class="textarea" id="fAdText" aria-describedby="contaAdText" rows="3"></textarea>
+                  <p class="help conta-caratteri" id="contaAdText" data-conta-per="fAdText"></p>
                 </div>
                 <div class="field">
                   <label class="label" for="fAdHeadline">Titolo</label>
-                  <input class="input" id="fAdHeadline">
-                  <p class="help conta-caratteri" data-conta-per="fAdHeadline"></p>
+                  <input class="input" id="fAdHeadline" aria-describedby="contaAdHeadline">
+                  <p class="help conta-caratteri" id="contaAdHeadline" data-conta-per="fAdHeadline"></p>
                 </div>
                 <div class="field">
                   <label class="label" for="fAdDescription">Descrizione</label>
-                  <input class="input" id="fAdDescription">
-                  <p class="help conta-caratteri" data-conta-per="fAdDescription"></p>
+                  <input class="input" id="fAdDescription" aria-describedby="contaAdDescription">
+                  <p class="help conta-caratteri" id="contaAdDescription" data-conta-per="fAdDescription"></p>
                 </div>
                 <div class="field">
                   <label class="label" for="fAdCta">Invito all'azione</label>
@@ -639,6 +639,7 @@
     <label class="label" for="spImporto">Importo (€)</label>
     <input class="input" id="spImporto" inputmode="decimal" placeholder="Es. 25,50">
   </div>
+  <p class="help is-danger" id="spErrore" role="alert" hidden></p>
   <div class="buttons">
     <button type="button" class="button is-medium" id="spAnnulla">Annulla</button>
     <button type="button" class="button is-medium is-link" id="spSalva">Registra</button>
@@ -724,6 +725,9 @@
     if (s === "post" || s === "campagne") {
       // Un post aperto resta nella sua scheda; con modifiche da salvare resta in vista.
       if (isOpen && sectionOf(isOpen) !== s && !modified()) { isOpen = null; showEditor(false); }
+      el("nessunPost").textContent = s === "campagne"
+        ? "Selezionare una campagna dall'elenco oppure crearne una con «+ Nuova campagna»."
+        : "Selezionare un post dall'elenco oppure crearne uno con «+ Nuovo post».";
       drawList();
       if (!el("editor").hidden) redraw();
     }
@@ -1038,6 +1042,9 @@
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { addRow(b.dataset.aggiungi); changed(); }));
     el("editor").addEventListener("input", (e) => {
+      // I campi dell'inserzione non cambiano le immagini né il testo del post: niente ridisegno
+      // (con l'immagine dello sponsor sono tre disegni da 1920 px a ogni tasto).
+      if (e.target.closest("#parteMeta")) { const post = daForm(); drawAdSheet(post, sponsorDi(post)); markChanges(); return; }
       if (e.target.id !== "testoPost") { changed(); return; }
       markManualText();
       markChanges();
@@ -1046,13 +1053,17 @@
       const file = el("fFoto").files[0];
       if (!file) return;
       el("fFoto").value = "";
+      const turn = aperture;  // aperto un altro post mentre l'immagine si riduce: non va in quello
+      let reduced;
       try {
         // L'immagine dello sponsor resta intera anche nella storia, alta 1920.
-        picture = await shrinkImage(file, group(el("fTipo").value) === "sponsor" ? 1920 : 1080, "image/jpeg");
+        reduced = await shrinkImage(file, group(el("fTipo").value) === "sponsor" ? 1920 : 1080, "image/jpeg");
       } catch (e) {
         showToast("Impossibile aprire l'immagine: usare una foto JPEG o PNG.", "is-danger");
         return;
       }
+      if (turn !== aperture) return;
+      picture = reduced;
       photoX = photoY = photoZoom = null;  // una foto nuova parte dal centro
       changed();
     });
@@ -1156,7 +1167,8 @@
   function duplicate() {
     if (!isOpen || !isOpen.id) return;
     const { id, created_at, updated_at, ...records } = isOpen;
-    doOpen({ ...records, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
+    // L'immagine data dallo sponsor di solito si riusa; la foto di una gita no (cambia la meta).
+    doOpen({ ...records, event_date: null, deadline: null, photo: records.kind === "sponsor" ? records.photo : null, photo_x: null, photo_y: null, photo_zoom: null,
       subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null });
     if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
@@ -1347,6 +1359,9 @@
     el("sitoInserzione").textContent = site ? site.toString() : "Manca l'indirizzo dello sponsor (Impostazioni > Sponsor).";
     el("parametriInserzione").textContent = sp ? adUrlParams(sp, post, SEASON) : "";
     el("avvisoAlcolMeta").hidden = !(sp && sp.alcohol);
+    // Senza indirizzo «Copia il sito» copierebbe la frase dell'avviso.
+    document.querySelector('[data-copia="sitoInserzione"]').disabled = !site;
+    document.querySelector('[data-copia="parametriInserzione"]').disabled = !sp;
   }
 
   let spendRound = 0;  // l'ultima lettura delle spese: una più vecchia non scrive
@@ -1371,6 +1386,8 @@
     el("btnRegistraSpesa").addEventListener("click", () => {
       el("spData").value = new Date().toLocaleDateString("sv-SE");  // oggi, AAAA-MM-GG
       el("spImporto").value = "";
+      el("spErrore").hidden = true;
+      for (const id of ["spImporto", "spData"]) el(id).removeAttribute("aria-invalid");
       el("dlgSpesa").showModal();
       el("spImporto").focus();
     });
@@ -1378,10 +1395,22 @@
     el("spSalva").addEventListener("click", askSpend);
   }
 
+  /* L'errore va dentro la finestra: l'avviso della pagina (markError) resterebbe sotto, invisibile. */
+  function spendError(field, message) {
+    el("spErrore").textContent = message;
+    el("spErrore").hidden = false;
+    field.setAttribute("aria-invalid", "true");
+    field.focus();
+  }
+
   function askSpend() {
-    const amount = Math.round(Number(el("spImporto").value.trim().replace(",", ".")) * 100) / 100;
-    if (!(amount > 0)) { markError(el("spImporto"), "Inserire l'importo in euro, es. 25,50."); return; }
-    if (!el("spData").value) { markError(el("spData"), "Inserire la data."); return; }
+    // Euro con la virgola dei centesimi; «1.250» (punto delle migliaia) diventerebbe 1,25.
+    const text = el("spImporto").value.trim(), amount = Number(text.replace(",", "."));
+    if (!/^\d{1,7}([.,]\d{1,2})?$/.test(text) || !(amount > 0)) {
+      spendError(el("spImporto"), "Importo in euro, con la virgola per i centesimi e senza il punto delle migliaia: es. 25,50 o 1250.");
+      return;
+    }
+    if (!el("spData").value) { spendError(el("spData"), "Inserire la data."); return; }
     const kind = el("spTipo").value, [category, label] = SPEND_KINDS[kind], p = isOpen, sp = sponsorDi(p);
     const row = { kind, category, description: `${sp ? `${sp.name}: ` : ""}${nomePost(p)}`, quantity: 1, unit_price: amount,
       entry_date: el("spData").value, social_event_id: p.id };
@@ -1503,7 +1532,9 @@
 
   function remove() {
     if (!isOpen || !isOpen.id) { savedOne = signature(); isOpen = null; showEditor(false); drawList(); return; }
-    ask(el("azioniElimina"), "Eliminare il post? L'operazione non è reversibile.", "Elimina", reallyDelete);
+    ask(el("azioniElimina"), isOpen.kind === "sponsor"
+      ? "Eliminare la campagna? L'operazione non è reversibile. Le spese già registrate restano in Bilancio, senza collegamento alla campagna."
+      : "Eliminare il post? L'operazione non è reversibile.", "Elimina", reallyDelete);
   }
 
   async function reallyDelete() {
@@ -1922,6 +1953,7 @@
     const howMany = campaigns.length === 1 ? "la sua campagna" : `le sue ${campaigns.length} campagne`;
     const question = campaigns.length
       ? `Eliminare ${sp.name} e ${howMany}${outflows ? ` (${outflows} già pubblicat${outflows === 1 ? "a" : "e"})` : ""}? L'operazione non è reversibile.`
+        + " Le spese già registrate restano in Bilancio, senza collegamento alle campagne."
       : `Eliminare ${sp.name}? L'operazione non è reversibile.`;
     ask(el("azioniSponsor"), question, "Elimina", () => deleteSponsor(sp, campaigns));
   }

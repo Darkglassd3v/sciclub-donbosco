@@ -780,7 +780,7 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:60px;top:54px">${clubBox(96)}</div>
       ${leadRight(84, 28)}
       ${sponsorPhoto(c.photo, "left:70px;top:210px;width:940px;height:790px")}
-      <div class="abs t-dest" style="left:70px;right:420px;top:1040px;font-size:62px">${titleLines(c.title)}</div>
+      <div class="abs t-dest" data-righe="3" style="left:70px;right:420px;top:1040px;--t:62px;font-size:var(--t)">${titleLines(c.title)}</div>
       <div class="abs" style="right:70px;top:1050px">${logoOnDark(M, 70)}</div>
       <div class="abs" style="left:70px;bottom:70px">${ctaPill(M, c.cta, 34)}</div>
       ${warning(M, 22, "position:absolute;right:70px;bottom:80px;max-width:420px;text-align:right")}</div>` },
@@ -791,7 +791,7 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
       ${leadRight(SAFE.top + 50, 30)}
       ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:800px`)}
-      <div class="abs t-dest" style="left:70px;right:70px;top:1265px;font-size:72px">${titleLines(c.story_title || c.title)}</div>
+      <div class="abs t-dest" data-righe="2" style="left:70px;right:70px;top:1265px;--t:72px;font-size:var(--t)">${titleLines(c.story_title || c.title)}</div>
       <div class="abs" style="left:70px;right:70px;top:1425px;display:flex;align-items:center;justify-content:space-between;gap:30px">
         ${logoOnDark(M, 76)}
         <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">sticker link qui ↗</div></div>
