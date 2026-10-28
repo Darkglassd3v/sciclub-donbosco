@@ -397,6 +397,9 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   }
   const bad = campaignFormats({ ...campaign, photo: 'x" onerror="alert(1)' }, santero, "2026/27");
   for (const { html } of Object.values(bad)) assert.ok(!html.includes('onerror="'), "l'immagine dello sponsor è diventata HTML");
+  // Un titolo troppo lungo stringe e, se non basta, fa comparire l'avviso (fit(), data-righe).
+  assert.ok(/data-righe="3"[^>]*>La nuova|data-righe="3"/.test(f.foto.html) && /data-righe="2"/.test(f.fotoStory.html),
+    "i titoli delle grafiche con l'immagine non si adattano allo spazio");
   // Senza immagine restano i formati col logo.
   assert.deepStrictEqual(Object.keys(campaignFormats(campaign, santero, "2026/27")), ["collab", "story", "grazie", "cover"]);
 }

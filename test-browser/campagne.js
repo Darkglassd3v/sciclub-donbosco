@@ -9,7 +9,12 @@
 // - Inserzione Meta: campi salvati col post, contatore oltre il limite, parametri URL,
 //   promemoria 18+ per gli sponsor di alcolici.
 // - Spese (permesso bilancio): totali dei movimenti collegati; «Registra spesa» scrive in
-//   ledger_entries col collegamento alla campagna, dopo la conferma.
+//   ledger_entries col collegamento alla campagna, dopo la conferma. Un importo sbagliato
+//   («1.250», con il punto delle migliaia) si dice dentro la finestra, non sotto.
+// - Review del 28/10: scrivere nei campi dell'inserzione non ridisegna le immagini; i
+//   contatori sono legati ai campi (aria-describedby); un titolo troppo lungo nelle
+//   grafiche con l'immagine fa comparire l'avviso «supera lo spazio»; in Campagne il
+//   riquadro vuoto parla di «+ Nuova campagna».
 const WRITES = [];
 const LEDGER = [
   { kind: "USCITA", amount: 50 }, { kind: "USCITA", amount: 30 }, { kind: "ENTRATA", amount: 40 },
@@ -58,6 +63,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await go("#campagne");
   test("soloCampagne", shown() === "P1,P3", shown());
   test("titolo", el("titoloSezione").textContent === "Campagne", el("titoloSezione").textContent);
+  test("vuotoCampagne", el("nessunPost").textContent.includes("Nuova campagna"), el("nessunPost").textContent.trim().slice(0, 60));
   el("filtroSponsor").value = "S2";
   el("filtroSponsor").dispatchEvent(new Event("change", { bubbles: true }));
   await wait(50);
@@ -110,6 +116,12 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("immagineScoperta", covered.every((o) => !o.length), JSON.stringify(covered.flat()).slice(0, 80));
   const files = [postFormats({ ...daForm(), title: "Brindisi" }), postFormats({ ...daForm(), title: "Auto nuova" })].map((l) => l[0]?.file);
   test("nomiFile", files[0] && files[0] !== files[1], JSON.stringify(files));
+  el("fTitolo").value = "Una campagna con un titolo davvero troppo lungo\nche non ci sta nello spazio\ne va avanti ancora\ne ancora per molte righe";
+  el("fTitolo").dispatchEvent(new Event("input", { bubbles: true }));
+  await wait(400);
+  test("titoloLungo", !el("sbordaTutti").hidden, "nessun avviso per un titolo che sborda");
+  el("fTitolo").value = "Brindisi";
+  el("fTitolo").dispatchEvent(new Event("input", { bubbles: true }));
 
   step = "meta";
   el("fAdText").value = "x".repeat(130);
@@ -123,6 +135,19 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("campiMeta", f.ad_text === "x".repeat(130) && f.ad_headline === "Titolo" && f.ad_description === null, JSON.stringify([f.ad_text?.length, f.ad_headline, f.ad_description]));
   test("parametri", el("parametriInserzione").textContent.includes("utm_source={{site_source_name}}&utm_medium=paid_social"), el("parametriInserzione").textContent.slice(0, 60));
   test("alcol18", visible(el("avvisoAlcolMeta")), "promemoria 18+ nascosto per uno sponsor di alcolici");
+  test("contatoriDescritti", ["fAdText", "fAdHeadline", "fAdDescription"].every((id) => {
+    const d = el(id).getAttribute("aria-describedby");
+    return d && el(d)?.dataset.contaPer === id;
+  }), "contatori non legati ai campi");
+  let redraws = 0;
+  const realRedraw = redraw;
+  window.redraw = () => { redraws++; realRedraw(); };
+  el("fAdDescription").value = "Desc";
+  el("fAdDescription").dispatchEvent(new Event("input", { bubbles: true }));
+  window.redraw = realRedraw;
+  test("metaSenzaRidisegno", redraws === 0 && el("btnSalva").classList.contains("salva-modifiche")
+    && document.querySelector('[data-conta-per="fAdDescription"]').textContent.startsWith("4/30"),
+    `${redraws} ridisegni, salva «${el("btnSalva").textContent}»`);
 
   step = "spese";
   test("speseVisibili", visible(el("speseCampagna")), "riquadro spese nascosto");
@@ -132,9 +157,15 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await wait(100);
   test("finestraSpesa", el("dlgSpesa").open, "finestra non aperta");
   el("spData").value = "2026-12-03";
-  el("spImporto").value = "25,50";
   el("spTipo").value = "USCITA";
   const before = WRITES.length;
+  el("spImporto").value = "1.250";
+  el("spSalva").click();
+  await wait(100);
+  test("importoSbagliato", el("dlgSpesa").open && visible(el("spErrore")) && el("dlgSpesa").contains(el("spErrore"))
+    && WRITES.length === before && !document.querySelector("dialog.finestra-domanda[open]"),
+    `finestra ${el("dlgSpesa").open}, errore «${el("spErrore")?.textContent}»`);
+  el("spImporto").value = "25,50";
   el("spSalva").click();
   await wait(100);
   test("chiedeConferma", WRITES.length === before && document.querySelector("dialog.finestra-domanda[open]"), "scritto senza conferma");
