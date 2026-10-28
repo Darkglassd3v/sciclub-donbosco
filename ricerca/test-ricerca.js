@@ -12,10 +12,10 @@ const path = require("path");
 // protectPage(): si può caricare qui senza finta finestra.
 const source = fs.readFileSync(path.join(__dirname, "comune.js"), "utf8");
 const { pieces, cardNumbers, pieceFilter, nameKey, highlight, whatsappNumber, callNumber, contactsHtml, text,
-        passDay, dayLabel, errorMessage, retryable } =
+        passDay, dayLabel, errorMessage, retryable, fetchRetryingFutureToken } =
   (0, eval)(`(() => { ${source}
     return { pieces, cardNumbers, pieceFilter, nameKey, highlight, whatsappNumber, callNumber, contactsHtml, text,
-             passDay, dayLabel, errorMessage, retryable }; })()`);
+             passDay, dayLabel, errorMessage, retryable, fetchRetryingFutureToken }; })()`);
 
 // --- Ricerca ---------------------------------------------------------------
 
@@ -177,3 +177,19 @@ for (const code of ["23505", "P0001", "42501", "PGRST116"]) {
 }
 
 console.log("ok — ricerca");
+
+// --- Token rifiutato per un attimo («JWT issued at future») ------------------
+// Come in web/shared.js: quel 401 si riprova (al massimo tre volte), gli altri no.
+(async () => {
+  const answer = (status, body) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  const future = () => answer(401, { code: "PGRST303", message: "JWT issued at future" });
+  const realFetch = global.fetch;
+  let replies = [], calls = 0;
+  global.fetch = async () => { calls++; return replies.shift(); };
+  const ask = async (list) => { replies = list; calls = 0; const r = await fetchRetryingFutureToken("https://x/rest/v1/rpc/my_access", {}); return [r.status, calls]; };
+  assert.deepStrictEqual(await ask([future(), answer(200, [])]), [200, 2], "il token appena rinnovato non si riprova");
+  assert.deepStrictEqual(await ask([answer(401, { code: "PGRST303", message: "JWT expired" })]), [401, 1], "un token scaduto non si riprova");
+  assert.deepStrictEqual(await ask(Array.from({ length: 10 }, future)), [401, 4], "deve arrendersi dopo tre tentativi");
+  global.fetch = realFetch;
+  console.log("ricerca: token rifiutato per un attimo, riprovato");
+})();
