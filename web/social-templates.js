@@ -773,15 +773,19 @@ const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-
 
 function photoFormats(c, sp, seasonValue) {
   const M = brand(sp);
+  // Titolo e testo del post in colonna: il testo segue il titolo, una o due righe che siano.
+  const texts = (box, titleText, title, sub, accent) => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:16px">
+      <div class="t-dest" data-righe="2" style="--t:${title}px;font-size:var(--t)">${titleLines(titleText, accent)}</div>
+      ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}</div>`;
   const leadRight = (top, px) => `<div class="abs" style="right:66px;top:${top}px;font-size:${px}px;font-weight:700;letter-spacing:.14em;text-align:right">${lead(M, seasonValue)}</div>`;
   return {
     foto: { w: 1080, h: 1350, nome: "Post con l'immagine dello sponsor 4:5", breve: "Immagine", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,50% 0,0 38%", "100% 52%,100% 100%,38% 100%")}
       <div class="abs" style="left:60px;top:54px">${clubBox(96)}</div>
       ${leadRight(84, 28)}
-      ${sponsorPhoto(c.photo, "left:70px;top:210px;width:940px;height:790px")}
-      <div class="abs t-dest" data-righe="3" style="left:70px;right:420px;top:1040px;--t:62px;font-size:var(--t)">${titleLines(c.title)}</div>
-      <div class="abs" style="right:70px;top:1050px">${logoOnDark(M, 70)}</div>
+      ${sponsorPhoto(c.photo, "left:70px;top:200px;width:940px;height:720px")}
+      ${texts("left:70px;right:400px;top:950px", c.title, 60, 34)}
+      <div class="abs" style="right:70px;top:960px">${logoOnDark(M, 70)}</div>
       <div class="abs" style="left:70px;bottom:70px">${ctaPill(M, c.cta, 34)}</div>
       ${warning(M, 22, "position:absolute;right:70px;bottom:80px;max-width:420px;text-align:right")}</div>` },
 
@@ -790,8 +794,8 @@ function photoFormats(c, sp, seasonValue) {
       ${planes(M, "0 0,58% 0,0 30%", "100% 62%,100% 100%,30% 100%")}
       <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
       ${leadRight(SAFE.top + 50, 30)}
-      ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:800px`)}
-      <div class="abs t-dest" data-righe="2" style="left:70px;right:70px;top:1265px;--t:72px;font-size:var(--t)">${titleLines(c.story_title || c.title)}</div>
+      ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:700px`)}
+      ${texts("left:70px;right:70px;top:1170px", c.story_title || c.title, 72, 38, M.accento)}
       <div class="abs" style="left:70px;right:70px;top:1425px;display:flex;align-items:center;justify-content:space-between;gap:30px">
         ${logoOnDark(M, 76)}
         <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">sticker link qui ↗</div></div>
