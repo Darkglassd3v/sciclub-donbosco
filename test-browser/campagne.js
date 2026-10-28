@@ -113,6 +113,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     return over.map((x) => x.textContent.trim().slice(0, 20));
   });
   test("formatiImmagine", covered.length === 3, `${covered.length} formati con l'immagine`);
+  test("collabResta", [...el("formati").querySelectorAll("button")].some((b) => b.textContent === "Collab"), "con l'immagine sparisce il Collab");
   test("immagineScoperta", covered.every((o) => !o.length), JSON.stringify(covered.flat()).slice(0, 80));
   const files = [postFormats({ ...daForm(), title: "Brindisi" }), postFormats({ ...daForm(), title: "Auto nuova" })].map((l) => l[0]?.file);
   test("nomiFile", files[0] && files[0] !== files[1], JSON.stringify(files));
