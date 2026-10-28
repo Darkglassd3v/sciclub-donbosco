@@ -26,35 +26,12 @@
       di soci: qui niente dati personali, il repository è pubblico.
 
 - [ ] **Social: menu «Campagne» per gli sponsor, immagini degli sponsor, inserzioni Meta** (28/10,
-      da pianificare: il piano qui sotto è una bozza, aspetta il sì dell'utente).
-      Richiesta: le campagne sponsor crescono. Oltre alle storie col logo, servono post con
-      immagini fornite dallo sponsor (es. BMW lancia un'auto nuova e manda la foto da condividere).
-      Separarle dai post Instagram di gite ed eventi con una voce sua in Social. Poi pubblicità
-      mirate con Facebook/Meta Ads: tenere traccia delle spese e preparare i contenuti da caricare
-      nell'app Inserzioni di Meta. Per la grafica dei post con immagini di terzi brandizzate usare
-      `/ui-ux-pro-max:design` (prima abbozzo piccolo, vedi memorie sulle grafiche).
-      Oggi: le campagne sono `social_events.kind = 'sponsor'` (`supabase/schema.sql:3379`), dentro
-      la scheda Post insieme a gite/corsi/cene (`web/social.html:257`, «Campagna sponsor»); gli
-      sponsor (nome, livello, url, handle, loghi, colori) sono nella tabella `sponsors`, gestiti in
-      Social > Impostazioni (`web/social.html:500`); link con UTM già pronti (`social.html:1367`).
-      Bozza di piano:
-      1. Voce «Campagne» nel gruppo Social del menu (`social.html#campagne`): elenco dei soli post
-         `sponsor`, filtrabile per sponsor; la scheda Post resta per gite ed eventi. Stessa tabella,
-         nessun dato da spostare.
-      2. Immagine dello sponsor nel post: campo per caricarla (come la foto dei post) e modelli
-         nuovi (feed 1080×1350, storia 1080×1920) con l'immagine intera e una cornice/fascia del
-         club e del logo sponsor, senza coprire o ritoccare l'immagine (le regole del marchio di
-         molti sponsor lo vietano: da chiedere allo sponsor). Disegno con `/ui-ux-pro-max:design`.
-      3. Inserzioni Meta, per campagna: testi entro i limiti di Meta (testo principale ~125
-         caratteri visibili, titolo ~40, descrizione ~30), invito all'azione, link UTM, immagini
-         esportate nei formati delle inserzioni (1080×1080, 1080×1350, 1080×1920): una scheda
-         «da copiare in Gestione inserzioni».
-      4. Spese: budget, date, speso e risultati (copertura, clic) per campagna; la spesa anche in
-         Bilancio come voce di uscita («Pubblicità Meta»), così entra nei conti della stagione.
-      Da decidere con l'utente: chi carica le immagini (social o anche admin), se la spesa va
-      solo in Bilancio o anche nella campagna, se lo sponsor rimborsa le inserzioni (entrata).
-      Rischi: diritti delle immagini di terzi (usarle solo come lo sponsor permette); peso delle
-      foto nel database (oggi la foto dei post sta in `social_events`, nessun bucket storage).
+      piano pronto, aspetta il sì dell'utente): `docs/PIANO_CAMPAGNE.md`. Cinque fasi: voce
+      Campagne separata da Post; immagine dello sponsor con grafiche nuove disegnate con
+      `/ui-ux-pro-max:design` (prima tre abbozzi 4:5, poi il set della scelta); scheda «Inserzione
+      Meta» da copiare in Gestione inserzioni; spese e rimborsi in Bilancio collegati alla
+      campagna; verifica e rilascio. Dall'utente: sì al piano, un'immagine vera di uno sponsor per
+      le bozze, conferma su `#adv` nel testo delle campagne.
 
 - [ ] **Menu che lampeggia: provare sul sito** (27/10, online `2a27fc6`). Corretto: una graffa
       in più in `brand.css` scartava la regola che mostra subito le voci; il menu ora ha la sua
