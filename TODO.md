@@ -19,6 +19,12 @@
 
 ## Richieste nuove
 
+- [ ] **Doppioni dei soci (28/10): fatto il grosso, restano controlli dell'utente.** 30 doppioni
+      eliminati o uniti in produzione, archiviati in `member_deletions`. Cosa controllare (una
+      scheda eliminata forse di un'altra persona, 7 codici fiscali da correggere con la tessera)
+      in `supabase/migration/doppioni-2026-10-28/DA-CONTROLLARE.md`, fuori da git perché ha nomi
+      di soci: qui niente dati personali, il repository è pubblico.
+
 - [ ] **Social: menu «Campagne» per gli sponsor, immagini degli sponsor, inserzioni Meta** (28/10,
       da pianificare: il piano qui sotto è una bozza, aspetta il sì dell'utente).
       Richiesta: le campagne sponsor crescono. Oltre alle storie col logo, servono post con
