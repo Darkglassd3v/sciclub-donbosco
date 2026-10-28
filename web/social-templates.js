@@ -751,10 +751,11 @@ const ridge = (M, w, h, b = 0) => `<svg class="abs" style="left:0;bottom:${b}px"
   <polygon fill="${M.accento}" points="640,90 585,120 700,120"/>
   <polygon fill="${M.accento}" points="260,110 189,140 320,140"/></svg>`;
 
-/** Titolo su più righe: un a capo nel testo = una riga. Con `accento` l'ultima riga è colorata. */
+/** Titolo su più righe: un a capo nel testo = una riga. Con `accento` l'ultima riga è colorata
+ *  (anche se è l'unica: prima una riga sola restava senza accento, contro quel che dice il form). */
 function titleLines(text, accent) {
   const rows = String(text || "").split("\n").map(escS);
-  if (accent && rows.length > 1) rows[rows.length - 1] = `<span style="color:${accent}">${rows[rows.length - 1]}</span>`;
+  if (accent) rows[rows.length - 1] = `<span style="color:${accent}">${rows[rows.length - 1]}</span>`;
   return rows.join("<br>");
 }
 
