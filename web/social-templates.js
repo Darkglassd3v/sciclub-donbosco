@@ -772,12 +772,15 @@ const clubBox = (h) => `<div style="background:#fff;border-radius:${h * .23}px;p
 const sponsorPhoto = (src, box) => `<img class="foto-sponsor" src="${escS(src)}" alt="" style="position:absolute;${box};object-fit:contain;filter:drop-shadow(0 18px 40px rgba(0,0,0,.45))">`;
 const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:#fff;color:${M.scuro};border-radius:999px;font-weight:800;padding:.4em 1.1em;font-size:${px}px">${escS(text)} ${diamond(M.accento, .45)}</span>` : "";
 
+/* Titolo e testo della campagna, gli stessi in ogni grafica (richiesta del 28/10): l'ultima riga
+ * del titolo (o l'unica) nel colore d'accento, il testo sotto; due righe al massimo ciascuno,
+ * poi fit() stringe o avvisa. Il pulsante (ctaPill, o lo sticker nelle story) a parte. */
+const campaignTexts = (c, M, box, title, sub) => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:${Math.round(title * .25)}px">
+    <div class="t-dest" data-righe="2" style="--t:${title}px;font-size:var(--t)">${titleLines(c.title, M.accento)}</div>
+    ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}</div>`;
+
 function photoFormats(c, sp, seasonValue) {
   const M = brand(sp);
-  // Titolo e testo del post in colonna: il testo segue il titolo, una o due righe che siano.
-  const texts = (box, titleText, title, sub, accent) => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:16px">
-      <div class="t-dest" data-righe="2" style="--t:${title}px;font-size:var(--t)">${titleLines(titleText, accent)}</div>
-      ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}</div>`;
   const leadRight = (top, px) => `<div class="abs" style="right:66px;top:${top}px;font-size:${px}px;font-weight:700;letter-spacing:.14em;text-align:right">${lead(M, seasonValue)}</div>`;
   return {
     foto: { w: 1080, h: 1350, nome: "Post con l'immagine dello sponsor 4:5", breve: "Immagine", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
@@ -785,7 +788,7 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:60px;top:54px">${clubBox(96)}</div>
       ${leadRight(84, 28)}
       ${sponsorPhoto(c.photo, "left:70px;top:200px;width:940px;height:720px")}
-      ${texts("left:70px;right:400px;top:950px", c.title, 60, 34)}
+      ${campaignTexts(c, M, "left:70px;right:400px;top:950px", 60, 34)}
       <div class="abs" style="right:70px;top:960px">${logoOnDark(M, 70)}</div>
       <div class="abs" style="left:70px;bottom:70px">${ctaPill(M, c.cta, 34)}</div>
       ${warning(M, 22, "position:absolute;right:70px;bottom:80px;max-width:420px;text-align:right")}</div>` },
@@ -796,10 +799,10 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
       ${leadRight(SAFE.top + 50, 30)}
       ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:700px`)}
-      ${texts("left:70px;right:70px;top:1170px", c.story_title || c.title, 72, 38, M.accento)}
+      ${campaignTexts(c, M, "left:70px;right:70px;top:1170px", 72, 38)}
       <div class="abs" style="left:70px;right:70px;top:1425px;display:flex;align-items:center;justify-content:space-between;gap:30px">
         ${logoOnDark(M, 76)}
-        <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">sticker link qui ↗</div></div>
+        <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">${escS(c.cta || "sticker link qui")} ↗</div></div>
       ${warning(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom}px;text-align:center`)}</div>` },
 
     /* Quadrata per le inserzioni: titolo e testo piccoli sotto l'immagine (chiesti il 28/10); Meta
@@ -809,7 +812,7 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:50px;top:44px">${clubBox(80)}</div>
       ${leadRight(64, 24)}
       ${sponsorPhoto(c.photo, "left:60px;top:160px;width:960px;height:600px")}
-      ${texts("left:60px;right:340px;top:790px", c.title, 50, 28)}
+      ${campaignTexts(c, M, "left:60px;right:340px;top:790px", 50, 28)}
       <div class="abs" style="right:60px;top:795px;display:flex;flex-direction:column;align-items:flex-end;gap:22px">
         ${logoOnDark(M, 64)}${ctaPill(M, c.cta, 28)}</div>
       ${warning(M, 20, "position:absolute;left:0;right:0;bottom:22px;text-align:center")}</div>` },
@@ -832,7 +835,7 @@ function campaignFormats(c, sp, seasonValue) {
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
     collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
-      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${titleLines(c.title)}</div>
+      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${titleLines(c.title, M.accento)}</div>
       <div class="abs" style="left:80px;top:500px;right:120px;font-size:40px;font-weight:600;line-height:1.25">${escS(c.subtitle || "")}</div>
       <div class="abs" style="left:80px;top:700px">${cta}</div>
       ${ridge(M, 1080, 420, 170)}
@@ -841,30 +844,33 @@ function campaignFormats(c, sp, seasonValue) {
 
     /* Story: spazio libero per lo sticker link verso l'indirizzo con UTM. */
     story: { w: 1080, h: 1920, nome: "Story con spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
+      <div class="abs" style="left:0;right:0;top:${SAFE.top + 12}px;text-align:center;font-size:30px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
       <div class="abs" style="left:0;right:0;top:320px;display:flex;justify-content:center">${logoOnDark(M, 200)}</div>
-      <div class="abs t-dest" style="left:0;right:0;top:700px;text-align:center;font-size:130px">${titleLines(c.story_title || c.title, M.accento)}</div>
-      <div class="abs" style="left:120px;right:120px;top:1010px;text-align:center;font-size:42px;font-weight:600;line-height:1.3">${escS(sp.name)} è ${escS(M.livello.toLowerCase())}<br>dello Sci Club Don Bosco ${escS(seasonValue)}</div>
-      <div class="abs" style="left:50%;top:1180px;transform:translateX(-50%);width:560px;height:120px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:${M.accento}">sticker link qui ↗</div>
+      <div class="abs t-dest" data-righe="2" style="left:60px;right:60px;top:640px;text-align:center;--t:120px;font-size:var(--t)">${titleLines(c.title, M.accento)}</div>
+      ${c.subtitle ? `<div class="abs" data-righe="3" style="left:120px;right:120px;top:930px;text-align:center;--t:42px;font-size:var(--t);font-weight:600;line-height:1.3">${escS(c.subtitle)}</div>` : ""}
+      <div class="abs" style="left:50%;top:1180px;transform:translateX(-50%);width:560px;height:120px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:${M.accento}">${escS(c.cta || "sticker link qui")} ↗</div>
       ${ridge(M, 1080, 520)}
       ${warning(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom + 20}px;text-align:center;color:${M.chiaro}`)}</div>` },
 
-    /* Post 1:1 chiaro, pagina del carosello "Grazie a chi ci sostiene". */
-    grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello «Grazie a chi ci sostiene»", breve: "Grazie", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.chiaro};color:${M.scuro}">
-      <div class="abs" style="left:80px;top:70px;padding:14px 22px;border-radius:28px;background:#fff"><img src="${SOCIAL.logo}" style="height:110px;display:block"></div>
-      <div class="abs" style="right:80px;top:120px;font-size:30px;font-weight:700;letter-spacing:.12em;color:#084C8D">STAGIONE ${escS(seasonValue)}</div>
-      <div class="abs t-dest" style="left:80px;top:280px;font-size:112px">Grazie a chi<br>ci sostiene.</div>
-      <div class="abs" style="left:80px;right:80px;top:560px;height:300px;border-radius:28px;background:#fff;box-shadow:0 12px 40px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center">${logoOnLight(M, 190)}</div>
-      <div class="abs" style="left:80px;right:80px;bottom:80px;display:flex;justify-content:space-between;align-items:center;gap:24px">
-        <span style="font-size:34px;font-weight:700;white-space:nowrap">${diamond(M.accento, .55)}<span style="margin-left:16px">${escS(M.livello)}</span></span>
-        ${warning(M, 22, "text-align:right")}</div></div>` },
+    /* Post 1:1 per il carosello degli sponsor: i testi della campagna (non più «Grazie a chi ci
+     * sostiene»), sul fondo scuro come le altre perché l'accento si legga; logo su una scheda bianca. */
+    grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello degli sponsor", breve: "Grazie", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.scuro};color:${M.chiaro}">
+      <div class="abs" style="left:70px;top:60px">${clubBox(100)}</div>
+      <div class="abs" style="right:70px;top:94px;font-size:28px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
+      ${campaignTexts(c, M, "left:70px;right:70px;top:250px", 96, 36)}
+      <div class="abs" style="left:70px;right:70px;top:600px;height:240px;border-radius:28px;background:#fff;color:${M.scuro};display:flex;align-items:center;justify-content:center">${logoOnLight(M, 160)}</div>
+      <div class="abs" style="left:70px;right:70px;bottom:70px;display:flex;justify-content:space-between;align-items:center;gap:24px">
+        <span style="font-size:32px;font-weight:700;white-space:nowrap">${diamond(M.accento, .55)}<span style="margin-left:16px">${escS(M.livello)}</span></span>
+        ${ctaPill(M, c.cta, 30)}</div>
+      ${warning(M, 20, "position:absolute;left:0;right:0;bottom:22px;text-align:center")}</div>` },
 
     /* Copertina FB: su mobile la foto profilo copre il basso a sinistra, lì non va testo. */
     cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
       ${ridge(M, 820, 150)}
-      <div class="abs t-dest" style="left:44px;top:48px;font-size:58px">Stagione ${escS(seasonValue)}</div>
-      <div class="abs" style="left:44px;top:120px;font-size:22px;font-weight:600">Gite, corsi e gare sociali · Iscrizioni aperte</div>
-      <div class="abs" style="right:44px;top:40px">${logoOnDark(M, 96)}</div>
-      <div class="abs" style="right:44px;top:148px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
+      ${campaignTexts(c, M, "left:44px;right:300px;top:30px", 46, 20)}
+      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90)}</div>
+      <div class="abs" style="right:44px;top:136px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
+      <div class="abs" style="right:44px;top:170px">${ctaPill(M, c.cta, 18)}</div>
       ${warning(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },
   };
 }
