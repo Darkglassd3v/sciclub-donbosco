@@ -185,3 +185,14 @@ Comandi: `node web/test-social.js`, `bash test-browser/esegui.sh` (45 prove), `b
 Differenze dal piano: un solo pulsante «Scarica» per immagine (scaricarle tutte insieme fa chiedere al
 browser il permesso dei download multipli, scelta già fatta per i post); l'immagine dello sponsor
 diventa sempre JPEG (un PNG a 1920 px peserebbe troppo nel database).
+
+## Testi uguali in tutte le grafiche (28/10/2026, dopo le prove dell'utente)
+
+Richiesta: «testi uguali in tutte le pagine». Tre campi (Titolo, Testo, Pulsante) usati identici
+nelle sette grafiche (Immagine, Story immagine, Inserzione, Collab, Story, Grazie, Copertina);
+tolto il campo «Titolo della story» e le frasi fisse («Grazie a chi ci sostiene», «… è sponsor
+dello Sci Club», «Stagione … · Iscrizioni aperte»). L'ultima riga del titolo, anche se è l'unica,
+nel colore d'accento ovunque; il pulsante è anche il testo dello sticker link delle story.
+«Grazie» ora su fondo scuro come le altre. Con l'immagine dello sponsor restano anche le grafiche
+col logo. Prove: `web/test-social.js` (ogni grafica ha titolo con accento, testo e pulsante;
+nessuna frase fissa; il form non ha più il titolo della story).

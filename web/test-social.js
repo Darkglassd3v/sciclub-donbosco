@@ -356,6 +356,8 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   assert.ok(withDark.story.html.includes('src="b.png"') && withDark.collab.html.includes('src="a.png"'));
   const withoutLogo = campaignFormats({ ...c, cta: "" }, { ...santero, logo: null, alcohol: false }, "2026/27");
   assert.ok(withoutLogo.cover.html.includes("958 Santero"), "senza logo deve comparire il nome");
+  // In «Grazie» il nome (senza logo) sta sulla scheda bianca: scritto nel colore scuro, non in quello chiaro.
+  assert.match(withoutLogo.grazie.html, new RegExp(`background:#fff;color:${santero.color_dark}[^>]*><span[^>]*>958 Santero`), "nome dello sponsor invisibile sulla scheda bianca");
   assert.ok(!withoutLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
 }
@@ -421,7 +423,7 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   for (const { html } of Object.values(bad)) assert.ok(!html.includes('onerror="'), "l'immagine dello sponsor è diventata HTML");
   // Un titolo troppo lungo stringe e, se non basta, fa comparire l'avviso (fit(), data-righe).
   // Titolo su due righe al massimo, sotto il testo del post (28/10).
-  assert.ok(f.fotoQuadrata.html.includes("Una stagione<br>da brindare."), "manca il titolo nella quadrata per le inserzioni");
+  assert.ok(f.fotoQuadrata.html.includes(`Una stagione<br><span style="color:${santero.color_accent}">da brindare.</span>`), "manca il titolo nella quadrata per le inserzioni");
   assert.ok(["foto", "fotoStory", "fotoQuadrata"].every((k) => /data-righe="2"/.test(f[k].html)),
     "i titoli delle grafiche con l'immagine non si adattano allo spazio");
   // Senza immagine restano i formati col logo.

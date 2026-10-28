@@ -356,12 +356,8 @@
                   <label class="label" for="fGancio">Frase di apertura (riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
-                <div data-campo="titoloStory" class="field campo-largo" data-per="sponsor">
-                  <label class="label" for="fTitoloStory">Titolo della story (ogni a capo inizia una riga; l'ultima riga usa il colore d'accento)</label>
-                  <textarea class="textarea" id="fTitoloStory" rows="2"></textarea>
-                </div>
                 <div data-campo="cta" class="field" data-per="sponsor">
-                  <label class="label" for="fCta">Testo del pulsante</label>
+                  <label class="label" for="fCta">Testo del pulsante (anche sullo sticker link delle story)</label>
                   <input class="input" id="fCta" placeholder="Es. Scopri le bollicine">
                 </div>
                 <div data-campo="partenze" class="field campo-largo" data-per="gita">
@@ -649,7 +645,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261028jwt"></script>
-<script src="social-templates.js?v=20261028accento"></script>
+<script src="social-templates.js?v=20261028testiuguali"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -1206,7 +1202,6 @@
     el("fTitolo").value = post.title || "";
     el("fSottotitolo").value = post.subtitle || "";
     el("fGancio").value = post.hook || "";
-    el("fTitoloStory").value = post.story_title || "";
     el("fCta").value = post.cta || "";
     for (const [id, column] of Object.entries(AD_FIELDS)) el(id).value = post[column] || "";
     // Senza sponsor si svuota: restava quello del post aperto prima.
@@ -1252,7 +1247,7 @@
     gita: ["corso", "giorno", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
     evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
-  const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "titoloStory", "cta", "data"];
+  const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "cta", "data"];
 
   function sortFields() {
     const g = group(el("fTipo").value), box = el("campiPost");
@@ -1268,8 +1263,8 @@
     const g = group(el("fTipo").value);
     sortFields();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
-    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (ogni a capo inizia una riga)" }[g];
-    el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
+    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo, uguale in tutte le grafiche (ogni a capo inizia una riga; l'ultima ha il colore d'accento)" }[g];
+    el("lSottotitolo").textContent = g === "sponsor" ? "Testo, uguale in tutte le grafiche"
       : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
     el("pFondo").textContent = g === "sponsor" ? "Immagine dello sponsor" : "Contatti e foto";
     el("lFoto").textContent = g === "sponsor" ? "Immagine data dallo sponsor (facoltativa)" : "Foto (facoltativa)";
@@ -1315,7 +1310,6 @@
       photo_y: g === "sponsor" || !picture ? null : photoY,
       photo_zoom: g === "sponsor" || !picture ? null : photoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
-      story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
       ...Object.fromEntries(Object.entries(AD_FIELDS).map(([id, column]) => [column, g === "sponsor" ? el(id).value.trim() || null : null])),
       contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
