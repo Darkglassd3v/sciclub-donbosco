@@ -790,7 +790,7 @@ function photoFormats(c, sp, seasonValue) {
       ${warning(M, 22, "position:absolute;right:70px;bottom:80px;max-width:420px;text-align:right")}</div>` },
 
     /* Story: in alto e in basso le zone coperte da Instagram (SAFE); al posto del pulsante, lo sticker link. */
-    fotoStory: { w: 1080, h: 1920, nome: "Story con l'immagine e lo spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
+    fotoStory: { w: 1080, h: 1920, nome: "Story con l'immagine e lo spazio per lo sticker link", breve: "Story immagine", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,58% 0,0 30%", "100% 62%,100% 100%,30% 100%")}
       <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
       ${leadRight(SAFE.top + 50, 30)}
@@ -801,24 +801,25 @@ function photoFormats(c, sp, seasonValue) {
         <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">sticker link qui ↗</div></div>
       ${warning(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom}px;text-align:center`)}</div>` },
 
-    /* Quadrata per le inserzioni: poco testo (Meta riduce la diffusione delle immagini piene di scritte);
-     * il titolo e il testo dell'inserzione li scrive Meta sotto l'immagine. */
+    /* Quadrata per le inserzioni: titolo e testo piccoli sotto l'immagine (chiesti il 28/10); Meta
+     * preferisce poco testo dentro l'immagine, il resto lo scrive lei sotto. */
     fotoQuadrata: { w: 1080, h: 1080, nome: "Quadrata 1:1 per le inserzioni Meta", breve: "Inserzione", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,44% 0,0 36%", "100% 60%,100% 100%,40% 100%")}
       <div class="abs" style="left:50px;top:44px">${clubBox(80)}</div>
       ${leadRight(64, 24)}
-      ${sponsorPhoto(c.photo, "left:60px;top:175px;width:960px;height:700px")}
-      <div class="abs" style="left:60px;right:60px;top:905px;display:flex;align-items:center;justify-content:space-between;gap:24px">
-        ${logoOnDark(M, 64)}${ctaPill(M, c.cta, 30)}</div>
+      ${sponsorPhoto(c.photo, "left:60px;top:160px;width:960px;height:600px")}
+      ${texts("left:60px;right:340px;top:790px", c.title, 50, 28)}
+      <div class="abs" style="right:60px;top:795px;display:flex;flex-direction:column;align-items:flex-end;gap:22px">
+        ${logoOnDark(M, 64)}${ctaPill(M, c.cta, 28)}</div>
       ${warning(M, 20, "position:absolute;left:0;right:0;bottom:22px;text-align:center")}</div>` },
   };
 }
 
 /** I formati di una campagna: { chiave: { w, h, nome, breve, html } }. `c` = post di tipo sponsor.
  *  `breve` è il nome sul pulsante che sceglie l'anteprima nella pagina. Con l'immagine
- *  dello sponsor, i suoi tre formati (photoFormats); senza, quelli col logo. */
+ *  dello sponsor prima i suoi tre formati (photoFormats), poi sempre quelli col logo. */
 function campaignFormats(c, sp, seasonValue) {
-  if (c.photo) return photoFormats(c, sp, seasonValue);
+  const withPhoto = c.photo ? photoFormats(c, sp, seasonValue) : {};
   const M = brand(sp);
   const signature = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
     <img src="${SOCIAL.logo}" style="height:${96 * k}px;display:block">
@@ -826,6 +827,7 @@ function campaignFormats(c, sp, seasonValue) {
     ${logoOnLight(M, 84 * k)}</div>`;
   const cta = c.cta ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:${M.accento};color:${M.scuro};border-radius:999px;font-weight:800;padding:.45em 1.1em;font-size:40px">${escS(c.cta)} ${diamond(M.scuro, .45)}</span>` : "";
   return {
+    ...withPhoto,
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
     collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
