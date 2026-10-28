@@ -761,9 +761,60 @@ function titleLines(text, accent) {
 /** Etichetta in alto: "MAIN SPONSOR · STAGIONE 2026/27". */
 const lead = (M, seasonValue) => `${escS(M.livello.toUpperCase())} · STAGIONE ${escS(seasonValue)}`;
 
+/* Campagna con l'immagine data dallo sponsor (es. l'auto nuova): grafica B «Piani K»,
+ * scelta il 28/10/2026. I piani a 45° della grafica K del club nei colori dello sponsor,
+ * logo del club nel riquadro bianco, l'immagine intera (contain) sul fondo, senza
+ * cornice: nessun testo le sta sopra, perché molti sponsor vietano tagli e scritte. */
+const planes = (M, corner, wedge) => `<div class="abs" style="inset:0;background:${M.accento};opacity:.88;clip-path:polygon(${corner})"></div>
+  <div class="abs" style="inset:0;background:${M.crinaleFronte};opacity:.9;clip-path:polygon(${wedge})"></div>`;
+const clubBox = (h) => `<div style="background:#fff;border-radius:${h * .23}px;padding:${h * .125}px ${h * .19}px"><img src="${SOCIAL.logo}" style="height:${h}px;display:block"></div>`;
+const sponsorPhoto = (src, box) => `<img class="foto-sponsor" src="${escS(src)}" alt="" style="position:absolute;${box};object-fit:contain;filter:drop-shadow(0 18px 40px rgba(0,0,0,.45))">`;
+const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:#fff;color:${M.scuro};border-radius:999px;font-weight:800;padding:.4em 1.1em;font-size:${px}px">${escS(text)} ${diamond(M.accento, .45)}</span>` : "";
+
+function photoFormats(c, sp, seasonValue) {
+  const M = brand(sp);
+  const leadRight = (top, px) => `<div class="abs" style="right:66px;top:${top}px;font-size:${px}px;font-weight:700;letter-spacing:.14em;text-align:right">${lead(M, seasonValue)}</div>`;
+  return {
+    foto: { w: 1080, h: 1350, nome: "Post con l'immagine dello sponsor 4:5", breve: "Immagine", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
+      ${planes(M, "0 0,50% 0,0 38%", "100% 52%,100% 100%,38% 100%")}
+      <div class="abs" style="left:60px;top:54px">${clubBox(96)}</div>
+      ${leadRight(84, 28)}
+      ${sponsorPhoto(c.photo, "left:70px;top:210px;width:940px;height:790px")}
+      <div class="abs t-dest" data-righe="3" style="left:70px;right:420px;top:1040px;--t:62px;font-size:var(--t)">${titleLines(c.title)}</div>
+      <div class="abs" style="right:70px;top:1050px">${logoOnDark(M, 70)}</div>
+      <div class="abs" style="left:70px;bottom:70px">${ctaPill(M, c.cta, 34)}</div>
+      ${warning(M, 22, "position:absolute;right:70px;bottom:80px;max-width:420px;text-align:right")}</div>` },
+
+    /* Story: in alto e in basso le zone coperte da Instagram (SAFE); al posto del pulsante, lo sticker link. */
+    fotoStory: { w: 1080, h: 1920, nome: "Story con l'immagine e lo spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
+      ${planes(M, "0 0,58% 0,0 30%", "100% 62%,100% 100%,30% 100%")}
+      <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
+      ${leadRight(SAFE.top + 50, 30)}
+      ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:800px`)}
+      <div class="abs t-dest" data-righe="2" style="left:70px;right:70px;top:1265px;--t:72px;font-size:var(--t)">${titleLines(c.story_title || c.title)}</div>
+      <div class="abs" style="left:70px;right:70px;top:1425px;display:flex;align-items:center;justify-content:space-between;gap:30px">
+        ${logoOnDark(M, 76)}
+        <div style="width:440px;height:100px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:${M.accento}">sticker link qui ↗</div></div>
+      ${warning(M, 26, `position:absolute;left:0;right:0;bottom:${SAFE.bottom}px;text-align:center`)}</div>` },
+
+    /* Quadrata per le inserzioni: poco testo (Meta riduce la diffusione delle immagini piene di scritte);
+     * il titolo e il testo dell'inserzione li scrive Meta sotto l'immagine. */
+    fotoQuadrata: { w: 1080, h: 1080, nome: "Quadrata 1:1 per le inserzioni Meta", breve: "Inserzione", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.scuro};color:${M.chiaro}">
+      ${planes(M, "0 0,44% 0,0 36%", "100% 60%,100% 100%,40% 100%")}
+      <div class="abs" style="left:50px;top:44px">${clubBox(80)}</div>
+      ${leadRight(64, 24)}
+      ${sponsorPhoto(c.photo, "left:60px;top:175px;width:960px;height:700px")}
+      <div class="abs" style="left:60px;right:60px;top:905px;display:flex;align-items:center;justify-content:space-between;gap:24px">
+        ${logoOnDark(M, 64)}${ctaPill(M, c.cta, 30)}</div>
+      ${warning(M, 20, "position:absolute;left:0;right:0;bottom:22px;text-align:center")}</div>` },
+  };
+}
+
 /** I formati di una campagna: { chiave: { w, h, nome, breve, html } }. `c` = post di tipo sponsor.
- *  `breve` è il nome sul pulsante che sceglie l'anteprima nella pagina. */
+ *  `breve` è il nome sul pulsante che sceglie l'anteprima nella pagina. Con l'immagine
+ *  dello sponsor, i suoi tre formati (photoFormats); senza, quelli col logo. */
 function campaignFormats(c, sp, seasonValue) {
+  if (c.photo) return photoFormats(c, sp, seasonValue);
   const M = brand(sp);
   const signature = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
     <img src="${SOCIAL.logo}" style="height:${96 * k}px;display:block">
@@ -842,6 +893,17 @@ function utmAddress(sp, c, half, seasonValue) {
   return url.toString();
 }
 
+/** I «Parametri URL» di un'inserzione Meta: {{site_source_name}} (fb, ig, ...) lo riempie Meta. */
+function adUrlParams(sp, c, seasonValue) {
+  return `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=${simple(sp.name)}-${simple(seasonValue)}`
+    + `&utm_content=${simple(c.title).slice(0, 40) || "post"}`;
+}
+
+// Lunghezze consigliate da Meta per le inserzioni: oltre, nel feed il testo si taglia.
+const META_LIMITS = { ad_text: 125, ad_headline: 40, ad_description: 30 };
+// Gli inviti all'azione di Gestione inserzioni, come li scrive Meta in italiano.
+const META_CTAS = ["Scopri di più", "Acquista ora", "Prenota ora", "Iscriviti", "Contattaci"];
+
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
 function postText(ev, sp, seasonValue) {
   const tel = contactsOf(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
@@ -855,7 +917,8 @@ function postText(ev, sp, seasonValue) {
     if (link) rows.push("", `👉 ${link}`);
     if (sp.handle) rows.push(`@${sp.handle.replace(/^@/, "")}`);
     if (sp.alcohol) rows.push("", SOCIAL.avvertenzaAlcol);
-    rows.push("", `#sciclubdonbosco #${simple(sp.name)}`);
+    // Una campagna è pubblicità: si dichiara (#adv).
+    rows.push("", `#adv #sciclubdonbosco #${simple(sp.name)}`);
     return rows.join("\n");
   }
   if (ev.kind === "gita") {
@@ -881,5 +944,6 @@ if (typeof module !== "undefined") {
   module.exports = { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, categoria: categoryName, impostaColoriGita: setTripColors, impostaContatti: setContacts, contattiDi: contactsOf, inchiostro: inkColor, modelloPost: postTemplate,
                      contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
-                     formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo };
+                     formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
+                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS };
 }

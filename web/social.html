@@ -30,6 +30,9 @@
       font: inherit; font-weight: 700; cursor: pointer;  text-transform: uppercase; letter-spacing: .04em; }
     .vista button[aria-pressed="true"] { background: var(--blu-pieno); color: #fff; }
     .elenco-post { list-style: none; margin: 0; padding: 0; }
+    /* Oltre il limite consigliato da Meta il testo dell'inserzione si taglia nel feed. */
+    .conta-caratteri.oltre { color: var(--errore); font-weight: 700; }
+    #sitoInserzione, #parametriInserzione { overflow-wrap: anywhere; }
     .elenco-post .mese { margin: 14px 0 4px; font-size: .9375rem; font-weight: 700; color: var(--testo-soft); }
     .elenco-post li button { width: 100%; display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 12px; align-items: center;
       text-align: left; background: none; border: 0; border-radius: var(--raggio); padding: 8px; cursor: pointer; font: inherit; color: inherit; }
@@ -217,6 +220,7 @@
     <details class="gruppo" data-permesso="social" hidden open>
       <summary><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10v4h4l7 5V5L7 10Z"/><path d="M18 8a5 5 0 0 1 0 8"/></svg><span>Social</span></summary>
       <a href="social.html#post" aria-current="page">Post<span class="conta" id="contaDaFare"></span></a>
+      <a href="social.html#campagne">Campagne<span class="conta" id="contaCampagne"></span></a>
       <a href="social.html#grafiche">Grafiche</a>
       <a href="social.html#impostazioni">Impostazioni</a>
     </details>
@@ -242,11 +246,12 @@
   <h1 class="title is-4" id="titoloSezione">Post</h1>
   <p class="occhiello" id="fraseSezione"></p>
 
-  <!-- Post: a sinistra i post, dal prossimo in avanti; a destra quello aperto. -->
-  <div class="colonne-social" data-sezione="post">
+  <!-- Post e Campagne: a sinistra i post, dal prossimo in avanti; a destra quello aperto.
+       Campagne mostra solo i post degli sponsor, Post tutti gli altri. -->
+  <div class="colonne-social" data-sezione="post campagne">
     <div class="riquadro">
       <div id="azioniNuovo">
-        <details class="nuovo-post" id="menuNuovo">
+        <details class="nuovo-post" id="menuNuovo" data-sezione="post">
           <summary class="button is-link">+ Nuovo post</summary>
           <div class="menu-nuovo">
             <button type="button" class="button is-light" data-nuovo="gita">Gita</button>
@@ -254,13 +259,17 @@
             <button type="button" class="button is-light" data-nuovo="cena">Cena o festa</button>
             <button type="button" class="button is-light" data-nuovo="gara">Gara</button>
             <button type="button" class="button is-light" data-nuovo="servizi">Servizi</button>
-            <button type="button" class="button is-light" data-nuovo="sponsor">Campagna sponsor</button>
           </div>
         </details>
+        <button type="button" class="button is-link" id="btnNuovaCampagna" data-sezione="campagne" data-nuovo="sponsor">+ Nuova campagna</button>
       </div>
       <div class="vista" role="group" aria-label="Quali post">
         <button type="button" data-vista="dafare" aria-pressed="true">Da fare</button>
         <button type="button" data-vista="pubblicati" aria-pressed="false">Pubblicati</button>
+      </div>
+      <div class="field" data-sezione="campagne">
+        <label class="label" for="filtroSponsor">Sponsor</label>
+        <select class="input" id="filtroSponsor"><option value="">Tutti gli sponsor</option></select>
       </div>
       <ul class="elenco-post" id="elencoPost"></ul>
     </div>
@@ -374,17 +383,18 @@
               </div>
             </section>
 
-            <section class="parte" aria-labelledby="pFondo" data-per="gita evento">
+            <section class="parte" aria-labelledby="pFondo" data-per="gita evento sponsor">
               <h3 id="pFondo">Contatti e foto</h3>
               <div class="campi">
-                <div class="field campo-largo">
+                <div class="field campo-largo" data-per="gita evento">
                   <span class="label" id="lContatti">Contatti in fondo al post</span>
                   <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
                   <a class="button is-small is-light mt-2" href="#contatti">Gestisci i contatti</a>
                 </div>
                 <div class="field">
-                  <label class="label" for="fFoto">Foto (facoltativa)</label>
+                  <label class="label" for="fFoto" id="lFoto">Foto (facoltativa)</label>
                   <input class="input" type="file" id="fFoto" accept="image/*">
+                  <p class="help" data-per="sponsor">Usare l'immagine solo come lo sponsor permette: nei post resta intera, senza tagli né scritte sopra.</p>
                   <button type="button" class="button is-small is-light mt-2" id="btnTogliFoto" hidden>Rimuovi la foto</button>
                   <!-- Quale parte della foto si vede, uguale in post e story: le frecce (pulsanti, o tastiera con
                        «Sposta la foto» premuto) la muovono e + e − la ingrandiscono; l'anteprima cambia a ogni tasto. -->
@@ -404,6 +414,57 @@
                   </div>
                 </div>
               </div>
+            </section>
+
+            <!-- Inserzione Meta della campagna: i testi da copiare in Gestione inserzioni,
+                 col contatore sui limiti consigliati da Meta (LIMITI in social-templates.js). -->
+            <section class="parte" aria-labelledby="pMeta" data-per="sponsor" id="parteMeta">
+              <h3 id="pMeta">Inserzione Meta</h3>
+              <p class="occhiello mb-2">Da copiare in Gestione inserzioni. Le immagini sono quelle dell'anteprima: quadrata e 4:5 per il feed, la storia per storie e reel.</p>
+              <div class="campi">
+                <div class="field campo-largo">
+                  <label class="label" for="fAdText">Testo principale</label>
+                  <textarea class="textarea" id="fAdText" aria-describedby="contaAdText" rows="3"></textarea>
+                  <p class="help conta-caratteri" id="contaAdText" data-conta-per="fAdText"></p>
+                </div>
+                <div class="field">
+                  <label class="label" for="fAdHeadline">Titolo</label>
+                  <input class="input" id="fAdHeadline" aria-describedby="contaAdHeadline">
+                  <p class="help conta-caratteri" id="contaAdHeadline" data-conta-per="fAdHeadline"></p>
+                </div>
+                <div class="field">
+                  <label class="label" for="fAdDescription">Descrizione</label>
+                  <input class="input" id="fAdDescription" aria-describedby="contaAdDescription">
+                  <p class="help conta-caratteri" id="contaAdDescription" data-conta-per="fAdDescription"></p>
+                </div>
+                <div class="field">
+                  <label class="label" for="fAdCta">Invito all'azione</label>
+                  <select class="input" id="fAdCta"></select>
+                </div>
+                <div class="field campo-largo">
+                  <span class="label" id="lSito">Sito web</span>
+                  <p><code id="sitoInserzione" aria-labelledby="lSito"></code></p>
+                  <span class="label mt-2" id="lParametri">Parametri URL</span>
+                  <p><code id="parametriInserzione" aria-labelledby="lParametri"></code></p>
+                  <div class="buttons mt-2">
+                    <button type="button" class="button is-small is-light" data-copia="fAdText">Copia il testo</button>
+                    <button type="button" class="button is-small is-light" data-copia="fAdHeadline">Copia il titolo</button>
+                    <button type="button" class="button is-small is-light" data-copia="fAdDescription">Copia la descrizione</button>
+                    <button type="button" class="button is-small is-light" data-copia="sitoInserzione">Copia il sito</button>
+                    <button type="button" class="button is-small is-light" data-copia="parametriInserzione">Copia i parametri</button>
+                  </div>
+                </div>
+              </div>
+              <p class="avviso-contrasto mt-2 mb-0" id="avvisoAlcolMeta" hidden>Sponsor di bevande alcoliche: in Gestione inserzioni il pubblico va limitato ai maggiorenni (18+), e valgono le regole di Meta sugli alcolici. L'avvertenza è già nelle immagini.</p>
+            </section>
+
+            <!-- Spese e rimborsi delle inserzioni: movimenti di Bilancio collegati alla
+                 campagna (ledger_entries.social_event_id). Solo col permesso bilancio. -->
+            <section class="parte" aria-labelledby="pSpese" id="speseCampagna" hidden>
+              <h3 id="pSpese">Spese e rimborsi</h3>
+              <p id="totaleSpese" aria-live="polite"></p>
+              <button type="button" class="button is-light" id="btnRegistraSpesa">Registra spesa o rimborso</button>
+              <p class="help">Va in Bilancio come movimento della stagione, collegato a questa campagna.</p>
             </section>
 
             <!-- Il testo sta qui, largo, dopo i dati da cui nasce: nella colonna
@@ -560,10 +621,35 @@
   </div>
 </div>
 
+<!-- Spesa o rimborso delle inserzioni di una campagna: poi la conferma (ask()) e il movimento in Bilancio. -->
+<dialog id="dlgSpesa" class="finestra" aria-labelledby="dlgSpesaTitolo">
+  <h2 class="title is-5" id="dlgSpesaTitolo">Spesa o rimborso della campagna</h2>
+  <div class="field">
+    <label class="label" for="spTipo">Tipo</label>
+    <select class="input" id="spTipo">
+      <option value="USCITA">Spesa per le inserzioni Meta</option>
+      <option value="ENTRATA">Rimborso dallo sponsor</option>
+    </select>
+  </div>
+  <div class="field">
+    <label class="label" for="spData">Data</label>
+    <input class="input" type="date" id="spData">
+  </div>
+  <div class="field">
+    <label class="label" for="spImporto">Importo (€)</label>
+    <input class="input" id="spImporto" inputmode="decimal" placeholder="Es. 25,50">
+  </div>
+  <p class="help is-danger" id="spErrore" role="alert" hidden></p>
+  <div class="buttons">
+    <button type="button" class="button is-medium" id="spAnnulla">Annulla</button>
+    <button type="button" class="button is-medium is-link" id="spSalva">Registra</button>
+  </div>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261028menu"></script>
-<script src="social-templates.js?v=20261023sponsor"></script>
+<script src="social-templates.js?v=20261028campagne"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -604,15 +690,16 @@
   })();
 
   // ---------------------------------------------------------------------
-  // Schede: Post, Grafiche e Impostazioni, scelte dall'indirizzo
+  // Schede: Post, Campagne, Grafiche e Impostazioni, scelte dall'indirizzo
   // (social.html#grafiche). #sponsor e #giorni aprono un modulo delle
   // Impostazioni; #calendario e #copertina, schede di prima, portano a
   // Grafiche: un segnalibro vecchio arriva ancora al posto giusto.
   // ---------------------------------------------------------------------
 
-  const SECTIONS = { post: "Post", grafiche: "Grafiche", impostazioni: "Impostazioni" };
+  const SECTIONS = { post: "Post", campagne: "Campagne", grafiche: "Grafiche", impostazioni: "Impostazioni" };
   const PHRASES = {
     post: "I post da preparare e quelli pubblicati: si compilano i dati e il post si disegna da solo.",
+    campagne: "Le campagne degli sponsor: storie col logo, post con l'immagine dello sponsor e inserzioni Meta.",
     grafiche: "Calendario delle gite e copertina, pronti da scaricare.",
     impostazioni: "Sponsor, contatti e giorni delle gite che i post usano.",
   };
@@ -628,14 +715,22 @@
 
   function showSection() {
     const [s, modulo] = dove();
-    document.querySelectorAll("[data-sezione]").forEach((x) => { x.hidden = x.dataset.sezione !== s; });
+    document.querySelectorAll("[data-sezione]").forEach((x) => { x.hidden = !x.dataset.sezione.split(" ").includes(s); });
     document.querySelectorAll("[data-modulo]").forEach((x) => { x.hidden = x.dataset.modulo !== modulo; });
     el("riassunti").hidden = !!modulo;
     el("titoloSezione").textContent = SECTIONS[s];
     el("fraseSezione").textContent = PHRASES[s];
     // Le anteprime disegnate mentre la sezione era nascosta non hanno misure
     // (fit() non vede niente da restringere): si rifanno ora che si vedono.
-    if (s === "post" && !el("editor").hidden) redraw();
+    if (s === "post" || s === "campagne") {
+      // Un post aperto resta nella sua scheda; con modifiche da salvare resta in vista.
+      if (isOpen && sectionOf(isOpen) !== s && !modified()) { isOpen = null; showEditor(false); }
+      el("nessunPost").textContent = s === "campagne"
+        ? "Selezionare una campagna dall'elenco oppure crearne una con «+ Nuova campagna»."
+        : "Selezionare un post dall'elenco oppure crearne uno con «+ Nuovo post».";
+      drawList();
+      if (!el("editor").hidden) redraw();
+    }
     if (s === "grafiche") { drawMonthCalendar(); drawFbCover(); }
     if (s === "impostazioni") drawSummaries();
     window.scrollTo(0, 0);
@@ -667,7 +762,8 @@
   // L'elenco senza le foto: sono nel database in base64, circa 250 KB l'una, e con 50 post la pagina
   // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
-    + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop";
+    + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,"
+    + "ad_text,ad_headline,ad_description,ad_cta";
 
   async function loadPosts() {
     const { data, error } = await sb.from("social_events").select(LIST_COLUMNS)
@@ -685,6 +781,10 @@
     const chosenOne = el("fSponsor").value;
     el("fSponsor").innerHTML = sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     if (chosenOne) el("fSponsor").value = chosenOne;
+    const filtered = el("filtroSponsor").value;
+    el("filtroSponsor").innerHTML = '<option value="">Tutti gli sponsor</option>'
+      + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+    el("filtroSponsor").value = sponsors.some((s) => s.id === filtered) ? filtered : "";
     el("sScegli").innerHTML = '<option value="">+ Nuovo sponsor</option>'
       + sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
     openSponsor(el("sScegli").value);
@@ -859,12 +959,21 @@
     return missingItems(p).length ? '<span class="stato manca">Da completare</span>' : '<span class="stato pronto">Pronto</span>';
   }
 
+  /** La scheda di un post: le campagne degli sponsor in Campagne, il resto in Post. */
+  const sectionOf = (p) => (p.kind === "sponsor" ? "campagne" : "post");
+
   function drawList() {
-    const daFare = posts.filter((p) => !p.published_at);
-    el("contaDaFare").textContent = daFare.length ? `${daFare.length} da fare` : "";
+    const toDo = (section) => posts.filter((p) => sectionOf(p) === section && !p.published_at).length;
+    for (const [id, section] of [["contaDaFare", "post"], ["contaCampagne", "campagne"]]) {
+      const n = toDo(section);
+      el(id).textContent = n ? `${n} da fare` : "";
+    }
+    const section = dove()[0] === "campagne" ? "campagne" : "post", chosenSponsor = el("filtroSponsor").value;
+    const own = posts.filter((p) => sectionOf(p) === section && (section !== "campagne" || !chosenSponsor || p.sponsor_id === chosenSponsor));
+    const daFare = own.filter((p) => !p.published_at);
     document.querySelectorAll("[data-vista]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.vista === vista));
     // posts arriva in ordine di data; i pubblicati si leggono dal più recente.
-    const visibleOnes = vista === "dafare" ? daFare : posts.filter((p) => p.published_at).reverse();
+    const visibleOnes = vista === "dafare" ? daFare : own.filter((p) => p.published_at).reverse();
     const months = new Map();
     for (const p of visibleOnes) {
       const m = p.event_date ? p.event_date.slice(0, 7) : "";
@@ -876,7 +985,9 @@
     el("elencoPost").innerHTML = visibleOnes.length ? groups.map(([m, rows]) => `
       <li class="mese">${m ? `${uppercase(MONTHS[Number(m.slice(5)) - 1])} ${m.slice(0, 4)}` : "Senza data"}</li>
       ${rows.map(listRow).join("")}`).join("")
-      : `<li class="occhiello pt-3">${vista === "dafare" ? "Nessun post da fare." : "Nessun post pubblicato."}</li>`;
+      : `<li class="occhiello pt-3">${section === "campagne"
+        ? (vista === "dafare" ? "Nessuna campagna da fare." : "Nessuna campagna pubblicata.")
+        : (vista === "dafare" ? "Nessun post da fare." : "Nessun post pubblicato.")}</li>`;
     el("elencoPost").querySelectorAll("button[data-id]").forEach((b) =>
       b.addEventListener("click", () => doOpen(posts.find((p) => p.id === b.dataset.id))));
   }
@@ -926,10 +1037,14 @@
       b.addEventListener("click", () => { el("menuNuovo").open = false; doOpen({ kind: b.dataset.nuovo }); }));
     document.querySelectorAll("[data-vista]").forEach((b) =>
       b.addEventListener("click", () => { vista = b.dataset.vista; drawList(); }));
+    el("filtroSponsor").addEventListener("change", drawList);
     el("fTipo").addEventListener("change", () => { showFields(); changed(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { addRow(b.dataset.aggiungi); changed(); }));
     el("editor").addEventListener("input", (e) => {
+      // I campi dell'inserzione non cambiano le immagini né il testo del post: niente ridisegno
+      // (con l'immagine dello sponsor sono tre disegni da 1920 px a ogni tasto).
+      if (e.target.closest("#parteMeta")) { const post = daForm(); drawAdSheet(post, sponsorDi(post)); markChanges(); return; }
       if (e.target.id !== "testoPost") { changed(); return; }
       markManualText();
       markChanges();
@@ -938,17 +1053,24 @@
       const file = el("fFoto").files[0];
       if (!file) return;
       el("fFoto").value = "";
+      const turn = aperture;  // aperto un altro post mentre l'immagine si riduce: non va in quello
+      let reduced;
       try {
-        picture = await shrinkImage(file, 1080, "image/jpeg");
+        // L'immagine dello sponsor resta intera anche nella storia, alta 1920.
+        reduced = await shrinkImage(file, group(el("fTipo").value) === "sponsor" ? 1920 : 1080, "image/jpeg");
       } catch (e) {
         showToast("Impossibile aprire l'immagine: usare una foto JPEG o PNG.", "is-danger");
         return;
       }
+      if (turn !== aperture) return;
+      picture = reduced;
       photoX = photoY = photoZoom = null;  // una foto nuova parte dal centro
       changed();
     });
     el("btnTogliFoto").addEventListener("click", () => { picture = null; photoX = photoY = photoZoom = null; changed(); });
     bindMovePhoto();
+    bindAdSheet();
+    bindSpend();
     el("btnEvidenzia").addEventListener("click", highlightSelection);
     el("btnSalva").addEventListener("click", save);
     el("btnRigenera").addEventListener("click", () => { updatePostText(true); markChanges(); el("testoPost").focus(); });
@@ -1045,7 +1167,8 @@
   function duplicate() {
     if (!isOpen || !isOpen.id) return;
     const { id, created_at, updated_at, ...records } = isOpen;
-    doOpen({ ...records, event_date: null, deadline: null, photo: null, photo_x: null, photo_y: null, photo_zoom: null,
+    // L'immagine data dallo sponsor di solito si riusa; la foto di una gita no (cambia la meta).
+    doOpen({ ...records, event_date: null, deadline: null, photo: records.kind === "sponsor" ? records.photo : null, photo_x: null, photo_y: null, photo_zoom: null,
       subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null });
     if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
@@ -1072,7 +1195,11 @@
       if (turn !== aperture) return;
     }
     isOpen = post;
-    if (dove()[0] !== "post") history.replaceState(null, "", "#post"), showSection();
+    if (dove()[0] !== sectionOf(post)) {
+      history.replaceState(null, "", "#" + sectionOf(post));
+      // Come un clic sul menu: la scheda e la voce segnata seguono l'indirizzo.
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    }
     const typeName = post.kind || "gita";
     el("fTipo").value = typeName;
     el("fData").value = post.event_date || "";
@@ -1081,6 +1208,7 @@
     el("fGancio").value = post.hook || "";
     el("fTitoloStory").value = post.story_title || "";
     el("fCta").value = post.cta || "";
+    for (const [id, column] of Object.entries(AD_FIELDS)) el(id).value = post[column] || "";
     // Senza sponsor si svuota: restava quello del post aperto prima.
     el("fSponsor").value = post.sponsor_id || "";
     el("fScadenza").value = post.deadline || "";
@@ -1111,6 +1239,7 @@
     markChanges();
     updateHeader();
     drawList();
+    drawSpend();
     el("editor").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -1142,6 +1271,8 @@
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo della campagna (ogni a capo inizia una riga)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo del post"
       : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
+    el("pFondo").textContent = g === "sponsor" ? "Immagine dello sponsor" : "Contatti e foto";
+    el("lFoto").textContent = g === "sponsor" ? "Immagine data dallo sponsor (facoltativa)" : "Foto (facoltativa)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) addRow("fPrezzi");
@@ -1179,13 +1310,14 @@
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,
       place: g === "evento" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
-      photo: g === "sponsor" ? null : picture,
+      photo: picture,
       photo_x: g === "sponsor" || !picture ? null : photoX,
       photo_y: g === "sponsor" || !picture ? null : photoY,
       photo_zoom: g === "sponsor" || !picture ? null : photoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       story_title: g === "sponsor" ? el("fTitoloStory").value.trim() || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
+      ...Object.fromEntries(Object.entries(AD_FIELDS).map(([id, column]) => [column, g === "sponsor" ? el(id).value.trim() || null : null])),
       contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
       // Vuoto = testo automatico, rifatto dai dati a ogni apertura. Si salva
       // solo quello scritto a mano: confrontare il testo salvato con quello
@@ -1195,6 +1327,114 @@
     };
   }
   const sponsorDi = (post) => sponsors.find((s) => s.id === post.sponsor_id) || null;
+
+  // ---------------------------------------------------------------------
+  // Inserzione Meta e spese della campagna
+  // ---------------------------------------------------------------------
+
+  /** I campi dell'inserzione e le loro colonne in social_events. */
+  const AD_FIELDS = { fAdText: "ad_text", fAdHeadline: "ad_headline", fAdDescription: "ad_description", fAdCta: "ad_cta" };
+
+  function bindAdSheet() {
+    el("fAdCta").innerHTML = '<option value="">—</option>' + META_CTAS.map((c) => `<option>${esc(c)}</option>`).join("");
+    document.querySelectorAll("[data-copia]").forEach((b) => b.addEventListener("click", async () => {
+      const source = el(b.dataset.copia);
+      try {
+        await navigator.clipboard.writeText("value" in source ? source.value : source.textContent);
+        showToast("Copiato: pronto da incollare in Gestione inserzioni.");
+      } catch (e) {
+        showToast("Copia automatica non riuscita: selezionare il testo e copiarlo con Ctrl+C.", "is-warning");
+      }
+    }));
+  }
+
+  /** Contatori dei caratteri, sito e parametri da incollare, promemoria per gli alcolici. */
+  function drawAdSheet(post, sp) {
+    for (const counter of document.querySelectorAll("[data-conta-per]")) {
+      const n = el(counter.dataset.contaPer).value.length, limit = META_LIMITS[AD_FIELDS[counter.dataset.contaPer]];
+      counter.textContent = n > limit ? `${n}/${limit} caratteri: oltre il limite, nel feed Meta lo taglia.` : `${n}/${limit} caratteri`;
+      counter.classList.toggle("oltre", n > limit);
+    }
+    const site = sp && urlSponsor(sp.url);
+    el("sitoInserzione").textContent = site ? site.toString() : "Manca l'indirizzo dello sponsor (Impostazioni > Sponsor).";
+    el("parametriInserzione").textContent = sp ? adUrlParams(sp, post, SEASON) : "";
+    el("avvisoAlcolMeta").hidden = !(sp && sp.alcohol);
+    // Senza indirizzo «Copia il sito» copierebbe la frase dell'avviso.
+    document.querySelector('[data-copia="sitoInserzione"]').disabled = !site;
+    document.querySelector('[data-copia="parametriInserzione"]').disabled = !sp;
+  }
+
+  let spendRound = 0;  // l'ultima lettura delle spese: una più vecchia non scrive
+  /** Speso, rimborsato e netto della campagna aperta, dai movimenti di Bilancio collegati. Solo col permesso bilancio. */
+  async function drawSpend() {
+    const p = isOpen, round = ++spendRound;
+    el("speseCampagna").hidden = true;
+    if (!p || !p.id || p.kind !== "sponsor" || !(await can("bilancio"))) return;
+    const { data, error } = await sb.from("ledger_entries").select("kind,amount").eq("social_event_id", p.id);
+    if (round !== spendRound) return;
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    const total = (kind) => data.filter((m) => m.kind === kind).reduce((sum, m) => sum + Number(m.amount), 0);
+    const spent = total("USCITA"), refunded = total("ENTRATA");
+    el("totaleSpese").innerHTML = `Speso <b>${fmt(spent)}</b> · Rimborsato <b>${fmt(refunded)}</b> · Netto <b>${fmt(spent - refunded)}</b>`;
+    el("speseCampagna").hidden = false;
+  }
+
+  /** Il tipo scelto nella finestra: [categoria in Bilancio, nome nella conferma]. */
+  const SPEND_KINDS = { USCITA: ["Pubblicità Meta", "Spesa per le inserzioni Meta"], ENTRATA: ["Rimborso sponsor", "Rimborso dallo sponsor"] };
+
+  function bindSpend() {
+    el("btnRegistraSpesa").addEventListener("click", () => {
+      el("spData").value = new Date().toLocaleDateString("sv-SE");  // oggi, AAAA-MM-GG
+      el("spImporto").value = "";
+      el("spErrore").hidden = true;
+      for (const id of ["spImporto", "spData"]) el(id).removeAttribute("aria-invalid");
+      el("dlgSpesa").showModal();
+      el("spImporto").focus();
+    });
+    el("spAnnulla").addEventListener("click", () => el("dlgSpesa").close());
+    el("spSalva").addEventListener("click", askSpend);
+  }
+
+  /* L'errore va dentro la finestra: l'avviso della pagina (markError) resterebbe sotto, invisibile. */
+  function spendError(field, message) {
+    el("spErrore").textContent = message;
+    el("spErrore").hidden = false;
+    field.setAttribute("aria-invalid", "true");
+    field.focus();
+  }
+
+  function askSpend() {
+    // Euro con la virgola dei centesimi; «1.250» (punto delle migliaia) diventerebbe 1,25.
+    const text = el("spImporto").value.trim(), amount = Number(text.replace(",", "."));
+    if (!/^\d{1,7}([.,]\d{1,2})?$/.test(text) || !(amount > 0)) {
+      spendError(el("spImporto"), "Importo in euro, con la virgola per i centesimi e senza il punto delle migliaia: es. 25,50 o 1250.");
+      return;
+    }
+    if (!el("spData").value) { spendError(el("spData"), "Inserire la data."); return; }
+    const kind = el("spTipo").value, [category, label] = SPEND_KINDS[kind], p = isOpen, sp = sponsorDi(p);
+    const row = { kind, category, description: `${sp ? `${sp.name}: ` : ""}${nomePost(p)}`, quantity: 1, unit_price: amount,
+      entry_date: el("spData").value, social_event_id: p.id };
+    el("dlgSpesa").close();
+    ask(el("btnRegistraSpesa"), "Registrare questo movimento in Bilancio?", "Registra", () => recordSpend(row), {
+      pericolo: false,
+      dettagli: [["Campagna", nomePost(p)], ["Tipo", label],
+        ["Data", new Date(`${row.entry_date}T12:00:00`).toLocaleDateString("it-IT")], ["Importo", fmt(amount)]],
+    });
+  }
+
+  async function recordSpend(row) {
+    setLoading(true);
+    try {
+      const { error } = await sb.from("ledger_entries").insert(row);
+      if (error) throw error;
+      showToast("Movimento registrato in Bilancio.");
+      await drawSpend();
+    } catch (error) {
+      showToast("Errore: " + errorMessage(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const signature = () => JSON.stringify(daForm());
   const modified = () => !el("editor").hidden && signature() !== savedOne;
@@ -1261,6 +1501,7 @@
       markChanges();
       updateHeader();
       await loadPosts();
+      drawSpend();
       showToast("Post salvato.");
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
@@ -1291,7 +1532,9 @@
 
   function remove() {
     if (!isOpen || !isOpen.id) { savedOne = signature(); isOpen = null; showEditor(false); drawList(); return; }
-    ask(el("azioniElimina"), "Eliminare il post? L'operazione non è reversibile.", "Elimina", reallyDelete);
+    ask(el("azioniElimina"), isOpen.kind === "sponsor"
+      ? "Eliminare la campagna? L'operazione non è reversibile. Le spese già registrate restano in Bilancio, senza collegamento alla campagna."
+      : "Eliminare il post? L'operazione non è reversibile.", "Elimina", reallyDelete);
   }
 
   async function reallyDelete() {
@@ -1358,7 +1601,8 @@
     if (post.kind === "gita") drawTripCalendar();
     el("btnTogliFoto").hidden = !picture;
     el("btnDuplica").hidden = !(isOpen && isOpen.id);
-    el("posFoto").hidden = !picture;
+    // L'immagine dello sponsor non si sposta né si ingrandisce: resta intera.
+    el("posFoto").hidden = !picture || post.kind === "sponsor";
     el("statoFoto").textContent = picture ? `Ingrandita al ${photoZoom ?? 100}%.` : "";
     updatePublished();
     const sp = post.kind === "sponsor" ? sponsorDi(post) : null;
@@ -1369,6 +1613,7 @@
         <button type="button" class="button is-small is-light mt-2" id="btnCopiaLink">Copia link</button>`;
       el("btnCopiaLink").addEventListener("click", () => navigator.clipboard.writeText(link).then(() => showToast("Link copiato.")));
     }
+    if (post.kind === "sponsor") drawAdSheet(post, sp);
     const listItems = postFormats(post);
     el("formati").hidden = listItems.length < 2;
     el("senzaAnteprima").hidden = listItems.length > 0;
@@ -1403,7 +1648,7 @@
     if (post.kind === "sponsor") {
       const sp = sponsorDi(post);
       return sp ? Object.entries(campaignFormats(post, sp, SEASON)).map(([keyName, f]) =>
-        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${simple(sp.name)}-${keyName}.png` })) : [];
+        ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${simple(sp.name)}-${simple(post.title).slice(0, 30) || "campagna"}-${keyName}.png` })) : [];
     }
     if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
     const nomeFile = (fmt) => `${post.event_date || "post"}-${simple(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
@@ -1708,6 +1953,7 @@
     const howMany = campaigns.length === 1 ? "la sua campagna" : `le sue ${campaigns.length} campagne`;
     const question = campaigns.length
       ? `Eliminare ${sp.name} e ${howMany}${outflows ? ` (${outflows} già pubblicat${outflows === 1 ? "a" : "e"})` : ""}? L'operazione non è reversibile.`
+        + " Le spese già registrate restano in Bilancio, senza collegamento alle campagne."
       : `Eliminare ${sp.name}? L'operazione non è reversibile.`;
     ask(el("azioniSponsor"), question, "Elimina", () => deleteSponsor(sp, campaigns));
   }

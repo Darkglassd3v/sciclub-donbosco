@@ -9,7 +9,8 @@ const assert = require("assert");
 const { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, categoria: categoryName, impostaColoriGita: setTripColors, impostaContatti: setContacts, contattiDi: contactsOf, modelloPost: postTemplate,
         contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, testoPost: postText, mancanti: missingItems, nomePost, SOCIAL,
         disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
-        formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo } = require("./social-templates.js");
+        formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams, LIMITI_META: META_LIMITS,
+        INVITI_META: META_CTAS } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -375,5 +376,43 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   const cal = drawCalendar("Calendario", [["g0", "17/01", "Cervinia\nValtournenche", false]], "2027-01");
   assert.ok(cal.includes("Cervinia Valtournenche") && !/Cervinia\s*<br>/.test(cal), "a capo nel calendario del mese");
 }
+
+// --- Campagne con l'immagine dello sponsor e inserzioni Meta ---------------
+// L'immagine data dallo sponsor (es. l'auto nuova) va nei post intera: mai
+// tagliata (object-fit: contain), con firma del club e logo dello sponsor.
+// I formati: feed 4:5, story 9:16 e quadrato 1:1 per le inserzioni.
+
+{
+  const photoSrc = "data:image/jpeg;base64,AAAA";
+  const f = campaignFormats({ ...campaign, photo: photoSrc }, { ...santero, logo: "a.png" }, "2026/27");
+  assert.deepStrictEqual(Object.keys(f), ["foto", "fotoStory", "fotoQuadrata"], "con l'immagine dello sponsor, i suoi tre formati");
+  assert.deepStrictEqual(Object.values(f).map(({ w, h }) => `${w}×${h}`), ["1080×1350", "1080×1920", "1080×1080"]);
+  for (const [k, { html, nome, breve: short }] of Object.entries(f)) {
+    assert.ok(nome && short, `${k}: manca il nome del formato`);
+    assert.ok(html.includes(`width:${f[k].w}px;height:${f[k].h}px`), `${k}: la tela non ha la sua misura`);
+    assert.ok(html.includes(`src="${photoSrc}"`), `${k}: manca l'immagine dello sponsor`);
+    assert.ok(/class="foto-sponsor"[^>]*object-fit:contain/.test(html), `${k}: l'immagine dello sponsor deve restare intera`);
+    assert.ok(html.includes(SOCIAL.logo) && html.includes('src="a.png"'), `${k}: mancano il logo del club o quello dello sponsor`);
+    assert.ok(html.includes(SOCIAL.avvertenzaAlcol), `${k}: sponsor alcolico senza avvertenza`);
+  }
+  const bad = campaignFormats({ ...campaign, photo: 'x" onerror="alert(1)' }, santero, "2026/27");
+  for (const { html } of Object.values(bad)) assert.ok(!html.includes('onerror="'), "l'immagine dello sponsor è diventata HTML");
+  // Un titolo troppo lungo stringe e, se non basta, fa comparire l'avviso (fit(), data-righe).
+  assert.ok(/data-righe="3"[^>]*>La nuova|data-righe="3"/.test(f.foto.html) && /data-righe="2"/.test(f.fotoStory.html),
+    "i titoli delle grafiche con l'immagine non si adattano allo spazio");
+  // Senza immagine restano i formati col logo.
+  assert.deepStrictEqual(Object.keys(campaignFormats(campaign, santero, "2026/27")), ["collab", "story", "grazie", "cover"]);
+}
+
+// Le campagne sono pubblicità: il testo lo dichiara (#adv), quello delle gite no.
+assert.match(postText(campaign, santero, "2026/27"), /#adv\b/);
+assert.ok(!postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, null, "2026/27").includes("#adv"));
+
+// Inserzione Meta: i parametri da incollare in Gestione inserzioni («Parametri URL»).
+// {{site_source_name}} lo riempie Meta (fb, ig, ...): resta scritto così, non codificato.
+assert.strictEqual(adUrlParams(santero, campaign, "2026/27"),
+  "utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=958santero-202627&utm_content=unastagionedabrindare");
+assert.deepStrictEqual(META_LIMITS, { ad_text: 125, ad_headline: 40, ad_description: 30 });
+assert.ok(META_CTAS.includes("Scopri di più"));
 
 console.log("social: tutti i controlli passati");

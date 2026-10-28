@@ -19,6 +19,12 @@
 
 ## Richieste nuove
 
+- [ ] **Doppioni dei soci (28/10): fatto il grosso, restano controlli dell'utente.** 30 doppioni
+      eliminati o uniti in produzione, archiviati in `member_deletions`. Cosa controllare (una
+      scheda eliminata forse di un'altra persona, 7 codici fiscali da correggere con la tessera)
+      in `supabase/migration/doppioni-2026-10-28/DA-CONTROLLARE.md`, fuori da git perché ha nomi
+      di soci: qui niente dati personali, il repository è pubblico.
+
 - [ ] **Menu che lampeggia: provare sul sito** (27/10, online `2a27fc6`). Corretto: una graffa
       in più in `brand.css` scartava la regola che mostra subito le voci; il menu ora ha la sua
       transizione fra pagine e resta fermo; email, ruolo, nomi scelti in Gestione > Ruoli
