@@ -385,9 +385,13 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
 {
   const photoSrc = "data:image/jpeg;base64,AAAA";
   const f = campaignFormats({ ...campaign, photo: photoSrc }, { ...santero, logo: "a.png" }, "2026/27");
-  assert.deepStrictEqual(Object.keys(f), ["foto", "fotoStory", "fotoQuadrata"], "con l'immagine dello sponsor, i suoi tre formati");
-  assert.deepStrictEqual(Object.values(f).map(({ w, h }) => `${w}×${h}`), ["1080×1350", "1080×1920", "1080×1080"]);
-  for (const [k, { html, nome, breve: short }] of Object.entries(f)) {
+  // Con l'immagine i suoi tre formati, e restano anche quelli col logo (Collab, Story, Grazie, Copertina).
+  assert.deepStrictEqual(Object.keys(f), ["foto", "fotoStory", "fotoQuadrata", "collab", "story", "grazie", "cover"],
+    "con l'immagine dello sponsor, i suoi tre formati più quelli col logo");
+  assert.strictEqual(new Set(Object.values(f).map((x) => x.breve)).size, 7, "due formati con lo stesso nome sul pulsante");
+  const photoOnes = Object.fromEntries(Object.entries(f).filter(([k]) => k.startsWith("foto")));
+  assert.deepStrictEqual(Object.values(photoOnes).map(({ w, h }) => `${w}×${h}`), ["1080×1350", "1080×1920", "1080×1080"]);
+  for (const [k, { html, nome, breve: short }] of Object.entries(photoOnes)) {
     assert.ok(nome && short, `${k}: manca il nome del formato`);
     assert.ok(html.includes(`width:${f[k].w}px;height:${f[k].h}px`), `${k}: la tela non ha la sua misura`);
     assert.ok(html.includes(`src="${photoSrc}"`), `${k}: manca l'immagine dello sponsor`);
@@ -396,7 +400,7 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
     assert.ok(html.includes(SOCIAL.avvertenzaAlcol), `${k}: sponsor alcolico senza avvertenza`);
   }
   // Il testo del post (sottotesto) c'è nel post e nella story, come nel post Collab; resta testo.
-  assert.ok(f.foto.html.includes("Gite, corsi e gare sociali.") && f.fotoStory.html.includes("Gite, corsi e gare sociali."),
+  assert.ok(["foto", "fotoStory", "fotoQuadrata"].every((k) => f[k].html.includes("Gite, corsi e gare sociali.")),
     "il testo del post non compare nelle grafiche con l'immagine");
   assert.ok(!campaignFormats({ ...campaign, subtitle: "<b>x</b>", photo: photoSrc }, santero, "2026/27").foto.html.includes("<b>x</b>"),
     "il testo del post è diventato HTML");
@@ -404,7 +408,8 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   for (const { html } of Object.values(bad)) assert.ok(!html.includes('onerror="'), "l'immagine dello sponsor è diventata HTML");
   // Un titolo troppo lungo stringe e, se non basta, fa comparire l'avviso (fit(), data-righe).
   // Titolo su due righe al massimo, sotto il testo del post (28/10).
-  assert.ok(/data-righe="2"/.test(f.foto.html) && /data-righe="2"/.test(f.fotoStory.html),
+  assert.ok(f.fotoQuadrata.html.includes("Una stagione<br>da brindare."), "manca il titolo nella quadrata per le inserzioni");
+  assert.ok(["foto", "fotoStory", "fotoQuadrata"].every((k) => /data-righe="2"/.test(f[k].html)),
     "i titoli delle grafiche con l'immagine non si adattano allo spazio");
   // Senza immagine restano i formati col logo.
   assert.deepStrictEqual(Object.keys(campaignFormats(campaign, santero, "2026/27")), ["collab", "story", "grazie", "cover"]);
