@@ -6,7 +6,21 @@
 
 const { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY } = window.SUPABASE_CONFIG;
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Un token appena rinnovato a volte è rifiutato per un attimo: «JWT issued at future» (l'API del
+// database ha l'orologio un poco indietro rispetto al login di Supabase, che firma il token; 28/10/2026).
+// Si riprova dopo un secondo, al massimo tre volte; ogni altra risposta torna com'è.
+const FUTURE_TOKEN_RETRIES = 3;
+async function fetchRetryingFutureToken(input, init) {
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(input, init);
+    if (response.status !== 401 || attempt === FUTURE_TOKEN_RETRIES) return response;
+    const body = await response.clone().json().catch(() => null);
+    if (!body || body.message !== "JWT issued at future") return response;
+    await new Promise((ok) => setTimeout(ok, 1000));
+  }
+}
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch: fetchRetryingFutureToken } });
 
 // ---------------------------------------------------------------------------
 // Autenticazione e permessi

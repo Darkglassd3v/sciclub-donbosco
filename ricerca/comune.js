@@ -153,6 +153,20 @@ function el(id) {
   return document.getElementById(id);
 }
 
+// Un token appena rinnovato a volte è rifiutato per un attimo: «JWT issued at future» (l'API del
+// database ha l'orologio un poco indietro rispetto al login di Supabase; 28/10/2026). Si riprova
+// dopo un secondo, al massimo tre volte; ogni altra risposta torna com'è. Come in web/shared.js.
+const FUTURE_TOKEN_RETRIES = 3;
+async function fetchRetryingFutureToken(input, init) {
+  for (let attempt = 0; ; attempt++) {
+    const response = await fetch(input, init);
+    if (response.status !== 401 || attempt === FUTURE_TOKEN_RETRIES) return response;
+    const body = await response.clone().json().catch(() => null);
+    if (!body || body.message !== "JWT issued at future") return response;
+    await new Promise((ok) => setTimeout(ok, 1000));
+  }
+}
+
 /**
  * Senza sessione si va al login del gestionale, che è l'unico ingresso del
  * sito: dopo l'accesso riporta qui (?next=). Senza sessione non si vede
@@ -163,7 +177,7 @@ function el(id) {
  */
 async function protectPage(alPronto) {
   window.sb = window.supabase.createClient(
-    window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+    window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: fetchRetryingFutureToken } });
 
   const thisPage = location.pathname.split("/").pop() || "index.html";
   const { data } = await sb.auth.getSession();
