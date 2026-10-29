@@ -3573,6 +3573,12 @@ comment on column public.social_events.ad_headline is 'Inserzione Meta: titolo.'
 comment on column public.social_events.ad_description is 'Inserzione Meta: descrizione.';
 comment on column public.social_events.ad_cta is 'Inserzione Meta: invito all''azione (es. "Scopri di più").';
 
+-- Gita o evento rimandato (29/10): nel post il timbro sulla data, il motivo e la nuova data.
+alter table public.social_events add column if not exists postponed_reason text;
+alter table public.social_events add column if not exists postponed_to date;
+comment on column public.social_events.postponed_reason is 'Rimandato: neve, maltempo o il motivo scritto a mano (vuoto = senza motivo). Null = si fa.';
+comment on column public.social_events.postponed_to is 'Rimandato: la nuova data. Null = da definire.';
+
 -- Spese e rimborsi delle inserzioni di una campagna: movimenti di Bilancio
 -- collegati al post. Eliminata la campagna, il movimento resta nei conti senza
 -- collegamento. Chi li vede e li scrive non cambia: il permesso bilancio.

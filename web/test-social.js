@@ -464,7 +464,8 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.deepStrictEqual(postTemplate(postponed, "post").postponed, { word: "Rimandata", reason: "causa neve", newDate: "Domenica 17 gennaio" });
   assert.strictEqual(postTemplate(trip, "post").postponed, null, "gita normale segnata come rimandata");
   const html = drawPost(postTemplate(postponed, "post"));
-  assert.match(html, /<div class="tessera"[^]*<i class="timbro">Rimandata<\/i><\/div>/, "manca il timbro sulla tessera");
+  // Il timbro è il primo figlio: in coda toglierebbe il margine al mese (.tessera b + span:last-child).
+  assert.match(html, /<div class="tessera"[^>]*><i class="timbro">Rimandata<\/i><span/, "manca il timbro sulla tessera");
   assert.ok(html.includes(">Gita rimandata causa neve<"), "manca il gancio del rinvio");
   assert.ok(html.includes("Nuova data: <b>Domenica 17 gennaio</b>"), "manca la nuova data");
   assert.ok(!html.includes("Iscrizioni entro"), "c'è ancora la scadenza della data vecchia");

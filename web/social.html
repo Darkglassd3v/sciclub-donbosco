@@ -354,6 +354,26 @@
                       l'evidenziazione, selezionarle di nuovo e scegliere «Evidenzia».</p>
                   </div>
                 </div>
+                <!-- Gita o evento rimandato (29/10): timbro sulla data, gancio col motivo, nuova data nel post. -->
+                <div data-campo="rinvio" class="field campo-largo" data-per="gita evento">
+                  <label class="label" for="fRinvio">Rimandato</label>
+                  <select class="input" id="fRinvio">
+                    <option value="">No, si fa</option>
+                    <option value="neve">Sì, causa neve</option>
+                    <option value="maltempo">Sì, causa maltempo</option>
+                    <option value="altro">Sì, per un altro motivo</option>
+                  </select>
+                  <div class="campi mt-2" id="dettagliRinvio" hidden>
+                    <div class="field" id="campoMotivo" hidden>
+                      <label class="label" for="fRinvioMotivo">Motivo (come si legge nel post)</label>
+                      <input class="input" id="fRinvioMotivo" placeholder="Es. per lo sciopero dei pullman">
+                    </div>
+                    <div class="field">
+                      <label class="label" for="fRinvioData">Nuova data (vuota: da definire)</label>
+                      <input class="input" type="date" id="fRinvioData">
+                    </div>
+                  </div>
+                </div>
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
                   <label class="label" for="fGancio">Frase di apertura (riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
@@ -761,7 +781,7 @@
   // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
     + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,"
-    + "ad_text,ad_headline,ad_description,ad_cta";
+    + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to";
 
   async function loadPosts() {
     const { data, error } = await sb.from("social_events").select(LIST_COLUMNS)
@@ -1037,6 +1057,7 @@
       b.addEventListener("click", () => { vista = b.dataset.vista; drawList(); }));
     el("filtroSponsor").addEventListener("change", drawList);
     el("fTipo").addEventListener("change", () => { showFields(); changed(); });
+    el("fRinvio").addEventListener("change", showPostponed);
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { addRow(b.dataset.aggiungi); changed(); }));
     el("editor").addEventListener("input", (e) => {
@@ -1167,7 +1188,7 @@
     const { id, created_at, updated_at, ...records } = isOpen;
     // L'immagine data dallo sponsor di solito si riusa; la foto di una gita no (cambia la meta).
     doOpen({ ...records, event_date: null, deadline: null, photo: records.kind === "sponsor" ? records.photo : null, photo_x: null, photo_y: null, photo_zoom: null,
-      subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null });
+      subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null, postponed_reason: null, postponed_to: null });
     if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
     // La gita sceglie il giorno nel calendario: il campo data è nascosto.
@@ -1212,6 +1233,10 @@
     el("fOra").value = post.event_time || "";
     el("fDove").value = post.place || "";
     el("fCorso").checked = !!post.course;
+    const reason = post.postponed_reason;
+    el("fRinvio").value = reason == null ? "" : ["neve", "maltempo"].includes(reason) ? reason : "altro";
+    el("fRinvioMotivo").value = el("fRinvio").value === "altro" ? reason : "";
+    el("fRinvioData").value = post.postponed_to || "";
     el("fMostraPrezzo").checked = post.show_price !== false;
     picture = post.photo || null;
     photoX = post.photo_x ?? null; photoY = post.photo_y ?? null; photoZoom = post.photo_zoom ?? null;
@@ -1246,8 +1271,8 @@
    * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
    * davvero (non con CSS order), così anche il tasto Tab li segue. */
   const FIELD_ORDER = {
-    gita: ["corso", "giorno", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
-    evento: ["tipo", "data", "ora", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
+    gita: ["corso", "giorno", "rinvio", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
+    evento: ["tipo", "data", "ora", "rinvio", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
   };
   const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "cta", "data"];
 
@@ -1265,6 +1290,7 @@
     const g = group(el("fTipo").value);
     sortFields();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
+    showPostponed();
     el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo, uguale in tutte le grafiche (ogni a capo inizia una riga; l'ultima ha il colore d'accento)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo, uguale in tutte le grafiche"
       : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
@@ -1274,6 +1300,18 @@
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
     if (g !== "sponsor" && !el("fPrezzi").children.length) addRow("fPrezzi");
     if (g === "sponsor" && !sponsors.length) showToast("Aggiungere prima uno sponsor in Impostazioni.", "is-warning");
+  }
+
+  // Nuova data e motivo solo con un rinvio; il motivo scritto a mano solo con «altro».
+  function showPostponed() {
+    el("dettagliRinvio").hidden = !el("fRinvio").value;
+    el("campoMotivo").hidden = el("fRinvio").value !== "altro";
+  }
+
+  /** Il motivo del rinvio come si salva: null = si fa; neve, maltempo o il testo scritto (anche vuoto). */
+  function postponedReason() {
+    const choice = el("fRinvio").value;
+    return !choice ? null : choice === "altro" ? el("fRinvioMotivo").value.trim() : choice;
   }
 
   /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
@@ -1313,6 +1351,8 @@
       photo_zoom: g === "sponsor" || !picture ? null : photoZoom,
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
+      postponed_reason: g === "sponsor" ? null : postponedReason(),
+      postponed_to: g !== "sponsor" && el("fRinvio").value ? el("fRinvioData").value || null : null,
       ...Object.fromEntries(Object.entries(AD_FIELDS).map(([id, column]) => [column, g === "sponsor" ? el(id).value.trim() || null : null])),
       contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
       // Vuoto = testo automatico, rifatto dai dati a ogni apertura. Si salva
