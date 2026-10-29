@@ -455,4 +455,33 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.ok(logoOnDark(M, 70).includes("color:#FFFFFF"), "nome senza logo sul fondo scuro senza il colore chiaro");
 }
 
+// --- Evento rimandato (richiesta del 29/10) -----------------------------------
+// Causa neve, maltempo o un motivo scritto a mano (vuoto = senza motivo); la nuova data o «da definire».
+// Nel post: timbro sulla tessera con la vecchia data, gancio «Gita rimandata causa neve», prima riga
+// la nuova data, niente scadenza delle iscrizioni (era della data vecchia). Testo del post: l'avviso in cima.
+{
+  const postponed = { ...trip, postponed_reason: "neve", postponed_to: "2027-01-17" };
+  assert.deepStrictEqual(postTemplate(postponed, "post").postponed, { word: "Rimandata", reason: "causa neve", newDate: "Domenica 17 gennaio" });
+  assert.strictEqual(postTemplate(trip, "post").postponed, null, "gita normale segnata come rimandata");
+  const html = drawPost(postTemplate(postponed, "post"));
+  assert.match(html, /<div class="tessera"[^]*<i class="timbro">Rimandata<\/i><\/div>/, "manca il timbro sulla tessera");
+  assert.ok(html.includes(">Gita rimandata causa neve<"), "manca il gancio del rinvio");
+  assert.ok(html.includes("Nuova data: <b>Domenica 17 gennaio</b>"), "manca la nuova data");
+  assert.ok(!html.includes("Iscrizioni entro"), "c'è ancora la scadenza della data vecchia");
+  assert.ok(!drawPost(postTemplate(trip, "post")).includes("timbro"), "timbro su una gita che si fa");
+  const undecided = drawPost(postTemplate({ ...trip, postponed_reason: "maltempo", postponed_to: null }, "story"));
+  assert.ok(undecided.includes("Gita rimandata causa maltempo") && undecided.includes("Nuova data <b>da definire</b>"));
+  // Un evento: «Rimandato» per corso e servizi, «Rimandata» per cena e gara; il motivo scritto a mano resta testo.
+  const course = { kind: "corso", event_date: "2027-01-16", title: "Corso sci", postponed_reason: "per lo <b>sciopero</b>", postponed_to: null };
+  const courseHtml = drawPost(postTemplate(course, "post"));
+  assert.ok(courseHtml.includes('<i class="timbro">Rimandato</i>') && courseHtml.includes(">Rimandato per lo &lt;b&gt;sciopero&lt;/b&gt;<"), "corso rimandato");
+  assert.strictEqual(postTemplate({ ...course, kind: "cena" }, "post").postponed.word, "Rimandata");
+  assert.strictEqual(postTemplate({ ...course, postponed_reason: "" }, "post").postponed.reason, "", "rimandato senza motivo");
+  assert.ok(drawPost(postTemplate({ ...course, postponed_reason: "" }, "post")).includes(">Rimandato<"));
+  const caption = postText(postponed);
+  assert.strictEqual(caption.split("\n")[0], "⚠️ Gita rimandata causa neve. Nuova data: domenica 17 gennaio.", caption.split("\n")[0]);
+  assert.ok(!/Iscrizioni entro/.test(caption), "scadenza della data vecchia nel testo del post");
+  assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[0], "⚠️ Rimandato. Nuova data da definire.");
+}
+
 console.log("social: tutti i controlli passati");
