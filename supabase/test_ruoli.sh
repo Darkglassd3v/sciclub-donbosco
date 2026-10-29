@@ -2052,6 +2052,22 @@ do $$ begin
 end $$;
 delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000000c1', 'aaaaaaaa-0000-0000-0000-0000000000c2');
 delete from public.departures where place in ('PROVA PIAZA', 'PROVA PIAZZA');
+
+-- Email in minuscolo; anagrafica, codice fiscale e indirizzo in maiuscolo; senza spazi ai lati:
+-- comunque si salvi un socio (richiesta del 29/10/2026, email con maiuscole sparse).
+do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  insert into public.members (id, last_name, first_name, email, tax_code, birth_place, birth_province, address, city, province)
+  values ('eeeeeeee-0000-0000-0000-000000000001', ' Prova ', 'normalizzata', ' Prova.Normalizzata@Example.IT ', 'rssmra80a01a479x ',
+          'asti', 'at', 'via roma 1', 'asti', 'at');
+  assert (select email = 'prova.normalizzata@example.it' and last_name = 'PROVA' and first_name = 'NORMALIZZATA' and tax_code = 'RSSMRA80A01A479X'
+                 and birth_place = 'ASTI' and birth_province = 'AT' and address = 'VIA ROMA 1' and city = 'ASTI' and province = 'AT'
+          from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001'), 'socio non normalizzato all''inserimento';
+  update public.members set email = 'NUOVA@Example.it', first_name = 'Normale' where id = 'eeeeeeee-0000-0000-0000-000000000001';
+  assert (select email = 'nuova@example.it' and first_name = 'NORMALE' from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001'),
+         'socio non normalizzato alla modifica';
+  delete from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001';
+end $$;
 SQL
 
 echo "test ruoli: tutto a posto"

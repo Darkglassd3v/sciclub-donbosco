@@ -1768,6 +1768,33 @@ create trigger check_member_guarded_columns
   before insert or update on public.members
   for each row execute function public.check_member_guarded_columns();
 
+-- Email in minuscolo; anagrafica, codice fiscale e indirizzo in maiuscolo; senza spazi ai lati.
+-- Vale per ogni strada (form, Excel caricati, funzioni): il 29/10/2026 metà delle email aveva
+-- maiuscole sparse e due codici fiscali erano in minuscolo.
+create or replace function public.normalize_member_text()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.email          := lower(btrim(new.email));
+  new.tax_code       := upper(btrim(new.tax_code));
+  new.last_name      := upper(btrim(new.last_name));
+  new.first_name     := upper(btrim(new.first_name));
+  new.birth_place    := upper(btrim(new.birth_place));
+  new.birth_province := upper(btrim(new.birth_province));
+  new.address        := upper(btrim(new.address));
+  new.city           := upper(btrim(new.city));
+  new.province       := upper(btrim(new.province));
+  return new;
+end;
+$$;
+
+drop trigger if exists members_normalize_text on public.members;
+create trigger members_normalize_text
+  before insert or update on public.members
+  for each row execute function public.normalize_member_text();
+
 -- Fino alla 2.5 il numero di polizza lo scriveva solo l'assicurazione
 -- (trigger check_policy_number). Il numero non c'è più: chi è assicurato
 -- lo dice la lista (members.insurance_list_id, vedi "Assicurazione").
