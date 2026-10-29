@@ -19,6 +19,27 @@
 
 ## Richieste nuove
 
+- [ ] **Sito WordPress del club da rifare nella grafica** (29/10, richiesta dell'utente).
+      `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4 su hosting proprio (Apache, non
+      wordpress.com), tema Enfold (a pagamento, già comprato) con tema figlio. Proposta fatta:
+      tema gratuito leggero (o lo stesso Enfold) nello stile dei post del club, prima bozze della
+      home da scegliere, backup completo (UpdraftPlus o pannello dell'hosting), se possibile su
+      una copia di prova. Aspetta dall'utente: chi gestisce l'hosting, e l'accesso a `/wp-admin`
+      fatto da lui nel suo Chrome (le password non le scrive Claude; l'estensione di Chrome va
+      collegata con lo stesso account di Claude Code).
+
+- [ ] **Normalizzazione dei soci (29/10): fatta, restano 14 schede da sistemare a mano.**
+      Email in minuscolo, anagrafica e indirizzi in maiuscolo, città e luoghi di nascita col nome
+      ufficiale ISTAT, apostrofi dritti, spazi singoli, telefoni con le sole cifre: in produzione
+      e nella regola del database (`normalize_member_text`). Restano 9 codici fiscali non di 16
+      caratteri e 5 telefoni strani, nel foglio «Da controllare a mano» di
+      `supabase/migration/normalizza-2026-10-29/anteprima-normalizzazione.xlsx` (fuori da git).
+
+- [ ] **Instagram del club: seguire i soci iscritti** (29/10). Cercati i 28 iscritti della
+      stagione: 6 già seguiti, gli altri con i profili probabili mostrati in chat; aspetta
+      dall'utente quali seguire (si seguono solo quelli confermati, uno alla volta). Nessun
+      nome qui: l'elenco si rifà dalla ricerca.
+
 - [ ] **Doppioni dei soci (28/10): fatto il grosso, restano controlli dell'utente.** 30 doppioni
       eliminati o uniti in produzione, archiviati in `member_deletions`. Cosa controllare (una
       scheda eliminata forse di un'altra persona, 7 codici fiscali da correggere con la tessera)
