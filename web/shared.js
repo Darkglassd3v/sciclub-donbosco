@@ -680,7 +680,7 @@ function columnWidths(rows, heading = 0, factor = 1, headFactor = factor) {
  * righe prima di `intestazione` sono titoli: grassetto 18, unite su tutte le
  * colonne. `opzioni` passa ad aoa_to_sheet (dateNF).
  */
-function readableSheet(rows, { intestazione: heading = 0, ...options } = {}) {
+function readableSheet(rows, { intestazione: heading = 0, gruppi: groups = null, ...options } = {}) {
   const sheet = XLSX.utils.aoa_to_sheet(rows, options);
   const cols = columnWidths(rows, heading, 1.3, 1.5);
   sheet["!cols"] = cols;
@@ -701,10 +701,56 @@ function readableSheet(rows, { intestazione: heading = 0, ...options } = {}) {
   }
   // Altezze delle righe per il corpo più grande: Excel non le rifà da solo.
   sheet["!rows"] = rows.map((_, r) => ({ hpt: r < heading ? 30 : r === heading ? 26 : 22 }));
-  if (heading > 0) {
+  if (groups) {
+    // Gruppi di colonne (`gruppi`: [{ nome, colore, colonne }], nella riga 0): ognuno col suo colore,
+    // unito sulle sue colonne; i nomi delle colonne (riga 1) nello stesso colore su fondo chiaro.
+    let c = 0;
+    sheet["!merges"] = groups.flatMap(({ colore, colonne }) => {
+      for (let k = c; k < c + colonne; k++) {
+        const top = sheet[XLSX.utils.encode_cell({ r: 0, c: k })], under = sheet[XLSX.utils.encode_cell({ r: 1, c: k })];
+        if (top) top.s = { ...styles.testa, fill: { patternType: "solid", fgColor: { rgb: colore } }, alignment: { vertical: "center", horizontal: "center" } };
+        if (under) under.s = { ...styles.testa, font: { ...styles.testa.font, color: { rgb: colore } }, fill: { patternType: "solid", fgColor: { rgb: tint(colore) } } };
+      }
+      const merge = colonne > 1 ? [{ s: { r: 0, c }, e: { r: 0, c: c + colonne - 1 } }] : [];
+      c += colonne;
+      return merge;
+    });
+  } else if (heading > 0) {
     sheet["!merges"] = Array.from({ length: heading }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } }));
   }
   return sheet;
+}
+
+/** "084C8D" schiarito verso il bianco (k 0–1): il fondo dei nomi delle colonne di un gruppo. */
+const tint = (rgb, k = .85) => rgb.match(/../g)
+  .map((h) => { const v = parseInt(h, 16); return Math.round(v + (255 - v) * k).toString(16).padStart(2, "0"); }).join("").toUpperCase();
+
+/**
+ * Il foglio (xml di xl/worksheets/sheetN.xml) con le prime `rows` righe e `cols` colonne bloccate:
+ * restano in vista mentre si scorre. xlsx-js-style scrive solo <sheetView workbookViewId="0"/>,
+ * senza blocco: lo si aggiunge qui.
+ */
+function frozenPaneXml(xml, rows, cols) {
+  const pane = rows && cols ? "bottomRight" : rows ? "bottomLeft" : "topRight";
+  const split = `${cols ? ` xSplit="${cols}"` : ""}${rows ? ` ySplit="${rows}"` : ""}`;
+  return xml.replace(/<sheetView ([^>]*?)\/>/, `<sheetView $1><pane${split} topLeftCell="${XLSX.utils.encode_cell({ r: rows, c: cols })}" `
+    + `activePane="${pane}" state="frozen"/><selection pane="${pane}"/></sheetView>`);
+}
+
+/** Scarica il libro Excel; `blocca` ({ righe, colonne }) le tiene ferme nel primo foglio mentre si scorre. */
+function saveBook(book, fileName, { righe: rows = 0, colonne: cols = 0 } = {}) {
+  const zip = rows || cols ? XLSX.CFB.read(new Uint8Array(XLSX.write(book, { bookType: "xlsx", type: "array" })), { type: "array" }) : null;
+  const entry = zip && XLSX.CFB.find(zip, zip.FullPaths.find((p) => p.endsWith("xl/worksheets/sheet1.xml")) || "");
+  // Niente blocco chiesto, o il foglio non si trova nel file: lo si scarica com'è.
+  if (!entry) { XLSX.writeFile(book, fileName); return; }
+  entry.content = new TextEncoder().encode(frozenPaneXml(new TextDecoder().decode(entry.content), rows, cols));
+  entry.size = entry.content.length;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([XLSX.CFB.write(zip, { fileType: "zip", type: "array" })],
+    { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  a.download = fileName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
 
 // jsPDF per la scheda del socio, anche lui solo al primo clic.
@@ -714,17 +760,21 @@ function loadPdf() {
     "sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk");
 }
 
-/** Scarica un foglio Excel dei soci passati. `columns`: [[intestazione, (socio) => valore], ...]. */
-async function downloadExcel(rows, nome, columns) {
+/**
+ * Scarica un foglio Excel dei soci passati. `columns`: [[intestazione, (socio) => valore], ...].
+ * `gruppi` ([{ nome, colore, colonne }]) mette sopra la riga dei gruppi colorati (readableSheet());
+ * `blocca` ({ righe, colonne }) le tiene ferme mentre si scorre (saveBook()).
+ */
+async function downloadExcel(rows, nome, columns, { gruppi: groups = null, blocca: freeze = {} } = {}) {
   if (!rows.length) { showToast("Nessun socio da scaricare."); return; }
   await loadXlsx();
-  const sheet = readableSheet([
-    columns.map(([titleText]) => titleText),
-    ...rows.map((s) => columns.map(([, theValue]) => theValue(s) ?? "")),
-  ]);
+  const table = [columns.map(([titleText]) => titleText), ...rows.map((s) => columns.map(([, theValue]) => theValue(s) ?? ""))];
+  const sheet = groups
+    ? readableSheet([groups.flatMap((g) => [g.nome, ...Array(g.colonne - 1).fill("")]), ...table], { intestazione: 1, gruppi: groups })
+    : readableSheet(table);
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Soci");
-  XLSX.writeFile(book, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  saveBook(book, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`, freeze);
   showToast(rows.length === 1 ? "Scaricato 1 socio." : `Scaricati ${rows.length} soci.`);
 }
 
