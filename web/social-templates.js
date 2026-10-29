@@ -729,15 +729,16 @@ function brand(sp) {
 }
 
 /* Il logo per fondi scuri; se lo sponsor non l'ha dato, quello normale su un
- * riquadro chiaro, così resta leggibile. */
+ * riquadro chiaro, così resta leggibile. Senza logo, il nome nei colori dello sponsor:
+ * senza colore prendeva quello del tema della pagina (chiaro su bianco col tema scuro). */
 function logoOnDark(M, h) {
   if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;display:block">`;
-  if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
+  if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800;color:${M.chiaro}">${escS(M.nome)}</span>`;
   return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;display:block"></span>`;
 }
 const logoOnLight = (M, h) => M.logo
   ? `<img src="${escS(M.logo)}" style="height:${h}px;display:block">`
-  : `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
+  : `<span style="font-size:${h * .5}px;font-weight:800;color:${M.scuro}">${escS(M.nome)}</span>`;
 
 const warning = (M, px, extra = "") => M.alcol
   ? `<div style="font-size:${px}px;font-weight:500;opacity:.75;${extra}">${escS(SOCIAL.avvertenzaAlcol)}</div>` : "";

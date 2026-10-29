@@ -133,6 +133,8 @@
     /* Anteprime: il canvas è a misura reale, il riquadro lo rimpicciolisce.
      * L'export legge il canvas, non il riquadro: esce a 1080 px. */
     .anteprime { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; margin-top: 18px; }
+    /* Il bordino tiene visibile il fondo quando ha il colore della pagina (bianco col tema chiaro, scuro con lo scuro). */
+    .fondo-sponsor { padding: 18px 26px; border-radius: 12px; box-shadow: 0 0 0 1px rgba(128, 128, 128, .45); }
     .anteprima figcaption { font-weight: 600; margin-bottom: 6px; }
     .anteprima .cornice { overflow: hidden; border-radius: 10px; box-shadow: 0 8px 28px rgba(20,32,46,.14); }
     .anteprima .scala { transform-origin: 0 0; }
@@ -645,7 +647,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261029titolo"></script>
-<script src="social-templates.js?v=20261028testiuguali"></script>
+<script src="social-templates.js?v=20261029sponsortema"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -1992,8 +1994,8 @@
   function sponsorPreview() {
     const sp = sponsorDaForm(), M = brand(sp);
     el("anteprimaLoghi").innerHTML = `
-      <div style="background:${sp.color_light};padding:18px 26px;border-radius:12px">${logoOnLight(M, 70)}</div>
-      <div style="background:${sp.color_dark};padding:18px 26px;border-radius:12px">${logoOnDark(M, 70)}</div>`;
+      <div class="fondo-sponsor" style="background:${sp.color_light}">${logoOnLight(M, 70)}</div>
+      <div class="fondo-sponsor" style="background:${sp.color_dark}">${logoOnDark(M, 70)}</div>`;
     const problems = [];
     if (contrast(sp.color_light, sp.color_dark) < 4.5) problems.push("il testo chiaro sul fondo scuro è poco leggibile");
     if (contrast(sp.color_accent, sp.color_dark) < 3) problems.push("il colore d'accento sul fondo scuro è poco visibile");
