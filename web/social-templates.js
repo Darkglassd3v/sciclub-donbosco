@@ -731,10 +731,11 @@ function brand(sp) {
 /* Il logo per fondi scuri; se lo sponsor non l'ha dato, quello normale su un
  * riquadro chiaro, così resta leggibile. Senza logo, il nome nei colori dello sponsor:
  * senza colore prendeva quello del tema della pagina (chiaro su bianco col tema scuro). */
-function logoOnDark(M, h) {
-  if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;display:block">`;
+function logoOnDark(M, h, maxWidth) {
+  const fitWidth = (w) => (maxWidth ? `max-width:${w}px;object-fit:contain;` : "");
+  if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;${fitWidth(maxWidth)}display:block">`;
   if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800;color:${M.chiaro}">${escS(M.nome)}</span>`;
-  return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;display:block"></span>`;
+  return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;${fitWidth(maxWidth - h * .5)}display:block"></span>`;
 }
 const logoOnLight = (M, h) => M.logo
   ? `<img src="${escS(M.logo)}" style="height:${h}px;display:block">`
@@ -776,9 +777,9 @@ const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-
 /* Titolo e testo della campagna, gli stessi in ogni grafica (richiesta del 28/10): l'ultima riga
  * del titolo (o l'unica) nel colore d'accento, il testo sotto; due righe al massimo ciascuno,
  * poi fit() stringe o avvisa. Il pulsante (ctaPill, o lo sticker nelle story) a parte. */
-const campaignTexts = (c, M, box, title, sub) => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:${Math.round(title * .25)}px">
+const campaignTexts = (c, M, box, title, sub, after = "") => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:${Math.round(title * .25)}px">
     <div class="t-dest" data-righe="2" style="--t:${title}px;font-size:var(--t)">${titleLines(c.title, M.accento)}</div>
-    ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}</div>`;
+    ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}${after}</div>`;
 
 function photoFormats(c, sp, seasonValue) {
   const M = brand(sp);
@@ -836,9 +837,7 @@ function campaignFormats(c, sp, seasonValue) {
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
     collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
-      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${titleLines(c.title, M.accento)}</div>
-      <div class="abs" style="left:80px;top:500px;right:120px;font-size:40px;font-weight:600;line-height:1.25">${escS(c.subtitle || "")}</div>
-      <div class="abs" style="left:80px;top:700px">${cta}</div>
+      ${campaignTexts(c, M, "left:80px;right:80px;top:170px", 150, 40, cta ? `<div>${cta}</div>` : "")}
       ${ridge(M, 1080, 420, 170)}
       <div class="abs" style="background:#fff;color:${M.scuro};left:0;right:0;bottom:0;height:190px;display:flex;align-items:center;justify-content:space-between;padding:0 80px">
         ${signature(1)}${warning(M, 22, "max-width:300px;text-align:right")}</div></div>` },
@@ -869,7 +868,7 @@ function campaignFormats(c, sp, seasonValue) {
     cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
       ${ridge(M, 820, 150)}
       ${campaignTexts(c, M, "left:44px;right:300px;top:30px", 46, 20)}
-      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90)}</div>
+      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90, 230)}</div>
       <div class="abs" style="right:44px;top:136px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
       <div class="abs" style="right:44px;top:170px">${ctaPill(M, c.cta, 18)}</div>
       ${warning(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },
