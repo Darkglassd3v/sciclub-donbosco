@@ -19,6 +19,12 @@
 
 ## Richieste nuove
 
+- [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
+      creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
+      testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
+      sono) e il livello vero; i testi sono una proposta. SQL e loghi in
+      `supabase/migration/campagne-sponsor-2026-10-29/` (fuori da git), `annulla.sql` li toglie.
+
 - [ ] **Sito WordPress del club da rifare nella grafica** (29/10, richiesta dell'utente).
       `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4 su hosting proprio (Apache, non
       wordpress.com), tema Enfold (a pagamento, già comprato) con tema figlio. Proposta fatta:
