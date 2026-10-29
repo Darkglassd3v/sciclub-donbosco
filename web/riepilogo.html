@@ -238,6 +238,7 @@
       ["Presciistica", (s) => s.preski_type]]],
     ["RECAPITI", "4A5868", [
       ["Telefono", (s) => s.phone],
+      ["Email", (s) => s.email],
       ["Indirizzo", (s) => s.address],
       ["Città", (s) => s.city],
       ["Provincia", (s) => s.province],
@@ -265,7 +266,7 @@
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-            + "phone, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
+            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
           .not("enrolled_at", "is", null)
           // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
           .is("card_holder", true)

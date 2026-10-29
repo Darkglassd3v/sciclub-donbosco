@@ -3,7 +3,7 @@
 // - Colonne a gruppi, ognuno col suo colore nella riga sopra i nomi delle colonne (richiesta del 29/10):
 //   TESSERA (numero, tipo), ANAGRAFICA (cognome, nome, data, luogo e provincia di nascita, codice fiscale),
 //   CORSI E ABBONAMENTI (corso col giorno, abbonamenti della stagione uniti con « + », presciistica),
-//   RECAPITI (telefono, indirizzo, città, provincia, CAP).
+//   RECAPITI (telefono, email, indirizzo, città, provincia, CAP).
 // - Mentre si scorre restano ferme le due righe d'intestazione e le colonne da Numero a Nome.
 // - frozenPaneXml(): il blocco scritto nel foglio, che xlsx-js-style da solo non scrive.
 const SHEETS = [];
@@ -25,7 +25,7 @@ FAKE.risposta = (t, r) => {
   if (t === "members") return [
     { id: "a", last_name: "ROSSI", first_name: "ANNA", card_number: "10", card_type: "ORDINARIA", birth_date: "1980-05-02", birth_place: "ASTI",
       birth_province: "AT", tax_code: "RSSNNA80E42A479X", course_type: "CORSO SCI ADULTI", course_day: "SABATO", preski_type: null, city: "ASTI",
-      phone: "333 1234567" },
+      phone: "333 1234567", email: "anna@example.it" },
     { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: "ORDINARIA", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA" },
     { id: "c", last_name: "VERDI", first_name: "ELIA", card_number: "100", card_type: "JUNIOR", course_type: "CORSO SCI BABY", course_day: null },
     { id: "d", last_name: "ZETA", first_name: "ZOE", card_number: null },
@@ -43,11 +43,11 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await downloadMembers();
   const [rows = [], sheet = {}] = SHEETS[SHEETS.length - 1] || [];
   const [groups = [], head = [], ...data] = rows;
-  test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA||||||CORSI E ABBONAMENTI|||RECAPITI||||", groups.join("|"));
+  test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA||||||CORSI E ABBONAMENTI|||RECAPITI|||||", groups.join("|"));
   test("colonne", head.join("|") === "Numero tessera|Tipo tessera|Cognome|Nome|Data di nascita|Luogo di nascita|Provincia di nascita|Codice fiscale"
-    + "|Corso|Abbonamento|Presciistica|Telefono|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
+    + "|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
   const merges = (sheet["!merges"] || []).map(({ s, e }) => `${letters(s.c)}${s.r + 1}:${letters(e.c)}${e.r + 1}`).join(" ");
-  test("unioni", merges === "A1:B1 C1:H1 I1:K1 L1:P1", merges);
+  test("unioni", merges === "A1:B1 C1:H1 I1:K1 L1:Q1", merges);
   const fill = (a) => sheet[a]?.s?.fill?.fgColor?.rgb;
   test("colori", fill("A1") === "084C8D" && fill("C1") === "0B6E69" && fill("I1") === "8A5300" && fill("L1") === "4A5868"
     && sheet.A1.s.font.color.rgb === "FFFFFF" && sheet.C2.s.font.color.rgb === "0B6E69" && fill("C2") && fill("C2") !== "0B6E69",
@@ -58,7 +58,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const rossi = data.find((d) => d[2] === "ROSSI") || [];
   test("riga", rossi.slice(0, 11).join("|") === "10|ORDINARIA|ROSSI|ANNA|02/05/1980|ASTI|AT|RSSNNA80E42A479X|CORSO SCI ADULTI (SABATO)|10 VIAGGI SABATO + 5 VIAGGI DOMENICA|",
     rossi.join("|").slice(0, 120));
-  test("telefono", rossi[11] === "333 1234567" && rossi[13] === "ASTI", `${rossi[11]} ${rossi[13]}`);
+  test("telefono", rossi[11] === "333 1234567" && rossi[12] === "anna@example.it" && rossi[14] === "ASTI", `${rossi[11]} ${rossi[12]} ${rossi[14]}`);
   const verdi = data.find((d) => d[2] === "VERDI") || [], bianchi = data.find((d) => d[2] === "BIANCHI") || [];
   test("corsoSenzaGiorno", verdi[8] === "CORSO SCI BABY" && verdi[9] === "STAGIONALE", `${verdi[8]} ${verdi[9]}`);
   test("presciistica", bianchi[10] === "CORSO PRESCIISTICA" && bianchi[8] === "", `${bianchi[10]} «${bianchi[8]}»`);
