@@ -522,6 +522,12 @@
         recompute();
       });
       el("f_tipologia_corso").addEventListener("change", updateCourseDay);
+      // Suggerimenti dei comuni: senza (rete lenta, errore) il form funziona come prima.
+      loadPlaces().catch(() => {});
+      el("f_citta").addEventListener("change", () =>
+        fillFromPlace("citta", el("f_citta").value, [["f_provincia", "province"], ["f_cap", "postal_code"]]));
+      el("f_luogo_nascita").addEventListener("change", () =>
+        fillFromPlace("nascita", el("f_luogo_nascita").value, [["f_provincia_nascita", "province"]]));
       el("f_acconto").addEventListener("input", recompute);
       el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
       el("f_totale_manuale").addEventListener("input", recompute);
@@ -1361,6 +1367,41 @@
   // -------------------------------------------------------------------------
   // Caricamento socio
   // -------------------------------------------------------------------------
+
+  // Comuni suggeriti (Città di nascita e di residenza), dai dati già nelle schede (vista member_places).
+  const PLACES = { citta: new Map(), nascita: new Map() };  // comune -> [{ province, postal_code, n }]
+
+  async function loadPlaces() {
+    const rows = await allRows(() => sb.from("member_places").select("kind, place, province, postal_code, n").order("kind").order("place"));
+    for (const r of rows) {
+      if (!PLACES[r.kind]) continue;
+      if (!PLACES[r.kind].has(r.place)) PLACES[r.kind].set(r.place, []);
+      PLACES[r.kind].get(r.place).push(r);
+    }
+    const total = (list) => list.reduce((sum, r) => sum + r.n, 0);
+    for (const [kind, input, id] of [["citta", "f_citta", "comuniResidenza"], ["nascita", "f_luogo_nascita", "comuniNascita"]]) {
+      const list = document.createElement("datalist");
+      list.id = id;
+      list.innerHTML = [...PLACES[kind]].sort(([, a], [, b]) => total(b) - total(a)).map(([place]) => `<option value="${esc(place)}">`).join("");
+      document.body.append(list);
+      el(input).setAttribute("list", id);
+    }
+  }
+
+  /** Scelto un comune già noto, la provincia (e il CAP) più usati con lui, solo nei campi vuoti. */
+  function fillFromPlace(kind, value, fields) {
+    const rows = PLACES[kind].get(String(value).trim().toUpperCase());
+    if (!rows) return;
+    for (const [id, column] of fields) {
+      if (el(id).value.trim()) continue;
+      const counts = new Map();
+      for (const r of rows) if (r[column]) counts.set(r[column], (counts.get(r[column]) || 0) + r.n);
+      const best = [...counts].sort((a, b) => b[1] - a[1])[0];
+      if (!best) continue;
+      el(id).value = best[0];
+      el(id).dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
 
   // Colonna del form (suffisso di f_...) -> colonna del database. I campi
   // HTML restano in italiano, la tabella members no: questa mappa fa da ponte.

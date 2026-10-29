@@ -165,8 +165,8 @@ values ('99999999-9999-9999-9999-999999999999', 'ROSSI', 'MARIO', now());
 -- matrice qui sotto abbia almeno una riga da leggere. La chiusura della
 -- stagione più avanti lo toglie dalla stagione come tutti.
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
-insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code)
-values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA', 'PRVMTR80A01F205X');
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, city)
+values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA', 'PRVMTR80A01F205X', 'ASTI');
 insert into public.member_passes (member_id, pass_type)
 values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA 10 VIAGGI SABATO');
 insert into public.trip_uses (member_id, pass_id)
