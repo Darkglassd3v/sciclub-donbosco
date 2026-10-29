@@ -36,8 +36,9 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   el("calMese").value = "2027-02"; drawMonthCalendar();
   const february = el("anteprimaCalendario").innerHTML;
   test("calendario", months === "2027-01,2027-02" && /Sestriere/.test(january) && !/Cervinia|Pila/.test(january)
-    && /Cervinia/.test(february) && /07\/02/.test(february) && !/Pila/.test(february),
-    `${months} gen:${["Sestriere", "Cervinia", "Pila"].filter((n) => january.includes(n))} feb:${["Cervinia", "Pila"].filter((n) => february.includes(n))}`);
+    && /Cervinia/.test(february) && /class="giorno"[^>]*>(\S+ )?7</.test(february) && !/Pila/.test(february),
+    `${months} gen:${["Sestriere", "Cervinia", "Pila"].filter((n) => january.includes(n))} feb:${["Cervinia", "Pila"].filter((n) => february.includes(n))} `
+    + (february.match(/class="giorno"[^>]*>[^<]*/) || [""])[0].slice(-12));
 
   await doOpen(post({}));
   await wait(100);

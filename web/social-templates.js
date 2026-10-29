@@ -959,15 +959,17 @@ function postText(ev, sp, seasonValue) {
   }
   const p = postponedOf(ev);
   if (p) rows.push(`⚠️ ${postponedHeadline(p, ev.kind === "gita")}. ${p.newDate ? `Nuova data: ${p.newDate.toLowerCase()}` : "Nuova data da definire"}.`, "");
+  // Rimandata: la data vecchia resta solo come «era», per riconoscere la gita.
+  const was = p && ev.event_date ? ` (era ${longDate(ev.event_date).toLowerCase()})` : "";
   if (ev.kind === "gita") {
-    rows.push(`🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
+    rows.push(p ? `🚌 Gita a ${oneRow(ev.title)}${was}` : `🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) rows.push(`Quota soci: ${quote}`);
     if (ev.deadline && !p) rows.push(`Iscrizioni ${within(ev.deadline)}`);
   } else {
-    rows.push(`${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
+    rows.push(p ? `${ev.title}${was}` : `${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (quote) rows.push("", quote);
     for (const [k, v] of eventFacts(ev)) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);

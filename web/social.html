@@ -1898,8 +1898,11 @@
   // Il titolo proposto dice cos'è: "Calendario di gennaio".
   const monthTitle = (month) => (month ? `Calendario di ${MONTHS[Number(month.slice(5, 7)) - 1]}` : "");
 
+  // Il giorno in cui la gita si fa davvero: rimandata, quello nuovo (nessuno se è da definire).
+  const tripDay = (p) => (p.postponed_reason != null ? p.postponed_to : p.event_date) || "";
+
   function fillMonths() {
-    const months = [...new Set(posts.filter((p) => p.kind === "gita" && p.event_date).map((p) => p.event_date.slice(0, 7)))].sort();
+    const months = [...new Set(posts.filter((p) => p.kind === "gita" && tripDay(p)).map((p) => tripDay(p).slice(0, 7)))].sort();
     const before = el("calMese").value;
     el("calMese").innerHTML = months.length
       ? months.map((m) => `<option value="${m}">${uppercase(MONTHS[Number(m.slice(5, 7)) - 1])} ${m.slice(0, 4)}</option>`).join("")
@@ -1914,9 +1917,9 @@
     const dove = el("anteprimaCalendario"), month = el("calMese").value;
     dove.innerHTML = "";
     if (!month) return;
-    const rows = posts.filter((p) => p.kind === "gita" && (p.event_date || "").startsWith(month))
-      .sort((a, b) => a.event_date.localeCompare(b.event_date))
-      .map((p) => [tripCategory(p.event_date), shortDate(p.event_date), p.title, p.course]);
+    const rows = posts.filter((p) => p.kind === "gita" && tripDay(p).startsWith(month))
+      .sort((a, b) => tripDay(a).localeCompare(tripDay(b)))
+      .map((p) => [tripCategory(tripDay(p)), shortDate(tripDay(p)), p.title, p.course]);
     preview(dove, { html: drawCalendar(el("calTitolo").value, rows, month), ...postSizes(), nome: "Calendario", file: `calendario-${month}.png` }, 360);
     preview(dove, { html: drawCalendar(el("calTitolo").value, rows, month, true), w: 1080, h: 1920, nome: "Calendario, story", file: `calendario-${month}-story.png` }, 360);
   }
