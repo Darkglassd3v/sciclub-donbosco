@@ -2066,6 +2066,15 @@ do $$ begin
   update public.members set email = 'NUOVA@Example.it', first_name = 'Normale' where id = 'eeeeeeee-0000-0000-0000-000000000001';
   assert (select email = 'nuova@example.it' and first_name = 'NORMALE' from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001'),
          'socio non normalizzato alla modifica';
+  -- Apostrofi tipografici dritti, spazi doppi singoli; telefono con le sole cifre, ma solo se è un
+  -- numero unico (due numeri nello stesso campo non si incollano).
+  update public.members set city = 'Isola d’Asti', address = 'via  roma   1', phone = '333 123.45-67', birth_place = 'Castell´Alfero'
+  where id = 'eeeeeeee-0000-0000-0000-000000000001';
+  assert (select city = 'ISOLA D''ASTI' and address = 'VIA ROMA 1' and phone = '3331234567' and birth_place = 'CASTELL''ALFERO'
+          from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001'), 'apostrofi, spazi o telefono non sistemati';
+  update public.members set phone = '333 1234567 / 0141 123456' where id = 'eeeeeeee-0000-0000-0000-000000000001';
+  assert (select phone from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001') = '333 1234567 / 0141 123456',
+         'due numeri nello stesso campo incollati';
   delete from public.members where id = 'eeeeeeee-0000-0000-0000-000000000001';
 end $$;
 SQL
