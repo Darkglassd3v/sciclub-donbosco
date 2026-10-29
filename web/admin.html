@@ -45,6 +45,7 @@
     .nucleo-saldato { color: var(--ok); font-weight: 600; font-size: 1.15rem; }
     /* A credito: ha versato più del dovuto. Blu, né rosso (deve) né verde (a posto). */
     .a-credito { color: var(--blu); font-weight: 700; font-size: 1.15rem; }
+    .senza-cellulare { color: var(--testo-soft); align-self: center; }
     .kpi-value.credito, td.credito { color: var(--blu); }
     .credito small { display: block; font-weight: 600; font-size: .8125rem; }
 
@@ -293,7 +294,7 @@
               </tbody>
             </table>
           </div>
-          ${balanceBar(household.head_id, balance, `${household.last_name} ${household.first_name}`)}
+          ${balanceBar(household.head_id, balance, `${household.last_name} ${household.first_name}`, reminderLink(payer, [payer, ...dependant], balance))}
         </div>`;
     }).join("");
 
@@ -345,7 +346,7 @@
    * (ask()) e non del browser: dice la cifra e il nome di chi paga, e non
    * si chiude da sola.
    */
-  function balanceBar(payerId, balance, nome) {
+  function balanceBar(payerId, balance, nome, reminder) {
     // Ha versato più del dovuto: niente da incassare. Si restituisce con
     // Modifica importi (Già versato più basso, con il motivo nello storico).
     if (balance < 0) {
@@ -359,9 +360,41 @@
       <div class="barra-saldo" id="barra_${payerId}" data-nome="${esc(nome)}">
         <span class="da-pagare">Da incassare: ${fmt(balance)}</span>
         <span class="azioni">
+          ${reminder
+            ? `<a class="button is-light" href="${esc(reminder)}" target="_blank" rel="noopener" aria-label="Sollecito WhatsApp a ${esc(nome)}">Sollecito WhatsApp</a>`
+            : '<span class="senza-cellulare">Nessun cellulare in scheda per il sollecito</span>'}
           <button class="button is-evidenza" data-chiedi="${payerId}">Incassa ${fmt(balance)}</button>
         </span>
       </div>`;
+  }
+
+  /**
+   * Il sollecito per chi deve ancora pagare: WhatsApp aperto col messaggio già scritto, mandato dal
+   * telefono di chi lo usa. Null senza un cellulare leggibile di chi paga.
+   */
+  function reminderLink(payer, people, balance) {
+    const number = whatsappNumber(payer.phone);
+    if (!number) return null;
+    const names = people.map((p) => properName(`${p.first_name} ${p.last_name}`)).join(", ");
+    const text = `Buongiorno, dallo Sci Club Don Bosco: per l'iscrizione di questa stagione (${names}) `
+      + `restano da versare ${fmt(balance)}. Grazie!`;
+    return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+  }
+
+  // Il numero per wa.me: solo cifre, col prefisso del paese. Un cellulare italiano senza prefisso (3…)
+  // prende il 39; un fisso (0…) o due numeri nello stesso campo non hanno WhatsApp da proporre.
+  function whatsappNumber(phone) {
+    const digits = String(phone || "").replace(/[^\d+]/g, "");
+    if (/^\+\d{8,15}$/.test(digits)) return digits.slice(1);
+    if (/^00\d{8,15}$/.test(digits)) return digits.slice(2);
+    if (/^393\d{8,9}$/.test(digits)) return digits;
+    if (/^3\d{8,9}$/.test(digits)) return "39" + digits;
+    return null;
+  }
+
+  // ROSSI D'ALESSANDRO → Rossi D'Alessandro: i nomi in maiuscolo nel messaggio sembrerebbero urlati.
+  function properName(text) {
+    return text.toLowerCase().replace(/(^|[\s'’-])(\p{L})/gu, (_, before, letter) => before + letter.toUpperCase());
   }
 
   // -------------------------------------------------------------------------
