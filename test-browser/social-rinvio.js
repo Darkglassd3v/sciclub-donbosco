@@ -4,13 +4,20 @@
 // - Si salva in postponed_reason (neve, maltempo, il testo; vuoto = senza motivo) e postponed_to.
 // - Riaperto, il form torna come era; nelle campagne non c'è; Duplica non copia il rinvio.
 const REQ = [];
+// Calendario del mese: la gita al giorno in cui si fa davvero (review del 29/10). Rimandata con la
+// nuova data, in quel mese; rimandata senza data, in nessuno.
+const LIST = [
+  { id: "A", kind: "gita", event_date: "2027-01-10", title: "Sestriere", course: false },
+  { id: "B", kind: "gita", event_date: "2027-01-10", title: "Cervinia", course: false, postponed_reason: "neve", postponed_to: "2027-02-07" },
+  { id: "C", kind: "gita", event_date: "2027-01-24", title: "Pila", course: false, postponed_reason: "maltempo", postponed_to: null },
+];
 const post = (extra) => ({ kind: "gita", event_date: "2027-01-10", title: "Cervinia", subtitle: null, hook: null,
   stops: [], prices: [], show_price: true, facts: [], contacts: [], course: false, published_at: null, caption: null,
   card_stop: null, deadline: null, sponsor_id: null, ...extra });
 FAKE.risposta = (t, r) => {
   REQ.push([t, r.colonne]);
   if (t === "sponsors") return [{ id: "S1", name: "Prova", level: "Sponsor", color_dark: "#14202E", color_light: "#FFFFFF", color_accent: "#FCCF02" }];
-  if (t === "social_events") return r.colonne === "photo" ? [{ photo: null }] : [];
+  if (t === "social_events") return r.colonne === "photo" ? [{ photo: null }] : LIST;
   return [];
 };
 window.addEventListener("load", () => setTimeout(async () => { try {
@@ -22,6 +29,15 @@ window.addEventListener("load", () => setTimeout(async () => { try {
 
   const list = REQ.find(([t, c]) => t === "social_events" && c && c.startsWith("id,"));
   test("colonne", !!list && /postponed_reason/.test(list[1]) && /postponed_to/.test(list[1]), list ? list[1].slice(-60) : "lista non letta");
+
+  const months = [...el("calMese").options].map((o) => o.value).join(",");
+  el("calMese").value = "2027-01"; drawMonthCalendar();
+  const january = el("anteprimaCalendario").innerHTML;
+  el("calMese").value = "2027-02"; drawMonthCalendar();
+  const february = el("anteprimaCalendario").innerHTML;
+  test("calendario", months === "2027-01,2027-02" && /Sestriere/.test(january) && !/Cervinia|Pila/.test(january)
+    && /Cervinia/.test(february) && /07\/02/.test(february) && !/Pila/.test(february),
+    `${months} gen:${["Sestriere", "Cervinia", "Pila"].filter((n) => january.includes(n))} feb:${["Cervinia", "Pila"].filter((n) => february.includes(n))}`);
 
   await doOpen(post({}));
   await wait(100);

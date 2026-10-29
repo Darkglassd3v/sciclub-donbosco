@@ -482,6 +482,9 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   const caption = postText(postponed);
   assert.strictEqual(caption.split("\n")[0], "⚠️ Gita rimandata causa neve. Nuova data: domenica 17 gennaio.", caption.split("\n")[0]);
   assert.ok(!/Iscrizioni entro/.test(caption), "scadenza della data vecchia nel testo del post");
+  // Dopo l'avviso la data vecchia non deve sembrare quella della gita (review del 29/10).
+  assert.strictEqual(caption.split("\n")[2], "🚌 Gita a La Thuile (era martedì 12 gennaio)", caption.split("\n")[2]);
+  assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[2], "Corso sci (era sabato 16 gennaio)");
   assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[0], "⚠️ Rimandato. Nuova data da definire.");
 }
 
