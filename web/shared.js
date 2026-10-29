@@ -580,23 +580,6 @@ function dataIt(iso) {
   return `${g}/${m}/${a}`;
 }
 
-// Intestazione della colonna e come si ricava dal socio. Un campo nuovo va
-// aggiunto anche a downloadMembers() in riepilogo.html, che legge i soci.
-const INSURANCE_COLUMNS = [
-  ["Cognome", (s) => s.last_name],
-  ["Nome", (s) => s.first_name],
-  ["Data di nascita", (s) => dataIt(s.birth_date)],
-  ["Luogo di nascita", (s) => s.birth_place],
-  ["Provincia di nascita", (s) => s.birth_province],
-  ["Codice fiscale", (s) => s.tax_code],
-  ["Indirizzo", (s) => s.address],
-  ["Città", (s) => s.city],
-  ["Provincia", (s) => s.province],
-  ["CAP", (s) => s.postal_code],
-  ["Tessera", (s) => s.card_type],
-  ["Numero tessera", (s) => s.card_number],
-];
-
 /**
  * Carica una libreria dal CDN la prima volta che serve, una volta sola anche
  * con due clic di fila. `cosa` finisce nel messaggio d'errore ("per l'Excel").
@@ -731,13 +714,13 @@ function loadPdf() {
     "sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk");
 }
 
-/** Scarica un foglio Excel dei soci passati, con le colonne per l'assicurazione. */
-async function downloadExcel(rows, nome) {
+/** Scarica un foglio Excel dei soci passati. `columns`: [[intestazione, (socio) => valore], ...]. */
+async function downloadExcel(rows, nome, columns) {
   if (!rows.length) { showToast("Nessun socio da scaricare."); return; }
   await loadXlsx();
   const sheet = readableSheet([
-    INSURANCE_COLUMNS.map(([titleText]) => titleText),
-    ...rows.map((s) => INSURANCE_COLUMNS.map(([, theValue]) => theValue(s) ?? "")),
+    columns.map(([titleText]) => titleText),
+    ...rows.map((s) => columns.map(([, theValue]) => theValue(s) ?? "")),
   ]);
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Soci");

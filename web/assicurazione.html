@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assicurazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261028jwt">
+  <link rel="stylesheet" href="brand.css?v=20261029riepilogo">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
 
@@ -199,7 +199,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261028jwt"></script>
+<script src="shared.js?v=20261029riepilogo"></script>
 <script src="codicefiscale.js?v=20261022testi"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
@@ -411,9 +411,14 @@
         dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });
-    // Solo le larghezze, dal testo: il resto (foglio, colonne, date, niente
-    // stili) resta come lo vuole l'assicurazione finché non dà il tracciato.
-    sheet["!cols"] = columnWidths(rows);
+    // Carattere 14 (Excel da solo usa l'11, si leggeva poco: richiesta del 29/10), con colonne e
+    // righe adatte; per il resto (foglio, colonne, date, niente colori) resta come lo vuole
+    // l'assicurazione finché non dà il tracciato. Il formato delle date va dentro lo stile.
+    for (const [address, cell] of Object.entries(sheet)) {
+      if (address[0] !== "!") cell.s = { font: { name: "Calibri", sz: 14 }, ...(cell.z ? { numFmt: cell.z } : {}) };
+    }
+    sheet["!cols"] = columnWidths(rows, 0, 1.3);
+    sheet["!rows"] = rows.map(() => ({ hpt: 22 }));
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, "Foglio1");
     XLSX.writeFile(book, `${number} Lista ${t.nome}.xlsx`);
