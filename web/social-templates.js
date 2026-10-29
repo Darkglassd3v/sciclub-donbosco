@@ -958,5 +958,5 @@ if (typeof module !== "undefined") {
                      contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
                      formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
-                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS };
+                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark };
 }

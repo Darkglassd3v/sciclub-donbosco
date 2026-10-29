@@ -10,7 +10,7 @@ const { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, 
         contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, testoPost: postText, mancanti: missingItems, nomePost, SOCIAL,
         disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
         formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams, LIMITI_META: META_LIMITS,
-        INVITI_META: META_CTAS } = require("./social-templates.js");
+        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -440,5 +440,13 @@ assert.strictEqual(adUrlParams(santero, campaign, "2026/27"),
   "utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=958santero-202627&utm_content=unastagionedabrindare");
 assert.deepStrictEqual(META_LIMITS, { ad_text: 125, ad_headline: 40, ad_description: 30 });
 assert.ok(META_CTAS.includes("Scopri di più"));
+
+// Sponsor senza logo: il nome scritto ha i colori dello sponsor (scuro sul fondo chiaro, chiaro sul
+// fondo scuro), non quello del tema della pagina: col tema scuro il nome diventava chiaro su bianco.
+{
+  const M = brand({ name: "Prova", color_dark: "#1B2430", color_light: "#FFFFFF", color_accent: "#FCCF02" });
+  assert.ok(logoOnLight(M, 70).includes("color:#1B2430"), "nome senza logo sul fondo chiaro senza il colore scuro");
+  assert.ok(logoOnDark(M, 70).includes("color:#FFFFFF"), "nome senza logo sul fondo scuro senza il colore chiaro");
+}
 
 console.log("social: tutti i controlli passati");
