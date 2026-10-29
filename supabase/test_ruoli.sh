@@ -237,6 +237,8 @@ declare
 begin
   for prova in select * from (values
     ('leggi',  'select 1 from public.members',                                   'SSSxSxx'),
+    -- I comuni già scritti nelle schede (suggerimenti del form): gli stessi permessi dei soci.
+    ('leggi',  'select 1 from public.member_places',                             'SSSxSxx'),
     ('leggi',  'select 1 from public.prices',                                    'SSSxSxx'),
     ('leggi',  'select 1 from public.departures',                                'SSxxxSx'),
     ('leggi',  'select 1 from public.member_passes',                             'SSSxSxx'),
