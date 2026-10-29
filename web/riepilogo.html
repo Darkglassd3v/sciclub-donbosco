@@ -236,7 +236,8 @@
       ["Corso", (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type)],
       ["Abbonamento", (s) => s.passes.join(" + ")],
       ["Presciistica", (s) => s.preski_type]]],
-    ["RESIDENZA", "4A5868", [
+    ["RECAPITI", "4A5868", [
+      ["Telefono", (s) => s.phone],
       ["Indirizzo", (s) => s.address],
       ["Città", (s) => s.city],
       ["Provincia", (s) => s.province],
@@ -264,7 +265,7 @@
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-            + "address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
+            + "phone, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
           .not("enrolled_at", "is", null)
           // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
           .is("card_holder", true)
