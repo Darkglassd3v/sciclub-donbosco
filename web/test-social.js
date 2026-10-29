@@ -10,7 +10,7 @@ const { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, 
         contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, testoPost: postText, mancanti: missingItems, nomePost, SOCIAL,
         disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
         formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams, LIMITI_META: META_LIMITS,
-        INVITI_META: META_CTAS } = require("./social-templates.js");
+        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -359,6 +359,12 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   // In «Grazie» il nome (senza logo) sta sulla scheda bianca: scritto nel colore scuro, non in quello chiaro.
   assert.match(withoutLogo.grazie.html, new RegExp(`background:#fff;color:${santero.color_dark}[^>]*><span[^>]*>958 Santero`), "nome dello sponsor invisibile sulla scheda bianca");
   assert.ok(!withoutLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
+  // Titolo lungo nel Post collab (29/10, «Si parte per la neve / con Gimax Rent»): a 150 px fissi una riga andava
+  // a capo e copriva testo e pulsante. Ora si restringe fino a due righe, e testo e pulsante gli scorrono sotto.
+  assert.match(withDark.collab.html, /data-righe="2" style="--t:150px;font-size:var\(--t\)"/, "titolo del collab che non si restringe");
+  assert.ok(!/top:500px|top:700px/.test(withDark.collab.html), "testo o pulsante del collab ancora a un'altezza fissa");
+  // Copertina: un logo largo (GIMAX, 4:1) alto 90 px entrava nel titolo; ora ha una larghezza massima.
+  assert.match(withDark.cover.html, /src="b\.png" style="height:90px;max-width:230px;object-fit:contain/, "logo della copertina senza larghezza massima");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
 }
 {
@@ -440,5 +446,46 @@ assert.strictEqual(adUrlParams(santero, campaign, "2026/27"),
   "utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign=958santero-202627&utm_content=unastagionedabrindare");
 assert.deepStrictEqual(META_LIMITS, { ad_text: 125, ad_headline: 40, ad_description: 30 });
 assert.ok(META_CTAS.includes("Scopri di più"));
+
+// Sponsor senza logo: il nome scritto ha i colori dello sponsor (scuro sul fondo chiaro, chiaro sul
+// fondo scuro), non quello del tema della pagina: col tema scuro il nome diventava chiaro su bianco.
+{
+  const M = brand({ name: "Prova", color_dark: "#1B2430", color_light: "#FFFFFF", color_accent: "#FCCF02" });
+  assert.ok(logoOnLight(M, 70).includes("color:#1B2430"), "nome senza logo sul fondo chiaro senza il colore scuro");
+  assert.ok(logoOnDark(M, 70).includes("color:#FFFFFF"), "nome senza logo sul fondo scuro senza il colore chiaro");
+}
+
+// --- Evento rimandato (richiesta del 29/10) -----------------------------------
+// Causa neve, maltempo o un motivo scritto a mano (vuoto = senza motivo); la nuova data o «da definire».
+// Nel post: timbro sulla tessera con la vecchia data, gancio «Gita rimandata causa neve», prima riga
+// la nuova data, niente scadenza delle iscrizioni (era della data vecchia). Testo del post: l'avviso in cima.
+{
+  const postponed = { ...trip, postponed_reason: "neve", postponed_to: "2027-01-17" };
+  assert.deepStrictEqual(postTemplate(postponed, "post").postponed, { word: "Rimandata", reason: "causa neve", newDate: "Domenica 17 gennaio" });
+  assert.strictEqual(postTemplate(trip, "post").postponed, null, "gita normale segnata come rimandata");
+  const html = drawPost(postTemplate(postponed, "post"));
+  // Il timbro è il primo figlio: in coda toglierebbe il margine al mese (.tessera b + span:last-child).
+  assert.match(html, /<div class="tessera"[^>]*><i class="timbro">Rimandata<\/i><span/, "manca il timbro sulla tessera");
+  assert.ok(html.includes(">Gita rimandata causa neve<"), "manca il gancio del rinvio");
+  assert.ok(html.includes("Nuova data: <b>Domenica 17 gennaio</b>"), "manca la nuova data");
+  assert.ok(!html.includes("Iscrizioni entro"), "c'è ancora la scadenza della data vecchia");
+  assert.ok(!drawPost(postTemplate(trip, "post")).includes("timbro"), "timbro su una gita che si fa");
+  const undecided = drawPost(postTemplate({ ...trip, postponed_reason: "maltempo", postponed_to: null }, "story"));
+  assert.ok(undecided.includes("Gita rimandata causa maltempo") && undecided.includes("Nuova data <b>da definire</b>"));
+  // Un evento: «Rimandato» per corso e servizi, «Rimandata» per cena e gara; il motivo scritto a mano resta testo.
+  const course = { kind: "corso", event_date: "2027-01-16", title: "Corso sci", postponed_reason: "per lo <b>sciopero</b>", postponed_to: null };
+  const courseHtml = drawPost(postTemplate(course, "post"));
+  assert.ok(courseHtml.includes('<i class="timbro">Rimandato</i>') && courseHtml.includes(">Rimandato per lo &lt;b&gt;sciopero&lt;/b&gt;<"), "corso rimandato");
+  assert.strictEqual(postTemplate({ ...course, kind: "cena" }, "post").postponed.word, "Rimandata");
+  assert.strictEqual(postTemplate({ ...course, postponed_reason: "" }, "post").postponed.reason, "", "rimandato senza motivo");
+  assert.ok(drawPost(postTemplate({ ...course, postponed_reason: "" }, "post")).includes(">Rimandato<"));
+  const caption = postText(postponed);
+  assert.strictEqual(caption.split("\n")[0], "⚠️ Gita rimandata causa neve. Nuova data: domenica 17 gennaio.", caption.split("\n")[0]);
+  assert.ok(!/Iscrizioni entro/.test(caption), "scadenza della data vecchia nel testo del post");
+  // Dopo l'avviso la data vecchia non deve sembrare quella della gita (review del 29/10).
+  assert.strictEqual(caption.split("\n")[2], "🚌 Gita a La Thuile (era martedì 12 gennaio)", caption.split("\n")[2]);
+  assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[2], "Corso sci (era sabato 16 gennaio)");
+  assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[0], "⚠️ Rimandato. Nuova data da definire.");
+}
 
 console.log("social: tutti i controlli passati");

@@ -162,7 +162,7 @@ function postTemplate(ev, fmt) {
   const base = {
     fmt: fmt, photo: ev.photo || null, pos: photoPos(ev), zoom: zoomPhoto(ev), cat: categoryOf(ev), iso: ev.event_date || null,
     hook: String(ev.hook || "").trim(),
-    prices: ev.show_price === false ? [] : priceMap, contatti: contactsOf(ev),
+    prices: ev.show_price === false ? [] : priceMap, contatti: contactsOf(ev), postponed: postponedOf(ev),
   };
   if (ev.kind === "gita") {
     return {
@@ -175,6 +175,19 @@ function postTemplate(ev, fmt) {
     date: longDate(ev.event_date), facts: eventFacts(ev),
   };
 }
+
+/** Gita o evento rimandato (postponed_reason non null): la parola per il tipo, il motivo («causa neve»,
+ *  «causa maltempo» o quello scritto a mano, anche vuoto) e la nuova data ("" = da definire). */
+const FEMININE_KINDS = ["gita", "cena", "gara"];
+function postponedOf(ev) {
+  if (ev.postponed_reason == null) return null;
+  const reason = String(ev.postponed_reason).trim();
+  return { word: FEMININE_KINDS.includes(ev.kind) ? "Rimandata" : "Rimandato",
+    reason: /^(neve|maltempo)$/.test(reason) ? `causa ${reason}` : reason, newDate: longDate(ev.postponed_to) || "" };
+}
+
+// «Gita rimandata causa neve», «Rimandato per lo sciopero»: il gancio del post e l'inizio del testo.
+const postponedHeadline = (p, trip) => `${trip ? `Gita ${p.word.toLowerCase()}` : p.word}${p.reason ? ` ${p.reason}` : ""}`;
 
 /* Le informazioni di un evento come le disegna la K. Ora, luogo e scadenza
  * hanno un campo loro nel form (prima l'ora finiva nei prezzi): diventano le
@@ -435,6 +448,10 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .sk .tessera b { font-size: 210px; font-weight: 800; line-height: .8; letter-spacing: -.05em; margin: 20px 0 16px -6px; }
     .sk .tessera b + span { font-weight: 800; letter-spacing: -.02em; }
     .sk .tessera b + span:last-child { margin-bottom: 34px; }
+    /* Gita o evento rimandato: timbro rosso sulla data vecchia. */
+    .sk .tessera .timbro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-12deg); z-index: 1;
+      font-style: normal; font-weight: 800; font-size: 46px; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+      color: #B3261E; background: rgba(255, 255, 255, .94); border: 7px solid #B3261E; border-radius: 12px; padding: 10px 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
     .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: var(--em, #084C8D); color: var(--em-ink, #fff); padding: 20px 34px 22px; margin-top: 28px; }
     .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
     .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
@@ -597,7 +614,8 @@ function cardK(s) {
   const c = s.kind === "gita" ? newColor(s.cat).c.toUpperCase() : YELLOW;
   const T = c === YELLOW ? null : c === BLU ? [BLU, "#FFFFFF", YELLOW, BLU] : [c, captionOn(c), BLU, "#FFFFFF"];
   const colors = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
-  return `<div class="tessera"${colors}><span data-fit style="font-size:${story ? 62 : 54}px">${DAYS[d.getDay()]}</span><b>${d.getDate()}</b>
+  const stamp = s.postponed ? `<i class="timbro">${s.postponed.word}</i>` : "";
+  return `<div class="tessera"${colors}>${stamp}<span data-fit style="font-size:${story ? 62 : 54}px">${DAYS[d.getDay()]}</span><b>${d.getDate()}</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">${MONTHS[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
 }
 
@@ -616,21 +634,25 @@ function postK(s) {
   const factText = ([n, v]) => `${n && !/^(dove|luogo|quando)$/i.test(String(n).trim()) ? `${escS(n)}: ` : ""}${highlight(v)}`;
   const within = (v) => `Iscrizioni entro <b>${escS(String(v).replace(/^entro\s+/i, ""))}</b>`;
   // Le righe sono testo dentro un <p>, o { html } già pronto (partenze, luogo).
+  const later = s.postponed && (s.postponed.newDate ? `Nuova data: <b>${escS(s.postponed.newDate)}</b>` : "Nuova data <b>da definire</b>");
   const rows = trip ? [
+    later,
     // La nota facoltativa sotto la meta, in giallo ("Prova gratuita con i maestri").
     s.nota && { html: `<p class="nota">${escS(withoutSigns(s.nota))}</p>` },
     p.length && { html: `<div class="partenze"><div class="etichetta">Partenze${story ? "" : ":"}</div>${p.map(([t, l]) =>
       `<div class="fermata">${t ? `<b>${escS(t)}</b>` : ""}${l ? `<span>${escS(l)}</span>` : ""}</div>`).join("")}</div>` },
     quota,
-    s.scadenza && within(s.scadenza),
+    // Rimandata: la scadenza era della data vecchia.
+    s.scadenza && !s.postponed && within(s.scadenza),
   ] : [
+    later,
     String(s.sub || "").trim() && highlight(String(s.sub).trim(), false),
     dove && { html: `<p class="dove">${icoPin}<span>${highlight(dove[1])}</span></p>` },
     // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
     !s.iso && ora && factText(ora),
     ...facts.filter((f) => f !== ora && f !== dove && f !== enrol).map(factText),
     quota,
-    enrol && within(enrol[1]),
+    enrol && !s.postponed && within(enrol[1]),
   ];
   const dest = String(s.dest || "").trim();
   // La meta va a capo dove l'ha scritto chi pubblica, o da sola se è più larga della riga; due righe al massimo,
@@ -648,7 +670,8 @@ function postK(s) {
     : `<div class="tit" data-cede><div data-righe="2" style="--t:${story ? 140 : 116}px">${newTitle(s)}</div></div>`;
   // Il gancio c'è sempre, anche vuoto: così titolo e dati partono sempre dallo stesso punto. Nella gita, se è
   // vuoto, dice «Gita a» (non se la meta dice già "Gita…").
-  const hookText = escS(s.hook) || (trip && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
+  const hookText = s.postponed ? escS(postponedHeadline(s.postponed, trip))
+    : escS(s.hook) || (trip && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
   const text = `<div class="testo" data-adatta=".6"><div class="gancio">${hookText}</div>${tit}
     <div class="fatti">${rows.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
   return bgK({ giallo: C.c === YELLOW, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, cardK(s), text, enrolments(s.contatti), trip && s.corso);
@@ -729,15 +752,17 @@ function brand(sp) {
 }
 
 /* Il logo per fondi scuri; se lo sponsor non l'ha dato, quello normale su un
- * riquadro chiaro, così resta leggibile. */
-function logoOnDark(M, h) {
-  if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;display:block">`;
-  if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
-  return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;display:block"></span>`;
+ * riquadro chiaro, così resta leggibile. Senza logo, il nome nei colori dello sponsor:
+ * senza colore prendeva quello del tema della pagina (chiaro su bianco col tema scuro). */
+function logoOnDark(M, h, maxWidth) {
+  const fitWidth = (w) => (maxWidth ? `max-width:${w}px;object-fit:contain;` : "");
+  if (M.logoScuro) return `<img src="${escS(M.logoScuro)}" style="height:${h}px;${fitWidth(maxWidth)}display:block">`;
+  if (!M.logo) return `<span style="font-size:${h * .5}px;font-weight:800;color:${M.chiaro}">${escS(M.nome)}</span>`;
+  return `<span style="display:inline-block;background:${M.chiaro};border-radius:${h * .2}px;padding:${h * .15}px ${h * .25}px"><img src="${escS(M.logo)}" style="height:${h}px;${fitWidth(maxWidth - h * .5)}display:block"></span>`;
 }
 const logoOnLight = (M, h) => M.logo
   ? `<img src="${escS(M.logo)}" style="height:${h}px;display:block">`
-  : `<span style="font-size:${h * .5}px;font-weight:800">${escS(M.nome)}</span>`;
+  : `<span style="font-size:${h * .5}px;font-weight:800;color:${M.scuro}">${escS(M.nome)}</span>`;
 
 const warning = (M, px, extra = "") => M.alcol
   ? `<div style="font-size:${px}px;font-weight:500;opacity:.75;${extra}">${escS(SOCIAL.avvertenzaAlcol)}</div>` : "";
@@ -775,9 +800,9 @@ const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-
 /* Titolo e testo della campagna, gli stessi in ogni grafica (richiesta del 28/10): l'ultima riga
  * del titolo (o l'unica) nel colore d'accento, il testo sotto; due righe al massimo ciascuno,
  * poi fit() stringe o avvisa. Il pulsante (ctaPill, o lo sticker nelle story) a parte. */
-const campaignTexts = (c, M, box, title, sub) => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:${Math.round(title * .25)}px">
+const campaignTexts = (c, M, box, title, sub, after = "") => `<div class="abs" style="${box};display:flex;flex-direction:column;gap:${Math.round(title * .25)}px">
     <div class="t-dest" data-righe="2" style="--t:${title}px;font-size:var(--t)">${titleLines(c.title, M.accento)}</div>
-    ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}</div>`;
+    ${c.subtitle ? `<div data-righe="2" style="--t:${sub}px;font-size:var(--t);font-weight:600;line-height:1.25">${escS(c.subtitle)}</div>` : ""}${after}</div>`;
 
 function photoFormats(c, sp, seasonValue) {
   const M = brand(sp);
@@ -835,9 +860,7 @@ function campaignFormats(c, sp, seasonValue) {
     /* Post collab 4:5: pubblicato insieme da club e brand, esce su entrambi i profili. */
     collab: { w: 1080, h: 1350, nome: "Post collab 4:5", breve: "Collab", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:80px;top:88px;font-size:34px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
-      <div class="abs t-dest" style="left:80px;right:80px;top:170px;font-size:150px">${titleLines(c.title, M.accento)}</div>
-      <div class="abs" style="left:80px;top:500px;right:120px;font-size:40px;font-weight:600;line-height:1.25">${escS(c.subtitle || "")}</div>
-      <div class="abs" style="left:80px;top:700px">${cta}</div>
+      ${campaignTexts(c, M, "left:80px;right:80px;top:170px", 150, 40, cta ? `<div>${cta}</div>` : "")}
       ${ridge(M, 1080, 420, 170)}
       <div class="abs" style="background:#fff;color:${M.scuro};left:0;right:0;bottom:0;height:190px;display:flex;align-items:center;justify-content:space-between;padding:0 80px">
         ${signature(1)}${warning(M, 22, "max-width:300px;text-align:right")}</div></div>` },
@@ -868,7 +891,7 @@ function campaignFormats(c, sp, seasonValue) {
     cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
       ${ridge(M, 820, 150)}
       ${campaignTexts(c, M, "left:44px;right:300px;top:30px", 46, 20)}
-      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90)}</div>
+      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90, 230)}</div>
       <div class="abs" style="right:44px;top:136px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
       <div class="abs" style="right:44px;top:170px">${ctaPill(M, c.cta, 18)}</div>
       ${warning(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },
@@ -934,18 +957,22 @@ function postText(ev, sp, seasonValue) {
     rows.push("", `#adv #sciclubdonbosco #${simple(sp.name)}`);
     return rows.join("\n");
   }
+  const p = postponedOf(ev);
+  if (p) rows.push(`⚠️ ${postponedHeadline(p, ev.kind === "gita")}. ${p.newDate ? `Nuova data: ${p.newDate.toLowerCase()}` : "Nuova data da definire"}.`, "");
+  // Rimandata: la data vecchia resta solo come «era», per riconoscere la gita.
+  const was = p && ev.event_date ? ` (era ${longDate(ev.event_date).toLowerCase()})` : "";
   if (ev.kind === "gita") {
-    rows.push(`🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
+    rows.push(p ? `🚌 Gita a ${oneRow(ev.title)}${was}` : `🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
     if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) rows.push(`Quota soci: ${quote}`);
-    if (ev.deadline) rows.push(`Iscrizioni ${within(ev.deadline)}`);
+    if (ev.deadline && !p) rows.push(`Iscrizioni ${within(ev.deadline)}`);
   } else {
-    rows.push(`${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
+    rows.push(p ? `${ev.title}${was}` : `${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (quote) rows.push("", quote);
-    for (const [k, v] of eventFacts(ev)) rows.push(`${k}: ${withoutSigns(v)}`);
+    for (const [k, v] of eventFacts(ev)) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   }
   if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
   rows.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${simple(ev.title)}` : ""}`);
@@ -958,5 +985,5 @@ if (typeof module !== "undefined") {
                      contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
                      formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
-                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS };
+                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark };
 }
