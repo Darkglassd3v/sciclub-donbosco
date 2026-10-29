@@ -1768,24 +1768,38 @@ create trigger check_member_guarded_columns
   before insert or update on public.members
   for each row execute function public.check_member_guarded_columns();
 
--- Email in minuscolo; anagrafica, codice fiscale e indirizzo in maiuscolo; senza spazi ai lati.
--- Vale per ogni strada (form, Excel caricati, funzioni): il 29/10/2026 metà delle email aveva
--- maiuscole sparse e due codici fiscali erano in minuscolo.
+-- Un nome, una città o un indirizzo: maiuscolo, apostrofi dritti (’ ` ´ → '), spazi doppi
+-- ridotti a uno, senza spazi ai lati.
+create or replace function public.normalize_member_word(t text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$ select upper(btrim(regexp_replace(translate(t, '’`´', ''''''''), '\s+', ' ', 'g'))) $$;
+
+-- Email in minuscolo; anagrafica, codice fiscale e indirizzo in maiuscolo (normalize_member_word);
+-- senza spazi ai lati. Il telefono con le sole cifre (via spazi, punti, trattini), ma solo se ne
+-- resta un numero unico: due numeri nello stesso campo restano come sono. Vale per ogni strada
+-- (form, Excel caricati, funzioni): il 29/10/2026 metà delle email aveva maiuscole sparse, due
+-- codici fiscali erano in minuscolo, città e indirizzi avevano apostrofi e spazi misti.
 create or replace function public.normalize_member_text()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  digits text := regexp_replace(btrim(new.phone), '[ .\-]', '', 'g');
 begin
   new.email          := lower(btrim(new.email));
   new.tax_code       := upper(btrim(new.tax_code));
-  new.last_name      := upper(btrim(new.last_name));
-  new.first_name     := upper(btrim(new.first_name));
-  new.birth_place    := upper(btrim(new.birth_place));
+  new.last_name      := public.normalize_member_word(new.last_name);
+  new.first_name     := public.normalize_member_word(new.first_name);
+  new.birth_place    := public.normalize_member_word(new.birth_place);
   new.birth_province := upper(btrim(new.birth_province));
-  new.address        := upper(btrim(new.address));
-  new.city           := upper(btrim(new.city));
+  new.address        := public.normalize_member_word(new.address);
+  new.city           := public.normalize_member_word(new.city);
   new.province       := upper(btrim(new.province));
+  new.phone          := case when digits ~ '^\+?[0-9]{6,15}$' then digits else btrim(new.phone) end;
   return new;
 end;
 $$;
