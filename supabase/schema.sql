@@ -328,6 +328,19 @@ where enrolled_at is not null
 group by preski_type;
 
 -- Le partenze sono liste separate da virgola come nella 1.x: vengono esplose.
+-- I comuni già scritti nelle schede, con quante volte: suggerimenti del form Soci (Città di nascita e
+-- di residenza) e la provincia e il CAP da proporre col comune scelto (i più usati).
+create or replace view public.member_places as
+select 'citta'::text as kind, city as place, province, postal_code, count(*)::int as n
+from public.members
+where city is not null and city <> ''
+group by city, province, postal_code
+union all
+select 'nascita'::text, birth_place, birth_province, null::text, count(*)::int
+from public.members
+where birth_place is not null and birth_place <> ''
+group by birth_place, birth_province;
+
 create or replace view public.departure_counts as
 select 'SABATO' as day, trim(place) as place, count(*) as count
 from public.members, unnest(string_to_array(saturday_departure, ',')) as place
@@ -1932,6 +1945,7 @@ alter view public.card_counts     set (security_invoker = true);
 alter view public.course_counts   set (security_invoker = true);
 alter view public.preski_counts   set (security_invoker = true);
 alter view public.departure_counts set (security_invoker = true);
+alter view public.member_places    set (security_invoker = true);
 alter view public.admin_summary    set (security_invoker = true);
 
 -- ---------------------------------------------------------------------------
