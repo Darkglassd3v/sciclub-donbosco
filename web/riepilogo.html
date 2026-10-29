@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261028jwt">
+  <link rel="stylesheet" href="brand.css?v=20261029riepilogo">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -183,7 +183,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261028jwt"></script>
+<script src="shared.js?v=20261029riepilogo"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -219,24 +219,56 @@
     el("zonaStagioni").hidden = false;
   }
 
+  /* Colonne dell'Excel dei soci del Riepilogo (richiesta del 29/10): prima tessera e persona, poi
+   * corso, abbonamento e presciistica, poi il resto. Un campo nuovo va letto anche in downloadMembers(). */
+  const SUMMARY_COLUMNS = [
+    ["Numero tessera", (s) => s.card_number],
+    ["Cognome", (s) => s.last_name],
+    ["Nome", (s) => s.first_name],
+    ["Data di nascita", (s) => dataIt(s.birth_date)],
+    ["Codice fiscale", (s) => s.tax_code],
+    ["Tipo tessera", (s) => s.card_type],
+    ["Corso", (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type)],
+    ["Abbonamento", (s) => s.passes.join(" + ")],
+    ["Presciistica", (s) => s.preski_type],
+    ["Luogo di nascita", (s) => s.birth_place],
+    ["Provincia di nascita", (s) => s.birth_province],
+    ["Indirizzo", (s) => s.address],
+    ["Città", (s) => s.city],
+    ["Provincia", (s) => s.province],
+    ["CAP", (s) => s.postal_code],
+  ];
+
+  /** Il numero di tessera come numero (2 prima di 10); senza numero, o «NO», in fondo. */
+  const cardOrder = (s) => { const n = parseInt(s.card_number, 10); return Number.isNaN(n) ? Infinity : n; };
+  const byName = (a, b) => (a.last_name || "").localeCompare(b.last_name || "", "it") || (a.first_name || "").localeCompare(b.first_name || "", "it");
+
   /**
-   * Tutti i tesserati della stagione in corso, in Excel per l'assicurazione
-   * (colonne in shared.js). Lo può fare chi ha il permesso riepilogo: il
-   * database lo nega al ruolo assicurazione, che non legge members. "NO" come
-   * tessera vale come nessuna tessera, come nel resto del Riepilogo.
+   * Tutti i tesserati della stagione in corso, in Excel, per capire la stagione: in ordine di
+   * tessera, con corso, abbonamenti della stagione (member_passes) e presciistica. Lo può fare chi
+   * ha il permesso riepilogo. "NO" come tessera vale come nessuna tessera, come nel resto del Riepilogo.
    */
   async function downloadMembers() {
     setLoading(true);
     try {
-      const members = await allRows(() => sb
-        .from("members")
-        .select("last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-          + "address, city, province, postal_code, card_type, card_number")
-        .not("enrolled_at", "is", null)
-        // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
-        .is("card_holder", true)
-        .order("last_name").order("first_name").order("id"));
-      await downloadExcel(members, "soci-stagione");
+      const { data: seasonValue, error } = await sb.rpc("current_season");
+      if (error) throw error;
+      const [members, passes] = await Promise.all([
+        allRows(() => sb
+          .from("members")
+          .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
+            + "address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
+          .not("enrolled_at", "is", null)
+          // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
+          .is("card_holder", true)
+          .order("id")),
+        allRows(() => sb.from("member_passes").select("member_id, pass_type").eq("season", seasonValue).order("id")),
+      ]);
+      const passesOf = new Map();
+      for (const p of passes) passesOf.set(p.member_id, [...(passesOf.get(p.member_id) || []), p.pass_type]);
+      const rows = members.map((s) => ({ ...s, passes: passesOf.get(s.id) || [] }))
+        .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
+      await downloadExcel(rows, "soci-stagione", SUMMARY_COLUMNS);
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
@@ -244,7 +276,6 @@
     }
   }
 
-  /** I cinque insiemi di dati della stagione in corso, dalle viste live. */
   async function currentData() {
     const responses = await Promise.all([
       sb.from("season_totals").select("*").single(),
