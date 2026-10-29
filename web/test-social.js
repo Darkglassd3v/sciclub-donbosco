@@ -359,6 +359,12 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   // In «Grazie» il nome (senza logo) sta sulla scheda bianca: scritto nel colore scuro, non in quello chiaro.
   assert.match(withoutLogo.grazie.html, new RegExp(`background:#fff;color:${santero.color_dark}[^>]*><span[^>]*>958 Santero`), "nome dello sponsor invisibile sulla scheda bianca");
   assert.ok(!withoutLogo.collab.html.includes("padding:.45em 1.1em"), "pulsante della campagna senza testo");
+  // Titolo lungo nel Post collab (29/10, «Si parte per la neve / con Gimax Rent»): a 150 px fissi una riga andava
+  // a capo e copriva testo e pulsante. Ora si restringe fino a due righe, e testo e pulsante gli scorrono sotto.
+  assert.match(withDark.collab.html, /data-righe="2" style="--t:150px;font-size:var\(--t\)"/, "titolo del collab che non si restringe");
+  assert.ok(!/top:500px|top:700px/.test(withDark.collab.html), "testo o pulsante del collab ancora a un'altezza fissa");
+  // Copertina: un logo largo (GIMAX, 4:1) alto 90 px entrava nel titolo; ora ha una larghezza massima.
+  assert.match(withDark.cover.html, /src="b\.png" style="height:90px;max-width:230px;object-fit:contain/, "logo della copertina senza larghezza massima");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
 }
 {
