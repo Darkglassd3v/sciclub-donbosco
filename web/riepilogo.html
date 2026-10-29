@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261029gruppi">
+  <link rel="stylesheet" href="brand.css?v=20261029titolo">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -183,7 +183,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261029gruppi"></script>
+<script src="shared.js?v=20261029titolo"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -245,8 +245,9 @@
       ["CAP", (s) => s.postal_code]]],
   ];
   const SUMMARY_COLUMNS = SUMMARY_GROUPS.flatMap(([, , columns]) => columns);
-  // Mentre si scorre restano ferme le due righe d'intestazione e le colonne da Numero tessera a Nome.
-  const SUMMARY_FROZEN = { righe: 2, colonne: 4 };
+  // Mentre si scorre restano ferme le tre righe d'intestazione (titolo, gruppi, colonne) e le
+  // colonne da Numero tessera a Nome.
+  const SUMMARY_FROZEN = { righe: 3, colonne: 4 };
 
   /** Il numero di tessera come numero (2 prima di 10); senza numero, o «NO», in fondo. */
   const cardOrder = (s) => { const n = parseInt(s.card_number, 10); return Number.isNaN(n) ? Infinity : n; };
@@ -277,8 +278,15 @@
       for (const p of passes) passesOf.set(p.member_id, [...(passesOf.get(p.member_id) || []), p.pass_type]);
       const rows = members.map((s) => ({ ...s, passes: passesOf.get(s.id) || [] }))
         .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
-      await downloadExcel(rows, "soci-stagione", SUMMARY_COLUMNS, {
-        gruppi: SUMMARY_GROUPS.map(([nome, colore, columns]) => ({ nome, colore, colonne: columns.length })), blocca: SUMMARY_FROZEN });
+      // La stagione scritta dentro il file (titolo e nome del foglio), non solo nel nome del file:
+      // rinominato o copiato, dice ancora di che stagione è.
+      const year = new Date(seasonValue).getFullYear(), label = `${year}/${String(year + 1).slice(2)}`;
+      const now = new Date();
+      const title = `Soci della stagione ${label} · scaricato il ${now.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+        + ` alle ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })} · ${rows.length === 1 ? "1 socio" : `${rows.length} soci`}`;
+      await downloadExcel(rows, `soci-stagione-${label.replace("/", "-")}`, SUMMARY_COLUMNS, {
+        gruppi: SUMMARY_GROUPS.map(([nome, colore, columns]) => ({ nome, colore, colonne: columns.length })),
+        blocca: SUMMARY_FROZEN, titolo: title, foglio: `Soci ${label.replace("/", "-")}` });
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {

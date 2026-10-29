@@ -702,19 +702,22 @@ function readableSheet(rows, { intestazione: heading = 0, gruppi: groups = null,
   // Altezze delle righe per il corpo più grande: Excel non le rifà da solo.
   sheet["!rows"] = rows.map((_, r) => ({ hpt: r < heading ? 30 : r === heading ? 26 : 22 }));
   if (groups) {
-    // Gruppi di colonne (`gruppi`: [{ nome, colore, colonne }], nella riga 0): ognuno col suo colore,
-    // unito sulle sue colonne; i nomi delle colonne (riga 1) nello stesso colore su fondo chiaro.
+    // Gruppi di colonne (`gruppi`: [{ nome, colore, colonne }], nella riga subito sopra i nomi delle
+    // colonne): ognuno col suo colore, unito sulle sue colonne; i nomi delle colonne nello stesso
+    // colore su fondo chiaro. Le righe prima, se ci sono, sono titoli su tutta la larghezza.
+    const g = heading - 1;
     let c = 0;
-    sheet["!merges"] = groups.flatMap(({ colore, colonne }) => {
+    sheet["!merges"] = [...Array.from({ length: g }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } })),
+      ...groups.flatMap(({ colore, colonne }) => {
       for (let k = c; k < c + colonne; k++) {
-        const top = sheet[XLSX.utils.encode_cell({ r: 0, c: k })], under = sheet[XLSX.utils.encode_cell({ r: 1, c: k })];
+        const top = sheet[XLSX.utils.encode_cell({ r: g, c: k })], under = sheet[XLSX.utils.encode_cell({ r: g + 1, c: k })];
         if (top) top.s = { ...styles.testa, fill: { patternType: "solid", fgColor: { rgb: colore } }, alignment: { vertical: "center", horizontal: "center" } };
         if (under) under.s = { ...styles.testa, font: { ...styles.testa.font, color: { rgb: colore } }, fill: { patternType: "solid", fgColor: { rgb: tint(colore) } } };
       }
-      const merge = colonne > 1 ? [{ s: { r: 0, c }, e: { r: 0, c: c + colonne - 1 } }] : [];
+      const merge = colonne > 1 ? [{ s: { r: g, c }, e: { r: g, c: c + colonne - 1 } }] : [];
       c += colonne;
       return merge;
-    });
+    })];
   } else if (heading > 0) {
     sheet["!merges"] = Array.from({ length: heading }, (_, r) => ({ s: { r, c: 0 }, e: { r, c: Math.max(0, cols.length - 1) } }));
   }
@@ -762,18 +765,18 @@ function loadPdf() {
 
 /**
  * Scarica un foglio Excel dei soci passati. `columns`: [[intestazione, (socio) => valore], ...].
- * `gruppi` ([{ nome, colore, colonne }]) mette sopra la riga dei gruppi colorati (readableSheet());
- * `blocca` ({ righe, colonne }) le tiene ferme mentre si scorre (saveBook()).
+ * `titolo` va nella prima riga, su tutta la larghezza; `gruppi` ([{ nome, colore, colonne }]) mette
+ * sopra i nomi delle colonne la riga dei gruppi colorati (readableSheet()); `blocca` ({ righe,
+ * colonne }) le tiene ferme mentre si scorre (saveBook()); `foglio` è il nome del foglio.
  */
-async function downloadExcel(rows, nome, columns, { gruppi: groups = null, blocca: freeze = {} } = {}) {
+async function downloadExcel(rows, nome, columns, { gruppi: groups = null, blocca: freeze = {}, titolo: title = null, foglio: sheetName = "Soci" } = {}) {
   if (!rows.length) { showToast("Nessun socio da scaricare."); return; }
   await loadXlsx();
+  const top = [...(title ? [[title]] : []), ...(groups ? [groups.flatMap((g) => [g.nome, ...Array(g.colonne - 1).fill("")])] : [])];
   const table = [columns.map(([titleText]) => titleText), ...rows.map((s) => columns.map(([, theValue]) => theValue(s) ?? ""))];
-  const sheet = groups
-    ? readableSheet([groups.flatMap((g) => [g.nome, ...Array(g.colonne - 1).fill("")]), ...table], { intestazione: 1, gruppi: groups })
-    : readableSheet(table);
+  const sheet = readableSheet([...top, ...table], { intestazione: top.length, gruppi: groups });
   const book = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(book, sheet, "Soci");
+  XLSX.utils.book_append_sheet(book, sheet, sheetName);
   saveBook(book, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`, freeze);
   showToast(rows.length === 1 ? "Scaricato 1 socio." : `Scaricati ${rows.length} soci.`);
 }

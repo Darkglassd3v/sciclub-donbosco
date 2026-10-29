@@ -4,7 +4,10 @@
 //   TESSERA (numero, tipo), ANAGRAFICA (cognome, nome, data, luogo e provincia di nascita, codice fiscale),
 //   CORSI E ABBONAMENTI (corso col giorno, abbonamenti della stagione uniti con « + », presciistica),
 //   RECAPITI (telefono, email, indirizzo, città, provincia, CAP).
-// - Mentre si scorre restano ferme le due righe d'intestazione e le colonne da Numero a Nome.
+// - In cima una riga col titolo: stagione, quando è stato scaricato, quanti soci (richiesta del 29/10:
+//   il file rinominato o copiato deve dire ancora di che stagione è). Foglio «Soci 2026-27», file
+//   soci-stagione-2026-27-AAAA-MM-GG.xlsx.
+// - Mentre si scorre restano ferme le tre righe d'intestazione e le colonne da Numero a Nome.
 // - frozenPaneXml(): il blocco scritto nel foglio, che xlsx-js-style da solo non scrive.
 const SHEETS = [];
 const letters = (c) => String.fromCharCode(65 + c);
@@ -17,7 +20,8 @@ window.XLSX = { utils: {
   },
   decode_cell: (a) => ({ c: a.charCodeAt(0) - 65, r: Number(a.slice(1)) - 1 }),
   encode_cell: ({ r, c }) => letters(c) + (r + 1),
-  book_new: () => ({}), book_append_sheet() {} }, writeFile() {} };
+  book_new: () => ({}), book_append_sheet: (book, sheet, name) => SHEET_NAMES.push(name) }, writeFile() {} };
+const SHEET_NAMES = [];
 const REQ = [];
 FAKE.rpc.current_season = "2026-09-01T00:00:00+00:00";
 FAKE.risposta = (t, r) => {
@@ -42,17 +46,19 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   window.saveBook = (...args) => saved.push(args);
   await downloadMembers();
   const [rows = [], sheet = {}] = SHEETS[SHEETS.length - 1] || [];
-  const [groups = [], head = [], ...data] = rows;
+  const [[title = ""] = [], groups = [], head = [], ...data] = rows;
+  test("titolo", /^Soci della stagione 2026\/27 · scaricato il \d{2}\/\d{2}\/\d{4} alle \d{2}:\d{2} · 5 soci$/.test(title), title);
+  test("foglio", SHEET_NAMES[SHEET_NAMES.length - 1] === "Soci 2026-27", SHEET_NAMES.join(","));
   test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA||||||CORSI E ABBONAMENTI|||RECAPITI|||||", groups.join("|"));
   test("colonne", head.join("|") === "Numero tessera|Tipo tessera|Cognome|Nome|Data di nascita|Luogo di nascita|Provincia di nascita|Codice fiscale"
     + "|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
   const merges = (sheet["!merges"] || []).map(({ s, e }) => `${letters(s.c)}${s.r + 1}:${letters(e.c)}${e.r + 1}`).join(" ");
-  test("unioni", merges === "A1:B1 C1:H1 I1:K1 L1:Q1", merges);
+  test("unioni", merges === "A1:Q1 A2:B2 C2:H2 I2:K2 L2:Q2", merges);
   const fill = (a) => sheet[a]?.s?.fill?.fgColor?.rgb;
-  test("colori", fill("A1") === "084C8D" && fill("C1") === "0B6E69" && fill("I1") === "8A5300" && fill("L1") === "4A5868"
-    && sheet.A1.s.font.color.rgb === "FFFFFF" && sheet.C2.s.font.color.rgb === "0B6E69" && fill("C2") && fill("C2") !== "0B6E69",
-    `${fill("A1")} ${fill("C1")} ${fill("I1")} ${fill("L1")} testa ${fill("C2")}`);
-  test("blocco", saved.length === 1 && saved[0][2]?.righe === 2 && saved[0][2]?.colonne === 4 && /^soci-stagione-.*\.xlsx$/.test(saved[0][1]),
+  test("colori", fill("A2") === "084C8D" && fill("C2") === "0B6E69" && fill("I2") === "8A5300" && fill("L2") === "4A5868"
+    && sheet.A2.s.font.color.rgb === "FFFFFF" && sheet.C3.s.font.color.rgb === "0B6E69" && fill("C3") && fill("C3") !== "0B6E69",
+    `${fill("A2")} ${fill("C2")} ${fill("I2")} ${fill("L2")} testa ${fill("C3")}`);
+  test("blocco", saved.length === 1 && saved[0][2]?.righe === 3 && saved[0][2]?.colonne === 4 && /^soci-stagione-2026-27-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[0][1]),
     JSON.stringify(saved.map((s) => s.slice(1))).slice(0, 80));
   test("ordineTessere", data.map((d) => d[2]).join(",") === "BIANCHI,ROSSI,VERDI,ALFA,ZETA", data.map((d) => d[2]).join(","));
   const rossi = data.find((d) => d[2] === "ROSSI") || [];
