@@ -76,7 +76,7 @@ Free License) e una Pexels (licenza Pexels), ritagliate in verticale.
 - clip: Mixkit 3387 «Mountain for skiing seen from the air» (4K), dal secondo 3,5
 - motion: blueprint cta-morph-press; rules spring-pop-entrance (logo), press-release-spring + cursor-click-ripple (tocco), waterfall-entry (righe social)
 
-Righe: Instagram @sciclubdonboscoasti · Facebook Sci Club Don Bosco Asti · Canale WhatsApp.
+Righe: Instagram @sciclubdonbosco_asti · Facebook Sci Club Don Bosco Asti · Canale WhatsApp.
 Loghi social: Simple Icons 16.34.0 nei colori dei marchi. Mano: emoji Fluent «backhand index
 pointing up» di Microsoft (licenza MIT, `assets/mano/`). Sotto le righe resta libera una fascia
 per lo sticker link o menzione che l'utente mette in Instagram.

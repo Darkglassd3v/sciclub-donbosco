@@ -24,7 +24,7 @@ alternati a primi piani di gente che scia, logo del club, frasi brevi.
 
 ## Customizations
 
-- Finale «Seguici» con icone e nomi: Instagram @sciclubdonboscoasti, Facebook «Sci Club Don Bosco Asti», Canale WhatsApp.
+- Finale «Seguici» con icone e nomi: Instagram @sciclubdonbosco_asti, Facebook «Sci Club Don Bosco Asti», Canale WhatsApp.
 - Spazio libero sul finale per lo sticker link/menzione aggiunto in Instagram.
 - Loghi ufficiali di Instagram, Facebook e WhatsApp, non disegnati (30/10).
 - Nel finale una mano tocca il logo del club come il pulsante «Segui»; il logo si abbassa come premuto (30/10).
