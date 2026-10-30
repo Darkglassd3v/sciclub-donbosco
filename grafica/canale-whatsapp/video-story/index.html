@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <!--
+      La story del canale WhatsApp (../sorgenti/story.html) animata appena: stesso disegno, l'ultimo
+      fotogramma è uguale all'immagine. Il riquadro blu col bordo giallo resta vuoto e fermo: lì chi
+      pubblica mette lo sticker link in Instagram. Foto: pista a La Thuile di DimiTalen, Wikimedia
+      Commons, CC0.
+    -->
+    <style>
+      @font-face { font-family: Barlow; font-style: normal; font-weight: 600; font-display: block; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
+      @font-face { font-family: Barlow; font-style: normal; font-weight: 700; font-display: block; src: url("assets/fonts/barlow-700.woff2") format("woff2"); }
+      @font-face { font-family: Barlow; font-style: normal; font-weight: 800; font-display: block; src: url("assets/fonts/barlow-800.woff2") format("woff2"); }
+      @font-face { font-family: Barlow; font-style: italic; font-weight: 800; font-display: block; src: url("assets/fonts/barlow-800-italic.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #14202E; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; color: #fff; background: #14202E;
+        font-family: Barlow, sans-serif; letter-spacing: -.01em; }
+      .foto { position: absolute; left: 0; right: 0; top: 0; height: 1100px; transform-origin: 50% 40%;
+        background: url("assets/foto/calendario-montagna.jpg") center 40% / cover; }
+      .scuro { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,32,46,.15) 0, rgba(20,32,46,.55) 520px, rgba(20,32,46,.94) 900px, #14202E 1100px); }
+      /* L'angolo giallo come nei post: la foto in grigi col giallo sopra, sotto il logo blu ufficiale. */
+      .angolo { position: absolute; inset: 0; opacity: .7; clip-path: polygon(0 0, 640px 0, 0 640px); }
+      .angolo .grigi { position: absolute; left: 0; right: 0; top: 0; height: 1100px; filter: grayscale(1) brightness(1.4) contrast(1.2);
+        background: url("assets/foto/calendario-montagna.jpg") center 40% / cover; }
+      .angolo .tinta { position: absolute; inset: 0; background: #FCCF02; mix-blend-mode: multiply; }
+      .cuneo { position: absolute; inset: 0; background: #FCCF02; clip-path: polygon(100% 1640px, 100% 1820px, 900px 1920px, 640px 1920px); opacity: .9; }
+      .logo { position: absolute; left: 60px; top: 250px; width: 220px; height: 220px; border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,.45); }
+      .testo { position: absolute; left: 60px; right: 60px; top: 490px; text-shadow: 0 2px 14px rgba(20,32,46,.6); }
+      .gancio { font-size: 66px; font-weight: 800; font-style: italic; color: #FCCF02; transform-origin: 0% 100%; }
+      .tit { font-size: 116px; font-weight: 800; line-height: .92; letter-spacing: -.035em; margin-top: 10px; transform-origin: 0% 100%; }
+      .sub { font-size: 50px; font-weight: 600; line-height: 1.16; margin-top: 22px; max-width: 900px; }
+      .sub b { background: #FCCF02; color: #084C8D; padding: 0 .18em; border-radius: 10px; text-shadow: none; }
+      /* La freccia: un blocco giallo con «TOCCA QUI» e la punta che entra nel riquadro (centrata senza transform,
+       * così il rimbalzo può muoverla). */
+      .freccia { position: absolute; left: 0; right: 0; top: 950px; display: flex; justify-content: center; }
+      .freccia-mossa { width: 560px; display: flex; flex-direction: column; align-items: center; filter: drop-shadow(0 8px 18px rgba(0,0,0,.5)); }
+      .freccia .corpo { width: 560px; height: 130px; background: #FCCF02; color: #084C8D; border-radius: 26px 26px 0 0; display: flex; align-items: center;
+        justify-content: center; font-size: 84px; font-weight: 800; letter-spacing: .02em; }
+      .freccia .punta { width: 0; height: 0; border-left: 200px solid transparent; border-right: 200px solid transparent; border-top: 120px solid #FCCF02; margin-top: -1px; }
+      /* Il posto dello sticker, fermo: pulsa solo l'alone giallo attorno. */
+      .pad { position: absolute; left: 70px; right: 70px; top: 1220px; height: 270px; border-radius: 40px; background: #084C8D; border: 12px solid #FCCF02;
+        box-shadow: 0 10px 40px rgba(0,0,0,.45); }
+      .alone { position: absolute; left: 70px; right: 70px; top: 1220px; height: 270px; border-radius: 40px; border: 10px solid rgba(252,207,2,.55); }
+      .passo { position: absolute; left: 60px; right: 60px; top: 1510px; font-size: 46px; font-weight: 700; white-space: nowrap;
+        display: flex; align-items: center; justify-content: center; gap: .3em; }
+      .passo b { color: #FCCF02; }
+      .passo svg { width: 1.05em; height: 1.05em; fill: #FCCF02; flex: none; transform-origin: 50% 10%; }
+      .oppure { position: absolute; left: 40px; right: 40px; top: 1568px; font-size: 34px; white-space: nowrap; font-weight: 600; text-align: center; color: #DCE4EC; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="10" data-width="1080" data-height="1920">
+      <div class="foto" id="foto"></div>
+      <div class="scuro"></div>
+      <div class="angolo" id="angolo"><div class="grigi"></div><div class="tinta"></div></div>
+      <div class="cuneo" id="cuneo"></div>
+      <img class="logo" id="logo" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
+      <div class="testo">
+        <div class="gancio" id="gancio">Novità!</div>
+        <div class="tit" id="tit">Il nostro canale WhatsApp</div>
+        <p class="sub" id="sub">Gite, pullman e avvisi <b>sul telefono</b>.</p>
+      </div>
+      <div class="alone" id="alone"></div>
+      <div class="pad"></div>
+      <div class="freccia"><div class="freccia-mossa" id="freccia"><div class="corpo">TOCCA QUI</div><div class="punta"></div></div></div>
+      <p class="passo" id="passo">Poi premi <b>«Segui»</b> e <b>attiva le notifiche</b><svg id="campanella" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2z"/></svg></p>
+      <p class="oppure" id="oppure">Oppure: WhatsApp › Aggiornamenti › «Sci Club Don Bosco Asti»</p>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const DUR = 10;
+      // ripetizioni finite che non superano la fine del video
+      const volte = (da, ciclo) => Math.max(0, Math.floor((DUR - da) / ciclo) - 1);
+      // La foto avanza piano per tutta la story
+      tl.fromTo("#foto", { scale: 1.08 }, { scale: 1, duration: DUR, ease: "none" }, 0);
+      // I piani entrano dagli angoli, poi il logo
+      tl.fromTo("#angolo", { x: -260, y: -260 }, { x: 0, y: 0, duration: 0.7, ease: "power3.out" }, 0.1);
+      tl.fromTo("#cuneo", { x: 260, y: 260 }, { x: 0, y: 0, duration: 0.7, ease: "power3.out" }, 0.25);
+      tl.fromTo("#logo", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.55, ease: "power3.out" }, 0.4);
+      // I testi
+      tl.fromTo("#gancio", { scale: 1.4, opacity: 0, filter: "blur(10px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "power4.out" }, 0.7);
+      tl.fromTo("#tit", { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, 0.9);
+      tl.fromTo("#sub", { x: -60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, 1.25);
+      // La freccia scende sul riquadro, poi rimbalza verso il basso finché dura la story
+      tl.fromTo("#freccia", { y: -140, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.8)" }, 1.6);
+      const RIMBALZO = 0.8;
+      tl.to("#freccia", { y: 26, duration: RIMBALZO / 2, ease: "sine.inOut", yoyo: true, repeat: volte(2.2, RIMBALZO) * 2 + 1 }, 2.2);
+      // L'alone attorno al riquadro dello sticker pulsa
+      const PULSA = 1.2;
+      tl.fromTo("#alone", { scale: 1, opacity: 0.9 }, { scale: 1.08, opacity: 0, duration: PULSA, ease: "power2.out", repeat: volte(2, PULSA) }, 2);
+      tl.fromTo("#passo", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" }, 2.0);
+      tl.fromTo("#oppure", { opacity: 0 }, { opacity: 1, duration: 0.45, ease: "power1.out" }, 2.3);
+      // La campanella oscilla ogni tanto
+      [3, 5.5, 8].forEach((t) => {
+        tl.to("#campanella", { keyframes: [{ rotation: 16 }, { rotation: -14 }, { rotation: 10 }, { rotation: -6 }, { rotation: 0 }], duration: 0.7, ease: "sine.inOut" }, t);
+      });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

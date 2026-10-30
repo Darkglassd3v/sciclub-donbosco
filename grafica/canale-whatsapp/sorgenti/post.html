@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8">
+<title>Post del canale WhatsApp</title>
+<link rel="stylesheet" href="../../font/barlow/barlow.css">
+<!--
+  Il post da feed (1080×1350, Instagram e Facebook) che invita a seguire il canale WhatsApp,
+  nello stile K · Piani: foto in alto, angolo giallo col logo blu, cuneo giallo, Barlow 800.
+  Un telefono mostra tre avvisi di esempio, perché si capisca cosa arriva; a sinistra i passi
+  per trovare il canale, senza link (in un'immagine non si tocca: va nel testo del post).
+  Foto: pista a La Thuile di DimiTalen, Wikimedia Commons, CC0. Logo WhatsApp: Simple Icons.
+-->
+<style>
+  html, body { margin: 0; background: #14202E; }
+  .cv { position: relative; width: 1080px; height: 1350px; overflow: hidden; color: #fff;
+        background: #14202E; font-family: Barlow, sans-serif; letter-spacing: -.01em; }
+  .cv * { box-sizing: border-box; margin: 0; }
+  .foto { position: absolute; left: 0; right: 0; top: 0; height: 718px;
+          background: url(../../proposte-post-social/sorgenti/foto/calendario-montagna.jpg) center 40% / cover; }
+  .scuro { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,32,46,.2) 0, rgba(20,32,46,.62) 330px, rgba(20,32,46,.95) 640px, #14202E 718px); }
+  /* L'angolo giallo come nei post: la foto in grigi col giallo sopra, sotto il logo blu ufficiale. */
+  .angolo { position: absolute; inset: 0; opacity: .7; clip-path: polygon(0 0, 520px 0, 0 520px); }
+  .angolo .grigi { position: absolute; left: 0; right: 0; top: 0; height: 718px; filter: grayscale(1) brightness(1.4) contrast(1.2);
+                   background: url(../../proposte-post-social/sorgenti/foto/calendario-montagna.jpg) center 40% / cover; }
+  .angolo .tinta { position: absolute; inset: 0; background: #FCCF02; mix-blend-mode: multiply; }
+  /* Il cuneo giallo da bordo a bordo nell'angolo in basso a destra, dietro il telefono. */
+  .cuneo { position: absolute; inset: 0; background: #FCCF02; opacity: .9; clip-path: polygon(100% 760px, 100% 1350px, 490px 1350px); }
+  .logo { position: absolute; left: 50px; top: 46px; width: 196px; height: 196px; border-radius: 50%; box-shadow: 0 8px 26px rgba(0,0,0,.45); }
+  .testo { position: absolute; left: 60px; right: 60px; top: 270px; text-shadow: 0 2px 14px rgba(20,32,46,.6); }
+  .gancio { font-size: 54px; font-weight: 800; font-style: italic; color: #FCCF02; }
+  .tit { font-size: 104px; font-weight: 800; line-height: .92; letter-spacing: -.035em; margin-top: 8px; }
+  .tit .wa { display: inline-flex; align-items: center; gap: 18px; }
+  .tit .wa svg { width: 88px; height: 88px; fill: #25D366; filter: drop-shadow(0 4px 10px rgba(0,0,0,.35)); }
+
+  /* I passi, a sinistra del telefono */
+  .passi { position: absolute; left: 60px; top: 700px; width: 470px; display: flex; flex-direction: column; gap: 26px; }
+  .passi .seg { align-self: flex-start; background: #FCCF02; color: #084C8D; font-size: 62px; font-weight: 800; line-height: 1;
+                padding: 18px 30px 16px; clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%, 0 30px); }
+  .passi ol { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+  .passi li { display: flex; gap: 18px; align-items: flex-start; font-size: 38px; font-weight: 600; line-height: 1.15; }
+  .passi li i { flex: none; width: 54px; height: 54px; background: #084C8D; color: #FCCF02; font-style: normal; font-weight: 800;
+                font-size: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; margin-top: -4px; }
+  .passi li b { font-weight: 800; color: #FCCF02; white-space: nowrap; }
+  /* In fondo a sinistra il perché, sotto i passi */
+  .perche { position: absolute; left: 60px; top: 1190px; width: 460px; font-size: 40px; font-weight: 700; line-height: 1.15; color: #DCE4EC; }
+  .perche b { color: #fff; background: #084C8D; padding: 0 .18em; border-radius: 8px; }
+
+  /* Il telefono, appena inclinato, che esce dal bordo in basso */
+  .tel { position: absolute; left: 556px; top: 640px; width: 470px; height: 900px; border-radius: 64px; background: #0B1118;
+         padding: 18px; transform: rotate(4deg); box-shadow: 0 30px 70px rgba(0,0,0,.55), inset 0 0 0 3px #2B3947; }
+  .schermo { width: 100%; height: 100%; border-radius: 48px; overflow: hidden; background: #EFEAE2; color: #14202E; letter-spacing: 0; }
+  .testa { display: flex; align-items: center; gap: 16px; padding: 46px 22px 18px; background: #fff; border-bottom: 1px solid #DAD4CB; }
+  .testa img { width: 64px; height: 64px; border-radius: 50%; }
+  .testa b { display: block; font-size: 27px; font-weight: 800; }
+  .testa span { font-size: 21px; color: #5F6B76; font-weight: 600; }
+  .msgs { display: flex; flex-direction: column; gap: 16px; padding: 20px 18px; }
+  .msg { background: #fff; border-radius: 18px; padding: 16px 18px 12px; box-shadow: 0 1px 2px rgba(0,0,0,.12); font-size: 25px; font-weight: 600; line-height: 1.25; }
+  .msg em { display: inline-block; font-style: normal; font-weight: 800; font-size: 19px; letter-spacing: .04em; text-transform: uppercase;
+            padding: 3px 10px; border-radius: 6px; margin-bottom: 8px; }
+  .msg .ora { display: block; text-align: right; font-size: 18px; color: #7C8792; margin-top: 4px; font-weight: 500; }
+  .rosso { background: #B3261E; color: #fff; }
+  .giallo { background: #FCCF02; color: #084C8D; }
+  .blu { background: #084C8D; color: #fff; }
+</style></head>
+<body>
+<div class="cv">
+  <div class="foto"></div><div class="scuro"></div><div class="angolo"><div class="grigi"></div><div class="tinta"></div></div><div class="cuneo"></div>
+  <img class="logo" src="../../logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti">
+  <div class="testo">
+    <div class="gancio">Avvisi in tempo reale!</div>
+    <div class="tit">Il nostro canale <span class="wa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>WhatsApp</span></div>
+  </div>
+  <div class="passi">
+    <div class="seg">Seguici!</div>
+    <ol>
+      <li><i>1</i><span>Apri WhatsApp › <b>Aggiornamenti</b></span></li>
+      <li><i>2</i><span>Cerca <b>Sci Club Don Bosco Asti</b></span></li>
+      <li><i>3</i><span>Premi <b>Segui</b> e attiva la campanella</span></li>
+    </ol>
+  </div>
+  <p class="perche">Gite, eventi e avvisi: lo sai <b>per primo</b>.</p>
+  <div class="tel"><div class="schermo">
+    <div class="testa"><img src="../../logo/logo-ufficiale-blu-tondo.svg" alt=""><div><b>Sci Club Don Bosco Asti</b><span>Canale</span></div></div>
+    <div class="msgs">
+      <div class="msg"><em class="blu">Gite</em><br>Nuova gita in calendario: meta e orari nel canale.<span class="ora">07:15</span></div>
+      <div class="msg"><em class="giallo">Eventi</em><br>Ti aspettiamo alla presentazione della stagione!<span class="ora">18:40</span></div>
+      <div class="msg"><em class="rosso">Avvisi</em><br>Orari di partenza aggiornati per domenica.<span class="ora">12:02</span></div>
+    </div>
+  </div></div>
+</div>
+</body></html>

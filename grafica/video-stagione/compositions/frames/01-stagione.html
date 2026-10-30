@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="it">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 600; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 700; src: url("assets/fonts/barlow-700.woff2") format("woff2"); }
+        #root { position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: "Barlow Condensed", sans-serif; background: #06396a; }
+        #f01-stagione-cam { position: absolute; inset: 0; transform-origin: 50% 60%; }
+        #f01-stagione-cam video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        #f01-stagione-velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 28, 52, 0) 32%, rgba(4, 28, 52, 0.55) 62%, rgba(4, 28, 52, 0.78) 100%); }
+        .f01-stagione-titolo { position: absolute; left: 64px; right: 64px; bottom: 400px; font-weight: 800; text-transform: uppercase;
+          line-height: 0.9; letter-spacing: 0.005em; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.5); }
+        .f01-stagione-titolo b { display: block; font-weight: 800; }
+        .giallo { color: #FCCF02; }
+        #f01-stagione-a, #f01-stagione-b { transform-origin: 0% 100%; }
+
+      </style>
+      <div id="root" data-composition-id="f01-stagione" data-width="1080" data-height="1920">
+        <div id="f01-stagione-cam">
+          <video id="f01-stagione-v0" class="clip" src="assets/clip/verticali/cime.mp4" muted playsinline data-start="0" data-duration="4.8" data-media-start="1" data-track-index="0"></video>
+        </div>
+        <div id="f01-stagione-velo"></div>
+        <div class="f01-stagione-titolo"><b id="f01-stagione-a" style="font-size:200px">Stagione</b><b id="f01-stagione-b" class="giallo" style="font-size:250px">2026/27</b></div>
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+        const DUR = 4.8;
+        // ENTRA: i testi arrivano quando la tendina della scena nuova è quasi finita
+        const ENTRA = 0.3;
+        // Spinta lenta in avanti sulle cime
+        tl.fromTo("#f01-stagione-cam", { scale: 1 }, { scale: 1.08, duration: DUR, ease: "none" }, 0);
+        tl.fromTo("#f01-stagione-a", { scale: 1.5, filter: "blur(16px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.6, ease: "power4.out" }, ENTRA);
+        tl.fromTo("#f01-stagione-b", { y: 90, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.65, ease: "circ.out" }, ENTRA + 0.5);
+        window.__timelines["f01-stagione"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

@@ -63,3 +63,20 @@ Per metterlo altrove (il volantino con il QR lo usa già): `qr-canale-whatsapp.p
 
 In `sorgenti/`: `cartello.html` (la scura è `cartello.html#scuro`), `story.html`, i QR in SVG
 e `rendi.sh`, che rifà con Chrome PDF e anteprime del cartello e il JPEG della story (il carattere Barlow è in `../font/barlow/`).
+
+## Post per Instagram e Facebook
+
+`post-canale-whatsapp.jpg` (1080×1350, va bene nel feed di entrambi), nello stile K dei post:
+angolo giallo col logo, «Avvisi in tempo reale!», «Il nostro canale WhatsApp» col logo di
+WhatsApp, un telefono con tre avvisi di esempio (gite, eventi, avvisi) e a sinistra i tre passi per seguirlo, senza link (in
+un'immagine non si tocca: va nel testo del post). Sorgente `sorgenti/post.html`, lo rifà
+`sorgenti/rendi.sh`. Foto: la stessa della story (DimiTalen, Wikimedia Commons, CC0); logo
+WhatsApp da Simple Icons.
+
+## Story animata (video)
+
+`video-story/` è un progetto HyperFrames: la stessa story, animata appena (10 s, 1080×1920, muta).
+Piani, logo e testi entrano nel primo secondo e mezzo, poi la freccia «TOCCA QUI» rimbalza sul
+riquadro, l'alone giallo del riquadro pulsa e la campanella oscilla; l'ultimo fotogramma è uguale
+all'immagine. Il riquadro resta vuoto e fermo per lo sticker link. Il video esce in
+`video-story/renders/story-canale-whatsapp.mp4` (fuori da git): `npm run render` nella cartella.

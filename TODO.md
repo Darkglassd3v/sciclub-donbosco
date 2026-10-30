@@ -32,7 +32,9 @@
       home da scegliere, backup completo (UpdraftPlus o pannello dell'hosting), se possibile su
       una copia di prova. Aspetta dall'utente: chi gestisce l'hosting, e l'accesso a `/wp-admin`
       fatto da lui nel suo Chrome (le password non le scrive Claude; l'estensione di Chrome va
-      collegata con lo stesso account di Claude Code).
+      collegata con lo stesso account di Claude Code). Il sito rimanda ancora al profilo
+      Instagram `instagram.com/sciclubdonboscoasti`, che non esiste più: il link va cambiato in
+      `instagram.com/sciclubdonbosco_asti` (30/10).
 
 - [ ] **Normalizzazione dei soci (29/10): fatta, restano 14 schede da sistemare a mano.**
       Email in minuscolo, anagrafica e indirizzi in maiuscolo, città e luoghi di nascita col nome
