@@ -17,19 +17,22 @@
         .giallo { color: #FCCF02; }
 
       </style>
-      <div data-hf-id="hf-kuhv" id="root" data-composition-id="f02-pista" data-width="1080" data-height="1920">
-        <div data-hf-id="hf-02bv" id="f02-pista-cam">
-          <video data-hf-id="hf-5dwt" id="f02-pista-v0" class="clip" src="assets/clip/verticali/pista.mp4" muted playsinline data-start="0" data-duration="2.5" data-media-start="7" data-track-index="0"></video>
+      <div id="root" data-composition-id="f02-pista" data-width="1080" data-height="1920">
+        <div id="f02-pista-cam">
+          <video id="f02-pista-v0" class="clip" src="assets/clip/verticali/sciatore.mp4" muted playsinline data-start="0" data-duration="2.4" data-media-start="9" data-track-index="0"></video>
+          <video id="f02-pista-v1" class="clip" src="assets/clip/verticali/pista.mp4" muted playsinline data-start="2.4" data-duration="2.4" data-media-start="7" data-track-index="0"></video>
         </div>
-        <div data-hf-id="hf-sa8q" id="f02-pista-velo"></div>
-        <div data-hf-id="hf-qp16" class="f02-pista-titolo"><b data-hf-id="hf-ipu6" id="f02-pista-a" style="font-size:210px">Si torna</b><b data-hf-id="hf-wxi2" id="f02-pista-b" style="font-size:210px">in <span data-hf-id="hf-i5ew" class="giallo">pista</span></b></div>
+        <div id="f02-pista-velo"></div>
+        <div class="f02-pista-titolo"><b id="f02-pista-a" style="font-size:210px">Si torna</b><b id="f02-pista-b" style="font-size:210px">in <span class="giallo">pista</span></b></div>
       </div>
       <script>
         const tl = gsap.timeline({ paused: true });
-        const DUR = 2.5;
+        const DUR = 4.8;
+        // ENTRA: i testi arrivano quando la tendina della scena nuova è quasi finita
+        const ENTRA = 0.7;
         tl.fromTo("#f02-pista-cam", { scale: 1.02 }, { scale: 1.1, duration: DUR, ease: "none" }, 0);
-        tl.fromTo("#f02-pista-a", { x: -360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, 0.15);
-        tl.fromTo("#f02-pista-b", { x: 360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, 0.45);
+        tl.fromTo("#f02-pista-a", { x: -360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, ENTRA);
+        tl.fromTo("#f02-pista-b", { x: 360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out" }, ENTRA + 0.35);
         window.__timelines["f02-pista"] = tl;
       </script>
     </template>

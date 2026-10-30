@@ -12,32 +12,54 @@
       html, body { width: 1080px; height: 1920px; overflow: hidden; background: #06396a; }
       #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
       .scena { position: absolute; inset: 0; }
-      /* Logo fisso in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram */
-      /* Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira */
+      /* Cambio scena: la scena nuova entra dall'alto dietro un taglio a 45° (come la tessera dei post K),
+       * con un bordo sottile, una volta giallo con il filo blu e una volta blu con il filo giallo. */
+      .banda { position: absolute; left: 0; top: 0; width: 1080px; height: 1160px; pointer-events: none; }
+      .banda i { position: absolute; inset: 0; }
+      .banda .pieno { clip-path: polygon(0 1080px, 100% 0, 100% 52px, 0 1132px); }
+      .banda .filo { clip-path: polygon(0 1140px, 100% 60px, 100% 74px, 0 1154px); }
+      .banda.gialla .pieno, .banda.blu .filo { background: #FCCF02; }
+      .banda.blu .pieno, .banda.gialla .filo { background: #084C8D; }
+      /* Logo fisso in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram.
+       * Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira. */
       #logo-strato { position: absolute; inset: 0; pointer-events: none; }
-      #logo-fisso { position: absolute; left: 64px; top: 270px; width: 230px; height: auto;
-        filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.35)); }
+      #logo-fisso { position: absolute; left: 64px; top: 270px; width: 210px; height: 210px;
+        filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.4)); }
     </style>
   </head>
   <body>
-    <div data-hf-id="hf-qv3y" id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
-      <div data-hf-id="hf-cmuc" class="scena" id="f01-stagione" data-composition-id="f01-stagione" data-composition-src="compositions/frames/01-stagione.html"
-        data-start="0" data-duration="3" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div data-hf-id="hf-cfdx" class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
-        data-start="3" data-duration="2.5" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div data-hf-id="hf-o8sh" class="scena" id="f03-gite" data-composition-id="f03-gite" data-composition-src="compositions/frames/03-gite.html"
-        data-start="5.5" data-duration="3" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div data-hf-id="hf-q5ps" class="scena" id="f04-attivita" data-composition-id="f04-attivita" data-composition-src="compositions/frames/04-attivita.html"
-        data-start="8.5" data-duration="2.5" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div data-hf-id="hf-ax6u" class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
-        data-start="11" data-duration="4" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div id="logo-strato" class="clip" data-start="0" data-duration="11" data-track-index="1">
-        <img data-hf-id="hf-rhuv" id="logo-fisso" src="assets/logo/logo-contorni-bianchi.png" alt="Sci Club Don Bosco Asti" />
+    <div id="root" data-composition-id="main" data-start="0" data-duration="19" data-width="1080" data-height="1920">
+      <div class="scena" id="f01-stagione" data-composition-id="f01-stagione" data-composition-src="compositions/frames/01-stagione.html"
+        data-start="0" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
+        data-start="3.5" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f03-gite" data-composition-id="f03-gite" data-composition-src="compositions/frames/03-gite.html"
+        data-start="7.5" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f04-attivita" data-composition-id="f04-attivita" data-composition-src="compositions/frames/04-attivita.html"
+        data-start="11" data-duration="3.8" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
+        data-start="14" data-duration="5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="banda gialla" id="banda-1"><i class="pieno"></i><i class="filo"></i></div>
+      <div class="banda blu" id="banda-2"><i class="pieno"></i><i class="filo"></i></div>
+      <div class="banda gialla" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
+      <div class="banda blu" id="banda-4"><i class="pieno"></i><i class="filo"></i></div>
+      <div id="logo-strato" class="clip" data-start="0" data-duration="14.8" data-track-index="1">
+        <img id="logo-fisso" src="assets/logo/logo-ufficiale-bianco-tondo.png" alt="Sci Club Don Bosco Asti" />
       </div>
     </div>
     <script>
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#logo-fisso", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.05);
+      tl.fromTo("#logo-fisso", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+      // Ogni scena nuova si scopre dall'alto lungo una linea a 45°, che scende con la sua banda
+      const CAMBI = [["#f02-pista", 3.5], ["#f03-gite", 7.5], ["#f04-attivita", 11], ["#f05-seguici", 14]];
+      const TENDINA = 0.8;
+      const taglio = (a) => `polygon(0px 0px, 1080px 0px, 1080px ${a}px, 0px ${a + 1080}px)`;
+      CAMBI.forEach(([scena, t], i) => {
+        tl.fromTo(scena, { clipPath: taglio(-1160) }, { clipPath: taglio(1920), duration: TENDINA, ease: "power2.inOut" }, t);
+        tl.fromTo(`#banda-${i + 1}`, { y: -1160 }, { y: 1920, duration: TENDINA, ease: "power2.inOut" }, t);
+      });
+      // Il logo piccolo se ne va mentre entra il finale, che ha il suo
+      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 14.1);
       window.__timelines["main"] = tl;
     </script>
   </body>

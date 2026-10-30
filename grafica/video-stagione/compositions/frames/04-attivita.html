@@ -16,26 +16,28 @@
         .f04-attivita-titolo b { display: block; font-weight: 800; }
         .giallo { color: #FCCF02; }
         .f04-attivita-titolo { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; text-shadow: none; }
-        .f04-attivita-titolo i { display: block; font-style: normal; font-size: 140px; line-height: 1; padding: 14px 30px 8px;
-          background: #084C8D; box-shadow: 14px 14px 0 #FCCF02; }
-        .f04-rientro { margin-left: 96px; }
+        .f04-attivita-titolo i { display: block; font-style: normal; font-size: 96px; line-height: 1; padding: 14px 30px 8px; white-space: nowrap;
+          background: #084C8D; box-shadow: 12px 12px 0 #FCCF02; }
+        .f04-rientro { margin-left: 70px; }
 
       </style>
-      <div data-hf-id="hf-wske" id="root" data-composition-id="f04-attivita" data-width="1080" data-height="1920">
-        <div data-hf-id="hf-ethc" id="f04-attivita-cam">
-          <video data-hf-id="hf-tkly" id="f04-attivita-v0" class="clip" src="assets/clip/verticali/scarpone.mp4" muted playsinline data-start="0" data-duration="1.25" data-media-start="2" data-track-index="0"></video>
-          <video data-hf-id="hf-vue8" id="f04-attivita-v1" class="clip" src="assets/clip/verticali/attrezzatura.mp4" muted playsinline data-start="1.25" data-duration="1.25" data-media-start="3" data-track-index="0"></video>
+      <div id="root" data-composition-id="f04-attivita" data-width="1080" data-height="1920">
+        <div id="f04-attivita-cam">
+          <video id="f04-attivita-v0" class="clip" src="assets/clip/verticali/scarpone.mp4" muted playsinline data-start="0" data-duration="1.9" data-media-start="1.6" data-track-index="0"></video>
+          <video id="f04-attivita-v1" class="clip" src="assets/clip/verticali/attrezzatura.mp4" muted playsinline data-start="1.9" data-duration="1.9" data-media-start="3" data-track-index="0"></video>
         </div>
-        <div data-hf-id="hf-ixdn" id="f04-attivita-velo"></div>
-        <div data-hf-id="hf-i8nl" class="f04-attivita-titolo"><i data-hf-id="hf-8kqb">Gite</i><i data-hf-id="hf-ij8y" class="f04-rientro">Corsi</i><i data-hf-id="hf-dl6d">Presciistica</i></div>
+        <div id="f04-attivita-velo"></div>
+        <div class="f04-attivita-titolo"><i>Settimana bianca</i><i>Corsi sci e snowboard</i><i class="f04-rientro">Gara sociale</i></div>
       </div>
       <script>
         const tl = gsap.timeline({ paused: true });
-        const DUR = 2.5;
+        const DUR = 3.8;
+        // ENTRA: i testi arrivano quando la tendina della scena nuova è quasi finita
+        const ENTRA = 0.7;
         tl.fromTo("#f04-attivita-cam", { scale: 1.06 }, { scale: 1, duration: DUR, ease: "none" }, 0);
         // Le tre targhe a cascata
         gsap.utils.toArray(".f04-attivita-titolo i").forEach((el, i) => {
-          tl.fromTo(el, { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.15 + i * 0.22);
+          tl.fromTo(el, { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "power3.out" }, ENTRA + i * 0.28);
         });
         window.__timelines["f04-attivita"] = tl;
       </script>

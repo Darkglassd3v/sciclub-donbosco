@@ -18,19 +18,21 @@
         #f03-gite-a, #f03-gite-b { transform-origin: 0% 100%; }
 
       </style>
-      <div data-hf-id="hf-09ii" id="root" data-composition-id="f03-gite" data-width="1080" data-height="1920">
-        <div data-hf-id="hf-3scw" id="f03-gite-cam">
-          <video data-hf-id="hf-4oh1" id="f03-gite-v0" class="clip" src="assets/clip/verticali/funivia.mp4" muted playsinline data-start="0" data-duration="3" data-media-start="9" data-track-index="0"></video>
+      <div id="root" data-composition-id="f03-gite" data-width="1080" data-height="1920">
+        <div id="f03-gite-cam">
+          <video id="f03-gite-v0" class="clip" src="assets/clip/verticali/funivia.mp4" muted playsinline data-start="0" data-duration="4.3" data-media-start="8.5" data-track-index="0"></video>
         </div>
-        <div data-hf-id="hf-abm3" id="f03-gite-velo"></div>
-        <div data-hf-id="hf-el2x" class="f03-gite-titolo"><b data-hf-id="hf-e1y1" id="f03-gite-a" style="font-size:180px">Nuove gite</b><b data-hf-id="hf-x3h3" id="f03-gite-b" class="giallo" style="font-size:180px">in arrivo</b></div>
+        <div id="f03-gite-velo"></div>
+        <div class="f03-gite-titolo"><b id="f03-gite-a" style="font-size:180px">Nuove gite</b><b id="f03-gite-b" class="giallo" style="font-size:180px">in arrivo</b></div>
       </div>
       <script>
         const tl = gsap.timeline({ paused: true });
-        const DUR = 3;
+        const DUR = 4.3;
+        // ENTRA: i testi arrivano quando la tendina della scena nuova è quasi finita
+        const ENTRA = 0.7;
         tl.fromTo("#f03-gite-cam", { scale: 1 }, { scale: 1.07, duration: DUR, ease: "none" }, 0);
-        tl.fromTo("#f03-gite-a", { y: 90, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, 0.2);
-        tl.fromTo("#f03-gite-b", { scale: 1.45, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "power4.out" }, 0.6);
+        tl.fromTo("#f03-gite-a", { y: 90, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.6, ease: "circ.out" }, ENTRA);
+        tl.fromTo("#f03-gite-b", { scale: 1.45, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.55, ease: "power4.out" }, ENTRA + 0.45);
         window.__timelines["f03-gite"] = tl;
       </script>
     </template>

@@ -18,20 +18,22 @@
         #f01-stagione-a, #f01-stagione-b { transform-origin: 0% 100%; }
 
       </style>
-      <div data-hf-id="hf-n18x" id="root" data-composition-id="f01-stagione" data-width="1080" data-height="1920">
-        <div data-hf-id="hf-km1p" id="f01-stagione-cam">
-          <video data-hf-id="hf-1lei" id="f01-stagione-v0" class="clip" src="assets/clip/verticali/cime.mp4" muted playsinline data-start="0" data-duration="3" data-media-start="1" data-track-index="0"></video>
+      <div id="root" data-composition-id="f01-stagione" data-width="1080" data-height="1920">
+        <div id="f01-stagione-cam">
+          <video id="f01-stagione-v0" class="clip" src="assets/clip/verticali/cime.mp4" muted playsinline data-start="0" data-duration="4.3" data-media-start="1" data-track-index="0"></video>
         </div>
-        <div data-hf-id="hf-8jlw" id="f01-stagione-velo"></div>
-        <div data-hf-id="hf-8zyq" class="f01-stagione-titolo"><b data-hf-id="hf-nwfj" id="f01-stagione-a" style="font-size:200px">Stagione</b><b data-hf-id="hf-cjas" id="f01-stagione-b" class="giallo" style="font-size:250px">2026/27</b></div>
+        <div id="f01-stagione-velo"></div>
+        <div class="f01-stagione-titolo"><b id="f01-stagione-a" style="font-size:200px">Stagione</b><b id="f01-stagione-b" class="giallo" style="font-size:250px">2026/27</b></div>
       </div>
       <script>
         const tl = gsap.timeline({ paused: true });
-        const DUR = 3;
+        const DUR = 4.3;
+        // ENTRA: i testi arrivano quando la tendina della scena nuova è quasi finita
+        const ENTRA = 0.3;
         // Spinta lenta in avanti sulle cime
         tl.fromTo("#f01-stagione-cam", { scale: 1 }, { scale: 1.08, duration: DUR, ease: "none" }, 0);
-        tl.fromTo("#f01-stagione-a", { scale: 1.5, filter: "blur(16px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "power4.out" }, 0.25);
-        tl.fromTo("#f01-stagione-b", { y: 90, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.55, ease: "circ.out" }, 0.65);
+        tl.fromTo("#f01-stagione-a", { scale: 1.5, filter: "blur(16px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.6, ease: "power4.out" }, ENTRA);
+        tl.fromTo("#f01-stagione-b", { y: 90, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.65, ease: "circ.out" }, ENTRA + 0.5);
         window.__timelines["f01-stagione"] = tl;
       </script>
     </template>
