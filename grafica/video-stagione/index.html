@@ -20,7 +20,8 @@
       .banda .filo { clip-path: polygon(0 1140px, 100% 60px, 100% 74px, 0 1154px); }
       .banda.gialla .pieno, .banda.blu .filo { background: #FCCF02; }
       .banda.blu .pieno, .banda.gialla .filo { background: #084C8D; }
-      /* Logo fisso (blu, tondo) in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram.
+      /* Logo blu tondo: apre il video al centro, grande, poi resta in alto a sinistra fino al finale, sotto la
+       * fascia coperta da Instagram.
        * Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira. */
       #logo-strato { position: absolute; inset: 0; pointer-events: none; }
       #logo-fisso { position: absolute; left: 64px; top: 270px; width: 210px; height: 210px;
@@ -28,30 +29,41 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="24" data-width="1080" data-height="1920">
-      <div class="scena" id="f01-stagione" data-composition-id="f01-stagione" data-composition-src="compositions/frames/01-stagione.html"
-        data-start="0" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="16.5" data-width="1080" data-height="1920">
+      <div class="scena" id="f01-intro" data-composition-id="f01-intro" data-composition-src="compositions/frames/01-intro.html"
+        data-start="0" data-duration="3.3" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
-        data-start="4" data-duration="5.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="2.5" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f03-gite" data-composition-id="f03-gite" data-composition-src="compositions/frames/03-gite.html"
-        data-start="8.5" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
-      <div class="scena" id="f04-attivita" data-composition-id="f04-attivita" data-composition-src="compositions/frames/04-attivita.html"
-        data-start="12.5" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="6" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
-        data-start="16" data-duration="8" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="9.5" data-duration="7" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="banda gialla" id="banda-1"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda blu" id="banda-2"><i class="pieno"></i><i class="filo"></i></div>
-      <div class="banda gialla" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
-      <div class="banda blu" id="banda-4"><i class="pieno"></i><i class="filo"></i></div>
-      <div id="logo-strato" class="clip" data-start="0" data-duration="16.8" data-track-index="1">
+      <div class="banda blu" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
+      <div id="logo-strato" class="clip" data-start="0" data-duration="10.3" data-track-index="1">
         <img id="logo-fisso" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
       </div>
     </div>
     <script>
       const tl = gsap.timeline({ paused: true });
-      tl.fromTo("#logo-fisso", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.1);
+      // Apertura: il logo cade al centro grande (840 px, scala 4 sui 210 px dell'angolo), rimbalza
+      // schiacciandosi come una gomma, fa un giro su sé stesso e vola nella sua posizione nell'angolo.
+      // Dal centro dell'angolo (169, 375) al centro del fotogramma (540, 960): x 371, y 585.
+      const CENTRO = { x: 371, y: 585 };
+      tl.fromTo("#logo-fisso", { x: CENTRO.x, y: CENTRO.y - 420, scaleX: 0.6, scaleY: 0.6, opacity: 0 }, {
+        keyframes: [
+          { y: CENTRO.y, scaleX: 3.2, scaleY: 4.6, opacity: 1, duration: 0.32, ease: "power2.in" },
+          { scaleX: 4.8, scaleY: 3.2, duration: 0.12, ease: "power2.out" },
+          { y: CENTRO.y - 110, scaleX: 3.7, scaleY: 4.4, duration: 0.22, ease: "power2.out" },
+          { y: CENTRO.y, scaleX: 4.4, scaleY: 3.6, duration: 0.2, ease: "power2.in" },
+          { scaleX: 4, scaleY: 4, duration: 0.24, ease: "elastic.out(1, 0.5)" },
+        ],
+      }, 0.05);
+      tl.fromTo("#logo-fisso", { rotation: 0 }, { rotation: 360, duration: 0.7, ease: "power2.inOut", immediateRender: false }, 1.15);
+      tl.to("#logo-fisso", { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.6, ease: "power3.inOut" }, 1.9);
       // Ogni scena nuova si scopre dall'alto lungo una linea a 45°, che scende con la sua banda
-      const CAMBI = [["#f02-pista", 4], ["#f03-gite", 8.5], ["#f04-attivita", 12.5], ["#f05-seguici", 16]];
+      const CAMBI = [["#f02-pista", 2.5], ["#f03-gite", 6], ["#f05-seguici", 9.5]];
       const TENDINA = 0.8;
       const taglio = (a) => `polygon(0px 0px, 1080px 0px, 1080px ${a}px, 0px ${a + 1080}px)`;
       CAMBI.forEach(([scena, t], i) => {
@@ -59,7 +71,7 @@
         tl.fromTo(`#banda-${i + 1}`, { y: -1160 }, { y: 1920, duration: TENDINA, ease: "power2.inOut" }, t);
       });
       // Il logo piccolo se ne va mentre entra il finale, che ha il suo
-      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 16.1);
+      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 9.6);
       window.__timelines["main"] = tl;
     </script>
   </body>
