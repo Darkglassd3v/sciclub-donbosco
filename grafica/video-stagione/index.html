@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-weight: 600; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
+      @font-face { font-family: "Barlow"; font-weight: 700; src: url("assets/fonts/barlow-700.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #06396a; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .scena { position: absolute; inset: 0; }
+      /* Logo fisso in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram */
+      /* Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira */
+      #logo-strato { position: absolute; inset: 0; pointer-events: none; }
+      #logo-fisso { position: absolute; left: 64px; top: 270px; width: 230px; height: auto;
+        filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.35)); }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-qv3y" id="root" data-composition-id="main" data-start="0" data-duration="15" data-width="1080" data-height="1920">
+      <div data-hf-id="hf-cmuc" class="scena" id="f01-stagione" data-composition-id="f01-stagione" data-composition-src="compositions/frames/01-stagione.html"
+        data-start="0" data-duration="3" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div data-hf-id="hf-cfdx" class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
+        data-start="3" data-duration="2.5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div data-hf-id="hf-o8sh" class="scena" id="f03-gite" data-composition-id="f03-gite" data-composition-src="compositions/frames/03-gite.html"
+        data-start="5.5" data-duration="3" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div data-hf-id="hf-q5ps" class="scena" id="f04-attivita" data-composition-id="f04-attivita" data-composition-src="compositions/frames/04-attivita.html"
+        data-start="8.5" data-duration="2.5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div data-hf-id="hf-ax6u" class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
+        data-start="11" data-duration="4" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div id="logo-strato" class="clip" data-start="0" data-duration="11" data-track-index="1">
+        <img data-hf-id="hf-rhuv" id="logo-fisso" src="assets/logo/logo-contorni-bianchi.png" alt="Sci Club Don Bosco Asti" />
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#logo-fisso", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, 0.05);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

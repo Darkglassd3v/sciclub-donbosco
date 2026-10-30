@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "instagram-story",
+      "confirmed_in": [
+        "video-stagione"
+      ],
+      "updated_at": "2026-10-30T00:10:17.883Z"
+    },
+    "aspect": {
+      "value": "1080x1920",
+      "confirmed_in": [
+        "video-stagione"
+      ],
+      "updated_at": "2026-10-30T00:10:18.025Z"
+    },
+    "language": {
+      "value": "it",
+      "confirmed_in": [
+        "video-stagione"
+      ],
+      "updated_at": "2026-10-30T00:10:18.189Z"
+    },
+    "storyboard": {
+      "value": "yes",
+      "confirmed_in": [
+        "video-stagione"
+      ],
+      "updated_at": "2026-10-30T00:10:18.329Z"
+    }
+  },
+  "sightings": {}
+}
