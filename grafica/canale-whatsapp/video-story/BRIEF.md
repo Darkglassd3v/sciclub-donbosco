@@ -2,7 +2,7 @@
 workflow: general-video
 flow: automation
 storyboard: no
-message: "Segui il canale WhatsApp dello Sci Club Don Bosco"
+message: "Segui il canale WhatsApp dello Sci Club Don Bosco Asti"
 destination: instagram-story
 aspect: 1080x1920
 language: it
