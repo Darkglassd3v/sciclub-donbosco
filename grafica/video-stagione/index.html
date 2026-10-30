@@ -20,7 +20,7 @@
       .banda .filo { clip-path: polygon(0 1140px, 100% 60px, 100% 74px, 0 1154px); }
       .banda.gialla .pieno, .banda.blu .filo { background: #FCCF02; }
       .banda.blu .pieno, .banda.gialla .filo { background: #084C8D; }
-      /* Logo fisso in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram.
+      /* Logo fisso (blu, tondo) in alto a sinistra dalla scena 1 alla 4, sotto la fascia coperta da Instagram.
        * Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira. */
       #logo-strato { position: absolute; inset: 0; pointer-events: none; }
       #logo-fisso { position: absolute; left: 64px; top: 270px; width: 210px; height: 210px;
@@ -44,7 +44,7 @@
       <div class="banda gialla" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda blu" id="banda-4"><i class="pieno"></i><i class="filo"></i></div>
       <div id="logo-strato" class="clip" data-start="0" data-duration="14.8" data-track-index="1">
-        <img id="logo-fisso" src="assets/logo/logo-ufficiale-bianco-tondo.png" alt="Sci Club Don Bosco Asti" />
+        <img id="logo-fisso" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
       </div>
     </div>
     <script>

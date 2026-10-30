@@ -7,7 +7,7 @@ audience: soci, famiglie e sciatori di Asti e dintorni su Instagram
 mode: collaborative
 ---
 
-Video muto (la musica la aggiunge l'utente in Instagram). Logo bianco rotondo fisso in alto a
+Video muto (la musica la aggiunge l'utente in Instagram). Logo blu rotondo fisso in alto a
 sinistra dalla scena 1 alla 4 (`fixed-anchor-cycle`: il logo resta fermo mentre le immagini
 cambiano). Testi in Barlow Condensed 800 maiuscolo, bianchi con ombra, accento giallo #FCCF02.
 Fasce coperte da Instagram libere: in alto 0–250 px, in basso 1580–1920 px.

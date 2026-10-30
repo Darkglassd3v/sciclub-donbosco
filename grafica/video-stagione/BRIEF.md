@@ -18,7 +18,7 @@ alternati a primi piani di gente che scia, logo del club, frasi brevi.
 
 ## Assets
 
-- ../logo/logo-ufficiale-bianco-tondo.png — logo fisso in alto a sinistra (scene 1–4)
+- ../logo/logo-ufficiale-blu-tondo.svg — logo fisso in alto a sinistra (scene 1–4), blu (30/10)
 - ../logo/logo-ufficiale-tondo.svg — logo tondo del finale, toccato dalla mano
 - ../font/barlow, ../font/barlow-condensed — font del club
 
