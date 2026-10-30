@@ -20,3 +20,9 @@ chrome --window-size=1080,1920 --screenshot=../story-canale-whatsapp.png "file:/
 python3 -c "import sys; from PIL import Image; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2], quality=90, optimize=True)" ../story-canale-whatsapp.png ../story-canale-whatsapp.jpg
 rm ../story-canale-whatsapp.png
 echo ../story-canale-whatsapp.jpg
+
+# Il post da feed del canale, 1080×1350, per Instagram e Facebook.
+chrome --window-size=1080,1350 --screenshot=../post-canale-whatsapp.png "file://$PWD/post.html" >/dev/null
+python3 -c "import sys; from PIL import Image; Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2], quality=90, optimize=True)" ../post-canale-whatsapp.png ../post-canale-whatsapp.jpg
+rm ../post-canale-whatsapp.png
+echo ../post-canale-whatsapp.jpg
