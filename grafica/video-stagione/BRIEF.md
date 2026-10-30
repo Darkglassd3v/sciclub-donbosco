@@ -7,7 +7,7 @@ destination: instagram-story
 aspect: 1080x1920
 language: it
 audience: soci, famiglie e sciatori di Asti e dintorni su Instagram
-length: 19s
+length: 24s
 ---
 
 ## Intent
@@ -30,6 +30,7 @@ alternati a primi piani di gente che scia, logo del club, frasi brevi.
 - Nel finale una mano tocca il logo del club come il pulsante «Segui»; il logo si abbassa come premuto (30/10).
 - Cambi scena a 45° con bordo giallo o blu alternato, non invasivi; scene un po' più lente (30/10).
 - Uno sciatore sportivo in pista oltre alla tavola (30/10).
+- Ritmo più calmo per un pubblico non giovanissimo: scene più lunghe e finale coi contatti tenuto 8 s (30/10).
 
 ## Notes
 

@@ -28,7 +28,7 @@
       </style>
       <div id="root" data-composition-id="f05-seguici" data-width="1080" data-height="1920">
         <div id="f05-seguici-cam">
-          <video id="f05-seguici-v0" class="clip" src="assets/clip/verticali/bosco.mp4" muted playsinline data-start="0" data-duration="5" data-media-start="3.5" data-track-index="0"></video>
+          <video id="f05-seguici-v0" class="clip" src="assets/clip/verticali/bosco.mp4" muted playsinline data-start="0" data-duration="8" data-media-start="3.5" data-track-index="0"></video>
         </div>
         <div id="f05-seguici-velo"></div>
         <div id="f05-seguici-col">
@@ -56,7 +56,7 @@
       </div>
       <script>
         const tl = gsap.timeline({ paused: true });
-        const DUR = 5;
+        const DUR = 8;
         // ENTRA: logo, mano e testi arrivano quando la tendina della scena è quasi finita
         const ENTRA = 0.7;
         const TOCCO = ENTRA + 1.1;
@@ -68,7 +68,7 @@
         // Il logo si abbassa come un pulsante premuto e torna su con un piccolo rimbalzo
         tl.to("#f05-seguici-logo", { scale: 0.86, duration: 0.12, ease: "power1.in" }, TOCCO);
         tl.to("#f05-seguici-logo", { scale: 1, duration: 0.55, ease: "back.out(2.4)" }, TOCCO + 0.12);
-        tl.fromTo(["#f05-cerchio-1", "#f05-cerchio-2"], { scale: 1, opacity: 0.95 }, { scale: 1.7, opacity: 0, duration: 0.75, ease: "power2.out", stagger: 0.14 }, TOCCO + 0.12);
+        tl.fromTo(["#f05-cerchio-1", "#f05-cerchio-2"], { scale: 1, opacity: 0.95 }, { scale: 1.7, opacity: 0, duration: 0.75, ease: "power2.out", stagger: 0.14, immediateRender: false }, TOCCO + 0.12);
         tl.to("#f05-seguici-mano", { x: 560, y: 60, opacity: 0, duration: 0.4, ease: "power2.in" }, TOCCO + 0.45);
         tl.fromTo("#f05-seguici-titolo", { scale: 1.5, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.55, ease: "power4.out" }, TOCCO + 0.35);
         tl.fromTo("#f05-seguici-sotto", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "power2.out" }, TOCCO + 0.65);

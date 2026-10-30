@@ -28,22 +28,22 @@
     </style>
   </head>
   <body>
-    <div id="root" data-composition-id="main" data-start="0" data-duration="19" data-width="1080" data-height="1920">
+    <div id="root" data-composition-id="main" data-start="0" data-duration="24" data-width="1080" data-height="1920">
       <div class="scena" id="f01-stagione" data-composition-id="f01-stagione" data-composition-src="compositions/frames/01-stagione.html"
-        data-start="0" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="0" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
-        data-start="3.5" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="4" data-duration="5.3" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f03-gite" data-composition-id="f03-gite" data-composition-src="compositions/frames/03-gite.html"
-        data-start="7.5" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="8.5" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f04-attivita" data-composition-id="f04-attivita" data-composition-src="compositions/frames/04-attivita.html"
-        data-start="11" data-duration="3.8" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="12.5" data-duration="4.3" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
-        data-start="14" data-duration="5" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="16" data-duration="8" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="banda gialla" id="banda-1"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda blu" id="banda-2"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda gialla" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda blu" id="banda-4"><i class="pieno"></i><i class="filo"></i></div>
-      <div id="logo-strato" class="clip" data-start="0" data-duration="14.8" data-track-index="1">
+      <div id="logo-strato" class="clip" data-start="0" data-duration="16.8" data-track-index="1">
         <img id="logo-fisso" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
       </div>
     </div>
@@ -51,7 +51,7 @@
       const tl = gsap.timeline({ paused: true });
       tl.fromTo("#logo-fisso", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0.1);
       // Ogni scena nuova si scopre dall'alto lungo una linea a 45°, che scende con la sua banda
-      const CAMBI = [["#f02-pista", 3.5], ["#f03-gite", 7.5], ["#f04-attivita", 11], ["#f05-seguici", 14]];
+      const CAMBI = [["#f02-pista", 4], ["#f03-gite", 8.5], ["#f04-attivita", 12.5], ["#f05-seguici", 16]];
       const TENDINA = 0.8;
       const taglio = (a) => `polygon(0px 0px, 1080px 0px, 1080px ${a}px, 0px ${a + 1080}px)`;
       CAMBI.forEach(([scena, t], i) => {
@@ -59,7 +59,7 @@
         tl.fromTo(`#banda-${i + 1}`, { y: -1160 }, { y: 1920, duration: TENDINA, ease: "power2.inOut" }, t);
       });
       // Il logo piccolo se ne va mentre entra il finale, che ha il suo
-      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 14.1);
+      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 16.1);
       window.__timelines["main"] = tl;
     </script>
   </body>
