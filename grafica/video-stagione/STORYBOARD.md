@@ -1,6 +1,6 @@
 ---
 format: 1080x1920
-duration: 16.5s
+duration: 16s
 message: "Seguici per scoprire le nuove gite della stagione 2026/27"
 arc: Marchio → Stagione → Cosa facciamo → Seguici
 audience: chi scia ad Asti e dintorni e non conosce ancora il club (inserzione Meta nelle storie)
@@ -16,13 +16,16 @@ Il logo blu tondo apre il video al centro, grande, e poi resta in alto a sinistr
 
 Cambi scena: la scena nuova si scopre dall'alto lungo un taglio a 45° (come la tessera dei post
 K) in 0,8 s, con un bordo sottile: giallo col filo blu verso la scena 2, blu col filo giallo
-verso la 3 e verso il finale giallo. Le scene si sovrappongono per quegli 0,8 s.
+verso la 3 e verso il finale. Le scene si sovrappongono per quegli 0,8 s.
 
 Il 31/10 la versione lunga e calma (24 s) è stata sostituita da questa, corta, per
-l'inserzione nelle storie: marchio subito riconoscibile, informazioni in una frase sola.
+l'inserzione nelle storie: marchio subito riconoscibile, informazioni in una frase sola. I tempi
+qui sotto sono quelli della versione da 16 s (`index.html`); la versione da 19 s
+(`../video-stagione-19s/index.html`) ha le stesse scene: stagione 2,5–6,5 s, frase 6,5–11 s
+(`03-gite-19s.html`), finale 11–19 s.
 
 Clip in `assets/clip/verticali/` (fuori da git, le rifà `prepara-clip.sh`): Mixkit (Stock Video
-Free License) e una Pexels (licenza Pexels), ritagliate in verticale.
+Free License) e due Pexels (licenza Pexels), ritagliate in verticale.
 
 ## Frame 1: Apertura (0-2.5s)
 
@@ -31,40 +34,40 @@ Free License) e una Pexels (licenza Pexels), ritagliate in verticale.
 - duration: 2.5s
 - transition_in: cut
 - src: compositions/frames/01-intro.html
-- scene: Cime innevate in time-lapse; il logo blu cade al centro grande (840 px), rimbalza schiacciandosi, fa un giro su sé stesso e vola nell'angolo in alto a sinistra
+- scene: Cime innevate in time-lapse; il logo blu cade al centro grande (840 px) e rimbalza schiacciandosi; poi gira sempre più veloce (tre giri), si rimpicciolisce e vola nell'angolo in alto a sinistra, dove si ferma a 2,35 s
 - clip: Mixkit 4283 «Swiss Alps snow background time-lapse» (4K), dal secondo 1
-- motion: rules spring-pop-entrance (caduta e rimbalzo con schiacciamento e allungamento), rotazione di 360°, volo all'angolo
+- motion: rules spring-pop-entrance (caduta e rimbalzo con schiacciamento e allungamento), rotazione di 1080° che accelera e frena, volo all'angolo
 
-## Frame 2: Stagione (2.5-6s)
+## Frame 2: Stagione (2.5-5.5s)
 
 - act: Stagione
 - status: animated
-- duration: 3.5s
+- duration: 3s
 - transition_in: wipe 45° gialla
 - src: compositions/frames/02-pista.html
 - scene: Sciatore con la giacca gialla che curva verso la camera; «STAGIONE» e «2026/27» in giallo
 - clip: Pexels 30598012 (1080×1920), dal secondo 8
 - motion: rule kinetic-beat-slam (scale-slam, rise-rotate)
 
-## Frame 3: Cosa facciamo (6-9.5s)
+## Frame 3: Cosa facciamo (5.5-9s)
 
 - act: Cosa facciamo
 - status: animated
 - duration: 3.5s
 - transition_in: wipe 45° blu
 - src: compositions/frames/03-gite.html
-- scene: Snowboard e sciatore in pista; una frase sola: «NUOVE GITE, / SETTIMANA BIANCA / E CORSI» («E CORSI» in giallo)
-- clip: Mixkit 3338 «Skiing on a snowy slope» (4K), dal secondo 6,5
+- scene: Prima la tavola in pista, poi uno sciatore che frena e spruzza la neve verso la camera (gli ultimi 2,1 s della scena); una frase sola: «NUOVE GITE, / SETTIMANA BIANCA / E CORSI» («E CORSI» in giallo)
+- clip: Mixkit 3338 «Skiing on a snowy slope» (4K), dal secondo 6,5; Pexels 11297785 «skier skiing towards camera» (1080×1920), dal secondo 0 (dopo 2,1 s la neve copre l'obiettivo)
 - motion: rule kinetic-beat-slam (rise-rotate, side-snap, scale-slam)
 
-## Frame 4: Seguici (9.5-16.5s)
+## Frame 4: Seguici (9-16s)
 
 - act: Seguici
 - status: animated
 - duration: 7s
 - transition_in: wipe 45° blu
 - src: compositions/frames/05-seguici.html
-- scene: Fondo giallo del club (bosco innevato in grigi sotto il giallo all'88%); logo blu tondo; una mano tocca il logo come il pulsante «Segui», cerchi blu; «SEGUICI» e «per non perdere nessuna novità» in blu; Instagram, Facebook e Canale WhatsApp coi loghi ufficiali, testo blu scuro
+- scene: Bosco innevato sotto il velo blu #084C8D; logo blu tondo con anello bianco, filo giallo, ombra e alone chiaro dietro; una mano tocca il logo come il pulsante «Segui», cerchi gialli; «SEGUICI» in giallo e «per non perdere nessuna novità» in bianco; Instagram, Facebook e Canale WhatsApp coi loghi ufficiali
 - clip: Mixkit 3387 «Mountain for skiing seen from the air» (4K), dal secondo 3,5
 - motion: blueprint cta-morph-press; rules spring-pop-entrance (logo), press-release-spring + cursor-click-ripple (tocco), waterfall-entry (righe social)
 
