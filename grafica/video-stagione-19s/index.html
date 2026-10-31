@@ -21,6 +21,10 @@
       .banda .filo { clip-path: polygon(0 1140px, 100% 60px, 100% 74px, 0 1154px); }
       .banda.gialla .pieno, .banda.blu .filo { background: #FCCF02; }
       .banda.blu .pieno, .banda.gialla .filo { background: #084C8D; }
+      /* Stacco verso il finale: la nuvola di neve dello spruzzo copre l'obiettivo, un lampo bianco la
+       * completa e il finale si schiarisce da sotto, come la neve che scivola via dalla lente. */
+      #neve { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+        background: radial-gradient(circle at 32% 44%, #ffffff 0%, #f1f5fa 45%, #d9e3ee 100%); }
       /* Logo blu tondo: apre il video al centro, grande, poi resta in alto a sinistra fino al finale, sotto la
        * fascia coperta da Instagram.
        * Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira. */
@@ -36,12 +40,12 @@
       <div class="scena" id="f02-pista" data-composition-id="f02-pista" data-composition-src="compositions/frames/02-pista.html"
         data-start="2.5" data-duration="4.8" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f03-gite-19s" data-composition-id="f03-gite-19s" data-composition-src="compositions/frames/03-gite-19s.html"
-        data-start="6.5" data-duration="5.3" data-track-index="0" data-width="1080" data-height="1920"></div>
+        data-start="6.5" data-duration="5.0" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="scena" id="f05-seguici" data-composition-id="f05-seguici" data-composition-src="compositions/frames/05-seguici.html"
         data-start="11" data-duration="8" data-track-index="0" data-width="1080" data-height="1920"></div>
       <div class="banda gialla" id="banda-1"><i class="pieno"></i><i class="filo"></i></div>
       <div class="banda blu" id="banda-2"><i class="pieno"></i><i class="filo"></i></div>
-      <div class="banda blu" id="banda-3"><i class="pieno"></i><i class="filo"></i></div>
+      <div id="neve"></div>
       <div id="logo-strato" class="clip" data-start="0" data-duration="11.8" data-track-index="1">
         <img id="logo-fisso" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
       </div>
@@ -67,15 +71,21 @@
       tl.fromTo("#logo-fisso", { rotation: 0 }, { rotation: 1080, duration: 1.35, ease: "power3.inOut", immediateRender: false }, 1.0);
       tl.to("#logo-fisso", { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.95, ease: "power3.inOut" }, 1.4);
       // Ogni scena nuova si scopre dall'alto lungo una linea a 45°, che scende con la sua banda
-      const CAMBI = [["#f02-pista", 2.5], ["#f03-gite-19s", 6.5], ["#f05-seguici", 11]];
+      const CAMBI = [["#f02-pista", 2.5], ["#f03-gite-19s", 6.5]];
       const TENDINA = 0.8;
       const taglio = (a) => `polygon(0px 0px, 1080px 0px, 1080px ${a}px, 0px ${a + 1080}px)`;
       CAMBI.forEach(([scena, t], i) => {
         tl.fromTo(scena, { clipPath: taglio(-1160) }, { clipPath: taglio(1920), duration: TENDINA, ease: "power2.inOut" }, t);
         tl.fromTo(`#banda-${i + 1}`, { y: -1160 }, { y: 1920, duration: TENDINA, ease: "power2.inOut" }, t);
       });
-      // Il logo piccolo se ne va mentre entra il finale, che ha il suo
-      tl.to("#logo-fisso", { opacity: 0, duration: 0.4, ease: "power2.in" }, 11.1);
+      // Il finale entra dalla neve dello spruzzo, non con la tendina: lampo bianco, poi il finale si
+      // schiarisce dal bianco e torna a fuoco.
+      const FINALE = 11;
+      tl.fromTo("#neve", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out" }, FINALE - 0.08);
+      tl.to("#neve", { opacity: 0, duration: 0.55, ease: "power1.out" }, FINALE + 0.08);
+      tl.fromTo("#f05-seguici", { opacity: 0, filter: "blur(18px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }, FINALE);
+      // Il logo piccolo se ne va quando la neve copre l'obiettivo: il finale ha il suo
+      tl.to("#logo-fisso", { opacity: 0, duration: 0.2, ease: "power2.in" }, FINALE - 0.25);
       window.__timelines["main"] = tl;
     </script>
   </body>

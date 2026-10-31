@@ -16,13 +16,16 @@ Il logo blu tondo apre il video al centro, grande, e poi resta in alto a sinistr
 
 Cambi scena: la scena nuova si scopre dall'alto lungo un taglio a 45° (come la tessera dei post
 K) in 0,8 s, con un bordo sottile: giallo col filo blu verso la scena 2, blu col filo giallo
-verso la 3 e verso il finale. Le scene si sovrappongono per quegli 0,8 s.
+verso la 3. Le scene si sovrappongono per quegli 0,8 s. Verso il finale non c'è la tendina: la
+nuvola di neve dello spruzzo copre l'obiettivo, un lampo bianco la completa (0,12 s) e il finale si
+schiarisce dal bianco tornando a fuoco (0,6 s); la frase della scena 3 e il logo piccolo spariscono
+con la neve.
 
 Il 31/10 la versione lunga e calma (24 s) è stata sostituita da questa, corta, per
 l'inserzione nelle storie: marchio subito riconoscibile, informazioni in una frase sola. I tempi
 qui sotto sono quelli della versione da 16 s (`index.html`); la versione da 19 s
 (`../video-stagione-19s/index.html`) ha le stesse scene: stagione 2,5–6,5 s, frase 6,5–11 s
-(`03-gite-19s.html`), finale 11–19 s.
+(`03-gite-19s.html`: tavola 3 s, poi lo spruzzo), finale 11–19 s.
 
 Clip in `assets/clip/verticali/` (fuori da git, le rifà `prepara-clip.sh`): Mixkit (Stock Video
 Free License) e due Pexels (licenza Pexels), ritagliate in verticale.
@@ -56,8 +59,8 @@ Free License) e due Pexels (licenza Pexels), ritagliate in verticale.
 - duration: 3.5s
 - transition_in: wipe 45° blu
 - src: compositions/frames/03-gite.html
-- scene: Prima la tavola in pista, poi uno sciatore che frena e spruzza la neve verso la camera (gli ultimi 2,1 s della scena); una frase sola: «NUOVE GITE, / SETTIMANA BIANCA / E CORSI» («E CORSI» in giallo)
-- clip: Mixkit 3338 «Skiing on a snowy slope» (4K), dal secondo 6,5; Pexels 11297785 «skier skiing towards camera» (1080×1920), dal secondo 0 (dopo 2,1 s la neve copre l'obiettivo)
+- scene: Prima la tavola in pista (2 s), poi uno sciatore in primo piano stretto (zoom da 1,45 a 1,7) che frena e spruzza la neve verso la camera; la nuvola che copre l'obiettivo fa da stacco verso il finale; una frase sola: «NUOVE GITE, / SETTIMANA BIANCA / E CORSI» («E CORSI» in giallo)
+- clip: Mixkit 3338 «Skiing on a snowy slope» (4K), dal secondo 6,5; Pexels 11297785 «skier skiing towards camera» (1080×1920), dal secondo 0,62 (al secondo 2,12 la neve copre l'obiettivo, all'istante del finale)
 - motion: rule kinetic-beat-slam (rise-rotate, side-snap, scale-slam)
 
 ## Frame 4: Seguici (9-16s)
@@ -65,7 +68,7 @@ Free License) e due Pexels (licenza Pexels), ritagliate in verticale.
 - act: Seguici
 - status: animated
 - duration: 7s
-- transition_in: wipe 45° blu
+- transition_in: nuvola di neve dello spruzzo, lampo bianco e schiarita con messa a fuoco
 - src: compositions/frames/05-seguici.html
 - scene: Bosco innevato sotto il velo blu #084C8D; logo blu tondo con anello bianco, filo giallo, ombra e alone chiaro dietro; una mano tocca il logo come il pulsante «Segui», cerchi gialli; «SEGUICI» in giallo e «per non perdere nessuna novità» in bianco; Instagram, Facebook e Canale WhatsApp coi loghi ufficiali
 - clip: Mixkit 3387 «Mountain for skiing seen from the air» (4K), dal secondo 3,5

@@ -32,8 +32,8 @@ gli stessi file tramite collegamenti).
 - Spazio libero sul finale per lo sticker link/menzione aggiunto in Instagram.
 - Loghi ufficiali di Instagram, Facebook e WhatsApp, non disegnati (30/10).
 - Nel finale una mano tocca il logo del club come il pulsante «Segui»; il logo si abbassa come premuto (30/10).
-- Cambi scena a 45° con bordo giallo o blu alternato, non invasivi (30/10).
-- Uno sciatore sportivo in pista oltre alla tavola (30/10); nella scena della frase, dopo la tavola, uno sciatore che frena e spruzza la neve verso la camera, per cambi più frequenti (31/10).
+- Cambi scena a 45° con bordo giallo o blu alternato, non invasivi (30/10); verso il finale, invece, lo stacco è la nuvola di neve dello spruzzo che copre l'obiettivo, seguita da un lampo bianco da cui il finale si schiarisce (31/10).
+- Uno sciatore sportivo in pista oltre alla tavola (30/10); nella scena della frase, dopo la tavola, uno sciatore che frena e spruzza la neve verso la camera, per cambi più frequenti, ripreso in primo piano stretto (zoom da 1,45 a 1,7) (31/10).
 
 ## Notes
 
