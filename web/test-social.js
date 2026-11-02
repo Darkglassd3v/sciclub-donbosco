@@ -10,7 +10,7 @@ const { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, 
         contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, testoPost: postText, mancanti: missingItems, nomePost, SOCIAL,
         disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
         formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams, LIMITI_META: META_LIMITS,
-        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark } = require("./social-templates.js");
+        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark, disegnaCarosello: drawCarousel } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -438,6 +438,7 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
 
 // Le campagne sono pubblicità: il testo lo dichiara (#adv), quello delle gite no.
 assert.match(postText(campaign, santero, "2026/27"), /#adv\b/);
+assert.ok(!postText(campaign, santero, "2026/27").includes("Canale WhatsApp"), "l'invito al canale del club nel testo di una campagna");
 assert.ok(!postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, null, "2026/27").includes("#adv"));
 
 // Inserzione Meta: i parametri da incollare in Gestione inserzioni («Parametri URL»).
@@ -486,6 +487,41 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.strictEqual(caption.split("\n")[2], "🚌 Gita a La Thuile (era martedì 12 gennaio)", caption.split("\n")[2]);
   assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[2], "Corso sci (era sabato 16 gennaio)");
   assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[0], "⚠️ Rimandato. Nuova data da definire.");
+}
+
+// --- Carosello (2/11) ---------------------------------------------------------
+// Tre pagine 4:5: la copertina fissa col logo, il bollino (di solito «Novità», scritto a mano
+// nel post) e la linguetta «Scorri»; il post con la stessa linguetta; il finale fisso «Seguici».
+{
+  const ev = { kind: "corso", title: "Ginnastica Presciistica", event_date: "2026-10-21", event_time: "19:30", place: "Palestra Way Assauto, Asti" };
+  const pages = drawCarousel(postTemplate(ev, "post"));
+  assert.strictEqual(pages.length, 3, "il carosello ha tre pagine");
+  pages.forEach((p, i) => assert.ok(p.includes("width:1080px;height:1350px"), `pagina ${i + 1} non è 1080×1350`));
+  const [cover, post, outro] = pages;
+  assert.ok(cover.includes(`src="${SOCIAL.logoTondo}"`), "copertina senza logo");
+  assert.match(cover, /class="bollino"><span[^>]*>Novità<\/span>/, "bollino senza «Novità» di partenza");
+  assert.match(cover, /class="scorri">Scorri<svg/, "copertina senza la linguetta «Scorri»");
+  // La pagina del post è il post di sempre con la linguetta: niente altro cambia.
+  const tab = post.match(/<div class="scorri">.*?<\/svg><\/div>/s);
+  assert.ok(tab, "post del carosello senza la linguetta «Scorri»");
+  assert.strictEqual(post.replace(tab[0], ""), drawPost(postTemplate(ev, "post")), "il post del carosello è diverso dal post");
+  assert.ok(!drawPost(postTemplate(ev, "post")).includes("scorri"), "la linguetta è finita anche nel post normale");
+  for (const t of ["Seguici", "per non perdere i prossimi eventi", "@sciclubdonbosco_asti", "Sci Club Don Bosco Asti", "Canale WhatsApp", "link in bio"])
+    assert.ok(outro.includes(t), `nel finale manca «${t}»`);
+  assert.ok(outro.includes(`src="${SOCIAL.fotoFinale}"`) && !outro.includes("scorri"), "finale senza foto o con la linguetta");
+  // Il bollino scritto a mano, come testo; vuoto o di soli spazi torna «Novità».
+  assert.match(drawCarousel(postTemplate({ ...ev, carousel_badge: "  Nuova <gita>  " }, "post"))[0], /class="bollino"><span[^>]*>Nuova &lt;gita&gt;<\/span>/);
+  assert.match(drawCarousel(postTemplate({ ...ev, carousel_badge: "   " }, "post"))[0], /class="bollino"><span[^>]*>Novità<\/span>/);
+  // Il testo del post (Instagram e Facebook, anche per il carosello) invita a seguire il canale WhatsApp:
+  // su Instagram il link sta nella bio, su Facebook c'è il link breve che conta i clic.
+  const lines = postText(ev).split("\n");
+  assert.deepStrictEqual(lines.slice(-4), ["🔗 Canale WhatsApp «Sci Club Don Bosco Asti»: link in bio (su Facebook https://is.gd/sciclubdb_fb)",
+    "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonbosco #sci"], lines.slice(-4).join(" | "));
+  assert.ok(postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).includes("🔔 Attiva la campanella"), "gita senza l'invito al canale");
+  // Copertina e finale non dipendono dal post.
+  const trip = drawCarousel(postTemplate({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, "post"));
+  assert.strictEqual(trip[0], cover, "la copertina cambia col post");
+  assert.strictEqual(trip[2], outro, "il finale cambia col post");
 }
 
 console.log("social: tutti i controlli passati");

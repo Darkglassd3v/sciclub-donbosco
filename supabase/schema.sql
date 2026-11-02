@@ -3579,6 +3579,12 @@ alter table public.social_events add column if not exists postponed_to date;
 comment on column public.social_events.postponed_reason is 'Rimandato: neve, maltempo o il motivo scritto a mano (vuoto = senza motivo). Null = si fa.';
 comment on column public.social_events.postponed_to is 'Rimandato: la nuova data. Null = da definire.';
 
+-- Carosello (2/11): la scritta del bollino giallo sulla copertina; vuota = «Novità».
+alter table public.social_events add column if not exists carousel_badge text;
+alter table public.social_events drop constraint if exists social_events_carousel_badge_valid;
+alter table public.social_events add constraint social_events_carousel_badge_valid check (char_length(carousel_badge) <= 30);
+comment on column public.social_events.carousel_badge is 'Scritta del bollino sulla copertina del carosello (es. "Nuova gita"); vuoto = "Novità".';
+
 -- Spese e rimborsi delle inserzioni di una campagna: movimenti di Bilancio
 -- collegati al post. Eliminata la campagna, il movimento resta nei conti senza
 -- collegamento. Chi li vede e li scrive non cambia: il permesso bilancio.
