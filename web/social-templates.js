@@ -27,6 +27,15 @@ const SOCIAL = {
   iscrizioni: "Iscrizioni in negozio o via mail",
   iscrizioniTel: "Iscrizioni in negozio, via mail o al telefono",
   mail: "sciclubdonboscoasti@gmail.com",
+  // Carosello: il bollino della copertina se il post non ne scrive uno, la foto del finale (un
+  // fotogramma della clip Mixkit 3387 del video della stagione) e i profili da seguire.
+  bollino: "Novità",
+  fotoFinale: "carosello-bosco.jpg",
+  instagram: "@sciclubdonbosco_asti",
+  facebook: "Sci Club Don Bosco Asti",
+  // Il canale WhatsApp nel testo dei post: su Instagram il link è nella bio, su Facebook il link breve (conta i clic).
+  canale: "Sci Club Don Bosco Asti",
+  canaleFacebook: "https://is.gd/sciclubdb_fb",
 };
 
 /* Una categoria = un colore. Le gite prendono il colore dal giorno della
@@ -163,6 +172,7 @@ function postTemplate(ev, fmt) {
     fmt: fmt, photo: ev.photo || null, pos: photoPos(ev), zoom: zoomPhoto(ev), cat: categoryOf(ev), iso: ev.event_date || null,
     hook: String(ev.hook || "").trim(),
     prices: ev.show_price === false ? [] : priceMap, contatti: contactsOf(ev), postponed: postponedOf(ev),
+    badge: String(ev.carousel_badge || "").trim() || SOCIAL.bollino,
   };
   if (ev.kind === "gita") {
     return {
@@ -519,7 +529,36 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .sk .tessera.mese ~ .col .tit { min-height: 0; max-width: none; margin-top: 0; }
     .sk .tessera.mese ~ .col .righe { gap: ${q(6)}; }
     .sk .tessera.mese ~ .col .righe .meta { white-space: nowrap; }
-    .sk .righe .corso { font-size: ${q(36)}; font-weight: 700; line-height: 1; color: #FCCF02; border: 3px solid #FCCF02; border-radius: 999px; padding: 6px 16px; }`;
+    .sk .righe .corso { font-size: ${q(36)}; font-weight: 700; line-height: 1; color: #FCCF02; border: 3px solid #FCCF02; border-radius: 999px; padding: 6px 16px; }
+
+    /* Carosello: la linguetta «Scorri», uguale in copertina e nel post, con l'angolo tagliato come la tessera. */
+    .cv .scorri { position: absolute; right: 0; bottom: 40px; width: 250px; padding: 16px 24px 18px 36px; background: #B3261E; color: #fff; text-shadow: none;
+      clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px); font-size: 54px; font-weight: 800; line-height: 1; letter-spacing: -.01em; }
+    .cv .scorri svg { display: block; width: 190px; height: 56px; margin-top: 8px; }
+    /* Nel post del carosello le iscrizioni (con i telefoni arrivano al bordo destro) si fermano prima della linguetta. */
+    .cv.sk:has(> .scorri) .isc { padding-right: 210px; }
+    /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino giallo inclinato. */
+    .cv.carosello { background: #084C8D; color: #fff; }
+    .carosello .car-logo { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; max-width: none; }
+    .carosello .bollino { position: absolute; right: 70px; top: 250px; transform: rotate(-8deg); filter: drop-shadow(0 10px 22px rgba(0,0,0,.35)); }
+    .carosello .bollino span { display: block; max-width: 760px; padding: 18px 40px 16px 52px; background: #FCCF02; color: #084C8D;
+      clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%, 0 30px); font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 800; line-height: 1;
+      text-transform: uppercase; letter-spacing: .01em; }
+    /* Il finale: le misure dell'outro del video, sul formato del post. */
+    .carosello .car-foto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+    .carosello .car-velo { position: absolute; inset: 0; background: rgba(8,76,141,.88); }
+    .carosello .car-luce { position: absolute; left: 140px; top: -105px; width: 800px; height: 800px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.38) 0%, rgba(255,255,255,.12) 38%, rgba(255,255,255,0) 68%); }
+    .carosello .car-colonna { position: absolute; left: 64px; right: 64px; top: 135px; display: flex; flex-direction: column; align-items: center; }
+    .carosello .car-anello { width: 340px; height: 340px; display: block; border-radius: 50%; box-shadow: 0 0 0 12px #fff, 0 0 0 18px #FCCF02, 0 16px 40px rgba(0,0,0,.4); }
+    .carosello .car-seguici { margin-top: 40px; font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 230px; font-weight: 800; line-height: .85; color: #FCCF02; text-transform: uppercase; }
+    .carosello .car-sotto { margin-top: 18px; font-size: 60px; font-weight: 700; line-height: 1.15; text-align: center; }
+    .carosello .car-social { margin-top: 64px; display: flex; flex-direction: column; gap: 30px; align-self: stretch; padding-left: 70px; }
+    .carosello .car-riga { display: flex; align-items: center; gap: 30px; font-size: 56px; font-weight: 700; line-height: 1; }
+    /* Su Instagram il canale si apre dal link nella bio: lo dice una riga gialla sotto il nome. */
+    .carosello .car-riga small { display: block; margin-top: 10px; font-size: 42px; font-weight: 700; color: #FCCF02; }
+    .carosello .car-icona { width: 104px; height: 104px; flex: none; border-radius: 28px; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .carosello .car-icona svg { width: 68px; height: 68px; display: block; }`;
   document.head.append(stile);
 })();
 
@@ -625,7 +664,7 @@ function cardK(s) {
  * prezzi e scadenze nei riquadrini gialli. Corsi e gite di domenica in giallo e
  * nero, il resto in blu e nero (coloreNuovo).
  */
-function postK(s) {
+function postK(s, extra = "") {
   const C = newColor(s.cat), trip = s.kind === "gita", story = s.fmt === "story";
   const quota = s.prices.map(([n, v]) => `${escS(n || "Quota")} <b>${escS(v)}</b>`).join(" · ");
   const p = departures(s);
@@ -674,7 +713,7 @@ function postK(s) {
     : escS(s.hook) || (trip && !/^gita\b/i.test(dest) ? "Gita a" : "&nbsp;");
   const text = `<div class="testo" data-adatta=".6"><div class="gancio">${hookText}</div>${tit}
     <div class="fatti">${rows.filter(Boolean).map((r) => r.html || `<p>${r}</p>`).join("")}</div></div>`;
-  return bgK({ giallo: C.c === YELLOW, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, cardK(s), text, enrolments(s.contatti), trip && s.corso);
+  return bgK({ giallo: C.c === YELLOW, story, foto: s.photo, pos: s.pos, zoom: s.zoom }, cardK(s) + extra, text, enrolments(s.contatti), trip && s.corso);
 }
 
 /** Calendario del mese in K: la tessera con il mese e quante gite, il titolo, una riga per gita (senza foto). */
@@ -687,6 +726,38 @@ function monthK(titleText, rows, month, story = false) {
     <div class="tit"><div data-righe="2" style="--t:${story ? 120 : 104}px">${escS(titleText)}</div></div>
     <div class="righe">${monthRows(rows, true, '<span class="corso">corso</span>')}</div></div>`;
   return bgK({ giallo: false, story, foto: null, fine: story ? 690 : 420 }, card, text, enrolments(), false);
+}
+
+// --- Carosello --------------------------------------------------------------------
+//
+// Tre pagine 4:5 (2/11/2026, dal carosello della presciistica in grafica/presciistica-carosello/):
+// la copertina col logo grande sul blu, il bollino giallo (s.badge, di solito «Novità») e la
+// linguetta rossa «Scorri»; il post K con la stessa linguetta; il finale fisso, come l'outro del
+// video della stagione (grafica/video-stagione/compositions/frames/05-seguici.html).
+
+/* Loghi ufficiali dei social (Simple Icons 16.34.0) nei colori dei marchi. */
+const SOCIAL_ICONS = {
+  instagram: '<svg viewBox="0 0 24 24" role="img" aria-label="Instagram"><defs><radialGradient id="car-ig" cx="0.3" cy="1.07" r="1.3"><stop offset="0" stop-color="#FFDD55" /><stop offset="0.1" stop-color="#FFDD55" /><stop offset="0.5" stop-color="#FF543E" /><stop offset="1" stop-color="#C837AB" /></radialGradient></defs><path fill="url(#car-ig)" d="M7.0301.084c-1.2768.0602-2.1487.264-2.911.5634-.7888.3075-1.4575.72-2.1228 1.3877-.6652.6677-1.075 1.3368-1.3802 2.127-.2954.7638-.4956 1.6365-.552 2.914-.0564 1.2775-.0689 1.6882-.0626 4.947.0062 3.2586.0206 3.6671.0825 4.9473.061 1.2765.264 2.1482.5635 2.9107.308.7889.72 1.4573 1.388 2.1228.6679.6655 1.3365 1.0743 2.1285 1.38.7632.295 1.6361.4961 2.9134.552 1.2773.056 1.6884.069 4.9462.0627 3.2578-.0062 3.668-.0207 4.9478-.0814 1.28-.0607 2.147-.2652 2.9098-.5633.7889-.3086 1.4578-.72 2.1228-1.3881.665-.6682 1.0745-1.3378 1.3795-2.1284.2957-.7632.4966-1.636.552-2.9124.056-1.2809.0692-1.6898.063-4.948-.0063-3.2583-.021-3.6668-.0817-4.9465-.0607-1.2797-.264-2.1487-.5633-2.9117-.3084-.7889-.72-1.4568-1.3876-2.1228C21.2982 1.33 20.628.9208 19.8378.6165 19.074.321 18.2017.1197 16.9244.0645 15.6471.0093 15.236-.005 11.977.0014 8.718.0076 8.31.0215 7.0301.0839m.1402 21.6932c-1.17-.0509-1.8053-.2453-2.2287-.408-.5606-.216-.96-.4771-1.3819-.895-.422-.4178-.6811-.8186-.9-1.378-.1644-.4234-.3624-1.058-.4171-2.228-.0595-1.2645-.072-1.6442-.079-4.848-.007-3.2037.0053-3.583.0607-4.848.05-1.169.2456-1.805.408-2.2282.216-.5613.4762-.96.895-1.3816.4188-.4217.8184-.6814 1.3783-.9003.423-.1651 1.0575-.3614 2.227-.4171 1.2655-.06 1.6447-.072 4.848-.079 3.2033-.007 3.5835.005 4.8495.0608 1.169.0508 1.8053.2445 2.228.408.5608.216.96.4754 1.3816.895.4217.4194.6816.8176.9005 1.3787.1653.4217.3617 1.056.4169 2.2263.0602 1.2655.0739 1.645.0796 4.848.0058 3.203-.0055 3.5834-.061 4.848-.051 1.17-.245 1.8055-.408 2.2294-.216.5604-.4763.96-.8954 1.3814-.419.4215-.8181.6811-1.3783.9-.4224.1649-1.0577.3617-2.2262.4174-1.2656.0595-1.6448.072-4.8493.079-3.2045.007-3.5825-.006-4.848-.0608M16.953 5.5864A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.4424M5.8385 12.012c.0067 3.4032 2.7706 6.1557 6.173 6.1493 3.4026-.0065 6.157-2.7701 6.1506-6.1733-.0065-3.4032-2.771-6.1565-6.174-6.1498-3.403.0067-6.156 2.771-6.1496 6.1738M8 12.0077a4 4 0 1 1 4.008 3.9921A3.9996 3.9996 0 0 1 8 12.0077" /></svg>',
+  facebook: '<svg viewBox="0 0 24 24" role="img" aria-label="Facebook"><path fill="#0866FF" d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z" /></svg>',
+  whatsapp: '<svg viewBox="0 0 24 24" role="img" aria-label="WhatsApp"><path fill="#25D366" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>',
+};
+
+/* La linguetta «Scorri» con tre frecce, appesa al bordo destro, rossa come le gite del martedì. */
+const SWIPE = `<div class="scorri">Scorri<svg viewBox="0 0 150 44" aria-hidden="true"><path d="M8 6l16 16L8 38M58 6l16 16-16 16M108 6l16 16-16 16"
+  fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+
+/** Le tre pagine del carosello (modello da postTemplate(ev, "post")): copertina, post, finale. */
+function drawCarousel(s) {
+  const page = (inner) => `<div class="cv carosello" style="width:1080px;height:1350px">${inner}</div>`;
+  const cover = page(`<img class="car-logo" src="${SOCIAL.logoTondo}" alt="">
+    <div class="bollino"><span data-fit style="font-size:104px">${escS(s.badge)}</span></div>${SWIPE}`);
+  const row = (icon, text, under = "") => `<div class="car-riga"><span class="car-icona">${icon}</span><span>${escS(text)}${under}</span></div>`;
+  const outro = page(`<img class="car-foto" src="${SOCIAL.fotoFinale}" alt=""><div class="car-velo"></div><div class="car-luce"></div>
+    <div class="car-colonna"><img class="car-anello" src="${SOCIAL.logoTondo}" alt="">
+      <div class="car-seguici">Seguici</div><div class="car-sotto">per non perdere i prossimi eventi</div>
+      <div class="car-social">${row(SOCIAL_ICONS.instagram, SOCIAL.instagram)}${row(SOCIAL_ICONS.facebook, SOCIAL.facebook)}${
+        row(SOCIAL_ICONS.whatsapp, "Canale WhatsApp", "<small>🔗 link in bio</small>")}</div></div>`);
+  return [cover, postK(s, SWIPE), outro];
 }
 
 /** Post o story di una gita o di un evento (modello da postTemplate()): sempre la K. */
@@ -975,6 +1046,8 @@ function postText(ev, sp, seasonValue) {
     for (const [k, v] of eventFacts(ev)) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   }
   if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
+  rows.push("", `🔗 Canale WhatsApp «${SOCIAL.canale}»: link in bio (su Facebook ${SOCIAL.canaleFacebook})`,
+    "🔔 Attiva la campanella per non perdere i prossimi eventi!");
   rows.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${simple(ev.title)}` : ""}`);
   return rows.join("\n");
 }
@@ -985,5 +1058,6 @@ if (typeof module !== "undefined") {
                      contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, urlSponsor, testoPost: postText, semplice: simple, mancanti: missingItems, nomePost, SOCIAL,
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
                      formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
-                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark };
+                     LIMITI_META: META_LIMITS, INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark,
+                     disegnaCarosello: drawCarousel };
 }

@@ -168,6 +168,13 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Conferme con dati di una persona: `dataTable()` in `shared.js` (anche come `dettagli` di
   `ask()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 
+- Social, carosello (2/11/2026): accanto a Post e Story ogni gita o evento ha tre pagine 1080×1350
+  (`drawCarousel()` in `social-templates.js`): la copertina fissa col logo, il bollino giallo
+  (`social_events.carousel_badge`, vuoto = «Novità») e la linguetta rossa «Scorri»; il post con la
+  stessa linguetta; il finale fisso «Seguici», come l'outro del video della stagione, con «link in bio»
+  sotto il canale WhatsApp. Il testo del post invita a seguire il canale (bio su Instagram, link breve
+  su Facebook). Le campagne sponsor non hanno il carosello.
+
 ### Testi
 
 Registro professionale in tutto il sito (`web/` e `ricerca/`), deciso il 22/10/2026 («etichette

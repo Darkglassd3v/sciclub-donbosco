@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="it">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 600; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 700; src: url("assets/fonts/barlow-700.woff2") format("woff2"); }
+        #root { position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: "Barlow Condensed", sans-serif; background: #06396a; }
+        #f01-intro-cam { position: absolute; inset: 0; transform-origin: 50% 60%; }
+        #f01-intro-cam video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        #f01-intro-velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 28, 52, 0.1) 0%, rgba(4, 28, 52, 0.25) 100%); }
+        .f01-intro-titolo { position: absolute; left: 64px; right: 64px; bottom: 400px; font-weight: 800; text-transform: uppercase;
+          line-height: 0.9; letter-spacing: 0.005em; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.5); }
+        .f01-intro-titolo b { display: block; font-weight: 800; }
+        .giallo { color: #FCCF02; }
+      </style>
+      <div id="root" data-composition-id="f01-intro" data-width="1080" data-height="1920">
+        <div id="f01-intro-cam">
+          <video id="f01-intro-v0" class="clip" src="assets/clip/verticali/cime.mp4" muted playsinline data-start="0" data-duration="3.3" data-media-start="1" data-track-index="0"></video>
+        </div>
+        <div id="f01-intro-velo"></div>
+        
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+        const DUR = 3.3;
+        // Spinta lenta in avanti sulle cime, dietro al logo che rimbalza
+        tl.fromTo("#f01-intro-cam", { scale: 1 }, { scale: 1.08, duration: DUR, ease: "none" }, 0);
+        window.__timelines["f01-intro"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

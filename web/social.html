@@ -9,7 +9,7 @@
   <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,600;0,700;0,800;1,800&display=swap">
+  <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,600;0,700;0,800;1,800&family=Barlow+Condensed:wght@800&display=swap">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     /* Si usa da PC. Post: elenco a sinistra, il post aperto a destra, e nel
@@ -377,6 +377,10 @@
                 <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
                   <label class="label" for="fGancio">Frase di apertura (riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
+                </div>
+                <div data-campo="bollino" class="field" data-per="gita evento">
+                  <label class="label" for="fBollino">Bollino della copertina del carosello</label>
+                  <input class="input" id="fBollino" maxlength="30" placeholder="Novità">
                 </div>
                 <div data-campo="cta" class="field" data-per="sponsor">
                   <label class="label" for="fCta">Testo del pulsante (anche sullo sticker link delle story)</label>
@@ -781,7 +785,7 @@
   // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
     + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,"
-    + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to";
+    + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to,carousel_badge";
 
   async function loadPosts() {
     const { data, error } = await sb.from("social_events").select(LIST_COLUMNS)
@@ -1225,6 +1229,7 @@
     el("fTitolo").value = post.title || "";
     el("fSottotitolo").value = post.subtitle || "";
     el("fGancio").value = post.hook || "";
+    el("fBollino").value = post.carousel_badge || "";
     el("fCta").value = post.cta || "";
     for (const [id, column] of Object.entries(AD_FIELDS)) el(id).value = post[column] || "";
     // Senza sponsor si svuota: restava quello del post aperto prima.
@@ -1268,11 +1273,12 @@
   /* L'ordine dei campi è quello in cui si leggono nel post (vedi postK() in
    * social-templates.js): in alto la coccarda del corso a sinistra e la
    * tessera con data e ora a destra, poi gancio, titolo e i dati nei
-   * riquadrini. Il tipo di evento sta sempre in testa. I campi si spostano
-   * davvero (non con CSS order), così anche il tasto Tab li segue. */
+   * riquadrini. Il tipo di evento sta sempre in testa; in fondo il bollino, che sta solo nella
+   * copertina del carosello. I campi si spostano davvero (non con CSS order), così anche il
+   * tasto Tab li segue. */
   const FIELD_ORDER = {
-    gita: ["corso", "giorno", "rinvio", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza"],
-    evento: ["tipo", "data", "ora", "rinvio", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza"],
+    gita: ["corso", "giorno", "rinvio", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza", "bollino"],
+    evento: ["tipo", "data", "ora", "rinvio", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza", "bollino"],
   };
   const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "cta", "data"];
 
@@ -1335,6 +1341,8 @@
       title: el("fTitolo").value.trim(),
       subtitle: el("fSottotitolo").value.trim() || null,
       hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
+      // Vuoto = «Novità» (SOCIAL.bollino).
+      carousel_badge: g !== "sponsor" ? el("fBollino").value.trim() || null : null,
       prices: g === "sponsor" ? [] : priceMap,
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? rowsOf("fFermate") : [],
@@ -1691,6 +1699,9 @@
     return [
       { html: drawPost(postTemplate(post, "post")), ...postSizes(), nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
       { html: drawPost(postTemplate(post, "story")), w: 1080, h: 1920, nome: "Story", breve: "Story", scarica: "Scarica la story", file: nomeFile("story") },
+      // Il carosello: copertina, post con la linguetta «Scorri», finale «Seguici».
+      ...drawCarousel(postTemplate(post, "post")).map((html, i) => ({ html, ...postSizes(), nome: `Carosello ${i + 1}/3 · ${["copertina", "post", "seguici"][i]}`,
+        breve: `Carosello ${i + 1}`, scarica: `Scarica il carosello ${i + 1}/3`, file: nomeFile(`carosello-${i + 1}`) })),
     ];
   }
 
