@@ -10,7 +10,7 @@ const { dataLunga: longDate, dataCorta: shortDate, categoriaGita: tripCategory, 
         contrasto: contrast, schiarisci: lighten, indirizzoUtm: utmAddress, testoPost: postText, mancanti: missingItems, nomePost, SOCIAL,
         disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
         formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams, LIMITI_META: META_LIMITS,
-        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark, disegnaCarosello: drawCarousel } = require("./social-templates.js");
+        INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark, disegnaCarosello: drawCarousel, impostaColoreEventi: setEventColor } = require("./social-templates.js");
 
 // --- Date e colore del giorno -----------------------------------------------
 
@@ -28,7 +28,7 @@ assert.strictEqual(categoryName("g2").ink, "#FFFFFF");          // bianco sul ro
 assert.strictEqual(categoryName("g0").ink, "#06396A");       // blu scuro sul giallo
 assert.strictEqual(categoryName("g2").txt, "#B3261E");       // il rosso si legge già su bianco
 assert.ok(contrast(categoryName("g0").txt, "#FFFFFF") >= 4.5, "il giallo dei prezzi non si legge su bianco");
-assert.strictEqual(categoryName("corso").c, "#147A45");      // gli altri tipi non cambiano
+assert.strictEqual(categoryName("evento").c, "#147A45");     // gli eventi: il loro colore, di partenza il verde
 
 // Giorni cambiati dalla pagina: sabato giallo, domenica blu, venerdì verde, niente martedì.
 setTripColors({ 6: "#FCCF02", 0: "#084C8D", 5: "#147A45" });
@@ -119,7 +119,7 @@ assert.deepStrictEqual(missingItems(trip), [], "gita completa segnata da complet
 assert.deepStrictEqual(missingItems({ ...trip, deadline: null, prices: [] }), [], "quota e scadenza della gita sono facoltative");
 assert.deepStrictEqual(missingItems({ kind: "gita", title: " ", stops: [["", ""]], prices: [[null, ""]] }),
   ["la meta", "il giorno", "le partenze"]);
-assert.deepStrictEqual(missingItems({ kind: "cena", title: "Cena sociale" }), ["la data"]);
+assert.deepStrictEqual(missingItems({ kind: "evento", title: "Cena sociale" }), [], "un evento senza data non è un errore");
 assert.deepStrictEqual(missingItems({ kind: "corso", title: "Corso bambini" }), [], "il corso senza data non è un errore");
 assert.deepStrictEqual(missingItems({ kind: "sponsor", title: "Brindiamo" }), ["lo sponsor"]);
 assert.deepStrictEqual(missingItems({ kind: "sponsor", title: "Brindiamo", sponsor_id: "s1" }), []);
@@ -142,9 +142,8 @@ assert.strictEqual(lighten("#000000", .5), "#808080");
 
 assert.deepStrictEqual(postSizes(), { w: 1080, h: 1350 }, "il post non è 4:5");
 
-// Un solo blu e un solo giallo: corsi gialli, eventi e calendario blu, le gite col colore del loro giorno.
-assert.deepStrictEqual(newColor("corso"), { c: "#FCCF02", ink: "#084C8D" });
-assert.deepStrictEqual(newColor("cena"), { c: "#084C8D", ink: "#FFFFFF" });
+// Un solo blu e un solo giallo: eventi col loro colore, calendario blu, le gite col colore del loro giorno.
+assert.deepStrictEqual(newColor("evento"), { c: "#147A45", ink: "#FFFFFF" });
 assert.deepStrictEqual(newColor("cal"), { c: "#084C8D", ink: "#FFFFFF" });
 assert.deepStrictEqual(newColor("g0"), { c: "#FCCF02", ink: "#084C8D" });
 assert.deepStrictEqual(newColor("g2"), { c: "#B3261E", ink: "#FFFFFF" });
@@ -221,7 +220,7 @@ assert.strictEqual(dayOfMonth(null), "");
   const courseItem = postTemplate({ kind: "corso", title: "Corso bambini", facts: [["Età", "5–12 anni"]] }, "post");
   assert.ok(!drawPost(courseItem).includes('class="tessera"') && drawPost(courseItem).includes("<p>Età: 5–12 anni</p>"));
   // Un post di solo sottotesto prende il nome del tipo come titolo.
-  assert.ok(drawPost(postTemplate({ kind: "servizi", title: "", subtitle: "Negozio aperto" }, "post")).includes(">Servizi</div>"));
+  assert.ok(drawPost(postTemplate({ kind: "evento", title: "", subtitle: "Negozio aperto" }, "post")).includes(">Evento</div>"));
 
   // Calendario del mese: la tessera col mese e quante gite, il giorno corto, il corso.
   const rows = [["g0", "10/01", "Prato Nevoso", true], ["g6", "16/01", "Sestriere", false]];
@@ -473,11 +472,11 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.ok(!drawPost(postTemplate(trip, "post")).includes("timbro"), "timbro su una gita che si fa");
   const undecided = drawPost(postTemplate({ ...trip, postponed_reason: "maltempo", postponed_to: null }, "story"));
   assert.ok(undecided.includes("Gita rimandata causa maltempo") && undecided.includes("Nuova data <b>da definire</b>"));
-  // Un evento: «Rimandato» per corso e servizi, «Rimandata» per cena e gara; il motivo scritto a mano resta testo.
+  // Un evento: «Rimandato», qualunque fosse il tipo di prima; il motivo scritto a mano resta testo.
   const course = { kind: "corso", event_date: "2027-01-16", title: "Corso sci", postponed_reason: "per lo <b>sciopero</b>", postponed_to: null };
   const courseHtml = drawPost(postTemplate(course, "post"));
   assert.ok(courseHtml.includes('<i class="timbro">Rimandato</i>') && courseHtml.includes(">Rimandato per lo &lt;b&gt;sciopero&lt;/b&gt;<"), "corso rimandato");
-  assert.strictEqual(postTemplate({ ...course, kind: "cena" }, "post").postponed.word, "Rimandata");
+  assert.strictEqual(postTemplate({ ...course, kind: "cena" }, "post").postponed.word, "Rimandato");
   assert.strictEqual(postTemplate({ ...course, postponed_reason: "" }, "post").postponed.reason, "", "rimandato senza motivo");
   assert.ok(drawPost(postTemplate({ ...course, postponed_reason: "" }, "post")).includes(">Rimandato<"));
   const caption = postText(postponed);
@@ -522,6 +521,58 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   const trip = drawCarousel(postTemplate({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, "post"));
   assert.strictEqual(trip[0], cover, "la copertina cambia col post");
   assert.strictEqual(trip[2], outro, "il finale cambia col post");
+}
+
+// --- Tipi di post (2/11) ---------------------------------------------------------
+// Tre tipi: gita, evento (i corsi, le cene, le gare e i servizi di prima) e weekend e settimane bianche.
+// Gli eventi hanno un colore loro, scelto in Impostazioni, e non quello del giorno.
+{
+  for (const k of ["corso", "cena", "gara", "servizi", "evento"])
+    assert.strictEqual(postTemplate({ kind: k, title: "X" }, "post").cat, "evento", `${k} non è diventato un evento`);
+  const ev = { kind: "evento", title: "Cena sociale", event_date: "2027-04-10" };
+  const card = (e) => drawPost(postTemplate(e, "post")).match(/<div class="tessera[^"]*"[^>]*>/)[0];
+  assert.strictEqual(card(ev), '<div class="tessera" style="background:#147A45;color:#FFFFFF;--em:#084C8D;--em-ink:#FFFFFF">', card(ev));
+  assert.strictEqual(card({ ...ev, event_date: "2027-01-12" }), card(ev), "il martedì cambia il colore di un evento");
+  setEventColor("#5b2a86");
+  assert.strictEqual(categoryName("evento").c, "#5B2A86");
+  assert.ok(card(ev).startsWith('<div class="tessera" style="background:#5B2A86'), card(ev));
+  // Giallo come i corsi di prima: la K gialla e la tessera gialla.
+  setEventColor("#FCCF02");
+  assert.ok(drawPost(postTemplate(ev, "post")).includes(" giallo") && card(ev) === '<div class="tessera">', card(ev));
+  setEventColor("#147A45");
+  assert.strictEqual(postTemplate({ kind: "cena", title: "X", postponed_reason: "" }, "post").postponed.word, "Rimandato");
+
+  // Weekend e settimane bianche: più giorni, senza prezzi, solo le informazioni essenziali.
+  const wk = { kind: "weekend", title: "Dream Weekend al Sestriere", event_date: "2026-12-11", end_date: "2026-12-13",
+    place: "Hotel Fronte Piste, Sestriere", subtitle: "Mezza pensione e skipass Vialattea", hook: "Posti limitati",
+    deadline: "2026-12-01", prices: [["Adulti", "€ 250"]], show_price: true, event_time: "8:00", facts: [["Acconto", "€ 100"]] };
+  const m = postTemplate(wk, "post");
+  assert.strictEqual(m.cat, "evento", "il weekend non ha il colore degli eventi");
+  assert.deepStrictEqual(m.prices, [], "prezzi nel post di un weekend");
+  for (const fmt of ["post", "story"]) {
+    const html = drawPost(postTemplate(wk, fmt));
+    assert.match(html, /<div class="tessera"[^>]*><span data-fit style="font-size:\d+px">ven–dom<\/span><b class="periodo" data-fit style="font-size:\d+px">11–13<\/b>\s*<span data-fit style="font-size:\d+px">dicembre<\/span><em data-fit style="font-size:58px">2 notti<\/em><\/div>/, `${fmt}: tessera del periodo`);
+    for (const t of ["Dream Weekend al Sestriere", "Posti limitati", "Hotel Fronte Piste, Sestriere", "Mezza pensione e skipass Vialattea", "Iscrizioni entro <b>martedì 1 dicembre</b>"])
+      assert.ok(html.includes(t), `${fmt}: manca «${t}»`);
+    for (const t of ["€ 250", "Acconto", "8:00"]) assert.ok(!html.includes(t), `${fmt}: c'è «${t}», che nel weekend non va`);
+  }
+  // A cavallo di due mesi, e una notte sola.
+  assert.match(drawPost(postTemplate({ ...wk, event_date: "2027-01-30", end_date: "2027-02-01" }, "post")),
+    />sab–lun<\/span><b class="periodo"[^>]*>30–1<\/b>\s*<span[^>]*>gen–feb<\/span><em[^>]*>2 notti</);
+  assert.match(drawPost(postTemplate({ ...wk, event_date: "2027-01-30", end_date: "2027-01-31" }, "post")), /<em[^>]*>1 notte</);
+  const text = postText(wk);
+  assert.strictEqual(text.split("\n")[0], "🏔️ Dream Weekend al Sestriere · da venerdì 11 a domenica 13 dicembre", text.split("\n")[0]);
+  assert.ok(text.includes("Dove: Hotel Fronte Piste, Sestriere") && text.includes("Iscrizioni: entro martedì 1 dicembre") && !/€|Acconto/.test(text), text);
+  assert.match(postText({ ...wk, event_date: "2027-01-30", end_date: "2027-02-01" }), /da sabato 30 gennaio a lunedì 1 febbraio/);
+  assert.strictEqual(postTemplate({ ...wk, postponed_reason: "maltempo" }, "post").postponed.word, "Rimandato");
+  assert.deepStrictEqual(missingItems(wk), []);
+  assert.deepStrictEqual(missingItems({ ...wk, end_date: null }), ["le date"]);
+  assert.deepStrictEqual(missingItems({ kind: "weekend", title: "" }), ["il titolo o il sottotesto", "le date"]);
+
+  // L'anteprima c'è sempre: senza data la gita e il weekend hanno la tessera vuota che tiene il posto;
+  // un evento senza data non ha tessera (la data è facoltativa).
+  for (const k of ["gita", "weekend"]) assert.ok(drawPost(postTemplate({ kind: k, title: "" }, "post")).includes('<div class="tessera vuota">'), k);
+  assert.ok(!drawPost(postTemplate({ kind: "evento", title: "X" }, "post")).includes("tessera"), "tessera vuota in un evento senza data");
 }
 
 console.log("social: tutti i controlli passati");

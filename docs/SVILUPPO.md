@@ -168,6 +168,13 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
 - Conferme con dati di una persona: `dataTable()` in `shared.js` (anche come `dettagli` di
   `ask()`), una riga per dato, i mancanti scritti "non scritto" in rosso.
 
+- Social, tipi di post (2/11/2026): Gita, Evento (i corsi, le cene, le gare e i servizi di prima: la
+  stessa grafica, un tipo solo) e Weekend e settimane bianche (`kind = 'weekend'`, dal giorno `event_date`
+  all'ultimo `end_date`, senza prezzi: solo luogo, dettagli essenziali e scadenza). Eventi e weekend hanno
+  un colore loro, scelto in Impostazioni > Giorni e colori (`social_settings`, chiave `event_color`), e
+  scelgono il giorno nello stesso calendario delle gite; il tipo non si cambia più nel form. Il rinvio è
+  fatto di due spunte, «Rimandato» e «Rimandato per maltempo». L'anteprima c'è sempre, con la tessera vuota
+  finché manca la data; i pulsanti per scaricare restano spenti e dicono cosa manca.
 - Social, carosello (2/11/2026): accanto a Post e Story ogni gita o evento ha tre pagine 1080×1350
   (`drawCarousel()` in `social-templates.js`): la copertina fissa col logo, il bollino giallo
   (`social_events.carousel_badge`, vuoto = «Novità») e la linguetta rossa «Scorri»; il post con la

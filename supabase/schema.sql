@@ -3429,9 +3429,12 @@ alter table public.social_events drop constraint if exists social_events_sponsor
 alter table public.social_events add constraint social_events_sponsor_id_fkey
   foreign key (sponsor_id) references public.sponsors (id) on delete cascade;
 
+-- Dal 2/11 i corsi, le cene, le gare e i servizi sono un tipo solo, evento; weekend è il tipo dei
+-- weekend e delle settimane bianche (più giorni, fino a end_date).
 alter table public.social_events drop constraint if exists social_events_kind_valid;
+update public.social_events set kind = 'evento' where kind in ('corso', 'cena', 'gara', 'servizi');
 alter table public.social_events add constraint social_events_kind_valid
-  check (kind in ('gita', 'corso', 'cena', 'gara', 'servizi', 'sponsor'));
+  check (kind in ('gita', 'evento', 'weekend', 'sponsor'));
 alter table public.social_events drop constraint if exists social_events_sponsor_needed;
 alter table public.social_events add constraint social_events_sponsor_needed
   check ((kind = 'sponsor') = (sponsor_id is not null));
@@ -3487,7 +3490,13 @@ alter table public.social_settings add constraint social_settings_style_valid
   check (key <> 'style' or value = 'k');
 insert into public.social_settings (key, value) values ('style', 'k')
 on conflict (key) do nothing;
-comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: dalla 2.8 solo k, la pagina non la legge).';
+-- Il colore degli eventi e dei weekend nei post (2/11), scelto in Impostazioni > Giorni e colori.
+alter table public.social_settings drop constraint if exists social_settings_event_color_valid;
+alter table public.social_settings add constraint social_settings_event_color_valid
+  check (key <> 'event_color' or value ~ '^#[0-9A-Fa-f]{6}$');
+insert into public.social_settings (key, value) values ('event_color', '#147A45')
+on conflict (key) do nothing;
+comment on table public.social_settings is 'Impostazioni della pagina Social (style = grafica dei post: dalla 2.8 solo k, la pagina non la legge; event_color = colore degli eventi e dei weekend).';
 
 -- Rubrica dei contatti per info e iscrizioni: nome e telefono, e se serve
 -- quando chiamare ("dopo le 18"). Si gestisce dalla pagina Social > Contatti;
@@ -3578,6 +3587,13 @@ alter table public.social_events add column if not exists postponed_reason text;
 alter table public.social_events add column if not exists postponed_to date;
 comment on column public.social_events.postponed_reason is 'Rimandato: neve, maltempo o il motivo scritto a mano (vuoto = senza motivo). Null = si fa.';
 comment on column public.social_events.postponed_to is 'Rimandato: la nuova data. Null = da definire.';
+
+-- Weekend e settimane bianche (2/11): l'ultimo giorno; il primo è event_date.
+alter table public.social_events add column if not exists end_date date;
+alter table public.social_events drop constraint if exists social_events_end_date_valid;
+alter table public.social_events add constraint social_events_end_date_valid
+  check (end_date is null or (event_date is not null and end_date >= event_date));
+comment on column public.social_events.end_date is 'Weekend e settimane bianche: l''ultimo giorno (il primo è event_date). Vuoto per gli altri post.';
 
 -- Carosello (2/11): la scritta del bollino giallo sulla copertina; vuota = «Novità».
 alter table public.social_events add column if not exists carousel_badge text;
