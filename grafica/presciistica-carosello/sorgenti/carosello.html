@@ -16,6 +16,10 @@
     .sk .fatti p.dove .tassello { flex: none; width: 1.3em; height: 1.3em; border-radius: .3em; background: #fff; display: grid; place-items: center; margin-right: .1em; }
     .sk .fatti p.dove .tassello i { display: block; width: .9em; height: .9em; background: var(--c); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
     .sk .fatti.social { gap: 26px; margin-top: 12px; }
+    /* Invito a scorrere: una linguetta gialla appesa al bordo destro, con l'angolo tagliato come la tessera. */
+    .sk .scorri { position: absolute; right: 0; bottom: 40px; width: 240px; padding: 16px 30px 18px 44px; background: #FCCF02; color: #084C8D;
+      clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px); font-size: 42px; font-weight: 800; line-height: 1; letter-spacing: -.01em; }
+    .sk .scorri svg { display: block; width: 150px; height: 44px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -34,6 +38,10 @@
     const NOVITA = `<div class="tessera"><b data-fit style="font-size:124px">gite</b>
       <span data-fit style="font-size:66px">eventi</span><em data-fit style="font-size:58px">avvisi</em></div>`;
 
+    // Sulle pagine che hanno un seguito: tre frecce che dicono di scorrere.
+    const SCORRI = `<div class="scorri">Scorri<svg viewBox="0 0 150 44" aria-hidden="true"><path d="M8 6l16 16L8 38M58 6l16 16-16 16M108 6l16 16-16 16"
+      fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+
     // Gancio, titolo e dati con la stessa struttura di postK().
     const text = (hook, title, rows, cls = "") => `<div class="testo" data-adatta=".6"><div class="gancio">${hook}</div>
       <div class="tit" data-cede><div data-righe="2" style="--t:116px">${title}</div></div>
@@ -42,14 +50,14 @@
     const social = (name, colour, label) => `<p class="dove"><span class="tassello"><i style="--c:${colour};--m:url(../../video-stagione/assets/social/${name}.svg)"></i></span><span>${label}</span></p>`;
 
     const PAGES = [
-      () => bgK({ giallo: true, foto: PALESTRA, pos: "50% 100%", zoom: 1.2 }, OGNI,
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "50% 100%", zoom: 1.2 }, OGNI + SCORRI,
         text("Alzati dal divano!", "Ginnastica Presciistica", [row("Ci vediamo *tutte le settimane*\nogni mercoledì alle *19:30*"), LUOGO]), enrolments()),
-      () => bgK({ giallo: true, foto: PALESTRA, pos: "86% 100%", zoom: 1.2 }, FINO,
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "86% 100%", zoom: 1.2 }, FINO + SCORRI,
         text("Tutte le settimane", "In forma<br>per la neve", [row("Tutti i mercoledì fino al *13 gennaio*\n(escluso periodo natalizio)"), LUOGO]), enrolments()),
-      () => bgK({ giallo: true, foto: PALESTRA, pos: "22% 100%", zoom: 1.2 }, OGNI,
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "22% 100%", zoom: 1.2 }, OGNI + SCORRI,
         text("Per partecipare", "Riservata<br>ai soci", [row("*Tesserati e assicurati* allo Sci Club\nDon Bosco Asti"), LUOGO]), enrolments()),
       () => bgK({ giallo: true, foto: MONTAGNA, pos: "50% 40%" }, NOVITA,
-        text("Non perdere nessuna novità", "Seguici<br>sui social", [
+        text("Novità in arrivo!", "Seguici per<br>non perderle", [
           social("instagram", "#E4405F", "@sciclubdonbosco_asti"),
           social("facebook", "#0866FF", "Sci Club Don Bosco Asti"),
           social("whatsapp", "#25D366", "Canale WhatsApp"),
