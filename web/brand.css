@@ -102,6 +102,8 @@ html[data-tema="scuro"] :is(.barra, .barra-voci) { background: #10263F; }
 :where(html[data-tema="scuro"]) table :is(th, td) { color: var(--testo); }
 /* Pulsanti spenti, «Esci» a testo e i rossi chiari di Bulma hanno colori fissi più precisi. */
 html[data-tema="scuro"] .button[disabled] { background-color: var(--riga-alt); border-color: var(--filo); color: var(--testo-soft); }
+/* Bulma dà il testo scuro al pulsante semplice col fuoco o sotto il mouse: su fondo scuro non si leggeva («Annulla» appena aperta una conferma). */
+html[data-tema="scuro"] .button:is(:focus, :hover, .is-focused, .is-hovered):not(.is-link, .is-danger, .is-success, .is-warning, .is-info, .is-primary, .is-light, .is-text, .is-white, .is-dark, .is-black) { color: var(--testo); }
 html[data-tema="scuro"] .button.is-text { background: transparent; color: var(--testo); }
 html[data-tema="scuro"] .button.is-danger.is-light { background: var(--errore-bg); border-color: var(--errore-bg); color: var(--errore); }
 /* Il giallo dei campi da compilare a mano, in versione scura. */
@@ -543,7 +545,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
   font-size: 17px;
   font-weight: 500;
 }
-.barra-voci .conta { margin-left: auto; padding: 0 8px; border-radius: 4px; background: var(--giallo); color: #084C8D; font-size: 14px; font-weight: 700; }
+.barra-voci .conta { flex: none; white-space: nowrap; margin-left: auto; padding: 0 8px; border-radius: 4px; background: var(--giallo); color: #084C8D; font-size: 14px; font-weight: 700; }
 .barra-voci a[aria-current="page"] .conta { background: var(--blu-pieno); color: #fff; }
 .barra-voci .conta:empty { display: none; }
 /* Chi è entrato, tema, A+ ed Esci in fondo al menu: solo sul telefono. */

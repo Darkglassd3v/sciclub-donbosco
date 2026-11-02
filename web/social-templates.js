@@ -477,7 +477,8 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: var(--em, #084C8D); color: var(--em-ink, #fff); padding: 20px 34px 22px; margin-top: 28px; }
     .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
     /* Il periodo di un weekend («11–13»): più piccolo del giorno singolo, fit() lo stringe se non ci sta. */
-    .sk .tessera b.periodo { letter-spacing: -.04em; margin: 22px 0 18px -4px; }
+    /* Senza padding: fit() guarda solo se il testo esce dal riquadro, e nel padding ci sarebbe finito («20–22» sul bordo). */
+    .sk .tessera b.periodo { padding: 0; letter-spacing: -.04em; margin: 22px 34px 18px 30px; }
     /* La tessera di una gita o di un weekend senza data, solo nell'anteprima. */
     .sk .tessera.vuota { opacity: .55; }
     .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
@@ -553,6 +554,8 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .cv .scorri svg { display: block; width: 190px; height: 56px; margin-top: 8px; }
     /* Nel post del carosello le iscrizioni (con i telefoni arrivano al bordo destro) si fermano prima della linguetta. */
     .cv.sk:has(> .scorri) .isc { padding-right: 210px; }
+    /* Così il testo va a capo accanto all'icona, invece di scendere tutto sotto di lei. */
+    .cv.sk:has(> .scorri) .isc > div { flex: 1 1 0; min-width: 0; }
     /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino giallo inclinato. */
     .cv.carosello { background: #084C8D; color: #fff; }
     .carosello .car-logo { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; max-width: none; }
@@ -600,7 +603,7 @@ const highlight = (text, auto = true) => String(text ?? "").split(/(\*[^*\n]+\*)
 /* Il titolo di un evento (la gita ha per titolo la meta, in postK()); un post
  * di solo sottotesto prende il nome del tipo ("Servizi"), così la grafica
  * resta quella e il sottotesto sta al suo posto. */
-const newTitle = (s) => escS(String(s.title || "").trim() || categoryName(s.cat).label);
+const newTitle = (s) => escS(String(s.title || "").trim() || (s.kind === "weekend" ? "Weekend" : categoryName(s.cat).label));
 
 /* Le informazioni che hanno un posto loro: l'orario (nella tessera della K) e
  * le iscrizioni (in fondo ai dati). */
