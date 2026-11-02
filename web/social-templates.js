@@ -556,7 +556,7 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .cv.sk:has(> .scorri) .isc { padding-right: 210px; }
     /* Così il testo va a capo accanto all'icona, invece di scendere tutto sotto di lei. */
     .cv.sk:has(> .scorri) .isc > div { flex: 1 1 0; min-width: 0; }
-    /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino giallo inclinato. */
+    /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino inclinato, giallo se il post non ha un altro colore. */
     .cv.carosello { background: #084C8D; color: #fff; }
     .carosello .car-logo { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; max-width: none; }
     .carosello .bollino { position: absolute; right: 70px; top: 250px; transform: rotate(-8deg); filter: drop-shadow(0 10px 22px rgba(0,0,0,.35)); }
@@ -760,7 +760,7 @@ function monthK(titleText, rows, month, story = false) {
 // --- Carosello --------------------------------------------------------------------
 //
 // Tre pagine 4:5 (2/11/2026, dal carosello della presciistica in grafica/presciistica-carosello/):
-// la copertina col logo grande sul blu, il bollino giallo (s.badge, di solito «Novità») e la
+// la copertina col logo grande sul blu, il bollino nel colore del post (s.badge, di solito «Novità») e la
 // linguetta rossa «Scorri»; il post K con la stessa linguetta; il finale fisso, come l'outro del
 // video della stagione (grafica/video-stagione/compositions/frames/05-seguici.html).
 
@@ -778,8 +778,11 @@ const SWIPE = `<div class="scorri">Scorri<svg viewBox="0 0 150 44" aria-hidden="
 /** Le tre pagine del carosello (modello da postTemplate(ev, "post")): copertina, post, finale. */
 function drawCarousel(s) {
   const page = (inner) => `<div class="cv carosello" style="width:1080px;height:1350px">${inner}</div>`;
+  // Il bollino ha il colore del post, come la tessera; se è blu resta giallo: sul fondo blu sparirebbe.
+  const c = newColor(s.cat).c.toUpperCase();
+  const colors = c === YELLOW || c === BLU ? "" : `;background:${c};color:${captionOn(c)}`;
   const cover = page(`<img class="car-logo" src="${SOCIAL.logoTondo}" alt="">
-    <div class="bollino"><span data-fit style="font-size:104px">${escS(s.badge)}</span></div>${SWIPE}`);
+    <div class="bollino"><span data-fit style="font-size:104px${colors}">${escS(s.badge)}</span></div>${SWIPE}`);
   const row = (icon, text, under = "") => `<div class="car-riga"><span class="car-icona">${icon}</span><span>${escS(text)}${under}</span></div>`;
   const outro = page(`<img class="car-foto" src="${SOCIAL.fotoFinale}" alt=""><div class="car-velo"></div><div class="car-luce"></div>
     <div class="car-colonna"><img class="car-anello" src="${SOCIAL.logoTondo}" alt="">

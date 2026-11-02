@@ -176,8 +176,8 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   fatto di due spunte, «Rimandato» e «Rimandato per maltempo». L'anteprima c'è sempre, con la tessera vuota
   finché manca la data; i pulsanti per scaricare restano spenti e dicono cosa manca.
 - Social, carosello (2/11/2026): accanto a Post e Story ogni gita o evento ha tre pagine 1080×1350
-  (`drawCarousel()` in `social-templates.js`): la copertina fissa col logo, il bollino giallo
-  (`social_events.carousel_badge`, vuoto = «Novità») e la linguetta rossa «Scorri»; il post con la
+  (`drawCarousel()` in `social-templates.js`): la copertina col logo, il bollino nel colore del post
+  (`social_events.carousel_badge`, vuoto = «Novità»; giallo se il post è blu o giallo) e la linguetta rossa «Scorri»; il post con la
   stessa linguetta; il finale fisso «Seguici», come l'outro del video della stagione, con «link in bio»
   sotto il canale WhatsApp. Il testo del post invita a seguire il canale (bio su Instagram, link breve
   su Facebook). Le campagne sponsor non hanno il carosello.
