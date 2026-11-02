@@ -43,10 +43,9 @@ const SOCIAL = {
 const CAT = {
   // Gite in un giorno che non è un giorno di gita: il blu del club.
   gita:    { label: "Gita",                day: "",    c: "#084C8D", ink: "#fff",    txt: "#084C8D" },
-  corso:   { label: "Corsi",               c: "#147A45", ink: "#fff", txt: "#147A45" },
-  gara:    { label: "Gara sociale",        c: "#5B2A86", ink: "#fff", txt: "#5B2A86" },
-  cena:    { label: "Cene e feste",        c: "#C2410C", ink: "#fff", txt: "#C2410C" },
-  servizi: { label: "Servizi",             c: "#14202E", ink: "#fff", txt: "#14202E" },
+  // Eventi (dal 2/11 i corsi, le cene, le gare e i servizi di prima) e weekend: il colore degli eventi,
+  // scelto in Impostazioni (setEventColor()); di partenza il verde.
+  evento:  { label: "Evento",              c: "#147A45", ink: "#fff", txt: "#147A45" },
   cal:     { label: "Calendario",          c: "#084C8D", ink: "#FCCF02", txt: "#084C8D" },
 };
 
@@ -147,9 +146,15 @@ function categoryName(k) {
   return { label: "Gita", day: uppercase(DAYS[g[1]].slice(0, 3)), c, ink: inkColor(c), txt: onWhite(c) };
 }
 
-/** Categoria (colore) di un post del database. */
+/** Il colore degli eventi e dei weekend, dalle impostazioni della pagina (social_settings, event_color). */
+function setEventColor(c) {
+  const colour = String(c).toUpperCase();
+  CAT.evento = { ...CAT.evento, c: colour, ink: inkColor(colour), txt: onWhite(colour) };
+}
+
+/** Categoria (colore) di un post del database: le gite il loro giorno, tutto il resto gli eventi. */
 function categoryOf(ev) {
-  return ev.kind === "gita" ? tripCategory(ev.event_date) : ev.kind;
+  return ev.kind === "gita" ? tripCategory(ev.event_date) : ev.kind === "sponsor" ? "sponsor" : "evento";
 }
 
 /** La parte della foto che si vede (photo_x, photo_y: 0–100, da sinistra e dall'alto), per object-position:
@@ -180,6 +185,11 @@ function postTemplate(ev, fmt) {
       stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: within(ev.deadline), scadenza: dayOfMonth(ev.deadline),
     };
   }
+  // Weekend e settimane bianche: più giorni (fino a end_date), niente prezzi, dei dati solo il luogo e la scadenza.
+  if (ev.kind === "weekend") {
+    return { ...base, kind: "weekend", title: ev.title, sub: ev.subtitle || "", end: ev.end_date || null, prices: [],
+      date: longDate(ev.event_date), facts: eventFacts({ place: ev.place, deadline: ev.deadline }) };
+  }
   return {
     ...base, kind: "evento", title: ev.title, sub: ev.subtitle || "",
     date: longDate(ev.event_date), facts: eventFacts(ev),
@@ -188,7 +198,7 @@ function postTemplate(ev, fmt) {
 
 /** Gita o evento rimandato (postponed_reason non null): la parola per il tipo, il motivo («causa neve»,
  *  «causa maltempo» o quello scritto a mano, anche vuoto) e la nuova data ("" = da definire). */
-const FEMININE_KINDS = ["gita", "cena", "gara"];
+const FEMININE_KINDS = ["gita"];
 function postponedOf(ev) {
   if (ev.postponed_reason == null) return null;
   const reason = String(ev.postponed_reason).trim();
@@ -222,6 +232,8 @@ function eventFacts(ev) {
 /* Sciatore: segno del corso, nella coccarda (courseStar()). */
 const skier = (px) => `<svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="#fff"><circle cx="16" cy="4" r="2.2"/><path d="M4 21.5l17-5.2-.5-1.4-4 1.2-1.9-4.8 2.6-2.2-2.7-3.4-5.4 2.6.8 1.6 3.6-1.7 1.1 1.4-3.4 2.9 2.2 5.5-9.6 2.9z"/></svg>`;
 
+const COURSE_GREEN = "#147A45";
+
 /* La coccarda verde del corso, una stella con lo sciatore, larga 210·k: il
  * contenuto (la stella e la scritta), il contenitore lo mette newStar(). */
 function courseStar(k = 1) {
@@ -230,7 +242,7 @@ function courseStar(k = 1) {
     return `${100 + r * Math.sin(a)},${100 - r * Math.cos(a)}`;
   }).join(" ");
   return `
-      <svg class="abs" style="inset:0" width="${d}" height="${d}" viewBox="-6 -6 212 212"><polygon points="${pts}" fill="${CAT.corso.c}" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></svg>
+      <svg class="abs" style="inset:0" width="${d}" height="${d}" viewBox="-6 -6 212 212"><polygon points="${pts}" fill="${COURSE_GREEN}" stroke="#fff" stroke-width="7" stroke-linejoin="round"/></svg>
       <div class="abs" style="inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;gap:${4 * k}px">
         ${skier(62 * k)}<div style="font-size:${36 * k}px;font-weight:800;line-height:1">Corso</div></div>`;
 }
@@ -327,9 +339,9 @@ function missingItems(ev) {
     if (!ev.event_date) missing.push("il giorno");
     if (!(ev.stops || []).some(([t, l]) => t || l)) missing.push("le partenze");
     // Quota e scadenza sono facoltative (l'utente, 16/10): senza, il post è pronto lo stesso.
-  } else if (ev.kind === "cena" || ev.kind === "gara") {
-    // Corsi e servizi possono non avere un giorno; una cena o una gara no.
-    if (!ev.event_date) missing.push("la data");
+  } else if (ev.kind === "weekend") {
+    // Un evento può non avere un giorno; un weekend ha sempre il primo e l'ultimo.
+    if (!ev.event_date || !ev.end_date) missing.push("le date");
   } else if (ev.kind === "sponsor" && !ev.sponsor_id) {
     missing.push("lo sponsor");
   }
@@ -464,6 +476,10 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
       color: #B3261E; background: rgba(255, 255, 255, .94); border: 7px solid #B3261E; border-radius: 12px; padding: 10px 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
     .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: var(--em, #084C8D); color: var(--em-ink, #fff); padding: 20px 34px 22px; margin-top: 28px; }
     .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
+    /* Il periodo di un weekend («11–13»): più piccolo del giorno singolo, fit() lo stringe se non ci sta. */
+    .sk .tessera b.periodo { letter-spacing: -.04em; margin: 22px 0 18px -4px; }
+    /* La tessera di una gita o di un weekend senza data, solo nell'anteprima. */
+    .sk .tessera.vuota { opacity: .55; }
     .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
     .sk.story .tessera b + span:last-child { margin-bottom: 26px; }
     .sk.story .tessera em { margin-top: 18px; padding: 16px 34px 18px; }
@@ -567,7 +583,7 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
  * scritta sopra è bianca o blu, quella che si legge meglio. */
 const captionOn = (c) => (contrast(c, "#FFFFFF") >= contrast(c, BLU) ? "#FFFFFF" : BLU);
 function newColor(k) {
-  const c = k === "corso" ? YELLOW : /^g\d$/.test(k) ? categoryName(k).c : BLU;
+  const c = k === "evento" ? CAT.evento.c : /^g\d$/.test(k) ? categoryName(k).c : BLU;
   return { c, ink: captionOn(c) };
 }
 
@@ -643,17 +659,27 @@ function bgK({ giallo: yellow, story, foto: picture, pos: pos, zoom, fine }, car
 
 /** La tessera del "quando": giorno, numero, mese e l'ora (nella gita la partenza scelta, card_stop, o la prima). Senza data, niente tessera. */
 function cardK(s) {
-  const d = dayOf(s.iso);
-  if (!d) return "";
+  const d = dayOf(s.iso), story = s.fmt === "story";
+  // Gita e weekend hanno sempre la data: finché manca, nell'anteprima la tessera vuota tiene il posto.
+  if (!d) return s.kind === "gita" || s.kind === "weekend" ? `<div class="tessera vuota"><span data-fit style="font-size:${story ? 62 : 54}px">giorno</span><b>––</b>
+    <span data-fit style="font-size:${story ? 78 : 66}px">mese</span></div>` : "";
   const p = departures(s), choice = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
   const ora = s.kind === "gita" ? (choice && choice[0] ? `ore ${choice[0]}` : "") : ((findFact(s.facts || [], TIME) || [])[1] || "");
-  const story = s.fmt === "story";
   // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
   // blu con le scritte bianche e la fascia dell'ora gialla, il martedì rossa; [fondo, scritte, fascia, sua scritta].
-  const c = s.kind === "gita" ? newColor(s.cat).c.toUpperCase() : YELLOW;
+  // Gli eventi e i weekend il colore degli eventi.
+  const c = newColor(s.cat).c.toUpperCase();
   const T = c === YELLOW ? null : c === BLU ? [BLU, "#FFFFFF", YELLOW, BLU] : [c, captionOn(c), BLU, "#FFFFFF"];
   const colors = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
   const stamp = s.postponed ? `<i class="timbro">${s.postponed.word}</i>` : "";
+  // Il weekend: i giorni («ven–dom»), il periodo («11–13»), il mese o i due mesi e le notti nella fascia.
+  const e = s.kind === "weekend" ? dayOf(s.end) : null;
+  if (e && e > d) {
+    const nights = Math.round((e - d) / 864e5), sameMonth = d.getMonth() === e.getMonth() && d.getFullYear() === e.getFullYear();
+    const month = sameMonth ? MONTHS[d.getMonth()] : `${MONTHS[d.getMonth()].slice(0, 3)}–${MONTHS[e.getMonth()].slice(0, 3)}`;
+    return `<div class="tessera"${colors}>${stamp}<span data-fit style="font-size:${story ? 62 : 54}px">${DAYS[d.getDay()].slice(0, 3)}–${DAYS[e.getDay()].slice(0, 3)}</span><b class="periodo" data-fit style="font-size:${story ? 170 : 150}px">${d.getDate()}–${e.getDate()}</b>
+    <span data-fit style="font-size:${story ? 78 : 66}px">${month}</span><em data-fit style="font-size:58px">${nights} ${nights === 1 ? "notte" : "notti"}</em></div>`;
+  }
   return `<div class="tessera"${colors}>${stamp}<span data-fit style="font-size:${story ? 62 : 54}px">${DAYS[d.getDay()]}</span><b>${d.getDate()}</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">${MONTHS[d.getMonth()]}</span>${ora ? `<em data-fit style="font-size:58px">${escS(ora)}</em>` : ""}</div>`;
 }
@@ -1011,6 +1037,14 @@ const META_LIMITS = { ad_text: 125, ad_headline: 40, ad_description: 30 };
 // Gli inviti all'azione di Gestione inserzioni, come li scrive Meta in italiano.
 const META_CTAS = ["Scopri di più", "Acquista ora", "Prenota ora", "Iscriviti", "Contattaci"];
 
+/** «da venerdì 11 a domenica 13 dicembre», «da sabato 30 gennaio a lunedì 1 febbraio»; senza fine, il primo giorno. */
+function period(a, b) {
+  const d = dayOf(a), e = dayOf(b);
+  if (!e) return longDate(a).toLowerCase();
+  const same = d.getMonth() === e.getMonth() && d.getFullYear() === e.getFullYear();
+  return `da ${DAYS[d.getDay()]} ${d.getDate()}${same ? "" : ` ${MONTHS[d.getMonth()]}`} a ${dayOfMonth(b)}`;
+}
+
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
 function postText(ev, sp, seasonValue) {
   const tel = contactsOf(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
@@ -1039,6 +1073,11 @@ function postText(ev, sp, seasonValue) {
     if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) rows.push(`Quota soci: ${quote}`);
     if (ev.deadline && !p) rows.push(`Iscrizioni ${within(ev.deadline)}`);
+  } else if (ev.kind === "weekend") {
+    // Niente prezzi né altre informazioni: il periodo, il sottotesto, il luogo e la scadenza.
+    rows.push(p ? `${ev.title}${was}` : `🏔️ ${ev.title}${ev.event_date ? ` · ${period(ev.event_date, ev.end_date)}` : ""}`);
+    if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
+    for (const [k, v] of eventFacts({ place: ev.place, deadline: ev.deadline })) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   } else {
     rows.push(p ? `${ev.title}${was}` : `${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
@@ -1059,5 +1098,5 @@ if (typeof module !== "undefined") {
                      disegnaPost: drawPost, disegnaCalendario: drawCalendar, misurePost: postSizes, evidenzia: highlight, coloreNuovo: newColor, giornoMese: dayOfMonth, posFoto: photoPos, zoomFoto: zoomPhoto,
                      formatiCampagna: campaignFormats, disegnaCopertina: drawCover, photo, parametriInserzione: adUrlParams,
                      LIMITI_META: META_LIMITS, INVITI_META: META_CTAS, marchio: brand, logoSuChiaro: logoOnLight, logoSuScuro: logoOnDark,
-                     disegnaCarosello: drawCarousel };
+                     disegnaCarosello: drawCarousel, impostaColoreEventi: setEventColor };
 }
