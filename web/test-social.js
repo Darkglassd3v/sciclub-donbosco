@@ -569,6 +569,10 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.deepStrictEqual(missingItems({ ...wk, end_date: null }), ["le date"]);
   assert.deepStrictEqual(missingItems({ kind: "weekend", title: "" }), ["il titolo o il sottotesto", "le date"]);
 
+  // Un weekend senza titolo non dice «Evento».
+  const untitled = drawPost(postTemplate({ kind: "weekend", title: "", subtitle: "Solo dettagli" }, "post"));
+  assert.ok(untitled.includes(">Weekend</div>") && !untitled.includes(">Evento</div>"), "titolo di riserva del weekend");
+
   // L'anteprima c'è sempre: senza data la gita e il weekend hanno la tessera vuota che tiene il posto;
   // un evento senza data non ha tessera (la data è facoltativa).
   for (const k of ["gita", "weekend"]) assert.ok(drawPost(postTemplate({ kind: k, title: "" }, "post")).includes('<div class="tessera vuota">'), k);

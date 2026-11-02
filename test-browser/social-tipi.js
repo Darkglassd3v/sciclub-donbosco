@@ -83,6 +83,16 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     && JSON.stringify(row.prices) === "[]" && JSON.stringify(row.facts) === "[]" && row.place === "Hotel Fronte Piste" && row.event_time === null,
     JSON.stringify(row).slice(0, 200));
 
+  // Il periodo sta dentro la tessera, col suo margine: «20–22» arrivava sul bordo.
+  await doOpen({ kind: "weekend", title: "Largo", event_date: "2026-12-20", end_date: "2026-12-22" });
+  await wait(500);
+  // Il periodo sta dentro la tessera, col suo margine: «20–22» arrivava sul bordo.
+  const periodo = el("anteprime").querySelector(".cv .tessera .periodo"), range = document.createRange();
+  range.selectNodeContents(periodo);
+  const scale = el("anteprime").querySelector(".cv").getBoundingClientRect().width / 1080;
+  const free = (card().getBoundingClientRect().right - range.getBoundingClientRect().right) / scale;
+  test("periodoDentro", free >= 24, `${Math.round(free)} px dal bordo`);
+
   el("coloreEventi").value = "#c2410c";
   el("coloreEventi").dispatchEvent(new Event("input", { bubbles: true }));
   const beforeS = WRITES.length;
@@ -91,5 +101,23 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const setting = WRITES.slice(beforeS).find(([t, op]) => t === "social_settings" && op === "upsert");
   test("coloreSalvato", !!setting && JSON.stringify(setting[2]) === '{"key":"event_color","value":"#C2410C"}' && categoryName("evento").c === "#C2410C",
     setting ? JSON.stringify(setting[2]) : "non salvato");
+  // Il conteggio accanto a «Campagne» sta su una riga, dentro la voce del menu.
+  const count = document.querySelector(".barra-voci .conta");
+  if (count) {
+    count.textContent = "22 da fare";
+    const row = count.parentElement.getBoundingClientRect(), box = count.getBoundingClientRect();
+    test("contaUnaRiga", getComputedStyle(count).whiteSpace === "nowrap" && box.right <= row.right + 1, `${getComputedStyle(count).whiteSpace} ${Math.round(box.right)}>${Math.round(row.right)}`);
+  } else test("contaUnaRiga", false, "conteggio non trovato");
+
+  // Tema scuro: il pulsante col fuoco, come «Annulla» appena aperta una conferma, resta leggibile.
+  document.documentElement.dataset.tema = "scuro";
+  const cancel = document.createElement("button"), sampleText = document.createElement("span");
+  cancel.className = "button is-medium is-focused";  // la stessa regola di Bulma di :focus, che in headless non scatta
+  cancel.textContent = "Annulla";
+  sampleText.style.color = "var(--testo)";
+  document.body.append(cancel, sampleText);
+  cancel.focus();
+  await wait(400);
+  test("annullaScuro", getComputedStyle(cancel).color === getComputedStyle(sampleText).color, `${getComputedStyle(cancel).color} invece di ${getComputedStyle(sampleText).color}`);
   document.title = "RISULTATO " + r.join(" ");
 } catch (e) { document.title = `RISULTATO ${r.join(" ")} eccezione=NO(${String(e?.message || e).slice(0, 160)})`; } }, 800));

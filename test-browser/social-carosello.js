@@ -54,6 +54,10 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     return b.right > tab.left && b.left < tab.right && b.bottom > tab.top && b.top < tab.bottom;
   });
   test("telefoniLiberi", !crossing.length, crossing.map((x) => x.textContent.slice(0, 30)).join(" | "));
+  // L'icona della mail resta accanto al testo delle iscrizioni, non su una riga sua.
+  const icon = page2.querySelector(".isc > svg").getBoundingClientRect(), words = page2.querySelector(".isc > div").getBoundingClientRect();
+  test("iconaAccanto", icon.right <= words.left && icon.bottom > words.top && icon.top < words.bottom,
+    `icona ${Math.round(icon.top)}-${Math.round(icon.bottom)} testo ${Math.round(words.top)}-${Math.round(words.bottom)}`);
   test("telefoniStaDentro", el("sbordaTutti").hidden, el("sbordaTutti").textContent);
 
   type("");
