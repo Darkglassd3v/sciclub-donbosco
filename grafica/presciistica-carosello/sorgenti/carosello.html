@@ -18,6 +18,11 @@
 
     /* Copertina: il logo del post «Don Bosco mode: on» a tutta larghezza; il suo cerchio ha lo stesso blu del fondo. */
     #logo-grande { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; }
+    /* Il logo da solo è già stato pubblicato: un bollino rosso «Novità», con l'angolo tagliato come la tessera,
+     * dice che questa volta c'è una notizia. Lo stesso rosso della linguetta «Scorri». */
+    #bollino { position: absolute; right: 70px; top: 250px; transform: rotate(-8deg); filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .35)); }
+    #bollino span { display: block; padding: 18px 40px 16px 52px; background: #B3261E; color: #fff;
+      clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%, 0 30px); font: 800 104px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .01em; }
 
     /* Invito a scorrere, uguale in copertina e nel post: una linguetta rossa (quella delle gite del martedì) appesa al bordo destro, con l'angolo tagliato come la tessera. */
     .scorri { position: absolute; right: 0; bottom: 40px; font-family: Barlow, sans-serif; width: 250px; padding: 16px 24px 18px 36px; background: #B3261E; color: #fff;
@@ -53,6 +58,7 @@
 
     const COVER = `<div class="pagina">
       <img id="logo-grande" src="../../../web/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti">
+      <div id="bollino"><span>Novità</span></div>
       ${SCORRI}
     </div>`;
 
