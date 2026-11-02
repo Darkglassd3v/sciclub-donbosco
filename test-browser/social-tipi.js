@@ -6,6 +6,9 @@
 // - Il weekend sceglie il primo e l'ultimo giorno; non ha prezzi, informazioni né ora.
 // - Gli eventi hanno un colore loro, salvato in Impostazioni (social_settings, event_color).
 // - L'anteprima c'è sempre; finché manca qualcosa i pulsanti per scaricare sono spenti e dicono cosa manca.
+// - I tipi del menu stanno nella colonna dell'elenco, anche «Weekend e settimane bianche» (a 1400 px andava sopra il form).
+// - Nel calendario di eventi e weekend i giorni di gita non hanno il loro colore: il giorno scelto (o il periodo) ha
+//   quello degli eventi; il pallino segna le gite già salvate.
 const WRITES = [], REQ = [];
 FAKE.risposta = (t, r) => {
   REQ.push([t, r.colonne]);
@@ -33,6 +36,11 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const types = [...document.querySelectorAll("[data-nuovo]")].filter((b) => b.dataset.nuovo !== "sponsor")
     .map((b) => `${b.dataset.nuovo}:${b.textContent.trim()}`).join(",");
   test("menu", types === "gita:Gita,evento:Evento,weekend:Weekend e settimane bianche", types);
+  el("menuNuovo").open = true;
+  const column = el("menuNuovo").getBoundingClientRect();
+  const outside = [...el("menuNuovo").querySelectorAll("[data-nuovo]")].filter((b) => b.getBoundingClientRect().right > column.right + 1 || b.scrollWidth > b.clientWidth + 1);
+  test("menuNellaColonna", !outside.length, outside.map((b) => `${b.textContent.trim()} ${Math.round(b.getBoundingClientRect().right)}>${Math.round(column.right)}`).join(" | "));
+  el("menuNuovo").open = false;
   test("coloreCaricato", categoryName("evento").c === "#5B2A86" && el("coloreEventi")?.value === "#5b2a86", `${categoryName("evento").c} ${el("coloreEventi")?.value}`);
 
   document.querySelector('[data-nuovo="evento"]').click();
@@ -47,6 +55,9 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("eventoGiorno", daForm().event_date === "2027-01-20" && day("2027-01-20")?.getAttribute("aria-pressed") === "true"
     && card()?.getAttribute("style")?.includes("#5B2A86"), `${daForm().event_date} ${card()?.getAttribute("style")}`);
   test("pronto", !off() && !visible("senzaAnteprima"), `spenti ${off()}`);
+  const tinted = (iso) => (day(iso)?.getAttribute("style") || "").replace(/\s/g, "").toUpperCase();
+  test("calendarioEvento", !el("calGita").querySelector(".di-gita") && tinted("2027-01-20").includes("BACKGROUND:#5B2A86") && !tinted("2027-01-12"),
+    `gita colorata ${!!el("calGita").querySelector(".di-gita")} scelto «${tinted("2027-01-20")}» martedì «${tinted("2027-01-12")}»`);
   await click("2027-01-12");
   test("martedi", daForm().event_date === "2027-01-12" && card()?.getAttribute("style")?.includes("#5B2A86"), `${daForm().event_date} ${card()?.getAttribute("style")}`);
   await click("2027-01-12");
@@ -59,7 +70,8 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     && /date/.test(el("senzaAnteprima").textContent), `${fields()} spenti ${off()} «${el("senzaAnteprima").textContent}»`);
   await click("2026-12-13");
   test("weekendPeriodo", daForm().event_date === "2026-12-11" && daForm().end_date === "2026-12-13" && day("2026-12-12")?.classList.contains("nel-periodo")
-    && /11–13/.test(card()?.textContent || "") && !off(), `${daForm().event_date} ${daForm().end_date} ${card()?.textContent.replace(/\s+/g, " ")}`);
+    && /11–13/.test(card()?.textContent || "") && !off() && ["2026-12-11", "2026-12-12", "2026-12-13"].every((d) => tinted(d).includes("BACKGROUND:#5B2A86")), `${daForm().event_date} ${daForm().end_date} ${card()?.textContent.replace(/\s+/g, " ")}`);
+  test("testataPeriodo", /da venerdì 11 a domenica 13 dicembre/.test(el("occhielloPost").textContent), el("occhielloPost").textContent);
   await click("2026-12-05");
   test("weekendDaCapo", daForm().event_date === "2026-12-05" && daForm().end_date === null && off(), `${daForm().event_date} ${daForm().end_date}`);
   await click("2026-12-06");

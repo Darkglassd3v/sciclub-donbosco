@@ -22,8 +22,9 @@
      * i post divisi per mese. */
     .nuovo-post > summary { list-style: none; width: 100%; box-sizing: border-box; }
     .nuovo-post > summary::-webkit-details-marker { display: none; }
-    .menu-nuovo { display: grid; gap: 8px; margin-top: 10px; }
-    .menu-nuovo .button { justify-content: flex-start; }
+    .menu-nuovo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 10px; }
+    /* Un tipo lungo («Weekend e settimane bianche») va a capo dentro la colonna invece di uscire sopra il form. */
+    .menu-nuovo .button { justify-content: flex-start; white-space: normal; height: auto; min-height: 44px; text-align: left; }
     .vista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; margin: 14px 0 4px;
       border: 2px solid var(--filo); border-radius: var(--pillola); }
     .vista button { min-height: 44px; border: 0; border-radius: var(--pillola); background: none; color: var(--blu);
@@ -153,9 +154,7 @@
     .cal-gita .nome-giorno { text-align: center; font-weight: 600; color: var(--testo-soft); }
     .cal-gita .griglia button { position: relative; aspect-ratio: 1; border: 1px solid var(--filo); border-radius: 8px;
       background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
-    .cal-gita .griglia button.di-gita { border-color: transparent; font-weight: 800; }
-    /* I giorni fra il primo e l'ultimo di un weekend. */
-    .cal-gita .griglia button.nel-periodo { box-shadow: inset 0 0 0 3px #14202E; }
+    .cal-gita .griglia button:is(.di-gita, .colorato) { border-color: transparent; font-weight: 800; }
     .cal-gita .griglia button[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #14202E; z-index: 1; }
     .cal-gita .occupato { position: absolute; bottom: 4px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: currentColor; }
     .cal-gita .esito { margin-top: 12px; font-weight: 600; }
@@ -1332,7 +1331,9 @@
 
   /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
   function updateHeader() {
-    const p = { ...daForm(), published_at: isOpen && isOpen.published_at }, when = longDate(p.event_date);
+    const p = { ...daForm(), published_at: isOpen && isOpen.published_at };
+    // Il weekend dice il periodo («da venerdì 11 a domenica 13 dicembre»), gli altri il giorno.
+    const when = p.kind === "weekend" && p.event_date ? period(p.event_date, p.end_date) : longDate(p.event_date);
     el("occhielloPost").textContent = `${TYPE_NAMES[p.kind]}${when ? ` · ${when}` : ""}`;
     el("titoloEditor").textContent = nomePost(p) || NEW_NAMES[p.kind] || "Nuovo post";
     el("statoPost").innerHTML = state(p);
@@ -1799,7 +1800,7 @@
    */
   function drawTripCalendar() {
     // Anche eventi e weekend scelgono qui il giorno (2/11); il weekend il primo e l'ultimo (fFine).
-    const kind = el("fTipo").value, end = kind === "weekend" ? el("fFine").value : "";
+    const kind = el("fTipo").value, end = kind === "weekend" ? el("fFine").value : "", EVENT = categoryName("evento");
     const choice = el("fData").value, [a, m] = tripMonth.split("-").map(Number);
     const emptyOnes = (new Date(a, m - 1, 1).getDay() + 6) % 7, dayList = new Date(a, m, 0).getDate();
     const others = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (isOpen && isOpen.id))
@@ -1808,10 +1809,13 @@
     for (let n = 1; n <= dayList; n++) {
       const iso = `${tripMonth}-${String(n).padStart(2, "0")}`, cat = tripCategory(iso), already = others.get(iso);
       const C = categoryName(cat), ofTrip = cat !== "gita";
-      const nome = `${longDate(iso)}${ofTrip ? ", giorno di gita" : ""}${already ? `, c'è già la gita ${already}` : ""}`;
-      const between = end && iso > choice && iso < end;
-      cells.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === choice || iso === end}" aria-label="${esc(nome)}"
-        ${already ? `title="C'è già: ${esc(already)}"` : ""} class="${ofTrip ? "di-gita" : ""}${between ? " nel-periodo" : ""}" ${ofTrip ? `style="background:${C.c};color:${C.ink}"` : ""}>${n}${already ? '<span class="occupato"></span>' : ""}</button>`);
+      const nome = `${longDate(iso)}${ofTrip && kind === "gita" ? ", giorno di gita" : ""}${already ? `, c'è già la gita ${already}` : ""}`;
+      // Gita: i giorni di gita nel loro colore. Evento e weekend: i giorni di gita non contano, il giorno scelto
+      // (o il periodo) ha il colore degli eventi; il pallino segna comunque le gite già salvate.
+      const between = end && iso > choice && iso < end, chosen = iso === choice || iso === end;
+      const paint = kind === "gita" ? (ofTrip ? C : null) : chosen || between ? EVENT : null;
+      cells.push(`<button type="button" data-giorno="${iso}" aria-pressed="${chosen}" aria-label="${esc(nome)}"
+        ${already ? `title="C'è già: ${esc(already)}"` : ""} class="${kind === "gita" && ofTrip ? "di-gita" : paint ? "colorato" : ""}${between ? " nel-periodo" : ""}" ${paint ? `style="background:${paint.c};color:${paint.ink}"` : ""}>${n}${already ? '<span class="occupato"></span>' : ""}</button>`);
     }
     // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
     const outside = kind === "gita" && choice && tripCategory(choice) === "gita", already = others.get(choice);
@@ -1831,7 +1835,7 @@
       </div>
       <div class="griglia">${["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g) => `<span class="nome-giorno">${g}</span>`).join("")}${cells.join("")}</div>
       <p class="esito ${outside ? "fuori" : ""}">${esc(outcome)}${already ? ` <span style="color:var(--errore)">Attenzione: c'è già la gita ${esc(already)}.</span>` : ""}</p>
-      <div class="legenda">${WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("")}
+      <div class="legenda">${kind === "gita" ? WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("") : eventSample()}
         <a href="#giorni">Modifica giorni e colori</a></div>`;
   }
 
