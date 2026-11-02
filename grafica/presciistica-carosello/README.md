@@ -1,15 +1,17 @@
 # Carosello della ginnastica presciistica
 
-Quattro pagine 1080×1350 per Instagram e Facebook, da pubblicare in quest'ordine:
-`presciistica-1.jpg` (ogni mercoledì), `presciistica-2.jpg` (fino al 13 gennaio),
-`presciistica-3.jpg` (riservata ai soci) e `presciistica-4.jpg` (novità in arrivo: seguici). Le prime
-tre hanno in basso a destra la linguetta «Scorri» con le frecce.
+Tre pagine 1080×1350 per Instagram e Facebook, da pubblicare in quest'ordine:
 
-Le pagine sono disegnate con le funzioni del generatore dei post (`web/social-templates.js`), nella
-grafica K · Piani del post pubblicato su Facebook il 16/10/2026, con la stessa foto tagliata in tre
-punti; solo l'ultima pagina usa la foto della montagna. La tessera dice «ogni mercoledì» invece della
-data di inizio, perché il carosello ricorda l'appuntamento di tutte le settimane. Per rifare le
-immagini: `sorgenti/rendi.sh`.
+1. `presciistica-1.jpg`: la copertina, con il logo del post «Don Bosco mode: on» su fondo blu, la scritta
+   «Novità» e la freccia gialla che invita a scorrere.
+2. `presciistica-2.jpg`: l'attività riservata ai soci, disegnata con le funzioni del generatore dei post
+   (`web/social-templates.js`) nella grafica K · Piani del post pubblicato su Facebook il 16/10/2026.
+   La tessera dice «ogni mercoledì» invece della data di inizio; in basso a destra c'è la linguetta «Scorri».
+3. `presciistica-3.jpg`: il finale, con le misure dell'outro del video della stagione
+   (`grafica/video-stagione/compositions/frames/05-seguici.html`), che ricorda di seguire il club per i
+   prossimi eventi. Il fondo è un fotogramma della clip Mixkit 3387 usata nel video.
+
+Per rifare le immagini: `sorgenti/rendi.sh`.
 
 ## Testo per Instagram
 
@@ -20,6 +22,6 @@ natalizio), alla Palestra Way Assauto di Asti.
 Attività riservata ai soci tesserati e assicurati. Iscrizioni in negozio o via mail:
 sciclubdonboscoasti@gmail.com
 
-Novità in arrivo: seguici per non perdere gite, eventi e avvisi! Il canale WhatsApp è nel link in bio.
+Seguici per non perdere i prossimi eventi! Il canale WhatsApp è nel link in bio.
 
 #sciclubdonbosco #sci #presciistica #asti
