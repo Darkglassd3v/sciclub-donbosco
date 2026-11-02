@@ -154,6 +154,8 @@
     .cal-gita .griglia button { position: relative; aspect-ratio: 1; border: 1px solid var(--filo); border-radius: 8px;
       background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
     .cal-gita .griglia button.di-gita { border-color: transparent; font-weight: 800; }
+    /* I giorni fra il primo e l'ultimo di un weekend. */
+    .cal-gita .griglia button.nel-periodo { box-shadow: inset 0 0 0 3px #14202E; }
     .cal-gita .griglia button[aria-pressed="true"] { box-shadow: 0 0 0 3px #fff, 0 0 0 6px #14202E; z-index: 1; }
     .cal-gita .occupato { position: absolute; bottom: 4px; left: 50%; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: currentColor; }
     .cal-gita .esito { margin-top: 12px; font-weight: 600; }
@@ -257,10 +259,9 @@
           <summary class="button is-link">+ Nuovo post</summary>
           <div class="menu-nuovo">
             <button type="button" class="button is-light" data-nuovo="gita">Gita</button>
-            <button type="button" class="button is-light" data-nuovo="corso">Corso</button>
-            <button type="button" class="button is-light" data-nuovo="cena">Cena o festa</button>
-            <button type="button" class="button is-light" data-nuovo="gara">Gara</button>
-            <button type="button" class="button is-light" data-nuovo="servizi">Servizi</button>
+            <!-- Corsi, cene, gare e servizi (prima quattro tipi con la stessa grafica) sono un tipo solo dal 2/11. -->
+            <button type="button" class="button is-light" data-nuovo="evento">Evento</button>
+            <button type="button" class="button is-light" data-nuovo="weekend">Weekend e settimane bianche</button>
           </div>
         </details>
         <button type="button" class="button is-link" id="btnNuovaCampagna" data-sezione="campagne" data-nuovo="sponsor">+ Nuova campagna</button>
@@ -298,7 +299,7 @@
               <h3 id="pCampi">Contenuto del post</h3>
               <p class="occhiello mb-2">I campi seguono l'ordine di lettura del post.</p>
               <div class="campi" id="campiPost">
-                <div data-campo="data" class="field" data-per="evento sponsor">
+                <div data-campo="data" class="field" data-per="sponsor">
                   <label class="label" for="fData">Data</label>
                   <input class="input" type="date" id="fData">
                 </div>
@@ -306,32 +307,31 @@
                   <label class="label" for="fOra">Ora</label>
                   <input class="input" id="fOra" placeholder="Es. 19:30">
                 </div>
-                <div data-campo="dove" class="field campo-largo" data-per="evento">
+                <div data-campo="dove" class="field campo-largo" data-per="evento weekend">
                   <label class="label" for="fDove">Luogo</label>
                   <input class="input" id="fDove" placeholder="Es. Palestra Way Assauto, Asti">
                 </div>
-                <div data-campo="giorno" class="field campo-largo" data-per="gita">
+                <div data-campo="giorno" class="field campo-largo" data-per="gita evento weekend">
                   <span class="label" id="lCalGita">Giorno della gita</span>
                   <div class="cal-gita" id="calGita" role="group" aria-labelledby="lCalGita"></div>
+                  <!-- L'ultimo giorno di un weekend: lo scrive il calendario, come fData il primo. -->
+                  <input type="hidden" id="fFine">
                 </div>
-                <div data-campo="scadenza" class="field" data-per="gita evento">
+                <div data-campo="scadenza" class="field" data-per="gita evento weekend">
                   <label class="label" for="fScadenza">Iscrizioni entro</label>
                   <input class="input" type="date" id="fScadenza">
                 </div>
                 <div data-campo="corso" class="field" data-per="gita">
                   <label class="spunta"><input type="checkbox" id="fCorso"> Corso previsto nello stesso giorno</label>
                 </div>
-                <!-- Il tipo si sceglie con "+ Nuovo post"; resta qui solo per gli
-                     eventi, che si possono spostare fra corso, cena, gara e servizi. -->
-                <div data-campo="tipo" class="field" data-per="evento">
-                  <label class="label" for="fTipo">Tipo di evento</label>
+                <!-- Il tipo si sceglie con "+ Nuovo post" e non cambia: il campo tiene solo il valore. -->
+                <div data-campo="tipo" class="field" data-per="nessuno">
+                  <label class="label" for="fTipo">Tipo di post</label>
                   <select class="input" id="fTipo">
-                    <option value="gita" hidden>Gita</option>
-                    <option value="corso">Corso</option>
-                    <option value="cena">Cena o festa</option>
-                    <option value="gara">Gara</option>
-                    <option value="servizi">Servizi</option>
-                    <option value="sponsor" hidden>Campagna sponsor</option>
+                    <option value="gita">Gita</option>
+                    <option value="evento">Evento</option>
+                    <option value="weekend">Weekend e settimane bianche</option>
+                    <option value="sponsor">Campagna sponsor</option>
                   </select>
                 </div>
                 <div data-campo="sponsor" class="field" data-per="sponsor">
@@ -342,12 +342,12 @@
                   <label class="label" for="fTitolo" id="lTitolo">Meta</label>
                   <textarea class="textarea" id="fTitolo" rows="1"></textarea>
                 </div>
-                <div data-campo="sottotesto" class="field campo-largo" data-per="gita evento sponsor">
+                <div data-campo="sottotesto" class="field campo-largo" data-per="gita evento weekend sponsor">
                   <!-- Più righe: gli a capo restano nel post, e un post può essere
                        fatto solo di sottotesto (senza titolo). -->
                   <label class="label" for="fSottotitolo" id="lSottotitolo">Sottotesto</label>
                   <textarea class="textarea" id="fSottotitolo" rows="4"></textarea>
-                  <div class="evidenzia" data-per="evento">
+                  <div class="evidenzia" data-per="evento weekend">
                     <button type="button" class="button is-small is-light" id="btnEvidenzia">Evidenzia</button>
                     <p class="help mt-0">Selezionare le parole e scegliere «Evidenzia»: nel post appaiono
                       evidenziate, qui sono racchiuse tra due asterischi. Per rimuovere
@@ -355,30 +355,22 @@
                   </div>
                 </div>
                 <!-- Gita o evento rimandato (29/10): timbro sulla data, gancio col motivo, nuova data nel post. -->
-                <div data-campo="rinvio" class="field campo-largo" data-per="gita evento">
-                  <label class="label" for="fRinvio">Rimandato</label>
-                  <select class="input" id="fRinvio">
-                    <option value="">No, si fa</option>
-                    <option value="neve">Sì, causa neve</option>
-                    <option value="maltempo">Sì, causa maltempo</option>
-                    <option value="altro">Sì, per un altro motivo</option>
-                  </select>
+                <!-- Due spunte (2/11): «per maltempo» vuol dire anche rimandato. -->
+                <div data-campo="rinvio" class="field campo-largo" data-per="gita evento weekend">
+                  <label class="spunta"><input type="checkbox" id="fRinvio"> Rimandato</label>
+                  <label class="spunta"><input type="checkbox" id="fMaltempo"> Rimandato per maltempo</label>
                   <div class="campi mt-2" id="dettagliRinvio" hidden>
-                    <div class="field" id="campoMotivo" hidden>
-                      <label class="label" for="fRinvioMotivo">Motivo (come si legge nel post)</label>
-                      <input class="input" id="fRinvioMotivo" placeholder="Es. per lo sciopero dei pullman">
-                    </div>
                     <div class="field">
                       <label class="label" for="fRinvioData">Nuova data (vuota: da definire)</label>
                       <input class="input" type="date" id="fRinvioData">
                     </div>
                   </div>
                 </div>
-                <div data-campo="gancio" class="field campo-largo" data-per="gita evento" id="campoGancio">
+                <div data-campo="gancio" class="field campo-largo" data-per="gita evento weekend" id="campoGancio">
                   <label class="label" for="fGancio">Frase di apertura (riga gialla sopra il titolo)</label>
                   <input class="input" id="fGancio" placeholder="Es. Tutti in pista!">
                 </div>
-                <div data-campo="bollino" class="field" data-per="gita evento">
+                <div data-campo="bollino" class="field" data-per="gita evento weekend">
                   <label class="label" for="fBollino">Bollino della copertina del carosello</label>
                   <input class="input" id="fBollino" maxlength="30" placeholder="Novità">
                 </div>
@@ -405,10 +397,10 @@
               </div>
             </section>
 
-            <section class="parte" aria-labelledby="pFondo" data-per="gita evento sponsor">
+            <section class="parte" aria-labelledby="pFondo" data-per="gita evento weekend sponsor">
               <h3 id="pFondo">Contatti e foto</h3>
               <div class="campi">
-                <div class="field campo-largo" data-per="gita evento">
+                <div class="field campo-largo" data-per="gita evento weekend">
                   <span class="label" id="lContatti">Contatti in fondo al post</span>
                   <div class="scelta-contatti" id="fContatti" role="group" aria-labelledby="lContatti"></div>
                   <a class="button is-small is-light mt-2" href="#contatti">Gestisci i contatti</a>
@@ -568,8 +560,8 @@
         <a class="button is-light" href="#contatti">Modifica la rubrica</a>
       </section>
       <section class="riquadro riassunto" style="--colore:#B3261E" aria-labelledby="rGiorni">
-        <h2 id="rGiorni">Giorni e colori delle gite</h2>
-        <p class="occhiello">Il giorno della gita ne determina il colore nei post e nel calendario.</p>
+        <h2 id="rGiorni">Giorni e colori</h2>
+        <p class="occhiello">Il giorno della gita ne determina il colore nei post e nel calendario; eventi e weekend hanno un colore loro.</p>
         <div class="legenda mt-0" id="riassuntoGiorni"></div>
         <p class="help mt-0">Le gite in altri giorni usano il blu del club.</p>
         <a class="button is-light" href="#giorni">Modifica giorni e colori</a>
@@ -628,13 +620,19 @@
 
     <div class="riquadro" id="giorniGita" data-modulo="giorni" hidden>
       <a class="indietro" href="#impostazioni">← Tutte le impostazioni</a>
-      <h2>Giorni e colori delle gite</h2>
+      <h2>Giorni e colori</h2>
       <p class="occhiello">
         Il giorno della settimana determina il colore della gita nei post e nel
         calendario del mese. Durante l'inserimento di una gita il calendario evidenzia
-        questi giorni; è comunque possibile scegliere un giorno diverso.
+        questi giorni; è comunque possibile scegliere un giorno diverso. Eventi e weekend
+        hanno un colore loro, lo stesso qualunque sia il giorno.
       </p>
       <div id="righeGiorni"></div>
+      <div class="riga-giorno">
+        <span class="spunta">Eventi e weekend</span>
+        <input class="input" type="color" id="coloreEventi" aria-label="Colore degli eventi e dei weekend">
+        <span id="campioneEventi"></span>
+      </div>
       <p class="avviso-contrasto mt-2" id="avvisoGiorni" hidden></p>
       <div class="azioni-post">
         <button type="button" class="button is-link" id="btnSalvaGiorni">Salva giorni e colori</button>
@@ -773,8 +771,8 @@
       `<li><span class="chi"><b>${esc(c.name)}</b><small>${esc(c.phone)}${c.hours ? ` · ${esc(c.hours)}` : ""}</small></span>
         ${c.is_default ? '<span class="stato pronto">Proposto</span>' : ""}</li>`).join("")
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
-    el("riassuntoGiorni").innerHTML = WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("")
-      || '<span class="occhiello mb-0">Nessun giorno di gita.</span>';
+    el("riassuntoGiorni").innerHTML = (WEEK.filter((g) => TRIP_COLORS[g]).map((g) => sample(g)).join("")
+      || '<span class="occhiello mb-0">Nessun giorno di gita.</span>') + eventSample();
   }
 
   // ---------------------------------------------------------------------
@@ -785,7 +783,7 @@
   // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
     + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,"
-    + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to,carousel_badge";
+    + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to,carousel_badge,end_date";
 
   async function loadPosts() {
     const { data, error } = await sb.from("social_events").select(LIST_COLUMNS)
@@ -814,9 +812,12 @@
 
   /** I giorni di gita e i loro colori (trip_days): senza, restano quelli di sempre. */
   async function loadTripDays() {
-    const { data, error } = await sb.from("trip_days").select("weekday, color");
+    const [{ data, error }, setting] = await Promise.all([sb.from("trip_days").select("weekday, color"),
+      sb.from("social_settings").select("key, value").eq("key", "event_color")]);
     if (error) showToast("Giorni delle gite non caricati, in uso i colori predefiniti: " + errorMessage(error), "is-danger");
     else setTripColors(colorMap(data));
+    if (setting.error) showToast("Colore degli eventi non caricato, in uso quello predefinito: " + errorMessage(setting.error), "is-danger");
+    else if (setting.data && setting.data[0]) setEventColor(setting.data[0].value);
     openDays();
   }
   /** La rubrica dei contatti (social_contacts), da cui ogni post sceglie i suoi. */
@@ -972,7 +973,7 @@
   // Elenco
   // ---------------------------------------------------------------------
 
-  const TYPE_NAMES = { gita: "Gita", corso: "Corso", cena: "Cena o festa", gara: "Gara", servizi: "Servizi", sponsor: "Campagna" };
+  const TYPE_NAMES = { gita: "Gita", evento: "Evento", weekend: "Weekend e settimane bianche", sponsor: "Campagna" };
   let vista = "dafare";  // l'elenco mostra i post da fare o quelli già pubblicati
 
   /** Lo stato di un post, per l'elenco e la testata: pubblicato, pronto o da completare (missingItems()). */
@@ -1017,7 +1018,7 @@
   /** Una riga: il giorno (nel colore della gita), il titolo, il tipo e lo stato. */
   function listRow(p) {
     const d = dayOf(p.event_date);
-    const C = p.kind === "gita" && d ? categoryName(tripCategory(p.event_date)) : null;
+    const C = d && p.kind !== "sponsor" ? categoryName(categoryOf(p)) : null;
     const sponsor = p.kind === "sponsor" ? " · " + esc((sponsors.find((s) => s.id === p.sponsor_id) || {}).name || "") : "";
     return `<li><button type="button" data-id="${p.id}" ${isOpen && isOpen.id === p.id ? 'aria-current="true"' : ""}>
       <span class="giorno" ${C ? `style="background:${C.c};color:${C.ink}"` : ""}>${d
@@ -1031,7 +1032,7 @@
   // Form del post
   // ---------------------------------------------------------------------
 
-  const group = (typeName) => (typeName === "gita" || typeName === "sponsor" ? typeName : "evento");
+  const group = (typeName) => (["gita", "sponsor", "weekend"].includes(typeName) ? typeName : "evento");
 
   /** Righe modificabili (partenze, prezzi, informazioni): [[a, b], ...]. */
   const PLACEHOLDERS = { fFermate: ["6:30", "Luogo"], fPrezzi: ["Etichetta", "€ 25"], fInfo: ["Voce", "Valore"] };
@@ -1061,7 +1062,9 @@
       b.addEventListener("click", () => { vista = b.dataset.vista; drawList(); }));
     el("filtroSponsor").addEventListener("change", drawList);
     el("fTipo").addEventListener("change", () => { showFields(); changed(); });
-    el("fRinvio").addEventListener("change", showPostponed);
+    // «per maltempo» vuol dire anche rimandato; tolto «Rimandato», si toglie anche «per maltempo».
+    el("fRinvio").addEventListener("change", () => { oldReason = null; if (!el("fRinvio").checked) el("fMaltempo").checked = false; showPostponed(); });
+    el("fMaltempo").addEventListener("change", () => { oldReason = null; if (el("fMaltempo").checked) el("fRinvio").checked = true; showPostponed(); });
     document.querySelectorAll("[data-aggiungi]").forEach((b) =>
       b.addEventListener("click", () => { addRow(b.dataset.aggiungi); changed(); }));
     el("editor").addEventListener("input", (e) => {
@@ -1134,8 +1137,7 @@
     t.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
-  const NEW_NAMES = { gita: "Nuova gita", corso: "Nuovo corso", cena: "Nuova cena o festa", gara: "Nuova gara",
-                       servizi: "Nuovo post dei servizi", sponsor: "Nuova campagna sponsor" };
+  const NEW_NAMES = { gita: "Nuova gita", evento: "Nuovo evento", weekend: "Nuovo weekend o settimana bianca", sponsor: "Nuova campagna sponsor" };
 
   /** Il post aperto al posto del riquadro "scegli un post", o viceversa. */
   function showEditor(si) {
@@ -1191,7 +1193,7 @@
     if (!isOpen || !isOpen.id) return;
     const { id, created_at, updated_at, ...records } = isOpen;
     // L'immagine data dallo sponsor di solito si riusa; la foto di una gita no (cambia la meta).
-    doOpen({ ...records, event_date: null, deadline: null, photo: records.kind === "sponsor" ? records.photo : null, photo_x: null, photo_y: null, photo_zoom: null,
+    doOpen({ ...records, event_date: null, end_date: null, deadline: null, photo: records.kind === "sponsor" ? records.photo : null, photo_x: null, photo_y: null, photo_zoom: null,
       subtitle: records.kind === "gita" ? null : records.subtitle, published_at: null, caption: null, postponed_reason: null, postponed_to: null });
     if (isOpen.id) return;  // modifiche non salvate: doOpen() ha chiesto prima, la copia parte dopo
     showToast("Copia creata: selezionare il giorno, verificare la meta e salvare.");
@@ -1226,6 +1228,7 @@
     const typeName = post.kind || "gita";
     el("fTipo").value = typeName;
     el("fData").value = post.event_date || "";
+    el("fFine").value = post.end_date || "";
     el("fTitolo").value = post.title || "";
     el("fSottotitolo").value = post.subtitle || "";
     el("fGancio").value = post.hook || "";
@@ -1239,8 +1242,10 @@
     el("fDove").value = post.place || "";
     el("fCorso").checked = !!post.course;
     const reason = post.postponed_reason;
-    el("fRinvio").value = reason == null ? "" : ["neve", "maltempo"].includes(reason) ? reason : "altro";
-    el("fRinvioMotivo").value = el("fRinvio").value === "altro" ? reason : "";
+    el("fRinvio").checked = reason != null;
+    el("fMaltempo").checked = reason === "maltempo";
+    // Un motivo dei post di prima (neve, scritto a mano): resta finché non si toccano le spunte.
+    oldReason = reason && reason !== "maltempo" ? reason : null;
     el("fRinvioData").value = post.postponed_to || "";
     el("fMostraPrezzo").checked = post.show_price !== false;
     picture = post.photo || null;
@@ -1273,12 +1278,13 @@
   /* L'ordine dei campi è quello in cui si leggono nel post (vedi postK() in
    * social-templates.js): in alto la coccarda del corso a sinistra e la
    * tessera con data e ora a destra, poi gancio, titolo e i dati nei
-   * riquadrini. Il tipo di evento sta sempre in testa; in fondo il bollino, che sta solo nella
+   * riquadrini. In fondo il bollino, che sta solo nella
    * copertina del carosello. I campi si spostano davvero (non con CSS order), così anche il
    * tasto Tab li segue. */
   const FIELD_ORDER = {
     gita: ["corso", "giorno", "rinvio", "gancio", "titolo", "sottotesto", "partenze", "prezzi", "scadenza", "bollino"],
-    evento: ["tipo", "data", "ora", "rinvio", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza", "bollino"],
+    evento: ["giorno", "ora", "rinvio", "gancio", "titolo", "sottotesto", "dove", "info", "prezzi", "scadenza", "bollino"],
+    weekend: ["giorno", "rinvio", "gancio", "titolo", "sottotesto", "dove", "scadenza", "bollino"],
   };
   const SPONSOR_ORDER = ["sponsor", "titolo", "sottotesto", "cta", "data"];
 
@@ -1297,27 +1303,31 @@
     sortFields();
     document.querySelectorAll("#editor [data-per]").forEach((x) => { x.hidden = !x.dataset.per.split(" ").includes(g); });
     showPostponed();
-    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", sponsor: "Titolo, uguale in tutte le grafiche (ogni a capo inizia una riga; l'ultima ha il colore d'accento)" }[g];
+    el("lCalGita").textContent = { gita: "Giorno della gita", evento: "Giorno (facoltativo: un secondo clic lo toglie)",
+      weekend: "Primo e ultimo giorno" }[g] || "";
+    el("lTitolo").textContent = { gita: "Meta", evento: "Titolo", weekend: "Titolo", sponsor: "Titolo, uguale in tutte le grafiche (ogni a capo inizia una riga; l'ultima ha il colore d'accento)" }[g];
     el("lSottotitolo").textContent = g === "sponsor" ? "Testo, uguale in tutte le grafiche"
-      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)" : "Sottotesto (sono ammessi gli a capo)";
+      : g === "gita" ? "Nota in giallo sotto la meta (facoltativa, es. «Prova gratuita con i maestri»)"
+      : g === "weekend" ? "Dettagli essenziali (es. mezza pensione e skipass; sono ammessi gli a capo)" : "Sottotesto (sono ammessi gli a capo)";
     el("pFondo").textContent = g === "sponsor" ? "Immagine dello sponsor" : "Contatti e foto";
     el("lFoto").textContent = g === "sponsor" ? "Immagine data dallo sponsor (facoltativa)" : "Foto (facoltativa)";
     // La gita ha un prezzo solo (la quota soci): niente etichette in più.
     el("fPrezzi").classList.toggle("una-quota", g === "gita");
-    if (g !== "sponsor" && !el("fPrezzi").children.length) addRow("fPrezzi");
+    if ((g === "gita" || g === "evento") && !el("fPrezzi").children.length) addRow("fPrezzi");
     if (g === "sponsor" && !sponsors.length) showToast("Aggiungere prima uno sponsor in Impostazioni.", "is-warning");
   }
 
-  // Nuova data e motivo solo con un rinvio; il motivo scritto a mano solo con «altro».
+  // La nuova data solo con un rinvio.
   function showPostponed() {
-    el("dettagliRinvio").hidden = !el("fRinvio").value;
-    el("campoMotivo").hidden = el("fRinvio").value !== "altro";
+    el("dettagliRinvio").hidden = !el("fRinvio").checked;
   }
 
-  /** Il motivo del rinvio come si salva: null = si fa; neve, maltempo o il testo scritto (anche vuoto). */
+  let oldReason = null;  // il motivo di un post di prima (neve, scritto a mano), finché non si toccano le spunte
+
+  /** Il motivo del rinvio come si salva: null = si fa; maltempo; vuoto = senza motivo (o quello di prima). */
   function postponedReason() {
-    const choice = el("fRinvio").value;
-    return !choice ? null : choice === "altro" ? el("fRinvioMotivo").value.trim() : choice;
+    if (!el("fRinvio").checked) return null;
+    return el("fMaltempo").checked ? "maltempo" : oldReason || "";
   }
 
   /** Testata del post aperto, dal form com'è adesso: tipo e giorno, titolo, stato e cosa manca. */
@@ -1343,7 +1353,9 @@
       hook: g !== "sponsor" ? el("fGancio").value.trim() || null : null,
       // Vuoto = «Novità» (SOCIAL.bollino).
       carousel_badge: g !== "sponsor" ? el("fBollino").value.trim() || null : null,
-      prices: g === "sponsor" ? [] : priceMap,
+      // Il weekend non ha prezzi.
+      prices: g === "sponsor" || g === "weekend" ? [] : priceMap,
+      end_date: g === "weekend" ? el("fFine").value || null : null,
       show_price: el("fMostraPrezzo").checked,
       stops: g === "gita" ? rowsOf("fFermate") : [],
       // La partenza scritta sotto la data, per luogo (resta giusta se le righe cambiano ordine); vuota = la prima.
@@ -1351,7 +1363,7 @@
       facts: g === "evento" ? rowsOf("fInfo") : [],
       deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,
-      place: g === "evento" ? el("fDove").value.trim() || null : null,
+      place: g === "evento" || g === "weekend" ? el("fDove").value.trim() || null : null,
       course: g === "gita" && el("fCorso").checked,
       photo: picture,
       photo_x: g === "sponsor" || !picture ? null : photoX,
@@ -1360,7 +1372,7 @@
       sponsor_id: g === "sponsor" ? el("fSponsor").value || null : null,
       cta: g === "sponsor" ? el("fCta").value.trim() || null : null,
       postponed_reason: g === "sponsor" ? null : postponedReason(),
-      postponed_to: g !== "sponsor" && el("fRinvio").value ? el("fRinvioData").value || null : null,
+      postponed_to: g !== "sponsor" && el("fRinvio").checked ? el("fRinvioData").value || null : null,
       ...Object.fromEntries(Object.entries(AD_FIELDS).map(([id, column]) => [column, g === "sponsor" ? el(id).value.trim() || null : null])),
       contacts: g === "sponsor" ? [] : [...el("fContatti").querySelectorAll("input:checked")].map((i) => i.value),
       // Vuoto = testo automatico, rifatto dai dati a ogni apertura. Si salva
@@ -1527,6 +1539,7 @@
       return;
     }
     if (row.kind === "gita" && !row.event_date) { markError(el("fData"), "Selezionare il giorno della gita nel calendario: ne determina anche il colore."); return; }
+    if (row.kind === "weekend" && !(row.event_date && row.end_date)) { markError(el("fData"), "Selezionare nel calendario il primo e l'ultimo giorno."); return; }
     if (row.kind === "sponsor" && !row.sponsor_id) { markError(el("fSponsor"), "Selezionare lo sponsor."); return; }
     // Prezzi in euro interi o con i 50 centesimi («€ 12,50»; «€ 1.200» sono migliaia).
     const cents = (text) => [...text.matchAll(/\d[,.](\d{1,2})(?!\d)/g)].some(([, c]) => !["0", "00", "5", "50"].includes(c));
@@ -1642,7 +1655,7 @@
     const post = daForm(), dove = el("anteprime"), round = ++previewRound;
     for (const id of ["anteprime", "formati", "scarica"]) el(id).innerHTML = "";
     el("sbordaTutti").hidden = true;
-    if (post.kind === "gita") drawTripCalendar();
+    if (post.kind !== "sponsor") drawTripCalendar();
     el("btnTogliFoto").hidden = !picture;
     el("btnDuplica").hidden = !(isOpen && isOpen.id);
     // L'immagine dello sponsor non si sposta né si ingrandisce: resta intera.
@@ -1659,10 +1672,12 @@
     }
     if (post.kind === "sponsor") drawAdSheet(post, sp);
     const listItems = postFormats(post);
+    // Quello che manca per scaricare (le partenze no: una gita si può annunciare prima di saperle).
+    const missing = post.kind === "sponsor" ? [] : missingItems(post).filter((m) => m !== "le partenze");
     el("formati").hidden = listItems.length < 2;
-    el("senzaAnteprima").hidden = listItems.length > 0;
-    el("senzaAnteprima").textContent = { gita: "L'anteprima compare dopo l'inserimento di meta e giorno.",
-      sponsor: "Le anteprime compaiono dopo la scelta dello sponsor." }[post.kind] || "L'anteprima compare dopo l'inserimento del titolo.";
+    el("senzaAnteprima").hidden = listItems.length > 0 && !missing.length;
+    el("senzaAnteprima").textContent = !listItems.length ? "Le anteprime compaiono dopo la scelta dello sponsor."
+      : `Per scaricare le immagini manca: ${missing.join(", ")}.`;
     if (!listItems.length) return;
     format = Math.min(format, listItems.length - 1);
     const drawn = listItems.map((f, i) =>
@@ -1676,7 +1691,7 @@
     }));
     // Un pulsante per immagine: scaricarle tutte con uno solo fa chiedere al
     // browser il permesso per i download multipli, e quella domanda spaventa.
-    el("scarica").innerHTML = listItems.map((f) => `<button type="button" class="button is-link">${esc(f.scarica)}</button>`).join("");
+    el("scarica").innerHTML = listItems.map((f) => `<button type="button" class="button is-link"${missing.length ? " disabled" : ""}>${esc(f.scarica)}</button>`).join("");
     el("scarica").querySelectorAll("button").forEach((b, i) =>
       b.addEventListener("click", () => downloadPng(drawn[i].figura.querySelector(".cv"), listItems[i].file)));
     Promise.all(drawn.map((d) => d.sborda)).then((outcomes) => {
@@ -1694,7 +1709,7 @@
       return sp ? Object.entries(campaignFormats(post, sp, SEASON)).map(([keyName, f]) =>
         ({ ...f, scarica: `Scarica: ${f.breve}`, file: `${simple(sp.name)}-${simple(post.title).slice(0, 30) || "campagna"}-${keyName}.png` })) : [];
     }
-    if (!nomePost(post) || (post.kind === "gita" && (!post.title || !post.event_date))) return [];
+    // Dal 2/11 l'anteprima c'è sempre, anche vuota: sono i pulsanti per scaricare ad aspettare i dati (redraw()).
     const nomeFile = (fmt) => `${post.event_date || "post"}-${simple(nomePost(post)).slice(0, 30) || "sciclub"}-${fmt}.png`;
     return [
       { html: drawPost(postTemplate(post, "post")), ...postSizes(), nome: "Post", breve: "Post", scarica: "Scarica il post", file: nomeFile("post") },
@@ -1769,6 +1784,9 @@
   const WEEK = [1, 2, 3, 4, 5, 6, 0];  // da lunedì, come i calendari italiani
   let tripMonth = "";                        // "2027-01": il mese mostrato nel calendario della gita
 
+  /** «Eventi e weekend» nel loro colore (quello salvato, o `c` dal form non ancora salvato). */
+  const eventSample = (c = categoryName("evento").c) => `<span class="campione" style="background:${c};color:${inkColor(c)}">Eventi e weekend</span>`;
+
   /** "Martedì" nel suo colore (quello salvato, o `c` dal form non ancora salvato). */
   const sample = (g, c = TRIP_COLORS[g]) =>
     `<span class="campione" style="background:${c};color:${inkColor(c)}">${uppercase(DAYS[g])}</span>`;
@@ -1780,6 +1798,8 @@
    * già un'altra gita salvata. Scrive in fData, da cui il form legge la data.
    */
   function drawTripCalendar() {
+    // Anche eventi e weekend scelgono qui il giorno (2/11); il weekend il primo e l'ultimo (fFine).
+    const kind = el("fTipo").value, end = kind === "weekend" ? el("fFine").value : "";
     const choice = el("fData").value, [a, m] = tripMonth.split("-").map(Number);
     const emptyOnes = (new Date(a, m - 1, 1).getDay() + 6) % 7, dayList = new Date(a, m, 0).getDate();
     const others = new Map(posts.filter((p) => p.kind === "gita" && p.event_date && p.id !== (isOpen && isOpen.id))
@@ -1789,14 +1809,20 @@
       const iso = `${tripMonth}-${String(n).padStart(2, "0")}`, cat = tripCategory(iso), already = others.get(iso);
       const C = categoryName(cat), ofTrip = cat !== "gita";
       const nome = `${longDate(iso)}${ofTrip ? ", giorno di gita" : ""}${already ? `, c'è già la gita ${already}` : ""}`;
-      cells.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === choice}" aria-label="${esc(nome)}"
-        ${already ? `title="C'è già: ${esc(already)}"` : ""} ${ofTrip ? `class="di-gita" style="background:${C.c};color:${C.ink}"` : ""}>${n}${already ? '<span class="occupato"></span>' : ""}</button>`);
+      const between = end && iso > choice && iso < end;
+      cells.push(`<button type="button" data-giorno="${iso}" aria-pressed="${iso === choice || iso === end}" aria-label="${esc(nome)}"
+        ${already ? `title="C'è già: ${esc(already)}"` : ""} class="${ofTrip ? "di-gita" : ""}${between ? " nel-periodo" : ""}" ${ofTrip ? `style="background:${C.c};color:${C.ink}"` : ""}>${n}${already ? '<span class="occupato"></span>' : ""}</button>`);
     }
     // Sotto, a parole, il giorno scelto: in rosso se non è un giorno di gita.
-    const outside = choice && tripCategory(choice) === "gita", already = others.get(choice);
-    const outcome = !choice ? "Selezionare il giorno: quelli colorati sono i giorni di gita."
-      : outside ? `${longDate(choice)} non è un giorno di gita: il post userà il blu del club.`
-      : `✓ ${longDate(choice)}`;
+    const outside = kind === "gita" && choice && tripCategory(choice) === "gita", already = others.get(choice);
+    const nights = end ? Math.round((dayOf(end) - dayOf(choice)) / 864e5) : 0;
+    const outcome = {
+      gita: !choice ? "Selezionare il giorno: quelli colorati sono i giorni di gita."
+        : outside ? `${longDate(choice)} non è un giorno di gita: il post userà il blu del club.` : `✓ ${longDate(choice)}`,
+      evento: !choice ? "Nessun giorno: il post esce senza data. Quelli colorati sono i giorni di gita." : `✓ ${longDate(choice)}`,
+      weekend: !choice ? "Selezionare il primo giorno." : !end ? `Dal ${longDate(choice).toLowerCase()}: selezionare l'ultimo giorno.`
+        : `✓ ${uppercase(period(choice, end))}, ${nights} ${nights === 1 ? "notte" : "notti"}`,
+    }[kind];
     el("calGita").innerHTML = `
       <div class="testa">
         <button type="button" class="button is-light" data-mese="-1" aria-label="Mese prima">‹</button>
@@ -1817,7 +1843,12 @@
       tripMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       drawTripCalendar();
     } else {
-      el("fData").value = b.dataset.giorno;
+      const iso = b.dataset.giorno, kind = el("fTipo").value, start = el("fData").value;
+      // Weekend: il primo clic è il primo giorno, il secondo l'ultimo; un giorno prima del primo, o un clic
+      // dopo che il periodo è completo, ricomincia. Evento: un secondo clic sul giorno lo toglie.
+      if (kind === "weekend" && start && !el("fFine").value && iso > start) el("fFine").value = iso;
+      else if (kind === "weekend") { el("fData").value = iso; el("fFine").value = ""; }
+      else el("fData").value = kind === "evento" && start === iso ? "" : iso;
       changed();
     }
     // Il calendario è rifatto da capo: il fuoco torna sul pulsante premuto.
@@ -1831,6 +1862,7 @@
         <label class="spunta"><input type="checkbox" id="gg${g}"> ${uppercase(DAYS[g])}</label>
         <input class="input" type="color" id="gc${g}" aria-label="Colore delle gite: ${DAYS[g]}">
         <span id="gp${g}"></span></div>`).join("");
+    el("coloreEventi").addEventListener("input", updateDays);
     el("righeGiorni").addEventListener("input", (e) => {
       // Un giorno appena spuntato parte dal blu del club.
       if (e.target.type === "checkbox" && e.target.checked && !TRIP_COLORS[e.target.id.slice(2)]) el(`gc${e.target.id.slice(2)}`).value = "#084C8D";
@@ -1844,12 +1876,14 @@
       el(`gg${g}`).checked = !!TRIP_COLORS[g];
       el(`gc${g}`).value = TRIP_COLORS[g] || "#084C8D";
     }
-    savedDays = JSON.stringify(daysFromForm());
+    el("coloreEventi").value = categoryName("evento").c.toLowerCase();
+    savedDays = JSON.stringify([daysFromForm(), eventColorFromForm()]);
     updateDays();
   }
 
   const daysFromForm = () => WEEK.map((g) => ({ weekday: g, color: el(`gg${g}`).checked ? el(`gc${g}`).value.toUpperCase() : null }));
-  const changedDays = () => JSON.stringify(daysFromForm()) !== savedDays;
+  const eventColorFromForm = () => el("coloreEventi").value.toUpperCase();
+  const changedDays = () => JSON.stringify([daysFromForm(), eventColorFromForm()]) !== savedDays;
 
   /** Campioni accanto ai colori, avviso se la scritta non si legge, "Salva modifiche". */
   function updateDays() {
@@ -1859,6 +1893,9 @@
       el(`gp${g}`).innerHTML = color ? sample(g, color) : "";
       if (color && contrast(color, inkColor(color)) < 4.5) weak.push(DAYS[g]);
     }
+    const ev = eventColorFromForm();
+    el("campioneEventi").innerHTML = eventSample(ev);
+    if (contrast(ev, inkColor(ev)) < 4.5) weak.push("eventi e weekend");
     el("avvisoGiorni").hidden = !weak.length;
     el("avvisoGiorni").textContent = `Attenzione: sul colore di ${weak.join(", ")} il testo è poco leggibile. Scegliere un colore più scuro o più chiaro.`;
     const m = changedDays();
@@ -1867,18 +1904,21 @@
   }
 
   async function saveDays() {
-    const rows = daysFromForm();
+    const rows = daysFromForm(), eventColor = eventColorFromForm();
     setLoading(true);
     try {
       const { error } = await sb.from("trip_days").upsert(rows);
       if (error) throw error;
+      const saved = await sb.from("social_settings").upsert({ key: "event_color", value: eventColor });
+      if (saved.error) throw saved.error;
       setTripColors(colorMap(rows));
-      savedDays = JSON.stringify(rows);
+      setEventColor(eventColor);
+      savedDays = JSON.stringify([rows, eventColor]);
       updateDays();
       drawMonthCalendar();
       drawList();
       if (!el("editor").hidden) redraw();
-      showToast("Giorni e colori delle gite salvati.");
+      showToast("Giorni e colori salvati.");
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {

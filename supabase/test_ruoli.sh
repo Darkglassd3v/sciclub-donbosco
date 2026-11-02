@@ -501,32 +501,55 @@ do $$ begin
   exception when check_violation then null;
   end;
   -- La foto si sposta fra 0 e 100 (%); vuota va bene.
-  insert into public.social_events (kind, title, photo_x, photo_y) values ('corso', 'PROVA FOTO', 0, 100), ('corso', 'PROVA FOTO', null, 30);
+  insert into public.social_events (kind, title, photo_x, photo_y) values ('evento', 'PROVA FOTO', 0, 100), ('evento', 'PROVA FOTO', null, 30);
   begin
-    insert into public.social_events (kind, title, photo_x) values ('corso', 'FOTO FUORI', 150);
+    insert into public.social_events (kind, title, photo_x) values ('evento', 'FOTO FUORI', 150);
     raise exception 'ASSERZIONE: foto spostata oltre il 100%% accettata';
   exception when check_violation then null;
   end;
   begin
-    insert into public.social_events (kind, title, photo) values ('corso', 'FOTO CSS', 'data:image/jpeg;base64,AA' || chr(12) || ');outline:9px solid red');
+    insert into public.social_events (kind, title, photo) values ('evento', 'FOTO CSS', 'data:image/jpeg;base64,AA' || chr(12) || ');outline:9px solid red');
     raise exception 'ASSERZIONE: foto con CSS dopo il base64 accettata';
   exception when check_violation then null;
   end;
   begin
-    insert into public.social_events (kind, title, photo) values ('corso', 'FOTO SVG', 'data:image/svg+xml;base64,PHN2Zy8+');
+    insert into public.social_events (kind, title, photo) values ('evento', 'FOTO SVG', 'data:image/svg+xml;base64,PHN2Zy8+');
     raise exception 'ASSERZIONE: foto SVG accettata';
   exception when check_violation then null;
   end;
-  insert into public.social_events (kind, title, photo) values ('corso', 'FOTO BUONA', 'data:image/jpeg;base64,/9j/4AA=');
+  insert into public.social_events (kind, title, photo) values ('evento', 'FOTO BUONA', 'data:image/jpeg;base64,/9j/4AA=');
   begin
-    insert into public.social_events (kind, title, photo_zoom) values ('corso', 'FOTO RIMPICCIOLITA', 90);
+    insert into public.social_events (kind, title, photo_zoom) values ('evento', 'FOTO RIMPICCIOLITA', 90);
     raise exception 'ASSERZIONE: foto più piccola del riquadro accettata';
+  exception when check_violation then null;
+  end;
+  -- Tipi dal 2/11: corsi, cene, gare e servizi sono evento; il weekend finisce dopo l'inizio; il colore degli eventi è esadecimale.
+  begin
+    insert into public.social_events (kind, title) values ('corso', 'TIPO VECCHIO');
+    raise exception 'ASSERZIONE: tipo vecchio (corso) accettato';
+  exception when check_violation then null;
+  end;
+  insert into public.social_events (kind, title, event_date, end_date) values ('weekend', 'WEEKEND', '2026-12-11', '2026-12-13');
+  begin
+    insert into public.social_events (kind, title, event_date, end_date) values ('weekend', 'WEEKEND AL CONTRARIO', '2026-12-13', '2026-12-11');
+    raise exception 'ASSERZIONE: weekend che finisce prima di cominciare accettato';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.social_events (kind, title, end_date) values ('weekend', 'WEEKEND SENZA INIZIO', '2026-12-13');
+    raise exception 'ASSERZIONE: weekend con la fine e senza l''inizio accettato';
+  exception when check_violation then null;
+  end;
+  assert (select value from public.social_settings where key = 'event_color') = '#147A45', 'manca il colore degli eventi di partenza';
+  begin
+    update public.social_settings set value = 'verde' where key = 'event_color';
+    raise exception 'ASSERZIONE: colore degli eventi non esadecimale accettato';
   exception when check_violation then null;
   end;
   -- Un contatto tolto dalla rubrica esce dai post che lo avevano, gli altri restano.
   insert into public.social_contacts (id, name, phone) values
     ('dddddddd-0000-0000-0000-000000000001', 'VIA', '1'), ('dddddddd-0000-0000-0000-000000000002', 'RESTA', '2');
-  insert into public.social_events (kind, title, contacts) values ('corso', 'PROVA CONTATTI',
+  insert into public.social_events (kind, title, contacts) values ('evento', 'PROVA CONTATTI',
     array['dddddddd-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000002']::uuid[]);
   delete from public.social_contacts where id = 'dddddddd-0000-0000-0000-000000000001';
   assert (select contacts from public.social_events where title = 'PROVA CONTATTI')

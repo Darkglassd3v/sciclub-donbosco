@@ -6,8 +6,9 @@
 // - Il weekend sceglie il primo e l'ultimo giorno; non ha prezzi, informazioni né ora.
 // - Gli eventi hanno un colore loro, salvato in Impostazioni (social_settings, event_color).
 // - L'anteprima c'è sempre; finché manca qualcosa i pulsanti per scaricare sono spenti e dicono cosa manca.
-const WRITES = [];
+const WRITES = [], REQ = [];
 FAKE.risposta = (t, r) => {
+  REQ.push([t, r.colonne]);
   const writing = r.filtri.find((f) => ["insert", "update", "upsert", "delete"].includes(f[0]));
   if (writing) { WRITES.push([t, writing[0], writing[1]]); return t === "social_events" ? { id: "P1", ...writing[1] } : []; }
   if (t === "social_settings") return [{ key: "event_color", value: "#5B2A86" }];
@@ -15,8 +16,8 @@ FAKE.risposta = (t, r) => {
   if (t === "social_events") return r.colonne === "photo" ? [{ photo: null }] : [];
   return [];
 };
+const r = [];
 window.addEventListener("load", () => setTimeout(async () => { try {
-  const r = [];
   const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   const visible = (id) => !!el(id) && !el(id).closest("[hidden]");
@@ -26,6 +27,9 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const card = () => el("anteprime").querySelector(".cv .tessera");
   const off = () => [...el("scarica").querySelectorAll("button")].every((b) => b.disabled);
 
+  // L'elenco legge anche l'ultimo giorno: riaperto dall'elenco, un weekend non lo perde.
+  const list = REQ.find(([t, c]) => t === "social_events" && c && c.startsWith("id,"));
+  test("colonne", !!list && /(^|,)end_date(,|$)/.test(list[1]), list ? list[1].slice(-60) : "lista non letta");
   const types = [...document.querySelectorAll("[data-nuovo]")].filter((b) => b.dataset.nuovo !== "sponsor")
     .map((b) => `${b.dataset.nuovo}:${b.textContent.trim()}`).join(",");
   test("menu", types === "gita:Gita,evento:Evento,weekend:Weekend e settimane bianche", types);
@@ -48,6 +52,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await click("2027-01-12");
   test("senzaGiorno", daForm().event_date === null && !card() && !off(), `${daForm().event_date} tessera ${!!card()}`);
 
+  await click("2027-01-20");  // di nuovo com'era aperto: aprire il weekend non chiede di abbandonare le modifiche
   await doOpen({ kind: "weekend", title: "Dream Weekend al Sestriere", event_date: "2026-12-11", end_date: null, place: "Hotel Fronte Piste" });
   await wait(300);
   test("weekendCampi", fields() === "giorno,rinvio,gancio,titolo,sottotesto,dove,scadenza,bollino" && off()
@@ -75,4 +80,4 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("coloreSalvato", !!setting && JSON.stringify(setting[2]) === '{"key":"event_color","value":"#C2410C"}' && categoryName("evento").c === "#C2410C",
     setting ? JSON.stringify(setting[2]) : "non salvato");
   document.title = "RISULTATO " + r.join(" ");
-} catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 160)})`; } }, 800));
+} catch (e) { document.title = `RISULTATO ${r.join(" ")} eccezione=NO(${String(e?.message || e).slice(0, 160)})`; } }, 800));
