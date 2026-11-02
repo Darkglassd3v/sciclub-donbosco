@@ -17,9 +17,11 @@
     .pagina { position: relative; width: 1080px; height: 1350px; overflow: hidden; color: #fff; background: #084C8D; }
 
     /* Copertina: il logo del post «Don Bosco mode: on» a tutta larghezza; il suo cerchio ha lo stesso blu del fondo. */
-    #logo-grande { position: absolute; left: 0; top: -96px; width: 1080px; height: 1080px; }
-    #novita { position: absolute; left: 0; right: 0; top: 770px; text-align: center; font: 800 250px/.85 "Barlow Condensed", sans-serif; text-transform: uppercase; }
-    #freccia { position: absolute; left: 330px; top: 1040px; width: 420px; height: 150px; }
+    #logo-grande { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; }
+    #invito { position: absolute; left: 0; right: 0; top: 1085px; display: flex; justify-content: center; align-items: center; gap: 28px;
+      font: 800 104px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+    #invito b { font-weight: 800; color: #FCCF02; }
+    #freccia { width: 190px; height: 88px; }
 
     /* Invito a scorrere nel post: una linguetta gialla appesa al bordo destro, con l'angolo tagliato come la tessera. */
     .sk .scorri { position: absolute; right: 0; bottom: 40px; width: 240px; padding: 16px 30px 18px 44px; background: #FCCF02; color: #084C8D;
@@ -50,8 +52,8 @@
 
     const COVER = `<div class="pagina">
       <img id="logo-grande" src="../../../web/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti">
-      <div id="novita">Novità</div>
-      <svg id="freccia" viewBox="0 0 420 150" aria-hidden="true"><path d="M16 75H396M326 16l72 59-72 59" fill="none" stroke="#FCCF02" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div id="invito"><span>Novità?</span><b>Scorri</b>
+        <svg id="freccia" viewBox="0 0 190 88" aria-hidden="true"><path d="M10 44H176M132 10l46 34-46 34" fill="none" stroke="#FCCF02" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
     </div>`;
 
     // La tessera ha la stessa struttura di cardK(), con il «quando» che vale tutte le settimane.

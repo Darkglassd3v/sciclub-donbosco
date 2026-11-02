@@ -2,8 +2,8 @@
 
 Tre pagine 1080×1350 per Instagram e Facebook, da pubblicare in quest'ordine:
 
-1. `presciistica-1.jpg`: la copertina, con il logo del post «Don Bosco mode: on» su fondo blu, la scritta
-   «Novità» e la freccia gialla che invita a scorrere.
+1. `presciistica-1.jpg`: la copertina, con il logo del post «Don Bosco mode: on» al centro del fondo blu e,
+   sotto, «Novità? Scorri» con la freccia gialla.
 2. `presciistica-2.jpg`: l'attività riservata ai soci, disegnata con le funzioni del generatore dei post
    (`web/social-templates.js`) nella grafica K · Piani del post pubblicato su Facebook il 16/10/2026.
    La tessera dice «ogni mercoledì» invece della data di inizio; in basso a destra c'è la linguetta «Scorri».
