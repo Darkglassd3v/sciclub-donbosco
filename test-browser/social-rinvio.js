@@ -47,6 +47,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("soloMaltempo", el("fRinvio").checked && daForm().postponed_reason === "maltempo", `${el("fRinvio").checked} ${daForm().postponed_reason}`);
   tick("fMaltempo", false);
   test("senzaMaltempo", el("fRinvio").checked && daForm().postponed_reason === "", JSON.stringify(daForm().postponed_reason));
+  tick("fRinvio", false);  // il form torna com'era: riaprire un altro post non chiede di abbandonare le modifiche
 
   await doOpen(post({ id: "P1", postponed_reason: "maltempo", postponed_to: "2027-01-24" }));
   await wait(100);
