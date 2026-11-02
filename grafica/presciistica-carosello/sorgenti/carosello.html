@@ -1,0 +1,67 @@
+<!doctype html>
+<!-- Carosello della ginnastica presciistica per Instagram e Facebook, quattro pagine 1080×1350: disegnate
+     con le funzioni del generatore dei post (web/social-templates.js), la stessa grafica K · Piani del post
+     pubblicato il 16/10. Si sceglie la pagina con l'hash (#1…#4); le immagini le rifà rendi.sh. -->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Carosello presciistica</title>
+  <!-- Gli stessi fogli della pagina del generatore (web/social.html), così i testi hanno le stesse misure. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="../../../web/brand.css">
+  <link rel="stylesheet" href="../../font/barlow/barlow.css">
+  <style>
+    html, body { margin: 0; background: #000; overflow: hidden; }
+    /* Loghi ufficiali (Simple Icons 16.34.0) nei colori del marchio, su un tassello bianco, come nel video della stagione. */
+    .sk .fatti p.dove .tassello { flex: none; width: 1.3em; height: 1.3em; border-radius: .3em; background: #fff; display: grid; place-items: center; margin-right: .1em; }
+    .sk .fatti p.dove .tassello i { display: block; width: .9em; height: .9em; background: var(--c); -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
+    .sk .fatti.social { gap: 26px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <script src="../../../web/social-templates.js"></script>
+  <script>
+    SOCIAL.logoTondo = "../../../web/logo-ufficiale-blu-tondo.svg";
+    const PALESTRA = "foto-palestra.jpg";
+    const MONTAGNA = "../../proposte-post-social/sorgenti/foto/calendario-montagna.jpg";
+    const LUOGO = `<p class="dove">${icoPin}<span>Palestra Way Assauto, Asti</span></p>`;
+
+    // La tessera ha la stessa struttura di cardK(), con il «quando» che vale tutte le settimane.
+    const OGNI = `<div class="tessera"><b data-fit style="font-size:124px">ogni</b>
+      <span data-fit style="font-size:66px">mercoledì</span><em data-fit style="font-size:58px">ore 19:30</em></div>`;
+    const FINO = `<div class="tessera"><span data-fit style="font-size:54px">fino al</span><b>13</b>
+      <span data-fit style="font-size:66px">gennaio</span><em data-fit style="font-size:58px">ore 19:30</em></div>`;
+    const NOVITA = `<div class="tessera"><b data-fit style="font-size:124px">gite</b>
+      <span data-fit style="font-size:66px">eventi</span><em data-fit style="font-size:58px">avvisi</em></div>`;
+
+    // Gancio, titolo e dati con la stessa struttura di postK().
+    const text = (hook, title, rows, cls = "") => `<div class="testo" data-adatta=".6"><div class="gancio">${hook}</div>
+      <div class="tit" data-cede><div data-righe="2" style="--t:116px">${title}</div></div>
+      <div class="fatti ${cls}">${rows.join("")}</div></div>`;
+    const row = (t) => `<p>${highlight(t, false)}</p>`;
+    const social = (name, colour, label) => `<p class="dove"><span class="tassello"><i style="--c:${colour};--m:url(../../video-stagione/assets/social/${name}.svg)"></i></span><span>${label}</span></p>`;
+
+    const PAGES = [
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "50% 100%", zoom: 1.2 }, OGNI,
+        text("Alzati dal divano!", "Ginnastica Presciistica", [row("Ci vediamo *tutte le settimane*\nogni mercoledì alle *19:30*"), LUOGO]), enrolments()),
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "86% 100%", zoom: 1.2 }, FINO,
+        text("Tutte le settimane", "In forma<br>per la neve", [row("Tutti i mercoledì fino al *13 gennaio*\n(escluso periodo natalizio)"), LUOGO]), enrolments()),
+      () => bgK({ giallo: true, foto: PALESTRA, pos: "22% 100%", zoom: 1.2 }, OGNI,
+        text("Per partecipare", "Riservata<br>ai soci", [row("*Tesserati e assicurati* allo Sci Club\nDon Bosco Asti"), LUOGO]), enrolments()),
+      () => bgK({ giallo: true, foto: MONTAGNA, pos: "50% 40%" }, NOVITA,
+        text("Non perdere nessuna novità", "Seguici<br>sui social", [
+          social("instagram", "#E4405F", "@sciclubdonbosco_asti"),
+          social("facebook", "#0866FF", "Sci Club Don Bosco Asti"),
+          social("whatsapp", "#25D366", "Canale WhatsApp"),
+        ], "social"), ""),
+    ];
+
+    const page = Number(location.hash.slice(1)) || 1;
+    document.body.insertAdjacentHTML("afterbegin", PAGES[page - 1]());
+    document.fonts.ready.then(() => {
+      const overflow = fit(document.body);
+      if (overflow) console.error("testo troppo lungo nella pagina", page);
+    });
+  </script>
+</body>
+</html>
