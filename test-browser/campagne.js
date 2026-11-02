@@ -30,7 +30,7 @@ const base = { subtitle: null, hook: null, stops: [], prices: [], show_price: tr
   ad_text: null, ad_headline: null, ad_description: null, ad_cta: null };
 const POSTS = [
   { ...base, id: "G1", kind: "gita", event_date: "2026-12-13", title: "Sestriere", hook: "Gita a" },
-  { ...base, id: "E1", kind: "cena", event_date: "2026-12-20", title: "Cena sociale" },
+  { ...base, id: "E1", kind: "evento", event_date: "2026-12-20", title: "Cena sociale" },
   { ...base, id: "P1", kind: "sponsor", event_date: "2026-12-01", title: "Brindisi", sponsor_id: "S1" },
   { ...base, id: "P2", kind: "sponsor", event_date: "2026-11-01", title: "Vecchia", sponsor_id: "S2", published_at: "2026-11-02T10:00:00Z" },
   { ...base, id: "P3", kind: "sponsor", event_date: "2026-12-05", title: "Auto nuova", sponsor_id: "S2" },
