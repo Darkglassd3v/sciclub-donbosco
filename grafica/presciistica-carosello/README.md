@@ -9,19 +9,21 @@ Tre pagine 1080×1350 per Instagram e Facebook, da pubblicare in quest'ordine:
    La tessera dice «ogni mercoledì» invece della data di inizio; in basso a destra c'è la linguetta «Scorri».
 3. `presciistica-3.jpg`: il finale, con le misure dell'outro del video della stagione
    (`grafica/video-stagione/compositions/frames/05-seguici.html`), che ricorda di seguire il club per i
-   prossimi eventi. Il fondo è un fotogramma della clip Mixkit 3387 usata nel video.
+   prossimi eventi; sotto il canale WhatsApp ricorda che il link è nella bio. Il fondo è un fotogramma della clip Mixkit 3387 usata nel video.
 
 Per rifare le immagini: `sorgenti/rendi.sh`.
 
 ## Testo per Instagram
 
-Alzati dal divano! 💪
-Ginnastica presciistica tutti i mercoledì alle 19:30, fino al 13 gennaio (escluso il periodo
-natalizio), alla Palestra Way Assauto di Asti.
+Alzati dal divano! 💪❄️
 
-Attività riservata ai soci tesserati e assicurati. Iscrizioni in negozio o via mail:
-sciclubdonboscoasti@gmail.com
+Ginnastica presciistica ogni mercoledì alle 19:30, fino al 13 gennaio (escluso il periodo natalizio).
 
-Seguici per non perdere i prossimi eventi! Il canale WhatsApp è nel link in bio.
+📍 Palestra Way Assauto, Asti
+👥 Riservata ai soci tesserati e assicurati
+✉️ Iscrizioni in negozio o a sciclubdonboscoasti@gmail.com
 
-#sciclubdonbosco #sci #presciistica #asti
+🔗 Il link per seguire il canale WhatsApp «Sci Club Don Bosco Asti» è nella bio
+🔔 Attiva la campanella per non perdere i prossimi eventi!
+
+#sciclubdonbosco #asti #sci #presciistica #ginnastica
