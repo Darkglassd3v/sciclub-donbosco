@@ -13,6 +13,8 @@ FAKE.risposta = (t, r) => {
   REQ.push([t, r.colonne]);
   const writing = r.filtri.find((f) => ["insert", "update", "upsert", "delete"].includes(f[0]));
   if (writing) { WRITES.push([t, writing[0], writing[1]]); return { id: "P1", ...post({}) }; }
+  if (t === "social_contacts") return [{ id: "C1", name: "Cesare", phone: "348 517 1707", hours: null, is_default: false, position: 0 },
+    { id: "C2", name: "Domenico", phone: "389 579 4663", hours: "dopo le 18", is_default: false, position: 1 }];
   if (t === "sponsors") return [{ id: "S1", name: "Prova", level: "Sponsor", color_dark: "#14202E", color_light: "#FFFFFF", color_accent: "#FCCF02" }];
   if (t === "social_events") return r.colonne === "photo" ? [{ photo: null }] : [];
   return [];
@@ -41,6 +43,18 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     cover().slice(0, 80));
   test("file", postFormats(daForm())[4].file === "2027-01-17-sestriere-carosello-3.png", postFormats(daForm())[4].file);
   test("staDentro", el("sbordaTutti").hidden, el("sbordaTutti").textContent);
+
+  // Con i telefoni la riga delle iscrizioni arriva fino in fondo a destra: non deve finire sotto la linguetta.
+  await doOpen(post({ id: "P1", contacts: ["C1", "C2"] }));
+  await wait(800);
+  const page2 = el("anteprime").querySelectorAll(".cv")[3];
+  const tab = page2.querySelector(".scorri").getBoundingClientRect();
+  const crossing = [...page2.querySelectorAll(".isc span, .isc b, .isc div")].filter((x) => {
+    const b = x.getBoundingClientRect();
+    return b.right > tab.left && b.left < tab.right && b.bottom > tab.top && b.top < tab.bottom;
+  });
+  test("telefoniLiberi", !crossing.length, crossing.map((x) => x.textContent.slice(0, 30)).join(" | "));
+  test("telefoniStaDentro", el("sbordaTutti").hidden, el("sbordaTutti").textContent);
 
   type("");
   await wait(300);

@@ -535,6 +535,8 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .cv .scorri { position: absolute; right: 0; bottom: 40px; width: 250px; padding: 16px 24px 18px 36px; background: #B3261E; color: #fff; text-shadow: none;
       clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px); font-size: 54px; font-weight: 800; line-height: 1; letter-spacing: -.01em; }
     .cv .scorri svg { display: block; width: 190px; height: 56px; margin-top: 8px; }
+    /* Nel post del carosello le iscrizioni (con i telefoni arrivano al bordo destro) si fermano prima della linguetta. */
+    .cv.sk:has(> .scorri) .isc { padding-right: 210px; }
     /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino giallo inclinato. */
     .cv.carosello { background: #084C8D; color: #fff; }
     .carosello .car-logo { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; max-width: none; }
