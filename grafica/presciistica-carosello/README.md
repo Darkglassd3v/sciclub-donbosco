@@ -14,17 +14,6 @@ Tre pagine 1080×1350 per Instagram e Facebook, da pubblicare in quest'ordine:
 
 Per rifare le immagini: `sorgenti/rendi.sh`.
 
-## Testo per Instagram
+## Didascalia
 
-Alzati dal divano! 💪❄️
-
-Ginnastica presciistica ogni mercoledì alle 19:30, fino al 13 gennaio (escluso il periodo natalizio).
-
-📍 Palestra Way Assauto, Asti
-👥 Riservata ai soci tesserati e assicurati
-✉️ Iscrizioni in negozio o a sciclubdonboscoasti@gmail.com
-
-🔗 Il link per seguire il canale WhatsApp «Sci Club Don Bosco Asti» è nella bio
-🔔 Attiva la campanella per non perdere i prossimi eventi!
-
-#sciclubdonbosco #asti #sci #presciistica #ginnastica
+Il testo da incollare sotto il carosello, per Instagram e per Facebook, è in `didascalia.md`.
