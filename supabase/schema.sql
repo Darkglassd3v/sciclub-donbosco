@@ -3595,7 +3595,7 @@ alter table public.social_events add constraint social_events_end_date_valid
   check (end_date is null or (event_date is not null and end_date >= event_date));
 comment on column public.social_events.end_date is 'Weekend e settimane bianche: l''ultimo giorno (il primo è event_date). Vuoto per gli altri post.';
 
--- Carosello (2/11): la scritta del bollino giallo sulla copertina; vuota = «Novità».
+-- Carosello (2/11): la scritta del bollino sulla copertina; vuota = «Novità».
 alter table public.social_events add column if not exists carousel_badge text;
 alter table public.social_events drop constraint if exists social_events_carousel_badge_valid;
 alter table public.social_events add constraint social_events_carousel_badge_valid check (char_length(carousel_badge) <= 30);

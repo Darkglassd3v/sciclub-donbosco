@@ -517,10 +517,19 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.deepStrictEqual(lines.slice(-4), ["🔗 Canale WhatsApp «Sci Club Don Bosco Asti»: link in bio (su Facebook https://is.gd/sciclubdb_fb)",
     "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonbosco #sci"], lines.slice(-4).join(" | "));
   assert.ok(postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).includes("🔔 Attiva la campanella"), "gita senza l'invito al canale");
-  // Copertina e finale non dipendono dal post.
-  const trip = drawCarousel(postTemplate({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, "post"));
-  assert.strictEqual(trip[0], cover, "la copertina cambia col post");
-  assert.strictEqual(trip[2], outro, "il finale cambia col post");
+  // Il bollino ha il colore del post, come la tessera: gli eventi e i weekend il loro, le gite quello del giorno.
+  // Giallo e blu no: il giallo è già il suo, e il blu sparirebbe sul fondo blu della copertina (resta giallo).
+  const badge = (e) => drawCarousel(postTemplate(e, "post"))[0].match(/class="bollino"><span([^>]*)>/)[1];
+  const trip = (iso, title = "Sestriere") => ({ kind: "gita", title, event_date: iso });
+  assert.ok(badge(ev).includes("background:#147A45;color:#FFFFFF"), `evento: ${badge(ev)}`);
+  assert.ok(badge({ kind: "weekend", title: "W", event_date: "2026-12-11", end_date: "2026-12-13" }).includes("background:#147A45;color:#FFFFFF"), "weekend");
+  assert.ok(badge(trip("2027-01-12")).includes("background:#B3261E;color:#FFFFFF"), "gita di martedì");
+  assert.ok(!badge(trip("2027-01-17")).includes("background"), "gita di domenica: il giallo di sempre");
+  assert.ok(!badge(trip("2027-01-16")).includes("background"), "gita di sabato: blu su blu");
+  // Il resto della copertina e il finale non dipendono dal post.
+  const pagesOf = (e) => drawCarousel(postTemplate(e, "post"));
+  assert.strictEqual(pagesOf(trip("2027-01-17"))[0], pagesOf(trip("2027-01-24", "Pila"))[0], "la copertina cambia con la meta");
+  assert.strictEqual(pagesOf(trip("2027-01-17"))[2], outro, "il finale cambia col post");
 }
 
 // --- Tipi di post (2/11) ---------------------------------------------------------
