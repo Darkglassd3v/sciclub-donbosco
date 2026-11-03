@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Riepilogo — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261103logotondo">
+  <link rel="stylesheet" href="brand.css?v=20261103caricamento">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; align-items: center; justify-content: center; }
@@ -149,44 +149,44 @@
     <!-- I tesserati veri: anche chi è coperto da presciistica o agevolazione famiglia senza tessera
          (card_holder()); le tabelle sotto contano le voci col loro prezzo, senza doppioni. -->
     <p class="mb-2" id="totTesserati" hidden></p>
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tTess"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
   <section class="riquadro sezione gite">
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Presciistica</h2>
     <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tPresc"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
   <section class="riquadro sezione gite">
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Abbonamenti gite</h2>
     <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tAbb"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
   <section class="riquadro sezione gite">
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 4l8 15H2L9 8l3 5 2-9Z"/></svg>Corsi</h2>
     <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
   <section class="riquadro sezione pagamento solo-bilancio" hidden>
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Entrate extra</h2>
     <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
   <section class="riquadro sezione pagamento solo-bilancio" hidden>
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Uscite</h2>
     <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"></tbody></table></div>
+    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261029titolo"></script>
+<script src="shared.js?v=20261103caricamento"></script>
 <script>
   const el = (id) => document.getElementById(id);
 

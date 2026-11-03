@@ -556,6 +556,11 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
    schermo. Le voci della barra si mostrano da sé, coi permessi (più sotto). */
 [hidden]:not(.barra-voci [data-permesso]) { display: none !important; }
 
+/* «Caricamento…» (fetchWithWaiting() in shared.js): sopra la pagina, non sposta niente e non blocca i clic. */
+#caricamento { position: fixed; z-index: 9000; top: 76px; left: 50%; transform: translateX(-50%); padding: 6px 18px; border-radius: 999px;
+  background: var(--giallo); color: #084C8D; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); pointer-events: none; }
+@media print { #caricamento { display: none; } }
+
 /* Il filo di avanzamento vive dentro la barra, alto 3px e sempre presente:
  * segnala il caricamento senza coprire la pagina di bianco e senza spostare
  * di un pixel quello che c'è sotto. */

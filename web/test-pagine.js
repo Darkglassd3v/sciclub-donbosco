@@ -36,4 +36,25 @@ for (const f of file) {
   }
 }
 assert.deepStrictEqual(wrongOnes, [], "librerie dal CDN:\n  " + wrongOnes.join("\n  "));
+
+// Regola del sito (3/11): ogni elenco che si riempie all'apertura parte da «Caricamento…», mai vuoto o con «Nessun…»;
+// e tutte le richieste al database passano da fetchWithWaiting(), che mostra la scritta quando durano.
+const LISTS = {
+  "web/social.html": ["elencoPost", "riassuntoSponsor", "riassuntoContatti", "riassuntoGiorni"],
+  "web/admin.html": ["displayArea"],
+  "web/riepilogo.html": ["tTess", "tPresc", "tAbb", "tCorsi", "tEntrate", "tUscite"],
+  "web/gestione.html": ["storicoPermessi", "tabellaPermessi"],
+  "web/assicurazione.html": ["tipi", "elencoDa", "elencoListe"],
+  "web/bilancio.html": ["elencoMovimenti"],
+  "web/stagione.html": ["tabellaStagioni", "tabellaChiuse"],
+  "web/impostazioni.html": ["tabellaPrezzi", "tabellaAssicurazioni", "tabellaPartenze"],
+  "web/utenti.html": ["tabellaUtenti"],
+};
+for (const [page, ids] of Object.entries(LISTS)) {
+  const text = fs.readFileSync(path.join(root, page), "utf8");
+  for (const id of ids) assert.ok(new RegExp(`id="${id}"[^>]*>(?:\\s*<[^>]+>)*\\s*Caricamento…`).test(text), `${page}: #${id} non parte da «Caricamento…»`);
+}
+for (const f of ["web/shared.js", "ricerca/comune.js"])
+  assert.ok(/fetch: fetchWithWaiting/.test(fs.readFileSync(path.join(root, f), "utf8")), `${f}: le richieste non mostrano «Caricamento…»`);
+
 console.log("test-pagine: tutto a posto");

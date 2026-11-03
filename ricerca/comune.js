@@ -167,6 +167,31 @@ async function fetchRetryingFutureToken(input, init) {
   }
 }
 
+// Come in web/shared.js. Regola del sito (3/11/2026): ogni richiesta al database che dura più di 400 ms mostra la scritta
+// «Caricamento…»; più breve non si vede, per non far lampeggiare la pagina.
+let pendingRequests = 0, waitingTimer = null;
+function showWaiting(active) {
+  let label = document.getElementById("caricamento");
+  if (!label && !active) return;
+  if (!label) {
+    label = document.createElement("div");
+    label.id = "caricamento";
+    label.setAttribute("role", "status");
+    label.textContent = "Caricamento…";
+    document.body.append(label);
+  }
+  label.hidden = !active;
+}
+async function fetchWithWaiting(input, init) {
+  pendingRequests++;
+  waitingTimer ??= setTimeout(() => showWaiting(true), 400);
+  try {
+    return await fetchRetryingFutureToken(input, init);
+  } finally {
+    if (--pendingRequests === 0) { clearTimeout(waitingTimer); waitingTimer = null; showWaiting(false); }
+  }
+}
+
 /**
  * Senza sessione si va al login del gestionale, che è l'unico ingresso del
  * sito: dopo l'accesso riporta qui (?next=). Senza sessione non si vede
@@ -177,7 +202,7 @@ async function fetchRetryingFutureToken(input, init) {
  */
 async function protectPage(alPronto) {
   window.sb = window.supabase.createClient(
-    window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: fetchRetryingFutureToken } });
+    window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: fetchWithWaiting } });
 
   const thisPage = location.pathname.split("/").pop() || "index.html";
   const { data } = await sb.auth.getSession();

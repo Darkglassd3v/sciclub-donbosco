@@ -20,7 +20,32 @@ async function fetchRetryingFutureToken(input, init) {
   }
 }
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch: fetchRetryingFutureToken } });
+// Regola del sito (3/11/2026): ogni richiesta al database che dura più di 400 ms mostra la scritta
+// «Caricamento…»; più breve non si vede, per non far lampeggiare la pagina.
+let pendingRequests = 0, waitingTimer = null;
+function showWaiting(active) {
+  let label = document.getElementById("caricamento");
+  if (!label && !active) return;
+  if (!label) {
+    label = document.createElement("div");
+    label.id = "caricamento";
+    label.setAttribute("role", "status");
+    label.textContent = "Caricamento…";
+    document.body.append(label);
+  }
+  label.hidden = !active;
+}
+async function fetchWithWaiting(input, init) {
+  pendingRequests++;
+  waitingTimer ??= setTimeout(() => showWaiting(true), 400);
+  try {
+    return await fetchRetryingFutureToken(input, init);
+  } finally {
+    if (--pendingRequests === 0) { clearTimeout(waitingTimer); waitingTimer = null; showWaiting(false); }
+  }
+}
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch: fetchWithWaiting } });
 
 // ---------------------------------------------------------------------------
 // Autenticazione e permessi
@@ -225,6 +250,15 @@ function allowedCard(minRole, roleKey) {
  * che chi legge piano arrivasse in fondo, e il socio restava non salvato
  * senza che nessuno se ne accorgesse. Le conferme se ne vanno da sole.
  */
+const LIST_UNAVAILABLE = "Elenco non disponibile: ricaricare la pagina.";
+
+/** Dopo un errore gli elenchi ancora in attesa lo dicono, invece di restare per sempre su «Caricamento…». */
+function listsUnavailable() {
+  for (const x of document.querySelectorAll("body *")) {
+    if (!x.children.length && x.id !== "caricamento" && x.textContent.trim() === "Caricamento…") x.textContent = LIST_UNAVAILABLE;
+  }
+}
+
 function showToast(message, typeName = "is-success") {
   let toast = document.getElementById("statusToast");
   if (!toast) {
@@ -233,6 +267,7 @@ function showToast(message, typeName = "is-success") {
     document.body.appendChild(toast);
   }
   const err = typeName === "is-danger";
+  if (err) listsUnavailable();
   toast.textContent = message;
   toast.className = `notification ${typeName}`;
   toast.setAttribute("role", err ? "alert" : "status");
