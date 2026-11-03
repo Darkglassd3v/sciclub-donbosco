@@ -259,15 +259,15 @@ const icoTel = (px, col) => `<svg width="${px}" height="${px}" viewBox="0 0 24 2
  *   righe; oltre, o con una parola più larga della riga, scende (--t) fino a
  *   48 px. Con data-due (la meta) prima stringe su una riga fino a quel corpo,
  *   poi va a capo.
- * - [data-adatta] (la colonna del testo): se il contenuto non ci sta,
- *   scende tutto insieme (--s) fino al 92%, che non si nota e lascia tutto al
- *   suo posto. Se non basta, si torna al 100% e si prende lo spazio che resta
- *   vuoto ([data-cede]: la seconda riga riservata al titolo quando ne usa
- *   una); poi scende tutto insieme fino alla scala scritta nell'attributo, e
- *   i testi piccoli si fermano al corpo minimo (--min).
+ * - [data-adatta] (la colonna del testo): se il contenuto non ci sta, prima
+ *   si prende lo spazio che resta vuoto ([data-cede]: la seconda riga
+ *   riservata al titolo quando ne usa una), poi scende tutto insieme (--s)
+ *   fino alla scala scritta nell'attributo, e i testi piccoli si fermano al
+ *   corpo minimo (--min).
  *   Così "il testo parte sempre dallo stesso punto" vale per i post che ci
- *   stanno, e un post pieno non rimpicciolisce il testo per tenere vuoto lo
- *   spazio in alto. */
+ *   stanno, e più testo non fa mai crescere il titolo. Fino al 3/11 si
+ *   stringeva prima tutto fino al 92% tenendo la riga vuota: con una riga in
+ *   più nel sottotesto il titolo tornava grande («Sestriere» da 109 a 114 px). */
 function fit(root = document) {
   let overflows = false;
   root.querySelectorAll("[data-fit]").forEach((el) => {
@@ -294,15 +294,11 @@ function fit(root = document) {
     // 6 px di tolleranza: come nelle proposte, l'ultima riga può entrare un poco nel margine in fondo.
     const full = () => el.scrollHeight > el.clientHeight + 6;
     const scala = (v) => el.style.setProperty("--s", s = v);
-    while (full() && s > Math.max(min, .92)) scala(Math.round((s - .02) * 100) / 100);
-    if (full()) {
-      scala(1);
-      for (const c of el.closest(".cv").querySelectorAll("[data-cede]")) {
-        if (!full()) break;
-        c.style.minHeight = "0"; c.style.height = "auto";
-      }
+    for (const c of el.closest(".cv").querySelectorAll("[data-cede]")) {
+      if (!full()) break;
+      c.style.minHeight = "0"; c.style.height = "auto";
     }
-    while (full() && s > min) el.style.setProperty("--s", s = Math.round((s - .02) * 100) / 100);
+    while (full() && s > min) scala(Math.round((s - .02) * 100) / 100);
     if (full()) overflows = true;
   });
   return overflows;
