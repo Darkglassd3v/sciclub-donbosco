@@ -416,7 +416,7 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
     assert.ok(html.includes(`width:${f[k].w}px;height:${f[k].h}px`), `${k}: la tela non ha la sua misura`);
     assert.ok(html.includes(`src="${photoSrc}"`), `${k}: manca l'immagine dello sponsor`);
     assert.ok(/class="foto-sponsor"[^>]*object-fit:contain/.test(html), `${k}: l'immagine dello sponsor deve restare intera`);
-    assert.ok(html.includes(SOCIAL.logo) && html.includes('src="a.png"'), `${k}: mancano il logo del club o quello dello sponsor`);
+    assert.ok(/src="logo-ufficiale-(blu-)?tondo\.svg"/.test(html) && html.includes('src="a.png"'), `${k}: mancano il logo tondo del club o quello dello sponsor`);
     assert.ok(html.includes(SOCIAL.avvertenzaAlcol), `${k}: sponsor alcolico senza avvertenza`);
   }
   // Il testo del post (sottotesto) c'è nel post e nella story, come nel post Collab; resta testo.
@@ -586,6 +586,28 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   // un evento senza data non ha tessera (la data è facoltativa).
   for (const k of ["gita", "weekend"]) assert.ok(drawPost(postTemplate({ kind: k, title: "" }, "post")).includes('<div class="tessera vuota">'), k);
   assert.ok(!drawPost(postTemplate({ kind: "evento", title: "X" }, "post")).includes("tessera"), "tessera vuota in un evento senza data");
+}
+
+// --- Logo del club (3/11) ---------------------------------------------------------
+// Nelle grafiche solo il logo tondo ufficiale: blu sui fondi chiari e gialli, bianco con l'anello giallo su quelli scuri.
+{
+  const RECT = "trasparente-lettere", BLUE = 'src="logo-ufficiale-blu-tondo.svg"', WHITE = 'src="logo-ufficiale-tondo.svg"';
+  const sponsor = (accent, dark = "#14202E") => ({ id: "S", name: "Prova", level: "Oro", logo: "a.png", color_dark: dark, color_light: "#FFFFFF", color_accent: accent });
+  const campaign = { kind: "sponsor", title: "Prova", subtitle: "Testo", cta: "Scopri", sponsor_id: "S", photo: "data:image/jpeg;base64,AA" };
+  const formats = (sp) => campaignFormats(campaign, sp, "2026/27");
+  for (const accent of ["#E6AC34", "#FCCF02", "#084C8D", "#0B3D2E"])
+    for (const [k, { html }] of Object.entries(formats(sponsor(accent)))) assert.ok(!html.includes(RECT), `${accent} ${k}: logo rettangolare`);
+  assert.ok(!drawCover("Stagione", "sotto").includes(RECT) && drawCover("Stagione", "sotto").includes(BLUE), "copertina Facebook: logo tondo blu sul bianco");
+  // Sull'angolo nel colore d'accento: chiaro o giallo il blu, scuro il bianco (il blu sparirebbe).
+  assert.ok(formats(sponsor("#FCCF02")).foto.html.includes(BLUE) && !formats(sponsor("#FCCF02")).foto.html.includes(WHITE), "accento giallo: logo blu");
+  assert.ok(formats(sponsor("#084C8D")).foto.html.includes(WHITE) && !formats(sponsor("#084C8D")).foto.html.includes(BLUE), "accento blu: logo bianco");
+  // «Grazie» è sul fondo scuro dello sponsor; il Collab sulla fascia bianca.
+  assert.ok(formats(sponsor("#FCCF02", "#0B3D2E")).grazie.html.includes(WHITE), "fondo scuro: logo bianco");
+  assert.ok(formats(sponsor("#084C8D", "#0B3D2E")).collab.html.includes(BLUE), "fascia bianca: logo blu");
+  // E nemmeno nel resto delle grafiche.
+  const trip = { kind: "gita", title: "Sestriere", event_date: "2027-01-17" };
+  for (const html of [drawPost(postTemplate(trip, "post")), drawPost(postTemplate(trip, "story")), ...drawCarousel(postTemplate(trip, "post")), drawCalendar("Gennaio", [], "2027-01")])
+    assert.ok(!html.includes(RECT), "logo rettangolare in una grafica");
 }
 
 console.log("social: tutti i controlli passati");

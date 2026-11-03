@@ -169,9 +169,13 @@ I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 Il logo del sito è `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`): il logo
 **ufficiale** (`grafica/logo/logo-ufficiale.JPG`, con «Sci Club» e «ASTI») ricalcato
-in vettoriale senza il cielo, per fondo chiaro. Lo usano tutte le pagine, i post
-social e la scheda PDF del socio. Non si ricolora e non si deforma; se si ritrova
-il file originale del grafico, sostituisce questo (vedi `grafica/logo/README.md`).
+in vettoriale senza il cielo, per fondo chiaro. Lo usano le pagine e la scheda PDF del
+socio. Non si ricolora e non si deforma; se si ritrova il file originale del grafico,
+sostituisce questo (vedi `grafica/logo/README.md`).
+
+Nelle grafiche social (post, story, carosello, campagne degli sponsor, copertina Facebook) si usa
+**solo il logo tondo ufficiale**, mai quello rettangolare: `web/logo-ufficiale-blu-tondo.svg` sui fondi
+chiari e gialli, `web/logo-ufficiale-tondo.svg` (bianco con l'anello giallo) su quelli scuri.
 
 ### Clear Space
 
