@@ -363,7 +363,7 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   assert.match(withDark.collab.html, /data-righe="2" style="--t:150px;font-size:var\(--t\)"/, "titolo del collab che non si restringe");
   assert.ok(!/top:500px|top:700px/.test(withDark.collab.html), "testo o pulsante del collab ancora a un'altezza fissa");
   // Copertina: un logo largo (GIMAX, 4:1) alto 90 px entrava nel titolo; ora ha una larghezza massima.
-  assert.match(withDark.cover.html, /src="b\.png" style="height:90px;max-width:230px;object-fit:contain/, "logo della copertina senza larghezza massima");
+  assert.match(withDark.cover.html, /src="b\.png" style="height:70px;max-width:150px;object-fit:contain/, "logo della copertina senza larghezza massima");
   for (const { html } of Object.values(withoutLogo)) assert.ok(!html.includes(SOCIAL.avvertenzaAlcol), "avvertenza su uno sponsor non alcolico");
 }
 {
@@ -604,6 +604,20 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   // «Grazie» è sul fondo scuro dello sponsor; il Collab sulla fascia bianca.
   assert.ok(formats(sponsor("#FCCF02", "#0B3D2E")).grazie.html.includes(WHITE), "fondo scuro: logo bianco");
   assert.ok(formats(sponsor("#084C8D", "#0B3D2E")).collab.html.includes(BLUE), "fascia bianca: logo blu");
+  // In ogni formato di una campagna c'è sempre il logo tondo del club (3/11), anche nella story e nella copertina.
+  const round = /src="logo-ufficiale-(blu-)?tondo\.svg"/;
+  for (const sp of [sponsor("#FCCF02"), sponsor("#084C8D", "#0B3D2E"), { ...sponsor("#E4082C"), logo: null }])
+    for (const [k, { html }] of Object.entries(formats(sp))) assert.ok(round.test(html), `${sp.color_accent} ${k}: manca il logo tondo del club`);
+  // In ogni grafica del club, anche.
+  for (const e of [{ kind: "gita", title: "X", event_date: "2027-01-17" }, { kind: "evento", title: "X" }, { kind: "weekend", title: "X", event_date: "2026-12-11", end_date: "2026-12-13" }])
+    for (const html of [drawPost(postTemplate(e, "post")), drawPost(postTemplate(e, "story")), ...drawCarousel(postTemplate(e, "post"))])
+      assert.ok(round.test(html), `${e.kind}: manca il logo tondo del club`);
+  assert.ok(round.test(drawCalendar("Gennaio", [], "2027-01")) && round.test(drawCalendar("Gennaio", [], "2027-01", true)), "calendario senza logo tondo");
+  // E il logo rettangolare non lo usa più nessuna pagina del sito.
+  const fs = require("fs"), path = require("path");
+  for (const dir of [__dirname, path.join(__dirname, "..", "ricerca")])
+    for (const name of fs.readdirSync(dir).filter((n) => /\.(html|css|js)$/.test(n) && !n.startsWith("test-")))
+      assert.ok(!/logo-ufficiale-trasparente/.test(fs.readFileSync(path.join(dir, name), "utf8")), `${name}: usa il logo rettangolare`);
   // E nemmeno nel resto delle grafiche.
   const trip = { kind: "gita", title: "Sestriere", event_date: "2027-01-17" };
   for (const html of [drawPost(postTemplate(trip, "post")), drawPost(postTemplate(trip, "story")), ...drawCarousel(postTemplate(trip, "post")), drawCalendar("Gennaio", [], "2027-01")])

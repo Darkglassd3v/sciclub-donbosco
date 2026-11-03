@@ -2,7 +2,7 @@
 
 > Ultimo aggiornamento: 2026-09-10
 > Stato: Attivo
-> Fonte dei colori: il logo, `web/logo-ufficiale-trasparente-lettere-blu.svg`
+> Fonte dei colori: il logo, `web/logo-ufficiale-blu-tondo.svg`
 
 Il gestionale è usato dal direttivo, in buona parte non abituato alle interfacce
 dense. La leggibilità viene prima dell'estetica: testo grande, contrasto alto,
@@ -167,15 +167,11 @@ I titoli usano una spaziatura stretta (`letter-spacing: -.022em`).
 
 ## 3. Logo Usage
 
-Il logo del sito è `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`): il logo
-**ufficiale** (`grafica/logo/logo-ufficiale.JPG`, con «Sci Club» e «ASTI») ricalcato
-in vettoriale senza il cielo, per fondo chiaro. Lo usano le pagine e la scheda PDF del
-socio. Non si ricolora e non si deforma; se si ritrova il file originale del grafico,
-sostituisce questo (vedi `grafica/logo/README.md`).
-
-Nelle grafiche social (post, story, carosello, campagne degli sponsor, copertina Facebook) si usa
-**solo il logo tondo ufficiale**, mai quello rettangolare: `web/logo-ufficiale-blu-tondo.svg` sui fondi
-chiari e gialli, `web/logo-ufficiale-tondo.svg` (bianco con l'anello giallo) su quelli scuri.
+Ovunque, sul sito e nelle grafiche, si usa **solo il logo tondo ufficiale** (`grafica/logo/logo-ufficiale.JPG`,
+con «Sci Club» e «ASTI», ricalcato in vettoriale, nel suo cerchio): `web/logo-ufficiale-blu-tondo.svg` sui fondi
+chiari e gialli, `web/logo-ufficiale-tondo.svg` (bianco con l'anello giallo) su quelli scuri e nelle pagine col
+tema chiaro e scuro. Quello rettangolare a lettere blu non si usa più. Ogni post, story, carosello, campagna e
+copertina ha sempre il logo tondo del club. Non si ricolora e non si deforma (vedi `grafica/logo/README.md`).
 
 ### Clear Space
 
@@ -192,7 +188,7 @@ Spazio libero minimo attorno al logo = altezza della lettera «D» di «DON».
 ### Don'ts
 
 - Non ruotare, deformare, aggiungere ombre o contorni.
-- Non mettere il logo su fondo giallo o blu pieno: solo bianco o #F2F5F8.
+- Non mettere il logo tondo blu su fondo blu: lì va quello bianco con l'anello giallo.
 - Non usare il logo come icona ritagliata: per la favicon serve un file dedicato.
 
 ---

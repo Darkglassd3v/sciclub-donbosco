@@ -2,17 +2,17 @@
 
 Il logo è quello **ufficiale**: `logo-ufficiale.JPG` (728×468, scansione stampata col retino, su
 cielo blu), con «Sci Club» in alto a sinistra e «ASTI» in basso a destra. Il deploy copia solo
-`web/` e `ricerca/`: il sito usa ovunque una copia di `logo-ufficiale-trasparente-lettere-blu.svg` (barra, login,
-post social, scheda PDF del socio, icona della scheda in `ricerca/`). Se l'SVG qui cambia, va
-ricopiato in `web/` e in `ricerca/`.
+`web/` e `ricerca/`: il sito e le grafiche usano ovunque solo il logo tondo, `logo-ufficiale-blu-tondo.svg` e
+`logo-ufficiale-tondo.svg` (barra, accesso, post, campagne, scheda PDF del socio, icona della scheda in `ricerca/`),
+copiati in `web/`. Se un SVG qui cambia, va ricopiato in `web/`.
 
 | File | Cosa | Per |
 |---|---|---|
 | `logo-ufficiale.JPG` | l'originale, col cielo: lo storico, a bassa qualità | sorgente del ricalco: non si pubblica, non si ritocca |
-| `logo-ufficiale-trasparente-lettere-blu.svg` | l'ufficiale ricalcato in vettoriale, senza cielo, per fondo chiaro | sito, post, scheda PDF |
+| `logo-ufficiale-trasparente-lettere-blu.svg` | l'ufficiale ricalcato in vettoriale, senza cielo, per fondo chiaro | non si usa più (dal 3/11): base dei loghi tondi |
 | `logo-ufficiale.svg` | l'ufficiale ricalcato, su fondo blu, contorni bianchi | stampe, grafiche su blu |
-| `logo-ufficiale-blu-tondo.svg` | l'ufficiale blu nel cerchio, in vettoriale (copia in `web/`) | post e story, sull'angolo giallo |
-| `logo-ufficiale-tondo.svg` | cerchio bianco con l'anello giallo, lettere blu | cartello del canale WhatsApp, volantino |
+| `logo-ufficiale-blu-tondo.svg` | l'ufficiale blu nel cerchio, in vettoriale (copia in `web/`) | fondi chiari e gialli: post, story, carosello, scheda PDF |
+| `logo-ufficiale-tondo.svg` | cerchio bianco con l'anello giallo, lettere blu (copia in `web/`) | fondi scuri, barra e accesso del sito, campagne, cartello, volantino |
 | `logo-ufficiale-blu-tondo.png` | 1080×1080, cerchio blu, fuori trasparente | immagine del profilo |
 | `logo-ufficiale-bianco-tondo.png` | 1080×1080, cerchio bianco con filo blu e giallo, fuori trasparente | immagine del profilo |
 | `logo-ufficiale-blu-quadrato.png` | 1080×1080, quadrato blu (il logo sta nel cerchio) | profilo, post |

@@ -34,7 +34,7 @@ html.story { --fine: 850px; --angolo: 760px; --cuneo: 780px; --su: 250px; --giu:
 html.story .finestra.fondo { display: block; }
 .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
 
-.logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 16px 20px; border-radius: 20px; }
+.logo-box { position: absolute; left: 60px; top: calc(var(--su) + 56px); padding: 0; background: none; }
 .logo-box img { height: 140px; }
 
 /* La tessera del "quando": gialla, appesa al bordo alto, angolo tagliato a 45°. */
