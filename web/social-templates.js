@@ -207,6 +207,26 @@ function postponedOf(ev) {
     reason: /^(neve|maltempo)$/.test(reason) ? `causa ${reason}` : reason, newDate: longDate(ev.postponed_to) || "" };
 }
 
+/* Le righe che iniziano con «-» o «•» (3/11): un elenco col puntino giallo, il testo allineato anche quando va a capo. */
+const BULLET = /^\s*[-•–]\s+/;
+
+/** Il sottotesto di un evento come righe della K: i gruppi di righe col trattino diventano un elenco, il resto testo. */
+function subRows(text) {
+  const rows = [];
+  for (const line of String(text || "").trim().split("\n")) {
+    const last = rows[rows.length - 1];
+    if (BULLET.test(line)) {
+      const item = `<li><i class="punto"></i><span>${highlight(line.replace(BULLET, ""), false)}</span></li>`;
+      if (last && last.list) last.list.push(item); else rows.push({ list: [item] });
+    } else if (last && typeof last === "string") rows[rows.length - 1] = `${last}\n${line}`;
+    else if (line.trim() || rows.length) rows.push(line);
+  }
+  return rows.filter((r) => r.list || r.trim()).map((r) => (r.list ? { html: `<ul class="elenco">${r.list.join("")}</ul>` } : highlight(r.trim(), false)));
+}
+
+/** Nel testo del post le voci dell'elenco col puntino «•». */
+const bulletsAsDots = (text) => String(text).split("\n").map((l) => l.replace(BULLET, "• ")).join("\n");
+
 // «Gita rimandata causa neve», «Rimandato per lo sciopero»: il gancio del post e l'inizio del testo.
 const postponedHeadline = (p, trip) => `${trip ? `Gita ${p.word.toLowerCase()}` : p.word}${p.reason ? ` ${p.reason}` : ""}`;
 
@@ -475,7 +495,8 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
     /* Il periodo di un weekend («11–13»): più piccolo del giorno singolo, fit() lo stringe se non ci sta. */
     /* Senza padding: fit() guarda solo se il testo esce dal riquadro, e nel padding ci sarebbe finito («20–22» sul bordo). */
-    .sk .tessera b.periodo { padding: 0; letter-spacing: -.04em; margin: 22px 34px 18px 30px; }
+    /* .cv.sk davanti: la regola della story (.sk.story .tessera b) lo batteva e toglieva i margini ai lati. */
+    .cv.sk .tessera b.periodo { padding: 0; letter-spacing: -.04em; margin: 22px 34px 18px 30px; }
     /* La tessera di una gita o di un weekend senza data, solo nell'anteprima. */
     .sk .tessera.vuota { opacity: .55; }
     .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
@@ -498,6 +519,12 @@ const BLU = "#084C8D", YELLOW = "#FCCF02";
     .sk.story .tit { min-height: ${q(258)}; }
     .sk.story .fatti { margin-top: ${q(30)}; gap: ${q(12)}; }
     .sk.story .fatti p { font-size: ${z(56)}; }
+    /* L'elenco del sottotesto: il puntino giallo e il testo allineato anche quando va a capo (niente ::before,
+     * html-to-image non lo rende sicuro). */
+    .sk .fatti .elenco { list-style: none; margin: 0; padding: 0; font-size: ${z(50)}; font-weight: 500; line-height: 1.16; }
+    .sk.story .fatti .elenco { font-size: ${z(56)}; }
+    .sk .fatti .elenco li { display: flex; align-items: baseline; gap: .4em; }
+    .sk .fatti .elenco .punto { flex: none; width: .34em; height: .34em; border-radius: 50%; background: #FCCF02; transform: translateY(-.12em); }
     .sk.story .isc > div { font-size: ${z(44)}; }
     .sk.story .isc > div > b { font-size: ${z(54)}; }
     /* Il luogo dell'evento: una riga sua, grande, col segnaposto (era una riga come le altre). */
@@ -711,7 +738,7 @@ function postK(s, extra = "") {
     s.scadenza && !s.postponed && within(s.scadenza),
   ] : [
     later,
-    String(s.sub || "").trim() && highlight(String(s.sub).trim(), false),
+    ...subRows(s.sub),
     dove && { html: `<p class="dove">${icoPin}<span>${highlight(dove[1])}</span></p>` },
     // L'orario sta nella tessera; senza data (niente tessera) resta fra i dati.
     !s.iso && ora && factText(ora),
@@ -1049,6 +1076,12 @@ function period(a, b) {
   return `da ${DAYS[d.getDay()]} ${d.getDate()}${same ? "" : ` ${MONTHS[d.getMonth()]}`} a ${dayOfMonth(b)}`;
 }
 
+/** «, 2 notti» (o «, 1 notte») fra il primo e l'ultimo giorno; senza l'ultimo, niente. */
+function nightsText(a, b) {
+  const n = dayOf(b) ? Math.round((dayOf(b) - dayOf(a)) / 864e5) : 0;
+  return n > 0 ? `, ${n} ${n === 1 ? "notte" : "notti"}` : "";
+}
+
 /** Il testo da incollare sotto al post, proposto dalla pagina. */
 function postText(ev, sp, seasonValue) {
   const tel = contactsOf(ev).map((c) => `${c.name} ${c.phone}${c.hours ? ` (${c.hours})` : ""}`).join(" · ");
@@ -1079,12 +1112,14 @@ function postText(ev, sp, seasonValue) {
     if (ev.deadline && !p) rows.push(`Iscrizioni ${within(ev.deadline)}`);
   } else if (ev.kind === "weekend") {
     // Niente prezzi né altre informazioni: il periodo, il sottotesto, il luogo e la scadenza.
-    rows.push(p ? `${ev.title}${was}` : `🏔️ ${ev.title}${ev.event_date ? ` · ${period(ev.event_date, ev.end_date)}` : ""}`);
-    if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
+    // Le date su una riga loro, con la maiuscola e le notti: dopo il «·» in minuscolo non si capivano (3/11).
+    rows.push(p ? `${ev.title}${was}` : `🏔️ ${ev.title}`);
+    if (!p && ev.event_date) rows.push(`📅 ${uppercase(period(ev.event_date, ev.end_date))}${nightsText(ev.event_date, ev.end_date)}`);
+    if (ev.subtitle) rows.push(bulletsAsDots(withoutSigns(ev.subtitle)));
     for (const [k, v] of eventFacts({ place: ev.place, deadline: ev.deadline })) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   } else {
     rows.push(p ? `${ev.title}${was}` : `${ev.title}${ev.event_date ? ` · ${longDate(ev.event_date)}` : ""}`);
-    if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
+    if (ev.subtitle) rows.push(bulletsAsDots(withoutSigns(ev.subtitle)));
     if (quote) rows.push("", quote);
     for (const [k, v] of eventFacts(ev)) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   }

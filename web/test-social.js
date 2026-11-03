@@ -570,9 +570,11 @@ assert.ok(META_CTAS.includes("Scopri di più"));
     />sab–lun<\/span><b class="periodo"[^>]*>30–1<\/b>\s*<span[^>]*>gen–feb<\/span><em[^>]*>2 notti</);
   assert.match(drawPost(postTemplate({ ...wk, event_date: "2027-01-30", end_date: "2027-01-31" }, "post")), /<em[^>]*>1 notte</);
   const text = postText(wk);
-  assert.strictEqual(text.split("\n")[0], "🏔️ Dream Weekend al Sestriere · da venerdì 11 a domenica 13 dicembre", text.split("\n")[0]);
+  // Le date su una riga loro, con la maiuscola e le notti: dopo il «·» in minuscolo non si capivano (3/11).
+  assert.deepStrictEqual(text.split("\n").slice(0, 2), ["🏔️ Dream Weekend al Sestriere", "📅 Da venerdì 11 a domenica 13 dicembre, 2 notti"], text.split("\n").slice(0, 2).join(" | "));
   assert.ok(text.includes("Dove: Hotel Fronte Piste, Sestriere") && text.includes("Iscrizioni: entro martedì 1 dicembre") && !/€|Acconto/.test(text), text);
-  assert.match(postText({ ...wk, event_date: "2027-01-30", end_date: "2027-02-01" }), /da sabato 30 gennaio a lunedì 1 febbraio/);
+  assert.match(postText({ ...wk, event_date: "2027-01-30", end_date: "2027-02-01" }), /\n📅 Da sabato 30 gennaio a lunedì 1 febbraio, 2 notti\n/);
+  assert.match(postText({ ...wk, end_date: "2026-12-12" }), /\n📅 Da venerdì 11 a sabato 12 dicembre, 1 notte\n/);
   assert.strictEqual(postTemplate({ ...wk, postponed_reason: "maltempo" }, "post").postponed.word, "Rimandato");
   assert.deepStrictEqual(missingItems(wk), []);
   assert.deepStrictEqual(missingItems({ ...wk, end_date: null }), ["le date"]);
@@ -622,6 +624,28 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   const trip = { kind: "gita", title: "Sestriere", event_date: "2027-01-17" };
   for (const html of [drawPost(postTemplate(trip, "post")), drawPost(postTemplate(trip, "story")), ...drawCarousel(postTemplate(trip, "post")), drawCalendar("Gennaio", [], "2027-01")])
     assert.ok(!html.includes(RECT), "logo rettangolare in una grafica");
+}
+
+// --- Elenco puntato nel sottotesto (3/11) -------------------------------------------
+// Le righe che iniziano con «-» o «•» diventano un elenco con il puntino giallo; le altre restano testo.
+{
+  const wk = { kind: "weekend", title: "Sestriere", event_date: "2026-12-11", end_date: "2026-12-13",
+    subtitle: "- Mezza pensione in camera doppia\n- Con o senza *skipass Vialattea*\n• Prezzi ridotti per ragazzi\nInfo in negozio" };
+  for (const fmt of ["post", "story"]) {
+    const html = drawPost(postTemplate(wk, fmt));
+    const list = html.match(/<ul class="elenco">(.*?)<\/ul>/s);
+    assert.ok(list, `${fmt}: le righe col trattino non sono un elenco`);
+    assert.strictEqual((list[1].match(/<li>/g) || []).length, 3, `${fmt}: le voci dell'elenco`);
+    assert.ok(list[1].includes('<i class="punto"></i><span>Mezza pensione in camera doppia</span>'), `${fmt}: la voce col suo puntino`);
+    assert.ok(list[1].includes("Con o senza <b>skipass Vialattea</b>"), `${fmt}: l'evidenza dentro la voce`);
+    assert.ok(!/>\s*[-•] /.test(list[1]), `${fmt}: il trattino è rimasto nel testo`);
+    assert.ok(html.includes("<p>Info in negozio</p>"), `${fmt}: la riga senza trattino resta testo`);
+  }
+  // Senza trattini il sottotesto resta com'era, e i trattini in mezzo alla riga non contano.
+  const plain = { kind: "evento", title: "X", subtitle: "Ritrovo alle 8 - partenza alle 9\nSeconda riga" };
+  assert.ok(!drawPost(postTemplate(plain, "post")).includes("elenco") && drawPost(postTemplate(plain, "post")).includes("<p>Ritrovo alle 8 - partenza alle 9\nSeconda riga</p>"));
+  // Nel testo del post le voci prendono il puntino «•».
+  assert.ok(postText(wk).includes("• Mezza pensione in camera doppia\n• Con o senza skipass Vialattea\n• Prezzi ridotti per ragazzi"), postText(wk));
 }
 
 console.log("social: tutti i controlli passati");

@@ -668,7 +668,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261103caricamento"></script>
-<script src="social-templates.js?v=20261103adatta"></script>
+<script src="social-templates.js?v=20261103elenco"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -1340,7 +1340,7 @@
   function updateHeader() {
     const p = { ...daForm(), published_at: isOpen && isOpen.published_at };
     // Il weekend dice il periodo («da venerdì 11 a domenica 13 dicembre»), gli altri il giorno.
-    const when = p.kind === "weekend" && p.event_date ? period(p.event_date, p.end_date) : longDate(p.event_date);
+    const when = p.kind === "weekend" && p.event_date ? uppercase(period(p.event_date, p.end_date)) : longDate(p.event_date);
     el("occhielloPost").textContent = `${TYPE_NAMES[p.kind]}${when ? ` · ${when}` : ""}`;
     el("titoloEditor").textContent = nomePost(p) || NEW_NAMES[p.kind] || "Nuovo post";
     el("statoPost").innerHTML = state(p);
