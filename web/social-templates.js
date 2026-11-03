@@ -13,10 +13,11 @@
 // Colori del club da docs/brand-guidelines.md.
 
 const SOCIAL = {
-  // Relativo alla pagina che disegna.
-  logo: "logo-ufficiale-trasparente-lettere-blu.svg",
-  // Il logo ufficiale, blu, nel cerchio: quello dei post e delle story (newLogo()), sull'angolo giallo.
+  // Relativi alla pagina che disegna. Nelle grafiche solo il logo tondo ufficiale (regola dell'utente, 3/11).
+  // Il logo blu nel cerchio: quello dei post e delle story (newLogo()), sull'angolo giallo.
   logoTondo: "logo-ufficiale-blu-tondo.svg",
+  // Il logo bianco con l'anello giallo: sui fondi scuri, dove quello blu sparirebbe (clubLogo()).
+  logoTondoBianco: "logo-ufficiale-tondo.svg",
   // Rubrica dei contatti per info e iscrizioni: la tabella social_contacts,
   // che la pagina carica e passa a setContacts(). Ogni post sceglie i suoi
   // (ev.contacts, id in ordine): contactsOf().
@@ -807,7 +808,7 @@ function drawCover(titleText, below) {
     <div class="abs" style="left:96px;right:96px;top:28px;bottom:28px;background:#fff;border-radius:22px;overflow:hidden">
       <div class="abs" style="left:0;top:0;bottom:0;width:190px;overflow:hidden">${photo(190, 240)}</div>
       <div class="abs" style="left:190px;top:0;bottom:0;border-left:4px dashed #C7D0DA"></div>
-      <img class="logo abs" src="${SOCIAL.logo}" style="right:24px;top:20px;height:70px">
+      <div class="abs" style="right:24px;top:18px">${clubLogo(104, "#FFFFFF")}</div>
       <div class="abs" style="left:220px;right:24px;bottom:22px">
         <div class="t-dest" style="font-size:54px;color:#084C8D">${escS(titleText)}</div>
         <div style="font-size:17px;color:#5B6472;font-weight:600;margin-top:8px">${escS(below)}</div></div></div></div>`;
@@ -896,7 +897,8 @@ const lead = (M, seasonValue) => `${escS(M.livello.toUpperCase())} · STAGIONE $
  * cornice: nessun testo le sta sopra, perché molti sponsor vietano tagli e scritte. */
 const planes = (M, corner, wedge) => `<div class="abs" style="inset:0;background:${M.accento};opacity:.88;clip-path:polygon(${corner})"></div>
   <div class="abs" style="inset:0;background:${M.crinaleFronte};opacity:.9;clip-path:polygon(${wedge})"></div>`;
-const clubBox = (h) => `<div style="background:#fff;border-radius:${h * .23}px;padding:${h * .125}px ${h * .19}px"><img src="${SOCIAL.logo}" style="height:${h}px;display:block"></div>`;
+/* Il logo del club, largo `px`, su un fondo di colore `bg`: blu sui fondi chiari e gialli, bianco su quelli scuri. */
+const clubLogo = (px, bg) => `<img src="${captionOn(bg) === BLU ? SOCIAL.logoTondo : SOCIAL.logoTondoBianco}" alt="" style="width:${px}px;height:${px}px;display:block;border-radius:50%;box-shadow:0 6px 22px rgba(0,0,0,.35)">`;
 const sponsorPhoto = (src, box) => `<img class="foto-sponsor" src="${escS(src)}" alt="" style="position:absolute;${box};object-fit:contain;filter:drop-shadow(0 18px 40px rgba(0,0,0,.45))">`;
 const ctaPill = (M, text, px) => text ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:#fff;color:${M.scuro};border-radius:999px;font-weight:800;padding:.4em 1.1em;font-size:${px}px">${escS(text)} ${diamond(M.accento, .45)}</span>` : "";
 
@@ -913,7 +915,7 @@ function photoFormats(c, sp, seasonValue) {
   return {
     foto: { w: 1080, h: 1350, nome: "Post con l'immagine dello sponsor 4:5", breve: "Immagine", html: `<div class="cv" style="width:1080px;height:1350px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,50% 0,0 38%", "100% 52%,100% 100%,38% 100%")}
-      <div class="abs" style="left:60px;top:54px">${clubBox(96)}</div>
+      <div class="abs" style="left:60px;top:54px">${clubLogo(130, M.accento)}</div>
       ${leadRight(84, 28)}
       ${sponsorPhoto(c.photo, "left:70px;top:200px;width:940px;height:720px")}
       ${campaignTexts(c, M, "left:70px;right:400px;top:950px", 60, 34)}
@@ -924,7 +926,7 @@ function photoFormats(c, sp, seasonValue) {
     /* Story: in alto e in basso le zone coperte da Instagram (SAFE); al posto del pulsante, lo sticker link. */
     fotoStory: { w: 1080, h: 1920, nome: "Story con l'immagine e lo spazio per lo sticker link", breve: "Story immagine", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,58% 0,0 30%", "100% 62%,100% 100%,30% 100%")}
-      <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubBox(104)}</div>
+      <div class="abs" style="left:60px;top:${SAFE.top + 10}px">${clubLogo(150, M.accento)}</div>
       ${leadRight(SAFE.top + 50, 30)}
       ${sponsorPhoto(c.photo, `left:60px;top:${SAFE.top + 180}px;width:960px;height:700px`)}
       ${campaignTexts(c, M, "left:70px;right:70px;top:1170px", 72, 38)}
@@ -937,7 +939,7 @@ function photoFormats(c, sp, seasonValue) {
      * preferisce poco testo dentro l'immagine, il resto lo scrive lei sotto. */
     fotoQuadrata: { w: 1080, h: 1080, nome: "Quadrata 1:1 per le inserzioni Meta", breve: "Inserzione", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.scuro};color:${M.chiaro}">
       ${planes(M, "0 0,44% 0,0 36%", "100% 60%,100% 100%,40% 100%")}
-      <div class="abs" style="left:50px;top:44px">${clubBox(80)}</div>
+      <div class="abs" style="left:50px;top:44px">${clubLogo(100, M.accento)}</div>
       ${leadRight(64, 24)}
       ${sponsorPhoto(c.photo, "left:60px;top:160px;width:960px;height:600px")}
       ${campaignTexts(c, M, "left:60px;right:340px;top:790px", 50, 28)}
@@ -954,7 +956,7 @@ function campaignFormats(c, sp, seasonValue) {
   const withPhoto = c.photo ? photoFormats(c, sp, seasonValue) : {};
   const M = brand(sp);
   const signature = (k) => `<div style="display:flex;align-items:center;gap:${28 * k}px">
-    <img src="${SOCIAL.logo}" style="height:${96 * k}px;display:block">
+    ${clubLogo(120 * k, "#FFFFFF")}
     <span class="t-dest" style="font-size:${48 * k}px;color:${M.accento}">×</span>
     ${logoOnLight(M, 84 * k)}</div>`;
   const cta = c.cta ? `<span style="display:inline-flex;align-items:center;gap:.5em;background:${M.accento};color:${M.scuro};border-radius:999px;font-weight:800;padding:.45em 1.1em;font-size:40px">${escS(c.cta)} ${diamond(M.scuro, .45)}</span>` : "";
@@ -981,7 +983,7 @@ function campaignFormats(c, sp, seasonValue) {
     /* Post 1:1 per il carosello degli sponsor: i testi della campagna (non più «Grazie a chi ci
      * sostiene»), sul fondo scuro come le altre perché l'accento si legga; logo su una scheda bianca. */
     grazie: { w: 1080, h: 1080, nome: "Post 1:1 · carosello degli sponsor", breve: "Grazie", html: `<div class="cv" style="width:1080px;height:1080px;background:${M.scuro};color:${M.chiaro}">
-      <div class="abs" style="left:70px;top:60px">${clubBox(100)}</div>
+      <div class="abs" style="left:70px;top:60px">${clubLogo(150, M.scuro)}</div>
       <div class="abs" style="right:70px;top:94px;font-size:28px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
       ${campaignTexts(c, M, "left:70px;right:70px;top:250px", 96, 36)}
       <div class="abs" style="left:70px;right:70px;top:600px;height:240px;border-radius:28px;background:#fff;color:${M.scuro};display:flex;align-items:center;justify-content:center">${logoOnLight(M, 160)}</div>
