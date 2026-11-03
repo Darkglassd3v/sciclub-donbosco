@@ -515,7 +515,7 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   // su Instagram il link sta nella bio, su Facebook c'è il link breve che conta i clic.
   const lines = postText(ev).split("\n");
   assert.deepStrictEqual(lines.slice(-4), ["🔗 Canale WhatsApp «Sci Club Don Bosco Asti»: link in bio (su Facebook https://is.gd/sciclubdb_fb)",
-    "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonbosco #sci"], lines.slice(-4).join(" | "));
+    "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonbosco #sciclubdonboscoasti #asti #sciclub #sci"], lines.slice(-4).join(" | "));
   assert.ok(postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).includes("🔔 Attiva la campanella"), "gita senza l'invito al canale");
   // Il bollino ha il colore del post, come la tessera: gli eventi e i weekend il loro, le gite quello del giorno.
   // Giallo e blu no: il giallo è già il suo, e il blu sparirebbe sul fondo blu della copertina (resta giallo).
@@ -646,6 +646,28 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.ok(!drawPost(postTemplate(plain, "post")).includes("elenco") && drawPost(postTemplate(plain, "post")).includes("<p>Ritrovo alle 8 - partenza alle 9\nSeconda riga</p>"));
   // Nel testo del post le voci prendono il puntino «•».
   assert.ok(postText(wk).includes("• Mezza pensione in camera doppia\n• Con o senza skipass Vialattea\n• Prezzi ridotti per ragazzi"), postText(wk));
+}
+
+// --- Hashtag (3/11) -----------------------------------------------------------------
+// In ogni post quelli del club, quelli della località (nome, comprensorio, regione) e quelli del tipo di post.
+{
+  const tags = (ev) => postText(ev).trim().split("\n").pop().split(" ");
+  const check = (ev, wanted, what) => {
+    const t = tags(ev);
+    assert.deepStrictEqual(t.slice(0, 3), ["#sciclubdonbosco", "#sciclubdonboscoasti", "#asti"], `${what}: prima quelli del club`);
+    for (const w of wanted) assert.ok(t.includes(w), `${what}: manca ${w} in ${t.join(" ")}`);
+    assert.strictEqual(new Set(t).size, t.length, `${what}: hashtag ripetuti`);
+    assert.ok(t.length <= 15 && t.every((x) => /^#[a-z0-9]+$/.test(x)), `${what}: ${t.join(" ")}`);
+  };
+  check({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, ["#sestriere", "#vialattea", "#piemonte", "#sci", "#neve"], "Sestriere");
+  check({ kind: "gita", title: "Cervinia\nZermatt", event_date: "2027-01-17" }, ["#cervinia", "#matterhornskiparadise", "#zermatt", "#valledaosta"], "Cervinia");
+  check({ kind: "gita", title: "La Thuile", event_date: "2027-01-17" }, ["#lathuile", "#espacesanbernardo"], "La Thuile");
+  check({ kind: "gita", title: "Val di Fassa", event_date: "2027-01-17" }, ["#valdifassa", "#dolomiti"], "Val di Fassa");
+  check({ kind: "gita", title: "Alpe Devero", event_date: "2027-01-17" }, ["#alpedevero"], "meta senza hashtag suoi");
+  check({ kind: "weekend", title: "Dream Weekend", place: "*Hotel Fronte Piste, Sestriere*", event_date: "2026-12-11", end_date: "2026-12-13" },
+    ["#sestriere", "#vialattea", "#settimanabianca"], "weekend");
+  check({ kind: "evento", title: "Presentazione della stagione", place: "Way Assauto, Asti", event_date: "2026-11-25" }, ["#sciclub"], "evento");
+  assert.ok(!tags({ kind: "evento", title: "Cena", place: "Asti" }).includes("#vialattea"), "hashtag di una località in un evento ad Asti");
 }
 
 console.log("social: tutti i controlli passati");

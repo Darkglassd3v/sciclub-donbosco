@@ -1076,6 +1076,43 @@ function period(a, b) {
   return `da ${DAYS[d.getDay()]} ${d.getDate()}${same ? "" : ` ${MONTHS[d.getMonth()]}`} a ${dayOfMonth(b)}`;
 }
 
+/* Hashtag (3/11): prima quelli del club, poi quelli della località (nome, comprensorio, regione), poi quelli del
+ * tipo di post; al massimo 15. La località si cerca nella meta della gita, nel titolo e nel luogo. I nomi sono quelli
+ * più usati: le stazioni non pubblicano un elenco ufficiale. */
+const CLUB_TAGS = ["sciclubdonbosco", "sciclubdonboscoasti", "asti"];
+const KIND_TAGS = {
+  gita: ["sci", "sciare", "neve", "montagna", "skiing"],
+  weekend: ["settimanabianca", "weekendinmontagna", "sci", "neve", "montagna"],
+  evento: ["sciclub", "sci"],
+};
+const PLACE_TAGS = [
+  [/sestriere/, ["sestriere", "vialattea", "piemonte"]],
+  [/monginevro|montgenevre/, ["monginevro", "montgenevre", "vialattea"]],
+  [/sauze/, ["sauzedoulx", "vialattea", "piemonte"]],
+  [/bardonecchia/, ["bardonecchia", "piemonte"]],
+  [/cervinia/, ["cervinia", "breuilcervinia", "matterhornskiparadise", "valledaosta"]],
+  [/valtournenche/, ["valtournenche", "matterhornskiparadise", "valledaosta"]],
+  [/zermatt/, ["zermatt", "matterhorn"]],
+  [/courmayeur/, ["courmayeur", "montebianco", "valledaosta"]],
+  [/chamonix/, ["chamonix", "montblanc"]],
+  [/la thuile/, ["lathuile", "espacesanbernardo", "valledaosta"]],
+  [/\bpila\b/, ["pila", "valledaosta"]],
+  [/monterosa|champoluc|gressoney/, ["monterosaski", "monterosa", "valledaosta"]],
+  [/limone/, ["limonepiemonte", "riserbianca", "piemonte"]],
+  [/prato nevoso/, ["pratonevoso", "mondoleski", "piemonte"]],
+  [/val thorens/, ["valthorens", "3vallees"]],
+  [/serre chevalier/, ["serrechevalier", "hautesalpes"]],
+  [/val cenis/, ["valcenis", "hautemaurienne"]],
+  [/val di fassa|canazei/, ["valdifassa", "dolomiti", "dolomitisuperski"]],
+];
+function hashtags(ev) {
+  const where = `${ev.title || ""} ${ev.place || ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const place = PLACE_TAGS.filter(([re]) => re.test(where)).flatMap(([, t]) => t);
+  // Una meta che non è nell'elenco: almeno il suo nome.
+  if (ev.kind === "gita" && !place.length && simple(ev.title)) place.push(simple(ev.title));
+  return [...new Set([...CLUB_TAGS, ...place, ...(KIND_TAGS[ev.kind] || KIND_TAGS.evento)])].slice(0, 15).map((t) => `#${t}`).join(" ");
+}
+
 /** «, 2 notti» (o «, 1 notte») fra il primo e l'ultimo giorno; senza l'ultimo, niente. */
 function nightsText(a, b) {
   const n = dayOf(b) ? Math.round((dayOf(b) - dayOf(a)) / 864e5) : 0;
@@ -1126,7 +1163,7 @@ function postText(ev, sp, seasonValue) {
   if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
   rows.push("", `🔗 Canale WhatsApp «${SOCIAL.canale}»: link in bio (su Facebook ${SOCIAL.canaleFacebook})`,
     "🔔 Attiva la campanella per non perdere i prossimi eventi!");
-  rows.push("", `#sciclubdonbosco #sci${ev.kind === "gita" ? ` #${simple(ev.title)}` : ""}`);
+  rows.push("", hashtags(ev));
   return rows.join("\n");
 }
 
