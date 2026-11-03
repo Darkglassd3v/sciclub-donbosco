@@ -71,7 +71,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await click("2026-12-13");
   test("weekendPeriodo", daForm().event_date === "2026-12-11" && daForm().end_date === "2026-12-13" && day("2026-12-12")?.classList.contains("nel-periodo")
     && /11–13/.test(card()?.textContent || "") && !off() && ["2026-12-11", "2026-12-12", "2026-12-13"].every((d) => tinted(d).includes("BACKGROUND:#5B2A86")), `${daForm().event_date} ${daForm().end_date} ${card()?.textContent.replace(/\s+/g, " ")}`);
-  test("testataPeriodo", /da venerdì 11 a domenica 13 dicembre/.test(el("occhielloPost").textContent), el("occhielloPost").textContent);
+  test("testataPeriodo", /· Da venerdì 11 a domenica 13 dicembre$/.test(el("occhielloPost").textContent.trim()), el("occhielloPost").textContent);
   await click("2026-12-05");
   test("weekendDaCapo", daForm().event_date === "2026-12-05" && daForm().end_date === null && off(), `${daForm().event_date} ${daForm().end_date}`);
   await click("2026-12-06");
@@ -86,12 +86,14 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   // Il periodo sta dentro la tessera, col suo margine: «20–22» arrivava sul bordo.
   await doOpen({ kind: "weekend", title: "Largo", event_date: "2026-12-20", end_date: "2026-12-22" });
   await wait(500);
-  // Il periodo sta dentro la tessera, col suo margine: «20–22» arrivava sul bordo.
-  const periodo = el("anteprime").querySelector(".cv .tessera .periodo"), range = document.createRange();
-  range.selectNodeContents(periodo);
-  const scale = el("anteprime").querySelector(".cv").getBoundingClientRect().width / 1080;
-  const free = (card().getBoundingClientRect().right - range.getBoundingClientRect().right) / scale;
-  test("periodoDentro", free >= 24, `${Math.round(free)} px dal bordo`);
+  // Il periodo sta dentro la tessera, col suo margine, nel post e nella story: «20–22» arrivava sul bordo.
+  for (const [i, fmt] of [[0, "post"], [1, "story"]]) {
+    const cv = el("anteprime").querySelectorAll(".cv")[i], tessera = cv.querySelector(".tessera"), range = document.createRange();
+    range.selectNodeContents(cv.querySelector(".tessera .periodo"));
+    const scale = cv.getBoundingClientRect().width / 1080, t = tessera.getBoundingClientRect(), p = range.getBoundingClientRect();
+    const left = (p.left - t.left) / scale, right = (t.right - p.right) / scale;
+    test(`periodoDentro-${fmt}`, left >= 24 && right >= 24, `${Math.round(left)} px a sinistra, ${Math.round(right)} a destra`);
+  }
 
   el("coloreEventi").value = "#c2410c";
   el("coloreEventi").dispatchEvent(new Event("input", { bubbles: true }));
