@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Social — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261103logotondo">
+  <link rel="stylesheet" href="brand.css?v=20261103caricamento">
   <!-- crossorigin: l'export PNG deve poter leggere il foglio dei font per
        metterli dentro l'immagine, altrimenti esce con il font di sistema. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -273,7 +273,7 @@
         <label class="label" for="filtroSponsor">Sponsor</label>
         <select class="input" id="filtroSponsor"><option value="">Tutti gli sponsor</option></select>
       </div>
-      <ul class="elenco-post" id="elencoPost"></ul>
+      <ul class="elenco-post" id="elencoPost"><li class="occhiello pt-3">Caricamento…</li></ul>
     </div>
 
     <div>
@@ -549,19 +549,19 @@
       <section class="riquadro riassunto" style="--colore:#8A5300" aria-labelledby="rSponsor">
         <h2 id="rSponsor">Sponsor</h2>
         <p class="occhiello">Marchio e colori per le campagne.</p>
-        <ul class="righe-riassunto" id="riassuntoSponsor"></ul>
+        <ul class="righe-riassunto" id="riassuntoSponsor"><li class="occhiello mb-0">Caricamento…</li></ul>
         <a class="button is-light" href="#sponsor" data-sponsor="">+ Aggiungi uno sponsor</a>
       </section>
       <section class="riquadro riassunto" style="--colore:#0B6E69" aria-labelledby="rContatti">
         <h2 id="rContatti">Contatti</h2>
         <p class="occhiello">Nomi e telefoni riportati in fondo ai post.</p>
-        <ul class="righe-riassunto" id="riassuntoContatti"></ul>
+        <ul class="righe-riassunto" id="riassuntoContatti"><li class="occhiello mb-0">Caricamento…</li></ul>
         <a class="button is-light" href="#contatti">Modifica la rubrica</a>
       </section>
       <section class="riquadro riassunto" style="--colore:#B3261E" aria-labelledby="rGiorni">
         <h2 id="rGiorni">Giorni e colori</h2>
         <p class="occhiello">Il giorno della gita ne determina il colore nei post e nel calendario; eventi e weekend hanno un colore loro.</p>
-        <div class="legenda mt-0" id="riassuntoGiorni"></div>
+        <div class="legenda mt-0" id="riassuntoGiorni"><span class="occhiello mb-0">Caricamento…</span></div>
         <p class="help mt-0">Le gite in altri giorni usano il blu del club.</p>
         <a class="button is-light" href="#giorni">Modifica giorni e colori</a>
       </section>
@@ -667,13 +667,16 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261029titolo"></script>
+<script src="shared.js?v=20261103caricamento"></script>
 <script src="social-templates.js?v=20261103logoovunque"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
   let posts = [];        // righe di social_events
   let sponsors = [];     // righe di sponsors
+  // Finché i dati non arrivano, elenco e riassunti restano su «Caricamento…»: scrivevano «Nessuno sponsor» a dati
+  // non ancora arrivati, e sembrava sparito tutto (3/11).
+  let postsLoaded = false, dataReady = false, sponsorsFailed = false, contactsFailed = false;
   let isOpen = null;     // il post nel form (riga salvata, o {} se nuovo)
   let savedOne = "";      // il form com'era all'ultimo salvataggio, per "Salva modifiche"
   let autoText = "";    // il testo del post come lo scrive la pagina dai dati (testoPost)
@@ -700,6 +703,7 @@
     window.addEventListener("hashchange", showSection);
     showSection();
     await Promise.all([loadPosts(), loadSponsors(), loadPlaces(), loadTripDays(), loadContacts()]);
+    dataReady = true;
     // Elenco e calendario del mese possono essersi disegnati prima degli
     // sponsor e dei colori dei giorni.
     drawList();
@@ -760,13 +764,14 @@
    * col pulsante che apre il suo modulo.
    */
   function drawSummaries() {
-    el("riassuntoSponsor").innerHTML = sponsors.length ? sponsors.map((s) => {
+    if (!dataReady) return;
+    el("riassuntoSponsor").innerHTML = sponsorsFailed ? `<li class="occhiello mb-0">${LIST_UNAVAILABLE}</li>` : sponsors.length ? sponsors.map((s) => {
       const n = posts.filter((p) => p.sponsor_id === s.id).length;
       return `<li><span class="logo-sponsor">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : ""}</span>
         <span class="chi"><b>${esc(s.name)}</b><small>${esc(s.level || "Sponsor")} · ${n === 1 ? "1 campagna" : `${n} campagne`}</small></span>
         <a class="button is-small is-light" href="#sponsor" data-sponsor="${s.id}">Modifica</a></li>`;
     }).join("") : '<li class="occhiello mb-0">Nessuno sponsor.</li>';
-    el("riassuntoContatti").innerHTML = SOCIAL.contatti.length ? SOCIAL.contatti.map((c) =>
+    el("riassuntoContatti").innerHTML = contactsFailed ? `<li class="occhiello mb-0">${LIST_UNAVAILABLE}</li>` : SOCIAL.contatti.length ? SOCIAL.contatti.map((c) =>
       `<li><span class="chi"><b>${esc(c.name)}</b><small>${esc(c.phone)}${c.hours ? ` · ${esc(c.hours)}` : ""}</small></span>
         ${c.is_default ? '<span class="stato pronto">Proposto</span>' : ""}</li>`).join("")
       : '<li class="occhiello mb-0">La rubrica è vuota.</li>';
@@ -789,13 +794,14 @@
       .order("event_date", { ascending: true, nullsFirst: false }).order("created_at");
     if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     posts = data;
+    postsLoaded = true;
     drawList();
     fillMonths();
   }
 
   async function loadSponsors() {
     const { data, error } = await sb.from("sponsors").select("*").order("name");
-    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    if (error) { sponsorsFailed = true; showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     sponsors = data;
     const chosenOne = el("fSponsor").value;
     el("fSponsor").innerHTML = sponsors.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
@@ -822,7 +828,7 @@
   /** La rubrica dei contatti (social_contacts), da cui ogni post sceglie i suoi. */
   async function loadContacts() {
     const { data, error } = await sb.from("social_contacts").select("id, name, phone, hours, is_default").order("position");
-    if (error) { showToast("Contatti non caricati, i post saranno privi di recapiti telefonici: " + errorMessage(error), "is-danger"); return; }
+    if (error) { contactsFailed = true; showToast("Contatti non caricati, i post saranno privi di recapiti telefonici: " + errorMessage(error), "is-danger"); return; }
     setContacts(data);
     if (!contactsModified()) openContactBook(data);
     // Il post aperto prima che la rubrica arrivasse: rifatto con i suoi contatti.
@@ -985,6 +991,7 @@
   const sectionOf = (p) => (p.kind === "sponsor" ? "campagne" : "post");
 
   function drawList() {
+    if (!postsLoaded) return;
     const toDo = (section) => posts.filter((p) => sectionOf(p) === section && !p.published_at).length;
     for (const [id, section] of [["contaDaFare", "post"], ["contaCampagne", "campagne"]]) {
       const n = toDo(section);

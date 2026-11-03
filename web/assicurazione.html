@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assicurazione — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261103logotondo">
+  <link rel="stylesheet" href="brand.css?v=20261103caricamento">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
 
@@ -133,7 +133,7 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste da inviare</h2>
     <div class="corpo">
     <p class="occhiello">Il numero proposto per ciascuna lista segue quello dell'ultima lista inviata dello stesso tipo.</p>
-    <div class="progressivi" id="tipi"></div>
+    <div class="progressivi" id="tipi"><div class="riquadro">Caricamento…</div></div>
     <label class="label" for="decorrenza">Data di decorrenza (comune a tutte le liste)</label>
     <input class="input" type="date" id="decorrenza">
     <div class="azioni-lista" id="azioniInvio">
@@ -199,7 +199,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261029titolo"></script>
+<script src="shared.js?v=20261103caricamento"></script>
 <script src="codicefiscale.js?v=20261022testi"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
