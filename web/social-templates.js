@@ -942,7 +942,7 @@ function photoFormats(c, sp, seasonValue) {
       <div class="abs" style="left:50px;top:44px">${clubLogo(100, M.accento)}</div>
       ${leadRight(64, 24)}
       ${sponsorPhoto(c.photo, "left:60px;top:160px;width:960px;height:600px")}
-      ${campaignTexts(c, M, "left:60px;right:340px;top:790px", 50, 28)}
+      ${campaignTexts(c, M, "left:60px;right:430px;top:790px", 50, 28)}
       <div class="abs" style="right:60px;top:795px;display:flex;flex-direction:column;align-items:flex-end;gap:22px">
         ${logoOnDark(M, 64)}${ctaPill(M, c.cta, 28)}</div>
       ${warning(M, 20, "position:absolute;left:0;right:0;bottom:22px;text-align:center")}</div>` },
@@ -973,7 +973,7 @@ function campaignFormats(c, sp, seasonValue) {
     /* Story: spazio libero per lo sticker link verso l'indirizzo con UTM. */
     story: { w: 1080, h: 1920, nome: "Story con spazio per lo sticker link", breve: "Story", html: `<div class="cv" style="width:1080px;height:1920px;background:${M.scuro};color:${M.chiaro}">
       <div class="abs" style="left:0;right:0;top:${SAFE.top + 12}px;text-align:center;font-size:30px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${lead(M, seasonValue)}</div>
-      <div class="abs" style="left:0;right:0;top:320px;display:flex;justify-content:center">${logoOnDark(M, 200)}</div>
+      <div class="abs" style="left:60px;right:60px;top:320px;display:flex;justify-content:center;align-items:center;gap:44px">${clubLogo(190, M.scuro)}${logoOnDark(M, 170, 640)}</div>
       <div class="abs t-dest" data-righe="2" style="left:60px;right:60px;top:640px;text-align:center;--t:120px;font-size:var(--t)">${titleLines(c.title, M.accento)}</div>
       ${c.subtitle ? `<div class="abs" data-righe="3" style="left:120px;right:120px;top:930px;text-align:center;--t:42px;font-size:var(--t);font-weight:600;line-height:1.3">${escS(c.subtitle)}</div>` : ""}
       <div class="abs" style="left:50%;top:1180px;transform:translateX(-50%);width:560px;height:120px;border:4px dashed ${M.accento};border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:${M.accento}">${escS(c.cta || "sticker link qui")} ↗</div>
@@ -996,7 +996,7 @@ function campaignFormats(c, sp, seasonValue) {
     cover: { w: 820, h: 312, nome: "Copertina Facebook", breve: "Copertina", html: `<div class="cv" style="width:820px;height:312px;background:${M.scuro};color:${M.chiaro}">
       ${ridge(M, 820, 150)}
       ${campaignTexts(c, M, "left:44px;right:300px;top:30px", 46, 20)}
-      <div class="abs" style="right:44px;top:34px">${logoOnDark(M, 90, 230)}</div>
+      <div class="abs" style="right:44px;top:26px;display:flex;align-items:center;gap:14px">${clubLogo(84, M.scuro)}${logoOnDark(M, 70, 150)}</div>
       <div class="abs" style="right:44px;top:136px;font-size:15px;font-weight:700;letter-spacing:.14em;color:${M.accento}">${escS(M.livello.toUpperCase())}</div>
       <div class="abs" style="right:44px;top:170px">${ctaPill(M, c.cta, 18)}</div>
       ${warning(M, 12, "position:absolute;right:44px;bottom:14px")}</div>` },

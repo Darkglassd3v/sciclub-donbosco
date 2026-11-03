@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestione Soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261102">
+  <link rel="stylesheet" href="brand.css?v=20261103logotondo">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     body { margin: 0; }
@@ -2008,7 +2008,7 @@
    */
   async function logoPdf() {
     const img = new Image();
-    img.src = "logo-ufficiale-trasparente-lettere-blu.svg";
+    img.src = "logo-ufficiale-blu-tondo.svg";
     await img.decode();
     const canvas = document.createElement("canvas");
     canvas.width = 600;
@@ -2036,13 +2036,13 @@
       let y = M;
 
       // Testata: logo, nome, riga blu.
-      if (logo) doc.addImage(logo.dati, "JPEG", M, y, 34, 34 * logo.proporzione);
-      const xt = logo ? M + 40 : M;
+      if (logo) doc.addImage(logo.dati, "JPEG", M, y, 24, 24 * logo.proporzione);
+      const xt = logo ? M + 30 : M;
       doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(0);
       doc.text(doc.splitTextToSize(nome, 210 - M - xt), xt, y + 9);
       doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(...GREY);
       doc.text("Sci Club Don Bosco · scheda del socio", xt, y + 17);
-      y += Math.max(logo ? 34 * logo.proporzione : 0, 20) + 3;
+      y += Math.max(logo ? 24 * logo.proporzione : 0, 20) + 3;
       doc.setDrawColor(...BLU).setLineWidth(.6).line(M, y, M + L, y);
       y += 8;
 

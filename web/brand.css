@@ -3,7 +3,7 @@
  * Caricato DOPO bulma.min.css e PRIMA dello <style> di pagina, che usa le
  * variabili definite qui invece di ripetere i colori.
  *
- * I due colori vengono dal logo (web/logo-ufficiale-trasparente-lettere-blu.svg) e non cambiano.
+ * I due colori vengono dal logo (web/logo-ufficiale-blu-tondo.svg) e non cambiano.
  * Le misure sono tarate sull'utenza del gestionale, in buona parte non
  * abituata alle interfacce dense: corpo 17px, campi e pulsanti da 48px, focus
  * sempre visibile, contrasti verificati.
@@ -113,8 +113,6 @@ html[data-tema="scuro"] .sezione { --tinta: #152131; }
 html[data-tema="scuro"] .sezione.tessera { --tinta: #13261C; }
 html[data-tema="scuro"] .sezione.gite { --tinta: #20192B; }
 html[data-tema="scuro"] .sezione.pagamento { --tinta: #2A1D14; }
-/* Il logo a lettere blu (accesso, cambio password) su un tondo chiaro. */
-html[data-tema="scuro"] img[src*="lettere-blu"] { background: #fff; border-radius: var(--raggio-card); padding: 6px; }
 
 html { font-size: 17px; background: var(--sfondo); }  /* Bulma lo fa bianco: sotto una pagina corta si vedeva una fascia bianca */
 /* Pulsante A+ della barra (toggleTextSize() in shared.js): le misure delle

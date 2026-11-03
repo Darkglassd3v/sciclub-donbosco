@@ -136,7 +136,7 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   sabato) prima del corso; la Stampa nello stesso ordine.
 - Barre fisse (navigazione, totali della pagina Soci, strisce delle sezioni) si sganciano sotto
   560px di altezza (zoom alto).
-- Logo: `web/logo-ufficiale-trasparente-lettere-blu.svg` (copia in `ricerca/`), vedi `grafica/logo/README.md`.
+- Logo: ovunque solo quello tondo, `web/logo-ufficiale-blu-tondo.svg` e `web/logo-ufficiale-tondo.svg`, vedi `grafica/logo/README.md`; ogni grafica lo ha sempre.
 - Post social: una sola grafica, **K · Piani** (`postK`, `monthK` in `web/social-templates.js`; il
   disegno d'origine in `grafica/proposte-post-social/`), post 4:5 (`postSizes()`) e story. Le altre
   (Ritocco, Montagna, Biglietto, Calendario, Divano) e la scelta in Impostazioni sono state tolte il
