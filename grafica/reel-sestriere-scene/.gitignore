@@ -1,0 +1,6 @@
+node_modules/
+assets/clip/
+renders/
+.hyperframes/
+*.mp4
+.thumbnails/
