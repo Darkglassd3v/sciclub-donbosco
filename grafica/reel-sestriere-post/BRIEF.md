@@ -14,8 +14,7 @@ length: 14s
 
 Reel per il Dream Weekend al Sestriere (post `0d8e762f-d78f-4940-81b3-723b51bb0e37`), senza prezzi. Questa versione
 segue la richiesta dell'utente del 4/11/2026: la foto del post resta ferma e il testo compare un pezzo alla volta,
-«come fosse un post, sempre in aggiunta», senza diventare un video di animazione. La versione con scene e clip è in
-`../reel-sestriere-scene/`.
+«come fosse un post, sempre in aggiunta», senza diventare un video di animazione.
 
 ## Come è fatto
 

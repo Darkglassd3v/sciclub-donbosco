@@ -11,7 +11,6 @@ versione 1.x) sta in [`../legacy/`](../legacy/).
 | [`font/barlow/`](font/barlow/) | il carattere Barlow (licenza OFL) usato da tutte le pagine qui sotto, in locale |
 | [`volantino/`](volantino/) | il volantino A5 fronte-retro della stagione 2026/2027 |
 | [`reel-sestriere-post/`](reel-sestriere-post/) | Reel del Dream Weekend al Sestriere: la story del generatore che si compone pezzo per pezzo, con la didascalia |
-| [`reel-sestriere-scene/`](reel-sestriere-scene/) | lo stesso Reel a scene, con le clip e il linguaggio del video della stagione |
 
 Ogni cartella ha il suo README e, in `sorgenti/`, le pagine HTML e gli script
 che rifanno le immagini.

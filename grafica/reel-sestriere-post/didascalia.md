@@ -1,7 +1,6 @@
 # Didascalia del Reel sul Dream Weekend
 
-Vale per entrambe le versioni del Reel. Il testo salvato nel post del generatore ha ancora i due hashtag vecchi, quindi
-per il Reel va copiato da qui.
+Il testo salvato nel post del generatore ha ancora i due hashtag vecchi, quindi per il Reel va copiato da qui.
 
 ```
 🏔️ Dream Weekend al Sestriere – posti limitati!
