@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="it">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+        #root { position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: "Barlow Condensed", sans-serif; background: #06396a; }
+        /* La foto vera del post: il nome del posto si scrive solo su questa, le clip degli altri momenti sono generiche.
+         * È larga 1080 px e qui è ingrandita 2,4 volte, quindi la spinta resta minima. */
+        #s2-foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 38% 45%; transform-origin: 50% 60%; }
+        #s2-velo { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 28, 52, 0) 35%, rgba(4, 28, 52, 0.62) 62%, rgba(4, 28, 52, 0.88) 100%); }
+        /* La tessera del periodo, nel colore dei weekend e con l'angolo tagliato come nei post. */
+        #s2-tessera { position: absolute; right: 60px; top: 0; width: 384px; height: 716px; display: flex; flex-direction: column; justify-content: flex-end;
+          background: #147A45; clip-path: polygon(0 96px, 96px 0, 100% 0, 100% 100%, 0 100%); }
+        .s2-t { padding: 0 32px; line-height: 1; }
+        #s2-giorni { font-size: 72px; }
+        #s2-numeri { font-size: 158px; margin: 8px 0 6px; letter-spacing: -0.01em; white-space: nowrap; }
+        #s2-mese { font-size: 84px; padding-bottom: 26px; }
+        #s2-notti { background: #084C8D; font-size: 70px; padding: 18px 32px 20px; line-height: 1; }
+        #s2-testo { position: absolute; left: 64px; right: 140px; bottom: 420px; font-weight: 800; }
+        #s2-nome { display: block; font-size: 214px; line-height: 0.9; text-transform: uppercase; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.5); transform-origin: 0% 100%; }
+        #s2-hotel { display: inline-flex; align-items: center; gap: 16px; margin-top: 24px; padding: 10px 26px 12px 18px; background: #FCCF02; color: #084C8D; font-size: 76px; line-height: 1; }
+        #s2-hotel svg { width: 64px; height: 64px; fill: #084C8D; flex: none; display: block; }
+      </style>
+      <div id="root" data-composition-id="s2-sestriere" data-width="1080" data-height="1920">
+        <img id="s2-foto" src="assets/sestriere.jpg" alt="Le piste del Sestriere" />
+        <div id="s2-velo"></div>
+        <div id="s2-tessera">
+          <div class="s2-t" id="s2-giorni">ven–dom</div>
+          <div class="s2-t" id="s2-numeri">11–13</div>
+          <div class="s2-t" id="s2-mese">dicembre</div>
+          <div id="s2-notti">2 notti</div>
+        </div>
+        <div id="s2-testo">
+          <span id="s2-nome">Sestriere</span>
+          <span id="s2-hotel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Hotel Fronte Piste</span>
+        </div>
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+        const ENTER = 0.7;
+        tl.fromTo("#s2-foto", { scale: 1 }, { scale: 1.05, duration: 4.8, ease: "none" }, 0);
+        tl.fromTo("#s2-nome", { scale: 1.5, filter: "blur(16px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "power4.out" }, ENTER);
+        tl.fromTo("#s2-tessera", { y: -760 }, { y: 0, duration: 0.55, ease: "power3.out" }, ENTER + 0.4);
+        tl.fromTo("#s2-hotel", { x: -360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, ENTER + 1.0);
+        window.__timelines["s2-sestriere"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

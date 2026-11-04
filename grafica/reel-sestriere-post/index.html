@@ -1,0 +1,259 @@
+<!doctype html>
+<!-- Generato da sorgenti/congela.cjs: non modificare a mano, le modifiche si perderebbero. -->
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+/* Barlow (licenza OFL, OFL.txt) in locale, solo il sottoinsieme latino: le pagine
+ * delle grafiche non dipendono più da Google Fonts, che a volte arrivava tardi e
+ * l'immagine usciva col carattere di riserva. */
+@font-face { font-family: Barlow; font-style: normal; font-weight: 500; font-display: block; src: url("assets/font/barlow-500.woff2") format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 600; font-display: block; src: url("assets/font/barlow-600.woff2") format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 700; font-display: block; src: url("assets/font/barlow-700.woff2") format("woff2"); }
+@font-face { font-family: Barlow; font-style: normal; font-weight: 800; font-display: block; src: url("assets/font/barlow-800.woff2") format("woff2"); }
+/* Il corsivo, per sottotitoli e adesivi della proposta F (Diagonale). */
+@font-face { font-family: Barlow; font-style: italic; font-weight: 600; font-display: block; src: url("assets/font/barlow-600-italic.woff2") format("woff2"); }
+@font-face { font-family: Barlow; font-style: italic; font-weight: 800; font-display: block; src: url("assets/font/barlow-800-italic.woff2") format("woff2"); }
+
+@font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/font-condensed/barlow-condensed-800.woff2") format("woff2"); }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #06396a; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+    .cv { position: relative; overflow: hidden; background: #fff; letter-spacing: -.01em;
+          font-family: Barlow, system-ui, sans-serif; color: #14202E; -webkit-font-smoothing: antialiased; }
+    .cv * { box-sizing: border-box; margin: 0; }
+    .cv .abs { position: absolute; }
+    .cv .logo { display: block; }
+    .cv .t-dest { font-weight: 800; letter-spacing: -.035em; line-height: .95; }
+
+    /* L'interlinea delle proposte: quella di Bulma (1.5) arriverebbe dalla pagina e allungherebbe le righe. */
+    .cv.nuovo { --s: 1; --min: 34px; line-height: normal; }
+    .cv.nuovo.story { --min: 44px; }
+    .cv.nuovo b { font-weight: 800; }
+    /* Il logo tondo porta il suo cerchio bianco: il riquadro non ha più fondo né margine. */
+    .cv.nuovo .logo-box { background: none; padding: 0; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+    .cv.nuovo .logo-box img { display: block; height: 240px; }
+    .cv.nuovo .col { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .cv.nuovo [data-righe] { font-size: calc(var(--t) * var(--s)); }
+    /* I telefoni su una riga sola, larga quanto il riquadro (nella story a 44 px due contatti ci stanno
+     * solo così), a capo solo fra un contatto e l'altro: uno sotto l'altro confondevano. */
+    .cv.nuovo .isc { flex-wrap: wrap; row-gap: 6px; }
+    .cv.nuovo .isc .tel { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; column-gap: .75em; font-size: max(var(--min), calc(36px * var(--s))); font-weight: 500; }
+    .cv.nuovo .isc .tel span { white-space: nowrap; }
+    .cv.nuovo .isc .tel b { font-weight: 800; }
+
+    /* Gita con il corso: la coccarda verde in alto a destra, accanto al logo, fuori dal flusso. */
+    .cv.nuovo .stella { position: absolute; z-index: 3; right: 44px; top: 30px; transform: rotate(-12deg); }
+    /* Nella story più grande (la scritta "Corso" a 45 px) e più in alto, per non toccare il titolo. */
+    .cv.nuovo.story .stella { top: 196px; }
+    /* K · Piani (grafica/proposte-post-social/sorgenti/k.css): la foto a tutta pagina col velo
+     * sotto il testo, i piani a 45°, la tessera gialla del "quando". Le misure sono quelle della
+     * tavola: --fine è dove comincia il testo, --su e --giu le fasce coperte della story. Niente
+     * pseudo-elementi (html-to-image non li rende sicuri): nel giallo la foto in grigi e il giallo
+     * in multiply sono due livelli veri. Senza foto: fondo blu notte, angolo giallo pieno, niente finestra. */
+    /* --velo: il fondo sotto il testo, un blu notte (prima nero: la foto usciva cupa; poi il blu del club,
+     * 6,57,106, ma i riquadri blu delle partenze non si staccavano). */
+    .cv.sk { --notte: 20,32,46; --velo: 4,32,62; --fine: 620px; --angolo: 560px; --cuneo: 600px; --su: 0px; --giu: 0px; background: #14202E; color: #fff; }
+    /* Story (16/10/2026): la tessera finisce a 716 px invece di 806 ma è più piena e il
+     * testo parte più su, più grande. Logo e coccarda stanno dove sono nel post (15/10); l'angolo
+     * (800, prima 660) tiene dentro il logo, che sta 250 px più in basso che nel post. */
+    /* In fondo 300 px per la risposta di Instagram (prima 340; la zona consigliata è 270): con
+     * due telefoni la story di una gita perdeva la riga della scadenza. */
+    .cv.sk.story { --fine: 726px; --angolo: 800px; --cuneo: 680px; --su: 250px; --giu: 300px; }
+    .cv.sk.giallo { --notte: 18,18,18; }
+    .sk .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: var(--pos, 50% 45%); }
+    .sk .piano { position: absolute; inset: 0; }
+    .sk .scuro { background: linear-gradient(180deg, rgba(var(--velo),0) 0, rgba(var(--velo),0) calc(var(--fine) - 200px),
+      rgba(var(--velo),.78) calc(var(--fine) + 10px), rgba(var(--velo),.88) 100%); }
+    /* L'angolo sempre giallo (la foto in grigi col giallo sopra): sotto il logo blu ufficiale, in ogni post. */
+    .sk .angolo { opacity: .7; clip-path: polygon(0 0, var(--angolo) 0, 0 var(--angolo)); }
+    .sk .cuneo { background: rgba(var(--notte),.86); clip-path: polygon(calc(100% - var(--cuneo)) 0, 100% 0, 100% var(--cuneo)); }
+    /* Nella finestra la foto in bianco e nero tinta di blu: tre livelli (foto, blu in "color", velo blu),
+     * così la foto si ingrandisce (--zoom) senza ingrandire il taglio. */
+    .sk .finestra { isolation: isolate; clip-path: polygon(100% calc(var(--fine) + 170px), 890px calc(var(--fine) + 360px), 100% calc(var(--fine) + 550px)); }
+    .sk .finestra.fondo { clip-path: polygon(100% calc(100% - 400px), 680px 100%, 100% 100%); }
+    .sk .ombra { background: rgba(var(--notte),.4); clip-path: polygon(0 calc(100% - var(--giu) - 350px), calc(var(--giu) + 350px) 100%, 0 100%); }
+    .sk.giallo .finestra { background: none; opacity: .7; }
+    .sk .grigi, .sk .schiarisci, .sk .tinta, .sk .foto-blu, .sk .colore-blu, .sk .velo-blu { position: absolute; inset: 0; }
+    /* La foto ingrandita (photo_zoom) attorno al punto scelto (photo_x, photo_y), uguale in ogni livello. */
+    .sk .foto, .sk .grigi, .sk .foto-blu { transform: scale(var(--zoom, 1)); transform-origin: var(--pos, 50% 45%); }
+    .sk .grigi { background: var(--immagine) var(--pos, 50% 45%) / cover; filter: grayscale(1) brightness(1.4) contrast(1.2); }
+    .sk .foto-blu { background: var(--immagine) var(--pos, 50% 45%) / cover; }
+    .sk .colore-blu { background: #084C8D; mix-blend-mode: color; }
+    .sk .velo-blu { background: rgba(8,76,141,.5); }
+    .sk .tinta { background: #FCCF02; mix-blend-mode: multiply; }
+    .sk .schiarisci { background: #4D4D4D; mix-blend-mode: screen; }
+    .sk.senza-foto .angolo { background: #FCCF02; opacity: 1; }
+    .cv.sk .logo-box { position: absolute; left: 60px; top: calc(var(--su) + 40px); }
+    /* Il logo ufficiale così com'è, blu, senza fili attorno; l'ombra lo stacca dall'angolo. */
+    .cv.sk .logo-box img { height: 224px; border-radius: 50%; box-shadow: 0 6px 22px rgba(0,0,0,.45); }
+    .cv.sk.story .logo-box img { height: 226px; }
+    /* La coccarda del corso appesa all'angolo basso della tessera, lontana dal logo: due tondi vicini si confondevano.
+     * Post e story uguali (l'utente, 15/10): logo in alto a sinistra, coccarda che entra di 30 px nella tessera
+     * e scende 20 px sotto (nella story ×1,25, come la coccarda). */
+    .cv.sk .stella { left: auto; right: 374px; top: calc(var(--su) + 366px); }
+    .cv.sk.story .stella { right: 406px; top: calc(var(--su) + 229px); }
+    /* La tessera del "quando", appesa al bordo alto: giorno, numero, mese e l'ora nella fascia blu. */
+    .sk .tessera { position: absolute; right: 60px; top: 0; width: 344px; height: calc(var(--su) + 556px); background: #FCCF02; color: #084C8D;
+      clip-path: polygon(96px 0, 100% 0, 100% 100%, 0 100%, 0 96px); display: flex; flex-direction: column; justify-content: flex-end; }
+    .sk .tessera span, .sk .tessera b, .sk .tessera em { display: block; padding: 0 34px; }
+    .sk .tessera span { font-weight: 700; line-height: 1; letter-spacing: -.01em; }
+    .sk .tessera b { font-size: 210px; font-weight: 800; line-height: .8; letter-spacing: -.05em; margin: 20px 0 16px -6px; }
+    .sk .tessera b + span { font-weight: 800; letter-spacing: -.02em; }
+    .sk .tessera b + span:last-child { margin-bottom: 34px; }
+    /* Gita o evento rimandato: timbro rosso sulla data vecchia. */
+    .sk .tessera .timbro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-12deg); z-index: 1;
+      font-style: normal; font-weight: 800; font-size: 46px; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+      color: #B3261E; background: rgba(255, 255, 255, .94); border: 7px solid #B3261E; border-radius: 12px; padding: 10px 16px; box-shadow: 0 6px 18px rgba(0, 0, 0, .25); }
+    .sk .tessera em { font-style: normal; font-weight: 800; line-height: 1; letter-spacing: -.015em; background: var(--em, #084C8D); color: var(--em-ink, #fff); padding: 20px 34px 22px; margin-top: 28px; }
+    .sk.story .tessera { width: 384px; height: calc(var(--su) + 466px); }
+    /* Il periodo di un weekend («11–13»): più piccolo del giorno singolo, fit() lo stringe se non ci sta. */
+    /* Senza padding: fit() guarda solo se il testo esce dal riquadro, e nel padding ci sarebbe finito («20–22» sul bordo). */
+    /* .cv.sk davanti: la regola della story (.sk.story .tessera b) lo batteva e toglieva i margini ai lati. */
+    .cv.sk .tessera b.periodo { padding: 0; letter-spacing: -.04em; margin: 22px 34px 18px 30px; }
+    /* La tessera di una gita o di un weekend senza data, solo nell'anteprima. */
+    .sk .tessera.vuota { opacity: .55; }
+    .sk.story .tessera b { font-size: 236px; margin: 12px 0 8px -6px; }
+    .sk.story .tessera b + span:last-child { margin-bottom: 26px; }
+    .sk.story .tessera em { margin-top: 18px; padding: 16px 34px 18px; }
+    /* Il testo sulla foto scurita, da --fine: gancio, titolo sempre alto due righe, i dati; in fondo le iscrizioni. */
+    .cv.sk .col { inset: auto; left: 60px; right: 60px; top: calc(var(--fine) + 28px); bottom: calc(var(--giu) + 44px); overflow: visible; text-shadow: 0 2px 14px rgba(var(--notte),.6); }
+    .sk .testo { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+    .sk .gancio { font-size: max(var(--min), calc(54px * var(--s))); font-weight: 800; font-style: italic; color: #FCCF02; letter-spacing: -.01em; line-height: 1; }
+    .sk .tit { margin-top: calc(12px * var(--s)); min-height: calc(213px * var(--s)); max-width: 640px; }
+    .sk .tit > [data-righe] { font-weight: 800; line-height: .92; letter-spacing: -.035em; }
+    .sk .tit.meta { max-width: 860px; }
+    /* La meta non scende con --s come il resto: lo fa solo se non ci sta in due righe. */
+    .sk .tit.meta [data-righe] { font-size: var(--t); line-height: .9; }
+    /* Le righe dei dati vanno a capo prima della finestra (punta a 890 px). */
+    .sk .fatti { margin-top: calc(24px * var(--s)); display: flex; flex-direction: column; gap: calc(4px * var(--s)); max-width: 800px; }
+    /* pre-line: gli a capo scritti nel sottotesto restano. */
+    .sk .fatti p { font-size: max(var(--min), calc(50px * var(--s))); font-weight: 500; line-height: 1.16; white-space: pre-line; }
+    .sk.story .gancio { font-size: max(var(--min), calc(66px * var(--s))); }
+    .sk.story .tit { min-height: calc(258px * var(--s)); }
+    .sk.story .fatti { margin-top: calc(30px * var(--s)); gap: calc(12px * var(--s)); }
+    .sk.story .fatti p { font-size: max(var(--min), calc(56px * var(--s))); }
+    /* L'elenco del sottotesto: il puntino giallo e il testo allineato anche quando va a capo (niente ::before,
+     * html-to-image non lo rende sicuro). */
+    .sk .fatti .elenco { list-style: none; margin: 0; padding: 0; font-size: max(var(--min), calc(50px * var(--s))); font-weight: 500; line-height: 1.16; }
+    .sk.story .fatti .elenco { font-size: max(var(--min), calc(56px * var(--s))); }
+    .sk .fatti .elenco li { display: flex; align-items: baseline; gap: .4em; }
+    .sk .fatti .elenco .punto { flex: none; width: .34em; height: .34em; border-radius: 50%; background: #FCCF02; transform: translateY(-.12em); }
+    .sk.story .isc > div { font-size: max(var(--min), calc(44px * var(--s))); }
+    .sk.story .isc > div > b { font-size: max(var(--min), calc(54px * var(--s))); }
+    /* Il luogo dell'evento: una riga sua, grande, col segnaposto (era una riga come le altre). */
+    .sk .fatti p.dove { display: flex; gap: .28em; align-items: center; font-size: max(var(--min), calc(56px * var(--s))); font-weight: 800; line-height: 1.05; }
+    .sk.story .fatti p.dove { font-size: max(var(--min), calc(64px * var(--s))); }
+    .sk .fatti p.dove svg { flex: none; width: 1em; height: 1em; fill: #FCCF02; }
+    .sk .fatti p.nota { color: #FCCF02; font-weight: 800; }
+    /* Le partenze della gita: un riquadro blu per fermata, l'ora in giallo (in una riga sola erano confuse). */
+    /* Non «box»: nella pagina c'è Bulma, che dà a .box colore grigio scuro e margini (il luogo usciva blu su blu). */
+    .sk .partenze { display: flex; flex-wrap: wrap; gap: calc(16px * var(--s)); margin: calc(4px * var(--s)) 0 calc(6px * var(--s)); }
+    .sk .partenze .etichetta { flex-basis: 100%; font-size: max(var(--min), calc(44px * var(--s))); font-weight: 700; color: #FCCF02; margin-bottom: -4px; }
+    .sk .partenze .fermata { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 22px 16px; color: #fff;
+      border-radius: 18px; background: #084C8D; text-shadow: none; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .sk .partenze .fermata b { font-size: max(var(--min), calc(64px * var(--s))); font-weight: 800; line-height: 1; background: #FCCF02; color: #084C8D; padding: 2px 12px; border-radius: 10px; }
+    .sk .partenze .fermata span { font-size: max(var(--min), calc(46px * var(--s))); font-weight: 700; line-height: 1.05; }
+    /* Nel post lo spazio è poco: riquadri bassi, ora e fermata affiancate, l'etichetta in fila con loro. */
+    .sk:not(.story) .partenze { align-items: center; }
+    .sk:not(.story) .partenze .etichetta { flex-basis: auto; margin: 0 4px 0 0; color: #fff; font-size: max(var(--min), calc(46px * var(--s))); font-weight: 500; }
+    .sk:not(.story) .partenze .fermata { flex-direction: row; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; border-radius: 14px; }
+    .sk:not(.story) .partenze .fermata b { font-size: max(var(--min), calc(46px * var(--s))); padding: 0 10px; }
+    .sk:not(.story) .partenze .fermata span { font-size: max(var(--min), calc(44px * var(--s))); }
+    /* I telefoni: numero e icona in giallo, senza riquadri (costerebbero righe). */
+    .sk .isc .tel > svg { color: #FCCF02; }
+    .sk .isc .tel b { color: #FCCF02; }
+    .sk .fatti b, .sk .righe .giorno, .sk .righe .corso { text-shadow: none; }
+    .sk .fatti b { font-weight: 800; line-height: 1.1; background: #FCCF02; color: #084C8D; padding: 0 .2em; border-radius: 10px; white-space: nowrap;
+      -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    .sk .isc { flex: none; display: flex; column-gap: 20px; align-items: center; margin-top: calc(14px * var(--s)); }
+    .sk .isc > svg { flex: none; width: 56px; height: 56px; fill: currentColor; }
+    .sk .isc > div { font-size: max(var(--min), calc(42px * var(--s))); font-weight: 600; line-height: 1.2; }
+    .sk .isc > div > b { display: block; font-size: max(var(--min), calc(46px * var(--s))); font-weight: 800; letter-spacing: -.01em; }
+    /* Il calendario: una riga per gita, il giorno nel colore della gita, il corso contornato. */
+    .sk .righe { margin-top: calc(24px * var(--s)); display: flex; flex-direction: column; gap: calc(8px * var(--s)); }
+    .sk .righe > div { display: flex; align-items: center; gap: 22px; }
+    .sk .righe .giorno { flex: none; width: calc(196px * var(--s)); text-align: center; border-radius: 12px; font-size: calc(42px * var(--s)); font-weight: 800; line-height: 1.3; }
+    .sk .righe .meta { font-size: calc(48px * var(--s)); font-weight: 700; letter-spacing: -.01em; min-width: 0; }
+    /* Il calendario: tessera del mese più bassa e angolo più piccolo, così il testo parte più su;
+     * il titolo senza la seconda riga riservata; le gite una per riga, la meta su una riga sola. */
+    .cv.sk:has(.tessera.mese) { --angolo: 500px; }
+    .cv.sk.story:has(.tessera.mese) { --angolo: 760px; }
+    .sk .tessera.mese { height: calc(var(--su) + 420px); }
+    .sk .tessera.mese b { font-size: 170px; }
+    .sk .tessera.mese ~ .col .tit { min-height: 0; max-width: none; margin-top: 0; }
+    .sk .tessera.mese ~ .col .righe { gap: calc(6px * var(--s)); }
+    .sk .tessera.mese ~ .col .righe .meta { white-space: nowrap; }
+    .sk .righe .corso { font-size: calc(36px * var(--s)); font-weight: 700; line-height: 1; color: #FCCF02; border: 3px solid #FCCF02; border-radius: 999px; padding: 6px 16px; }
+
+    /* Carosello: la linguetta «Scorri», uguale in copertina e nel post, con l'angolo tagliato come la tessera. */
+    .cv .scorri { position: absolute; right: 0; bottom: 40px; width: 250px; padding: 16px 24px 18px 36px; background: #B3261E; color: #fff; text-shadow: none;
+      clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px); font-size: 54px; font-weight: 800; line-height: 1; letter-spacing: -.01em; }
+    .cv .scorri svg { display: block; width: 190px; height: 56px; margin-top: 8px; }
+    /* Nel post del carosello le iscrizioni (con i telefoni arrivano al bordo destro) si fermano prima della linguetta. */
+    .cv.sk:has(> .scorri) .isc { padding-right: 210px; }
+    /* Così il testo va a capo accanto all'icona, invece di scendere tutto sotto di lei. */
+    .cv.sk:has(> .scorri) .isc > div { flex: 1 1 0; min-width: 0; }
+    /* La copertina: il logo a tutta larghezza, il suo cerchio ha lo stesso blu del fondo; il bollino inclinato, giallo se il post non ha un altro colore. */
+    .cv.carosello { background: #084C8D; color: #fff; }
+    .carosello .car-logo { position: absolute; left: 0; top: 135px; width: 1080px; height: 1080px; max-width: none; }
+    .carosello .bollino { position: absolute; right: 70px; top: 250px; transform: rotate(-8deg); filter: drop-shadow(0 10px 22px rgba(0,0,0,.35)); }
+    .carosello .bollino span { display: block; max-width: 760px; padding: 18px 40px 16px 52px; background: #FCCF02; color: #084C8D;
+      clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%, 0 30px); font-family: "Barlow Condensed", Barlow, sans-serif; font-weight: 800; line-height: 1;
+      text-transform: uppercase; letter-spacing: .01em; }
+    /* Il finale: le misure dell'outro del video, sul formato del post. */
+    .carosello .car-foto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+    .carosello .car-velo { position: absolute; inset: 0; background: rgba(8,76,141,.88); }
+    .carosello .car-luce { position: absolute; left: 140px; top: -105px; width: 800px; height: 800px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.38) 0%, rgba(255,255,255,.12) 38%, rgba(255,255,255,0) 68%); }
+    .carosello .car-colonna { position: absolute; left: 64px; right: 64px; top: 135px; display: flex; flex-direction: column; align-items: center; }
+    .carosello .car-anello { width: 340px; height: 340px; display: block; border-radius: 50%; box-shadow: 0 0 0 12px #fff, 0 0 0 18px #FCCF02, 0 16px 40px rgba(0,0,0,.4); }
+    .carosello .car-seguici { margin-top: 40px; font-family: "Barlow Condensed", Barlow, sans-serif; font-size: 230px; font-weight: 800; line-height: .85; color: #FCCF02; text-transform: uppercase; }
+    .carosello .car-sotto { margin-top: 18px; font-size: 60px; font-weight: 700; line-height: 1.15; text-align: center; }
+    .carosello .car-social { margin-top: 64px; display: flex; flex-direction: column; gap: 30px; align-self: stretch; padding-left: 70px; }
+    .carosello .car-riga { display: flex; align-items: center; gap: 30px; font-size: 56px; font-weight: 700; line-height: 1; }
+    /* Su Instagram il canale si apre dal link nella bio: lo dice una riga gialla sotto il nome. */
+    .carosello .car-riga small { display: block; margin-top: 10px; font-size: 42px; font-weight: 700; color: #FCCF02; }
+    .carosello .car-icona { width: 104px; height: 104px; flex: none; border-radius: 28px; background: #fff; display: flex; align-items: center; justify-content: center; }
+    .carosello .car-icona svg { width: 68px; height: 68px; display: block; }
+.cv.nuovo.sk.story { --giu: 376px; }
+.cv.nuovo.sk.story .col { right: 135px; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="14" data-width="1080" data-height="1920">
+      <div class="cv nuovo sk story" style="width:1080px;height:1920px;--immagine:url(&quot;assets/sestriere.jpg&quot;);--pos:38% 45%;--zoom:1">
+    <img class="foto" src="assets/sestriere.jpg" alt="">
+    <div class="piano scuro"></div><div class="piano angolo"><div class="grigi"></div><div class="schiarisci"></div><div class="tinta"></div></div><div class="piano cuneo"></div>
+    <div class="piano finestra"><div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div></div><div class="piano finestra fondo"><div class="foto-blu"></div><div class="colore-blu"></div><div class="velo-blu"></div></div>
+    <div class="piano ombra"></div>
+    <div class="logo-box"><img src="assets/logo-ufficiale-blu-tondo.svg" alt=""></div><div class="tessera" style="background:#147A45;color:#FFFFFF;--em:#084C8D;--em-ink:#FFFFFF"><span data-fit="" style="font-size: 62px; white-space: nowrap;">ven–dom</span><b class="periodo" data-fit="" style="font-size: 166px; white-space: nowrap;">11–13</b>
+    <span data-fit="" style="font-size: 78px; white-space: nowrap;">dicembre</span><em data-fit="" style="font-size: 58px; white-space: nowrap;">2 notti</em></div>
+    <div class="col"><div class="testo" data-adatta=".6" style="--s: 0.9;"><div class="gancio">DREAM WEEKEND - POSTI LIMITATI</div><div class="tit" data-cede="" style="min-height: 0px; height: auto;"><div data-righe="2" style="--t:140px">Sestriere</div></div>
+    <div class="fatti"><ul class="elenco"><li><i class="punto"></i><span>Mezza pensione in camera doppia</span></li><li><i class="punto"></i><span>Con o senza skipass Vialattea</span></li><li><i class="punto"></i><span>Prezzi ridotti per ragazzi e bambini</span></li></ul><p class="dove"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"></path></svg><span><b>Hotel Fronte Piste, Sestriere</b></span></p></div></div><div class="isc"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"></path></svg><div>Iscrizioni in negozio, via mail o al telefono<b>sciclubdonboscoasti@gmail.com</b></div><span class="tel"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-.12em"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"></path></svg><span>Cesare <b>3485171707</b></span><span>Beppe <b>3393291015</b></span><span>Domenico <b>3895794663</b></span></span></div></div></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // Foto, piani e logo ci sono dal primo fotogramma; il resto del post si aggiunge pezzo per pezzo, senza che
+      // niente se ne vada, nell'ordine in cui si legge.
+      const add = (target, at) => tl.fromTo(target, { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, at);
+      tl.fromTo(".tessera", { y: -760 }, { y: 0, duration: 0.55, ease: "power3.out" }, 0.2);
+      add(".gancio", 0.8);
+      add(".tit", 1.5);
+      add(".elenco li:nth-child(1)", 2.5);
+      add(".elenco li:nth-child(2)", 3.5);
+      add(".elenco li:nth-child(3)", 4.5);
+      add(".dove", 5.5);
+      add([".isc > svg", ".isc > div"], 6.6);
+      add(".tel > svg", 7.7);
+      add(".tel > span:nth-of-type(1)", 7.7);
+      add(".tel > span:nth-of-type(2)", 8.1);
+      add(".tel > span:nth-of-type(3)", 8.5);
+      // Il post completo resta fermo fino alla fine, per il tempo di leggere i telefoni.
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
