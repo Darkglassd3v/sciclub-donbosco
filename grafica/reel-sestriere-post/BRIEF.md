@@ -23,9 +23,12 @@ segue la richiesta dell'utente del 4/11/2026: la foto del post resta ferma e il 
   stile, testi e colori sono quelli del generatore. `index.html` non va modificato a mano.
 - Foto, piani e logo tondo ci sono dal primo fotogramma. Poi si aggiungono tessera, frase gialla, titolo, le tre voci
   dell'elenco, il luogo, le iscrizioni e i telefoni, che arrivano a 8,9 s. Il post completo resta fermo fino a 14 s.
+- In fondo, da 9,4 s, compare la riga «Seguici per non perderti i nuovi aggiornamenti». Da 10 s arriva la mano del video
+  della stagione (`assets/mano` è un collegamento a `../video-stagione/assets/mano`), che tocca il tasto a 10,7 e a
+  12,2 s e resta lì.
 - Rispetto alla story, la colonna del testo finisce più in alto e più a sinistra, perché nei Reels didascalia e
-  pulsanti coprono più spazio. Lo script si ferma se un dato manca, se compare un prezzo o se il testo entra nelle zone
-  coperte.
+  pulsanti coprono più spazio e sotto serve posto per la riga «Seguici». Lo script si ferma se un dato manca, se compare
+  un prezzo, se il testo viene rimpicciolito o se entra nelle zone coperte.
 
 ## Comandi
 
