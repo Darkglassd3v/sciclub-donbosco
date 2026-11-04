@@ -28,10 +28,21 @@ const CONTACTS = [
 const EVENT_COLOR = "#147A45";
 
 // Nei Reels didascalia e nome coprono più del fondo che nelle story, e la colonna dei pulsanti copre il bordo destro.
-const REEL_SAFE = { bottom: 1510, right: 960 };
+const REEL_SAFE = { bottom: 1600, right: 960 };
+// Il post finisce qui per lasciare posto alla riga «Seguici»: più in alto fit() rimpicciolirebbe il testo.
+const POST_BOTTOM = 1480;
+const POST_SCALE = 0.9;
 // La colonna sta qualche pixel più dentro: fit() tollera che l'ultima riga sporga di poco.
-const REEL_CSS = `.cv.nuovo.sk.story { --giu: ${1920 - REEL_SAFE.bottom - 44 + 10}px; }
-.cv.nuovo.sk.story .col { right: ${1080 - REEL_SAFE.right + 15}px; }`;
+const REEL_CSS = `.cv.nuovo.sk.story { --giu: ${1920 - POST_BOTTOM - 44 + 10}px; }
+.cv.nuovo.sk.story .col { right: ${1080 - REEL_SAFE.right + 15}px; }
+#seguici { position: absolute; left: 60px; top: 1490px; display: flex; align-items: center; gap: 26px; color: #fff; }
+#seguici-tasto { position: relative; padding: 16px 40px; border-radius: 999px; background: #FCCF02; color: #084C8D; font: 800 62px/1 Barlow, sans-serif; box-shadow: 0 8px 24px rgba(4, 32, 62, 0.45); }
+#seguici-anello { position: absolute; inset: 0; border: 6px solid #FCCF02; border-radius: 999px; opacity: 0; }
+#seguici-testo { font: 600 40px/1.15 Barlow, sans-serif; text-shadow: 0 2px 14px rgba(20, 32, 46, 0.6); }
+#seguici-mano { position: absolute; left: 238px; top: 1555px; width: 170px; height: 170px; transform-origin: 42% 6%; filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35)); }`;
+// La mano è l'emoji Fluent di Microsoft (licenza MIT), la stessa del finale del video della stagione.
+const SEGUICI = `<div id="seguici"><div id="seguici-tasto"><div id="seguici-anello"></div>Seguici</div><div id="seguici-testo">per non perderti<br>i nuovi aggiornamenti</div></div>
+<img id="seguici-mano" src="assets/mano/mano.svg" alt="">`;
 
 const FONT_FACES = fs.readFileSync(path.join(ROOT, "assets/font/barlow.css"), "utf8")
   .replace(/url\(([^)"]+)\)/g, 'url("assets/font/$1")')
@@ -46,15 +57,17 @@ setEventColor(${JSON.stringify(EVENT_COLOR)});
 setContacts(${JSON.stringify(CONTACTS)});
 const box = document.createElement("div");
 box.id = "post";
-box.innerHTML = drawPost(postTemplate(${JSON.stringify(EVENT)}, "story"));
+box.innerHTML = drawPost(postTemplate(${JSON.stringify(EVENT)}, "story")) + ${JSON.stringify(SEGUICI)};
 document.body.append(box, document.createComment("fine-post"));
 Promise.all(["500 40px Barlow", "600 40px Barlow", "800 40px Barlow", "italic 800 40px Barlow"].map((f) => document.fonts.load(f)))
   .then(() => document.fonts.ready)
   .then(() => {
     const overflows = fit(box);
     const edges = [...box.querySelectorAll(".col *")].map((el) => el.getBoundingClientRect());
+    const seguici = box.querySelector("#seguici").getBoundingClientRect();
     box.dataset.misure = JSON.stringify({ overflows, scale: getComputedStyle(box.querySelector(".testo")).getPropertyValue("--s"),
-      bottom: Math.max(...edges.map((r) => r.bottom)), right: Math.max(...edges.map((r) => r.right)) });
+      bottom: Math.max(...edges.map((r) => r.bottom)), right: Math.max(...edges.map((r) => r.right)),
+      seguiciTop: seguici.top, seguiciBottom: seguici.bottom, seguiciRight: seguici.right });
   });
 </script>`;
 
@@ -73,14 +86,17 @@ const styleOf = (id) => dump.match(new RegExp(`<style id="${id}">([\\s\\S]*?)</s
 const frozen = dump.match(/<div id="post"[^>]*>([\s\S]*?)<\/div>\s*<!--fine-post-->/)[1];
 const measures = JSON.parse(dump.match(/data-misure="([^"]+)"/)[1].replace(/&quot;/g, '"'));
 
-// Controllo prima di scrivere: tutti i dati del post ci sono, nessun prezzo, niente sotto le zone coperte dei Reels.
+// Controllo prima di scrivere: tutti i dati del post ci sono, nessun prezzo, testo non rimpicciolito, niente sotto le
+// zone coperte dei Reels e la riga «Seguici» non si sovrappone al post.
 const required = ["DREAM WEEKEND - POSTI LIMITATI", "Sestriere", "11–13", "dicembre", "2 notti", "Mezza pensione in camera doppia",
   "Con o senza skipass Vialattea", "Prezzi ridotti per ragazzi e bambini", "Hotel Fronte Piste, Sestriere",
-  "sciclubdonboscoasti@gmail.com", "3485171707", "3393291015", "3895794663"];
+  "sciclubdonboscoasti@gmail.com", "3485171707", "3393291015", "3895794663", "Seguici", "per non perderti", "i nuovi aggiornamenti"];
 for (const text of required) if (!frozen.includes(text)) throw new Error(`Manca dal post: ${text}`);
 if (/€/.test(frozen)) throw new Error("Nel post c'è un prezzo");
 if (measures.overflows) throw new Error(`Il testo non ci sta: ${JSON.stringify(measures)}`);
-if (measures.bottom > REEL_SAFE.bottom || measures.right > REEL_SAFE.right) throw new Error(`Testo nelle zone coperte: ${JSON.stringify(measures)}`);
+if (Number(measures.scale) < POST_SCALE) throw new Error(`Testo rimpicciolito: ${JSON.stringify(measures)}`);
+if (measures.bottom > POST_BOTTOM || measures.right > REEL_SAFE.right || measures.seguiciTop < measures.bottom - 8
+  || measures.seguiciBottom > REEL_SAFE.bottom || measures.seguiciRight > REEL_SAFE.right) throw new Error(`Testo nelle zone coperte: ${JSON.stringify(measures)}`);
 
 const timeline = `const tl = gsap.timeline({ paused: true });
       // Foto, piani e logo ci sono dal primo fotogramma; il resto del post si aggiunge pezzo per pezzo, senza che
@@ -98,6 +114,17 @@ const timeline = `const tl = gsap.timeline({ paused: true });
       add(".tel > span:nth-of-type(1)", 7.7);
       add(".tel > span:nth-of-type(2)", 8.1);
       add(".tel > span:nth-of-type(3)", 8.5);
+      // In fondo la riga «Seguici»: la mano arriva dal basso a destra, tocca il tasto due volte e resta lì.
+      add("#seguici", 9.4);
+      tl.fromTo("#seguici-mano", { x: 420, y: 420, opacity: 0 }, { x: 0, y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 10);
+      const tap = (at) => {
+        tl.to("#seguici-mano", { scale: 0.86, duration: 0.12, ease: "power2.in", yoyo: true, repeat: 1 }, at);
+        tl.to("#seguici-tasto", { scale: 0.9, duration: 0.12, ease: "power1.in" }, at);
+        tl.to("#seguici-tasto", { scale: 1, duration: 0.45, ease: "back.out(2.4)" }, at + 0.12);
+        tl.fromTo("#seguici-anello", { scale: 1, opacity: 0.95 }, { scale: 1.35, opacity: 0, duration: 0.7, ease: "power2.out", immediateRender: false }, at + 0.12);
+      };
+      tap(10.7);
+      tap(12.2);
       // Il post completo resta fermo fino alla fine, per il tempo di leggere i telefoni.
       window.__timelines["main"] = tl;`;
 
