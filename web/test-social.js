@@ -660,6 +660,11 @@ assert.ok(META_CTAS.includes("Scopri di più"));
     assert.ok(t.length <= 15 && t.every((x) => /^#[a-z0-9]+$/.test(x)), `${what}: ${t.join(" ")}`);
   };
   check({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, ["#sestriere", "#vialattea", "#piemonte", "#sci", "#neve"], "Sestriere");
+  // L'elenco chiesto dall'utente il 4/11: una gita al Sestriere lo riporta identico, le altre con la propria località.
+  assert.strictEqual(tags({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).join(" "),
+    "#sciclubdonbosco #sciclubdonboscoasti #asti #sestriere #vialattea #piemonte #settimanabianca #weekendinmontagna #sci #neve #montagna");
+  assert.strictEqual(tags({ kind: "gita", title: "Val Thorens", event_date: "2027-01-17" }).join(" "),
+    "#sciclubdonbosco #sciclubdonboscoasti #asti #valthorens #3vallees #settimanabianca #weekendinmontagna #sci #neve #montagna");
   check({ kind: "gita", title: "Cervinia\nZermatt", event_date: "2027-01-17" }, ["#cervinia", "#matterhornskiparadise", "#zermatt", "#valledaosta"], "Cervinia");
   check({ kind: "gita", title: "La Thuile", event_date: "2027-01-17" }, ["#lathuile", "#espacesanbernardo"], "La Thuile");
   check({ kind: "gita", title: "Val di Fassa", event_date: "2027-01-17" }, ["#valdifassa", "#dolomiti"], "Val di Fassa");

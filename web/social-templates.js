@@ -1080,9 +1080,10 @@ function period(a, b) {
  * tipo di post; al massimo 15. La località si cerca nella meta della gita, nel titolo e nel luogo. I nomi sono quelli
  * più usati: le stazioni non pubblicano un elenco ufficiale. */
 const CLUB_TAGS = ["sciclubdonbosco", "sciclubdonboscoasti", "asti"];
+const TRIP_TAGS = ["settimanabianca", "weekendinmontagna", "sci", "neve", "montagna"];
 const KIND_TAGS = {
-  gita: ["sci", "sciare", "neve", "montagna", "skiing"],
-  weekend: ["settimanabianca", "weekendinmontagna", "sci", "neve", "montagna"],
+  gita: TRIP_TAGS,
+  weekend: TRIP_TAGS,
   evento: ["sciclub", "sci"],
 };
 const PLACE_TAGS = [
