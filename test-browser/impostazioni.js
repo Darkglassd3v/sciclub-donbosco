@@ -36,7 +36,7 @@
     const writing = r.filtri.find((f) => f[0] === "update" || f[0] === "insert");
     if (writing) { written.push([t, writing[1]]); return denied ? [] : [{ id: 1 }]; }
     if (t === "prices") return [
-      { id: 1, category: "PRESCIISTICA", name: LONG, price: 75, active: true, min_role: "utente", insurance: "SPORT", insurance_paid: true, position: null },
+      { id: 1, category: "PRESCIISTICA", name: LONG, price: 70, active: true, min_role: "utente", insurance: null, insurance_paid: true, position: null },
       { id: 2, category: "TESSERA", name: CON_AMP, price: 20, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1 },
       { id: 3, category: "FAMIGLIA", name: "3 PERSONE CON ASSICURAZIONE", price: 50, active: true, min_role: "utente", insurance: "BASE", insurance_paid: true, position: 1, people: 3 },
       { id: 4, category: "CORSO", name: "CORSO SCI ADULTI", price: 210, active: true, min_role: "utente", insurance: null, insurance_paid: true, position: 1 },
@@ -109,6 +109,9 @@
       quota.dispatchEvent(new Event("input", { bubbles: true }));
       test("inSociSegue", conClub === "€ 20,00" && conQuota === "€ 45,00", `club «${conClub}», quota 25 «${conQuota}»`);
     } else test("inSociSegue", false, "riga della tessera mancante");
+
+    // L'assicurazione della presciistica si sceglie sul socio: il listino non la propone.
+    test("presciSenzaAssicurazione", !row("tabellaPrezzi", 1)?.querySelector("[data-assicurazione]"), "la voce della presciistica ha ancora l'assicurazione");
 
     const family = row("tabellaPrezzi", 3);
     const pays = family?.querySelector("[data-paga]")?.textContent || "";

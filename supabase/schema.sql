@@ -319,13 +319,7 @@ where enrolled_at is not null
   and upper(course_type) <> 'NO'
 group by course_type;
 
-create or replace view public.preski_counts as
-select preski_type as name, count(*) as count
-from public.members
-where enrolled_at is not null
-  and preski_type is not null
-  and upper(preski_type) <> 'NO'
-group by preski_type;
+-- preski_counts (presciistica per voce e assicurazione) sta più sotto, con preski_price().
 
 -- Le partenze sono liste separate da virgola come nella 1.x: vengono esplose.
 -- I comuni già scritti nelle schede, con quante volte: suggerimenti del form Soci (Città di nascita e
@@ -1089,15 +1083,14 @@ create policy insurances_write on public.insurances
 -- Il tipo di assicurazione di ogni tessera; vuoto = la tessera non assicura
 -- (SOLO TESSERA, SCONTATA - NO ASSICURAZIONE). La scontata dei nati prima del
 -- 1947 ha la Base, il direttivo la Global Sport, la più completa.
--- Anche le voci della presciistica (dalla 2.8): comprende tessera, quota e
--- assicurazione, come sulla scheda di carta, e la sua vale al posto di quella
--- della tessera. Due voci: 70 + Base e 75 + Total Sport.
+-- Le agevolazioni famiglia hanno anche loro la colonna; la presciistica no: dal
+-- 5/11/2026 l'assicurazione la sceglie il socio (members.preski_insurance).
 alter table public.prices add column if not exists insurance text;
 
-comment on column public.prices.insurance is 'Tessere e presciistica: assicurazione che dà (insurances.code); vuoto = nessuna.';
+comment on column public.prices.insurance is 'Tessere e agevolazioni: assicurazione che dà (insurances.code); vuoto = nessuna.';
 
--- L'assicurazione scelta per il socio (members.insurance, 21/10/2026), tolta
--- il giorno dopo: quella della presciistica la dice la sua voce del listino.
+-- L'assicurazione scelta per il socio (members.insurance, 21/10/2026), tolta il
+-- giorno dopo; dal 5/11/2026 c'è members.preski_insurance, più sotto.
 alter table public.members drop column if exists insurance;
 
 -- Una volta sola, al passaggio alle assicurazioni a parte (14/10/2026): le due
@@ -1140,31 +1133,12 @@ end $$;
 
 comment on column public.prices.insurance_paid is 'Tessere: false = l''assicurazione la paga il club (il direttivo) e non si somma alla quota.';
 
+-- Il vincolo su chi può avere l'assicurazione (prices_insurance_valid) sta più sotto,
+-- dopo aver tolto quella dalle voci della presciistica.
 alter table public.prices drop constraint if exists prices_insurance_valid;
-alter table public.prices add constraint prices_insurance_valid
-  check (insurance is null or category in ('TESSERA', 'PRESCIISTICA', 'FAMIGLIA'));
 alter table public.prices drop constraint if exists prices_insurance_fkey;
 alter table public.prices add constraint prices_insurance_fkey
   foreign key (insurance) references public.insurances (code);
-
--- Una volta sola (21/10/2026): la presciistica passa dai 90 € con dentro la
--- vecchia assicurazione da 15 alla quota più la Base (70 + 20 = 90), e arriva
--- la voce con la Total Sport (75 + 45 = 120). Parte solo se nessuna voce della
--- presciistica ha già un'assicurazione: rieseguito non tocca i prezzi.
-do $$
-begin
-  if exists (select 1 from public.prices where category = 'PRESCIISTICA' and insurance is not null)
-     or not exists (select 1 from public.prices where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA')
-     or not exists (select 1 from public.insurances where code = 'BASE')
-     or not exists (select 1 from public.insurances where code = 'SPORT') then
-    return;
-  end if;
-  update public.prices set price = 70, insurance = 'BASE'
-   where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA';
-  insert into public.prices (category, name, price, insurance)
-  values ('PRESCIISTICA', 'CORSO PRESCIISTICA - REALE TOTAL SPORT', 75, 'SPORT')
-  on conflict (category, name) do nothing;
-end $$;
 
 -- Agevolazioni famiglia (dal 21/10/2026): al posto della tessera, le sceglie il
 -- capofamiglia e coprono lui e i familiari a carico. Le persone si leggono dal
@@ -1256,9 +1230,102 @@ comment on function public.card_price(public.prices) is 'Prezzo che paga il soci
 revoke all on function public.card_price(public.prices) from public;
 grant execute on function public.card_price(public.prices) to authenticated;
 
+-- La presciistica slegata dall'assicurazione (5/11/2026). La voce del listino dice
+-- solo il corso, che comprende la tessera; l'assicurazione la sceglie il socio
+-- (members.preski_insurance: nessuna, Base o Sport) e si somma alla voce. Con
+-- l'assicurazione dentro la voce non si poteva togliere, e chi non la voleva finiva
+-- lo stesso nell'elenco da assicurare. La voce della famiglia resta «solo corso»
+-- (prices.course_only): niente tessera e niente assicurazione, le dà l'agevolazione.
+alter table public.prices add column if not exists course_only boolean not null default false;
+comment on column public.prices.course_only is 'Presciistica: true = solo il corso, per chi è coperto dall''agevolazione famiglia; false = comprende la tessera.';
+
+alter table public.members add column if not exists preski_insurance text;
+comment on column public.members.preski_insurance is 'Assicurazione scelta con la presciistica (insurances.code); vuoto = nessuna. Esclusiva con tessera e agevolazione.';
+alter table public.members drop constraint if exists members_preski_insurance_fkey;
+alter table public.members add constraint members_preski_insurance_fkey
+  foreign key (preski_insurance) references public.insurances (code);
+
+-- Una volta sola: parte finché una voce della presciistica ha ancora l'assicurazione.
+-- I soci la portano sul campo nuovo e lasciano la tessera, che era un doppione; la
+-- voce con la Total Sport (75 + 45) si spegne, ora è la voce unica più la Sport (70 +
+-- 45). I totali non si toccano: quello fatto pagare vale.
+do $$
+begin
+  if not exists (select 1 from public.prices where category = 'PRESCIISTICA' and insurance is not null) then
+    return;
+  end if;
+  update public.prices set course_only = true where category = 'PRESCIISTICA' and insurance is null;
+  update public.members m set preski_insurance = p.insurance, card_type = null
+    from public.prices p
+   where p.category = 'PRESCIISTICA' and p.name = m.preski_type
+     and p.insurance is not null and m.family_discount is null;
+  update public.members set preski_type = 'CORSO PRESCIISTICA'
+   where preski_type = 'CORSO PRESCIISTICA - REALE TOTAL SPORT';
+  update public.prices set active = false
+   where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - REALE TOTAL SPORT';
+  update public.prices set insurance = null where category = 'PRESCIISTICA';
+end $$;
+
+alter table public.prices drop constraint if exists prices_insurance_valid;
+alter table public.prices add constraint prices_insurance_valid
+  check (insurance is null or category in ('TESSERA', 'FAMIGLIA'));
+-- Due assicurazioni sulla stessa persona sarebbero un doppione.
+alter table public.members drop constraint if exists members_preski_insurance_alone;
+alter table public.members add constraint members_preski_insurance_alone
+  check (preski_insurance is null or (preski_type is not null and card_type is null and family_discount is null));
+
+-- Quello che paga il socio per la presciistica: la voce più l'assicurazione scelta.
+create or replace function public.preski_price(m public.members)
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select p.price + coalesce((select i.price from public.insurances i where i.code = m.preski_insurance), 0)
+    from public.prices p
+   where p.category = 'PRESCIISTICA' and p.name = m.preski_type;
+$$;
+
+-- Come si legge la presciistica di un socio nei riepiloghi: dice sempre se è assicurata.
+create or replace function public.preski_label(m public.members)
+returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select case
+    when m.preski_insurance is not null
+      then m.preski_type || ' + ' || (select i.name from public.insurances i where i.code = m.preski_insurance)
+    when exists (select 1 from public.prices p
+                  where p.category = 'PRESCIISTICA' and p.name = m.preski_type and not p.course_only)
+      then m.preski_type || ' - NO ASSICURAZIONE'
+    else m.preski_type
+  end;
+$$;
+
+comment on function public.preski_price(public.members) is 'Prezzo della presciistica del socio: voce più assicurazione scelta.';
+comment on function public.preski_label(public.members) is 'Presciistica del socio con la sua assicurazione, per i riepiloghi.';
+revoke all on function public.preski_price(public.members) from public;
+revoke all on function public.preski_label(public.members) from public;
+grant execute on function public.preski_price(public.members) to authenticated;
+grant execute on function public.preski_label(public.members) to authenticated;
+
+-- Conteggi della presciistica, una riga per voce e assicurazione.
+create or replace view public.preski_counts as
+select
+  public.preski_label(m)            as name,
+  count(*)                          as count,
+  public.preski_price(m)            as price,
+  count(*) * public.preski_price(m) as total
+from public.members m
+where m.enrolled_at is not null
+  and m.preski_type is not null
+  and upper(m.preski_type) <> 'NO'
+group by public.preski_label(m), public.preski_price(m);
+
 -- Conteggi per tipologia, col prezzo che paga il socio (quota più assicurazione):
 -- le tessere e le agevolazioni famiglia, che le sostituiscono. La tessera
--- compresa nella presciistica con l'assicurazione non si conta: la paga lei.
+-- compresa nella presciistica non si conta: la paga lei.
 create or replace view public.card_counts as
 select
   v.name                          as name,
@@ -1272,7 +1339,7 @@ from (
      and m.card_type is not null
      and upper(m.card_type) <> 'NO'
      and not exists (select 1 from public.prices pp
-                      where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and pp.insurance is not null)
+                      where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
   union all
   select m.family_discount, 'FAMIGLIA'
     from public.members m
@@ -1323,8 +1390,9 @@ comment on column public.members.insurance_list_id is 'Lista con cui il socio è
 -- l'elenco completo dei soci chiamando l'API a mano. L'elenco completo è del
 -- Riepilogo (permesso riepilogo, che legge members con la sua RLS); qui restano
 -- chi è da assicurare e una ricerca con pochi risultati per le correzioni.
--- L'assicurazione di un socio, nell'ordine: quella della presciistica (che
--- comprende la tessera), della tessera, dell'agevolazione famiglia che ha
+-- L'assicurazione di un socio. Con la presciistica che comprende la tessera è quella
+-- scelta con lei, anche nessuna: una tessera rimasta da prima non assicura chi ha
+-- detto no. Altrimenti, nell'ordine: della tessera, dell'agevolazione famiglia che ha
 -- scelto, o di quella del capofamiglia che paga per lui. NULL = non assicurato.
 create or replace function public.member_insurance(m public.members)
 returns text
@@ -1332,19 +1400,23 @@ language sql
 stable
 set search_path = ''
 as $$
-  select coalesce(
-    (select p.insurance from public.prices p where p.category = 'PRESCIISTICA' and p.name = m.preski_type),
-    (select p.insurance from public.prices p where p.category = 'TESSERA' and p.name = m.card_type),
-    (select p.insurance from public.prices p where p.category = 'FAMIGLIA' and p.name = m.family_discount),
-    -- Chi ha la sua tessera (nucleo pieno) non è coperto dal capofamiglia.
-    (select p.insurance from public.members c
-       join public.prices p on p.category = 'FAMIGLIA' and p.name = c.family_discount
-      where c.id = m.payer_id and c.enrolled_at is not null and m.card_type is null));
+  select case
+    when exists (select 1 from public.prices p
+                  where p.category = 'PRESCIISTICA' and p.name = m.preski_type and not p.course_only)
+      then m.preski_insurance
+    else coalesce(
+      (select p.insurance from public.prices p where p.category = 'TESSERA' and p.name = m.card_type),
+      (select p.insurance from public.prices p where p.category = 'FAMIGLIA' and p.name = m.family_discount),
+      -- Chi ha la sua tessera (nucleo pieno) non è coperto dal capofamiglia.
+      (select p.insurance from public.members c
+         join public.prices p on p.category = 'FAMIGLIA' and p.name = c.family_discount
+        where c.id = m.payer_id and c.enrolled_at is not null and m.card_type is null))
+  end;
 $$;
 
-comment on function public.member_insurance(public.members) is 'Assicurazione del socio: della presciistica, della tessera, dell''agevolazione o di quella del capofamiglia.';
+comment on function public.member_insurance(public.members) is 'Assicurazione del socio: quella scelta con la presciistica, altrimenti della tessera, dell''agevolazione o di quella del capofamiglia.';
 
--- Tesserato: ha la tessera, o ne è coperto (presciistica con l'assicurazione,
+-- Tesserato: ha la tessera, o ne è coperto (presciistica che la comprende,
 -- agevolazione famiglia sua o del capofamiglia). Colonna calcolata per le
 -- pagine (select=...&card_holder=is.true).
 create or replace function public.card_holder(m public.members)
@@ -1356,12 +1428,12 @@ as $$
   select (m.card_type is not null and upper(m.card_type) <> 'NO')
       or m.family_discount is not null
       or exists (select 1 from public.prices p
-                  where p.category = 'PRESCIISTICA' and p.name = m.preski_type and p.insurance is not null)
+                  where p.category = 'PRESCIISTICA' and p.name = m.preski_type and not p.course_only)
       or exists (select 1 from public.members c
                   where c.id = m.payer_id and c.enrolled_at is not null and c.family_discount is not null);
 $$;
 
-comment on function public.card_holder(public.members) is 'Tesserato: tessera, presciistica con l''assicurazione o agevolazione famiglia (sua o del capofamiglia).';
+comment on function public.card_holder(public.members) is 'Tesserato: tessera, presciistica che la comprende o agevolazione famiglia (sua o del capofamiglia).';
 
 revoke all on function public.member_insurance(public.members) from public;
 revoke all on function public.card_holder(public.members) from public;
@@ -1390,7 +1462,7 @@ drop function if exists public.insurance_members(boolean);
 drop function if exists public.insurance_members();
 
 -- I tesserati della stagione aperta ancora da assicurare, con il tipo della
--- loro tessera (o della presciistica, che la comprende). Ci sono anche quelli
+-- loro tessera (o quello scelto con la presciistica). Ci sono anche quelli
 -- senza codice fiscale: la pagina li mostra, perché lo si scriva, ma in una
 -- lista non entrano.
 create or replace function public.insurance_members()
@@ -2285,7 +2357,7 @@ begin
     insert into public.season_breakdown (season, category, label, day, count, total)
     -- Il prezzo della tessera comprende l'assicurazione (card_price()); le
     -- agevolazioni famiglia la sostituiscono, e la tessera compresa nella
-    -- presciistica con l'assicurazione non si conta (come card_counts).
+    -- presciistica non si conta (come card_counts).
     select which, 'CARD', v.name, '', count(*), count(*) * coalesce(c.price, 0)
     from (
       select m.card_type as name, 'TESSERA' as category
@@ -2293,7 +2365,7 @@ begin
         join da_chiudere t on t.id = m.id
        where m.card_type is not null and upper(m.card_type) <> 'NO'
          and not exists (select 1 from public.prices pp
-                          where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and pp.insurance is not null)
+                          where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
       union all
       select m.family_discount, 'FAMIGLIA'
         from public.members m
@@ -2324,13 +2396,12 @@ begin
     where m.course_type is not null and upper(m.course_type) <> 'NO'
     group by m.course_type, p.price
     union all
-    -- La presciistica col prezzo che paga il socio: comprende l'assicurazione.
-    select which, 'PRESKI', m.preski_type, '', count(*), sum(public.card_price(p))
+    -- La presciistica col prezzo che paga il socio, una riga per voce e assicurazione.
+    select which, 'PRESKI', public.preski_label(m), '', count(*), sum(public.preski_price(m))
     from public.members m
     join da_chiudere t on t.id = m.id
-    left join public.prices p on p.category = 'PRESCIISTICA' and p.name = m.preski_type
     where m.preski_type is not null and upper(m.preski_type) <> 'NO'
-    group by m.preski_type
+    group by public.preski_label(m)
     union all
     select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
     from public.members m
@@ -2387,6 +2458,7 @@ begin
     family_discount    = null,
     pass_type          = null,
     preski_type        = null,
+    preski_insurance   = null,
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
@@ -2458,6 +2530,7 @@ begin
     family_discount    = null,
     pass_type          = null,
     preski_type        = null,
+    preski_insurance   = null,
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,

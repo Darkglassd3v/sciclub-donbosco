@@ -154,7 +154,6 @@
       che ha l'elenco.
 - [ ] Leggere `supabase/migration/cf-2026-09-30/warning-cf.md`: 13 persone dei fogli non
       trovate, 9 con data di nascita diversa, 73 codici dei fogli che non passano il controllo.
-- [ ] Controllare LACHELLI: presciistica Total Sport (120) e totale 115.
 - [ ] Assicurazione: tracciato dell'Excel da definire con le specifiche dell'assicurazione.
       `INSURANCE_COLUMNS` in `web/shared.js` (colonne provvisorie), usate dalla pagina
       Assicurazione e dal Riepilogo; campi nuovi anche in `insurance_members()`

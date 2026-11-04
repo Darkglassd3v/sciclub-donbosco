@@ -266,13 +266,15 @@ le lancia il deploy.
 - Tessera → assicurazione: ORDINARIA NEVE BASE e SCONTATA NEVE BASE (nati prima del 1947) → Base;
   ORDINARIA NEVE PLUS → Plus; ORDINARIA GLOBAL SPORT e DIRETTIVO → Sport;
   SOLO TESSERA / SCONTATA NO ASSICURAZIONE → in nessuna lista.
-- Presciistica (dal 21/10/2026): comprende tessera, quota CONI e assicurazione (scheda di carta,
-  `legacy/dati26/1TESSERAMENTO Scheda e Ricevuta.pdf`). Due voci del listino con
-  `prices.insurance`: «CORSO PRESCIISTICA» 70 + Base 20 = 90 €, «CORSO PRESCIISTICA - REALE TOTAL
-  SPORT» 75 + Sport 45 = 120 € (`card_price()`). L'assicurazione della voce vale al posto di quella
-  della tessera nelle liste (`insurance_members()`, `insurance_send()`); nella pagina Soci, con la
-  presciistica, la tessera non si somma al totale. `close_season()` conta la presciistica a
-  `card_price()`. La scelta a parte del 21/10 (`members.insurance`, +25 €) è stata tolta.
+- Presciistica (dal 5/11/2026): la voce «CORSO PRESCIISTICA» da 70 € comprende tessera e quota CONI
+  (scheda di carta, `legacy/dati26/1TESSERAMENTO Scheda e Ricevuta.pdf`); l'assicurazione è un campo
+  del socio, `members.preski_insurance`: nessuna (70 €), Base (90 €) o Sport (115 €). Nella pagina
+  Soci la Base è proposta e si può togliere o cambiare. Il campo è esclusivo con tessera e
+  agevolazione (vincolo `members_preski_insurance_alone`): sarebbero doppioni. Con questa voce
+  `member_insurance()` dà solo quel campo, quindi chi l'ha tolta non entra nelle liste.
+  `preski_price()` e `preski_label()` danno prezzo e nome con l'assicurazione per `preski_counts`,
+  `close_season()`, Riepilogo e ricerca. I totali già fatti pagare non sono stati toccati: chi ha
+  pagato 120 € con la vecchia voce Total Sport (75 + 45, ora spenta) li tiene.
 - Agevolazioni famiglia (dal 21/10/2026): al posto della tessera (vincolo
   `members_card_or_family`), le sceglie il capofamiglia e coprono lui e i familiari a carico.
   `prices.people` dal nome («3 PERSONE», trigger `fill_family_people`), `prices.insurance` anche
@@ -280,10 +282,10 @@ le lancia il deploy.
   `member_insurance(m)` dà l'assicurazione di un socio (presciistica, tessera, agevolazione sua o
   del capofamiglia) per le liste; `card_holder(m)` dice chi è tesserato (Riepilogo, Gite,
   `admin_summary`). `card_counts` e `close_season()` contano le agevolazioni e non la tessera
-  compresa nella presciistica con l'assicurazione. In Soci (`cover()`) la tessera è
+  compresa nella presciistica. In Soci (`cover()`) la tessera è
   obbligatoria solo per chi non è coperto; il nucleo si conta e un familiare oltre le persone
   dell'agevolazione deve avere la tessera; chi è coperto dall'agevolazione ha la presciistica
-  «solo corso» (CORSO PRESCIISTICA - FAMIGLIA, 50 €).
+  «solo corso» (CORSO PRESCIISTICA - FAMIGLIA, 50 €, `prices.course_only`).
 - «Da assicurare» (dal 21/10/2026) è a pagine di 25, una per tipo; il titolo del gruppo dice
   quanti sono senza codice fiscale. Dopo Salva si resta sulla pagina; un codice fiscale scritto e
   non salvato si chiede prima di cambiare pagina. Excel e «Segna come assicurati» prendono tutti.

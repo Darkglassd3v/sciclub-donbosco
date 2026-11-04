@@ -956,7 +956,7 @@ function householdTotals(householdHead, familyMembers = []) {
 async function loadPrices() {
   const { data, error } = await sb
     .from("prices")
-    .select("category, name, price:card_price, min_role, trips, day, insurance, people, active")
+    .select("category, name, price:card_price, min_role, trips, day, insurance, people, active, course_only")
     .order("category")
     .order("position", { nullsFirst: false })
     .order("card_price")

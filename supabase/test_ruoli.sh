@@ -609,8 +609,22 @@ psql_ -c "delete from public.social_contacts; insert into public.social_contacts
 # Una tessera col tipo nel nome messa da Impostazioni a "nessuna" e senza posizione:
 # l'assicurazione dal nome e l'ordine del modulo valgono una volta sola.
 psql_ -c "insert into public.prices (category, name, price) values ('TESSERA', 'TESSERA ORDINARIA - GLOBAL NEVE BASE', 15);"
-# La presciistica come in produzione prima del 21/10/2026: 90 € senza assicurazione.
-psql_ -c "insert into public.prices (category, name, price) values ('PRESCIISTICA', 'CORSO PRESCIISTICA', 90);"
+# La presciistica come in produzione prima del 5/11/2026: l'assicurazione nella voce del
+# listino, e i soci che hanno anche la tessera, spenta. Lo schema rieseguito la toglie.
+psql_ <<'SQL'
+alter table public.prices drop constraint prices_insurance_valid;
+alter table public.prices add constraint prices_insurance_valid
+  check (insurance is null or category in ('TESSERA', 'PRESCIISTICA', 'FAMIGLIA'));
+insert into public.prices (category, name, price, insurance) values
+  ('PRESCIISTICA', 'CORSO PRESCIISTICA', 70, 'BASE'),
+  ('PRESCIISTICA', 'CORSO PRESCIISTICA - REALE TOTAL SPORT', 75, 'SPORT'),
+  ('PRESCIISTICA', 'CORSO PRESCIISTICA - FAMIGLIA', 50, null);
+insert into public.prices (category, name, price, insurance) values ('TESSERA', 'TESSERA VECCHIA BASE', 20, 'BASE');
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, preski_type, total, total_manual) values
+  ('dddddddd-0511-0000-0000-000000000001', 'VECCHIO', 'BASE', now(), 'TESSERA VECCHIA BASE', 'CORSO PRESCIISTICA', 90, false),
+  ('dddddddd-0511-0000-0000-000000000002', 'VECCHIO', 'SPORT', now(), null, 'CORSO PRESCIISTICA - REALE TOTAL SPORT', 120, true),
+  ('dddddddd-0511-0000-0000-000000000003', 'VECCHIO', 'FAMIGLIA', now(), null, 'CORSO PRESCIISTICA - FAMIGLIA', 50, false);
+SQL
 # Le agevolazioni famiglia come in produzione prima del 21/10: la Base dentro il prezzo.
 psql_ -c "insert into public.prices (category, name, price) values ('FAMIGLIA', '3 PERSONE CON ASSICURAZIONE', 110), ('FAMIGLIA', '3 PERSONE SENZA ASSICURAZIONE', 50);"
 
@@ -631,12 +645,31 @@ do $$ begin
   assert (select color from public.trip_days where weekday = 2) is null, 'schema.sql ha rimesso il martedì tolto';
   assert (select color from public.trip_days where weekday = 6) = '#FCCF02', 'schema.sql ha rimesso il colore di prima al sabato';
   assert (select count(*) from public.social_contacts) = 1, 'schema.sql ha cambiato i contatti dei post';
-  assert (select price = 70 and insurance = 'BASE' and public.card_price(p) = 90 from public.prices p
+  assert (select price = 70 and insurance is null and not course_only and public.card_price(p) = 70 from public.prices p
            where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA'),
-         'presciistica: attesa la quota 70 più la Base (90)';
-  assert (select price = 75 and insurance = 'SPORT' and active and public.card_price(p) = 120 from public.prices p
+         'presciistica: attesa la voce da 70 senza assicurazione';
+  assert (select not active and insurance is null and not course_only from public.prices
            where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - REALE TOTAL SPORT'),
-         'presciistica: attesa la voce con la Total Sport, 75 più 45 (120)';
+         'presciistica: la voce con la Total Sport doveva spegnersi';
+  assert (select course_only and insurance is null from public.prices
+           where category = 'PRESCIISTICA' and name = 'CORSO PRESCIISTICA - FAMIGLIA'),
+         'presciistica: la voce della famiglia deve restare solo corso';
+  assert (select card_type is null and preski_type = 'CORSO PRESCIISTICA' and preski_insurance = 'BASE' and total = 90
+            from public.members where id = 'dddddddd-0511-0000-0000-000000000001'),
+         'presciistica con la Base: socio non spostato sul campo nuovo, o tessera non tolta';
+  assert (select preski_type = 'CORSO PRESCIISTICA' and preski_insurance = 'SPORT' and total = 120 and total_manual
+            from public.members where id = 'dddddddd-0511-0000-0000-000000000002'),
+         'presciistica Total Sport: socio non spostato, o totale già pagato cambiato';
+  assert (select preski_type = 'CORSO PRESCIISTICA - FAMIGLIA' and preski_insurance is null
+            from public.members where id = 'dddddddd-0511-0000-0000-000000000003'),
+         'presciistica della famiglia: non doveva avere un''assicurazione sua';
+  delete from public.members where id::text like 'dddddddd-0511-%';
+  delete from public.prices where name = 'TESSERA VECCHIA BASE';
+  begin
+    insert into public.prices (category, name, price, insurance) values ('PRESCIISTICA', 'PROVA CON ASSICURAZIONE', 70, 'BASE');
+    raise exception 'ASSERZIONE: voce della presciistica con l''assicurazione accettata';
+  exception when check_violation then null;
+  end;
   assert (select price = 50 and insurance = 'BASE' and people = 3 and public.card_price(p) = 110 from public.prices p
            where category = 'FAMIGLIA' and name = '3 PERSONE CON ASSICURAZIONE'),
          'agevolazione: attesa la quota 50 più 3 × Base (110)';
@@ -1166,18 +1199,20 @@ do $$ begin
 end $$;
 delete from public.members where id in ('aaaaaaaa-0000-0000-0000-0000000ad001', 'aaaaaaaa-0000-0000-0000-0000000ad002');
 
--- La presciistica comprende tessera, quota e assicurazione: la sua voce del
--- listino dice quale (prices.insurance), e vale al posto di quella della
--- tessera nell'elenco da assicurare e nelle liste. Con una tessera senza
--- assicurazione, la voce della presciistica assicura lo stesso.
+-- La presciistica comprende la tessera. L'assicurazione è una scelta del socio
+-- (members.preski_insurance: nessuna, Base o Sport), esclusiva con la tessera e
+-- con l'agevolazione: decide l'elenco da assicurare e le liste.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
-insert into public.prices (category, name, price, min_role, insurance) values
-  ('PRESCIISTICA', 'PROVA PRESCIISTICA', 70, 'utente', 'BASE'),
-  ('PRESCIISTICA', 'PROVA PRESCIISTICA - SPORT', 75, 'utente', 'SPORT');
+insert into public.prices (category, name, price, min_role) values
+  ('PRESCIISTICA', 'PROVA PRESCIISTICA', 70, 'utente');
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, preski_type, preski_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000012', 'GIALLI', 'PRESCI', now(), 'GLLPRS80A01F205X', 'PROVA PRESCIISTICA', 'SPORT'),
+  ('aaaaaaaa-0000-0000-0000-000000000013', 'GIALLI', 'SENZA', now(), 'GLLSNZ80A01F205X', 'PROVA PRESCIISTICA', 'BASE'),
+  ('aaaaaaaa-0000-0000-0000-000000000014', 'GIALLI', 'NIENTE', now(), 'GLLNNT80A01F205X', 'PROVA PRESCIISTICA', null);
+-- Una tessera con l'assicurazione rimasta da prima: il socio ha detto no, non si assicura lo stesso.
 insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, preski_type) values
-  ('aaaaaaaa-0000-0000-0000-000000000012', 'GIALLI', 'PRESCI', now(), 'PROVA TESSERA ORDINARIA', 'GLLPRS80A01F205X', 'PROVA PRESCIISTICA - SPORT'),
-  ('aaaaaaaa-0000-0000-0000-000000000013', 'GIALLI', 'SENZA', now(), 'PROVA TESSERA PRESIDENTE', 'GLLSNZ80A01F205X', 'PROVA PRESCIISTICA');
+  ('aaaaaaaa-0000-0000-0000-000000000015', 'GIALLI', 'RIMASTA', now(), 'PROVA TESSERA ORDINARIA', 'GLLRMS80A01F205X', 'PROVA PRESCIISTICA');
 do $$ begin
   assert not exists (select 1 from information_schema.columns
                       where table_schema = 'public' and table_name = 'members' and column_name = 'insurance'),
@@ -1188,18 +1223,43 @@ do $$
 declare
   presci constant uuid := 'aaaaaaaa-0000-0000-0000-000000000012';
   senza  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000013';
+  niente constant uuid := 'aaaaaaaa-0000-0000-0000-000000000014';
+  rimasta constant uuid := 'aaaaaaaa-0000-0000-0000-000000000015';
 begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin, come la pagina Soci
-  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA PRESCIISTICA') = 90,
-         'presciistica Base: attesi 70 + 20 = 90';
-  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA PRESCIISTICA - SPORT') = 120,
-         'presciistica Sport: attesi 75 + 45 = 120';
+  assert (select public.card_price(p) from public.prices p where p.name = 'PROVA PRESCIISTICA') = 70,
+         'presciistica: la voce non comprende più l''assicurazione';
+  assert (select public.preski_price(m) from public.members m where m.id = senza) = 90, 'presciistica Base: attesi 70 + 20 = 90';
+  assert (select public.preski_price(m) from public.members m where m.id = presci) = 115, 'presciistica Sport: attesi 70 + 45 = 115';
+  assert (select public.preski_price(m) from public.members m where m.id = niente) = 70, 'presciistica senza assicurazione: attesi 70';
+  assert (select public.preski_label(m) from public.members m where m.id = senza) = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'BASE'),
+         'presciistica Base: l''etichetta non dice l''assicurazione';
+  assert (select public.preski_label(m) from public.members m where m.id = niente) = 'PROVA PRESCIISTICA - NO ASSICURAZIONE',
+         'presciistica senza assicurazione: l''etichetta non lo dice';
+  assert (select count = 2 and price = 70 and total = 140 from public.preski_counts where name = 'PROVA PRESCIISTICA - NO ASSICURAZIONE'),
+         'conteggi: presciistica senza assicurazione sbagliata';
+  assert (select count = 1 and price = 115 and total = 115 from public.preski_counts where name = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'SPORT')),
+         'conteggi: presciistica Sport sbagliata';
+  assert (select public.card_holder(m) from public.members m where m.id = niente),
+         'presciistica senza assicurazione: comprende la tessera, deve essere tesserato';
+  begin
+    update public.members set card_type = 'PROVA TESSERA ORDINARIA' where id = senza;
+    raise exception 'ASSERZIONE: accettate tessera e assicurazione della presciistica insieme, doppione';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.members set preski_type = null where id = senza;
+    raise exception 'ASSERZIONE: assicurazione della presciistica rimasta senza presciistica';
+  exception when check_violation then null;
+  end;
 
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert (select insurance from public.insurance_members() where id = presci) = 'SPORT',
          'presciistica Sport: conta ancora l''assicurazione della tessera';
   assert (select insurance from public.insurance_members() where id = senza) = 'BASE',
-         'presciistica con una tessera senza assicurazione: il socio non è da assicurare';
+         'presciistica Base: il socio non è da assicurare';
+  assert not exists (select 1 from public.insurance_members() where id in (niente, rimasta)),
+         'presciistica senza assicurazione: il socio risulta da assicurare';
   begin
     perform public.insurance_send('BASE', 20, array[presci]);
     raise exception 'ASSERZIONE: presciistica Sport, mandato nella lista Base';
@@ -1208,13 +1268,13 @@ begin
     assert sqlerrm like '%Nessun socio%', 'errore inatteso: ' || sqlerrm;
   end;
   assert public.insurance_send('SPORT', 20, array[presci]) = 1, 'presciistica Sport: non è entrato nella lista Sport';
-  assert public.insurance_send('BASE', 21, array[senza]) = 1, 'tessera senza assicurazione: non è entrato nella lista Base';
+  assert public.insurance_send('BASE', 21, array[senza]) = 1, 'presciistica Base: non è entrato nella lista Base';
 end $$;
 
 -- Agevolazioni famiglia: le sceglie il capofamiglia al posto della tessera e
 -- coprono lui e i familiari a carico, con l'assicurazione della voce (quota +
--- persone × assicurazione). La presciistica con l'assicurazione comprende la
--- tessera: chi ha solo lei è assicurato lo stesso. I tesserati (card_holder)
+-- persone × assicurazione). La presciistica comprende la tessera: chi ha solo
+-- lei, con l'assicurazione scelta, è assicurato lo stesso. I tesserati (card_holder)
 -- sono anche loro, e la tessera compresa nella presciistica non si conta.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
@@ -1223,9 +1283,11 @@ insert into public.prices (category, name, price, min_role, insurance) values
   ('FAMIGLIA', 'PROVA 3 PERSONE SPORT', 50, 'utente', 'SPORT'),
   ('FAMIGLIA', 'PROVA 4 PERSONE SENZA ASSICURAZIONE', 65, 'utente', null),
   ('PRESCIISTICA', 'PROVA PRESCIISTICA - FAMIGLIA', 50, 'utente', null);
+update public.prices set course_only = true where name = 'PROVA PRESCIISTICA - FAMIGLIA';
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, preski_type, preski_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000022', 'ROSA', 'SOLAPRESCI', now(), 'RSOSLP80A01F205X', 'PROVA PRESCIISTICA', 'SPORT');
 insert into public.members (id, last_name, first_name, enrolled_at, tax_code, family_discount, preski_type) values
   ('aaaaaaaa-0000-0000-0000-000000000020', 'ROSA', 'CAPO', now(), 'RSOCPA80A01F205X', 'PROVA 3 PERSONE CON ASSICURAZIONE', null),
-  ('aaaaaaaa-0000-0000-0000-000000000022', 'ROSA', 'SOLAPRESCI', now(), 'RSOSLP80A01F205X', null, 'PROVA PRESCIISTICA - SPORT'),
   ('aaaaaaaa-0000-0000-0000-000000000023', 'VIOLA', 'CAPO', now(), 'VLICPA80A01F205X', 'PROVA 4 PERSONE SENZA ASSICURAZIONE', null);
 insert into public.members (id, last_name, first_name, enrolled_at, tax_code, payer_id, preski_type) values
   ('aaaaaaaa-0000-0000-0000-000000000021', 'ROSA', 'FIGLIO', now(), 'RSOFGL80A01F205X',
@@ -1272,7 +1334,7 @@ begin
                                          where m.enrolled_at is not null and m.card_type = 'PROVA TESSERA ORDINARIA'
                                            and not exists (select 1 from public.prices pp
                                                             where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
-                                                              and pp.insurance is not null))),
+                                                              and not pp.course_only))),
          'conteggi: la tessera compresa nella presciistica conta ancora';
 
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
@@ -1485,9 +1547,12 @@ begin
          'chiusura: giorno del corso non azzerato';
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
-  assert (select total = count * 120 from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - SPORT'),
-         'chiusura: presciistica contata senza l''assicurazione che comprende';
+  assert (select total = count * 115 from public.season_breakdown
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'SPORT')),
+         'chiusura: presciistica contata senza l''assicurazione scelta';
+  assert (select total = count * 70 from public.season_breakdown
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - NO ASSICURAZIONE'),
+         'chiusura: presciistica senza assicurazione non contata a parte';
   assert (select total from public.season_breakdown
            where season = chiusa and category = 'CARD' and label = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
          'chiusura: agevolazione famiglia non contata';
