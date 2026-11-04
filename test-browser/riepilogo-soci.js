@@ -30,7 +30,7 @@ FAKE.risposta = (t, r) => {
     { id: "a", last_name: "ROSSI", first_name: "ANNA", card_number: "10", card_type: "ORDINARIA", birth_date: "1980-05-02", birth_place: "ASTI",
       birth_province: "AT", tax_code: "RSSNNA80E42A479X", course_type: "CORSO SCI ADULTI", course_day: "SABATO", preski_type: null, city: "ASTI",
       phone: "333 1234567", email: "anna@example.it" },
-    { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: "ORDINARIA", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA" },
+    { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: "ORDINARIA", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA", preski_label: "CORSO PRESCIISTICA + REALE MUTUA NEVE" },
     { id: "c", last_name: "VERDI", first_name: "ELIA", card_number: "100", card_type: "JUNIOR", course_type: "CORSO SCI BABY", course_day: null },
     { id: "d", last_name: "ZETA", first_name: "ZOE", card_number: null },
     { id: "e", last_name: "ALFA", first_name: "ALDO", card_number: "NO" },
@@ -67,7 +67,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("telefono", rossi[11] === "333 1234567" && rossi[12] === "anna@example.it" && rossi[14] === "ASTI", `${rossi[11]} ${rossi[12]} ${rossi[14]}`);
   const verdi = data.find((d) => d[2] === "VERDI") || [], bianchi = data.find((d) => d[2] === "BIANCHI") || [];
   test("corsoSenzaGiorno", verdi[8] === "CORSO SCI BABY" && verdi[9] === "STAGIONALE", `${verdi[8]} ${verdi[9]}`);
-  test("presciistica", bianchi[10] === "CORSO PRESCIISTICA" && bianchi[8] === "", `${bianchi[10]} «${bianchi[8]}»`);
+  test("presciistica", bianchi[10] === "CORSO PRESCIISTICA + REALE MUTUA NEVE" && bianchi[8] === "", `${bianchi[10]} «${bianchi[8]}»`);
   const passes = REQ.find(([t]) => t === "member_passes");
   test("abbonamentiStagione", passes && passes[2].some((f) => f[0] === "eq" && f[1] === "season" && f[2] === FAKE.rpc.current_season),
     String(JSON.stringify(passes && passes[2])).slice(0, 80));

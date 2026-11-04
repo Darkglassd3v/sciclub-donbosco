@@ -1,6 +1,6 @@
 // Soci (index.html): chi è già coperto non sceglie la tessera.
-// - La presciistica con l'assicurazione comprende la tessera: con lei la tessera
-//   non è obbligatoria, e la presciistica «solo corso» (senza assicurazione) non si vede.
+// - La presciistica comprende la tessera: con lei la tessera non è obbligatoria, e la
+//   presciistica «solo corso» (riservata a chi è coperto dalla famiglia) non si vede.
 // - O la tessera o l'agevolazione famiglia: scelta l'una, l'altra si svuota.
 //   L'agevolazione costa quota + persone × assicurazione (il finto dà già card_price).
 // - Il capofamiglia con l'agevolazione vede quante persone ci sono nel nucleo;
@@ -15,9 +15,8 @@
     { category: "TESSERA", name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, insurance: null, people: null, min_role: "utente" },
     { category: "FAMIGLIA", name: "3 PERSONE CON ASSICURAZIONE", price: 110, insurance: "BASE", people: 3, min_role: "utente" },
     { category: "FAMIGLIA", name: "3 PERSONE SENZA ASSICURAZIONE", price: 50, insurance: null, people: 3, min_role: "utente" },
-    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA", price: 90, insurance: "BASE", people: null, min_role: "utente" },
-    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA - REALE TOTAL SPORT", price: 120, insurance: "SPORT", people: null, min_role: "utente" },
-    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA - FAMIGLIA", price: 50, insurance: null, people: null, min_role: "utente" },
+    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA", price: 70, insurance: null, course_only: false, people: null, min_role: "utente" },
+    { category: "PRESCIISTICA", name: "CORSO PRESCIISTICA - FAMIGLIA", price: 50, insurance: null, course_only: true, people: null, min_role: "utente" },
   ];
   const member = (id, surname, nome, extra = {}) => ({ id, last_name: surname, first_name: nome, updated_at: "1",
     enrolled_at: "2026-10-14", paid: 0, total: 0, total_manual: false, card_type: null, family_discount: null, payer_id: null, ...extra });
@@ -36,6 +35,7 @@
     const writing = r.filtri.find((f) => f[0] === "insert" || f[0] === "update");
     if (t === "members" && writing) { saved.push(writing[1]); return [{ id: "NUOVO", updated_at: "2" }]; }
     if (t === "prices") return PRICE_LIST;
+    if (t === "insurances") return [{ code: "BASE", name: "REALE MUTUA NEVE", price: 20 }, { code: "SPORT", name: "REALE TOTAL SPORT", price: 45 }];
     const eq = (field) => r.filtri.find((f) => f[0] === "eq" && f[1] === field)?.[2];
     if (t === "members" && eq("payer_id")) return NUCLEI[eq("payer_id")] || [];
     if (t === "members" && eq("id")) return MEMBERS[eq("id")] ? [MEMBERS[eq("id")]] : [];
@@ -62,7 +62,7 @@
     }
     showToast = (text) => messages.push(text);
 
-    // 1. Presciistica con l'assicurazione, senza tessera.
+    // 1. Presciistica con l'assicurazione proposta (la Base), senza tessera.
     choose("f_presciistica", "CORSO PRESCIISTICA");
     test("presciSenzaTessera", !requiredCard() && individualTotal() === 90 && !visible("CORSO PRESCIISTICA - FAMIGLIA"),
       `tessera obbligatoria ${requiredCard()}, totale ${individualTotal()}, solo corso visibile ${visible("CORSO PRESCIISTICA - FAMIGLIA")}`);
@@ -80,10 +80,14 @@
       `solo corso ${visible("CORSO PRESCIISTICA - FAMIGLIA")}, con assicurazione ${visible("CORSO PRESCIISTICA")}`);
     choose("f_presciistica", "CORSO PRESCIISTICA - FAMIGLIA");
     test("capoTotale", individualTotal() === 160, `totale ${individualTotal()}`);
+    // Coperto dalla famiglia l'assicurazione c'è già: la scelta della presciistica non si propone.
+    const insuranceBox = el("f_assicurazione_presciistica");
+    test("capoSenzaScelta", insuranceBox && getComputedStyle(insuranceBox).display === "none", "la scelta dell'assicurazione si vede anche al capofamiglia");
     fill();
     await write();
-    test("capoSalva", last().card_type === null && last().family_discount === "3 PERSONE CON ASSICURAZIONE" && last().total === 160,
-      `tessera ${last().card_type}, agevolazione ${last().family_discount}, totale ${last().total}`);
+    test("capoSalva", last().card_type === null && last().family_discount === "3 PERSONE CON ASSICURAZIONE" && last().total === 160
+      && last().preski_insurance === null,
+      `tessera ${last().card_type}, agevolazione ${last().family_discount}, totale ${last().total}, assicurazione ${last().preski_insurance}`);
     choose("f_presciistica", "");
     choose("f_tipologia_tessera", "TESSERA ORDINARIA - REALE MUTUA NEVE");
     test("tesseraTogliAgevolazione", !selectedName("f_agevolazioni_famiglia") && individualTotal() === 40,
