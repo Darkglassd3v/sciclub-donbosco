@@ -127,8 +127,8 @@
         eliminano: si disattivano. «Ordine» indica la posizione nella pagina Soci, come nel modulo
         cartaceo (se vuoto, la voce compare in fondo). «In Soci» è il prezzo mostrato nella pagina
         Soci. La quota della tessera non comprende l'assicurazione, a carico del socio salvo quando
-        è a carico del club; lo stesso vale per la presciistica, che comprende la tessera. Le
-        agevolazioni famiglia sostituiscono la tessera: il numero di persone è ricavato dal nome
+        è a carico del club. La presciistica comprende la tessera, e l'assicurazione si sceglie nella
+        pagina Soci. Le agevolazioni famiglia sostituiscono la tessera: il numero di persone è ricavato dal nome
         (es. "3 PERSONE") e il socio paga la quota più l'assicurazione di ciascuna.
       </p>
       <div class="tabella-scorrevole">
@@ -151,7 +151,7 @@
             <td data-etichetta="Nome"><textarea class="textarea campo-nome" id="nuovoNome" rows="1" placeholder="Nome" aria-label="Nome della voce nuova"></textarea></td>
             <td data-etichetta="Quota €"><input class="input" type="number" id="nuovoPrezzo" step="0.5" min="0" placeholder="0" aria-label="Quota in euro della voce nuova"></td>
             <td data-etichetta="Assicurazione">
-              <div class="select"><select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o presciistica)"></select></div>
+              <div class="select"><select id="nuovoAssicurazione" aria-label="Assicurazione della voce nuova (tessera o agevolazione)"></select></div>
             </td>
             <td></td>
             <td></td>
@@ -219,7 +219,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261103caricamento"></script>
+<script src="shared.js?v=20261105presciistica"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -363,10 +363,10 @@
 
   // L'assicurazione che dà una tessera: decide in quale lista della pagina
   // Assicurazione finisce chi ce l'ha (prices.insurance) e quanto si somma
-  // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto). Anche la
-  // presciistica ne ha una: comprende tessera, quota e assicurazione.
+  // alla quota. Dalla 2.8 vengono dalla tabella insurances (sotto). Quella della
+  // presciistica si sceglie sul socio, nella pagina Soci.
   let INSURANCES = [];
-  const withInsurance = (categoryName) => ["TESSERA", "PRESCIISTICA", "FAMIGLIA"].includes(categoryName);
+  const withInsurance = (categoryName) => ["TESSERA", "FAMIGLIA"].includes(categoryName);
   // Le agevolazioni famiglia pagano l'assicurazione per ogni persona, lette dal nome come fa il database.
   const peopleFromName = (row) => (row.dataset.categoria === "FAMIGLIA"
     && Number(cleanName(row.querySelector("[data-nome]")).toUpperCase().match(/(\d+)\s*PERSON/)?.[1])) || 1;
@@ -613,7 +613,7 @@
     } catch (error) {
       // 23503: la usa ancora una voce del listino o una lista già mandata all'assicurazione.
       showToast("Eliminazione non riuscita: " + (error.code === "23503"
-        ? "l'assicurazione è ancora usata da una voce del listino o da una lista già inviata."
+        ? "l'assicurazione è ancora usata da una voce del listino, dalla presciistica di un socio o da una lista già inviata."
         : errorMessage(error)), "is-danger");
     }
   }

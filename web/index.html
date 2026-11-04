@@ -283,7 +283,7 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 3v2h16V8H4Zm0 6v2h7v-2H4Z"/></svg>Tessera <span class="cosa">Tipo di tessera e famiglia</span></h2>
     <div class="corpo">
       <fieldset class="scelte" id="f_tipologia_tessera"><legend class="label">Tipologia tessera<span class="obbligo">*</span></legend><div class="scelte-opzioni"></div></fieldset>
-      <p id="notaPresciistica" class="help" hidden>La tessera è compresa nella presciistica e non va selezionata.</p>
+      <p id="notaPresciistica" class="help" hidden>La tessera è compresa nella presciistica e non va selezionata, anche senza assicurazione.</p>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
       <p id="notaFamiglia" class="help" hidden></p>
     </div>
@@ -302,6 +302,8 @@
         <div class="scelte-opzioni" id="listinoAbbonamenti"></div>
       </fieldset>
       <fieldset class="scelte" id="f_presciistica"><legend class="label">Presciistica</legend><div class="scelte-opzioni"></div></fieldset>
+      <!-- Si vede solo con la presciistica che comprende la tessera: la Base è già scelta, si può togliere o cambiare. -->
+      <fieldset class="scelte" id="f_assicurazione_presciistica" hidden><legend class="label">Assicurazione della presciistica</legend><div class="scelte-opzioni"></div></fieldset>
 
     <!-- Le partenze prima del corso, la domenica prima del sabato: come sul modulo di carta. -->
     <div class="columns mt-1">
@@ -436,7 +438,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261103caricamento"></script>
+<script src="shared.js?v=20261105presciistica"></script>
 <script src="codicefiscale.js?v=20261022testi"></script>
 <script>
   let PRICES = {};
@@ -489,6 +491,7 @@
     f_tipologia_tessera: "TESSERA",
     f_agevolazioni_famiglia: "FAMIGLIA",
     f_presciistica: "PRESCIISTICA",
+    f_assicurazione_presciistica: "ASSICURAZIONE",
     f_tipologia_corso: "CORSO",
   };
 
@@ -500,6 +503,10 @@
       access = await getProfile();
 
       PRICES = await loadPrices();
+      // Dalla meno cara: la prima è quella proposta con la presciistica.
+      const { data: insurances, error: insurancesError } = await sb.from("insurances").select("code, name, price").order("price").order("name");
+      if (insurancesError) throw insurancesError;
+      PRICES.ASSICURAZIONE = insurances;
       Object.entries(CATEGORY_SELECT).forEach(([id, categoryName]) => fillChoices(id, categoryName));
       fillPassPriceList();
       drawPasses();
@@ -515,10 +522,10 @@
         if (selectedName("f_agevolazioni_famiglia")) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
         recompute();
       });
-      // Anche la presciistica con l'assicurazione comprende la tessera: scelta lei, la
-      // tessera si svuota (e si spegne, updateCover()).
+      // Anche la presciistica comprende la tessera: scelta lei, la tessera si svuota
+      // (e si spegne, updateCover()).
       el("f_presciistica").addEventListener("change", () => {
-        if (chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
+        if (preskiWithCard()) el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.checked = false; });
         recompute();
       });
       el("f_tipologia_corso").addEventListener("change", updateCourseDay);
@@ -585,7 +592,8 @@
       radio.type = "radio";
       radio.name = id;
       radio.value = p.price;
-      radio.dataset.nome = p.name;
+      // Le assicurazioni si salvano col codice, le voci del listino col nome.
+      radio.dataset.nome = p.code || p.name;
       radio.required = required;
       radio.defaultChecked = Boolean(p.nessuna);
 
@@ -1027,9 +1035,9 @@
 
   /** Il totale come lo dà il listino: voci scelte più abbonamenti. */
   function priceListTotal() {
-    // La presciistica con l'assicurazione comprende tessera, quota e assicurazione
-    // (scheda di carta): la tessera non si somma. Quella «solo corso» no.
-    const withPreski = Boolean(chosenItem("PRESCIISTICA", "f_presciistica")?.insurance);
+    // La presciistica comprende la tessera (scheda di carta): la tessera non si somma.
+    // Quella «solo corso» no. L'assicurazione scelta con lei è una voce come le altre.
+    const withPreski = preskiWithCard();
     const items = Object.keys(CATEGORY_SELECT)
       .filter((id) => !(withPreski && id === "f_tipologia_tessera"))
       .reduce((sum, id) => sum + (parseFloat(choiceOf(id)?.value) || 0), 0);
@@ -1081,10 +1089,28 @@
   const chosenItem = (categoryName, groupId) => (PRICES[categoryName] || []).find((p) => p.name === selectedName(groupId));
   const people = (n) => (n === 1 ? "1 persona" : `${n} persone`);
 
+  /** La presciistica scelta comprende la tessera: tutte tranne quella «solo corso» della famiglia. */
+  function preskiWithCard() {
+    const item = chosenItem("PRESCIISTICA", "f_presciistica");
+    return Boolean(item) && !item.course_only;
+  }
+
+  /**
+   * L'assicurazione si sceglie solo con la presciistica che comprende la tessera. Appena
+   * compare propone la meno cara, la Base; sparisce vuota, per non restare nel totale.
+   */
+  function updatePreskiInsurance() {
+    const box = el("f_assicurazione_presciistica");
+    const offered = preskiWithCard();
+    if (offered && box.hidden) selectByName("f_assicurazione_presciistica", PRICES.ASSICURAZIONE[0]?.code);
+    if (!offered && !box.hidden) selectByName("f_assicurazione_presciistica", null);
+    box.hidden = !offered;
+  }
+
   /**
    * Da dove viene la tessera di chi non la sceglie: l'agevolazione famiglia la
    * dà al capofamiglia e ai familiari a carico, fino alle sue persone
-   * ({ famiglia: true }); la presciistica con l'assicurazione la comprende
+   * ({ famiglia: true }); la presciistica la comprende
    * ({ famiglia: false }). null = la tessera serve.
    */
   function cover() {
@@ -1093,7 +1119,7 @@
     const ofHead = el("pagaFamiliare").checked && householdHead
       && (PRICES.FAMIGLIA || []).find((p) => p.name === householdHead.agevolazione);
     if (ofHead && householdHead.coperti < (ofHead.people || 1)) return { famiglia: true, agevolazione: ofHead, capo: householdHead };
-    if (chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) return { famiglia: false };
+    if (preskiWithCard()) return { famiglia: false };
     return null;
   }
 
@@ -1108,13 +1134,13 @@
   /**
    * Tessera obbligatoria solo per chi non è coperto; la nota dice da cosa (o
    * quante persone conta il nucleo del capofamiglia); la presciistica di chi è
-   * coperto dall'agevolazione è solo il corso, quella degli altri ha l'assicurazione.
+   * coperto dall'agevolazione è solo il corso, quella degli altri comprende la tessera.
    */
   function updateCover() {
+    updatePreskiInsurance();
     const c = cover();
-    // Con la presciistica con l'assicurazione la tessera non si sceglie: la comprende. Chi
-    // le ha già tutte e due (prima del 22/10) la tiene, spenta.
-    const withPreski = Boolean(chosenItem("PRESCIISTICA", "f_presciistica")?.insurance);
+    // Con la presciistica la tessera non si sceglie, nemmeno senza assicurazione: la comprende.
+    const withPreski = preskiWithCard();
     el("f_tipologia_tessera").querySelectorAll("input").forEach((r) => { r.required = !c; r.disabled = withPreski || r.dataset.fisso === "1"; });
     el("f_tipologia_tessera").querySelector(".obbligo").hidden = Boolean(c);
     const note = el("notaFamiglia");
@@ -1136,13 +1162,13 @@
     const family = Boolean(c?.famiglia);
     el("f_presciistica").querySelectorAll("input").forEach((r) => {
       const item = (PRICES.PRESCIISTICA || []).find((p) => p.name === r.dataset.nome);
-      r.closest("label").hidden = Boolean(item) && !r.checked && (family ? Boolean(item.insurance) : !item.insurance);
+      r.closest("label").hidden = Boolean(item) && !r.checked && (family ? !item.course_only : Boolean(item.course_only));
     });
   }
 
   function recompute() {
     updateCover();
-    el("notaPresciistica").hidden = !chosenItem("PRESCIISTICA", "f_presciistica")?.insurance;
+    el("notaPresciistica").hidden = !preskiWithCard();
     const currentMember = { total: individualTotal(), paid: el("f_acconto").value };
     const { totale: totalAmount, saldo: balance } = householdTotals(currentMember, dependants);
     el("v_totale").textContent = fmt(totalAmount);
@@ -1417,6 +1443,7 @@
     f_tipologia_tessera: "card_type",
     f_agevolazioni_famiglia: "family_discount",
     f_presciistica: "preski_type",
+    f_assicurazione_presciistica: "preski_insurance",
     f_tipologia_corso: "course_type",
   };
 
@@ -1442,6 +1469,8 @@
 
       Object.keys(CATEGORY_SELECT).forEach((idSelect) =>
         selectByName(idSelect, member[DB_SELECT_FIELDS[idSelect]]));
+      // Già visibile: resta quella del socio, anche nessuna, senza riproporre la Base.
+      el("f_assicurazione_presciistica").hidden = !preskiWithCard();
       el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === member.course_day));
       updateCourseDay();
       el("f_totale_a_mano").checked = Boolean(member.total_manual);
@@ -1699,8 +1728,8 @@
       markError(el("f_tipologia_tessera"), fullHousehold());
       return;
     }
-    if (cover()?.famiglia && chosenItem("PRESCIISTICA", "f_presciistica")?.insurance) {
-      markError(el("f_presciistica"), "L'agevolazione famiglia comprende già tessera e assicurazione: selezionare la presciistica senza assicurazione.");
+    if (cover()?.famiglia && preskiWithCard()) {
+      markError(el("f_presciistica"), "L'agevolazione famiglia comprende già la tessera: selezionare la presciistica della famiglia, solo il corso.");
       return;
     }
     if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -1794,6 +1823,7 @@
       // pass_type non si manda: lo scrive il database dagli abbonamenti
       // (member_passes), vedi sotto.
       preski_type: selectedName("f_presciistica"),
+      preski_insurance: selectedName("f_assicurazione_presciistica"),
       course_type: selectedName("f_tipologia_corso"),
       course_day: choiceOf("f_giorno_corso")?.value || null,
       saturday_departure: selectedDepartures("check_sabato"),
@@ -1989,6 +2019,7 @@
       ["Tessera", [["Numero tessera", cardNumber()], ["Tessera", selectedName("f_tipologia_tessera")],
         ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")]]],
       ["Gite e corsi", [["Abbonamenti", passList], ["Presciistica", selectedName("f_presciistica")],
+        ["Assicurazione della presciistica", PRICES.ASSICURAZIONE.find((a) => a.code === selectedName("f_assicurazione_presciistica"))?.name],
         ["Partenza della domenica", selectedDepartures("check_domenica")],
         ["Partenza del sabato", selectedDepartures("check_sabato")],
         ["Corso", courseItem && (dayKey ? `${courseItem} · ${dayKey.toLowerCase()}` : courseItem)]]],

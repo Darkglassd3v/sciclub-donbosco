@@ -101,7 +101,7 @@
   // Solo le informazioni di base. Codice fiscale, indirizzo e importi restano
   // fuori: qui si cerca un contatto, non si fa amministrazione, e quello che
   // non si scarica non si può neanche lasciare in giro.
-  const FIELDS = "id, last_name, first_name, phone, email, card_type, card_number, pass_type, preski_type";
+  const FIELDS = "id, last_name, first_name, phone, email, card_type, card_number, pass_type, preski_type, preski_label";
   const MAX = 40;
 
   const listItems = () => el("risultati");
@@ -159,7 +159,7 @@
           ${row("Email", email)}
           ${row("Tessera", esc(text(s.card_type)))}
           ${row("Abbonamento", esc(text(s.pass_type)))}
-          ${s.preski_type ? row("Presciistica", esc(s.preski_type)) : ""}
+          ${s.preski_type ? row("Presciistica", esc(s.preski_label)) : ""}
         </dl>
         ${contactsHtml(s.phone)}
       </div>`;

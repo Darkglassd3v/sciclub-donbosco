@@ -1232,7 +1232,7 @@ begin
   assert (select public.preski_price(m) from public.members m where m.id = senza) = 90, 'presciistica Base: attesi 70 + 20 = 90';
   assert (select public.preski_price(m) from public.members m where m.id = presci) = 115, 'presciistica Sport: attesi 70 + 45 = 115';
   assert (select public.preski_price(m) from public.members m where m.id = niente) = 70, 'presciistica senza assicurazione: attesi 70';
-  assert (select public.preski_label(m) from public.members m where m.id = senza) = 'PROVA PRESCIISTICA + REALE MUTUA NEVE',
+  assert (select public.preski_label(m) from public.members m where m.id = senza) = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'BASE'),
          'presciistica Base: l''etichetta non dice l''assicurazione';
   assert (select public.preski_label(m) from public.members m where m.id = niente) = 'PROVA PRESCIISTICA - NO ASSICURAZIONE',
          'presciistica senza assicurazione: l''etichetta non lo dice';
@@ -1548,8 +1548,7 @@ begin
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
   assert (select total = count * 115 from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label like 'PROVA PRESCIISTICA + %'
-             and label not like '%MUTUA%'),
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'SPORT')),
          'chiusura: presciistica contata senza l''assicurazione scelta';
   assert (select total = count * 70 from public.season_breakdown
            where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - NO ASSICURAZIONE'),

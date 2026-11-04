@@ -45,12 +45,13 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
 - **Abbonamenti gite**: premi **+ Aggiungi** sull'abbonamento. Se lo paga
   subito sul pullman, spunta **già pagato**.
 - **Corso**: sceglilo e poi scegli il **giorno** (sabato o domenica).
-- **Presciistica**: comprende tessera, quota e assicurazione, come sulla scheda
-  di carta. Ci sono due voci: **CORSO PRESCIISTICA** (90 €, con l'assicurazione
-  Base) e **CORSO PRESCIISTICA - REALE TOTAL SPORT** (120 €, con la più
-  completa). La tessera non serve: se la scegli lo stesso, nel totale non si
-  somma, e sotto la tessera lo dice una nota. Chi è coperto da un'agevolazione
-  famiglia ha la **CORSO PRESCIISTICA - FAMIGLIA** (50 €, solo il corso).
+- **Presciistica**: **CORSO PRESCIISTICA** (70 €) comprende tessera e quota, come
+  sulla scheda di carta: la tessera non si sceglie. Sotto compare
+  **Assicurazione della presciistica**, con **REALE MUTUA NEVE** già selezionata
+  (in tutto 90 €). Se il socio non la vuole scegli **Nessuna** (70 €); per la più
+  completa scegli **REALE TOTAL SPORT** (115 €). Con «Nessuna» non finisce
+  nell'elenco da assicurare. Chi è coperto da un'agevolazione famiglia ha la
+  **CORSO PRESCIISTICA - FAMIGLIA** (50 €, solo il corso).
 - **Partenze**: spunta da dove parte il sabato e la domenica.
 - **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
 - **Acconto** (nella parte Pagamento): quanto ha già dato.

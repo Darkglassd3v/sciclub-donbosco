@@ -186,7 +186,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261103caricamento"></script>
+<script src="shared.js?v=20261105presciistica"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -238,7 +238,7 @@
     ["CORSI E ABBONAMENTI", "8A5300", [
       ["Corso", (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type)],
       ["Abbonamento", (s) => s.passes.join(" + ")],
-      ["Presciistica", (s) => s.preski_type]]],
+      ["Presciistica", (s) => s.preski_label]]],
     ["RECAPITI", "4A5868", [
       ["Telefono", (s) => s.phone],
       ["Email", (s) => s.email],
@@ -270,7 +270,7 @@
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_type")
+            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label")
           .not("enrolled_at", "is", null)
           // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
           .is("card_holder", true)
@@ -328,7 +328,8 @@
       kpi: kpi, tessere: cards, tesserati: holders.length,
       abbonamenti: withPrice(passList, "ABBONAMENTO"),
       corsi: withPrice(courses, "CORSO"),
-      presciistica: withPrice(preskiCourse, "PRESCIISTICA"),
+      // Il prezzo dipende dall'assicurazione scelta: lo dà la vista, una riga per voce e assicurazione.
+      presciistica: preskiCourse.map((r) => ({ name: r.name, count: r.count, price: Number(r.price), total: Number(r.total) })),
       ...byItem(entries),
     };
   }

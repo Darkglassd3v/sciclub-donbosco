@@ -65,6 +65,8 @@
     test("salvaBase", last().preski_type === "CORSO PRESCIISTICA" && last().preski_insurance === "BASE" && last().total === 90 && last().card_type === null,
       `voce ${last().preski_type}, assicurazione ${last().preski_insurance}, totale ${last().total}, tessera ${last().card_type}`);
 
+    // Dopo il salvataggio il modulo riparte vuoto.
+    choose("f_presciistica", "CORSO PRESCIISTICA");
     choose(BOX, "SPORT");
     test("sport", individualTotal() === 115, `totale ${individualTotal()}`);
     fill();
@@ -72,6 +74,7 @@
     test("salvaSport", last().preski_insurance === "SPORT" && last().total === 115,
       `assicurazione ${last().preski_insurance}, totale ${last().total}`);
 
+    choose("f_presciistica", "CORSO PRESCIISTICA");
     choose(BOX, "");
     test("tolta", individualTotal() === 70 && !selectedName(BOX) && boxShown(), `totale ${individualTotal()}, assicurazione ${selectedName(BOX)}`);
     test("tesseraSpentaAncheSenza", cards().every((t) => t.disabled), "senza assicurazione la tessera si può scegliere: 70 la comprendono già");
