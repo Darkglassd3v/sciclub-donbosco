@@ -2019,7 +2019,7 @@
       ["Tessera", [["Numero tessera", cardNumber()], ["Tessera", selectedName("f_tipologia_tessera")],
         ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")]]],
       ["Gite e corsi", [["Abbonamenti", passList], ["Presciistica", selectedName("f_presciistica")],
-        ["Assicurazione della presciistica", PRICES.ASSICURAZIONE.find((a) => a.code === selectedName("f_assicurazione_presciistica"))?.name],
+        ["Assicurazione della presciistica", preskiWithCard() && (PRICES.ASSICURAZIONE.find((a) => a.code === selectedName("f_assicurazione_presciistica"))?.name || "Nessuna")],
         ["Partenza della domenica", selectedDepartures("check_domenica")],
         ["Partenza del sabato", selectedDepartures("check_sabato")],
         ["Corso", courseItem && (dayKey ? `${courseItem} · ${dayKey.toLowerCase()}` : courseItem)]]],
