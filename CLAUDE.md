@@ -9,6 +9,9 @@
   nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
   di cosa è fatto e cosa no): la sola lettura non chiude il turno. Push sempre solo col sì.
 - Interfaccia, commenti e variabili JS in italiano; nomi database in inglese.
+- Campagne Meta (Facebook e Instagram): prima leggere `docs/META-ADS.md` (esperienze reali
+  raccolte nei forum, posizionamenti da escludere, età, divisione Facebook/Instagram) e
+  aggiungerci ciò che si scopre di utile.
 
 ## graphify
 
