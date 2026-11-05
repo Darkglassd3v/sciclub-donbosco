@@ -24,6 +24,11 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   **Threads** e la **colonna destra** di Facebook (solo desktop, senza limite di frequenza).
 - Per un carosello o un'immagine restano i feed di Facebook e Instagram, Esplora di Instagram e
   le storie (con immagini nel formato delle storie, senza bande nere).
+- In fondo ai posizionamenti manuali c'è **«Consenti spesa limitata per i posizionamenti
+  esclusi»**, attiva di default: Meta spende comunque circa il 5% del budget su ogni
+  posizionamento tolto. Va spenta.
+- Nel selettore «Usa post esistente» compaiono solo i post delle piattaforme scelte nel gruppo
+  di inserzioni: con solo Facebook, la scheda Instagram resta vuota.
 - Togliere un posizionamento a campagna avviata è una modifica significativa: l'apprendimento
   riparte e i primi giorni costano di più. Si decide tutto prima di pubblicare.
 
