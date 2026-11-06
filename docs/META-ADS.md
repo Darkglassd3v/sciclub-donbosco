@@ -13,6 +13,15 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   Un'inserzione usa un solo post (di Facebook o di Instagram).
 - «Pubblica» e il pagamento li fa l'utente. Chi prepara la bozza si ferma prima.
 - Il pubblico del club è locale: Asti con raggio di 35 km.
+- Un post esistente si mostra così com'è: un carosello parte sempre dalla prima foto e non si
+  può scegliere un'altra foto iniziale. La copertina del carosello va pensata anche per la
+  pubblicità (informazioni subito visibili).
+- Un post Instagram usato come inserzione chiede un «URL del sito Web» e un pulsante: si usa il
+  profilo `https://www.instagram.com/sciclubdonbosco_asti/` con «Scopri di più».
+- Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
+  animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
+  campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
+- La pubblicazione richiede un numero di telefono verificato sull'account pubblicitario.
 
 ## Posizionamenti
 
