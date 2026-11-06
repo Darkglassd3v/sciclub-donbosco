@@ -16,8 +16,14 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Un post esistente si mostra così com'è: un carosello parte sempre dalla prima foto e non si
   può scegliere un'altra foto iniziale. La copertina del carosello va pensata anche per la
   pubblicità (informazioni subito visibili).
-- Un post Instagram usato come inserzione chiede un «URL del sito Web» e un pulsante: si usa il
-  profilo `https://www.instagram.com/sciclubdonbosco_asti/` con «Scopri di più».
+- **Ogni inserzione ha la sua call to action, sempre impostata.** La call to action di un post
+  Facebook esistente sta sul post stesso: due inserzioni che usano lo stesso post hanno per forza
+  lo stesso pulsante. Per questo Facebook e Instagram vanno in gruppi di inserzioni separati, ognuno
+  con il proprio post: Facebook «Scopri di più» verso la pagina
+  (`https://www.facebook.com/share/19LxpQWqA4/`), Instagram «Scopri di più» verso il profilo
+  `https://www.instagram.com/sciclubdonbosco_asti/` (per un post Instagram l'URL è obbligatorio).
+- Duplicando un gruppo di inserzioni, l'inserzione copiata tiene il post dell'originale: va
+  riaperta e collegata al post giusto, poi vanno ricontrollati pulsante e miglioramenti.
 - Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
   animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
   campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
