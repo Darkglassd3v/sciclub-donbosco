@@ -9,6 +9,8 @@
 //   sbagliata e la pagina proponeva un codice sbagliato): nessun codice proposto, l'avviso dice la
 //   data scritta nel codice; con la scheda giusta, nessun avviso. Il comune soppresso (Lu, oggi Lu e
 //   Cuccaro Monferrato) non conta: il comune si confronta solo se la libreria lo trova.
+// - Nome del comune non ufficiale (LU MONFERRATO, provincia AL): con la provincia si riprova
+//   togliendo le ultime parole, e Calcola trova LU.
 // - Codice valido di un'altra persona (cognome e nome diversi): nessun codice proposto.
 // - Campo vuoto e dati completi: il codice compare da solo.
 // Dati inventati: il repository è pubblico.
@@ -77,6 +79,12 @@
     write("f_data_nascita", "1957-01-20");
     await wait(300);
     test("validoCoerente", notice().hidden, `avviso «${text()}»`);
+    // Lo stesso codice svuotato e ricalcolato: la libreria conosce solo il nome ufficiale (LU), con la
+    // provincia si riprova togliendo le ultime parole del nome scritto.
+    el("f_codice_fiscale").value = "";
+    chooseSex("M");
+    await compute();
+    test("nomeNonUfficiale", proposed()?.textContent.includes(code("VERDI", "GIAN LUCA", "M", 20, 1, 1957, "LU", "AL")), `avviso «${text()}»`);
 
     resetForm();
     fill("BIANCHI", "LUCA", "1980-01-01", "ASTI", "AT");
