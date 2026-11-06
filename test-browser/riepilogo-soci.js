@@ -9,6 +9,10 @@
 //   soci-stagione-2026-27-AAAA-MM-GG.xlsx.
 // - Mentre si scorre restano ferme le tre righe d'intestazione e le colonne da Numero a Nome.
 // - frozenPaneXml(): il blocco scritto nel foglio, che xlsx-js-style da solo non scrive.
+// - Chi è tesserato con la presciistica o con l'agevolazione famiglia non ha una tessera sua, ma
+//   nella colonna Tipo tessera ha quella ordinaria della sua assicurazione (member_insurance):
+//   Base → ordinaria Reale Mutua Neve, Sport → ordinaria Total Sport, nessuna → solo tessera
+//   (richiesta del 6/11). Mai una tessera riservata o scontata.
 const SHEETS = [];
 const letters = (c) => String.fromCharCode(65 + c);
 window.XLSX = { utils: {
@@ -30,10 +34,18 @@ FAKE.risposta = (t, r) => {
     { id: "a", last_name: "ROSSI", first_name: "ANNA", card_number: "10", card_type: "ORDINARIA", birth_date: "1980-05-02", birth_place: "ASTI",
       birth_province: "AT", tax_code: "RSSNNA80E42A479X", course_type: "CORSO SCI ADULTI", course_day: "SABATO", preski_type: null, city: "ASTI",
       phone: "333 1234567", email: "anna@example.it" },
-    { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: "ORDINARIA", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA", preski_label: "CORSO PRESCIISTICA + REALE MUTUA NEVE" },
+    { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: null, member_insurance: "BASE", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA", preski_label: "CORSO PRESCIISTICA + REALE MUTUA NEVE" },
     { id: "c", last_name: "VERDI", first_name: "ELIA", card_number: "100", card_type: "JUNIOR", course_type: "CORSO SCI BABY", course_day: null },
-    { id: "d", last_name: "ZETA", first_name: "ZOE", card_number: null },
-    { id: "e", last_name: "ALFA", first_name: "ALDO", card_number: "NO" },
+    { id: "d", last_name: "ZETA", first_name: "ZOE", card_number: null, card_type: null, member_insurance: null },
+    { id: "e", last_name: "ALFA", first_name: "ALDO", card_number: "NO", card_type: null, member_insurance: "SPORT" },
+  ];
+  if (t === "prices") return [
+    { name: "TESSERA DIRETTIVO", price: 0, insurance: "SPORT", min_role: "admin" },
+    { name: "TESSERA SCONTATA - REALE MUTUA NEVE", price: 10, insurance: "BASE", min_role: "utente" },
+    { name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 20, insurance: "BASE", min_role: "utente" },
+    { name: "TESSERA ORDINARIA - REALE TOTAL SPORT", price: 20, insurance: "SPORT", min_role: "utente" },
+    { name: "TESSERA SCONTATA - NO ASSICURAZIONE", price: 10, insurance: null, min_role: "utente" },
+    { name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, insurance: null, min_role: "utente" },
   ];
   if (t === "member_passes") return [{ member_id: "a", pass_type: "10 VIAGGI SABATO" }, { member_id: "a", pass_type: "5 VIAGGI DOMENICA" },
     { member_id: "c", pass_type: "STAGIONALE" }];
@@ -68,6 +80,12 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const verdi = data.find((d) => d[2] === "VERDI") || [], bianchi = data.find((d) => d[2] === "BIANCHI") || [];
   test("corsoSenzaGiorno", verdi[8] === "CORSO SCI BABY" && verdi[9] === "STAGIONALE", `${verdi[8]} ${verdi[9]}`);
   test("presciistica", bianchi[10] === "CORSO PRESCIISTICA + REALE MUTUA NEVE" && bianchi[8] === "", `${bianchi[10]} «${bianchi[8]}»`);
+  const tipo = (cognome) => (data.find((d) => d[2] === cognome) || [])[1];
+  test("tesseraCompresa", tipo("BIANCHI") === "TESSERA ORDINARIA - REALE MUTUA NEVE" && tipo("ALFA") === "TESSERA ORDINARIA - REALE TOTAL SPORT"
+    && tipo("ZETA") === "SOLO TESSERA - NO ASSICURAZIONE" && tipo("ROSSI") === "ORDINARIA",
+    `${tipo("BIANCHI")} / ${tipo("ALFA")} / ${tipo("ZETA")} / ${tipo("ROSSI")}`);
+  const asked = REQ.find(([t, c]) => t === "members" && String(c).includes("tax_code"));
+  test("chiedeAssicurazione", String(asked && asked[1]).includes("member_insurance"), String(asked && asked[1]).slice(0, 80));
   const passes = REQ.find(([t]) => t === "member_passes");
   test("abbonamentiStagione", passes && passes[2].some((f) => f[0] === "eq" && f[1] === "season" && f[2] === FAKE.rpc.current_season),
     String(JSON.stringify(passes && passes[2])).slice(0, 80));

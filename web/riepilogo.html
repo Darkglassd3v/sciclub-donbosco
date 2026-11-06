@@ -254,6 +254,15 @@
 
   /** Il numero di tessera come numero (2 prima di 10); senza numero, o «NO», in fondo. */
   const cardOrder = (s) => { const n = parseInt(s.card_number, 10); return Number.isNaN(n) ? Infinity : n; };
+  const ownCard = (s) => s.card_type && s.card_type.toUpperCase() !== "NO";
+  /**
+   * La tessera di chi è tesserato con la presciistica o con l'agevolazione famiglia, che non ne
+   * hanno una loro: quella ordinaria della loro assicurazione (la più cara fra le tessere per
+   * tutti con quell'assicurazione, quindi mai la scontata né il direttivo). Richiesta del 6/11.
+   */
+  const coveringCard = (cards, insurance) => cards
+    .filter((p) => (p.min_role || "utente") === "utente" && (p.insurance || null) === (insurance || null))
+    .sort((a, b) => Number(b.price) - Number(a.price))[0]?.name || null;
   const byName = (a, b) => (a.last_name || "").localeCompare(b.last_name || "", "it") || (a.first_name || "").localeCompare(b.first_name || "", "it");
 
   /**
@@ -266,20 +275,22 @@
     try {
       const { data: seasonValue, error } = await sb.rpc("current_season");
       if (error) throw error;
-      const [members, passes] = await Promise.all([
+      const [members, passes, cards] = await Promise.all([
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label")
+            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label, member_insurance")
           .not("enrolled_at", "is", null)
           // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
           .is("card_holder", true)
           .order("id")),
         allRows(() => sb.from("member_passes").select("member_id, pass_type").eq("season", seasonValue).order("id")),
+        allRows(() => sb.from("prices").select("name, price, insurance, min_role").eq("category", "TESSERA").order("name")),
       ]);
       const passesOf = new Map();
       for (const p of passes) passesOf.set(p.member_id, [...(passesOf.get(p.member_id) || []), p.pass_type]);
-      const rows = members.map((s) => ({ ...s, passes: passesOf.get(s.id) || [] }))
+      const rows = members.map((s) => ({ ...s, card_type: ownCard(s) ? s.card_type : coveringCard(cards, s.member_insurance),
+        passes: passesOf.get(s.id) || [] }))
         .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
       // La stagione scritta dentro il file (titolo e nome del foglio), non solo nel nome del file:
       // rinominato o copiato, dice ancora di che stagione è.
