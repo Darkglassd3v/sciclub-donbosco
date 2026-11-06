@@ -606,10 +606,18 @@ function showTaxCodeNotice(box, field, outcome, after) {
 /** Il codice fiscale come si salva: maiuscolo, senza spazi né altri segni. */
 const cleanTaxCode = (value) => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-/** Il comune scritto nella scheda come lo trova la libreria: con la provincia, poi senza (può essere sbagliata o mancare). */
-function taxCodePlace(fn, provincia) {
-  for (const birthplaceProvincia of [provincia || undefined, undefined]) {
-    try { return fn(birthplaceProvincia); } catch { /* comune non trovato con questa provincia */ }
+/**
+ * Il comune scritto nella scheda come lo trova la libreria: `fn(nome, provincia)` provato col nome
+ * scritto, con la provincia e poi senza (può essere sbagliata o mancare). Con la provincia si
+ * riprova anche togliendo le ultime parole del nome: la libreria conosce solo i nomi ufficiali, e
+ * «LU MONFERRATO» (AL) è il comune di LU.
+ */
+function taxCodePlace(fn, luogo, provincia) {
+  const words = String(luogo || "").trim().split(/\s+/);
+  const tries = [[words.join(" "), provincia || undefined], [words.join(" "), undefined]];
+  if (provincia) for (let i = words.length - 1; i > 0; i--) tries.push([words.slice(0, i).join(" "), provincia]);
+  for (const [name, prov] of tries) {
+    try { return fn(name, prov); } catch { /* comune non trovato così */ }
   }
   return null;
 }
@@ -621,8 +629,8 @@ function taxCodePlace(fn, provincia) {
 function computeTaxCode({ cognome, nome, dataNascita, sesso, luogo, provincia } = {}) {
   const [year, month, day] = String(dataNascita || "").split("-").map(Number);
   if (!cognome?.trim() || !nome?.trim() || !day || !/^[MF]$/.test(sesso || "") || !luogo?.trim()) return null;
-  return taxCodePlace((birthplaceProvincia) => CodiceFiscale.compute({ name: nome.trim(), surname: cognome.trim(), gender: sesso,
-    day, month, year, birthplace: luogo.trim(), birthplaceProvincia }), provincia);
+  return taxCodePlace((birthplace, birthplaceProvincia) => CodiceFiscale.compute({ name: nome.trim(), surname: cognome.trim(), gender: sesso,
+    day, month, year, birthplace, birthplaceProvincia }), luogo, provincia);
 }
 
 /**
@@ -649,7 +657,7 @@ function taxCodeOutcome(written, details = {}) {
   const [year, month, day] = String(dataNascita || "").split("-").map(Number);
   if (day && (day !== data.day || month !== data.month || year % 100 !== data.year % 100)) differences.push("data di nascita");
   if (/^[MF]$/.test(sesso || "") && sesso !== data.gender) differences.push("sesso");
-  const place = luogo?.trim() && taxCodePlace((p) => CodiceFiscale.findLocationCode(luogo.trim(), p), provincia);
+  const place = luogo?.trim() && taxCodePlace((n, p) => CodiceFiscale.findLocationCode(n, p), luogo, provincia);
   if (place && place !== cf.birthplace.cc) differences.push("luogo di nascita");
   if (!differences.length) return null;
   const date = `${String(data.day).padStart(2, "0")}/${String(data.month).padStart(2, "0")}/${data.year}`;
