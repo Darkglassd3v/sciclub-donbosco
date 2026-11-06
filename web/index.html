@@ -438,8 +438,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261105presciistica"></script>
-<script src="codicefiscale.js?v=20261022testi"></script>
+<script src="shared.js?v=20261106codicefiscale"></script>
+<script src="vendor/codice-fiscale-js-2.4.0.js"></script>
 <script>
   let PRICES = {};
   let dependants = [];
@@ -786,158 +786,54 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Confronta il codice fiscale con l'anagrafica (codicefiscale.js), anche col
-   * comune dei soci nati nello stesso posto; se il campo è vuoto, propone il
-   * codice calcolato. L'avviso non dice il motivo: «Codice fiscale errato» e,
-   * se si può, il codice proposto (mostraAvvisoCF).
+   * Il codice fiscale confrontato con la scheda (taxCodeOutcome, libreria codice-fiscale-js). A
+   * campo vuoto, con tutti i dati, il codice calcolato si propone da solo.
    */
-  let taxCodeTurn = 0;
-  async function checkTaxCode() {
-    const turn = ++taxCodeTurn;
-    const writtenOne = el("f_codice_fiscale").value.trim();
-    // Nel frattempo il codice potrebbe essere stato cambiato a mano, o partito un
-    // controllo più nuovo (vince quello): la risposta non serve più.
-    const old = () => turn !== taxCodeTurn || el("f_codice_fiscale").value.trim() !== writtenOne;
-    if (!writtenOne) {
-      // Campo vuoto: il codice dai dati, se ci sono tutti (il sesso anche dal nome).
-      const { anagrafica: personalDetails, mancano: missingOnes } = await taxCodeData();
-      const municipality = !missingOnes.length && await placeMunicipality(personalDetails.luogo, 1);
-      if (old()) return;
-      // Per un posto mai visto non si propone niente.
-      const proposed = municipality && computeTaxCode({ ...personalDetails, comune: municipality });
-      showTaxCodeNotice(el("avvisoCF"), el("f_codice_fiscale"), proposed && { ok: false, suggerito: proposed }, checkDuplicates);
-      return;
-    }
-    const personalDetails = {
-      cognome: el("f_cognome").value,
-      nome: el("f_nome").value,
-      dataNascita: el("f_data_nascita").value,
-      luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
-      // Il sesso lo indica chi compila e non si salva.
-      sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
-    };
-    // Il comune serve solo per controllare un codice di 15 o 16 caratteri (uno
-    // più corto o più lungo è errato e basta). Per dire che il comune di un
-    // codice scritto è sbagliato servono almeno tre soci nati lì.
-    const len = normalizeTaxCode(writtenOne).length;
-    const municipality = len === 15 || len === 16 ? await placeMunicipality(personalDetails.luogo, 3) : null;
-    if (old()) return;
-    let outcome = verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality });
-    // Giorno illeggibile e sesso non indicato: lo si prova a ricavare dai soci
-    // con lo stesso nome. Solo per il giorno illeggibile (sessoProbabile): uno
-    // leggibile dice il sesso meglio. La richiesta parte solo se un sesso
-    // qualunque darebbe una proposta.
-    const nome = personalDetails.nome.trim().toUpperCase();
-    if (outcome && !outcome.ok && !outcome.suggerito && !personalDetails.sesso && nome
-        && verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality, sessoProbabile: "M" })?.suggerito) {
-      const sex = await sexFromName(nome);
-      if (old()) return;
-      const withSex = sex && verifyTaxCode(writtenOne, { ...personalDetails, comune: municipality, sessoProbabile: sex });
-      if (withSex?.suggerito) outcome = withSex;
-    }
-    // Sbagliato: con tutti i dati si propone il codice che ne viene, al posto
-    // della correzione del solo codice scritto.
-    if (outcome && !outcome.ok) {
-      const { anagrafica: records, mancano: missingOnes } = await taxCodeData();
-      const municipalityData = !missingOnes.length && await placeMunicipality(records.luogo, 1);
-      if (old()) return;
-      const computed = municipalityData && computeTaxCode({ ...records, comune: municipalityData });
-      if (computed && computed !== normalizeTaxCode(writtenOne)) outcome = { ...outcome, suggerito: computed };
-    }
-    showTaxCodeNotice(el("avvisoCF"), el("f_codice_fiscale"), outcome, checkDuplicates);
+  function checkTaxCode() {
+    const field = el("f_codice_fiscale");
+    const details = taxCodeData();
+    const proposed = !field.value.trim() && computeTaxCode(details);
+    const outcome = field.value.trim() ? taxCodeOutcome(field.value, details) : proposed && { ok: false, suggerito: proposed };
+    showTaxCodeNotice(el("avvisoCF"), field, outcome, checkDuplicates);
   }
 
-  /**
-   * I dati per calcolare il codice fiscale dalla scheda. Il sesso non scelto si
-   * prende dai soci con lo stesso nome (sessoDelNome); quello che manca torna in
-   * `mancano`, come [campo, nome].
-   */
-  async function taxCodeData() {
-    const personalDetails = {
+  /** I dati della scheda per il codice fiscale. Il sesso lo indica chi compila e non si salva. */
+  function taxCodeData() {
+    return {
       cognome: el("f_cognome").value,
       nome: el("f_nome").value,
       dataNascita: el("f_data_nascita").value,
-      luogo: el("f_luogo_nascita").value.trim().toUpperCase(),
+      luogo: el("f_luogo_nascita").value,
+      provincia: el("f_provincia_nascita").value.trim(),
       sesso: document.querySelector("input[name=sessoCF]:checked")?.value,
     };
-    const missingOnes = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
-      .filter(([id]) => !el(id).value.trim()).map(([id, nome]) => [el(id), nome]);
-    const nome = personalDetails.nome.trim().toUpperCase();
-    if (!personalDetails.sesso && nome) personalDetails.sesso = await sexFromName(nome);
-    if (!personalDetails.sesso) missingOnes.push([document.querySelector("input[name=sessoCF]"), "sesso"]);
-    return { anagrafica: personalDetails, mancano: missingOnes };
   }
 
   /** «Calcola»: il codice fiscale dai dati della scheda, o quali dati mancano (bordati di rosso). */
-  async function computeFiscalCode() {
-    const turn = ++taxCodeTurn;
+  function computeFiscalCode() {
     const field = el("f_codice_fiscale"), box = el("avvisoCF");
-    const { anagrafica: personalDetails, mancano: missingOnes } = await taxCodeData();
-    if (turn !== taxCodeTurn) return;
+    const details = taxCodeData();
+    const missingOnes = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
+      .filter(([id]) => !el(id).value.trim()).map(([id, nome]) => [el(id), nome]);
+    if (!details.sesso) missingOnes.push([document.querySelector("input[name=sessoCF]"), "sesso"]);
     if (missingOnes.length) {
       missingOnes.forEach(([c]) => markField(c));
       showTaxCodeNotice(box, field, { ok: false, messaggio: `Dati mancanti per il calcolo: ${missingOnes.map(([, nome]) => nome).join(", ")}.` });
       return;
     }
-    const municipality = await placeMunicipality(personalDetails.luogo, 1);
-    if (turn !== taxCodeTurn) return;
-    if (!municipality) {
+    const proposed = computeTaxCode(details);
+    if (!proposed) {
       markField(el("f_luogo_nascita"));
-      showTaxCodeNotice(box, field, { ok: false, messaggio: `Codice del comune di ${personalDetails.luogo} non disponibile: `
-        + "nessun socio nato in quel comune ha il codice fiscale registrato. Copiarlo dalla tessera sanitaria." });
+      showTaxCodeNotice(box, field, { ok: false, messaggio: `Comune di nascita ${details.luogo.trim().toUpperCase()} non trovato: `
+        + "copiare il codice dalla tessera sanitaria." });
       return;
     }
-    const proposed = computeTaxCode({ ...personalDetails, comune: municipality });
-    if (proposed === normalizeTaxCode(field.value)) {
+    if (proposed === field.value.trim().toUpperCase()) {
       showTaxCodeNotice(box, field, null);
       showToast("Il codice fiscale inserito è coerente con i dati anagrafici.");
       return;
     }
     showTaxCodeNotice(box, field, { ok: false, suggerito: proposed }, checkDuplicates);
-  }
-
-  /**
-   * Il codice catastale del luogo di nascita, ricavato dai codici fiscali dei
-   * soci nati lì (comuneDaiCF), o null. Il socio aperto non conta: il suo
-   * codice è quello da controllare.
-   */
-  async function placeMunicipality(placeName, minimum) {
-    if (!placeName) return null;
-    // Solo lettere: la provincia finisce nel filtro or() di PostgREST.
-    const provinceCode = el("f_provincia_nascita").value.toUpperCase().replace(/[^A-Z]/g, "");
-    const id = el("f_id").value;
-    const codes = await membersCodes(`luogo|${placeName}|${provinceCode}|${id}`, () => {
-      // Il luogo si salva in maiuscolo e senza spazi ai lati (anche dal
-      // caricamento da Excel): basta l'uguaglianza.
-      let request = sb.from("members").select("tax_code").eq("birth_place", placeName).not("tax_code", "is", null).limit(50);
-      // Quasi tutti i soci d'archivio hanno la provincia di nascita vuota: contano anche loro.
-      if (provinceCode) request = request.or(`birth_province.eq.${provinceCode},birth_province.is.null`);
-      return id ? request.neq("id", id) : request;
-    });
-    return codes && municipalityFromCodes(codes, minimum);
-  }
-
-  /** Il sesso ricavato dai codici dei soci con lo stesso nome (sessoDaiCF), o null. */
-  async function sexFromName(nome) {
-    const id = el("f_id").value;
-    const codes = await membersCodes(`nome|${nome}|${id}`, () => {
-      const request = sb.from("members").select("tax_code").eq("first_name", nome).not("tax_code", "is", null).limit(50);
-      return id ? request.neq("id", id) : request;
-    });
-    return codes && sexFromCodes(codes);
-  }
-
-  // I codici fiscali già chiesti, per luogo o nome: il controllo riparte a ogni
-  // campo lasciato, e la stessa domanda non va rifatta. Si svuota con la scheda.
-  const codesAlreadyRead = new Map();
-  /** I codici fiscali della richiesta, una volta sola per chiave; null se non è andata. */
-  function membersCodes(keyName, request) {
-    if (!codesAlreadyRead.has(keyName)) {
-      codesAlreadyRead.set(keyName, Promise.resolve(request())
-        .then(({ data, error }) => { if (error) throw error; return (data || []).map((r) => r.tax_code); })
-        .catch(() => { codesAlreadyRead.delete(keyName); return null; }));
-    }
-    return codesAlreadyRead.get(keyName);
   }
 
   /**
@@ -1911,12 +1807,9 @@
   }
 
   function resetForm() {
-    // Un controllo del codice fiscale, una scheda o una ricerca ancora in volo
-    // sono di prima.
-    taxCodeTurn++;
+    // Una scheda o una ricerca ancora in volo sono di prima.
     cardTurn++;
     searchTurn++;
-    codesAlreadyRead.clear();
     el("memberForm").reset();
     // Le partenze fuori elenco aggiunte per il socio di prima (spuntaPartenze) vanno via.
     tickDepartures("check_sabato", "");
