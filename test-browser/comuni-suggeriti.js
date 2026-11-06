@@ -1,9 +1,10 @@
-// Soci (index.html): Città di residenza suggerisce, mentre si scrive, i comuni già presenti nelle
-// schede (vista member_places), i più usati per primi; scelto il comune, provincia e CAP si compilano
-// da soli con i valori più usati, se il campo è vuoto: uno già scritto non si cambia.
-// Città di nascita suggerisce invece l'elenco ufficiale di comuni e stati esteri della libreria
-// (searchBirthPlaces, 6/11): solo quelli esistiti alla data di nascita (nel 1957 c'è LU, non
-// Lu e Cuccaro Monferrato, nato nel 2019), il nome uguale per primo; scelto, la provincia si compila.
+// Soci (index.html): Città di nascita e Città di residenza suggeriscono, mentre si scrive, l'elenco
+// ufficiale della libreria (searchPlaces, 6/11), il nome uguale per primo; scelto il comune, la
+// provincia si compila dall'elenco, se il campo è vuoto: uno già scritto non si cambia.
+// - Nascita: comuni e stati esteri esistiti alla data di nascita (nel 1957 c'è LU, non Lu e Cuccaro
+//   Monferrato, nato nel 2019).
+// - Residenza: solo i comuni di oggi (LU E CUCCARO MONFERRATO, non LU). Il CAP, che l'elenco non ha,
+//   viene dalle schede (vista member_places), il più usato col comune.
 FAKE.risposta = (t) => t === "member_places" ? [
   { kind: "citta", place: "NIZZA MONFERRATO", province: "AT", postal_code: "14049", n: 202 },
   { kind: "citta", place: "ASTI", province: "AT", postal_code: "14100", n: 300 },
@@ -16,8 +17,12 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
   await new Promise((ok) => setTimeout(ok, 600));
   const options = (input) => [...(document.getElementById(input.getAttribute("list") || "") || { options: [] }).options].map((o) => o.value).join(",");
-  test("residenza", options(el("f_citta")) === "ASTI,NIZZA MONFERRATO", options(el("f_citta")) || "nessun suggerimento");
   const type = async (id, value) => { el(id).value = value; el(id).dispatchEvent(new Event("input", { bubbles: true })); await new Promise((ok) => setTimeout(ok, 300)); };
+  await type("f_citta", "nizza m");
+  test("residenza", options(el("f_citta")).split(",")[0] === "NIZZA MONFERRATO", options(el("f_citta")) || "nessun suggerimento");
+  await type("f_citta", "lu");
+  const today = options(el("f_citta")).split(",");
+  test("residenzaOggi", today[0] === "LU E CUCCARO MONFERRATO" && !today.includes("LU"), today.slice(0, 5).join(",") || "nessun suggerimento");
   await type("f_luogo_nascita", "canel");
   test("nascita", options(el("f_luogo_nascita")).split(",")[0] === "CANELLI", options(el("f_luogo_nascita")) || "nessun suggerimento");
   el("f_data_nascita").value = "1957-01-20";
@@ -27,10 +32,15 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const choose = (id, value) => { el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); };
   el("f_provincia").value = ""; el("f_cap").value = "";
   choose("f_citta", "NIZZA MONFERRATO");
+  await new Promise((ok) => setTimeout(ok, 300));
   test("provinciaCap", el("f_provincia").value === "AT" && el("f_cap").value === "14049", `${el("f_provincia").value} ${el("f_cap").value}`);
   el("f_cap").value = "14050";
   choose("f_citta", "ASTI");
   test("capGiàScritto", el("f_cap").value === "14050", el("f_cap").value);
+  el("f_provincia").value = ""; el("f_cap").value = "";
+  choose("f_citta", "canelli");
+  await new Promise((ok) => setTimeout(ok, 300));
+  test("provinciaDallElenco", el("f_provincia").value === "AT" && el("f_cap").value === "", `${el("f_provincia").value} «${el("f_cap").value}»`);
   el("f_provincia_nascita").value = "";
   choose("f_luogo_nascita", "canelli");
   await new Promise((ok) => setTimeout(ok, 300));
