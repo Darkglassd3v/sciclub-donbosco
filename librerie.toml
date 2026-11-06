@@ -1,0 +1,22 @@
+# Librerie esterne copiate nel sito, in web/vendor/.
+#
+# Il sito non dipende da file su altri server: una copia sparita o cambiata altrove non lo
+# rompe. Ogni libreria ha qui la versione in uso; per aggiornarla:
+#
+#   python3 strumenti/aggiorna-libreria.py codice-fiscale-js            # ultima versione
+#   python3 strumenti/aggiorna-libreria.py codice-fiscale-js 2.4.1      # versione precisa
+#
+# Lo script scarica il pacchetto da npm, ne verifica l'impronta, sostituisce il file in
+# web/vendor/, aggiorna le pagine che lo caricano e la versione qui sotto. Poi vanno lanciate
+# le prove (test-browser/esegui.sh) prima del commit.
+#
+# Campi: version, la versione in uso; file, il file del pacchetto da copiare; license, il file
+# della licenza da copiare accanto; pages, le pagine che caricano la libreria.
+
+[codice-fiscale-js]
+# Calcolo e controllo del codice fiscale, con l'elenco dei comuni (anche soppressi) e degli stati
+# esteri. Licenza CC BY-SA 4.0, autore Luca Vandro (github.com/lucavandro/CodiceFiscaleJS).
+version = "2.4.0"
+file = "dist/codice.fiscale.var.js"
+license = "LICENSE-CC-BY-SA.txt"
+pages = ["web/index.html", "web/assicurazione.html"]

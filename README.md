@@ -146,13 +146,30 @@ cd web && python3 -m http.server 8000     # gestionale, su /login.html
 cd ricerca && python3 -m http.server 8001 # sito di ricerca
 node ricerca/test-ricerca.js              # controlla la logica della ricerca
 node web/test-social.js                   # controlla testi, prezzo facoltativo, contatti e UTM dei post
-node web/test-codicefiscale.js            # controlla il validatore del codice fiscale
 node web/test-stampe.js                   # controlla i fogli delle Stampe
 bash test-browser/esegui.sh               # le pagine vere in Chrome, con un Supabase finto
 ./supabase/test_ruoli.sh                  # controlla ruoli, RLS e trigger (serve docker)
 ```
 
 Non c'è nessuno step di build: le pagine sono HTML e JavaScript serviti così come sono.
+
+### Librerie copiate nel sito
+
+Le librerie esterne che il sito usa senza CDN sono copiate in `web/vendor/`, con la versione nel
+nome del file; le versioni in uso sono in [librerie.toml](librerie.toml). Per aggiornarne una:
+
+```bash
+python3 strumenti/aggiorna-libreria.py codice-fiscale-js          # ultima versione su npm
+python3 strumenti/aggiorna-libreria.py codice-fiscale-js 2.4.1    # versione precisa
+bash test-browser/esegui.sh                                       # poi le prove, il diff e il commit
+```
+
+Lo script verifica l'impronta del pacchetto dichiarata da npm, sostituisce il file, aggiorna le
+pagine che lo caricano e la versione in `librerie.toml`.
+
+- **codice-fiscale-js** di Luca Vandro ([CodiceFiscaleJS](https://github.com/lucavandro/CodiceFiscaleJS),
+  licenza CC BY-SA 4.0, testo in `web/vendor/codice-fiscale-js-LICENSE.txt`): calcolo e controllo
+  del codice fiscale nelle pagine Soci e Assicurazione, con l'elenco dei comuni e degli stati esteri.
 Il workflow di GitHub Pages pubblica `web/` alla radice e `ricerca/` sotto `/ricerca/`.
 Le pagine si linkano come online (il login sta alla radice, `ricerca/` sotto): per
 provarle insieme si serve una cartella con `web/` alla radice e `ricerca/` dentro.

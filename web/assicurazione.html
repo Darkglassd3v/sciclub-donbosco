@@ -199,8 +199,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261105presciistica"></script>
-<script src="codicefiscale.js?v=20261022testi"></script>
+<script src="shared.js?v=20261106codicefiscale"></script>
+<script src="vendor/codice-fiscale-js-2.4.0.js"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
   // insurance_members() dà chi è da assicurare, insurance_sent_lists() le
@@ -473,7 +473,7 @@
   function unsavedCodes() {
     return [...el("elencoDa").querySelectorAll("tr[data-id]")].filter((tr) => {
       const s = toInsure.find((d) => d.id === tr.dataset.id);
-      return s && normalizeTaxCode(tr.querySelector(".cf").value) !== normalizeTaxCode(s.tax_code);
+      return s && cleanTaxCode(tr.querySelector(".cf").value) !== cleanTaxCode(s.tax_code);
     });
   }
 
@@ -575,7 +575,7 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Il codice fiscale si controlla subito (codicefiscale.js): chi prepara la
+   * Il codice fiscale si controlla subito (taxCodeOutcome, libreria codice-fiscale-js): chi prepara la
    * lista vede cosa non torna prima di mandarla, non quando l'assicurazione
    * la rimanda indietro. Nella lista dei da assicurare c'è la colonna del
    * tipo (conTipo); nella ricerca, `stato` dice se è già assicurato.
@@ -603,7 +603,7 @@
     const notice = tr.querySelector(".avviso-cf");
     cf.value = s.tax_code || "";
     const check = () => showTaxCodeNotice(notice, cf,
-      verifyTaxCode(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date }));
+      taxCodeOutcome(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date, luogo: s.birth_place, provincia: s.birth_province }));
     cf.addEventListener("change", check);
     check();
 
@@ -634,11 +634,11 @@
       // fuori dalla prossima lista, quindi si ridisegnano riepilogo e lista.
       const fromList = toInsure.find((d) => d.id === s.id);
       if (fromList) {
-        fromList.tax_code = normalizeTaxCode(codeValue) || null;
+        fromList.tax_code = cleanTaxCode(codeValue) || null;
         drawProgressives();
         drawToInsure();
       } else {
-        s.tax_code = normalizeTaxCode(codeValue) || null;
+        s.tax_code = cleanTaxCode(codeValue) || null;
         tr.querySelector(".cf").value = s.tax_code || "";
         tr.classList.add("salvata");
       }

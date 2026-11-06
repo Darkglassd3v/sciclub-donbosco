@@ -38,7 +38,7 @@ anomalie (controllo, chi) as (
     from iscritti where tessera is not null and nullif(trim(tax_code), '') is null
   union all
   -- Solo la forma (16 caratteri al posto giusto): il carattere di controllo lo
-  -- verifica già il modulo Soci (web/codicefiscale.js).
+  -- verifica già il modulo Soci (libreria codice-fiscale-js, librerie.toml).
   select 'Codice fiscale scritto male', last_name || ' ' || first_name || ': ' || tax_code
     from iscritti
    where nullif(trim(tax_code), '') is not null

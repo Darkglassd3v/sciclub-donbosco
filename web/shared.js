@@ -565,8 +565,8 @@ const ROLE_NAMES = {
 };
 
 /**
- * Avviso sotto un campo codice fiscale, a partire dall'esito di verifyTaxCode()
- * (codicefiscale.js): solo «Codice fiscale errato» (o, a campo vuoto, «Codice
+ * Avviso sotto un campo codice fiscale, a partire dall'esito di taxCodeOutcome()
+ * (qui sotto): solo «Codice fiscale errato» (o, a campo vuoto, «Codice
  * proposto») e il codice proposto, che è un pulsante: il click lo scrive nel
  * campo. Il motivo non si dice: chi compila vuole il codice giusto, non la
  * regola. `esito.messaggio`, se c'è, prende il posto della frase. Non blocca
@@ -598,6 +598,64 @@ function showTaxCodeNotice(box, field, outcome, after) {
     box.append(usa);
   }
   box.hidden = false;
+}
+
+// Il codice fiscale lo calcolano e lo controllano le funzioni della libreria codice-fiscale-js
+// (CodiceFiscale, web/vendor/, versione in librerie.toml), caricata dalle pagine che le usano.
+
+/** Il codice fiscale come si salva: maiuscolo, senza spazi né altri segni. */
+const cleanTaxCode = (value) => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+/** Il comune scritto nella scheda come lo trova la libreria: con la provincia, poi senza (può essere sbagliata o mancare). */
+function taxCodePlace(fn, provincia) {
+  for (const birthplaceProvincia of [provincia || undefined, undefined]) {
+    try { return fn(birthplaceProvincia); } catch { /* comune non trovato con questa provincia */ }
+  }
+  return null;
+}
+
+/**
+ * Il codice fiscale calcolato dai dati della scheda (cognome, nome, dataNascita AAAA-MM-GG,
+ * sesso M/F, luogo, provincia), o null se manca un dato o la libreria non trova il comune.
+ */
+function computeTaxCode({ cognome, nome, dataNascita, sesso, luogo, provincia } = {}) {
+  const [year, month, day] = String(dataNascita || "").split("-").map(Number);
+  if (!cognome?.trim() || !nome?.trim() || !day || !/^[MF]$/.test(sesso || "") || !luogo?.trim()) return null;
+  return taxCodePlace((birthplaceProvincia) => CodiceFiscale.compute({ name: nome.trim(), surname: cognome.trim(), gender: sesso,
+    day, month, year, birthplace: luogo.trim(), birthplaceProvincia }), provincia);
+}
+
+/**
+ * Il codice fiscale scritto confrontato con la scheda, per showTaxCodeNotice(): null se il campo
+ * è vuoto o tutto torna.
+ *   - Codice non valido: «Codice fiscale errato» e, se i dati bastano, il codice calcolato.
+ *   - Codice valido che non torna con la scheda: si dice che cosa non torna e che cosa dice il
+ *     codice, senza proporne un altro. Un codice valido è quasi sempre copiato giusto dalla tessera
+ *     sanitaria ed è la scheda ad avere un dato sbagliato: il 6/11 una data sbagliata faceva proporre
+ *     un codice sbagliato al posto di quello giusto.
+ * Si confronta solo quello che la scheda ha; il comune solo se la libreria lo trova.
+ */
+function taxCodeOutcome(written, details = {}) {
+  const code = cleanTaxCode(written);
+  if (!code) return null;
+  if (!CodiceFiscale.check(code)) return { ok: false, suggerito: computeTaxCode(details) };
+  const { cognome, nome, dataNascita, sesso, luogo, provincia } = details;
+  const cf = new CodiceFiscale(code), data = cf.toJSON();
+  const differences = [];
+  // Cognome e nome: il codice che darebbero, col resto preso dal codice stesso.
+  const same = computeTaxCode({ cognome, nome, sesso: data.gender, luogo: data.birthplace, provincia: data.birthplaceProvincia,
+    dataNascita: `${data.year}-${data.month}-${data.day}` });
+  if (same && same.slice(0, 6) !== code.slice(0, 6)) differences.push("cognome o nome");
+  const [year, month, day] = String(dataNascita || "").split("-").map(Number);
+  if (day && (day !== data.day || month !== data.month || year % 100 !== data.year % 100)) differences.push("data di nascita");
+  if (/^[MF]$/.test(sesso || "") && sesso !== data.gender) differences.push("sesso");
+  const place = luogo?.trim() && taxCodePlace((p) => CodiceFiscale.findLocationCode(luogo.trim(), p), provincia);
+  if (place && place !== cf.birthplace.cc) differences.push("luogo di nascita");
+  if (!differences.length) return null;
+  const date = `${String(data.day).padStart(2, "0")}/${String(data.month).padStart(2, "0")}/${data.year}`;
+  return { ok: false, messaggio: `Il codice fiscale non corrisponde alla scheda (${differences.join(", ")}): è di `
+    + `${data.gender === "F" ? "una donna nata" : "un uomo nato"} il ${date} a ${data.birthplace} (${data.birthplaceProvincia}). `
+    + "Controllare la scheda o la tessera sanitaria." };
 }
 
 // ---------------------------------------------------------------------------
