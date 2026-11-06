@@ -5,6 +5,9 @@
 //   Monferrato, nato nel 2019).
 // - Residenza: solo i comuni di oggi (LU E CUCCARO MONFERRATO, non LU). Il CAP, che l'elenco non ha,
 //   viene dalle schede (vista member_places), il più usato col comune.
+// - Scelta una voce, l'elenco non si ricarica: Chrome lo riaprirebbe e la voce andrebbe scelta due volte.
+// - Città cambiata (es. da NIZZA MONFERRATO ad ALESSANDRIA): provincia e CAP seguono il comune nuovo
+//   (CAP dalle schede, o vuoto). Stessa città scelta di nuovo: provincia e CAP scritti restano.
 FAKE.risposta = (t) => t === "member_places" ? [
   { kind: "citta", place: "NIZZA MONFERRATO", province: "AT", postal_code: "14049", n: 202 },
   { kind: "citta", place: "ASTI", province: "AT", postal_code: "14100", n: 300 },
@@ -20,6 +23,12 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const type = async (id, value) => { el(id).value = value; el(id).dispatchEvent(new Event("input", { bubbles: true })); await new Promise((ok) => setTimeout(ok, 300)); };
   await type("f_citta", "nizza m");
   test("residenza", options(el("f_citta")).split(",")[0] === "NIZZA MONFERRATO", options(el("f_citta")) || "nessun suggerimento");
+  // Rifare l'elenco sostituisce le voci (e Chrome lo riapre): dopo la scelta devono essere le stesse.
+  await type("f_citta", "asti");
+  const first = document.getElementById(el("f_citta").getAttribute("list")).options[0];
+  await type("f_citta", "ASTI");
+  test("sceltaNonRicarica", first?.value === "ASTI" && document.getElementById(el("f_citta").getAttribute("list")).options[0] === first,
+    `prima ${first?.value}, voce ${document.getElementById(el("f_citta").getAttribute("list")).options[0] === first ? "uguale" : "rifatta"}`);
   await type("f_citta", "lu");
   const today = options(el("f_citta")).split(",");
   test("residenzaOggi", today[0] === "LU E CUCCARO MONFERRATO" && !today.includes("LU"), today.slice(0, 5).join(",") || "nessun suggerimento");
@@ -29,14 +38,19 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await type("f_luogo_nascita", "lu");
   const lu = options(el("f_luogo_nascita")).split(",");
   test("nascitaAllaData", lu[0] === "LU" && !lu.includes("LU E CUCCARO MONFERRATO"), lu.slice(0, 5).join(",") || "nessun suggerimento");
-  const choose = (id, value) => { el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); };
+  // Come chi usa la pagina: entra nel campo, scrive o sceglie, esce.
+  const choose = (id, value) => { el(id).dispatchEvent(new Event("focus")); el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); };
   el("f_provincia").value = ""; el("f_cap").value = "";
   choose("f_citta", "NIZZA MONFERRATO");
   await new Promise((ok) => setTimeout(ok, 300));
   test("provinciaCap", el("f_provincia").value === "AT" && el("f_cap").value === "14049", `${el("f_provincia").value} ${el("f_cap").value}`);
   el("f_cap").value = "14050";
-  choose("f_citta", "ASTI");
-  test("capGiàScritto", el("f_cap").value === "14050", el("f_cap").value);
+  choose("f_citta", "NIZZA MONFERRATO");
+  await new Promise((ok) => setTimeout(ok, 300));
+  test("capGiàScritto", el("f_cap").value === "14050" && el("f_provincia").value === "AT", `${el("f_provincia").value} ${el("f_cap").value}`);
+  choose("f_citta", "ALESSANDRIA");
+  await new Promise((ok) => setTimeout(ok, 300));
+  test("cambioCitta", el("f_provincia").value === "AL" && el("f_cap").value === "", `${el("f_provincia").value} «${el("f_cap").value}»`);
   el("f_provincia").value = ""; el("f_cap").value = "";
   choose("f_citta", "canelli");
   await new Promise((ok) => setTimeout(ok, 300));

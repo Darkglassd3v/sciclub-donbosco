@@ -608,6 +608,9 @@ function showTaxCodeNotice(box, field, outcome, after) {
 /** Il codice fiscale come si salva: maiuscolo, senza spazi né altri segni. */
 const cleanTaxCode = (value) => String(value ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
 
+// Se un file delle librerie non si è caricato, codice fiscale e città restano senza controlli e
+// suggerimenti, ma la scheda si compila e si salva lo stesso.
+const taxCodeLibrariesLoaded = () => typeof CodiceFiscaleUtils === "object" && typeof BelfioreConnector === "object";
 const taxCodeLibrary = () => (taxCodeLibrary.utils ??= new CodiceFiscaleUtils.CodiceFiscaleUtils(BelfioreConnector.belfioreConnector));
 
 /** I comuni e gli stati esteri esistiti alla data di nascita (tutti, senza data). */
@@ -619,6 +622,7 @@ const placesAt = (dataNascita) => (dataNascita ? BelfioreConnector.belfioreConne
  * ha solo i nomi ufficiali, e «LU MONFERRATO» (AL) è il comune di LU.
  */
 async function findPlace(luogo, provincia, dataNascita) {
+  if (!taxCodeLibrariesLoaded()) return null;
   const words = String(luogo || "").trim().split(/\s+/).filter(Boolean);
   if (!words.length) return null;
   const places = placesAt(dataNascita);
@@ -639,6 +643,7 @@ async function findPlace(luogo, provincia, dataNascita) {
  * (province vuota per gli stati esteri).
  */
 async function searchPlaces(text, { date, provincia, onlyCities = false, limit = 15 } = {}) {
+  if (!taxCodeLibrariesLoaded()) return [];
   const query = String(text || "").trim().toUpperCase();
   if (query.length < 2) return [];
   const source = onlyCities ? placesAt(date).cities : placesAt(date);
@@ -654,6 +659,7 @@ async function searchPlaces(text, { date, provincia, onlyCities = false, limit =
  * sesso M/F, luogo, provincia), o null se manca un dato o il luogo non è nell'elenco.
  */
 async function computeTaxCode({ cognome, nome, dataNascita, sesso, luogo, provincia } = {}) {
+  if (!taxCodeLibrariesLoaded()) return null;
   if (!cognome?.trim() || !nome?.trim() || !dataNascita || !/^[MF]$/.test(sesso || "")) return null;
   const place = await findPlace(luogo, provincia, dataNascita);
   return place && taxCodeLibrary().parser.encodeCf({ lastName: cognome.trim(), firstName: nome.trim(), date: dataNascita, gender: sesso, place });
@@ -670,6 +676,7 @@ async function computeTaxCode({ cognome, nome, dataNascita, sesso, luogo, provin
  * Si confronta solo quello che la scheda ha; il luogo solo se è nell'elenco.
  */
 async function taxCodeOutcome(written, details = {}) {
+  if (!taxCodeLibrariesLoaded()) return null;
   const code = cleanTaxCode(written);
   if (!code) return null;
   const check = taxCodeLibrary().validator.codiceFiscale(code);

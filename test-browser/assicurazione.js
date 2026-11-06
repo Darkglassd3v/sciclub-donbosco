@@ -6,6 +6,7 @@
 // - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
 // - Un codice fiscale sbagliato dice solo «Codice fiscale errato» (e il proposto), senza il motivo.
+// - Un codice valido ma diverso dalla scheda (qui la data) dice che cosa non torna, senza proporne un altro.
 // - Cambiata pagina il fuoco resta su Indietro/Avanti (tastiera), anche all'ultima.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
@@ -14,7 +15,9 @@
   const member = (letter, i, typeName) => ({ id: letter + number(i), last_name: letter + number(i), first_name: "PROVA",
     birth_date: "1980-01-01", tax_code: letter === "B" && i % 17 === 0 ? null : "XXXXXX80A01F205X", insurance: typeName });
   const base = (n) => Array.from({ length: n }, (_, i) => member("B", i + 1, "BASE"));
+  // Il primo Sport ha un codice valido (dati inventati: nato l'1/1/1980 ad Asti) e nella scheda l'1/2.
   const SPORT = [1, 2, 3].map((i) => member("S", i, "SPORT"));
+  Object.assign(SPORT[0], { last_name: "ROSSI", first_name: "MARIO", birth_date: "1980-02-01", birth_place: "ASTI", tax_code: "RSSMRA80A01A479L" });
   FAKE.rpc.insurance_members = [...base(60), ...SPORT];
   FAKE.rpc.insurance_sent_lists = [];
   FAKE.rpc.set_tax_code = null;
@@ -37,6 +40,11 @@
     const baseTitle = [...document.querySelectorAll("#elencoDa tr.gruppo")].find((t) => t.textContent.includes("REALE MUTUA NEVE"));
     test("prima", rows("B").length === 25 && text("BASE") === "1–25 di 60" && back("BASE").disabled,
       `${rows("B").length} righe, «${text("BASE")}», indietro spento ${back("BASE").disabled}`);
+    await wait(500);
+    const mismatch = rows("S").find((t) => t.textContent.includes("ROSSI"))?.querySelector(".avviso-cf");
+    const mismatchText = mismatch && !mismatch.hidden ? mismatch.textContent.replace(/\s+/g, " ").trim() : "";
+    test("cfValidoDiverso", mismatchText.includes("data di nascita") && mismatchText.includes("01/01/1980") && !mismatch.querySelector("button"),
+      `avviso «${mismatchText}»`);
     test("pocheSenzaPagine", rows("S").length === 3 && !pages("SPORT"), `${rows("S").length} Sport, pagine ${Boolean(pages("SPORT"))}`);
     test("senzaCF", baseTitle?.textContent.includes("3 senza codice fiscale"), `titolo «${baseTitle?.textContent.trim()}»`);
 
