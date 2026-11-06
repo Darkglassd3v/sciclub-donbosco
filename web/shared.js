@@ -614,11 +614,11 @@ const taxCodeLibrary = () => (taxCodeLibrary.utils ??= new CodiceFiscaleUtils.Co
 const placesAt = (dataNascita) => (dataNascita ? BelfioreConnector.belfioreConnector.active(dataNascita) : BelfioreConnector.belfioreConnector);
 
 /**
- * Il luogo di nascita della scheda nell'elenco della libreria, o null: prima nella provincia
- * scritta, poi ovunque. Con la provincia si riprova togliendo le ultime parole del nome: l'elenco
+ * Il luogo scritto nella scheda nell'elenco della libreria, esistito alla data se c'è, o null:
+ * prima nella provincia scritta, poi ovunque. Con la provincia si riprova togliendo le ultime parole del nome: l'elenco
  * ha solo i nomi ufficiali, e «LU MONFERRATO» (AL) è il comune di LU.
  */
-async function findBirthPlace(luogo, provincia, dataNascita) {
+async function findPlace(luogo, provincia, dataNascita) {
   const words = String(luogo || "").trim().split(/\s+/).filter(Boolean);
   if (!words.length) return null;
   const places = placesAt(dataNascita);
@@ -633,14 +633,16 @@ async function findBirthPlace(luogo, provincia, dataNascita) {
 }
 
 /**
- * I luoghi di nascita che contengono il testo scritto, esistiti alla data di nascita se c'è: prima
- * il nome uguale, poi quelli che cominciano così, poi gli altri; a parità, quelli della provincia
- * scritta. Al massimo `limit`, come { name, province } in maiuscolo (province vuota per gli stati).
+ * I luoghi che contengono il testo scritto, esistiti alla data `date` se c'è (solo i comuni con
+ * `onlyCities`): prima il nome uguale, poi quelli che cominciano così, poi gli altri; a parità,
+ * quelli della provincia scritta. Al massimo `limit`, come { name, province } in maiuscolo
+ * (province vuota per gli stati esteri).
  */
-async function searchBirthPlaces(text, dataNascita, provincia, limit = 15) {
+async function searchPlaces(text, { date, provincia, onlyCities = false, limit = 15 } = {}) {
   const query = String(text || "").trim().toUpperCase();
   if (query.length < 2) return [];
-  const found = (await placesAt(dataNascita).searchByName(query).catch(() => null)) || [];
+  const source = onlyCities ? placesAt(date).cities : placesAt(date);
+  const found = (await source.searchByName(query).catch(() => null)) || [];
   const province = String(provincia || "").trim().toUpperCase();
   const rank = (p) => (p.name.toUpperCase() === query ? 0 : p.name.toUpperCase().startsWith(query) ? 2 : 4) + (p.province === province ? 0 : 1);
   return found.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, "it")).slice(0, limit)
@@ -653,7 +655,7 @@ async function searchBirthPlaces(text, dataNascita, provincia, limit = 15) {
  */
 async function computeTaxCode({ cognome, nome, dataNascita, sesso, luogo, provincia } = {}) {
   if (!cognome?.trim() || !nome?.trim() || !dataNascita || !/^[MF]$/.test(sesso || "")) return null;
-  const place = await findBirthPlace(luogo, provincia, dataNascita);
+  const place = await findPlace(luogo, provincia, dataNascita);
   return place && taxCodeLibrary().parser.encodeCf({ lastName: cognome.trim(), firstName: nome.trim(), date: dataNascita, gender: sesso, place });
 }
 
@@ -677,7 +679,7 @@ async function taxCodeOutcome(written, details = {}) {
   if (cognome?.trim() && nome?.trim() && (check.mismatchLastName(cognome.trim()) || check.mismatchFirstName(nome.trim()))) differences.push("cognome o nome");
   if (dataNascita && check.mismatchBirthDate(dataNascita)) differences.push("data di nascita");
   if (/^[MF]$/.test(sesso || "") && check.mismatchGender(sesso)) differences.push("sesso");
-  const place = await findBirthPlace(luogo, provincia, dataNascita);
+  const place = await findPlace(luogo, provincia, dataNascita);
   if (place && await check.mismatchBirthPlace(place)) differences.push("luogo di nascita");
   if (!differences.length) return null;
   const { date, gender, place: codePlace } = await taxCodeLibrary().parser.cfDecode(code);

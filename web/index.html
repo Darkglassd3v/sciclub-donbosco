@@ -438,7 +438,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261106marketto"></script>
+<script src="shared.js?v=20261106residenza"></script>
 <script src="vendor/dayjs-1.11.23.js"></script>
 <script src="vendor/dayjs-utc-1.11.23.js"></script>
 <script src="vendor/belfiore-connector-3.0.0.js"></script>
@@ -538,13 +538,18 @@
       el("f_tipologia_corso").addEventListener("change", updateCourseDay);
       // Suggerimenti dei comuni: senza (rete lenta, errore) il form funziona come prima.
       loadPlaces().catch(() => {});
-      el("f_citta").addEventListener("change", () =>
-        fillFromPlace("citta", el("f_citta").value, [["f_provincia", "province"], ["f_cap", "postal_code"]]));
-      // Città di nascita: l'elenco ufficiale della libreria, mentre si scrive (suggestBirthPlaces).
-      document.body.append(Object.assign(document.createElement("datalist"), { id: "comuniNascita" }));
-      el("f_luogo_nascita").setAttribute("list", "comuniNascita");
-      el("f_luogo_nascita").addEventListener("input", suggestBirthPlaces);
-      el("f_luogo_nascita").addEventListener("change", fillBirthProvince);
+      // Città di residenza e di nascita: l'elenco ufficiale della libreria mentre si scrive, e scelto il
+      // comune la sua provincia; il CAP della residenza dalle schede (fillFromPlace).
+      const today = () => new Date().toISOString().slice(0, 10);
+      const birthDate = () => el("f_data_nascita").value;
+      for (const [input, list, province, date, onlyCities] of [["f_citta", "comuniResidenza", "f_provincia", today, true],
+        ["f_luogo_nascita", "comuniNascita", "f_provincia_nascita", birthDate, false]]) {
+        document.body.append(Object.assign(document.createElement("datalist"), { id: list }));
+        el(input).setAttribute("list", list);
+        el(input).addEventListener("input", () => suggestPlaces(input, list, { date: date(), provincia: el(province).value, onlyCities }));
+        el(input).addEventListener("change", () => fillProvince(input, province, date()));
+      }
+      el("f_citta").addEventListener("change", () => fillFromPlace("citta", el("f_citta").value, [["f_cap", "postal_code"]]));
       el("f_acconto").addEventListener("input", recompute);
       el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
       el("f_totale_manuale").addEventListener("input", recompute);
@@ -1307,8 +1312,8 @@
   // Caricamento socio
   // -------------------------------------------------------------------------
 
-  // Comuni suggeriti per la Città di residenza, dai dati già nelle schede (vista member_places), con
-  // provincia e CAP. Per la Città di nascita l'elenco è quello ufficiale della libreria (suggestBirthPlaces).
+  // I CAP della Città di residenza, dai dati già nelle schede (vista member_places): l'elenco
+  // ufficiale dei comuni (suggestPlaces) non li ha.
   const PLACES = { citta: new Map() };  // comune -> [{ province, postal_code, n }]
 
   async function loadPlaces() {
@@ -1318,30 +1323,22 @@
       if (!PLACES[r.kind].has(r.place)) PLACES[r.kind].set(r.place, []);
       PLACES[r.kind].get(r.place).push(r);
     }
-    const total = (list) => list.reduce((sum, r) => sum + r.n, 0);
-    for (const [kind, input, id] of [["citta", "f_citta", "comuniResidenza"]]) {
-      const list = document.createElement("datalist");
-      list.id = id;
-      list.innerHTML = [...PLACES[kind]].sort(([, a], [, b]) => total(b) - total(a)).map(([place]) => `<option value="${esc(place)}">`).join("");
-      document.body.append(list);
-      el(input).setAttribute("list", id);
-    }
   }
 
-  /** Città di nascita: mentre si scrive, i comuni e gli stati esteri dell'elenco ufficiale esistiti alla data di nascita. */
-  let birthPlacesTurn = 0;
-  async function suggestBirthPlaces() {
-    const turn = ++birthPlacesTurn;
-    const found = await searchBirthPlaces(el("f_luogo_nascita").value, el("f_data_nascita").value, el("f_provincia_nascita").value);
-    if (turn !== birthPlacesTurn) return;
-    el("comuniNascita").innerHTML = found.map((p) => `<option value="${esc(p.name)}">${esc(p.province || "Stato estero")}</option>`).join("");
+  /** Mentre si scrive una città, i luoghi dell'elenco ufficiale (searchPlaces) nell'elenco suggerito `list`. */
+  const placesTurn = {};
+  async function suggestPlaces(input, list, options) {
+    const turn = placesTurn[input] = (placesTurn[input] || 0) + 1;
+    const found = await searchPlaces(el(input).value, options);
+    if (turn !== placesTurn[input]) return;
+    el(list).innerHTML = found.map((p) => `<option value="${esc(p.name)}">${esc(p.province || "Stato estero")}</option>`).join("");
   }
 
-  /** Scelta la città di nascita, la sua provincia dall'elenco ufficiale, solo se il campo è vuoto. */
-  async function fillBirthProvince() {
-    const province = el("f_provincia_nascita");
+  /** Scelta una città, la sua provincia dall'elenco ufficiale, solo se il campo è vuoto. */
+  async function fillProvince(input, provinceId, date) {
+    const province = el(provinceId);
     if (province.value.trim()) return;
-    const place = await findBirthPlace(el("f_luogo_nascita").value, "", el("f_data_nascita").value);
+    const place = await findPlace(el(input).value, "", date);
     if (!place?.province || province.value.trim()) return;
     province.value = place.province;
     province.dispatchEvent(new Event("input", { bubbles: true }));
