@@ -27,6 +27,10 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
   animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
   campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
+- Budget: si scrive con la virgola («2,50»); con il punto Gestione inserzioni legge 250 €. Il
+  modo più sicuro per dare budget diversi ai gruppi è la tabella «Gruppi di inserzioni»: matita
+  sulla cella Budget › importo › «Salva bozza». Dopo ogni modifica si ricontrolla anche la data di
+  fine, che può sparire (colonna «Fine» con «Continue» vuol dire senza fine).
 - La pubblicazione richiede un numero di telefono verificato sull'account pubblicitario.
 
 ## Posizionamenti
