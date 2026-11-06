@@ -199,8 +199,15 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261106comuni"></script>
-<script src="vendor/codice-fiscale-js-2.4.0.js"></script>
+<script src="shared.js?v=20261106marketto"></script>
+<script src="vendor/dayjs-1.11.23.js"></script>
+<script src="vendor/dayjs-utc-1.11.23.js"></script>
+<script src="vendor/belfiore-connector-3.0.0.js"></script>
+<!-- I pacchetti @marketto si cercano l'un l'altro con questi due nomi (librerie.toml). -->
+<script>var utc = dayjs_plugin_utc, belfioreConnector$1 = BelfioreAbstractConnector;</script>
+<script src="vendor/belfiore-connector-embedded-1.2.1.js"></script>
+<script src="vendor/diacritic-remover-1.0.8.js"></script>
+<script src="vendor/codice-fiscale-utils-3.1.3.js"></script>
 <script>
   // Tutto passa dalle funzioni del database (schema.sql, "Assicurazione"):
   // insurance_members() dà chi è da assicurare, insurance_sent_lists() le
@@ -575,7 +582,7 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Il codice fiscale si controlla subito (taxCodeOutcome, libreria codice-fiscale-js): chi prepara la
+   * Il codice fiscale si controlla subito (taxCodeOutcome, librerie @marketto): chi prepara la
    * lista vede cosa non torna prima di mandarla, non quando l'assicurazione
    * la rimanda indietro. Nella lista dei da assicurare c'è la colonna del
    * tipo (conTipo); nella ricerca, `stato` dice se è già assicurato.
@@ -602,8 +609,13 @@
     const cf = tr.querySelector(".cf");
     const notice = tr.querySelector(".avviso-cf");
     cf.value = s.tax_code || "";
-    const check = () => showTaxCodeNotice(notice, cf,
-      taxCodeOutcome(cf.value, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date, luogo: s.birth_place, provincia: s.birth_province }));
+    const check = async () => {
+      const written = cf.value;
+      const outcome = await taxCodeOutcome(written, { cognome: s.last_name, nome: s.first_name, dataNascita: s.birth_date,
+        luogo: s.birth_place, provincia: s.birth_province });
+      // Il codice cambiato nel frattempo ha il suo controllo.
+      if (cf.value === written) showTaxCodeNotice(notice, cf, outcome);
+    };
     cf.addEventListener("change", check);
     check();
 

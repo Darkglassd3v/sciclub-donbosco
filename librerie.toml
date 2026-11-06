@@ -1,22 +1,64 @@
 # Librerie esterne copiate nel sito, in web/vendor/.
 #
 # Il sito non dipende da file su altri server: una copia sparita o cambiata altrove non lo
-# rompe. Ogni libreria ha qui la versione in uso; per aggiornarla:
+# rompe. Ogni sezione è un file copiato, col pacchetto npm da cui viene e la versione in uso;
+# nel sito si chiama <sezione>-<versione>.js. Per aggiornarne uno:
 #
-#   python3 strumenti/aggiorna-libreria.py codice-fiscale-js            # ultima versione
-#   python3 strumenti/aggiorna-libreria.py codice-fiscale-js 2.4.1      # versione precisa
+#   python3 strumenti/aggiorna-libreria.py codice-fiscale-utils            # ultima versione
+#   python3 strumenti/aggiorna-libreria.py codice-fiscale-utils 3.1.4      # versione precisa
 #
 # Lo script scarica il pacchetto da npm, ne verifica l'impronta, sostituisce il file in
 # web/vendor/, aggiorna le pagine che lo caricano e la versione qui sotto. Poi vanno lanciate
-# le prove (test-browser/esegui.sh) prima del commit.
+# le prove (bash test-browser/esegui.sh) prima del commit: le librerie si appoggiano l'una
+# all'altra (dayjs sotto tutte), e una versione nuova può cambiare i nomi che si aspettano.
+# dayjs e dayjs-utc vengono dallo stesso pacchetto: si aggiornano insieme, alla stessa versione.
 #
-# Campi: version, la versione in uso; file, il file del pacchetto da copiare; license, il file
-# della licenza da copiare accanto; pages, le pagine che caricano la libreria.
+# Campi: package, il pacchetto npm; version, la versione in uso; file, il file del pacchetto da
+# copiare; licenses, i file di licenza da copiare accanto (<sezione>-<nome del file>); pages, le
+# pagine che caricano il file.
+#
+# Codice fiscale e comuni (pagine Soci e Assicurazione): librerie di Marco Ricupero, licenza MIT.
+# L'elenco di comuni e stati esteri, con le date in cui sono esistiti, viene da Agenzia delle
+# Entrate e Ministero dell'Interno (CC BY 4.0) e ISTAT (CC BY 3.0).
 
-[codice-fiscale-js]
-# Calcolo e controllo del codice fiscale, con l'elenco dei comuni (anche soppressi) e degli stati
-# esteri. Licenza CC BY-SA 4.0, autore Luca Vandro (github.com/lucavandro/CodiceFiscaleJS).
-version = "2.4.0"
-file = "dist/codice.fiscale.var.js"
-license = "LICENSE-CC-BY-SA.txt"
+[dayjs]
+package = "dayjs"
+version = "1.11.23"
+file = "dayjs.min.js"
+licenses = ["LICENSE"]
+pages = ["web/index.html", "web/assicurazione.html"]
+
+[dayjs-utc]
+package = "dayjs"
+version = "1.11.23"
+file = "plugin/utc.js"
+licenses = []
+pages = ["web/index.html", "web/assicurazione.html"]
+
+[belfiore-connector]
+package = "@marketto/belfiore-connector"
+version = "3.0.0"
+file = "dist/belfiore-abstract-connector.bundle.min.js"
+licenses = ["LICENSE"]
+pages = ["web/index.html", "web/assicurazione.html"]
+
+[belfiore-connector-embedded]
+package = "@marketto/belfiore-connector-embedded"
+version = "1.2.1"
+file = "dist/belfiore-connector.bundle.min.js"
+licenses = ["LICENSE", "asset/AGENZIA_DELLE_ENTRATE.LICENSE", "asset/MINISTERO_DELL_INTERNO.LICENSE", "asset/ISTITUTO_NAZIONALE_DI_STATISTICA.LICENSE"]
+pages = ["web/index.html", "web/assicurazione.html"]
+
+[diacritic-remover]
+package = "@marketto/diacritic-remover"
+version = "1.0.8"
+file = "dist/diacritic-remover.bundle.min.js"
+licenses = ["LICENSE"]
+pages = ["web/index.html", "web/assicurazione.html"]
+
+[codice-fiscale-utils]
+package = "@marketto/codice-fiscale-utils"
+version = "3.1.3"
+file = "dist/codice-fiscale-utils.bundle.min.js"
+licenses = ["LICENSE"]
 pages = ["web/index.html", "web/assicurazione.html"]

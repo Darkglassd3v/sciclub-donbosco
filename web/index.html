@@ -438,8 +438,15 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261106comuni"></script>
-<script src="vendor/codice-fiscale-js-2.4.0.js"></script>
+<script src="shared.js?v=20261106marketto"></script>
+<script src="vendor/dayjs-1.11.23.js"></script>
+<script src="vendor/dayjs-utc-1.11.23.js"></script>
+<script src="vendor/belfiore-connector-3.0.0.js"></script>
+<!-- I pacchetti @marketto si cercano l'un l'altro con questi due nomi (librerie.toml). -->
+<script>var utc = dayjs_plugin_utc, belfioreConnector$1 = BelfioreAbstractConnector;</script>
+<script src="vendor/belfiore-connector-embedded-1.2.1.js"></script>
+<script src="vendor/diacritic-remover-1.0.8.js"></script>
+<script src="vendor/codice-fiscale-utils-3.1.3.js"></script>
 <script>
   let PRICES = {};
   let dependants = [];
@@ -533,8 +540,11 @@
       loadPlaces().catch(() => {});
       el("f_citta").addEventListener("change", () =>
         fillFromPlace("citta", el("f_citta").value, [["f_provincia", "province"], ["f_cap", "postal_code"]]));
-      el("f_luogo_nascita").addEventListener("change", () =>
-        fillFromPlace("nascita", el("f_luogo_nascita").value, [["f_provincia_nascita", "province"]]));
+      // Città di nascita: l'elenco ufficiale della libreria, mentre si scrive (suggestBirthPlaces).
+      document.body.append(Object.assign(document.createElement("datalist"), { id: "comuniNascita" }));
+      el("f_luogo_nascita").setAttribute("list", "comuniNascita");
+      el("f_luogo_nascita").addEventListener("input", suggestBirthPlaces);
+      el("f_luogo_nascita").addEventListener("change", fillBirthProvince);
       el("f_acconto").addEventListener("input", recompute);
       el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
       el("f_totale_manuale").addEventListener("input", recompute);
@@ -786,14 +796,19 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Il codice fiscale confrontato con la scheda (taxCodeOutcome, libreria codice-fiscale-js). A
-   * campo vuoto, con tutti i dati, il codice calcolato si propone da solo.
+   * Il codice fiscale confrontato con la scheda (taxCodeOutcome, librerie @marketto). A campo
+   * vuoto, con tutti i dati, il codice calcolato si propone da solo.
    */
-  function checkTaxCode() {
+  let taxCodeTurn = 0;
+  async function checkTaxCode() {
+    const turn = ++taxCodeTurn;
     const field = el("f_codice_fiscale");
+    const written = field.value.trim();
     const details = taxCodeData();
-    const proposed = !field.value.trim() && computeTaxCode(details);
-    const outcome = field.value.trim() ? taxCodeOutcome(field.value, details) : proposed && { ok: false, suggerito: proposed };
+    const proposed = !written && await computeTaxCode(details);
+    const outcome = written ? await taxCodeOutcome(written, details) : proposed && { ok: false, suggerito: proposed };
+    // Nel frattempo è partito un controllo più nuovo, o il codice è stato cambiato a mano.
+    if (turn !== taxCodeTurn || field.value.trim() !== written) return;
     showTaxCodeNotice(el("avvisoCF"), field, outcome, checkDuplicates);
   }
 
@@ -810,7 +825,8 @@
   }
 
   /** «Calcola»: il codice fiscale dai dati della scheda, o quali dati mancano (bordati di rosso). */
-  function computeFiscalCode() {
+  async function computeFiscalCode() {
+    const turn = ++taxCodeTurn;
     const field = el("f_codice_fiscale"), box = el("avvisoCF");
     const details = taxCodeData();
     const missingOnes = [["f_cognome", "cognome"], ["f_nome", "nome"], ["f_data_nascita", "data di nascita"], ["f_luogo_nascita", "città di nascita"]]
@@ -821,14 +837,15 @@
       showTaxCodeNotice(box, field, { ok: false, messaggio: `Dati mancanti per il calcolo: ${missingOnes.map(([, nome]) => nome).join(", ")}.` });
       return;
     }
-    const proposed = computeTaxCode(details);
+    const proposed = await computeTaxCode(details);
+    if (turn !== taxCodeTurn) return;
     if (!proposed) {
       markField(el("f_luogo_nascita"));
       showTaxCodeNotice(box, field, { ok: false, messaggio: `Comune di nascita ${details.luogo.trim().toUpperCase()} non trovato: `
-        + "copiare il codice dalla tessera sanitaria." });
+        + "sceglierlo dall'elenco che compare mentre si scrive, o copiare il codice dalla tessera sanitaria." });
       return;
     }
-    if (proposed === field.value.trim().toUpperCase()) {
+    if (proposed === cleanTaxCode(field.value)) {
       showTaxCodeNotice(box, field, null);
       showToast("Il codice fiscale inserito è coerente con i dati anagrafici.");
       return;
@@ -1290,8 +1307,9 @@
   // Caricamento socio
   // -------------------------------------------------------------------------
 
-  // Comuni suggeriti (Città di nascita e di residenza), dai dati già nelle schede (vista member_places).
-  const PLACES = { citta: new Map(), nascita: new Map() };  // comune -> [{ province, postal_code, n }]
+  // Comuni suggeriti per la Città di residenza, dai dati già nelle schede (vista member_places), con
+  // provincia e CAP. Per la Città di nascita l'elenco è quello ufficiale della libreria (suggestBirthPlaces).
+  const PLACES = { citta: new Map() };  // comune -> [{ province, postal_code, n }]
 
   async function loadPlaces() {
     const rows = await allRows(() => sb.from("member_places").select("kind, place, province, postal_code, n").order("kind").order("place"));
@@ -1301,13 +1319,32 @@
       PLACES[r.kind].get(r.place).push(r);
     }
     const total = (list) => list.reduce((sum, r) => sum + r.n, 0);
-    for (const [kind, input, id] of [["citta", "f_citta", "comuniResidenza"], ["nascita", "f_luogo_nascita", "comuniNascita"]]) {
+    for (const [kind, input, id] of [["citta", "f_citta", "comuniResidenza"]]) {
       const list = document.createElement("datalist");
       list.id = id;
       list.innerHTML = [...PLACES[kind]].sort(([, a], [, b]) => total(b) - total(a)).map(([place]) => `<option value="${esc(place)}">`).join("");
       document.body.append(list);
       el(input).setAttribute("list", id);
     }
+  }
+
+  /** Città di nascita: mentre si scrive, i comuni e gli stati esteri dell'elenco ufficiale esistiti alla data di nascita. */
+  let birthPlacesTurn = 0;
+  async function suggestBirthPlaces() {
+    const turn = ++birthPlacesTurn;
+    const found = await searchBirthPlaces(el("f_luogo_nascita").value, el("f_data_nascita").value, el("f_provincia_nascita").value);
+    if (turn !== birthPlacesTurn) return;
+    el("comuniNascita").innerHTML = found.map((p) => `<option value="${esc(p.name)}">${esc(p.province || "Stato estero")}</option>`).join("");
+  }
+
+  /** Scelta la città di nascita, la sua provincia dall'elenco ufficiale, solo se il campo è vuoto. */
+  async function fillBirthProvince() {
+    const province = el("f_provincia_nascita");
+    if (province.value.trim()) return;
+    const place = await findBirthPlace(el("f_luogo_nascita").value, "", el("f_data_nascita").value);
+    if (!place?.province || province.value.trim()) return;
+    province.value = place.province;
+    province.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   /** Scelto un comune già noto, la provincia (e il CAP) più usati con lui, solo nei campi vuoti. */
@@ -1807,7 +1844,8 @@
   }
 
   function resetForm() {
-    // Una scheda o una ricerca ancora in volo sono di prima.
+    // Un controllo del codice fiscale, una scheda o una ricerca ancora in volo sono di prima.
+    taxCodeTurn++;
     cardTurn++;
     searchTurn++;
     el("memberForm").reset();

@@ -156,20 +156,25 @@ Non c'è nessuno step di build: le pagine sono HTML e JavaScript serviti così c
 ### Librerie copiate nel sito
 
 Le librerie esterne che il sito usa senza CDN sono copiate in `web/vendor/`, con la versione nel
-nome del file; le versioni in uso sono in [librerie.toml](librerie.toml). Per aggiornarne una:
+nome del file; le versioni in uso sono in [librerie.toml](librerie.toml), una sezione per file.
+Per aggiornarne una:
 
 ```bash
-python3 strumenti/aggiorna-libreria.py codice-fiscale-js          # ultima versione su npm
-python3 strumenti/aggiorna-libreria.py codice-fiscale-js 2.4.1    # versione precisa
-bash test-browser/esegui.sh                                       # poi le prove, il diff e il commit
+python3 strumenti/aggiorna-libreria.py codice-fiscale-utils          # ultima versione su npm
+python3 strumenti/aggiorna-libreria.py codice-fiscale-utils 3.1.4    # versione precisa
+bash test-browser/esegui.sh                                          # poi le prove, il diff e il commit
 ```
 
-Lo script verifica l'impronta del pacchetto dichiarata da npm, sostituisce il file, aggiorna le
-pagine che lo caricano e la versione in `librerie.toml`.
+Lo script verifica l'impronta del pacchetto dichiarata da npm, sostituisce il file e le licenze,
+aggiorna le pagine che lo caricano e la versione in `librerie.toml`.
 
-- **codice-fiscale-js** di Luca Vandro ([CodiceFiscaleJS](https://github.com/lucavandro/CodiceFiscaleJS),
-  licenza CC BY-SA 4.0, testo in `web/vendor/codice-fiscale-js-LICENSE.txt`): calcolo e controllo
-  del codice fiscale nelle pagine Soci e Assicurazione, con l'elenco dei comuni e degli stati esteri.
+- **Codice fiscale e comuni** (pagine Soci e Assicurazione): `@marketto/codice-fiscale-utils`,
+  `@marketto/belfiore-connector-embedded`, `@marketto/belfiore-connector` e
+  `@marketto/diacritic-remover` di Marco Ricupero (licenza MIT), con `dayjs` (MIT). Calcolano e
+  controllano il codice fiscale e danno l'elenco ufficiale di comuni e stati esteri, con le date in
+  cui sono esistiti, per i suggerimenti della Città di nascita. I dati dei luoghi sono di Agenzia
+  delle Entrate e Ministero dell'Interno (CC BY 4.0) e ISTAT (CC BY 3.0); le licenze sono accanto
+  ai file in `web/vendor/`.
 Il workflow di GitHub Pages pubblica `web/` alla radice e `ricerca/` sotto `/ricerca/`.
 Le pagine si linkano come online (il login sta alla radice, `ricerca/` sotto): per
 provarle insieme si serve una cartella con `web/` alla radice e `ricerca/` dentro.
