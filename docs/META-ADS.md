@@ -45,7 +45,15 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   le storie (con immagini nel formato delle storie, senza bande nere).
 - In fondo ai posizionamenti manuali c'è **«Consenti spesa limitata per i posizionamenti
   esclusi»**, attiva di default: Meta spende comunque circa il 5% del budget su ogni
-  posizionamento tolto. Va spenta.
+  posizionamento tolto. Va spenta **in ogni gruppo di inserzioni**, e dopo la pubblicazione si
+  ricontrolla gruppo per gruppo: nella campagna della presciistica (novembre 2026) era rimasta
+  attiva nel gruppo solo Instagram, e il post Instagram compariva su Facebook come post della
+  pagina con i pulsanti «Vedi dettagli». Togliendo la spunta Gestione inserzioni chiede di
+  confermare l'esclusione del feed di Facebook e di altri cinque posizionamenti: è la prova che
+  prima ci finiva una parte della spesa.
+- Ogni inserzione, anche quella solo su Instagram, mostra nell'«Identità» sia la pagina Facebook
+  sia l'account Instagram: la pagina Facebook è obbligatoria per qualsiasi inserzione di Meta e
+  non si può togliere. Dove compare l'inserzione lo decidono solo i posizionamenti.
 - Nel selettore «Usa post esistente» compaiono solo i post delle piattaforme scelte nel gruppo
   di inserzioni: con solo Facebook, la scheda Instagram resta vuota.
 - Togliere un posizionamento a campagna avviata è una modifica significativa: l'apprendimento
