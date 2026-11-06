@@ -1,8 +1,9 @@
-// Soci (index.html): il codice fiscale lo calcola e lo controlla la libreria codice-fiscale-js
-// (CodiceFiscale), non più un codice nostro (richiesta del 6/11).
+// Soci (index.html): il codice fiscale lo calcolano e lo controllano le librerie @marketto
+// (codice-fiscale-utils, con l'elenco dei luoghi di belfiore-connector-embedded), non più un codice
+// nostro (richiesta del 6/11).
 // - Calcola col modulo vuoto: i dati che mancano, sesso compreso, hanno il bordo rosso e l'avviso li dice.
 // - Il sesso si sceglie: non si ricava più dal nome.
-// - Comune che la libreria non conosce: non si calcola, il luogo è bordato, l'avviso rimanda alla tessera sanitaria.
+// - Luogo che la libreria non conosce: non si calcola, il luogo è bordato, l'avviso rimanda all'elenco e alla tessera sanitaria.
 // - Codice proposto: è un pulsante, il click lo scrive nel campo (anche sopra uno sbagliato).
 // - Codice non valido: «Codice fiscale errato, codice proposto: …».
 // - Codice valido ma con una data diversa dalla scheda (caso del 6/11: la data della scheda era
@@ -36,10 +37,14 @@
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
-    if (typeof CodiceFiscale !== "function") { document.title = "RISULTATO libreria=NO(CodiceFiscale non caricata)"; return; }
-    const code = (surname, nome, gender, day, month, year, birthplace, birthplaceProvincia) =>
-      CodiceFiscale.compute({ name: nome, surname, gender, day, month, year, birthplace, birthplaceProvincia });
-    const right = code("ROSSI", "MARIO", "M", 1, 1, 1980, "ASTI", "AT");
+    if (typeof CodiceFiscaleUtils !== "object" || typeof BelfioreConnector !== "object") {
+      document.title = "RISULTATO libreria=NO(librerie @marketto non caricate)"; return;
+    }
+    // I codici attesi li calcola la libreria, col luogo cercato nella provincia alla data di nascita.
+    const places = BelfioreConnector.belfioreConnector, lib = new CodiceFiscaleUtils.CodiceFiscaleUtils(places);
+    const code = async (lastName, firstName, gender, date, place, province) => lib.parser.encodeCf({ lastName, firstName, gender, date,
+      place: await places.active(date).byProvince(province).findByName(place) });
+    const right = await code("ROSSI", "MARIO", "M", "1980-01-01", "ASTI", "AT");
 
     await compute();
     const missingOnes = ["f_cognome", "f_nome", "f_data_nascita", "f_luogo_nascita"].filter((id) => !red(el(id)));
@@ -73,7 +78,7 @@
     // Codice giusto (nato il 20/01/1957 a Lu, comune soppresso), data della scheda sbagliata.
     resetForm();
     fill("VERDI", "GIAN LUCA", "1957-09-20", "LU MONFERRATO", "AL");
-    write("f_codice_fiscale", code("VERDI", "GIAN LUCA", "M", 20, 1, 1957, "LU", "AL"));
+    write("f_codice_fiscale", await code("VERDI", "GIAN LUCA", "M", "1957-01-20", "LU", "AL"));
     await wait(300);
     test("validoDataDiversa", !notice().hidden && text().includes("20/01/1957") && !proposed(), `avviso «${text()}»`);
     write("f_data_nascita", "1957-01-20");
@@ -84,7 +89,7 @@
     el("f_codice_fiscale").value = "";
     chooseSex("M");
     await compute();
-    test("nomeNonUfficiale", proposed()?.textContent.includes(code("VERDI", "GIAN LUCA", "M", 20, 1, 1957, "LU", "AL")), `avviso «${text()}»`);
+    test("nomeNonUfficiale", proposed()?.textContent.includes(await code("VERDI", "GIAN LUCA", "M", "1957-01-20", "LU", "AL")), `avviso «${text()}»`);
 
     resetForm();
     fill("BIANCHI", "LUCA", "1980-01-01", "ASTI", "AT");
