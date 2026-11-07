@@ -57,10 +57,12 @@
     .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
     .tabella-assic .stato { display: block; color: var(--testo-soft); margin-top: 4px; }
     /* Chi ha un importo da saldare: la casella rossa lo tiene fuori dalla lista finché non salda. */
+    .tabella-assic td.chi:has(.escludi) { min-width: 14rem; }
     .tabella-assic .debito { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
-    .tabella-assic .escludi { display: flex; align-items: center; gap: 8px; min-height: var(--tocco);
-                              color: var(--errore); font-weight: 600; cursor: pointer; }
-    .tabella-assic .escludi input { flex: none; width: 1.25rem; height: 1.25rem; margin: 0;
+    .tabella-assic .debito .importo { white-space: nowrap; }
+    .tabella-assic .escludi { display: flex; align-items: flex-start; gap: 8px; min-height: var(--tocco);
+                              padding-top: 6px; color: var(--errore); font-weight: 600; cursor: pointer; }
+    .tabella-assic .escludi input { flex: none; width: 1.25rem; height: 1.25rem; margin: .1em 0 0;
                                     accent-color: var(--errore-pieno); cursor: pointer; }
     .tabella-assic tr.esclusa td { background: var(--errore-bg); }
     @media screen and (max-width: 900px) {
@@ -617,7 +619,7 @@
         ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
         ${state ? `<span class="stato">${esc(state)}</span>` : ""}
         ${toInsureWithoutTaxCode ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}
-        ${inDebt ? `<span class="debito">Importo da saldare: ${esc(fmt(s.debt))}</span>
+        ${inDebt ? `<span class="debito">Importo da saldare: <span class="importo">${esc(fmt(s.debt))}</span></span>
           <label class="escludi"><input type="checkbox" class="escludi-lista"${s.insurance_hold ? " checked" : ""}>
             Escludi dalla lista fino al saldo</label>` : ""}</td>
       ${withType ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(typeName(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
