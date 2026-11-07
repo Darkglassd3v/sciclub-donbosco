@@ -60,6 +60,12 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   non si può togliere. Dove compare l'inserzione lo decidono solo i posizionamenti.
 - Nel selettore «Usa post esistente» compaiono solo i post delle piattaforme scelte nel gruppo
   di inserzioni: con solo Facebook, la scheda Instagram resta vuota.
+- Il consiglio «Potresti migliorare le prestazioni includendo 6 o più posizionamenti» viene dal
+  punteggio opportunità di Meta, non dai risultati della campagna: più posizionamenti vogliono dire
+  più spazi dove Meta può spendere, compresi quelli che sopra si escludono. Le cifre di miglioramento
+  sono dichiarate da Meta; chi analizza le campagne (Jon Loomer) nota che il punteggio non dice i
+  risultati e che per gli obiettivi di superficie, come le interazioni, la scelta manuale dei
+  posizionamenti protegge dal traffico di scarsa qualità. Per le campagne del club si ignora.
 - Togliere un posizionamento a campagna avviata è una modifica significativa: l'apprendimento
   riparte e i primi giorni costano di più. Si decide tutto prima di pubblicare.
 
