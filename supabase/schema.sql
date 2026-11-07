@@ -1385,6 +1385,13 @@ create index if not exists members_insurance_list_idx on public.members (insuran
 
 comment on column public.members.insurance_list_id is 'Lista con cui il socio è stato assicurato in questa stagione; vuoto = da assicurare.';
 
+-- Chi ha un saldo da versare resta da assicurare, ma la pagina Assicurazione lo può escludere
+-- dalla lista finché il nucleo non salda (set_insurance_hold). Senza debito non vale più; con
+-- l'invio della lista, e a fine stagione, torna spento.
+alter table public.members add column if not exists insurance_hold boolean not null default false;
+
+comment on column public.members.insurance_hold is 'Escluso dalla lista dell''assicurazione finché il nucleo familiare non salda; senza debito non ha effetto.';
+
 -- Fino al primo rilascio della 2.4 insurance_members(only_pending) dava, con
 -- false, tutti i tesserati della stagione: l'assicurazione poteva scaricare
 -- l'elenco completo dei soci chiamando l'API a mano. L'elenco completo è del
@@ -1461,14 +1468,39 @@ drop function if exists public.insurance_members(boolean);
 -- si toglie.
 drop function if exists public.insurance_members();
 
+-- Il saldo che il nucleo familiare del socio deve ancora versare, lo stesso della pagina
+-- Pagamenti (vista households): per un familiare a carico, quello del nucleo del
+-- capofamiglia. Zero per chi è in pari o a credito. Serve solo alle funzioni
+-- dell'assicurazione: nessun ruolo la chiama da sé, perché darebbe il saldo di qualunque nucleo.
+create or replace function public.member_debt(m public.members)
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select greatest(coalesce((select h.household_balance from public.households h
+                             where h.head_id = coalesce(m.payer_id, m.id)), 0), 0);
+$$;
+
+comment on function public.member_debt(public.members) is 'Saldo ancora da versare dal nucleo familiare del socio (zero se in pari o a credito), come in Pagamenti.';
+
+revoke all on function public.member_debt(public.members) from public, authenticated;
+do $$ begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on function public.member_debt(public.members) from anon;
+  end if;
+end $$;
+
 -- I tesserati della stagione aperta ancora da assicurare, con il tipo della
 -- loro tessera (o quello scelto con la presciistica). Ci sono anche quelli
 -- senza codice fiscale: la pagina li mostra, perché lo si scriva, ma in una
--- lista non entrano.
+-- lista non entrano. debt e insurance_hold servono alla casella «Escludi dalla
+-- lista fino al saldo».
 create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
-               card_type text, card_number text, insurance text)
+               card_type text, card_number text, insurance text,
+               debt numeric, insurance_hold boolean)
 language sql
 stable
 security definer
@@ -1476,8 +1508,8 @@ set search_path = ''
 as $$
   select t.id, t.last_name, t.first_name, t.birth_date,
          t.birth_place, t.birth_province, t.tax_code,
-         t.card_type, t.card_number, t.tipo
-    from (select m.*, public.member_insurance(m) as tipo
+         t.card_type, t.card_number, t.tipo, t.debt, t.insurance_hold
+    from (select m.*, public.member_insurance(m) as tipo, public.member_debt(m) as debt
             from public.members m
            where public.can('polizze')
              and m.enrolled_at is not null
@@ -1488,7 +1520,7 @@ as $$
    order by t.tipo, t.last_name, t.first_name, t.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (member_insurance(): presciistica, tessera o agevolazione famiglia).';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (member_insurance(): presciistica, tessera o agevolazione famiglia), il debito del nucleo e l''esclusione fino al saldo.';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)
@@ -1558,6 +1590,31 @@ $$;
 
 comment on function public.set_tax_code is 'Scrive il codice fiscale di un iscritto della stagione. Solo con il permesso polizze.';
 
+-- La casella «Escludi dalla lista fino al saldo» della pagina Assicurazione: si salva subito.
+-- L'esclusione conta solo finché il nucleo ha un saldo da versare (insurance_send).
+create or replace function public.set_insurance_hold(member_id uuid, hold boolean)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di modificare i dati dell''assicurazione.';
+  end if;
+
+  update public.members m set insurance_hold = coalesce(set_insurance_hold.hold, false)
+   where m.id = set_insurance_hold.member_id
+     and m.enrolled_at is not null;
+
+  if not found then
+    raise exception 'Socio non trovato fra gli iscritti della stagione: ricarica la pagina.';
+  end if;
+end;
+$$;
+
+comment on function public.set_insurance_hold is 'Esclude un iscritto della stagione dalla lista dell''assicurazione finché il nucleo non salda, o lo include di nuovo. Solo con il permesso polizze.';
+
 -- Le liste mandate nella stagione aperta, con quanti soci ha ciascuna: la
 -- pagina ne ricava l'ultima di ogni tipo e il numero da proporre.
 create or replace function public.insurance_sent_lists()
@@ -1597,6 +1654,7 @@ as $$
 declare
   lista uuid;
   quanti int;
+  esclusi text;
 begin
   if not public.can('polizze') then
     raise exception 'Non hai il permesso di mandare le liste dell''assicurazione.';
@@ -1617,12 +1675,26 @@ begin
                 and l.number = insurance_send.list_number) then
     raise exception 'La lista numero % di questo tipo è già stata mandata: scegli un altro numero.', insurance_send.list_number;
   end if;
+  -- Chi è escluso fino al saldo e ha ancora un saldo da versare non entra: la pagina lo
+  -- tiene fuori dal file, quindi un file scaricato prima dell'esclusione va rifatto.
+  select string_agg(m.last_name || ' ' || m.first_name, ', ' order by m.last_name, m.first_name)
+    into esclusi
+    from public.members m
+   where m.id = any (insurance_send.member_ids)
+     and m.insurance_hold
+     and m.enrolled_at is not null
+     and m.insurance_list_id is null
+     and public.member_insurance(m) = insurance_send.kind
+     and public.member_debt(m) > 0;
+  if esclusi is not null then
+    raise exception 'Soci esclusi dalla lista fino al saldo: %. Scaricare di nuovo le liste prima dell''invio.', esclusi;
+  end if;
 
   insert into public.insurance_lists (kind, number, starts_on)
   values (insurance_send.kind, insurance_send.list_number, insurance_send.starts_on)
   returning id into lista;
 
-  update public.members m set insurance_list_id = lista
+  update public.members m set insurance_list_id = lista, insurance_hold = false
    where m.id = any (insurance_send.member_ids)
      and m.enrolled_at is not null
      and m.insurance_list_id is null
@@ -1728,6 +1800,7 @@ declare f text;
 begin
   foreach f in array array[
     'public.insurance_members()', 'public.insurance_search(text)', 'public.set_tax_code(uuid, text)',
+    'public.set_insurance_hold(uuid, boolean)',
     'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[], date)',
     'public.insurance_send_all(text[], int[], uuid[], date)',
     'public.insurance_undo(uuid)', 'public.insurance_list_members(uuid)'] loop
@@ -1822,8 +1895,9 @@ create trigger check_card_type_role
   before insert or update on public.members
   for each row execute function public.check_card_type_role();
 
--- members_update asks only for 'soci', and RLS picks rows, not columns. Two columns
--- belong to other permissions: insurance_list_id to 'polizze' (insurance_send/undo),
+-- members_update asks only for 'soci', and RLS picks rows, not columns. Some columns
+-- belong to other permissions: insurance_list_id and insurance_hold to 'polizze'
+-- (insurance_send/undo, set_insurance_hold),
 -- and taking a member out of the season (enrolled_at back to null, amounts not logged)
 -- to 'gestione' (close_season, remove_from_season). Without a logged-in user (SQL
 -- Editor, service_role) nothing is checked, as everywhere else.
@@ -1835,8 +1909,9 @@ begin
   if auth.uid() is null then
     return new;
   end if;
-  if ((tg_op = 'INSERT' and new.insurance_list_id is not null)
-      or (tg_op = 'UPDATE' and new.insurance_list_id is distinct from old.insurance_list_id))
+  if ((tg_op = 'INSERT' and (new.insurance_list_id is not null or new.insurance_hold))
+      or (tg_op = 'UPDATE' and (new.insurance_list_id is distinct from old.insurance_list_id
+                                or new.insurance_hold is distinct from old.insurance_hold)))
      and not public.can('polizze') then
     raise exception 'Solo chi gestisce le polizze può cambiare la lista dell''assicurazione di un socio.';
   end if;
@@ -2462,6 +2537,7 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
+    insurance_hold     = false,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -2534,6 +2610,7 @@ begin
     course_type        = null,
     course_day         = null,
     insurance_list_id  = null,
+    insurance_hold     = false,
     saturday_departure = null,
     sunday_departure   = null,
     total              = 0,
@@ -3884,10 +3961,13 @@ begin
     raise exception 'Eliminazione non trovata.';
   end if;
 
+  -- Solo le colonne presenti nella copia: una scheda eliminata prima che una colonna esistesse
+  -- (per esempio insurance_hold) prende il valore predefinito, non un null che il vincolo rifiuta.
   select string_agg(quote_ident(a.attname), ', ' order by a.attnum) into colonne
     from pg_attribute a
    where a.attrelid = 'public.members'::regclass and a.attnum > 0
-     and not a.attisdropped and a.attgenerated = '';
+     and not a.attisdropped and a.attgenerated = ''
+     and (d -> 'member') ? a.attname;
   -- Dall'SQL Editor non c'è un utente collegato: il controllo delle tessere
   -- riservate rifiuterebbe un DIRETTIVO, e quello dei doppi inserimenti una
   -- scheda rifatta nel frattempo. Si spengono per questo inserimento solo;

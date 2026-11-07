@@ -27,6 +27,14 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
   animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
   campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
+- Nell'inserzione ci sono anche i «Miglioramenti fondamentali», attivi di default e separati dai
+  miglioramenti delle creatività; si cambiano da «Modifica» (o «Prova subito» se sono tutti spenti)
+  › «Creatività Advantage+», in fondo alla finestra. «Commenti pertinenti» resta acceso: mostra
+  sotto l'inserzione i commenti veri più utili, e chi analizza le campagne lo considera a basso
+  rischio. «Migliora CTA» e «Mostra contenuti in evidenza» si spengono: il primo riscrive con l'IA
+  il pulsante scelto per l'inserzione. L'etichetta della sezione dice quanti sono accesi («1/3»).
+- Dopo ogni modifica si ricontrolla il pulsante: nell'inserzione Instagram della presciistica era
+  diventato «Vedi dettagli» invece di «Scopri di più».
 - Budget: si scrive con la virgola («2,50»); con il punto Gestione inserzioni legge 250 €. Il
   modo più sicuro per dare budget diversi ai gruppi è la tabella «Gruppi di inserzioni»: matita
   sulla cella Budget › importo › «Salva bozza». Dopo ogni modifica si ricontrolla anche la data di
@@ -56,6 +64,12 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   non si può togliere. Dove compare l'inserzione lo decidono solo i posizionamenti.
 - Nel selettore «Usa post esistente» compaiono solo i post delle piattaforme scelte nel gruppo
   di inserzioni: con solo Facebook, la scheda Instagram resta vuota.
+- Il consiglio «Potresti migliorare le prestazioni includendo 6 o più posizionamenti» viene dal
+  punteggio opportunità di Meta, non dai risultati della campagna: più posizionamenti vogliono dire
+  più spazi dove Meta può spendere, compresi quelli che sopra si escludono. Le cifre di miglioramento
+  sono dichiarate da Meta; chi analizza le campagne (Jon Loomer) nota che il punteggio non dice i
+  risultati e che per gli obiettivi di superficie, come le interazioni, la scelta manuale dei
+  posizionamenti protegge dal traffico di scarsa qualità. Per le campagne del club si ignora.
 - Togliere un posizionamento a campagna avviata è una modifica significativa: l'apprendimento
   riparte e i primi giorni costano di più. Si decide tutto prima di pubblicare.
 
@@ -66,6 +80,11 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   ricevuto soprattutto persone di 60 anni e oltre.
 - Per una fascia d'età vera si usa **«Limita ulteriormente il tuo pubblico» › «Raggiungi un
   pubblico limitato»** e si toglie la spunta «Usa come suggerimento».
+- Il pubblico Advantage+ si spegne dall'età, non dall'etichetta «Advantage+ attivo» (che apre solo
+  una spiegazione): nel gruppo di inserzioni si apre «Età» e si toglie la spunta «Usa come
+  suggerimento»; l'etichetta diventa «Advantage+ non attivo». Nella campagna della presciistica
+  (novembre 2026) il gruppo Instagram l'aveva accesa e quello Facebook no: si ricontrollano tutti i
+  gruppi dopo ogni modifica.
 - Su Facebook Meta tende già a spendere sulle fasce più anziane, e per il pubblico 45–65+ il
   costo per mille visualizzazioni è più alto.
 
