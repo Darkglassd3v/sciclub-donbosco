@@ -3,7 +3,8 @@
 //   «Da assicurare»; la sua riga ha la casella «Escludi dalla lista fino al saldo», spenta di
 //   default, e l'importo da saldare accanto.
 // - Casella spenta: il socio entra nei file Excel. Casella accesa: ne resta fuori, e i conteggi
-//   dicono quanti soci sono esclusi.
+//   dicono quanti soci sono esclusi. «Segna come assicurati» manda solo i soci del file: gli
+//   esclusi restano da assicurare, gli altri diventano assicurati.
 // - Chi è a credito o in pari non ha la casella; una spunta rimasta accesa dopo il saldo non conta.
 // - La scelta si salva subito (set_insurance_hold); se il salvataggio non riesce, la casella torna
 //   com'era e i conteggi non cambiano.
@@ -25,8 +26,11 @@
   FAKE.rpc.set_insurance_hold = null;
   FAKE.risposta = (t) => (t === "insurances" ? [{ code: "BASE", name: "REALE MUTUA NEVE" }, { code: "SPORT", name: "REALE TOTAL SPORT" }] : []);
   const calls = [];
+  const sent = [];
   let failSave = false;
+  FAKE.rpc.insurance_send_all = 3;
   FAKE.errore = (t, request) => {
+    if (t === "rpc:insurance_send_all") sent.push(request.parametri);
     if (t !== "rpc:set_insurance_hold") return null;
     calls.push(request.parametri);
     return failSave ? { message: "Errore di prova" } : null;
@@ -70,6 +74,11 @@
     downloaded.length = 0;
     await downloadAll();
     test("excelDopo", downloaded.join(",") === "BASE:CREDITO+SALDATO,SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
+    // «Segna come assicurati» manda solo i soci del file: gli esclusi restano da assicurare.
+    await send();
+    const sentIds = sent.at(-1)?.member_ids?.join("+");
+    test("inviaSenzaEsclusi", sentIds === "CREDITO+SALDATO+SPORT1", `inviati ${sentIds}`);
+    await wait(100);
 
     failSave = true;
     box("ESCLUSO").click();

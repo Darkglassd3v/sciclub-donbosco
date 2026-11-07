@@ -1405,6 +1405,9 @@ begin
   end;
   assert not exists (select 1 from public.insurance_sent_lists() where number = 40),
          'la lista con il socio escluso è rimasta segnata';
+  -- La lista scaricata senza l'escluso parte: gli altri diventano assicurati, lui resta da assicurare.
+  assert public.insurance_send_all(array['BASE'], array[39], array[pari]) = 1, 'la lista senza l''escluso non parte';
+  assert exists (select 1 from public.insurance_members() where id = figlio), 'il socio escluso non è più da assicurare';
 
   -- Chi non è iscritto alla stagione non si tocca.
   begin
