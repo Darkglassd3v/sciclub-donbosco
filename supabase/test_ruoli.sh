@@ -266,6 +266,7 @@ begin
     -- ROSSI MARIO: iscritto ora, senza pagamenti né gite, quindi eliminabile.
     ('scrivi', 'select public.delete_member(''99999999-9999-9999-9999-999999999999'')', 'SSxxxxx'),
     ('scrivi', 'select public.set_tax_code(' || m || ', ''X'')',                   'SxxSxxx'),
+    ('scrivi', 'select public.set_insurance_hold(' || m || ', true)',              'SxxSxxx'),
     ('scrivi', 'select public.insurance_send(''BASE'', 99, array[' || m || ']::uuid[])', 'SxxSxxx'),
     ('scrivi', 'select public.settle_household(' || m || ')',                     'SSSxxxx'),
     ('scrivi', 'select public.set_amounts(' || m || ', 10, 5, ''prova'')',          'SSSxxxx'),
@@ -1358,6 +1359,83 @@ set role authenticated;
 do $$ begin
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert (select count(*) from public.insurance_search('molti')) = 20, 'la ricerca non si ferma a 20 risultati';
+end $$;
+
+-- Assicurazione e importi da saldare: chi ha un saldo da versare resta da assicurare, ma con
+-- set_insurance_hold si può escludere dalla lista finché non salda. Il debito è quello del nucleo
+-- familiare, come in Pagamenti: il familiare a carico segue il capofamiglia. Chi è a credito o in
+-- pari non è a debito, e per lui l'esclusione non vale. La difesa è nelle funzioni di invio.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, total, paid) values
+  ('aaaaaaaa-0000-0000-0000-000000000040', 'NERI', 'CAPODEBITO', now(), 'PROVA TESSERA ORDINARIA', 'NRECPD80A01F205X', 100, 40),
+  ('aaaaaaaa-0000-0000-0000-000000000042', 'BLU', 'CREDITO', now(), 'PROVA TESSERA ORDINARIA', 'BLECRD80A01F205X', 35, 50),
+  ('aaaaaaaa-0000-0000-0000-000000000043', 'BLU', 'PARI', now(), 'PROVA TESSERA ORDINARIA', 'BLEPRA80A01F205X', 35, 35);
+insert into public.members (id, last_name, first_name, enrolled_at, card_type, tax_code, total, paid, payer_id) values
+  ('aaaaaaaa-0000-0000-0000-000000000041', 'NERI', 'FIGLIODEBITO', now(), 'PROVA TESSERA ORDINARIA', 'NREFGL80A01F205X', 35, 0,
+   'aaaaaaaa-0000-0000-0000-000000000040');
+set role authenticated;
+do $$
+declare
+  capo    constant uuid := 'aaaaaaaa-0000-0000-0000-000000000040';
+  figlio  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000041';
+  credito constant uuid := 'aaaaaaaa-0000-0000-0000-000000000042';
+  pari    constant uuid := 'aaaaaaaa-0000-0000-0000-000000000043';
+begin
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert (select debt from public.insurance_members() where id = capo) = 95,
+         'debito del capofamiglia sbagliato: atteso il saldo del nucleo, 60 + 35 = 95';
+  assert (select debt from public.insurance_members() where id = figlio) = 95,
+         'il familiare a carico non segue il debito del nucleo del capofamiglia';
+  assert (select debt from public.insurance_members() where id = credito) = 0, 'chi è a credito risulta a debito';
+  assert (select debt from public.insurance_members() where id = pari) = 0, 'chi è in pari risulta a debito';
+  assert not (select insurance_hold from public.insurance_members() where id = capo), 'l''esclusione nasce già attiva';
+
+  perform public.set_insurance_hold(figlio, true);
+  perform public.set_insurance_hold(credito, true);
+  assert (select insurance_hold from public.insurance_members() where id = figlio), 'l''esclusione non è stata salvata';
+
+  -- Escluso e a debito: la lista non parte, e nemmeno le altre (tutto o niente).
+  begin
+    perform public.insurance_send_all(array['BASE'], array[40], array[capo, figlio, credito]);
+    raise exception 'ASSERZIONE: inviata una lista con un socio escluso finché non salda';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%NERI FIGLIODEBITO%', 'errore inatteso: ' || sqlerrm;
+  end;
+  assert not exists (select 1 from public.insurance_sent_lists() where number = 40),
+         'la lista con il socio escluso è rimasta segnata';
+
+  -- Chi non è iscritto alla stagione non si tocca.
+  begin
+    perform public.set_insurance_hold('99999999-9999-9999-9999-999999999999', true);
+    raise exception 'ASSERZIONE: esclusione scritta a un socio non iscritto';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+
+  -- Saldato il nucleo, l'esclusione non vale più: capofamiglia, familiare e il socio a credito
+  -- entrano nella lista, e l'esclusione si spegne.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin, come la pagina Pagamenti
+  perform public.settle_household(capo);
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert (select debt from public.insurance_members() where id = figlio) = 0, 'dopo il saldo il nucleo risulta ancora a debito';
+  assert public.insurance_send_all(array['BASE'], array[40], array[capo, figlio, credito]) = 3,
+         'dopo il saldo i soci esclusi non sono entrati nella lista';
+end $$;
+
+do $$ begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  assert not exists (select 1 from public.members where id in ('aaaaaaaa-0000-0000-0000-000000000041',
+                                                                'aaaaaaaa-0000-0000-0000-000000000042') and insurance_hold),
+         'l''esclusione resta attiva dopo l''invio della lista';
+  -- L'esclusione è dell'assicurazione: chi gestisce i soci non la cambia dalla tabella.
+  begin
+    update public.members set insurance_hold = true where id = 'aaaaaaaa-0000-0000-0000-000000000043';
+    raise exception 'ASSERZIONE: un admin senza il permesso polizze ha escluso un socio dalla lista';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
 end $$;
 
 -- Più abbonamenti per socio.
