@@ -19,6 +19,52 @@
 
 ## Richieste nuove
 
+- [ ] **Assicurazione: chi non ha saldato si può escludere dalla lista (richiesta del 7/11).**
+      Sviluppo obbligatorio con /tdd-workflow (prova vista rossa, poi verde) e poi /ecc:code-review,
+      con tutto quello che emerge corretto prima di pubblicare; poi push, deploy verificato, `dev`.
+      - **Cosa vuole l'utente.** Nella pagina Assicurazione, «Da assicurare», chi non ha saldato
+        resta nella lista ma la sua riga ha una casella rossa **«Escludi dalla lista»**, spenta di
+        default: spenta, la persona entra nel file Excel e nell'invio come oggi; accesa, resta fuori
+        dal file e dall'invio finché il debito non è saldato. Saldato il debito la casella sparisce
+        e la persona entra di nuovo da sola (la spunta non vale più).
+      - **Chi conta come «non ha saldato».** Solo chi è a **debito**: saldo del nucleo maggiore di
+        zero. Chi è a credito (saldo sotto zero) o in pari no. Il saldo è quello del nucleo, come
+        nella pagina Pagamenti: vista `households`, colonna `household_balance` = saldo del
+        capofamiglia più quello dei familiari a carico; per un socio a carico si guarda il nucleo
+        del suo capofamiglia (`payer_id`), per gli altri il proprio.
+      - **Database (`supabase/schema.sql`, idempotente; in produzione solo le istruzioni nuove con
+        `lock_timeout`).**
+        - `members.insurance_hold boolean not null default false` («escluso dalla lista
+          dell'assicurazione finché non salda»).
+        - `insurance_members()`: due colonne in più, `debt` (il saldo del nucleo se maggiore di
+          zero, altrimenti 0) e `insurance_hold`. Cambiando le colonne restituite serve
+          `drop function` prima del `create`, e vanno rifatti grant e comment.
+        - `set_insurance_hold(member_id uuid, hold boolean)`: security definer, solo col permesso
+          `polizze`, solo per iscritti della stagione aperta, come `set_tax_code()`.
+        - `insurance_send()` e `insurance_send_all()`: rifiutano un socio con `insurance_hold` e
+          debito maggiore di zero. È la difesa vera: la pagina da sola non basta.
+      - **Pagina (`web/assicurazione.html`).** Casella rossa sulla riga solo se `debt > 0`, con
+        l'importo del debito accanto; il cambio si salva subito con `set_insurance_hold`. La
+        funzione `ready()` (chi entra nel file) esclude chi ha `insurance_hold` e `debt > 0`; i
+        conteggi dei gruppi dicono anche quanti sono esclusi. Il colore rosso segue i contrasti di
+        `docs/brand-guidelines.md`, a A+ al massimo e sul telefono.
+      - **Prove prima (rosse).**
+        - `test-browser/`: nuova prova sulla pagina Assicurazione. Il socio a debito ha la casella
+          spenta ed entra nel file; accesa, esce dal file e dai conteggi e parte
+          `set_insurance_hold`; il socio a credito o in pari non ha la casella; il familiare a
+          carico segue il debito del capofamiglia; un debito saldato con la spunta accesa lo fa
+          rientrare.
+        - `supabase/test_ruoli.sh` (docker): `set_insurance_hold` solo col permesso `polizze`;
+          `insurance_send_all` rifiuta un socio escluso e a debito e accetta lo stesso socio dopo
+          il saldo.
+      - **Verifica finale.** Tutte le prove nel browser e i test node; `supabase/test_ruoli.sh`;
+        schema riapplicabile due volte; pagina guardata nel Chrome dell'utente (claude-in-chrome),
+        anche a 500 px e con A+, senza salvare né inviare liste.
+      - **Rischi.** Cambiare le colonne di `insurance_members()` tocca le prove esistenti della
+        pagina Assicurazione (i dati finti vanno aggiornati con `debt` e `insurance_hold`). Lo
+        schema in produzione blocca il sito per minuti: solo le istruzioni nuove, con
+        `lock_timeout`.
+
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
       testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
