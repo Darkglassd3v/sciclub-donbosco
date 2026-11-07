@@ -291,8 +291,8 @@
   // Escluso fino al saldo: casella accesa e nucleo con un importo ancora da versare. Saldato il
   // debito la spunta non conta più, e il socio torna nella lista da solo.
   const onHold = (s) => Boolean(s.insurance_hold) && num(s.debt) > 0;
-  const heldCount = (n) => howManyOnes(n, "escluso fino al saldo", "esclusi fino al saldo");
   const howManyOnes = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const heldCount = (n) => howManyOnes(n, "escluso fino al saldo", "esclusi fino al saldo");
 
   function lastList(kind) {
     return sentLists.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
@@ -702,9 +702,9 @@
       const name = `${s.last_name} ${s.first_name}`;
       if (hold && downloadedOne?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
         cancelDownload();
-        showToast(`${name}: escluso dalla lista fino al saldo. Il socio era in una lista già scaricata: scaricare di nuovo le liste prima dell'invio.`, "is-warning");
+        showToast(`${name}: esclusione dalla lista fino al saldo registrata. Il nominativo era in una lista già scaricata: scaricare di nuovo le liste prima dell'invio.`, "is-warning");
       } else {
-        showToast(`${name}: ${hold ? "escluso dalla lista fino al saldo" : "incluso di nuovo nella lista"}.`);
+        showToast(`${name}: ${hold ? "esclusione dalla lista fino al saldo registrata" : "esclusione annullata, il nominativo rientra nella lista"}.`);
       }
       // Conteggi, titolo del gruppo e colore della riga cambiano: si ridisegna, e il fuoco
       // torna sulla casella (chi usa la tastiera non perde il punto).

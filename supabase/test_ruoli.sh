@@ -1577,7 +1577,10 @@ begin
 
   select id into gita from public.trip_uses where client_id = 'eeeeeeee-0000-0000-0000-000000000001';
   perform public.cancel_trip(gita);
+  -- L'esclusione dalla lista dell'assicurazione è della stagione: uscendo si azzera.
+  update public.members set insurance_hold = true where id = luca;
   perform public.remove_from_season(luca);
+  assert not (select insurance_hold from public.members where id = luca), 'esclusione dall''assicurazione non azzerata';
 
   assert (select enrolled_at from public.members where id = luca) is null, 'il socio è ancora iscritto';
   assert (select card_type is null and card_number is null and total = 0 and paid = 0 and pass_type is null
@@ -1898,8 +1901,14 @@ begin
   assert jsonb_array_length(d.data -> 'passes') = 1 and jsonb_array_length(d.data -> 'amount_changes') = 1,
          'member_deletions: abbonamento o storico non copiati';
 
+  -- Una scheda eliminata prima che una colonna esistesse non ce l'ha nella copia: si
+  -- ripristina lo stesso, e la colonna prende il valore predefinito.
+  update public.member_deletions set data = data #- '{member,insurance_hold}' where id = d.id;
+
   -- Ripristino dall'SQL Editor (superuser, nessun utente collegato).
   assert public.restore_member(d.id) = 'dddddddd-0000-0000-0000-000000000007', 'ripristino: id sbagliato';
+  assert not (select insurance_hold from public.members where id = 'dddddddd-0000-0000-0000-000000000007'),
+         'ripristino: colonna assente nella copia senza il valore predefinito';
   assert (select name_key from public.members where id = 'dddddddd-0000-0000-0000-000000000007') = 'DOPPIONE DINO',
          'ripristino: la scheda non è tornata';
   assert (select created_at from public.members where id = 'dddddddd-0000-0000-0000-000000000007') = '2000-01-01',

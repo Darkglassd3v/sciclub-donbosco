@@ -3961,10 +3961,13 @@ begin
     raise exception 'Eliminazione non trovata.';
   end if;
 
+  -- Solo le colonne presenti nella copia: una scheda eliminata prima che una colonna esistesse
+  -- (per esempio insurance_hold) prende il valore predefinito, non un null che il vincolo rifiuta.
   select string_agg(quote_ident(a.attname), ', ' order by a.attnum) into colonne
     from pg_attribute a
    where a.attrelid = 'public.members'::regclass and a.attnum > 0
-     and not a.attisdropped and a.attgenerated = '';
+     and not a.attisdropped and a.attgenerated = ''
+     and (d -> 'member') ? a.attname;
   -- Dall'SQL Editor non c'è un utente collegato: il controllo delle tessere
   -- riservate rifiuterebbe un DIRETTIVO, e quello dei doppi inserimenti una
   -- scheda rifatta nel frattempo. Si spengono per questo inserimento solo;

@@ -289,6 +289,14 @@ le lancia il deploy.
 - «Da assicurare» (dal 21/10/2026) è a pagine di 25, una per tipo; il titolo del gruppo dice
   quanti sono senza codice fiscale. Dopo Salva si resta sulla pagina; un codice fiscale scritto e
   non salvato si chiede prima di cambiare pagina. Excel e «Segna come assicurati» prendono tutti.
+- Chi ha un importo da saldare (dal 7/11/2026) resta in «Da assicurare» con l'importo e la casella
+  rossa «Escludi dalla lista fino al saldo», spenta di default (`members.insurance_hold`, scritta
+  solo da `set_insurance_hold()` col permesso polizze). Il debito è quello del nucleo, come in
+  Pagamenti (`member_debt()` sulla vista `households`; il familiare a carico segue il
+  capofamiglia); chi è a credito o in pari non ha la casella. Accesa, il socio resta fuori da
+  Excel e invio e i conteggi lo dicono; `insurance_send()` rifiuta un socio escluso e ancora a
+  debito (file scaricato prima dell'esclusione) e spegne l'esclusione di chi entra in una lista.
+  Saldato il debito la spunta non conta più; fine stagione e uscita dalla stagione la azzerano.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
   L'invio si può annullare e una lista inviata si può riscaricare uguale.
