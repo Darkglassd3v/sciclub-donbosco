@@ -27,6 +27,10 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
   animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
   campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
+- Nell'inserzione ci sono anche i «Miglioramenti fondamentali» («Commenti pertinenti», «Migliora
+  CTA», «Mostra contenuti in evidenza»), attivi di default e separati dai miglioramenti delle
+  creatività: si spengono da «Modifica» › «Creatività Advantage+», in fondo alla finestra.
+  L'etichetta della sezione dice quanti ne restano accesi (per esempio «0/2»).
 - Budget: si scrive con la virgola («2,50»); con il punto Gestione inserzioni legge 250 €. Il
   modo più sicuro per dare budget diversi ai gruppi è la tabella «Gruppi di inserzioni»: matita
   sulla cella Budget › importo › «Salva bozza». Dopo ogni modifica si ricontrolla anche la data di
@@ -66,6 +70,11 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   ricevuto soprattutto persone di 60 anni e oltre.
 - Per una fascia d'età vera si usa **«Limita ulteriormente il tuo pubblico» › «Raggiungi un
   pubblico limitato»** e si toglie la spunta «Usa come suggerimento».
+- Il pubblico Advantage+ si spegne dall'età, non dall'etichetta «Advantage+ attivo» (che apre solo
+  una spiegazione): nel gruppo di inserzioni si apre «Età» e si toglie la spunta «Usa come
+  suggerimento»; l'etichetta diventa «Advantage+ non attivo». Nella campagna della presciistica
+  (novembre 2026) il gruppo Instagram l'aveva accesa e quello Facebook no: si ricontrollano tutti i
+  gruppi dopo ogni modifica.
 - Su Facebook Meta tende già a spendere sulle fasce più anziane, e per il pubblico 45–65+ il
   costo per mille visualizzazioni è più alto.
 
