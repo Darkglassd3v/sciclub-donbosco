@@ -27,10 +27,14 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Nel gruppo di inserzioni si spengono i «Miglioramenti delle creatività Advantage+» (ritocchi,
   animazioni, testo riscritto, altre immagini), «Inserzioni di più inserzionisti» e, nella
   campagna, la condivisione del budget fra gruppi se la divisione deve restare fissa.
-- Nell'inserzione ci sono anche i «Miglioramenti fondamentali» («Commenti pertinenti», «Migliora
-  CTA», «Mostra contenuti in evidenza»), attivi di default e separati dai miglioramenti delle
-  creatività: si spengono da «Modifica» › «Creatività Advantage+», in fondo alla finestra.
-  L'etichetta della sezione dice quanti ne restano accesi (per esempio «0/2»).
+- Nell'inserzione ci sono anche i «Miglioramenti fondamentali», attivi di default e separati dai
+  miglioramenti delle creatività; si cambiano da «Modifica» (o «Prova subito» se sono tutti spenti)
+  › «Creatività Advantage+», in fondo alla finestra. «Commenti pertinenti» resta acceso: mostra
+  sotto l'inserzione i commenti veri più utili, e chi analizza le campagne lo considera a basso
+  rischio. «Migliora CTA» e «Mostra contenuti in evidenza» si spengono: il primo riscrive con l'IA
+  il pulsante scelto per l'inserzione. L'etichetta della sezione dice quanti sono accesi («1/3»).
+- Dopo ogni modifica si ricontrolla il pulsante: nell'inserzione Instagram della presciistica era
+  diventato «Vedi dettagli» invece di «Scopri di più».
 - Budget: si scrive con la virgola («2,50»); con il punto Gestione inserzioni legge 250 €. Il
   modo più sicuro per dare budget diversi ai gruppi è la tabella «Gruppi di inserzioni»: matita
   sulla cella Budget › importo › «Salva bozza». Dopo ogni modifica si ricontrolla anche la data di
