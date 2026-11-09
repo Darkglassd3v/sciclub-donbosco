@@ -104,8 +104,26 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   frammentazione» (novembre 2026, +27 punti): si ignora. La separazione è voluta (un post, un
   pulsante e una spesa per piattaforma); unendo i gruppi Meta torna a spendere quasi tutto su
   Facebook. Anche chi analizza le campagne (Jon Loomer, HunchAds) consiglia di non applicarlo
-  quando i gruppi sono separati di proposito. La fase di apprendimento con pochi euro al giorno
-  non si chiude comunque (vedi sotto).
+  quando i gruppi sono separati di proposito. Il motivo tecnico del consiglio è vero: due gruppi
+  piccoli escono più tardi dalla fase di apprendimento (circa 50 risultati a settimana ciascuno).
+  Con l'obiettivo Interazioni i risultati costano poco e possono bastare anche così: si controlla
+  in Gestione inserzioni se i gruppi sono usciti dalla fase di apprendimento prima di decidere.
+
+## Quanto valgono i numeri dei consigli (ricerca del 9/11/2026)
+
+- Le percentuali dei consigli sono dati di Meta, senza metodo pubblicato né verifiche esterne:
+  12% di costo per risultato in meno (mediana) per chi applica i consigli del punteggio, 9,7% per
+  il pubblico Advantage+ (150 test A/B di Meta su Traffico, Interazioni e Contatti), 11,7% di costo
+  per azione per i posizionamenti Advantage+. Il «17%» di «aziende come la tua» non ha fonte
+  pubblica; «risultato di inserzionisti simili» confronta chi ha seguito il consiglio con chi non
+  l'ha fatto, quindi non dimostra che il risultato venga dal consiglio.
+- Il costo per risultato è contato da Meta stessa: un'interazione più economica può venire da
+  posizionamenti o persone che al club non servono.
+- L'unica verifica indipendente trovata (Haus, 640 test di incrementalità, ottobre 2025, campagne
+  di vendita): l'automazione Advantage+ ha battuto le campagne manuali nel 42% dei casi.
+- Sui posizionamenti c'è chi consiglia di lasciarli automatici e togliere solo quelli che il
+  dettaglio per posizionamento mostra come spazzatura: a fine campagna si guarda la suddivisione
+  per posizionamento prima di decidere la successiva.
 
 ## Obiettivo e budget
 
@@ -119,6 +137,10 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 
 ## Fonti
 
+- [Opportunity Score and Campaign Score explained](https://www.jonloomer.com/opportunity-score-campaign-score/),
+  [Meta Advantage+ won just 42% of 640 incrementality tests](https://elevarus.com/meta-advantage-automation-what-to-turn-off/),
+  [Meta's Advantage+ Audience: when to override it](https://lineardesign.com/blog/metas-advantage-audience/),
+  [Meta's replacements for placement controls](https://www.relevantaudience.com/meta/meta-placement-controls-alternatives-documented/),
 - [Opportunity Score in Meta Ads Manager](https://www.jonloomer.com/opportunity-score/),
   [Audience fragmentation can hurt ad performance](https://www.jonloomer.com/qvt/audience-fragmentation-can-hurt-ad-performance/),
   [Meta opportunity score: what to act on and what to ignore](https://www.hunchads.com/blog/meta-opportunity-score-what-to-act-on-and-what-to-ignore),
