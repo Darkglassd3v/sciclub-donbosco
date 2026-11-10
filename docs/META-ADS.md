@@ -109,6 +109,29 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   Con l'obiettivo Interazioni i risultati costano poco e possono bastare anche così: si controlla
   in Gestione inserzioni se i gruppi sono usciti dalla fase di apprendimento prima di decidere.
 
+## Risultati della campagna presciistica (al 9/11/2026, età 45+)
+
+| | Facebook (foto) | Instagram (carosello) |
+|---|---|---|
+| Budget al giorno | 3,00 € | 2,00 € |
+| Speso | 11,46 € | 6,90 € |
+| Persone raggiunte / visualizzazioni | 1200 / 2015 | 1355 / 1743 |
+| Costo per 1000 visualizzazioni | 5,69 € | 3,96 € |
+| Interazioni (su 100 visualizzazioni) | 44 (2,2) | 12 (0,7) |
+| Costo per interazione | 0,26 € | 0,57 € |
+
+- La differenza non dipende dal budget: rapportato all'euro speso, Facebook dà 3,8 interazioni e
+  Instagram 1,7. Instagram costa meno per farsi vedere (raggiunge più persone con meno soldi), ma
+  chi lo vede interagisce un terzo delle volte. Con 44 e 12 interazioni la differenza è
+  statisticamente solida, non un caso.
+- Spiegazione più probabile: il pubblico di 45 anni e oltre usa Facebook molto più di Instagram.
+  Pesano però anche altre differenze: foto singola contro carosello, post Facebook più vecchio
+  (dal 16/10, con like già presenti) e «interazione» contata in modo diverso sulle due piattaforme.
+- Per la prossima campagna allo stesso pubblico: più budget a Facebook se lo scopo sono le
+  interazioni; Instagram tenuto piccolo se serve soprattutto farsi vedere. Per separare l'effetto
+  della piattaforma da quello del post, la stessa grafica su entrambe. In Gestione inserzioni,
+  «Dettagli» › per età e per posizionamento, si controlla quali fasce rispondono.
+
 ## Quanto valgono i numeri dei consigli (ricerca del 9/11/2026)
 
 - Le percentuali dei consigli sono dati di Meta, senza metodo pubblicato né verifiche esterne:
