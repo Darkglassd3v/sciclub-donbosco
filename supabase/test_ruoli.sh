@@ -1237,10 +1237,9 @@ begin
          'presciistica Base: l''etichetta non dice l''assicurazione';
   assert (select public.preski_label(m) from public.members m where m.id = niente) = 'PROVA PRESCIISTICA - NO ASSICURAZIONE',
          'presciistica senza assicurazione: l''etichetta non lo dice';
-  assert (select count = 2 and price = 70 and total = 140 from public.preski_counts where name = 'PROVA PRESCIISTICA - NO ASSICURAZIONE'),
-         'conteggi: presciistica senza assicurazione sbagliata';
-  assert (select count = 1 and price = 115 and total = 115 from public.preski_counts where name = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'SPORT')),
-         'conteggi: presciistica Sport sbagliata';
+  -- Nel Riepilogo la presciistica si conta per voce: l'assicurazione va con la tessera compresa.
+  assert (select sum(count) from public.preski_counts where name = 'PROVA PRESCIISTICA') = 4,
+         'conteggi: la presciistica è ancora divisa per assicurazione';
   assert (select public.card_holder(m) from public.members m where m.id = niente),
          'presciistica senza assicurazione: comprende la tessera, deve essere tesserato';
   begin
@@ -1271,6 +1270,72 @@ begin
   assert public.insurance_send('SPORT', 20, array[presci]) = 1, 'presciistica Sport: non è entrato nella lista Sport';
   assert public.insurance_send('BASE', 21, array[senza]) = 1, 'presciistica Base: non è entrato nella lista Base';
 end $$;
+
+-- Riepilogo (richiesta dell'11/11): la presciistica comprende la tessera ordinaria della sua
+-- assicurazione (Base → con la Reale Mutua Neve, Sport → con la Reale Total Sport, nessuna →
+-- solo tessera). Nel Riepilogo la presciistica conta solo la sua parte (voce meno la quota della
+-- tessera), e la tessera compresa va fra le tessere col suo tipo e il suo prezzo (quota più
+-- assicurazione). Il totale complessivo non cambia.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.prices (category, name, price, min_role, insurance) values
+  ('TESSERA', 'PROVA CONTI NEVE', 90, 'utente', 'BASE'),
+  ('TESSERA', 'PROVA CONTI SPORT', 90, 'utente', 'SPORT'),
+  ('TESSERA', 'PROVA CONTI SOLA', 90, 'utente', null),
+  ('TESSERA', 'PROVA CONTI SCONTATA', 40, 'utente', null),
+  ('PRESCIISTICA', 'PROVA PRESCI CONTI', 200, 'utente', null);
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, preski_type, preski_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000050', 'CONTI', 'NEVE', now(), 'CNTNVE80A01F205X', 'PROVA PRESCI CONTI', 'BASE'),
+  ('aaaaaaaa-0000-0000-0000-000000000051', 'CONTI', 'SPORT', now(), 'CNTSPR80A01F205X', 'PROVA PRESCI CONTI', 'SPORT'),
+  ('aaaaaaaa-0000-0000-0000-000000000052', 'CONTI', 'SOLA', now(), 'CNTSLA80A01F205X', 'PROVA PRESCI CONTI', null);
+set role authenticated;
+do $$
+declare
+  neve  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000050';
+  sport constant uuid := 'aaaaaaaa-0000-0000-0000-000000000051';
+  sola  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000052';
+  attesi numeric;
+begin
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);  -- admin, come il Riepilogo
+  assert (select public.preski_card(m) from public.members m where m.id = neve) = 'PROVA CONTI NEVE',
+         'presciistica Base: la tessera compresa non è l''ordinaria con la Base';
+  assert (select public.preski_card(m) from public.members m where m.id = sport) = 'PROVA CONTI SPORT',
+         'presciistica Sport: la tessera compresa non è l''ordinaria con la Sport';
+  assert (select public.preski_card(m) from public.members m where m.id = sola) = 'PROVA CONTI SOLA',
+         'presciistica senza assicurazione: la tessera compresa non è la solo tessera (la più cara, non la scontata)';
+
+  -- Presciistica: solo la sua parte, 200 - 90 = 110, una riga per voce.
+  assert (select count = 3 and price = 110 and total = 330 from public.preski_counts where name = 'PROVA PRESCI CONTI'),
+         'conteggi: la presciistica comprende ancora la tessera';
+  -- Tessere: la tessera compresa, col prezzo di quota più assicurazione.
+  assert (select count from public.card_counts where name = 'PROVA CONTI SOLA')
+       = (select count(*) from public.members m where m.enrolled_at is not null and public.preski_card(m) = 'PROVA CONTI SOLA'),
+         'conteggi: chi ha la presciistica senza assicurazione non è fra le solo tessera';
+  assert (select price from public.card_counts where name = 'PROVA CONTI SOLA') = 90,
+         'conteggi: solo tessera della presciistica col prezzo sbagliato';
+  assert (select price from public.card_counts where name = 'PROVA CONTI SPORT')
+       = 90 + (select i.price from public.insurances i where i.code = 'SPORT'),
+         'conteggi: tessera Sport della presciistica senza l''assicurazione';
+
+  -- Il totale non cambia: tessere, agevolazioni e presciistica insieme fanno quello che pagano i soci.
+  select coalesce(sum(public.preski_price(m)) filter (where m.preski_type is not null and upper(m.preski_type) <> 'NO'), 0)
+       + coalesce(sum(public.card_price(c)) filter (where c.name is not null), 0)
+       + coalesce(sum(public.card_price(f)) filter (where f.name is not null), 0)
+    into attesi
+    from public.members m
+    left join public.prices c on c.category = 'TESSERA' and c.name = m.card_type and upper(m.card_type) <> 'NO'
+          and not exists (select 1 from public.prices pp where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+    left join public.prices f on f.category = 'FAMIGLIA' and f.name = m.family_discount
+   where m.enrolled_at is not null;
+  assert (select coalesce(sum(total), 0) from public.preski_counts) + (select coalesce(sum(total), 0) from public.card_counts) = attesi,
+         'conteggi: spostando la tessera dalla presciistica alle tessere il totale è cambiato';
+end $$;
+reset role;
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-000000000050', 'aaaaaaaa-0000-0000-0000-000000000051',
+                                        'aaaaaaaa-0000-0000-0000-000000000052');
+delete from public.prices where name in ('PROVA CONTI NEVE', 'PROVA CONTI SPORT', 'PROVA CONTI SOLA', 'PROVA CONTI SCONTATA',
+                                         'PROVA PRESCI CONTI');
+set role authenticated;
 
 -- Agevolazioni famiglia: le sceglie il capofamiglia al posto della tessera e
 -- coprono lui e i familiari a carico, con l'assicurazione della voce (quota +
@@ -1332,11 +1397,13 @@ begin
   assert not exists (select 1 from public.card_counts c
                       where c.name = 'PROVA TESSERA ORDINARIA'
                         and c.count <> (select count(*) from public.members m
-                                         where m.enrolled_at is not null and m.card_type = 'PROVA TESSERA ORDINARIA'
-                                           and not exists (select 1 from public.prices pp
-                                                            where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
-                                                              and not pp.course_only))),
-         'conteggi: la tessera compresa nella presciistica conta ancora';
+                                         where m.enrolled_at is not null
+                                           and ((m.card_type = 'PROVA TESSERA ORDINARIA'
+                                                 and not exists (select 1 from public.prices pp
+                                                                  where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type
+                                                                    and not pp.course_only))
+                                                or public.preski_card(m) = 'PROVA TESSERA ORDINARIA'))),
+         'conteggi: la tessera compresa nella presciistica è contata due volte o per niente';
 
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert (select insurance from public.insurance_members() where id = capo) = 'BASE', 'capofamiglia con l''agevolazione: non è da assicurare';
@@ -1631,12 +1698,13 @@ begin
          'chiusura: giorno del corso non azzerato';
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
-  assert (select total = count * 115 from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA + ' || (select i.name from public.insurances i where i.code = 'SPORT')),
-         'chiusura: presciistica contata senza l''assicurazione scelta';
-  assert (select total = count * 70 from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA - NO ASSICURAZIONE'),
-         'chiusura: presciistica senza assicurazione non contata a parte';
+  -- Come il Riepilogo: la presciistica per voce, la tessera compresa fra le tessere.
+  assert (select sum(count) from public.season_breakdown
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA') = 4,
+         'chiusura: presciistica ancora divisa per assicurazione';
+  assert not exists (select 1 from public.season_breakdown
+                      where season = chiusa and category = 'PRESKI' and label like 'PROVA PRESCIISTICA %'),
+         'chiusura: presciistica ancora con l''assicurazione nell''etichetta';
   assert (select total from public.season_breakdown
            where season = chiusa and category = 'CARD' and label = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
          'chiusura: agevolazione famiglia non contata';
