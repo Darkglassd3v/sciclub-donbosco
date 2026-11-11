@@ -1717,6 +1717,8 @@
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
       ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
       ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
+      // Con la tessera scelta un numero vuoto resta «non scritto» in rosso, perché si noti.
+      ["Numero tessera", selectedName("f_tipologia_tessera") ? el("f_numero_tessera").value.trim() : "Senza tessera"],
     ];
   }
 
