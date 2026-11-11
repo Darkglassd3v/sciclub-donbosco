@@ -1699,11 +1699,15 @@ begin
   assert (select insurance_list_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is null,
          'chiusura: assicurazione non azzerata';
   -- Come il Riepilogo: la presciistica per voce, la tessera compresa fra le tessere.
+  -- Cinque soci con la PROVA PRESCIISTICA: i quattro GIALLI e ROSA SOLAPRESCI (agevolazioni).
   assert (select sum(count) from public.season_breakdown
-           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA') = 4,
-         'chiusura: presciistica ancora divisa per assicurazione';
+           where season = chiusa and category = 'PRESKI' and label = 'PROVA PRESCIISTICA') = 5,
+         format('chiusura: presciistica ancora divisa per assicurazione (%s)',
+                (select string_agg(label || ':' || count, ', ') from public.season_breakdown
+                  where season = chiusa and category = 'PRESKI'));
   assert not exists (select 1 from public.season_breakdown
-                      where season = chiusa and category = 'PRESKI' and label like 'PROVA PRESCIISTICA %'),
+                      where season = chiusa and category = 'PRESKI'
+                        and (label like '% + %' or label like '% - NO ASSICURAZIONE')),
          'chiusura: presciistica ancora con l''assicurazione nell''etichetta';
   assert (select total from public.season_breakdown
            where season = chiusa and category = 'CARD' and label = 'PROVA 3 PERSONE CON ASSICURAZIONE') = 110,
