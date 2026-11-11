@@ -18,6 +18,12 @@
     .total-box { position: fixed; bottom: 0; left: var(--menu-l, 0); right: 0; background: #14202E; color: #fff; padding: 18px 15px; z-index: 1000; border-top: 3px solid var(--giallo); }
     .val-label { font-size: .9375rem; color: #A8B2BF; letter-spacing: -.01em; }
     .val-amount { font-size: 2.1rem; font-weight: 700; letter-spacing: -.022em; display: block; line-height: 1; margin-top: 4px; }
+    /* Nella finestra di conferma del salvataggio il pagamento si legge come nella barra in fondo:
+     * stesso fondo scuro, stessi colori del residuo. */
+    .pagamento-conferma { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 12px 20px; margin: 12px 0;
+                          padding: 12px 16px; background: #14202E; color: #fff; border-top: 3px solid var(--giallo);
+                          border-radius: 6px; text-align: center; }
+    .pagamento-conferma .val-amount { font-size: 1.5rem; }
 
     .result-item { cursor: pointer; padding: 14px 12px; min-height: var(--tocco); background: var(--superficie); border-bottom: 1px solid var(--filo); }
     .result-item:hover { background: var(--blu-light); }
@@ -1094,8 +1100,36 @@
     // Nella barra la cifra resta da sola (su un telefono non ci sta altro): a credito lo dice l'etichetta.
     el("l_saldo").textContent = balance < 0 ? "A credito" : "Residuo";
     el("v_saldo").textContent = fmt(Math.abs(balance));
-    // Sul fondo scuro della barra: giallo deve, azzurro chiaro a credito, verde a posto.
-    el("v_saldo").style.color = balance > 0 ? "var(--giallo)" : balance < 0 ? "var(--blu-light)" : "#7BD8A6";
+    el("v_saldo").style.color = barColor(balance);
+  }
+
+  // Sul fondo scuro della barra (e della sua copia nella conferma): giallo deve, azzurro chiaro a
+  // credito, verde a posto.
+  function barColor(balance) {
+    return balance > 0 ? "var(--giallo)" : balance < 0 ? "var(--blu-light)" : "#7BD8A6";
+  }
+
+  /**
+   * Il pagamento come nella barra in fondo (totale, acconto e residuo del nucleo), per la
+   * finestra di conferma del salvataggio: chi salva vede subito se il socio ha saldato.
+   */
+  function paymentBand() {
+    const { totale: totalAmount, saldo: balance } = householdTotals({ total: individualTotal(), paid: el("f_acconto").value }, dependants);
+    const band = document.createElement("div");
+    band.className = "pagamento-conferma";
+    const item = (key, label, amount, color = "") => {
+      const div = document.createElement("div");
+      div.dataset.voce = key;
+      div.innerHTML = `<span class="val-label">${esc(label)}</span><span class="val-amount">${esc(fmt(amount))}</span>`;
+      if (color) div.querySelector(".val-amount").style.color = color;
+      return div;
+    };
+    // Con familiari a carico i numeri sono del nucleo (come nella barra), non del solo socio.
+    const household = dependants.length > 0;
+    band.append(item("totale", household ? "Totale del nucleo" : "Totale", totalAmount),
+      item("acconto", household ? "Versato dal nucleo" : "Acconto versato", totalAmount - balance),
+      item("residuo", balance > 0 ? "Residuo" : balance < 0 ? "A credito" : "Saldato", Math.abs(balance), barColor(balance)));
+    return band;
   }
 
   // -------------------------------------------------------------------------
@@ -1702,6 +1736,8 @@
       if (JSON.stringify(saveData()) !== JSON.stringify(records)) { save(); return; }
       write();
     }, { pericolo: false, dettagli: records });
+    // ask() costruisce la finestra subito: il pagamento va sopra i pulsanti.
+    document.querySelector("#finestraDomanda .buttons")?.before(paymentBand());
   }
 
   /** Luogo di nascita come si legge: "ASTI (AT)". Senza la città è "non scritto", anche con la provincia. */
