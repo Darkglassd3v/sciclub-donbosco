@@ -19,12 +19,6 @@
 
 ## Richieste nuove
 
-- [ ] **Soci: numero tessera nella finestra di conferma del salvataggio (11/11).** La finestra
-      «Salvare il nuovo socio?» / «Salvare le modifiche al socio?» mostra nome, codice fiscale,
-      luogo e data di nascita; deve mostrare anche il numero di tessera («non scritto» in rosso se
-      la tessera è scelta ma il numero manca, «Senza tessera» se il socio non ha tessera). Sviluppo
-      con /tdd-workflow e /ecc:code-review.
-
 - [ ] **Riepilogo: presciistica e tessere contate giuste (11/11).** In produzione il Riepilogo
       dice 2 soci «solo tessera, senza assicurazione» ma sono 3, e l'Assicurazione ne mostra 54
       (giusto) contro i 55 che il Riepilogo lascia intendere. Causa probabile: la presciistica.
