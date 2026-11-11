@@ -63,6 +63,9 @@
     .tabella-assic tr.gruppo .assicura-scelta { float: right; min-height: 0; font-size: 1rem; }
     /* Chi ha un importo da saldare resta selezionato, ma la riga lo dice in rosso. */
     .tabella-assic tr.a-debito td { background: var(--errore-bg); }
+    /* Non selezionato, quindi non assicurato con questa lista: tutta la riga in giallo, anche se a
+     * debito (la regola viene dopo, a parità di peso, e vince sul rosso). */
+    .tabella-assic tr.non-selezionata td { background: var(--giallo-light); }
     .tabella-assic .debito { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
     .tabella-assic .debito .importo { white-space: nowrap; }
     @media screen and (max-width: 900px) {
@@ -627,6 +630,7 @@
     const inDebt = withType && num(s.debt) > 0;
     tr.classList.toggle("senza-cf", toInsureWithoutTaxCode);
     tr.classList.toggle("a-debito", inDebt);
+    tr.classList.toggle("non-selezionata", withType && conCF(s) && !selected(s));
     tr.innerHTML = `
       <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
         ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}

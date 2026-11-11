@@ -1,7 +1,8 @@
 // Assicurazione (assicurazione.html): si sceglie chi assicurare, socio per socio.
 // - Ogni riga con il codice fiscale ha la casella «Assicura», accesa di default per tutti.
 //   Spenta, il socio resta fuori dai file Excel e dall'invio, e i conteggi dicono quanti non
-//   sono selezionati. La scelta non si salva nel database.
+//   sono selezionati. La scelta non si salva nel database. La riga non selezionata è tutta
+//   gialla, anche se il socio è a debito.
 // - Chi ha un importo da saldare resta selezionato, con la riga rossa e l'importo accanto; la
 //   vecchia casella «Escludi dalla lista fino al saldo» non c'è più.
 // - Nel titolo di ogni gruppo la casella «Tutti» spegne e riaccende i soci di quel tipo; con
@@ -60,6 +61,17 @@
     box("PARI").click();
     await wait(100);
     test("annullaScarico", el("btnSegna").disabled, `segna spento ${el("btnSegna").disabled}`);
+    // La riga non selezionata è tutta gialla, anche quella di chi è a debito (rossa).
+    const bg = (id) => getComputedStyle(row(id).querySelector("td")).backgroundColor;
+    const yellow = bg("PARI");
+    test("rigaGialla", row("PARI")?.classList.contains("non-selezionata") && [...row("PARI").querySelectorAll("td")].every((td) => getComputedStyle(td).backgroundColor === yellow)
+      && yellow !== bg("ALTRO"), `classi «${row("PARI")?.className}», sfondo ${yellow} contro ${bg("ALTRO")}`);
+    box("DEBITO").click();
+    await wait(100);
+    test("debitoGiallo", bg("DEBITO") === yellow, `sfondo ${bg("DEBITO")} contro ${yellow}`);
+    box("DEBITO").click();
+    await wait(100);
+    test("debitoTornaRosso", bg("DEBITO") !== yellow && bg("DEBITO") !== bg("ALTRO"), `sfondo ${bg("DEBITO")}`);
     test("conteggi", count("BASE").startsWith("2 da assicurare") && count("BASE").includes("1 non selezionato"),
       `conta «${count("BASE")}»`);
     test("excelSenza", await download() === "BASE:DEBITO+ALTRO,SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
