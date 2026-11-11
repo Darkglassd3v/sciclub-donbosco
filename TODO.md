@@ -19,6 +19,21 @@
 
 ## Richieste nuove
 
+- [ ] **Soci: numero tessera nella finestra di conferma del salvataggio (11/11).** La finestra
+      «Salvare il nuovo socio?» / «Salvare le modifiche al socio?» mostra nome, codice fiscale,
+      luogo e data di nascita; deve mostrare anche il numero di tessera («non scritto» in rosso se
+      la tessera è scelta ma il numero manca, «Senza tessera» se il socio non ha tessera). Sviluppo
+      con /tdd-workflow e /ecc:code-review.
+
+- [ ] **Riepilogo: presciistica e tessere contate giuste (11/11).** In produzione il Riepilogo
+      dice 2 soci «solo tessera, senza assicurazione» ma sono 3, e l'Assicurazione ne mostra 54
+      (giusto) contro i 55 che il Riepilogo lascia intendere. Causa probabile: la presciistica.
+      Regola dell'utente: presciistica con assicurazione (90 €) = tessera ordinaria - Reale Mutua
+      Neve; presciistica senza assicurazione = tessera base; con Reale Total Sport = tessera Reale
+      Total Sport. Nel Riepilogo la presciistica deve avere il suo totale, e le tessere che comprende
+      vanno contate nel riepilogo delle tessere col tipo giusto. Sviluppo con /ecc:plan,
+      /tdd-workflow e /ecc:code-review; backup prima di toccare la produzione.
+
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
       testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
