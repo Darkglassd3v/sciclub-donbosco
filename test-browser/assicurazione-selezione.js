@@ -4,7 +4,8 @@
 //   sono selezionati. La scelta non si salva nel database.
 // - Chi ha un importo da saldare resta selezionato, con la riga rossa e l'importo accanto; la
 //   vecchia casella «Escludi dalla lista fino al saldo» non c'è più.
-// - Nel titolo di ogni gruppo la casella «Tutti» spegne e riaccende i soci di quel tipo.
+// - Nel titolo di ogni gruppo la casella «Tutti» spegne e riaccende i soci di quel tipo; con
+//   solo alcuni spenti è «a metà», e il clic li riaccende tutti.
 // - Cambiata la selezione dopo lo scarico, le liste vanno scaricate di nuovo.
 // - «Segna come assicurati» manda solo i soci selezionati del file.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
@@ -64,14 +65,18 @@
     test("excelSenza", await download() === "BASE:DEBITO+ALTRO,SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
     test("nienteNelDatabase", rpcCalls.length === 0, `chiamate ${rpcCalls.join(",")}`);
 
+    // Con un socio spento «Tutti» è a metà: il primo clic riaccende tutti, il secondo li spegne.
+    test("tuttiAMeta", all("BASE")?.indeterminate === true, `a metà ${all("BASE")?.indeterminate}`);
+    all("BASE").click();
+    await wait(100);
+    test("tuttiAccesi", ["DEBITO", "PARI", "ALTRO"].every((id) => box(id)?.checked) && all("BASE")?.checked,
+      `caselle ${["DEBITO", "PARI", "ALTRO"].map((id) => box(id)?.checked).join(",")}`);
     all("BASE").click();
     await wait(100);
     test("tuttiSpenti", ["DEBITO", "PARI", "ALTRO"].every((id) => !box(id)?.checked) && box("SPORT1")?.checked
       && await download() === "SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
     all("BASE").click();
     await wait(100);
-    test("tuttiAccesi", ["DEBITO", "PARI", "ALTRO"].every((id) => box(id)?.checked) && all("BASE")?.checked,
-      `caselle ${["DEBITO", "PARI", "ALTRO"].map((id) => box(id)?.checked).join(",")}`);
 
     box("ALTRO").click();
     await wait(100);

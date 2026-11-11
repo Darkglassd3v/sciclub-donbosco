@@ -56,15 +56,15 @@
     .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
     .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
     .tabella-assic .stato { display: block; color: var(--testo-soft); margin-top: 4px; }
-    /* Chi ha un importo da saldare: la casella rossa lo tiene fuori dalla lista finché non salda. */
-    .tabella-assic td.chi:has(.escludi) { min-width: 14rem; }
+    /* La casella «Assicura» di ogni socio (e «Tutti» nel titolo del gruppo): chi entra nella lista. */
+    .tabella-assic .assicura-scelta { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco);
+                                      font-weight: 600; cursor: pointer; }
+    .tabella-assic .assicura-scelta input { flex: none; width: 1.25rem; height: 1.25rem; margin: 0; cursor: pointer; }
+    .tabella-assic tr.gruppo .assicura-scelta { float: right; min-height: 0; font-size: 1rem; }
+    /* Chi ha un importo da saldare resta selezionato, ma la riga lo dice in rosso. */
+    .tabella-assic tr.a-debito td { background: var(--errore-bg); }
     .tabella-assic .debito { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
     .tabella-assic .debito .importo { white-space: nowrap; }
-    .tabella-assic .escludi { display: flex; align-items: flex-start; gap: 8px; min-height: var(--tocco);
-                              padding-top: 6px; color: var(--errore); font-weight: 600; cursor: pointer; }
-    .tabella-assic .escludi input { flex: none; width: 1.25rem; height: 1.25rem; margin: .1em 0 0;
-                                    accent-color: var(--errore-pieno); cursor: pointer; }
-    .tabella-assic tr.esclusa td { background: var(--errore-bg); }
     @media screen and (max-width: 900px) {
       .tabella-assic thead { display: none; }
       .tabella-assic tr, .tabella-assic td { display: block; width: 100% !important; }
@@ -159,9 +159,10 @@
     <p class="occhiello">
       Tesserati non ancora assicurati, suddivisi per tipo di assicurazione e in ordine alfabetico.
       I soci privi di codice fiscale non possono essere assicurati: la riga resta evidenziata in
-      rosso fino all'inserimento e al salvataggio del codice. I soci con un importo ancora da
-      saldare restano nell'elenco: la casella «Escludi dalla lista fino al saldo» li tiene fuori dai
-      file Excel e dall'invio finché il nucleo familiare non ha saldato.
+      rosso fino all'inserimento e al salvataggio del codice. La casella «Assicura» sceglie chi entra
+      nei file Excel e nell'invio: è accesa per tutti, e «Tutti» nel titolo del gruppo la accende o
+      la spegne per l'intero tipo. Chi resta fuori rimane da assicurare. I soci con un importo ancora
+      da saldare sono evidenziati in rosso.
     </p>
     <div class="tabella-scorrevole">
       <table class="tabella-assic">
@@ -224,7 +225,7 @@
   // insurance_members() dà chi è da assicurare, insurance_sent_lists() le
   // liste già mandate, insurance_send_all() le segna tutte insieme e
   // insurance_undo() annulla l'ultima di un tipo, set_tax_code() corregge il codice fiscale,
-  // set_insurance_hold() esclude dalla lista fino al saldo chi è a debito. Chi ha il ruolo
+  // chi assicurare lo sceglie la pagina (casella «Assicura»), senza salvarlo. Chi ha il ruolo
   // assicurazione non ha altro accesso ai soci: niente quote, telefoni,
   // abbonamenti né l'elenco completo dei tesserati.
 
@@ -290,11 +291,13 @@
   }
 
   const conCF = (s) => Boolean((s.tax_code || "").trim());
-  // Escluso fino al saldo: casella accesa e nucleo con un importo ancora da versare. Saldato il
-  // debito la spunta non conta più, e il socio torna nella lista da solo.
-  const onHold = (s) => Boolean(s.insurance_hold) && num(s.debt) > 0;
   const howManyOnes = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-  const heldCount = (n) => howManyOnes(n, "escluso fino al saldo", "esclusi fino al saldo");
+  // Chi entra nella lista lo sceglie la casella «Assicura»: accesa per tutti, spenta per chi è
+  // qui. La scelta vale finché la pagina è aperta (dopo un invio si riparte da tutti).
+  const deselected = new Set();
+  const selected = (s) => !deselected.has(s.id);
+  const notSelected = (members) => members.filter((s) => conCF(s) && !selected(s)).length;
+  const notSelectedText = (n) => howManyOnes(n, "non selezionato", "non selezionati");
 
   function lastList(kind) {
     return sentLists.filter((l) => l.kind === kind).sort((a, b) => b.number - a.number)[0] || null;
@@ -304,14 +307,14 @@
   // Liste da mandare: un progressivo per tipo, una decorrenza, tutto insieme
   // -------------------------------------------------------------------------
 
-  const ready = (t) => toInsure.filter((s) => s.insurance === t.kind && conCF(s) && !onHold(s));
+  const ready = (t) => toInsure.filter((s) => s.insurance === t.kind && conCF(s) && selected(s));
 
   function drawProgressives() {
     el("tipi").replaceChildren(...TIPI.map((t) => {
       const members = toInsure.filter((s) => s.insurance === t.kind);
       const n = ready(t).length;
       const without = members.filter((s) => !conCF(s)).length;
-      const held = members.filter((s) => conCF(s) && onHold(s)).length;
+      const off = notSelected(members);
       const lastOne = lastList(t.kind);
       // Dopo lo scarico si tengono i numeri del file, anche se la pagina si
       // ridisegna (un codice fiscale salvato nella lista).
@@ -325,7 +328,7 @@
                value="${inFile ? inFile.numero : (lastOne ? lastOne.number + 1 : 1)}" ${n ? "" : "disabled"}>
         <p class="conta">${n ? howManyOnes(n, "da assicurare", "da assicurare") : "nessun socio da assicurare"}${
           without ? ` · <span class="senza">${without} senza codice fiscale</span>` : ""}${
-          held ? ` · <span class="senza">${heldCount(held)}</span>` : ""}</p>`;
+          off ? ` · <span class="senza">${notSelectedText(off)}</span>` : ""}</p>`;
       div.querySelector(".numero").addEventListener("input", cancelDownload);
       return div;
     }));
@@ -416,6 +419,8 @@
       });
       if (error) throw error;
       cancelDownload();
+      // Chi è rimasto fuori torna selezionato: la prossima lista riparte da tutti.
+      deselected.clear();
       showToast(`Invio registrato: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
       await load();
     } catch (error) {
@@ -475,7 +480,7 @@
       if (!members.length) return [];
       // Le righe rosse sono sparse fra le pagine: il titolo dice quante sono.
       const without = members.filter((s) => !conCF(s)).length;
-      const held = members.filter((s) => conCF(s) && onHold(s)).length;
+      const off = notSelected(members);
       const pages = Math.ceil(members.length / PER_PAGE);
       // Lista accorciata (codice salvato, liste segnate): l'ultima pagina che c'è.
       const page = Math.min(pageOf[t.kind] || 0, pages - 1);
@@ -483,8 +488,16 @@
       const titleText = document.createElement("tr");
       titleText.className = "gruppo";
       titleText.dataset.kind = t.kind;
+      const withCode = members.filter(conCF);
       titleText.innerHTML = `<td colspan="5">${esc(t.nome)} · ${howManyOnes(members.length, "socio", "soci")}${
-        without ? ` · ${without} senza codice fiscale` : ""}${held ? ` · ${heldCount(held)}` : ""}</td>`;
+        without ? ` · ${without} senza codice fiscale` : ""}${off ? ` · ${notSelectedText(off)}` : ""}${
+        withCode.length ? `<label class="assicura-scelta"><input type="checkbox" class="assicura-tutti"${off ? "" : " checked"}
+          aria-label="Assicura tutti i soci ${esc(t.nome)}"> Tutti</label>` : ""}</td>`;
+      const allBox = titleText.querySelector(".assicura-tutti");
+      if (allBox) {
+        allBox.indeterminate = off > 0 && off < withCode.length;
+        allBox.addEventListener("change", () => changeSelection(withCode, allBox.checked, `.gruppo[data-kind="${t.kind}"] .assicura-tutti`));
+      }
       const rows = members.slice(page * PER_PAGE, (page + 1) * PER_PAGE).map((s) => row(s, { conTipo: true }));
       return [titleText, ...rows, ...(pages > 1 ? [pagesRow(t, page, pages, members.length)] : [])];
     }));
@@ -613,15 +626,15 @@
     const toInsureWithoutTaxCode = withType && !conCF(s);
     const inDebt = withType && num(s.debt) > 0;
     tr.classList.toggle("senza-cf", toInsureWithoutTaxCode);
-    tr.classList.toggle("esclusa", withType && onHold(s));
+    tr.classList.toggle("a-debito", inDebt);
     tr.innerHTML = `
       <td class="chi"><strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
         ${s.card_number ? `Tessera n° ${esc(s.card_number)}` : ""}
         ${state ? `<span class="stato">${esc(state)}</span>` : ""}
         ${toInsureWithoutTaxCode ? '<span class="motivo">Senza codice fiscale: non entra nella lista.</span>' : ""}
-        ${inDebt ? `<span class="debito">Importo da saldare: <span class="importo">${esc(fmt(s.debt))}</span></span>
-          <label class="escludi"><input type="checkbox" class="escludi-lista"${s.insurance_hold ? " checked" : ""}>
-            Escludi dalla lista fino al saldo</label>` : ""}</td>
+        ${inDebt ? `<span class="debito">Importo da saldare: <span class="importo">${esc(fmt(s.debt))}</span></span>` : ""}
+        ${withType && conCF(s) ? `<label class="assicura-scelta"><input type="checkbox" class="assicura"${selected(s) ? " checked" : ""}
+          aria-label="Assicura ${esc(s.last_name)} ${esc(s.first_name)}"> Assicura</label>` : ""}</td>
       ${withType ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(typeName(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
       <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
         ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
@@ -645,7 +658,8 @@
     check();
 
     tr.querySelector(".salva-riga").addEventListener("click", () => save(s, tr));
-    tr.querySelector(".escludi-lista")?.addEventListener("change", (e) => saveHold(s, e.target));
+    tr.querySelector(".assicura")?.addEventListener("change", (e) =>
+      changeSelection([s], e.target.checked, `tr[data-id="${CSS.escape(s.id)}"] .assicura`));
     // Invio nel campo salva la riga: chi ricopia una lista va avanti con la
     // tastiera, senza cercare il pulsante col mouse.
     cf.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); save(s, tr); } });
@@ -689,37 +703,19 @@
   }
 
   /**
-   * La casella «Escludi dalla lista fino al saldo» si salva subito. Se il salvataggio non riesce
-   * torna com'era. Escluso un socio di una lista appena scaricata, il file non va più bene
-   * (insurance_send lo rifiuterebbe): lo scarico si annulla e le liste vanno scaricate di nuovo.
+   * Accende o spegne «Assicura» per alcuni soci. Non si salva: cambia solo chi entra nei file e
+   * nell'invio. Cambiata dopo lo scarico, i file non corrispondono più: lo scarico si annulla.
+   * Poi si ridisegna (conteggi e «Tutti») e il fuoco torna sulla casella usata.
    */
-  async function saveHold(s, box) {
-    const hold = box.checked;
-    box.disabled = true;
-    setLoading(true);
-    try {
-      const { error } = await sb.rpc("set_insurance_hold", { member_id: s.id, hold });
-      if (error) throw error;
-      s.insurance_hold = hold;
-      const name = `${s.last_name} ${s.first_name}`;
-      if (hold && downloadedOne?.liste.some((l) => l.soci.some((x) => x.id === s.id))) {
-        cancelDownload();
-        showToast(`${name}: esclusione dalla lista fino al saldo registrata. Il nominativo era in una lista già scaricata: scaricare di nuovo le liste prima dell'invio.`, "is-warning");
-      } else {
-        showToast(`${name}: ${hold ? "esclusione dalla lista fino al saldo registrata" : "esclusione annullata, il nominativo rientra nella lista"}.`);
-      }
-      // Conteggi, titolo del gruppo e colore della riga cambiano: si ridisegna, e il fuoco
-      // torna sulla casella (chi usa la tastiera non perde il punto).
-      drawProgressives();
-      drawToInsure();
-      el("elencoDa").querySelector(`tr[data-id="${CSS.escape(s.id)}"] .escludi-lista`)?.focus();
-    } catch (error) {
-      box.checked = !hold;
-      showToast("Errore: " + errorMessage(error), "is-danger");
-    } finally {
-      box.disabled = false;
-      setLoading(false);
+  function changeSelection(members, on, focusSelector) {
+    for (const s of members) on ? deselected.delete(s.id) : deselected.add(s.id);
+    if (downloadedOne) {
+      cancelDownload();
+      showToast("La selezione è cambiata dopo lo scarico: scaricare di nuovo le liste prima dell'invio.", "is-warning");
     }
+    drawProgressives();
+    drawToInsure();
+    el("elencoDa").querySelector(focusSelector)?.focus();
   }
 
   // -------------------------------------------------------------------------
