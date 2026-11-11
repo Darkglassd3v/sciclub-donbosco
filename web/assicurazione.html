@@ -328,7 +328,7 @@
                value="${inFile ? inFile.numero : (lastOne ? lastOne.number + 1 : 1)}" ${n ? "" : "disabled"}>
         <p class="conta">${n ? howManyOnes(n, "da assicurare", "da assicurare") : "nessun socio da assicurare"}${
           without ? ` · <span class="senza">${without} senza codice fiscale</span>` : ""}${
-          off ? ` · <span class="senza">${notSelectedText(off)}</span>` : ""}</p>`;
+          off ? ` · ${notSelectedText(off)}` : ""}</p>`;
       div.querySelector(".numero").addEventListener("input", cancelDownload);
       return div;
     }));

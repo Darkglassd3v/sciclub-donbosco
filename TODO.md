@@ -19,24 +19,6 @@
 
 ## Richieste nuove
 
-- [ ] **Assicurazione: casella «Assicura» per ogni socio, al posto dell'esclusione fino al saldo
-      (11/11).** Si devono poter mandare liste con solo alcuni soci.
-      - **Pagina.** Ogni riga con codice fiscale ha la casella «Assicura», accesa di default per
-        tutti; spenta, il socio resta fuori da Excel e invio e rimane da assicurare. Nel titolo di
-        ogni gruppo una casella «Tutti» accende o spegne i soci di quel tipo, su tutte le pagine.
-        I conteggi dicono quanti non sono selezionati. Chi ha un importo da saldare resta
-        selezionato ma la riga è rossa, con «Importo da saldare: € …». La scelta vale per la
-        sessione: ricaricata la pagina, o dopo un invio, tutti tornano selezionati. Cambiata la
-        selezione dopo lo scarico, le liste vanno riscaricate (come per un codice fiscale).
-      - **Database.** Via l'esclusione fino al saldo: colonna `members.insurance_hold` (in
-        produzione nessun socio escluso), `set_insurance_hold()`, il rifiuto in
-        `insurance_send()`, la colonna in `insurance_members()` (resta `debt`), la protezione nel
-        trigger e gli azzeramenti a fine stagione.
-      - **Prove prima (rosse):** nuova prova nel browser al posto di `assicurazione-debito.js`;
-        `test_ruoli.sh` controlla che colonna e funzione non esistano più.
-      - /tdd-workflow, poi /ecc:code-review obbligatoria; produzione con backup e solo le
-        istruzioni nuove; push, deploy, `dev`.
-
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
       testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
