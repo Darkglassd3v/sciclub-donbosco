@@ -1124,7 +1124,10 @@
       if (color) div.querySelector(".val-amount").style.color = color;
       return div;
     };
-    band.append(item("totale", "Totale", totalAmount), item("acconto", "Acconto versato", totalAmount - balance),
+    // Con familiari a carico i numeri sono del nucleo (come nella barra), non del solo socio.
+    const household = dependants.length > 0;
+    band.append(item("totale", household ? "Totale del nucleo" : "Totale", totalAmount),
+      item("acconto", household ? "Versato dal nucleo" : "Acconto versato", totalAmount - balance),
       item("residuo", balance > 0 ? "Residuo" : balance < 0 ? "A credito" : "Saldato", Math.abs(balance), barColor(balance)));
     return band;
   }

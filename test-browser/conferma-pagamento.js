@@ -4,6 +4,8 @@
 // - Acconto minore del totale: «Residuo» in giallo, con la cifra della barra.
 // - Acconto uguale al totale: «Saldato» in verde.
 // - Acconto maggiore del totale: «A credito» in azzurro.
+// - Capofamiglia con familiari a carico: i numeri sono del nucleo, come nella barra, e le
+//   etichette lo dicono («Totale del nucleo», «Versato dal nucleo»).
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const PRICE_LIST = [
@@ -42,6 +44,16 @@
     await check("residuo", 10, "Residuo");
     await check("saldato", num(total.replace(/[^\d,]/g, "").replace(",", ".")), "Saldato");
     await check("credito", 100, "A credito");
+
+    dependants.push({ id: "FIGLIO", last_name: "PROVA", first_name: "FIGLIO", total: 20, paid: 0 });
+    recompute();
+    el("f_acconto").value = 0;
+    el("f_acconto").dispatchEvent(new Event("input"));
+    await save(); await wait(300);
+    test("nucleo", text(part("totale")).startsWith("Totale del nucleo") && text(part("totale")).includes(el("v_totale").textContent.trim())
+      && text(part("acconto")).startsWith("Versato dal nucleo"),
+      `fascia «${text(band())}», barra ${el("v_totale").textContent}`);
+    close();
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));
