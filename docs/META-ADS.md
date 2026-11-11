@@ -70,6 +70,10 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   sono dichiarate da Meta; chi analizza le campagne (Jon Loomer) nota che il punteggio non dice i
   risultati e che per gli obiettivi di superficie, come le interazioni, la scelta manuale dei
   posizionamenti protegge dal traffico di scarsa qualità. Per le campagne del club si ignora.
+- Per lo stesso motivo si ignora «Usa i posizionamenti Advantage+ per ottenere l'11,7% in meno di
+  costo per risultato» (novembre 2026): rimette Audience Network, Reels di Facebook, Messenger e
+  Threads, cioè proprio i posizionamenti che producono interazioni a basso costo ma di scarsa
+  qualità.
 - Togliere un posizionamento a campagna avviata è una modifica significativa: l'apprendimento
   riparte e i primi giorni costano di più. Si decide tutto prima di pubblicare.
 
@@ -85,6 +89,9 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   suggerimento»; l'etichetta diventa «Advantage+ non attivo». Nella campagna della presciistica
   (novembre 2026) il gruppo Instagram l'aveva accesa e quello Facebook no: si ricontrollano tutti i
   gruppi dopo ogni modifica.
+- Il consiglio «Usa il pubblico Advantage+ per ottenere il 17% in meno di costo per l'interazione»
+  (novembre 2026, +1 punto) si ignora: riapre il pubblico oltre la fascia d'età scelta, e le
+  interazioni costano meno proprio perché arrivano da persone fuori dal pubblico del club.
 - Su Facebook Meta tende già a spendere sulle fasce più anziane, e per il pubblico 45–65+ il
   costo per mille visualizzazioni è più alto.
 
@@ -93,6 +100,53 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Meta manda fino al 99% della spesa su Facebook e ignora le «regole per i valori» che chiedono
   di spostarla. Per dividere davvero la spesa servono **gruppi di inserzioni separati**, uno per
   Facebook con il post di Facebook e uno per Instagram con il post di Instagram.
+- Il punteggio opportunità propone allora «Combina gruppi di inserzioni simili interessati dalla
+  frammentazione» (novembre 2026, +27 punti): si ignora. La separazione è voluta (un post, un
+  pulsante e una spesa per piattaforma); unendo i gruppi Meta torna a spendere quasi tutto su
+  Facebook. Anche chi analizza le campagne (Jon Loomer, HunchAds) consiglia di non applicarlo
+  quando i gruppi sono separati di proposito. Il motivo tecnico del consiglio è vero: due gruppi
+  piccoli escono più tardi dalla fase di apprendimento (circa 50 risultati a settimana ciascuno).
+  Con l'obiettivo Interazioni i risultati costano poco e possono bastare anche così: si controlla
+  in Gestione inserzioni se i gruppi sono usciti dalla fase di apprendimento prima di decidere.
+
+## Risultati della campagna presciistica (al 9/11/2026, età 45+)
+
+| | Facebook (foto) | Instagram (carosello) |
+|---|---|---|
+| Budget al giorno | 3,00 € | 2,00 € |
+| Speso | 11,46 € | 6,90 € |
+| Persone raggiunte / visualizzazioni | 1200 / 2015 | 1355 / 1743 |
+| Costo per 1000 visualizzazioni | 5,69 € | 3,96 € |
+| Interazioni (su 100 visualizzazioni) | 44 (2,2) | 12 (0,7) |
+| Costo per interazione | 0,26 € | 0,57 € |
+
+- La differenza non dipende dal budget: rapportato all'euro speso, Facebook dà 3,8 interazioni e
+  Instagram 1,7. Instagram costa meno per farsi vedere (raggiunge più persone con meno soldi), ma
+  chi lo vede interagisce un terzo delle volte. Con 44 e 12 interazioni la differenza è
+  statisticamente solida, non un caso.
+- Spiegazione più probabile: il pubblico di 45 anni e oltre usa Facebook molto più di Instagram.
+  Pesano però anche altre differenze: foto singola contro carosello, post Facebook più vecchio
+  (dal 16/10, con like già presenti) e «interazione» contata in modo diverso sulle due piattaforme.
+- Per la prossima campagna allo stesso pubblico: più budget a Facebook se lo scopo sono le
+  interazioni; Instagram tenuto piccolo se serve soprattutto farsi vedere. Per separare l'effetto
+  della piattaforma da quello del post, la stessa grafica su entrambe. In Gestione inserzioni,
+  «Dettagli» › per età e per posizionamento, si controlla quali fasce rispondono.
+
+## Quanto valgono i numeri dei consigli (ricerca del 9/11/2026)
+
+- Le percentuali dei consigli sono dati di Meta, senza metodo pubblicato né verifiche esterne:
+  12% di costo per risultato in meno (mediana) per chi applica i consigli del punteggio, 9,7% per
+  il pubblico Advantage+ (150 test A/B di Meta su Traffico, Interazioni e Contatti), 11,7% di costo
+  per azione per i posizionamenti Advantage+. Il «17%» di «aziende come la tua» non ha fonte
+  pubblica; «risultato di inserzionisti simili» confronta chi ha seguito il consiglio con chi non
+  l'ha fatto, quindi non dimostra che il risultato venga dal consiglio.
+- Il costo per risultato è contato da Meta stessa: un'interazione più economica può venire da
+  posizionamenti o persone che al club non servono.
+- L'unica verifica indipendente trovata (Haus, 640 test di incrementalità, ottobre 2025, campagne
+  di vendita): l'automazione Advantage+ ha battuto le campagne manuali nel 42% dei casi.
+- Sui posizionamenti c'è chi consiglia di lasciarli automatici e togliere solo quelli che il
+  dettaglio per posizionamento mostra come spazzatura: a fine campagna si guarda la suddivisione
+  per posizionamento prima di decidere la successiva.
 
 ## Obiettivo e budget
 
@@ -105,6 +159,15 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   confrontano le interazioni visibili sui post con i numeri di Gestione inserzioni.
 
 ## Fonti
+
+- [Opportunity Score and Campaign Score explained](https://www.jonloomer.com/opportunity-score-campaign-score/),
+  [Meta Advantage+ won just 42% of 640 incrementality tests](https://elevarus.com/meta-advantage-automation-what-to-turn-off/),
+  [Meta's Advantage+ Audience: when to override it](https://lineardesign.com/blog/metas-advantage-audience/),
+  [Meta's replacements for placement controls](https://www.relevantaudience.com/meta/meta-placement-controls-alternatives-documented/),
+- [Opportunity Score in Meta Ads Manager](https://www.jonloomer.com/opportunity-score/),
+  [Audience fragmentation can hurt ad performance](https://www.jonloomer.com/qvt/audience-fragmentation-can-hurt-ad-performance/),
+  [Meta opportunity score: what to act on and what to ignore](https://www.hunchads.com/blog/meta-opportunity-score-what-to-act-on-and-what-to-ignore),
+  [Common advertising mistakes: placement](https://www.jonloomer.com/common-advertising-mistakes-placement/)
 
 - [Turn off Audience Network](https://www.reddit.com/r/FacebookAds/comments/1tr5f45/),
   [Audience network performance](https://www.reddit.com/r/FacebookAds/comments/1wme13j/),

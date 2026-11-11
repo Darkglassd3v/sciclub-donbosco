@@ -1310,22 +1310,66 @@ revoke all on function public.preski_label(public.members) from public;
 grant execute on function public.preski_price(public.members) to authenticated;
 grant execute on function public.preski_label(public.members) to authenticated;
 
--- Conteggi della presciistica, una riga per voce e assicurazione.
+-- La tessera compresa nella presciistica (richiesta dell'11/11/2026): quella ordinaria
+-- dell'assicurazione scelta, cioè la più cara fra le tessere per tutti con quell'assicurazione
+-- (mai la scontata né il direttivo); senza assicurazione, la solo tessera. Nessuna per la
+-- presciistica «solo corso», che ha la tessera dall'agevolazione famiglia. È la stessa scelta
+-- della colonna Tipo tessera nell'Excel del Riepilogo (coveringCard() in riepilogo.html).
+create or replace function public.preski_card(m public.members)
+returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select t.name
+    from public.prices p
+    join public.prices t on t.category = 'TESSERA' and t.min_role = 'utente'
+                        and t.insurance is not distinct from m.preski_insurance
+   where p.category = 'PRESCIISTICA' and p.name = m.preski_type and not p.course_only
+   order by t.price desc, t.name
+   limit 1;
+$$;
+
+-- La parte della presciistica senza la tessera compresa: la voce meno la quota della tessera
+-- (l'assicurazione va con la tessera, in card_price()). Senza una tessera compresa (solo corso,
+-- o nessuna tessera adatta nel listino) resta il prezzo intero, così il totale non cambia.
+create or replace function public.preski_course_price(m public.members)
+returns numeric
+language sql
+stable
+set search_path = ''
+as $$
+  select case when c.name is null then public.preski_price(m) else p.price - c.price end
+    from public.prices p
+    left join public.prices c on c.category = 'TESSERA' and c.name = public.preski_card(m)
+   where p.category = 'PRESCIISTICA' and p.name = m.preski_type;
+$$;
+
+comment on function public.preski_card(public.members) is 'Tessera compresa nella presciistica del socio: l''ordinaria della sua assicurazione, o la solo tessera.';
+comment on function public.preski_course_price(public.members) is 'Prezzo della presciistica senza la tessera compresa (voce meno la quota della tessera).';
+revoke all on function public.preski_card(public.members) from public;
+revoke all on function public.preski_course_price(public.members) from public;
+grant execute on function public.preski_card(public.members) to authenticated;
+grant execute on function public.preski_course_price(public.members) to authenticated;
+
+-- Conteggi della presciistica, una riga per voce: solo la parte della presciistica. La tessera
+-- compresa, con la sua assicurazione, si conta fra le tessere (card_counts).
 create or replace view public.preski_counts as
 select
-  public.preski_label(m)            as name,
-  count(*)                          as count,
-  public.preski_price(m)            as price,
-  count(*) * public.preski_price(m) as total
+  m.preski_type                                   as name,
+  count(*)                                        as count,
+  public.preski_course_price(m)                   as price,
+  count(*) * public.preski_course_price(m)        as total
 from public.members m
 where m.enrolled_at is not null
   and m.preski_type is not null
   and upper(m.preski_type) <> 'NO'
-group by public.preski_label(m), public.preski_price(m);
+group by m.preski_type, public.preski_course_price(m);
 
 -- Conteggi per tipologia, col prezzo che paga il socio (quota più assicurazione):
--- le tessere e le agevolazioni famiglia, che le sostituiscono. La tessera
--- compresa nella presciistica non si conta: la paga lei.
+-- le tessere, le agevolazioni famiglia che le sostituiscono e la tessera compresa
+-- nella presciistica, col suo tipo (preski_card()). Una tessera scritta su chi ha
+-- anche la presciistica non si conta due volte: vale quella compresa.
 create or replace view public.card_counts as
 select
   v.name                          as name,
@@ -1340,6 +1384,10 @@ from (
      and upper(m.card_type) <> 'NO'
      and not exists (select 1 from public.prices pp
                       where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+  union all
+  select public.preski_card(m), 'TESSERA'
+    from public.members m
+   where m.enrolled_at is not null and public.preski_card(m) is not null
   union all
   select m.family_discount, 'FAMIGLIA'
     from public.members m
@@ -2432,7 +2480,7 @@ begin
     insert into public.season_breakdown (season, category, label, day, count, total)
     -- Il prezzo della tessera comprende l'assicurazione (card_price()); le
     -- agevolazioni famiglia la sostituiscono, e la tessera compresa nella
-    -- presciistica non si conta (come card_counts).
+    -- presciistica si conta col suo tipo (come card_counts).
     select which, 'CARD', v.name, '', count(*), count(*) * coalesce(c.price, 0)
     from (
       select m.card_type as name, 'TESSERA' as category
@@ -2441,6 +2489,11 @@ begin
        where m.card_type is not null and upper(m.card_type) <> 'NO'
          and not exists (select 1 from public.prices pp
                           where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+      union all
+      select public.preski_card(m), 'TESSERA'
+        from public.members m
+        join da_chiudere t on t.id = m.id
+       where public.preski_card(m) is not null
       union all
       select m.family_discount, 'FAMIGLIA'
         from public.members m
@@ -2471,12 +2524,12 @@ begin
     where m.course_type is not null and upper(m.course_type) <> 'NO'
     group by m.course_type, p.price
     union all
-    -- La presciistica col prezzo che paga il socio, una riga per voce e assicurazione.
-    select which, 'PRESKI', public.preski_label(m), '', count(*), sum(public.preski_price(m))
+    -- La presciistica per voce, senza la tessera compresa (come preski_counts).
+    select which, 'PRESKI', m.preski_type, '', count(*), sum(public.preski_course_price(m))
     from public.members m
     join da_chiudere t on t.id = m.id
     where m.preski_type is not null and upper(m.preski_type) <> 'NO'
-    group by public.preski_label(m)
+    group by m.preski_type
     union all
     select which, 'COURSE_INCOME', 'Incasso corsi', '', count(*), sum(p.price)
     from public.members m

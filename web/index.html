@@ -1717,6 +1717,9 @@
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
       ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
       ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
+      // Lo ha ogni iscritto, anche chi è coperto da presciistica o agevolazione: vuoto, si legge
+      // «non scritto» in rosso.
+      ["Numero tessera", el("f_numero_tessera").value.trim()],
     ];
   }
 

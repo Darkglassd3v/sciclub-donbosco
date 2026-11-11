@@ -281,8 +281,10 @@ le lancia il deploy.
   per FAMIGLIA, `card_price()` = quota + persone × assicurazione (3 persone Base 50 + 3×20 = 110).
   `member_insurance(m)` dà l'assicurazione di un socio (presciistica, tessera, agevolazione sua o
   del capofamiglia) per le liste; `card_holder(m)` dice chi è tesserato (Riepilogo, Gite,
-  `admin_summary`). `card_counts` e `close_season()` contano le agevolazioni e non la tessera
-  compresa nella presciistica. In Soci (`cover()`) la tessera è
+  `admin_summary`). `card_counts` e `close_season()` contano le agevolazioni e, dall'11/11/2026,
+  anche la tessera compresa nella presciistica col suo tipo (`preski_card()`: l'ordinaria della
+  sua assicurazione, o la solo tessera); `preski_counts` ha una riga per voce col solo prezzo della
+  presciistica (`preski_course_price()`: voce meno la quota della tessera). Il totale non cambia. In Soci (`cover()`) la tessera è
   obbligatoria solo per chi non è coperto; il nucleo si conta e un familiare oltre le persone
   dell'agevolazione deve avere la tessera; chi è coperto dall'agevolazione ha la presciistica
   «solo corso» (CORSO PRESCIISTICA - FAMIGLIA, 50 €, `prices.course_only`).
