@@ -444,7 +444,7 @@
     const rows = [
       ["Nr.", "Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"],
       ...members.map((s, i) => [i + 1, dataExcel(startDate), t.nome, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
-        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
+        dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO ASTI", number]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });
     // Carattere 14 (Excel da solo usa l'11, si leggeva poco: richiesta del 29/10), tutte le celle
