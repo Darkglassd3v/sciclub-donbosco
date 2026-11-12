@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+        /* Montaggio veloce per le inserzioni Instagram (12/11/2026). Apre come il video della stagione: le
+         * cime in time-lapse dietro al logo grande, che la composizione principale fa cadere al centro e
+         * tiene fermo un secondo in più prima di mandarlo nell'angolo. Da 3,5 s i tagli accelerano: sei
+         * inquadrature da 0,9 s, perché nel feed si decide subito se fermarsi. I testi stanno sopra i tagli,
+         * nella stessa posizione delle scene 02 e 03, sopra la fascia bassa coperta da Instagram. Dopo il
+         * montaggio viene il finale (05-serata), che parte a 9 s: l'ultima inquadratura gli scorre sotto. */
+        #root { position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: "Barlow Condensed", sans-serif; background: #06396a; }
+        /* Ogni clip ha la sua cornice: la spinta della camera si anima sulla cornice, non sul video a tempo */
+        .f00-veloce-inq { position: absolute; inset: 0; transform-origin: 50% 55%; }
+        .f00-veloce-inq video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        /* Sulle cime il velo leggero dell'apertura, poi quello scuro in basso che fa leggere i testi */
+        #f00-veloce-velo-cime { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(4, 28, 52, 0.1) 0%, rgba(4, 28, 52, 0.25) 100%); }
+        #f00-veloce-velo { position: absolute; inset: 0; opacity: 0; background: linear-gradient(180deg, rgba(4, 28, 52, 0) 32%, rgba(4, 28, 52, 0.55) 62%, rgba(4, 28, 52, 0.78) 100%); }
+        .f00-veloce-titolo { position: absolute; left: 64px; right: 64px; bottom: 400px; font-weight: 800; text-transform: uppercase;
+          line-height: 0.9; letter-spacing: 0.005em; text-shadow: 0 6px 28px rgba(0, 0, 0, 0.5); }
+        .f00-veloce-titolo b { display: block; font-weight: 800; transform-origin: 0% 100%; }
+        #f00-veloce-frase b { font-size: 128px; }
+        .giallo { color: #FCCF02; }
+      </style>
+      <div id="root" data-composition-id="f00-veloce" data-width="1080" data-height="1920">
+        <!-- Inquadrature: cime (sotto il logo), spruzzo verso la camera, sciatore, pista, funivia, scarpone,
+             attrezzatura. I tempi sono gli stessi dell'elenco INQ nello script. -->
+        <div class="f00-veloce-inq"><video id="f00-veloce-v0" class="clip" src="assets/clip/verticali/cime.mp4" muted playsinline data-start="0" data-duration="3.5" data-media-start="1" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v1" class="clip" src="assets/clip/verticali/spruzzo.mp4" muted playsinline data-start="3.5" data-duration="0.9" data-media-start="1.2" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v2" class="clip" src="assets/clip/verticali/sciatore.mp4" muted playsinline data-start="4.4" data-duration="0.9" data-media-start="9.2" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v3" class="clip" src="assets/clip/verticali/pista.mp4" muted playsinline data-start="5.3" data-duration="0.9" data-media-start="7.6" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v4" class="clip" src="assets/clip/verticali/funivia.mp4" muted playsinline data-start="6.2" data-duration="0.9" data-media-start="1" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v5" class="clip" src="assets/clip/verticali/scarpone.mp4" muted playsinline data-start="7.1" data-duration="0.9" data-media-start="4.2" data-track-index="0"></video></div>
+        <div class="f00-veloce-inq"><video id="f00-veloce-v6" class="clip" src="assets/clip/verticali/attrezzatura.mp4" muted playsinline data-start="8" data-duration="1.6" data-media-start="1" data-track-index="0"></video></div>
+        <div id="f00-veloce-velo-cime"></div>
+        <div id="f00-veloce-velo"></div>
+        <div class="f00-veloce-titolo" id="f00-veloce-stagione"><b id="f00-veloce-a" style="font-size:200px">Stagione</b><b id="f00-veloce-b" class="giallo" style="font-size:250px">2026/27</b></div>
+        <div class="f00-veloce-titolo" id="f00-veloce-frase"><b id="f00-veloce-c">Nuove gite,</b><b id="f00-veloce-d">settimana bianca</b><b id="f00-veloce-e" class="giallo">e corsi</b></div>
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+        // [inizio, durata] di ogni inquadratura, gli stessi di data-start e data-duration dei video
+        const INQ = [[0, 3.5], [3.5, 0.9], [4.4, 0.9], [5.3, 0.9], [6.2, 0.9], [7.1, 0.9], [8, 1.6]];
+        // VIA: fine dell'apertura col logo, primo taglio veloce; FINALE: inizio del finale della serata nella
+        // composizione principale (il montaggio parte a 0, quindi i tempi coincidono)
+        const VIA = INQ[1][0];
+        const FINALE = 9;
+        document.querySelectorAll(".f00-veloce-inq").forEach((inq, i) => {
+          const [t, d] = INQ[i];
+          // Sulle cime la spinta lenta dell'apertura; ogni taglio veloce entra con un colpo di zoom
+          if (i === 0) { tl.fromTo(inq, { scale: 1 }, { scale: 1.08, duration: d, ease: "none" }, t); return; }
+          tl.fromTo(inq, { scale: 1.16 }, { scale: 1.04, duration: 0.3, ease: "power3.out" }, t);
+          tl.to(inq, { scale: 1, duration: d - 0.3, ease: "none" }, t + 0.3);
+        });
+        tl.set("#f00-veloce-velo-cime", { opacity: 0 }, VIA);
+        tl.set("#f00-veloce-velo", { opacity: 1 }, VIA);
+        // «Stagione 2026/27» col primo taglio, sopra due inquadrature; esce un attimo prima del terzo
+        tl.fromTo("#f00-veloce-a", { scale: 1.5, filter: "blur(16px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.35, ease: "power4.out" }, VIA + 0.05);
+        tl.fromTo("#f00-veloce-b", { y: 90, rotation: 4, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.4, ease: "circ.out" }, VIA + 0.25);
+        tl.to("#f00-veloce-stagione", { opacity: 0, y: -40, duration: 0.15, ease: "power2.in" }, INQ[3][0] - 0.12);
+        // La frase si compone una riga per taglio e resta da leggere fino a poco prima del finale
+        tl.fromTo("#f00-veloce-c", { y: 90, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.35, ease: "circ.out" }, INQ[3][0] + 0.05);
+        tl.fromTo("#f00-veloce-d", { x: -360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "expo.out" }, INQ[4][0] + 0.05);
+        tl.fromTo("#f00-veloce-e", { scale: 1.45, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.35, ease: "power4.out" }, INQ[5][0] + 0.05);
+        tl.to("#f00-veloce-frase", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, FINALE - 0.35);
+        window.__timelines["f00-veloce"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

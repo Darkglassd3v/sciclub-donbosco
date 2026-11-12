@@ -4,8 +4,9 @@ Testi da incollare sotto i post. Nessun prezzo; il profilo Instagram è `@sciclu
 
 ## Post 1: invito alla serata (dal 13 al 25 novembre)
 
-Immagini: `invito-post.jpg` (post), `invito-story.jpg` (storia) e il Reel
-`../video-presentazione/renders/invito-serata-19s.mp4`.
+Immagini: `invito-post.jpg` (post), `invito-story.jpg` (storia) e il Reel veloce
+`../video-serata-veloce/renders/invito-serata-veloce-16s.mp4` (o quello da 19 s
+`../video-presentazione/renders/invito-serata-19s.mp4`).
 
 ### Instagram
 
