@@ -17,8 +17,9 @@ il post si può riscaricare da lì.
 - **Post 1**: la grafica K · Piani del generatore (`web/social-templates.js`) con la foto di gruppo del
   volantino. Il Reel da pubblicare e sponsorizzare su Instagram è quello veloce da 16 s
   (`../video-serata-veloce/`): l'apertura del video della stagione col logo grande al centro, che resta
-  fermo un secondo in più, poi da 3,5 s sei inquadrature con un taglio ogni 0,9 s e «Stagione 2026/27»,
-  perché nel feed si decide subito se fermarsi, e a 9 s lo stesso finale della serata (scena
+  fermo un secondo in più, poi da 3,5 s quattro inquadrature con un taglio ogni 0,95 s e «Stagione
+  2026/27», perché nel feed si decide subito se fermarsi; poi lo spruzzo, la cui neve copre l'obiettivo e
+  fa da stacco, e a 9 s lo stesso finale della serata (scena
   `05-serata.html`). Resta anche la versione da 19 s (`../video-presentazione/`).
 - **Post 2**: la copertina con il logo e la prima gita del 1° dicembre, il calendario di dicembre del
   generatore (le 6 gite salvate) e «Da non perdere» (prova gratuita del 13 dicembre, Dream Weekend
