@@ -4,8 +4,9 @@
 // - Post 2, «Si parte!»: la prima gita il 1° dicembre, il calendario di dicembre, la prova gratuita con
 //   i maestri del 13 dicembre, il Dream Weekend dall'11 al 13 dicembre e i corsi dal 9 gennaio.
 // - Reel: la copia del video da 19 s con il finale della serata al posto di «Seguici».
-// - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 15 s, un'inquadratura nuova
-//   almeno ogni 1,5 s e lo stesso finale della serata.
+// - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 16 s, l'apertura col logo grande
+//   al centro con un secondo di pausa in più, poi un'inquadratura nuova almeno ogni secondo e lo stesso
+//   finale della serata.
 // Le prove controllano i dati, le didascalie (niente prezzi, profilo Instagram nuovo), i testi del
 // finale del video, le misure delle immagini e del video prodotti e, se la variabile DB porta la
 // connessione, l'evento salvato nel database.
@@ -109,20 +110,24 @@ prova("video della serata", () => controllaVideo("video-presentazione", "invito-
 
 prova("montaggio veloce per Instagram", () => {
   const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
-  assert.match(indice, /data-composition-id="main"[^>]*data-duration="15"/, "il video veloce non dura 15 s");
+  assert.match(indice, /data-composition-id="main"[^>]*data-duration="16"/, "il video veloce non dura 16 s");
   for (const scena of ["00-veloce.html", "05-serata.html"]) {
     assert.ok(indice.includes(`compositions/frames/${scena}`), `il video veloce non usa ${scena}`);
   }
+  // L'apertura resta quella del video della stagione: il logo grande cade al centro dello schermo
+  assert.ok(/const CENTRO = /.test(indice) && /tl\.fromTo\("#logo-fisso", \{ x: CENTRO\.x/.test(indice), "manca il logo grande al centro all'apertura");
   const FINALE = Number((indice.match(/id="f05-serata"[^>]*data-start="([\d.]+)"/) || [])[1]);
-  assert.strictEqual(FINALE, 8, "il finale della serata deve partire a 8 s");
+  assert.strictEqual(FINALE, 9, "il finale della serata deve partire a 9 s");
   const montaggio = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "00-veloce.html"));
   const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
   const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({ src: attr(tag, "src"), inizio: Number(attr(tag, "data-start")) }));
-  assert.ok(clip.length >= 7, `solo ${clip.length} inquadrature nel montaggio`);
-  // Un'inquadratura nuova almeno ogni 1,5 s, dall'inizio fino al finale della serata
   const tagli = [...clip.map((c) => c.inizio).sort((a, b) => a - b), FINALE];
   assert.strictEqual(tagli[0], 0, "il montaggio non parte da 0");
-  tagli.slice(1).forEach((t, i) => assert.ok(t - tagli[i] <= 1.5, `inquadratura di ${(t - tagli[i]).toFixed(2)} s da ${tagli[i]} s`));
+  // Il logo ha un secondo di pausa in più rispetto al video da 16 s (che taglia a 2,5 s), poi i tagli
+  // accelerano: almeno sei inquadrature, una nuova almeno ogni secondo fino al finale della serata.
+  assert.ok(tagli[1] >= 3.4, `il logo resta solo ${tagli[1]} s`);
+  assert.ok(clip.length - 1 >= 6, `solo ${clip.length - 1} inquadrature dopo il logo`);
+  tagli.slice(2).forEach((t, i) => assert.ok(t - tagli[i + 1] <= 1, `inquadratura di ${(t - tagli[i + 1]).toFixed(2)} s da ${tagli[i + 1]} s`));
   const verticali = path.join(GRAFICA, "video-stagione");
   for (const c of clip) assert.ok(fs.existsSync(path.join(verticali, c.src)), `manca la clip ${c.src} (prepara-clip.sh)`);
   for (const atteso of ["Stagione", "2026/27", "Nuove gite,", "settimana bianca", "e corsi"]) {
@@ -130,7 +135,7 @@ prova("montaggio veloce per Instagram", () => {
   }
 });
 
-prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "invito-serata-veloce-15s.mp4", 15));
+prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "invito-serata-veloce-16s.mp4", 16));
 
 /** Una query al database: solo l'errore di psql, perché il messaggio di Node riporterebbe il comando con la password. */
 function psql(sql) {
