@@ -43,8 +43,10 @@
         const tl = gsap.timeline({ paused: true });
         // [inizio, durata] di ogni inquadratura, gli stessi di data-start e data-duration dei video
         const INQ = [[0, 3.5], [3.5, 0.9], [4.4, 0.9], [5.3, 0.9], [6.2, 0.9], [7.1, 0.9], [8, 1.6]];
-        // VIA: fine dell'apertura col logo, primo taglio veloce
+        // VIA: fine dell'apertura col logo, primo taglio veloce; FINALE: inizio del finale della serata nella
+        // composizione principale (il montaggio parte a 0, quindi i tempi coincidono)
         const VIA = INQ[1][0];
+        const FINALE = 9;
         document.querySelectorAll(".f00-veloce-inq").forEach((inq, i) => {
           const [t, d] = INQ[i];
           // Sulle cime la spinta lenta dell'apertura; ogni taglio veloce entra con un colpo di zoom
@@ -62,7 +64,7 @@
         tl.fromTo("#f00-veloce-c", { y: 90, rotation: 5, opacity: 0 }, { y: 0, rotation: 0, opacity: 1, duration: 0.35, ease: "circ.out" }, INQ[3][0] + 0.05);
         tl.fromTo("#f00-veloce-d", { x: -360, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, ease: "expo.out" }, INQ[4][0] + 0.05);
         tl.fromTo("#f00-veloce-e", { scale: 1.45, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.35, ease: "power4.out" }, INQ[5][0] + 0.05);
-        tl.to("#f00-veloce-frase", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, 8.65);
+        tl.to("#f00-veloce-frase", { opacity: 0, filter: "blur(10px)", duration: 0.2, ease: "power2.in" }, FINALE - 0.35);
         window.__timelines["f00-veloce"] = tl;
       </script>
     </template>

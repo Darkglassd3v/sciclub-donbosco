@@ -120,7 +120,12 @@ prova("montaggio veloce per Instagram", () => {
   assert.strictEqual(FINALE, 9, "il finale della serata deve partire a 9 s");
   const montaggio = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "00-veloce.html"));
   const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
-  const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({ src: attr(tag, "src"), inizio: Number(attr(tag, "data-start")) }));
+  const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({
+    src: attr(tag, "src"), inizio: Number(attr(tag, "data-start")), durata: Number(attr(tag, "data-duration")),
+  }));
+  // L'elenco INQ dello script (colpo di zoom a ogni taglio) deve avere gli stessi tempi dei video
+  const inq = JSON.parse((montaggio.match(/const INQ = (\[.*\]);/) || [])[1] || "null");
+  assert.deepStrictEqual(inq, clip.map((c) => [c.inizio, c.durata]), "INQ nello script non corrisponde ai tempi dei video");
   const tagli = [...clip.map((c) => c.inizio).sort((a, b) => a - b), FINALE];
   assert.strictEqual(tagli[0], 0, "il montaggio non parte da 0");
   // Il logo ha un secondo di pausa in più rispetto al video da 16 s (che taglia a 2,5 s), poi i tagli
