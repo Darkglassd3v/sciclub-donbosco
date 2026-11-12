@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- Lancio della stagione 2026/27: le immagini dei due post e delle storie, disegnate con le funzioni del
+     generatore (web/social-templates.js, grafica K · Piani). Si sceglie la pagina con l'hash:
+       #invito-post, #invito-story            post 1, invito alla serata di presentazione del 25/11
+       #promemoria-mercoledi, #promemoria-stasera   storie di promemoria (22/11 e 25/11)
+       #si-parte-1, #si-parte-2, #si-parte-3  post 2, carosello «Si parte!»
+     Quando i caratteri sono pronti la pagina scrive nel titolo «PRONTO [...]» con i problemi trovati (testo
+     che non ci sta); rendi.sh accetta solo «PRONTO []». Dati in dati.js. -->
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Lancio della stagione</title>
+  <!-- Gli stessi fogli della pagina del generatore (web/social.html), così i testi hanno le stesse misure. -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="../../../web/brand.css">
+  <link rel="stylesheet" href="../../font/barlow/barlow.css">
+  <link rel="stylesheet" href="../../font/barlow-condensed/barlow-condensed.css">
+  <style>
+    html, body { margin: 0; background: #084C8D; overflow: hidden; }
+    .pagina { position: relative; width: 1080px; height: 1350px; overflow: hidden; color: #fff; background: #084C8D; }
+
+    /* Copertina di «Si parte!»: il logo grande sul blu come nel carosello del generatore, e sotto le
+     * informazioni che servono anche nella pubblicità (la copertina è la prima cosa che si vede). */
+    #logo-grande { position: absolute; left: 190px; top: 70px; width: 700px; height: 700px; }
+    #bollino { position: absolute; right: 60px; top: 120px; transform: rotate(-8deg); filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .35)); }
+    #bollino span { display: block; padding: 18px 40px 16px 52px; background: #FCCF02; color: #084C8D;
+      clip-path: polygon(30px 0, 100% 0, 100% 100%, 0 100%, 0 30px); font: 800 120px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+    #copertina-testo { position: absolute; left: 70px; right: 70px; top: 800px; text-align: center; }
+    #copertina-testo .stagione { font: 800 76px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+    #copertina-testo .quando { display: inline-block; margin-top: 26px; padding: 14px 34px 12px; background: #FCCF02; color: #084C8D;
+      clip-path: polygon(24px 0, 100% 0, 100% 100%, 0 100%, 0 24px); font: 800 92px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; }
+    #copertina-testo .dove { margin-top: 26px; font: 700 54px/1.15 Barlow, sans-serif; }
+    /* La linguetta rossa «Scorri», come nel carosello del generatore. */
+    .scorri { position: absolute; right: 0; bottom: 40px; font-family: Barlow, sans-serif; width: 250px; padding: 16px 24px 18px 36px; background: #B3261E; color: #fff;
+      clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%, 0 28px); font-size: 54px; font-weight: 800; line-height: 1; z-index: 5; }
+    .scorri svg { display: block; width: 190px; height: 56px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <script src="../../../web/social-templates.js"></script>
+  <script src="dati.js"></script>
+  <script>
+    SOCIAL.logoTondo = "../../../web/logo-ufficiale-blu-tondo.svg";
+
+    const SCORRI = `<div class="scorri">Scorri<svg viewBox="0 0 150 44" aria-hidden="true"><path d="M8 6l16 16L8 38M58 6l16 16-16 16M108 6l16 16-16 16"
+      fill="none" stroke="currentColor" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+
+    // L'evento come la riga di social_events: lo stesso post che disegna la pagina Social.
+    const SERATA_EV = {
+      kind: "evento", event_date: SERATA.data, event_time: SERATA.ora,
+      place: `${SERATA.luogo}, ${SERATA.indirizzo}`,
+      title: "Presentazione della stagione 2026/27", hook: "Sei il benvenuto",
+      subtitle: `*${SERATA.extra}*\nTutto il direttivo ti aspetta`,
+      photo: "foto-gruppo.jpg", photo_x: 50, photo_y: 40,
+    };
+    const promemoria = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook }, "story"));
+
+    const COPERTINA = `<div class="pagina">
+      <img id="logo-grande" src="${SOCIAL.logoTondo}" alt="Sci Club Don Bosco Asti">
+      <div id="bollino"><span>Si parte!</span></div>
+      <div id="copertina-testo">
+        <div class="stagione">Stagione 2026/27</div>
+        <div class="quando">Martedì 1° dicembre</div>
+        <div class="dove">Prima gita a Val Thorens</div>
+      </div>${SCORRI}</div>`;
+
+    // Il calendario del mese del generatore: [categoria, "GG/MM", meta, corso].
+    const righe = DICEMBRE.map((g) => [tripCategory(g.data), shortDate(g.data), g.meta, false]);
+
+    // «Da non perdere»: un evento senza data (niente tessera), le novità in elenco con il quando in giallo.
+    const NOVITA_EV = {
+      kind: "evento", title: "Da non perdere", hook: "Il primo mese",
+      subtitle: NOVITA.map((n) => `- *${n.quando}* ${n.cosa}, ${n.dove}`).join("\n"),
+      photo: "foto-pista.jpg", photo_x: 50, photo_y: 50,
+    };
+
+    const PAGINE = {
+      "invito-post": () => drawPost(postTemplate(SERATA_EV, "post")),
+      "invito-story": () => drawPost(postTemplate(SERATA_EV, "story")),
+      "promemoria-mercoledi": () => promemoria("Mercoledì ci vediamo"),
+      "promemoria-stasera": () => promemoria("Stasera alle 21"),
+      "si-parte-1": () => COPERTINA,
+      "si-parte-2": () => drawCalendar("Le gite di dicembre", righe, "2026-12"),
+      "si-parte-3": () => drawPost(postTemplate(NOVITA_EV, "post")),
+    };
+
+    const nome = location.hash.slice(1) || "invito-post";
+    document.body.insertAdjacentHTML("afterbegin", (PAGINE[nome] || (() => `<p>Pagina «${nome}» sconosciuta</p>`))());
+    document.fonts.ready.then(() => {
+      const problemi = [];
+      if (!PAGINE[nome]) problemi.push(`pagina sconosciuta: ${nome}`);
+      if (fit(document.body)) problemi.push("testo troppo lungo");
+      // Niente immagini mancanti: una foto o un logo che non si carica lascerebbe un buco.
+      for (const img of document.images) if (!img.complete || !img.naturalWidth) problemi.push(`immagine mancante: ${img.getAttribute("src")}`);
+      document.title = `PRONTO ${JSON.stringify(problemi)}`;
+    });
+  </script>
+</body>
+</html>

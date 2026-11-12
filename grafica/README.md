@@ -11,6 +11,8 @@ versione 1.x) sta in [`../legacy/`](../legacy/).
 | [`font/barlow/`](font/barlow/) | il carattere Barlow (licenza OFL) usato da tutte le pagine qui sotto, in locale |
 | [`volantino/`](volantino/) | il volantino A5 fronte-retro della stagione 2026/2027 |
 | [`reel-sestriere-post/`](reel-sestriere-post/) | Reel del Dream Weekend al Sestriere: la story del generatore che si compone pezzo per pezzo, con la didascalia |
+| [`lancio-stagione/`](lancio-stagione/) | lancio della stagione 2026/27: invito alla serata di presentazione del 25/11 (post, storie) e carosello «Si parte!», con le didascalie |
+| [`video-presentazione/`](video-presentazione/) | Reel dell'invito alla serata: il video della stagione da 19 s con il finale della serata |
 
 Ogni cartella ha il suo README e, in `sorgenti/`, le pagine HTML e gli script
 che rifanno le immagini.

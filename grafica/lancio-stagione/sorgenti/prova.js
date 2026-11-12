@@ -104,7 +104,8 @@ prova("video della serata", () => {
 
 if (process.env.DB) {
   prova("evento nel database", () => {
-    const sql = "select place || ' | ' || coalesce(subtitle,'') || ' | ' || coalesce(event_time,'') || ' | ' || coalesce(cta,'')"
+    // Il sottotesto evidenzia il buffet in giallo (*…*) e ha una seconda riga: conta che ci sia la frase.
+    const sql = "select place || ' | ' || (subtitle like '%Buffet e brindisi finale%')::text || ' | ' || coalesce(event_time,'') || ' | ' || coalesce(cta,'')"
       + " || ' | ' || (caption is not null and caption <> '')::text from public.social_events"
       + " where kind = 'evento' and event_date = '2026-11-25'";
     let riga;
@@ -114,7 +115,7 @@ if (process.env.DB) {
       // Solo l'errore di psql: il messaggio di Node riporterebbe il comando, con la password.
       throw new Error(String(e.stderr || "psql non riuscito").trim());
     }
-    assert.strictEqual(riga, "Circolo Way Assauto, corso Pietro Chiesa 20, Asti | Buffet e brindisi finale | 21:00 | Scopri di più | true");
+    assert.strictEqual(riga, "Circolo Way Assauto, corso Pietro Chiesa 20, Asti | true | 21:00 | Scopri di più | true");
   });
 }
 
