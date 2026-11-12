@@ -5,9 +5,10 @@ presentazione della stagione 2026/27 (mercoledì 25 novembre 2026, ore 21, Circo
 
 - **0–3,5 s**: l'apertura del video della stagione, con il logo grande che cade al centro sulle cime e
   resta fermo un secondo in più prima di girare e volare nell'angolo.
-- **3,5–9 s**: il montaggio `compositions/frames/00-veloce.html`, con sei inquadrature da 0,9 secondi
-  (spruzzo, sciatore, pista, funivia, scarpone, attrezzatura), «Stagione 2026/27» e «Nuove gite,
-  settimana bianca e corsi».
+- **3,5–9 s**: il montaggio `compositions/frames/00-veloce.html`, con quattro inquadrature da 0,95
+  secondi (sciatore, pista, funivia, scarpone) e poi lo spruzzo verso la camera per 1,7 secondi, la cui
+  neve copre l'obiettivo all'arrivo del finale; sopra, «Stagione 2026/27» e «Nuove gite, settimana bianca
+  e corsi».
 - **9–16 s**: il finale della serata `compositions/frames/05-serata.html`, lo stesso del Reel da 19 secondi
   (`../video-presentazione/`).
 

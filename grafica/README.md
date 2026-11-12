@@ -13,7 +13,7 @@ versione 1.x) sta in [`../legacy/`](../legacy/).
 | [`reel-sestriere-post/`](reel-sestriere-post/) | Reel del Dream Weekend al Sestriere: la story del generatore che si compone pezzo per pezzo, con la didascalia |
 | [`lancio-stagione/`](lancio-stagione/) | lancio della stagione 2026/27: invito alla serata di presentazione del 25/11 (post, storie) e carosello «Si parte!», con le didascalie |
 | [`video-presentazione/`](video-presentazione/) | Reel dell'invito alla serata: il video della stagione da 19 s con il finale della serata |
-| [`video-serata-veloce/`](video-serata-veloce/) | Reel veloce dell'invito alla serata per le inserzioni Instagram: 16 s, il logo grande al centro con un secondo di pausa in più, poi un taglio ogni 0,9 s (montaggio `00-veloce.html`) e il finale della serata |
+| [`video-serata-veloce/`](video-serata-veloce/) | Reel veloce dell'invito alla serata per le inserzioni Instagram: 16 s, il logo grande al centro con un secondo di pausa in più, poi un taglio ogni 0,95 s e lo spruzzo come stacco (montaggio `00-veloce.html`) e il finale della serata |
 
 Ogni cartella ha il suo README e, in `sorgenti/`, le pagine HTML e gli script
 che rifanno le immagini.
