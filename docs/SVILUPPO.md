@@ -100,6 +100,19 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   `auth.users` e `reset_password()`, la toglie il cambio vero della password); `my_access()` la
   restituisce come `change_password` e le guardie delle pagine mandano a `password.html`.
 
+## Bilancio: post collegati, spese anticipate, fatture (dal 12/11/2026)
+
+- Un movimento si collega a un post qualsiasi di Social (`ledger_entries.social_event_id`): in
+  Bilancio con la tendina, che legge `ledger_social_events()` perché il tesoriere non vede
+  `social_events`; in Social col riquadro «Spese» di ogni post salvato. Il rimborso dallo
+  sponsor esiste solo sulle campagne.
+- Spesa anticipata da un socio: `advanced_by` (chi ha pagato) e `refunded_on` (quando il club
+  gliel'ha restituita), solo per le uscite. In alto il totale ancora da rimborsare.
+- Fatture in PDF nel database (`ledger_receipts`, al massimo 2 MB, iniziano con `%PDF`), così
+  stanno nel backup cifrato senza altre chiavi; si scrivono con `set_ledger_receipt()` e si
+  leggono con `ledger_receipt()`, in base64, col permesso bilancio. Il piano gratuito ha 500 MB
+  di database: tenerlo d'occhio. Nel backup Excel i PDF vanno nella cartella `fatture/`.
+
 ## Interfaccia: scelte da non disfare
 
 - Token in `web/brand.css` (ricopiati in `ricerca/stile.css`, i due siti non condividono

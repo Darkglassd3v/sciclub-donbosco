@@ -39,6 +39,7 @@ declare -A NOME=(
   [insurances]="assicurazioni|Tipi di assicurazione"
   [insurance_lists]="liste_assicurazione|Liste inviate all'assicurazione"
   [ledger_entries]="movimenti_bilancio|Entrate e uscite oltre alle quote (Bilancio)"
+  [ledger_receipts]="fatture_bilancio|Fatture dei movimenti di Bilancio (i PDF sono nella cartella fatture)"
   [season_accounts]="saldi_banca|Saldo in banca a inizio stagione"
   [season_history]="stagioni_chiuse|Totali delle stagioni chiuse"
   [season_breakdown]="stagioni_chiuse_dettaglio|Conteggi per tipologia delle stagioni chiuse"
@@ -63,6 +64,8 @@ select c.relname, string_agg(case
     when t.typname = 'bool' then format('case when %1$I then ''sì'' when not %1$I then ''no'' end as %1$I', a.attname)
     -- Una cella di Excel tiene al massimo 32.767 caratteri (le immagini dei post ne hanno milioni).
     when t.typname in ('text', 'varchar', 'json', 'jsonb') then format('case when length(%1$I::text) > 32000 then ''(troppo lungo per Excel: è nel file .dump del backup)'' else %1$I::text end as %1$I', a.attname)
+    -- Le fatture in PDF (ledger_receipts) non stanno in una cella: qui la misura, i file in fatture/.
+    when t.typname = 'bytea' then format('''(PDF di '' || octet_length(%1$I) || '' byte: è nella cartella fatture)'' as %1$I', a.attname)
     else format('%I', a.attname) end, ', ' order by a.attnum)
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace
@@ -94,6 +97,20 @@ CONTI=($(psql_ -f "$OUT/.comandi.sql" | sed -n 's/^COPY \([0-9]*\)$/\1/p'))
 rm "$OUT/.comandi.sql"
 [ "${#CONTI[@]}" -eq "${#FILE[@]}" ] || { echo "esportati ${#CONTI[@]} file su ${#FILE[@]}" >&2; exit 1; }
 
+# Le fatture del Bilancio come file PDF, da aprire con un doppio clic: id del movimento più il
+# nome con cui sono state caricate (solo lettere, cifre, punto, trattino e spazio).
+FATTURE=0
+if [ "$(psql_ -q -A -t -c "select to_regclass('public.ledger_receipts') is not null")" = t ]; then
+  mkdir -p "$OUT/fatture"
+  while IFS=$'\t' read -r id nome contenuto; do
+    [ -n "$id" ] || continue
+    nome="${nome//[^A-Za-z0-9._ -]/_}"
+    printf '%s' "$contenuto" | base64 -d > "$OUT/fatture/$id-$nome"
+    FATTURE=$((FATTURE + 1))
+  done < <(psql_ -q -A -t -F $'\t' -c "select entry_id, file_name, replace(encode(content, 'base64'), E'\n', '') from public.ledger_receipts order by uploaded_at")
+  if [ "$FATTURE" -eq 0 ]; then rmdir "$OUT/fatture"; fi
+fi
+
 # Il BOM fa capire a Excel che il file è UTF-8 (senza, «NICOLÒ» diventa «NICOLÃ’»).
 for f in "$OUT"/*.csv; do
   { printf '\xef\xbb\xbf'; cat "$f"; } > "$f.tmp" && mv "$f.tmp" "$f"
@@ -116,6 +133,7 @@ done
     [ "$tabella" = auth.users ] && descr="Account per entrare nel sito (senza password)"
     printf '%-34s %7s  %s (%s)\n' "$f" "${CONTI[$i]}" "${descr:-Tabella $tabella}" "$tabella"
   done | sort
+  [ "$FATTURE" -gt 0 ] && printf '%-34s %7s  %s\n' "fatture/" "$FATTURE" "Fatture e ricevute dei movimenti di Bilancio, in PDF"
   echo
   echo "Per rimettere i dati in un database nuovo serve l'altro file del backup,"
   echo "backup-AAAA-MM-GG.dump.gpg: vedi docs/BACKUP.md nel repository del sito."

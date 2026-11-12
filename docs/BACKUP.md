@@ -36,6 +36,8 @@ I backup di prima del 23/10/2026 hanno solo il file `.dump.gpg`.
 I file hanno colonne separate da «;», decimali con la virgola e ore italiane. I nomi delle
 colonne sono quelli del database, in inglese: `LEGGIMI.txt` traduce i principali. Le immagini
 dei post non ci sono (troppo grandi per una cella di Excel): restano nel file `.dump.gpg`.
+Le fatture e ricevute del Bilancio (dal 12/11/2026) stanno invece nella cartella `fatture/`,
+una per file PDF, col numero del movimento davanti al nome.
 
 **Al termine cancellare la cartella estratta**: contiene i dati personali dei soci in chiaro.
 

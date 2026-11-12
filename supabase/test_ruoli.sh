@@ -2291,4 +2291,93 @@ do $$ begin
 end $$;
 SQL
 
+# Bilancio (12/11/2026): movimenti collegati a un post, spese anticipate da rimborsare,
+# fatture in PDF nel database. Tutto solo col permesso bilancio.
+psql_ <<'SQL'
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.social_events (id, kind, title, event_date) values
+  ('dddddddd-7777-0000-0000-000000000001', 'evento', 'PROVA PRESCIISTICA SPONSORIZZATA', current_date),
+  ('dddddddd-7777-0000-0000-000000000002', 'gita', 'PROVA GITA VECCHIA', public.current_season()::date - 30);
+set role authenticated;
+do $$
+declare
+  movimento  uuid;
+  anticipato uuid;
+  pdf        text := encode(convert_to('%PDF-1.4 fattura di prova', 'UTF8'), 'base64');
+  troppo     text := encode(convert_to('%PDF', 'UTF8') || decode(repeat('00', 2 * 1024 * 1024), 'hex'), 'base64');
+begin
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);  -- tesoriere
+  -- Fase 1: i post della stagione da collegare a un movimento.
+  assert exists (select 1 from public.ledger_social_events()
+                  where id = 'dddddddd-7777-0000-0000-000000000001' and title = 'PROVA PRESCIISTICA SPONSORIZZATA'),
+         'Bilancio: il tesoriere non vede i post della stagione da collegare';
+  assert not exists (select 1 from public.ledger_social_events() where id = 'dddddddd-7777-0000-0000-000000000002'),
+         'Bilancio: fra i post da collegare compaiono quelli delle stagioni passate';
+  insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id)
+  values ('USCITA', 'Pubblicità Meta', 1, 30, 'dddddddd-7777-0000-0000-000000000001') returning id into movimento;
+
+  -- Fase 2: uscita anticipata da un socio, poi rimborsata.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by)
+  values ('USCITA', 'Altro', 1, 12.5, 'ROSSI MARIO') returning id into anticipato;
+  assert (select advanced_by = 'ROSSI MARIO' and refunded_on is null from public.ledger_entries where id = anticipato),
+         'Bilancio: spesa anticipata non salvata come da rimborsare';
+  update public.ledger_entries set refunded_on = current_date where id = anticipato;
+  assert (select refunded_on = current_date from public.ledger_entries where id = anticipato), 'Bilancio: rimborso non segnato';
+  begin
+    insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by) values ('ENTRATA', 'Altro', 1, 5, 'ROSSI MARIO');
+    raise exception 'ASSERZIONE: un''entrata anticipata da un socio è stata accettata';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.ledger_entries (kind, category, quantity, unit_price, refunded_on) values ('USCITA', 'Altro', 1, 5, current_date);
+    raise exception 'ASSERZIONE: rimborsata una spesa che nessuno aveva anticipato';
+  exception when check_violation then null;
+  end;
+
+  -- Fase 3: fattura in PDF, solo PDF e al massimo 2 MB.
+  perform public.set_ledger_receipt(movimento, 'fattura meta.pdf', pdf);
+  assert (select file_name = 'fattura meta.pdf' and content_base64 = pdf from public.ledger_receipt(movimento)),
+         'Bilancio: la fattura riletta non è uguale a quella caricata';
+  perform public.set_ledger_receipt(movimento, 'fattura corretta.pdf', pdf);
+  assert (select file_name from public.ledger_receipt(movimento)) = 'fattura corretta.pdf', 'Bilancio: la fattura non si sostituisce';
+  begin
+    perform public.set_ledger_receipt(movimento, 'foto.jpg', encode(convert_to('JPEG', 'UTF8'), 'base64'));
+    raise exception 'ASSERZIONE: accettato un file che non è un PDF';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%PDF%', 'errore inatteso per un file non PDF: ' || sqlerrm;
+  end;
+  begin
+    perform public.set_ledger_receipt(movimento, 'grande.pdf', troppo);
+    raise exception 'ASSERZIONE: accettato un PDF oltre i 2 MB';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%2 MB%', 'errore inatteso per un PDF troppo grande: ' || sqlerrm;
+  end;
+
+  -- Senza il permesso bilancio non si vede e non si scrive niente.
+  perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);  -- social
+  assert (select count(*) from public.ledger_social_events()) = 0, 'Bilancio: senza permesso vede i post da collegare';
+  assert (select count(*) from public.ledger_receipt(movimento)) = 0, 'Bilancio: senza permesso scarica una fattura';
+  assert (select count(*) from public.ledger_receipts) = 0, 'Bilancio: senza permesso legge le fatture dalla tabella';
+  begin
+    perform public.set_ledger_receipt(movimento, 'x.pdf', pdf);
+    raise exception 'ASSERZIONE: senza permesso bilancio ha caricato una fattura';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+    assert sqlerrm like '%permesso%', 'errore inatteso senza permesso: ' || sqlerrm;
+  end;
+
+  -- Eliminato il movimento, la fattura sparisce con lui.
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  delete from public.ledger_entries where id = movimento;
+  assert not exists (select 1 from public.ledger_receipts where entry_id = movimento),
+         'Bilancio: eliminato il movimento, la fattura è rimasta';
+  delete from public.ledger_entries where id = anticipato;
+end $$;
+reset role;
+delete from public.social_events where id in ('dddddddd-7777-0000-0000-000000000001', 'dddddddd-7777-0000-0000-000000000002');
+SQL
+
 echo "test ruoli: tutto a posto"

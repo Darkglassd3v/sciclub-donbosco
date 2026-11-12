@@ -471,13 +471,14 @@
               <p class="avviso-contrasto mt-2 mb-0" id="avvisoAlcolMeta" hidden>Sponsor di bevande alcoliche: in Gestione inserzioni il pubblico va limitato ai maggiorenni (18+), e valgono le regole di Meta sugli alcolici. L'avvertenza è già nelle immagini.</p>
             </section>
 
-            <!-- Spese e rimborsi delle inserzioni: movimenti di Bilancio collegati alla
-                 campagna (ledger_entries.social_event_id). Solo col permesso bilancio. -->
+            <!-- Spese e rimborsi delle inserzioni: movimenti di Bilancio collegati al post
+                 (ledger_entries.social_event_id). Su ogni post salvato, non solo sulle campagne
+                 (richiesta del 12/11: post della presciistica sponsorizzato). Solo col permesso bilancio. -->
             <section class="parte" aria-labelledby="pSpese" id="speseCampagna" hidden>
               <h3 id="pSpese">Spese e rimborsi</h3>
               <p id="totaleSpese" aria-live="polite"></p>
               <button type="button" class="button is-light" id="btnRegistraSpesa">Registra spesa o rimborso</button>
-              <p class="help">Va in Bilancio come movimento della stagione, collegato a questa campagna.</p>
+              <p class="help">Va in Bilancio come movimento della stagione, collegato a questo post.</p>
             </section>
 
             <!-- Il testo sta qui, largo, dopo i dati da cui nasce: nella colonna
@@ -1429,17 +1430,27 @@
   }
 
   let spendRound = 0;  // l'ultima lettura delle spese: una più vecchia non scrive
-  /** Speso, rimborsato e netto della campagna aperta, dai movimenti di Bilancio collegati. Solo col permesso bilancio. */
+  /**
+   * Speso (e, per le campagne, rimborsato e netto) del post aperto, dai movimenti di Bilancio
+   * collegati. Su ogni post salvato; solo col permesso bilancio.
+   */
   async function drawSpend() {
     const p = isOpen, round = ++spendRound;
     el("speseCampagna").hidden = true;
-    if (!p || !p.id || p.kind !== "sponsor" || !(await can("bilancio"))) return;
+    if (!p || !p.id || !(await can("bilancio"))) return;
     const { data, error } = await sb.from("ledger_entries").select("kind,amount").eq("social_event_id", p.id);
     if (round !== spendRound) return;
     if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
     const total = (kind) => data.filter((m) => m.kind === kind).reduce((sum, m) => sum + Number(m.amount), 0);
-    const spent = total("USCITA"), refunded = total("ENTRATA");
-    el("totaleSpese").innerHTML = `Speso <b>${fmt(spent)}</b> · Rimborsato <b>${fmt(refunded)}</b> · Netto <b>${fmt(spent - refunded)}</b>`;
+    const spent = total("USCITA"), refunded = total("ENTRATA"), campaign = p.kind === "sponsor";
+    el("totaleSpese").innerHTML = campaign
+      ? `Speso <b>${fmt(spent)}</b> · Rimborsato <b>${fmt(refunded)}</b> · Netto <b>${fmt(spent - refunded)}</b>`
+      : `Speso <b>${fmt(spent)}</b>`;
+    // Il rimborso dallo sponsor esiste solo per le campagne degli sponsor.
+    const refund = el("spTipo").querySelector('option[value="ENTRATA"]');
+    refund.hidden = refund.disabled = !campaign;
+    if (!campaign) el("spTipo").value = "USCITA";
+    el("btnRegistraSpesa").textContent = campaign ? "Registra spesa o rimborso" : "Registra spesa";
     el("speseCampagna").hidden = false;
   }
 
@@ -1481,7 +1492,7 @@
     el("dlgSpesa").close();
     ask(el("btnRegistraSpesa"), "Registrare questo movimento in Bilancio?", "Registra", () => recordSpend(row), {
       pericolo: false,
-      dettagli: [["Campagna", nomePost(p)], ["Tipo", label],
+      dettagli: [[p.kind === "sponsor" ? "Campagna" : "Post", nomePost(p)], ["Tipo", label],
         ["Data", new Date(`${row.entry_date}T12:00:00`).toLocaleDateString("it-IT")], ["Importo", fmt(amount)]],
     });
   }
