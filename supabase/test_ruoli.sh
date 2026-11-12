@@ -774,6 +774,8 @@ insert into public.members (id, last_name, first_name, enrolled_at, card_type, c
   ('aaaaaaaa-0000-0000-0000-000000000001', 'BIANCHI', 'ANNA', now(), 'PROVA TESSERA ORDINARIA', '21',  'XXX', 35, 0),
   ('aaaaaaaa-0000-0000-0000-000000000002', 'VERDI',   'LUCA', now(), 'PROVA TESSERA ORDINARIA', 'A-7', null,  35, 35),
   ('aaaaaaaa-0000-0000-0000-000000000003', 'NERI',    'ELIO', now(), null,                      null,  null,  0,  0);
+-- Il luogo di nascita va nei fogli dell'assicurazione (solo il comune).
+update public.members set birth_place = 'ASTI', birth_province = 'AT' where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 
 set role authenticated;
 
@@ -934,6 +936,9 @@ begin
          'liste mandate sbagliate';
   select id into prima from public.insurance_sent_lists() where number = 1;
   assert (select last_name from public.insurance_list_members(prima)) = 'BIANCHI', 'la lista 1 non si riscarica';
+  -- Il foglio riscaricato ha anche il luogo di nascita (tracciato dell'assicurazione, 12/11/2026).
+  assert (select birth_place from public.insurance_list_members(prima)) = 'ASTI',
+         'la lista riscaricata non ha il luogo di nascita';
 
   -- Si annulla solo l'ultima lista del tipo: la 1 no, la 3 sì, e Luca torna da assicurare.
   begin
