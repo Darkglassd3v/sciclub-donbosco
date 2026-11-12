@@ -16,9 +16,14 @@ name: Deploy pagine su GitHub Pages
 # (Settings > Secrets and variables > Actions > Variables): se presenti,
 # sovrascrivono config.js in fase di deploy.
 
+# Rami e rilasci (dal 12/11/2026): si lavora su release/v<versione> creato da main e si apre
+# una PR verso main. Sulla PR girano costruzione e prove, senza pubblicare. Dopo il merge (senza
+# squash) il tag v<versione> su main avvia il rilascio: solo i tag v* pubblicano il sito.
 on:
   push:
-    branches: ["3.0-SNAPSHOT"]
+    tags: ["v*"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 # Niente filtro paths: quando si crea il branch di una nuova release non c'è
@@ -121,6 +126,8 @@ jobs:
 
   deploy:
     needs: build
+    # Sulle PR si costruisce e si prova soltanto; pubblica un tag v* o un avvio a mano.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
