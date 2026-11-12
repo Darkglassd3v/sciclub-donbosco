@@ -2,12 +2,14 @@
 
 - Prima leggere `PROJECT-CONTEXT.md` (breve) e `TODO.md` (cosa fare);
   regole, rilascio e database in `docs/SVILUPPO.md`.
-- Commit locali liberi, limitati ai file toccati (`git commit -- file...`). **Niente push senza sì
-  esplicito** da chi segue progetto: il push su `2.9-SNAPSHOT` pubblica il sito.
+- Commit locali liberi, limitati ai file toccati (`git commit -- file...`). Il push su
+  `3.0-SNAPSHOT` pubblica il sito: è autorizzato senza chiedere quando il lavoro è finito, con le
+  prove verdi e la code review fatta. Prima del push si controlla `git status`; poi deploy
+  verificato e merge in `dev`. Si chiede prima solo per le modifiche di origine sconosciuta.
 - Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
 - "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
   nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
-  di cosa è fatto e cosa no): la sola lettura non chiude il turno. Push sempre solo col sì.
+  di cosa è fatto e cosa no): la sola lettura non chiude il turno.
 - Interfaccia, commenti e variabili JS in italiano; nomi database in inglese.
 - Campagne Meta (Facebook e Instagram): prima leggere `docs/META-ADS.md` (esperienze reali
   raccolte nei forum, posizionamenti da escludere, età, divisione Facebook/Instagram) e
