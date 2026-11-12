@@ -2,10 +2,10 @@
 
 - Prima leggere `PROJECT-CONTEXT.md` (breve) e `TODO.md` (cosa fare);
   regole, rilascio e database in `docs/SVILUPPO.md`.
-- Commit locali liberi, limitati ai file toccati (`git commit -- file...`). Il push su
-  `3.0-SNAPSHOT` pubblica il sito: è autorizzato senza chiedere quando il lavoro è finito, con le
-  prove verdi e la code review fatta. Prima del push si controlla `git status`; poi deploy
-  verificato e merge in `dev`. Si chiede prima solo per le modifiche di origine sconosciuta.
+- Rami, versioni e rilasci seguono la regola globale di `~/.claude/CLAUDE.md` (ramo
+  `release/v<versione>` creato da `main`, PR verso `main` con CI verde, merge senza squash, tag
+  `v<versione>` su `main`). Commit locali liberi, limitati ai file toccati
+  (`git commit -- file...`); prima di ogni push si controlla `git status`.
 - Richieste nuove in **cima** a `TODO.md`, sezione "Richieste nuove", non in fondo.
 - "Riprendi il lavoro in cima a TODO.md": dopo `PROJECT-CONTEXT.md` e `TODO.md`, implementare
   nello stesso turno la prima voce di "Richieste nuove" (modifiche, comandi, verifica, resoconto
