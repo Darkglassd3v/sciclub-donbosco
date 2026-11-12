@@ -7,38 +7,33 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
 
 - I commit locali si fanno senza chiedere, limitati ai percorsi toccati
   (`git commit -- file...`), così non finisce in stage altro: un commit non pubblica niente.
-  **Niente push senza un sì esplicito** di chi segue il progetto: il push su un branch nei
-  trigger di `deploy-pages.yml` (oggi `3.0-SNAPSHOT`) ricostruisce il sito.
+  Il push è autorizzato a lavoro finito, con le prove verdi e la code review fatta; prima si
+  controlla `git status`. Il sito si pubblica solo dai tag `v<versione>` (vedi sotto).
 - Messaggi di commit: Conventional Commits in italiano, con un corpo che spiega il perché
   (vedi `git log`).
 - Interfaccia, commenti e variabili JS in **italiano**; nomi del database in **inglese**. I
   commenti spiegano il perché, in prosa: mantenere lo stesso stile.
 - Le richieste nuove si scrivono **in cima** a `TODO.md`. Quando una cosa è fatta si toglie
   dal TODO: la storia resta nei commit.
-- Il branch predefinito è `dev` (non esiste `main`); si lavora su `X.Y-SNAPSHOT`. Ogni branch
-  nuovo va aggiunto ai trigger di `.github/workflows/deploy-pages.yml`.
+- Rami (dal 12/11/2026, regola valida per tutti i progetti): il ramo predefinito è `main`,
+  uguale all'ultimo rilascio; ogni versione si sviluppa su `release/v<versione>` creato da
+  `main`. `dev` e `3.0-SNAPSHOT` sono rami vecchi, fermi alla 3.0.0.
 - `gh` serve per seguire i deploy: `gh run list --workflow deploy-pages.yml --limit 3`.
 
-## Rilasciare una versione (fatto così dalla 2.2 alla 2.9)
+## Rilasciare una versione (dalla 3.0.1)
 
-1. Sullo SNAPSHOT: trigger del workflow → `["X.Y"]`; commit
-   `chore: il workflow delle pagine pubblica dal branch X.Y`.
-2. `git branch X.Y <commit>` e `git tag -a X.Y refs/heads/X.Y -m "riassunto"`; push con i
-   riferimenti completi (branch e tag hanno lo stesso nome):
-   `git push origin refs/heads/X.Y refs/tags/X.Y`.
-3. `git switch -c X.(Y+1)-SNAPSHOT refs/heads/X.Y`; trigger → `["X.Y", "X.(Y+1)-SNAPSHOT"]`;
-   commit `ci: deploy anche dal branch ... [skip ci]` (senza `[skip ci]` parte un deploy dallo
-   SNAPSHOT e online la versione appena rilasciata diventa "X.(Y+1)-SNAPSHOT");
-   `git push -u origin refs/heads/X.(Y+1)-SNAPSHOT`. Così al rilascio parte un solo deploy,
-   dal branch X.Y: lo SNAPSHOT pushato al passo 2 ha già il trigger `["X.Y"]` e i tag non fanno
-   partire il workflow.
-4. Allineare `dev` (dove gira il backup del database): in una worktree, `git merge
-   refs/tags/X.Y` su `origin/dev`, controllare che l'albero sia uguale al tag, push su `dev`
-   (niente force push).
-5. Quando le pagine pubblicano dal nuovo SNAPSHOT, il branch `X.Y` e il vecchio
-   `X.Y-SNAPSHOT` non servono più: la versione resta nel tag `X.Y`. Si tolgono con
-   `git push origin --delete refs/heads/X.Y refs/heads/X.Y-SNAPSHOT` (dopo aver controllato con
-   `git tag --contains` che il tag li contenga). Su GitHub restano solo `dev` e lo SNAPSHOT aperto.
+1. `git switch -c release/v<versione> main` e push del ramo; si lavora e si committa lì.
+2. PR verso `main` (`gh pr create --base main`): sulla PR il workflow `deploy-pages.yml`
+   costruisce il sito e fa girare le prove, senza pubblicare.
+3. Con la CI verde, merge con un commit di merge, mai squash (resta la storia RED/GREEN):
+   `gh pr merge --merge`.
+4. Tag su `main`: `git tag -a v<versione> origin/main -m "riassunto"` e
+   `git push origin refs/tags/v<versione>`. Il tag avvia il rilascio: il workflow pubblica il
+   sito e `web/versione.json` dice `v<versione>`.
+5. Correzioni urgenti a una versione pubblicata: `hotfix/v<x.y.z>` dal tag, stessa PR.
+
+Fino alla 3.0.0 si pubblicava da un ramo `X.Y-SNAPSHOT` con il merge in `dev`: la storia resta
+nei tag `2.5` … `2.9` e `v3.0.0`.
 
 La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 
