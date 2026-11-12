@@ -102,20 +102,29 @@ prova("video della serata", () => {
   assert.ok(Math.abs(Number(info.format.duration) - 19) < 0.2, `il video dura ${info.format.duration} s invece di 19`);
 });
 
+/** Una query al database: solo l'errore di psql, perché il messaggio di Node riporterebbe il comando con la password. */
+function psql(sql) {
+  try {
+    return execFileSync("psql", [process.env.DB, "-X", "-At", "-c", sql], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  } catch (e) {
+    throw new Error(String(e.stderr || "psql non riuscito").trim());
+  }
+}
+
 if (process.env.DB) {
+  prova("gite di dicembre uguali al database", () => {
+    // dati.js è una copia: se una gita cambia data o meta (o viene rimandata), le immagini vanno rifatte.
+    const { DICEMBRE } = require(path.join(QUI, "dati.js"));
+    const db = psql("select string_agg(coalesce(postponed_to, event_date)::text || ' ' || replace(title, chr(10), ' '), ',' order by coalesce(postponed_to, event_date))"
+      + " from public.social_events where kind = 'gita' and coalesce(postponed_to, event_date) between '2026-12-01' and '2026-12-31'");
+    assert.strictEqual(DICEMBRE.map((g) => `${g.data} ${g.meta}`).join(","), db);
+  });
   prova("evento nel database", () => {
     // Il sottotesto evidenzia il buffet in giallo (*…*) e ha una seconda riga: conta che ci sia la frase.
     const sql = "select place || ' | ' || (subtitle like '%Buffet e brindisi finale%')::text || ' | ' || coalesce(event_time,'') || ' | ' || coalesce(cta,'')"
       + " || ' | ' || (caption is not null and caption <> '')::text from public.social_events"
       + " where kind = 'evento' and event_date = '2026-11-25'";
-    let riga;
-    try {
-      riga = execFileSync("psql", [process.env.DB, "-X", "-At", "-c", sql], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
-    } catch (e) {
-      // Solo l'errore di psql: il messaggio di Node riporterebbe il comando, con la password.
-      throw new Error(String(e.stderr || "psql non riuscito").trim());
-    }
-    assert.strictEqual(riga, "Circolo Way Assauto, corso Pietro Chiesa 20, Asti | true | 21:00 | Scopri di più | true");
+    assert.strictEqual(psql(sql), "Circolo Way Assauto, corso Pietro Chiesa 20, Asti | true | 21:00 | Scopri di più | true");
   });
 }
 

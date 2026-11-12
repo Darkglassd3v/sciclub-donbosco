@@ -11,7 +11,7 @@
   <meta charset="utf-8">
   <title>Lancio della stagione</title>
   <!-- Gli stessi fogli della pagina del generatore (web/social.html), così i testi hanno le stesse misure. -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
   <link rel="stylesheet" href="../../../web/brand.css">
   <link rel="stylesheet" href="../../font/barlow/barlow.css">
   <link rel="stylesheet" href="../../font/barlow-condensed/barlow-condensed.css">
@@ -85,7 +85,8 @@
     };
 
     const nome = location.hash.slice(1) || "invito-post";
-    document.body.insertAdjacentHTML("afterbegin", (PAGINE[nome] || (() => `<p>Pagina «${nome}» sconosciuta</p>`))());
+    // L'hash arriva dall'indirizzo: nel messaggio di pagina sconosciuta passa da escS(), mai crudo nell'HTML.
+    document.body.insertAdjacentHTML("afterbegin", (PAGINE[nome] || (() => `<p>Pagina «${escS(nome)}» sconosciuta</p>`))());
     document.fonts.ready.then(() => {
       const problemi = [];
       if (!PAGINE[nome]) problemi.push(`pagina sconosciuta: ${nome}`);
