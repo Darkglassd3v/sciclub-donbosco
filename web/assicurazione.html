@@ -135,10 +135,11 @@
 <div class="container-main" role="main">
   <h1 class="title is-4">Assicurazione</h1>
   <p class="occhiello">
-    Per ciascun tipo di assicurazione viene preparata una lista. Scaricare i file Excel, inviarli
-    alla compagnia assicurativa e confermare con <b>Segna come assicurati</b>: solo da quel momento
-    i soci risultano assicurati e non compaiono nelle liste successive. Numero e decorrenza sono
-    proposti automaticamente e possono essere modificati.
+    Per ciascun tipo di assicurazione viene preparata una lista. Dopo lo scarico dei file Excel la
+    pagina chiede subito se segnare i soci come assicurati; con Annulla lo si può fare più tardi con
+    <b>Segna come assicurati</b>. Solo da quel momento i soci risultano assicurati e non compaiono
+    nelle liste successive. Numero e decorrenza (il giorno dopo) sono proposti automaticamente e
+    possono essere modificati.
   </p>
 
   <section class="riquadro sezione tessera" id="invio">
@@ -247,11 +248,16 @@
   // quella decorrenza: quello che è partito.
   let downloadedOne = null;
 
-  const todayIso = () => new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
+  // La copertura parte sempre dal giorno dopo l'invio: la decorrenza proposta è domani.
+  const tomorrowIso = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toLocaleDateString("sv-SE");   // AAAA-MM-GG, ora locale
+  };
 
   (async function init() {
     if (!(await requirePermission("polizze"))) return;
-    el("decorrenza").value = todayIso();
+    el("decorrenza").value = tomorrowIso();
     el("decorrenza").addEventListener("input", cancelDownload);
     el("btnScarica").addEventListener("click", downloadAll);
     el("btnSegna").addEventListener("click", askSend);
@@ -365,6 +371,7 @@
       lists.push({ t, numero: number, soci: ready(t) });
     }
     setLoading(true);
+    let downloaded = false;
     try {
       for (const l of lists) await excelList(l.t, l.numero, startDate, l.soci);
       downloadedOne = { decorrenza: startDate, liste: lists };
@@ -389,22 +396,29 @@
         el("passo").append(" Se il browser ha scaricato un solo file, le altre liste sono disponibili qui: ", theButtons);
       }
       el("passo").hidden = false;
+      downloaded = true;
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
+    // Subito la conferma (12/11/2026): ricordarsi di premere «Segna come assicurati» dopo lo
+    // scarico era scomodo. Con Annulla il pulsante resta acceso per farlo più tardi.
+    if (downloaded) askSend();
   }
 
   const describeLists = (lists) =>
     lists.map((l) => `${l.t.nome} n. ${l.numero} (${howManyOnes(l.soci.length, "socio", "soci")})`).join(", ");
 
+  /** La conferma dell'invio: una lista per punto, con quanti soci, e la decorrenza. */
   function askSend() {
     if (!downloadedOne) return;
-    const n = downloadedOne.liste.reduce((sum, l) => sum + l.soci.length, 0);
-    ask(el("azioniInvio"),
-      `Confermare l'invio delle liste? ${describeLists(downloadedOne.liste)}: ${n === 1 ? "1 socio risulterà assicurato" : `${n} soci risulteranno assicurati`} con decorrenza ${dataIt(downloadedOne.decorrenza)}.`,
-      "Conferma invio", send);
+    ask(el("azioniInvio"), "Segnare come assicurati i soci delle liste scaricate?", "Segna come assicurati", send, {
+      elenco: [
+        ...downloadedOne.liste.map((l) => `${l.t.nome} n. ${l.numero}: ${howManyOnes(l.soci.length, "socio", "soci")}`),
+        `Decorrenza: ${dataIt(downloadedOne.decorrenza)}`,
+      ],
+    });
   }
 
   async function send() {

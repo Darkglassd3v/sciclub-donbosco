@@ -2065,12 +2065,12 @@ create policy settings_select on public.settings
 create policy settings_write on public.settings
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
--- Il numero da proporre: il più alto già dato, più uno. Non riempie i buchi
--- apposta: il direttivo si tiene i primi numeri (es. 1-20) ma si tessera più
--- tardi, e i soci partono dopo (21, 22, ...). Riempire i buchi darebbe a un
--- socio il numero riservato a un consigliere. Mai sotto card_gaps_from (le
--- Impostazioni, dal 23/10/2026): a inizio stagione la proposta è quel numero,
--- non 1.
+-- Il numero da proporre: il primo libero da card_gaps_from (le Impostazioni,
+-- dal 23/10/2026) in su. Sotto quel numero ci sono i posti del direttivo e
+-- della famiglia (es. 1-20), che si tesserano più tardi: non si propongono mai.
+-- Dal 12/11/2026 si riempiono i buchi sopra: due soci hanno voluto le tessere
+-- 100 e 101, e la proposta deve restare il numero successivo della sequenza
+-- (59), non 102.
 --
 -- I numeri scritti in altri formati (lettere, trattini) non contano: non
 -- hanno un "successivo". Security invoker: legge solo quello che la RLS di
@@ -2082,14 +2082,23 @@ stable
 security invoker
 set search_path = ''
 as $$
-  select greatest(
-    coalesce(max(m.card_number::bigint), 0) + 1,
-    coalesce((select s.value::bigint from public.settings s where s.key = 'card_gaps_from'), 1))
-    from public.members m
-   where m.card_number ~ '^[0-9]{1,15}$';
+  with used as (
+    select m.card_number::bigint as n
+      from public.members m
+     where m.card_number ~ '^[0-9]{1,15}$'
+  ), start as (
+    select coalesce((select s.value::bigint from public.settings s where s.key = 'card_gaps_from'), 1) as f
+  )
+  -- I candidati sono il primo numero ammesso e ogni numero subito dopo uno dato: il più
+  -- piccolo che nessuno ha è il primo buco (o il successivo del più alto, senza buchi).
+  select min(c.n)
+    from (select f as n from start
+          union all
+          select u.n + 1 from used u, start where u.n >= start.f) c
+   where not exists (select 1 from used u where u.n = c.n);
 $$;
 
-comment on function public.next_card_number is 'Numero tessera da proporre: il più alto già dato (solo quelli numerici) più uno, mai sotto card_gaps_from.';
+comment on function public.next_card_number is 'Numero tessera da proporre: il primo numero libero da card_gaps_from in su (solo i numeri di sole cifre contano).';
 
 -- Le viste ereditano la RLS delle tabelle sottostanti (security invoker).
 alter view public.households      set (security_invoker = true);

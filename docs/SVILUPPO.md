@@ -312,9 +312,18 @@ le lancia il deploy.
   progressivo della riga), Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
   Sci club («DON BOSCO ASTI»), Numero lista; tutte le celle centrate, carattere 14. Si scrivono in `excelList()`
   di `assicurazione.html`; le liste già inviate si riscaricano con `insurance_list_members()`.
-- Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
-  lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.
-  L'invio si può annullare e una lista inviata si può riscaricare uguale.
+- Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con «Segna come
+  assicurati»: lì si registrano decorrenza e numero di lista, progressivo per tipo e per stagione.
+  Dal 12/11/2026 la decorrenza proposta è domani (la copertura parte dal giorno dopo l'invio) e lo
+  scarico apre subito la stessa conferma del pulsante, con un punto per lista (tipo, numero, quanti
+  soci) e la decorrenza; con Annulla il pulsante resta per confermare più tardi. L'invio si può
+  annullare e una lista inviata si può riscaricare uguale.
+- Numero tessera proposto (`next_card_number()`, dal 12/11/2026): il primo numero libero da
+  `card_gaps_from` (Impostazioni) in su, anche se più avanti ci sono tessere chieste fuori
+  sequenza (es. 100 e 101): con 21-58 date la proposta è 59. Sotto `card_gaps_from` restano i posti
+  del direttivo e della famiglia, mai proposti. Nel modulo un numero già dato a un altro socio
+  diventa rosso mentre si scrive (`showDuplicateCard()` in `index.html`); il doppione lo ferma
+  comunque il vincolo `members_card_number_key`.
 - Stampe: fogli corsisti, abbonamenti 5 gite e SEMPRE jolly, divisi per partenza, in ordine
   alfabetico: un pulsante per sabato, domenica e martedì, ognuno con fino a tre file Excel.
 - Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel

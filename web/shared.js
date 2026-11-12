@@ -962,10 +962,12 @@ const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(
  * risponde non si tocca altro. Annulla è già scelto: un Invio distratto non
  * fa niente. `dove` è il riquadro dei pulsanti che l'ha aperta: alla chiusura
  * il cursore torna lì. `pericolo: false` per le domande che non tolgono
- * niente (salvare, incassare): il "Sì" è blu invece che rosso.
+ * niente (salvare, incassare): il "Sì" è blu invece che rosso. `elenco`:
+ * testi da mostrare uno per punto sotto la domanda, quando in una frase sola
+ * non si leggerebbero.
  * Stile in brand.css (dialog.finestra.finestra-domanda).
  */
-function ask(dove, question, si, alSi, { pericolo: danger = true, dettagli: details = null } = {}) {
+function ask(dove, question, si, alSi, { pericolo: danger = true, dettagli: details = null, elenco: points = null } = {}) {
   document.getElementById("finestraDomanda")?.remove();
   const dialog = document.createElement("dialog");
   dialog.id = "finestraDomanda";
@@ -973,6 +975,7 @@ function ask(dove, question, si, alSi, { pericolo: danger = true, dettagli: deta
   dialog.setAttribute("aria-labelledby", "finestraDomandaTesto");
   dialog.innerHTML = `<p class="domanda" id="finestraDomandaTesto">${esc(question)}</p>
     ${details ? dataTable(details) : ""}
+    ${points?.length ? `<ul class="elenco-domanda">${points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
     <div class="buttons">
       <button type="button" class="button is-medium" data-no>Annulla</button>
       <button type="button" class="button is-medium ${danger ? "is-danger" : "is-link"}" data-si>${esc(si)}</button>

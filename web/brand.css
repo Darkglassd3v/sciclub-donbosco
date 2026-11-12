@@ -271,6 +271,10 @@ dialog.finestra .buttons { margin-top: 20px; }
 
 /* La domanda di ask() (shared.js): una frase sola, grande. */
 dialog.finestra-domanda .domanda { font-size: 1.45rem; font-weight: 600; line-height: 1.35; margin: 0; }
+/* I punti sotto la domanda (opzione elenco di ask()): uno per riga, in grassetto. Bulma
+ * toglie i pallini alle liste: qui si rimettono. */
+dialog.finestra-domanda .elenco-domanda { list-style: disc; margin: 16px 0 4px 1.6em; font-size: 1.25rem; font-weight: 700; }
+dialog.finestra-domanda .elenco-domanda li + li { margin-top: 6px; }
 
 /* I dati di chi si salva o si elimina (dataTable() in shared.js): una riga
  * per dato, valori grandi e in grassetto, i mancanti in rosso. */
