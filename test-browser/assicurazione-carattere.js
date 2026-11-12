@@ -34,6 +34,6 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     + ` righe=${(sheet["!rows"] || []).length === 2 && sheet["!rows"].every((x) => x.hpt >= 20) ? "ok" : "NO(righe non alzate)"}`
     + ` senzaColori=${cells.every(([, c]) => !c.s?.fill && !c.s?.font?.bold) ? "ok" : "NO(stili in più)"}`
     + ` colonne=${header.join("|") === EXPECTED.join("|") ? "ok" : `NO(${header.join("|")})`}`
-    + ` riga=${values.join("|") === "1|Sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO|7" ? "ok" : `NO(${values.join("|")})`}`
+    + ` riga=${values.join("|") === "1|Sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO ASTI|7" ? "ok" : `NO(${values.join("|")})`}`
     + ` centrate=${cells.length && cells.every(([, c]) => c.s?.alignment?.horizontal === "center" && c.s?.alignment?.vertical === "center") ? "ok" : "NO(celle non centrate)"}`;
 } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 600));
