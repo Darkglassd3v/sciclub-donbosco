@@ -947,8 +947,11 @@
     const written = cardNumber();
     const duplicate = !!written && !!usedCards?.some((t) => t.id !== el("f_id").value && normalCard(t.card_number) === written);
     field.classList.toggle("campo-errore", duplicate);
-    if (duplicate) field.setAttribute("aria-invalid", "true");
-    else field.removeAttribute("aria-invalid");
+    // Per il lettore di schermo: campo non valido, e il perché è la riga sotto.
+    for (const [name, theValue] of [["aria-invalid", "true"], ["aria-describedby", "tesseraDoppia"]]) {
+      if (duplicate) field.setAttribute(name, theValue);
+      else field.removeAttribute(name);
+    }
     el("tesseraDoppia").hidden = !duplicate;
   }
 

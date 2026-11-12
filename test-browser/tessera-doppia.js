@@ -26,7 +26,9 @@
   const field = () => el("f_numero_tessera");
   const warning = () => document.getElementById("tesseraDoppia");
   const warningShown = () => !!warning() && getComputedStyle(warning()).display !== "none" && /già assegnato/.test(warning().textContent);
-  const isRed = () => field().classList.contains("campo-errore") && field().getAttribute("aria-invalid") === "true";
+  // Rosso anche per chi usa un lettore di schermo: campo non valido, descritto dalla riga sotto.
+  const isRed = () => field().classList.contains("campo-errore") && field().getAttribute("aria-invalid") === "true"
+    && field().getAttribute("aria-describedby") === "tesseraDoppia";
   const write = (theValue) => {
     field().value = theValue;
     field().dispatchEvent(new Event("input", { bubbles: true }));
@@ -48,6 +50,8 @@
     write("");
     test("vuoto", !isRed() && !warningShown(), state());
 
+    // Aperto un socio con un doppione ancora scritto: il controllo si rifà sul suo numero.
+    write("37");
     await loadMember("M");
     test("suoNumero", field().value === "30" && !isRed() && !warningShown(), `numero «${field().value}», ${state()}`);
     write("21");
