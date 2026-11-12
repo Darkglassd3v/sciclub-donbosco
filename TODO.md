@@ -57,25 +57,26 @@
           In alto il totale «Da rimborsare: € …» quando non è zero.
         - Prove: uscita anticipata che compare da rimborsare e nel totale; segnata, diventa
           verde ed esce dal totale; un'entrata non ha il campo; vincoli in `test_ruoli.sh`.
-      - **Fase 3. Fattura o ricevuta in PDF.** Fattibile col piano gratuito di Supabase: circa
-        1 GB di spazio per i file e 50 MB al massimo per file; una fattura pesa 0,1-0,5 MB,
-        quindi ce ne stanno migliaia. Il database è a 31 MB su 500.
-        - Database e Storage: bucket privato `receipts`, solo `application/pdf`, massimo 5 MB;
-          policy su `storage.objects` per leggere, caricare ed eliminare solo col permesso
-          `bilancio`; colonna `ledger_entries.receipt_path text`. In `schema.sql` il blocco dello
-          Storage va protetto con «se esiste lo schema `storage`» (in `test_ruoli.sh` non c'è).
-        - `bilancio.html`: nel modulo «Fattura o ricevuta (PDF, massimo 5 MB)»; il file va in
-          `receipts/<stagione>/<id movimento>.pdf`. Nell'elenco «Apri la fattura» (indirizzo
-          firmato, valido 60 secondi) e «Sostituisci». Eliminando il movimento si elimina anche
-          il file. File non PDF o troppo grande: messaggio chiaro, niente salvataggio a metà.
-        - Backup: `backup-db.yml` oggi salva solo il database. Aggiungere la copia dei file del
-          bucket nello stesso archivio cifrato, e la riga in `docs/BACKUP.md`.
-        - Prove: caricamento finto in `fake-supabase.js` (va aggiunto `storage.from()`); file
-          rifiutato se non PDF o oltre 5 MB; movimento eliminato che elimina il file.
-      - **Rischi.** Le fatture hanno dati personali: bucket privato, mai indirizzi pubblici. Lo
-        Storage non è nel backup finché la fase 3 non lo aggiunge. Il piano gratuito mette in
-        pausa un progetto fermo da una settimana: il sito è in uso e il backup gira tre volte a
-        settimana, quindi non succede, ma i file non sarebbero raggiungibili durante una pausa.
+      - **Fase 3. Fattura o ricevuta in PDF, nel database** (scelta dell'utente del 12/11: così
+        finisce nel backup che c'è già, senza chiavi nuove, ed è provabile con `test_ruoli.sh`).
+        - Database: tabella `ledger_receipts` (`entry_id` chiave e riferimento a
+          `ledger_entries` con `on delete cascade`, `file_name`, `content bytea` di 2 MB al
+          massimo e che inizia con `%PDF`, `uploaded_at`, `uploaded_by`), RLS col permesso
+          `bilancio`. Funzioni `set_ledger_receipt(entry_id, file_name, content_base64)` e
+          `ledger_receipt(entry_id)` per caricare e scaricare in base64.
+        - `bilancio.html`: nel modulo «Fattura o ricevuta (PDF, massimo 2 MB)»; nell'elenco
+          «Apri la fattura» (scarica il file) e «Allega la fattura» per un movimento che non
+          ce l'ha. Eliminando il movimento si elimina anche la fattura. File non PDF o troppo
+          grande: messaggio chiaro, il movimento non si salva a metà.
+        - Backup: il dump cifrato la contiene già. In `esporta-tutto.sh` (Excel) la colonna
+          del file diventa un testo, e i PDF vanno in una cartella `fatture/` dell'archivio.
+        - Spazio: piano gratuito 500 MB di database, oggi 31 MB; 100 fatture da 0,5 MB = 50 MB.
+      - **Verificato sul codice il 12/11.** Il riquadro delle spese in `social.html` compare
+        solo per `kind === "sponsor"` (`drawSpend()`, riga 1436). `ledger_entries` ha già le
+        policy di lettura, inserimento, modifica e cancellazione col permesso `bilancio`. Per
+        `bilancio.html` non esistono prove nel browser oltre a `caricamento-fallito.js`.
+      - **Rischi.** Le fatture hanno dati personali: stanno solo nel database, lette col
+        permesso `bilancio`. Il database cresce con le fatture: tenere d'occhio i 500 MB.
 
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
