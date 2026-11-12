@@ -310,8 +310,7 @@ le lancia il deploy.
   `set_insurance_hold()`) è stata tolta.
 - Fogli Excel per l'assicurazione (tracciato del 12/11/2026, uguale per ogni tipo): Nr. (numero
   progressivo della riga), Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
-  Sci club, Numero lista; tutte le celle centrate, carattere 14. Nella colonna Polizza «Reale
-  neve» per BASE e «Reale sport» per SPORT (`POLICY_NAMES`). Si scrivono in `excelList()`
+  Sci club, Numero lista; tutte le celle centrate, carattere 14. Si scrivono in `excelList()`
   di `assicurazione.html`; le liste già inviate si riscaricano con `insurance_list_members()`.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":
   lì si assegnano decorrenza (data del giorno) e numero di lista, progressivo per tipo e per stagione.

@@ -439,16 +439,11 @@
    * progressivo della riga), Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il comune),
    * Data di nascita, Codice fiscale, Sci club, Numero lista.
    */
-  // Nella colonna «Polizza» l'assicurazione vuole questi nomi (richiesta del 12/11/2026); un tipo
-  // nuovo di Impostazioni tiene il suo nome.
-  const POLICY_NAMES = { BASE: "Reale neve", SPORT: "Reale sport" };
-
   async function excelList(t, number, startDate, members) {
     await loadXlsx();
-    const policy = POLICY_NAMES[t.kind] || t.nome;
     const rows = [
       ["Nr.", "Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"],
-      ...members.map((s, i) => [i + 1, dataExcel(startDate), policy, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
+      ...members.map((s, i) => [i + 1, dataExcel(startDate), t.nome, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
         dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });
