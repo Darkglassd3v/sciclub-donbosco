@@ -5,8 +5,8 @@
 //   i maestri del 13 dicembre, il Dream Weekend dall'11 al 13 dicembre e i corsi dal 9 gennaio.
 // - Reel: la copia del video da 19 s con il finale della serata al posto di «Seguici».
 // - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 16 s, l'apertura col logo grande
-//   al centro con un secondo di pausa in più, poi un'inquadratura nuova almeno ogni secondo e lo stesso
-//   finale della serata.
+//   al centro con un secondo di pausa in più, poi un'inquadratura nuova almeno ogni secondo, lo spruzzo
+//   più lungo come stacco e lo stesso finale della serata.
 // Le prove controllano i dati, le didascalie (niente prezzi, profilo Instagram nuovo), i testi del
 // finale del video, le misure delle immagini e del video prodotti e, se la variabile DB porta la
 // connessione, l'evento salvato nel database.
@@ -122,6 +122,7 @@ prova("montaggio veloce per Instagram", () => {
   const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
   const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({
     src: attr(tag, "src"), inizio: Number(attr(tag, "data-start")), durata: Number(attr(tag, "data-duration")),
+    daMedia: Number(attr(tag, "data-media-start")),
   }));
   // L'elenco INQ dello script (colpo di zoom a ogni taglio) deve avere gli stessi tempi dei video
   const inq = JSON.parse((montaggio.match(/const INQ = (\[.*\]);/) || [])[1] || "null");
@@ -129,10 +130,18 @@ prova("montaggio veloce per Instagram", () => {
   const tagli = [...clip.map((c) => c.inizio).sort((a, b) => a - b), FINALE];
   assert.strictEqual(tagli[0], 0, "il montaggio non parte da 0");
   // Il logo ha un secondo di pausa in più rispetto al video da 16 s (che taglia a 2,5 s), poi i tagli
-  // accelerano: almeno sei inquadrature, una nuova almeno ogni secondo fino al finale della serata.
+  // accelerano: almeno quattro inquadrature da un secondo al massimo. Gli sci nella rastrelliera sono
+  // stati tolti (richiesta del 12/11): l'ultima inquadratura è lo spruzzo, più lungo, e la sua neve che
+  // copre l'obiettivo (secondo 2,12 della clip) fa da stacco verso il finale della serata.
   assert.ok(tagli[1] >= 3.4, `il logo resta solo ${tagli[1]} s`);
-  assert.ok(clip.length - 1 >= 6, `solo ${clip.length - 1} inquadrature dopo il logo`);
-  tagli.slice(2).forEach((t, i) => assert.ok(t - tagli[i + 1] <= 1, `inquadratura di ${(t - tagli[i + 1]).toFixed(2)} s da ${tagli[i + 1]} s`));
+  assert.ok(!clip.some((c) => c.src.endsWith("attrezzatura.mp4")), "c'è ancora l'inquadratura degli sci");
+  const ultima = clip[clip.length - 1];
+  assert.ok(ultima.src.endsWith("spruzzo.mp4"), `l'ultima inquadratura è ${ultima.src}, non lo spruzzo`);
+  assert.ok(FINALE - ultima.inizio >= 1.5, `lo spruzzo dura solo ${(FINALE - ultima.inizio).toFixed(2)} s prima del finale`);
+  assert.ok(Math.abs(ultima.daMedia + FINALE - ultima.inizio - 2.12) < 0.05, "la neve dello spruzzo non copre l'obiettivo all'arrivo del finale");
+  const veloci = tagli.slice(1, -2);
+  assert.ok(veloci.length >= 4, `solo ${veloci.length} inquadrature fra il logo e lo spruzzo`);
+  veloci.forEach((t, i) => assert.ok(tagli[i + 2] - t <= 1, `inquadratura di ${(tagli[i + 2] - t).toFixed(2)} s da ${t} s`));
   const verticali = path.join(GRAFICA, "video-stagione");
   for (const c of clip) assert.ok(fs.existsSync(path.join(verticali, c.src)), `manca la clip ${c.src} (prepara-clip.sh)`);
   for (const atteso of ["Stagione", "2026/27", "Nuove gite,", "settimana bianca", "e corsi"]) {
