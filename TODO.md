@@ -72,6 +72,10 @@
          imagick, intl, mbstring, zip, exif, curl, openssl, sodium, opcache, ionCube) e le stesse
          opzioni (memory_limit 2G, max_execution_time 300, max_input_vars 10000, post_max_size 512M,
          upload_max_filesize 1G); senza mysqli il sito si ferma con «missing the MySQL extension».
+         Bloccato dal 12/11/2026: l'utente non ha le credenziali dell'area clienti di Host.it
+         (`https://my.host.it/pannello/login.jsp`, poi pannello DirectAdmin del servizio, utente di
+         sistema `umnwnjze`); servono a chi ha comprato o rinnova l'hosting (mail di attivazione o
+         fatture di Host.it), oppure «password dimenticata» con l'email dell'account.
          Il cambio lo fa l'utente dal pannello; subito dopo si controllano home, un articolo, Sponsor,
          amministrazione, opzioni di Enfold e firewall di Wordfence, e in caso di problemi si torna a
          7.4 dal pannello. Le copie locali restano utili per provare il nuovo tema e le immagini.
