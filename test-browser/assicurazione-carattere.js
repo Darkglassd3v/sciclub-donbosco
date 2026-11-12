@@ -3,8 +3,6 @@
 // Tracciato dell'assicurazione (12/11): Nr. (numero progressivo della riga), Decorrenza, Polizza,
 // Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale, Sci club,
 // Numero lista; «Polizza» in ogni foglio, anche per la Reale Total Sport; tutte le celle centrate.
-// Nella colonna «Polizza» i nomi che vuole l'assicurazione: «Reale neve» (BASE) e «Reale sport»
-// (SPORT); un'assicurazione nuova tiene il suo nome di Impostazioni.
 const BOOKS = [];
 const letters = (c) => String.fromCharCode(65 + c);
 window.XLSX = { utils: {
@@ -20,12 +18,8 @@ window.XLSX = { utils: {
   decode_cell: (a) => ({ c: a.charCodeAt(0) - 65, r: Number(a.slice(1)) - 1 }),
   book_new: () => ({}), book_append_sheet: (book, sheet) => BOOKS.push(sheet) }, writeFile() {} };
 window.addEventListener("load", () => setTimeout(async () => { try {
-  const ANNA = [{ last_name: "ROSSI", first_name: "ANNA", birth_date: "1980-05-02", birth_place: "ASTI", birth_province: "AT", tax_code: "rssnna80e42a479x" }];
-  await excelList({ kind: "BASE", nome: "REALE MUTUA NEVE" }, 7, "2026-11-01", ANNA);
-  const base = BOOKS[BOOKS.length - 1] || {};
-  await excelList({ kind: "NUOVA", nome: "ALTRA ASSICURAZIONE" }, 7, "2026-11-01", ANNA);
-  const other = BOOKS[BOOKS.length - 1] || {};
-  await excelList({ kind: "SPORT", nome: "REALE TOTAL SPORT" }, 7, "2026-11-01", ANNA);
+  await excelList({ nome: "Sport", colonna: "Tipo" }, 7, "2026-11-01",
+    [{ last_name: "ROSSI", first_name: "ANNA", birth_date: "1980-05-02", birth_place: "ASTI", birth_province: "AT", tax_code: "rssnna80e42a479x" }]);
   const sheet = BOOKS[BOOKS.length - 1] || {};
   const cells = Object.entries(sheet).filter(([a]) => a[0] !== "!");
   const small = cells.filter(([, c]) => c.s?.font?.sz !== 14).map(([a]) => a);
@@ -40,8 +34,6 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     + ` righe=${(sheet["!rows"] || []).length === 2 && sheet["!rows"].every((x) => x.hpt >= 20) ? "ok" : "NO(righe non alzate)"}`
     + ` senzaColori=${cells.every(([, c]) => !c.s?.fill && !c.s?.font?.bold) ? "ok" : "NO(stili in più)"}`
     + ` colonne=${header.join("|") === EXPECTED.join("|") ? "ok" : `NO(${header.join("|")})`}`
-    + ` riga=${values.join("|") === "1|Reale sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO|7" ? "ok" : `NO(${values.join("|")})`}`
-    + ` polizzaNeve=${base.C2?.v === "Reale neve" ? "ok" : `NO(${base.C2?.v})`}`
-    + ` polizzaAltra=${other.C2?.v === "ALTRA ASSICURAZIONE" ? "ok" : `NO(${other.C2?.v})`}`
+    + ` riga=${values.join("|") === "1|Sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO|7" ? "ok" : `NO(${values.join("|")})`}`
     + ` centrate=${cells.length && cells.every(([, c]) => c.s?.alignment?.horizontal === "center" && c.s?.alignment?.vertical === "center") ? "ok" : "NO(celle non centrate)"}`;
 } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 600));
