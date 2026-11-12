@@ -56,6 +56,12 @@
     .uscita { color: var(--errore); font-weight: 600; }
     .riga-totale td { font-weight: 600; border-top: 2px solid var(--testo-soft); }
     .azioni { white-space: nowrap; text-align: right; }
+    .azioni .button + .button { margin-left: 6px; }
+    /* Sotto la descrizione: il post collegato e lo stato di una spesa anticipata da un socio. */
+    .tabella-movimenti .nota { display: block; margin-top: 4px; font-size: .9375rem; color: var(--testo-soft); }
+    .tabella-movimenti .da-rimborsare { color: var(--errore); font-weight: 600; }
+    .tabella-movimenti .rimborsata { color: var(--ok); font-weight: 600; }
+    .tabella-movimenti .nota .button { margin-left: 8px; }
 
   </style>
 </head>
@@ -124,6 +130,7 @@
     <div class="kpi"><div class="kpi-label">Altre entrate</div><div class="kpi-value" id="kExtra">—</div></div>
     <div class="kpi"><div class="kpi-label">Totale entrate</div><div class="kpi-value" id="kTotale">—</div></div>
     <div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div>
+    <div class="kpi" id="kpiDaRimborsare" hidden><div class="kpi-label">Spese anticipate da rimborsare</div><div class="kpi-value uscita" id="kDaRimborsare">—</div></div>
   </div>
 
   <section class="riquadro sezione pagamento">
@@ -181,6 +188,17 @@
           <label class="label" for="mDescrizione" id="lDescrizione">Descrizione</label>
           <input class="input" id="mDescrizione" autocomplete="off">
         </div>
+        <div class="field campo-largo">
+          <label class="label" for="mPost">Post o campagna collegata</label>
+          <div class="select is-fullwidth">
+            <select id="mPost"><option value="">Nessuno</option></select>
+          </div>
+        </div>
+        <!-- Solo per le uscite: chi ha pagato di tasca sua e va rimborsato dal club. -->
+        <div class="field" id="campoAnticipata" hidden>
+          <label class="label" for="mAnticipata">Anticipata da</label>
+          <input class="input" id="mAnticipata" autocomplete="off" placeholder="Cognome e nome">
+        </div>
         <div class="field">
           <label class="label" for="mQuantita">Quantità</label>
           <input class="input" id="mQuantita" type="number" min="1" step="1" value="1" required>
@@ -188,6 +206,11 @@
         <div class="field">
           <label class="label" for="mPrezzo">Prezzo unit. (€)</label>
           <input class="input" id="mPrezzo" type="number" min="0" step="0.01" inputmode="decimal" required>
+        </div>
+        <div class="field campo-largo">
+          <label class="label" for="mFattura">Fattura o ricevuta (PDF, massimo 2 MB)</label>
+          <input class="input" id="mFattura" type="file" accept="application/pdf,.pdf">
+          <p class="help is-danger" id="erroreFattura" role="alert" hidden></p>
         </div>
         <button class="button is-link" type="submit" id="btnAggiungi">Aggiungi</button>
       </div>
@@ -203,6 +226,8 @@
         <tbody id="elencoMovimenti"><tr><td colspan="7" class="vuota">Caricamento…</td></tr></tbody>
       </table>
     </div>
+    <!-- Per allegare la fattura a un movimento già registrato («Allega la fattura»). -->
+    <input type="file" id="allegaFattura" accept="application/pdf,.pdf" hidden>
     </div>
   </section>
   </div>
@@ -215,6 +240,9 @@
   const el = (id) => document.getElementById(id);
   const today = () => new Date().toLocaleDateString("sv-SE"); // AAAA-MM-GG, ora locale
   let seasonValue = null; // season della vista season_balance: filtra i movimenti
+  let postsById = new Map();   // post della stagione da collegare (ledger_social_events)
+  let entriesById = new Map(); // movimenti mostrati, per le azioni di ogni riga
+  const MAX_RECEIPT = 2 * 1024 * 1024;
 
   (async function init() {
     if (!(await requirePermission("bilancio"))) return;
@@ -224,6 +252,10 @@
     el("formSaldo").addEventListener("submit", saveBalance);
     el("formMovimento").addEventListener("submit", add);
     el("elencoMovimenti").addEventListener("click", rowAction);
+    for (const r of document.querySelectorAll("input[name=mTipo]")) r.addEventListener("change", updateAdvance);
+    el("mFattura").addEventListener("change", () => (el("erroreFattura").hidden = true));
+    el("allegaFattura").addEventListener("change", attachToEntry);
+    await loadPosts();
     await reload();
   })();
 
@@ -234,6 +266,23 @@
     const sponsor = el("mVoce").value === "Sponsor";
     el("lDescrizione").textContent = sponsor ? "Nome dello sponsor" : "Descrizione";
     el("mDescrizione").required = sponsor;
+  }
+
+  /** «Anticipata da» ha senso solo per le uscite: con un'entrata il campo sparisce e si svuota. */
+  function updateAdvance() {
+    const outflow = document.querySelector("input[name=mTipo]:checked")?.value === "USCITA";
+    el("campoAnticipata").hidden = !outflow;
+    if (!outflow) el("mAnticipata").value = "";
+  }
+
+  const postLabel = (p) => `${p.title}${p.event_date ? ` (${dataIt(p.event_date)})` : ""}`;
+
+  /** I post della stagione da collegare a un movimento: il tesoriere non legge Social, li dà il database. */
+  async function loadPosts() {
+    const { data, error } = await sb.rpc("ledger_social_events");
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    postsById = new Map(data.map((p) => [p.id, p]));
+    el("mPost").replaceChildren(new Option("Nessuno", ""), ...data.map((p) => new Option(postLabel(p), p.id)));
   }
 
   function preview() {
@@ -271,10 +320,19 @@
       .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false });
     if (error) throw error;
+    entriesById = new Map(data.map((m) => [m.id, m]));
+    // Chi deve ancora riavere i soldi anticipati: il totale sta in alto, vicino al saldo.
+    const owed = data.filter((m) => m.advanced_by && !m.refunded_on).reduce((s, m) => s + num(m.amount), 0);
+    el("kpiDaRimborsare").hidden = owed <= 0;
+    el("kDaRimborsare").textContent = fmt(owed);
     if (!data.length) {
       el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento registrato nella stagione in corso.</td></tr>`;
       return;
     }
+    // Solo quali movimenti hanno la fattura, non i file: si scaricano uno alla volta.
+    const { data: receipts, error: receiptsError } = await sb.from("ledger_receipts").select("entry_id,file_name");
+    if (receiptsError) throw receiptsError;
+    const withReceipt = new Set(receipts.map((r) => r.entry_id));
     // Totale netto: entrate meno uscite.
     const totalAmount = data.reduce((s, m) => s + (m.kind === "USCITA" ? -1 : 1) * num(m.amount), 0);
     el("elencoMovimenti").innerHTML = data.map((m) => {
@@ -283,11 +341,13 @@
         <tr>
           <td data-etichetta="Data">${new Date(m.entry_date + "T00:00").toLocaleDateString("it-IT")}</td>
           <td data-etichetta="Voce">${esc(m.category)}</td>
-          <td data-etichetta="Descrizione">${esc(m.description)}</td>
+          <td data-etichetta="Descrizione">${esc(m.description)}${notes(m)}</td>
           <td class="num" data-etichetta="Quantità">${num(m.quantity).toLocaleString("it-IT")}</td>
           <td class="num" data-etichetta="Prezzo">${fmt(m.unit_price)}</td>
           <td class="num ${isOutflow ? "uscita" : "entrata"}" data-etichetta="Importo">${isOutflow ? "−" : "+"} ${fmt(m.amount)}</td>
-          <td class="azioni" data-id="${m.id}">${deleteButton()}</td>
+          <td class="azioni" data-id="${m.id}">${withReceipt.has(m.id)
+            ? '<button type="button" class="button is-small is-link is-light" data-azione="fattura">Apri la fattura</button>'
+            : '<button type="button" class="button is-small is-light" data-azione="allega">Allega la fattura</button>'}${deleteButton()}</td>
         </tr>`;
     }).join("") + `
       <tr class="riga-totale">
@@ -297,18 +357,97 @@
       </tr>`;
   }
 
+  /** Il post collegato e lo stato della spesa anticipata, sotto la descrizione. */
+  function notes(m) {
+    const post = m.social_event_id && postsById.get(m.social_event_id);
+    const linked = m.social_event_id
+      ? `<span class="nota">Collegato a: ${esc(post ? postLabel(post) : "un post di Social")}</span>` : "";
+    const advance = !m.advanced_by ? ""
+      : m.refunded_on ? `<span class="nota rimborsata">Rimborsata il ${esc(dataIt(m.refunded_on))} a ${esc(m.advanced_by)}</span>`
+      : `<span class="nota da-rimborsare">Da rimborsare a ${esc(m.advanced_by)}`
+        + `<button type="button" class="button is-small is-light" data-azione="rimborsa">Segna come rimborsata</button></span>`;
+    return linked + advance;
+  }
+
   const deleteButton = () =>
     `<button type="button" class="button is-small is-light" data-azione="chiedi">Elimina</button>`;
 
-  /** Elimina con la conferma in una finestra sopra la pagina, con i dati del movimento. */
+  /** I dati di un movimento per le finestre di conferma. */
+  const entryDetails = (m) => [["Data", dataIt(m.entry_date)], ["Voce", m.category],
+    ...(m.description ? [["Descrizione", m.description]] : []), ["Importo", fmt(m.amount)]];
+
+  /** Le azioni di una riga: elimina, rimborso di una spesa anticipata, apri o allega la fattura. */
   function rowAction(e) {
     const btn = e.target.closest("button[data-azione]");
     if (!btn) return;
-    const cell = btn.closest("td");
-    const [data, categoryName, descriptionText, , , amount] = [...cell.closest("tr").children].map((c) => c.textContent.trim());
-    ask(cell, "Eliminare questo movimento?", "Sì, elimina",
-      () => write(() => sb.from("ledger_entries").delete().eq("id", cell.dataset.id), "Movimento eliminato."),
-      { dettagli: [["Data", data], ["Categoria", categoryName], ...(descriptionText ? [["Descrizione", descriptionText]] : []), ["Importo", amount]] });
+    const row = btn.closest("tr"), id = row.querySelector("td[data-id]").dataset.id, m = entriesById.get(id);
+    if (!m) return;
+    const action = btn.dataset.azione;
+    if (action === "chiedi") {
+      // Con il movimento si elimina anche la sua fattura (on delete cascade).
+      ask(btn.closest("td"), "Eliminare questo movimento?", "Sì, elimina",
+        () => write(() => sb.from("ledger_entries").delete().eq("id", id), "Movimento eliminato."), { dettagli: entryDetails(m) });
+    } else if (action === "rimborsa") {
+      ask(btn.closest("td"), `Segnare come rimborsata a ${m.advanced_by} la spesa anticipata?`, "Segna come rimborsata",
+        () => write(() => sb.from("ledger_entries").update({ refunded_on: today() }).eq("id", id), "Spesa segnata come rimborsata."),
+        { pericolo: false, dettagli: [...entryDetails(m), ["Anticipata da", m.advanced_by], ["Rimborsata il", dataIt(today())]] });
+    } else if (action === "fattura") {
+      openReceipt(id);
+    } else if (action === "allega") {
+      el("allegaFattura").dataset.entry = id;
+      el("allegaFattura").value = "";
+      el("allegaFattura").click();
+    }
+  }
+
+  /**
+   * Il PDF scelto, letto e controllato prima di toccare il database: solo PDF (i primi byte
+   * sono «%PDF», non basta l'estensione) e al massimo 2 MB. Restituisce il base64 o un errore.
+   */
+  async function readReceipt(file) {
+    if (file.size > MAX_RECEIPT) return { error: "La fattura supera i 2 MB: ridurla prima di allegarla." };
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (String.fromCharCode(...bytes.slice(0, 4)) !== "%PDF") return { error: "Il file non è un PDF: allegare la fattura in formato PDF." };
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return { base64: btoa(binary) };
+  }
+
+  async function uploadReceipt(entryId, file, receipt) {
+    const { error } = await sb.rpc("set_ledger_receipt", { entry_id: entryId, file_name: file.name, content_base64: receipt.base64 });
+    if (error) throw error;
+  }
+
+  /** «Allega la fattura» su un movimento già registrato. */
+  async function attachToEntry() {
+    const file = el("allegaFattura").files[0], id = el("allegaFattura").dataset.entry;
+    if (!file || !id) return;
+    const receipt = await readReceipt(file);
+    if (receipt.error) { showToast(receipt.error, "is-danger"); return; }
+    await write(() => uploadReceipt(id, file, receipt).then(() => ({ error: null }), (error) => ({ error })), "Fattura allegata.");
+  }
+
+  /** Scarica la fattura di un movimento con il suo nome. */
+  async function openReceipt(id) {
+    setLoading(true);
+    try {
+      const { data, error } = await sb.rpc("ledger_receipt", { entry_id: id });
+      if (error) throw error;
+      const receipt = Array.isArray(data) ? data[0] : data;
+      if (!receipt) throw new Error("Fattura non trovata: ricaricare la pagina.");
+      const binary = atob(receipt.content_base64);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = receipt.file_name || "fattura.pdf";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      showToast("Errore: " + errorMessage(error), "is-danger");
+    } finally {
+      setLoading(false);
+    }
   }
 
   /** Esegue una scrittura, avvisa e ricarica tutto: i totali li calcola il database. */
@@ -339,19 +478,42 @@
 
   async function add(e) {
     e.preventDefault();
+    // La fattura si controlla prima di salvare: un PDF sbagliato non lascia un movimento a metà.
+    const file = el("mFattura").files[0];
+    const receipt = file ? await readReceipt(file) : null;
+    if (receipt?.error) {
+      el("erroreFattura").textContent = receipt.error;
+      el("erroreFattura").hidden = false;
+      el("mFattura").focus();
+      return;
+    }
+    const kind = document.querySelector("input[name=mTipo]:checked").value;
     el("btnAggiungi").disabled = true;
-    const ok = await write(() => sb.from("ledger_entries").insert({
-      entry_date: el("mData").value,
-      kind: document.querySelector("input[name=mTipo]:checked").value,
-      category: el("mVoce").value.trim(),
-      description: el("mDescrizione").value.trim() || null,
-      quantity: num(el("mQuantita").value),
-      unit_price: num(el("mPrezzo").value),
-    }), "Movimento aggiunto.");
+    const ok = await write(async () => {
+      const { data, error } = await sb.from("ledger_entries").insert({
+        entry_date: el("mData").value,
+        kind,
+        category: el("mVoce").value.trim(),
+        description: el("mDescrizione").value.trim() || null,
+        quantity: num(el("mQuantita").value),
+        unit_price: num(el("mPrezzo").value),
+        social_event_id: el("mPost").value || null,
+        advanced_by: kind === "USCITA" ? el("mAnticipata").value.trim().toUpperCase() || null : null,
+      }).select("id").single();
+      if (error) return { error };
+      if (file) {
+        // Il movimento è salvato: se la fattura non passa lo si dice, e si allega dalla riga.
+        try { await uploadReceipt(data.id, file, receipt); } catch (uploadError) {
+          showToast("Movimento salvato, ma la fattura non è stata allegata: " + errorMessage(uploadError)
+            + " Allegarla dalla riga del movimento.", "is-warning");
+        }
+      }
+      return { error: null };
+    }, "Movimento aggiunto.");
     el("btnAggiungi").disabled = false;
     if (ok) {
       // Data e tipo restano: spesso si registrano più movimenti dello stesso giorno.
-      for (const id of ["mVoce", "mDescrizione", "mPrezzo"]) el(id).value = "";
+      for (const id of ["mVoce", "mDescrizione", "mPrezzo", "mAnticipata", "mPost", "mFattura"]) el(id).value = "";
       el("mQuantita").value = 1;
       updateDescription();
       preview();

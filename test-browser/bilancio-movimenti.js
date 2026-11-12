@@ -45,6 +45,19 @@
   const row = (id) => document.querySelector(`#elencoMovimenti td[data-id="${id}"]`)?.closest("tr");
   const text = (node) => node?.textContent.replace(/\s+/g, " ").trim() || "";
   const pick = (input, file) => { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; };
+  // La lettura vera di un file è I/O: con --virtual-time-budget il tempo virtuale corre avanti
+  // mentre aspetta, e la prova guarderebbe la pagina prima del controllo del PDF. Come il finto
+  // Supabase per la rete, qui i file della prova si leggono subito dai byte con cui sono nati.
+  const BYTES = new WeakMap();
+  const makeFile = (text, name, type) => {
+    const file = new File([text], name, { type });
+    BYTES.set(file, new TextEncoder().encode(text));
+    return file;
+  };
+  const realArrayBuffer = Blob.prototype.arrayBuffer;
+  Blob.prototype.arrayBuffer = function () {
+    return BYTES.has(this) ? Promise.resolve(BYTES.get(this).buffer) : realArrayBuffer.call(this);
+  };
   const fill = (kind) => {
     document.querySelector(`input[name=mTipo][value=${kind}]`).click();
     el("mVoce").value = "Altro";
@@ -92,15 +105,15 @@
     writes.length = 0;
     fill("USCITA");
     el("mAnticipata").value = "Verdi Luca";
-    pick(el("mFattura"), new File(["ciao"], "foto.jpg", { type: "image/jpeg" }));
+    pick(el("mFattura"), makeFile("ciao", "foto.jpg", "image/jpeg"));
     el("formMovimento").requestSubmit();
     await wait(400);
     test("rifiutaNonPdf", writes.length === 0 && /PDF/.test(text(el("erroreFattura"))) && !el("erroreFattura").hidden,
-      `scritture ${writes.length}, messaggio «${text(el("erroreFattura"))}»`);
+      `scritture ${writes.length}, messaggio «${text(el("erroreFattura"))}», non validi ${[...el("formMovimento").elements].filter((x) => x.validity && !x.validity.valid).map((x) => x.id || x.name).join(",")}`);
 
     // PDF giusto: movimento con post, anticipo e fattura.
     el("mPost").value = "P1";
-    pick(el("mFattura"), new File(["%PDF-1.4 fattura"], "fattura.pdf", { type: "application/pdf" }));
+    pick(el("mFattura"), makeFile("%PDF-1.4 fattura", "fattura.pdf", "application/pdf"));
     el("formMovimento").requestSubmit();
     await wait(600);
     const insert = writes.find((w) => w[0] === "insert")?.[1];

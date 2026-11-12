@@ -3766,6 +3766,126 @@ alter table public.ledger_entries add column if not exists social_event_id uuid
 create index if not exists ledger_entries_social_event_idx on public.ledger_entries (social_event_id);
 comment on column public.ledger_entries.social_event_id is 'La campagna social a cui si riferisce il movimento (spesa o rimborso delle inserzioni Meta); vuoto = nessuna.';
 
+-- Bilancio (12/11/2026). Un movimento si collega a qualsiasi post sponsorizzato, non solo alle
+-- campagne: il tesoriere non legge social_events, quindi la tendina della pagina li prende da
+-- ledger_social_events(), solo titolo e data dei post della stagione in corso.
+create or replace function public.ledger_social_events()
+returns table (id uuid, kind text, title text, event_date date)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select e.id, e.kind, e.title, e.event_date
+    from public.social_events e
+   where public.can('bilancio')
+     and (e.event_date is null or e.event_date >= public.current_season()::date)
+   order by e.event_date desc nulls first, e.title;
+$$;
+
+comment on function public.ledger_social_events is 'Post della stagione in corso (id, tipo, titolo, data) da collegare a un movimento di Bilancio. Permesso bilancio.';
+
+-- Spesa anticipata da un socio: advanced_by è chi ha pagato di tasca sua (vuoto = pagata dal
+-- club), refunded_on il giorno in cui il club gliel'ha restituita (vuoto = ancora da
+-- rimborsare). Solo per le uscite, e il rimborso solo dopo un anticipo.
+alter table public.ledger_entries add column if not exists advanced_by text;
+alter table public.ledger_entries add column if not exists refunded_on date;
+alter table public.ledger_entries drop constraint if exists ledger_entries_advance_valid;
+alter table public.ledger_entries add constraint ledger_entries_advance_valid
+  check ((advanced_by is null or kind = 'USCITA') and (refunded_on is null or advanced_by is not null));
+
+comment on column public.ledger_entries.advanced_by is 'Chi ha anticipato la spesa di tasca sua; vuoto = pagata dal club.';
+comment on column public.ledger_entries.refunded_on is 'Giorno in cui il club ha restituito la spesa anticipata; vuoto = ancora da rimborsare.';
+
+-- La fattura o ricevuta di un movimento, in PDF, nel database: così sta nel backup cifrato
+-- senza altre chiavi (scelta del 12/11/2026). Al massimo 2 MB; il piano gratuito ha 500 MB di
+-- database. Si scrive solo con set_ledger_receipt(), che controlla permesso, formato e misura.
+create table if not exists public.ledger_receipts (
+  entry_id    uuid primary key references public.ledger_entries (id) on delete cascade,
+  file_name   text not null,
+  content     bytea not null,
+  uploaded_at timestamptz not null default now(),
+  uploaded_by uuid default auth.uid(),
+  constraint ledger_receipts_pdf check (substring(content from 1 for 4) = '\x25504446'::bytea),
+  constraint ledger_receipts_size check (octet_length(content) <= 2097152)
+);
+
+comment on table public.ledger_receipts is 'Fattura o ricevuta in PDF di un movimento di Bilancio (al massimo 2 MB).';
+
+alter table public.ledger_receipts enable row level security;
+drop policy if exists ledger_receipts_select on public.ledger_receipts;
+drop policy if exists ledger_receipts_delete on public.ledger_receipts;
+create policy ledger_receipts_select on public.ledger_receipts
+  for select to authenticated using ((select public.can('bilancio')));
+create policy ledger_receipts_delete on public.ledger_receipts
+  for delete to authenticated using ((select public.can('bilancio')));
+
+create or replace function public.set_ledger_receipt(entry_id uuid, file_name text, content_base64 text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  pdf bytea;
+begin
+  if not public.can('bilancio') then
+    raise exception 'Non hai il permesso di modificare il bilancio.';
+  end if;
+  begin
+    pdf := decode(coalesce(set_ledger_receipt.content_base64, ''), 'base64');
+  exception when others then
+    raise exception 'Il file non è un PDF: allegare la fattura in formato PDF.';
+  end;
+  if octet_length(pdf) > 2097152 then
+    raise exception 'La fattura supera i 2 MB: ridurla prima di allegarla.';
+  end if;
+  if octet_length(pdf) < 4 or substring(pdf from 1 for 4) <> '\x25504446'::bytea then
+    raise exception 'Il file non è un PDF: allegare la fattura in formato PDF.';
+  end if;
+  if not exists (select 1 from public.ledger_entries e where e.id = set_ledger_receipt.entry_id) then
+    raise exception 'Movimento non trovato: ricaricare la pagina.';
+  end if;
+
+  insert into public.ledger_receipts as r (entry_id, file_name, content)
+  values (set_ledger_receipt.entry_id,
+          coalesce(nullif(left(btrim(set_ledger_receipt.file_name), 200), ''), 'fattura.pdf'), pdf)
+  on conflict on constraint ledger_receipts_pkey do update
+    set file_name = excluded.file_name, content = excluded.content,
+        uploaded_at = now(), uploaded_by = auth.uid();
+end;
+$$;
+
+comment on function public.set_ledger_receipt is 'Allega (o sostituisce) la fattura PDF di un movimento, in base64: solo PDF, al massimo 2 MB. Permesso bilancio.';
+
+create or replace function public.ledger_receipt(entry_id uuid)
+returns table (file_name text, content_base64 text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select r.file_name, replace(encode(r.content, 'base64'), E'\n', '')
+    from public.ledger_receipts r
+   where public.can('bilancio')
+     and r.entry_id = ledger_receipt.entry_id;
+$$;
+
+comment on function public.ledger_receipt is 'La fattura PDF di un movimento, in base64, per scaricarla. Permesso bilancio.';
+
+do $$
+declare f text;
+begin
+  foreach f in array array['public.ledger_social_events()', 'public.set_ledger_receipt(uuid, text, text)',
+                           'public.ledger_receipt(uuid)'] loop
+    execute format('revoke all on function %s from public', f);
+    if exists (select 1 from pg_roles where rolname = 'anon') then
+      execute format('revoke all on function %s from anon', f);
+    end if;
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
+end $$;
+
 -- Un contatto tolto dalla rubrica esce anche dai post che lo avevano.
 create or replace function public.social_contacts_remove_from_posts()
 returns trigger language plpgsql set search_path = public as $$
