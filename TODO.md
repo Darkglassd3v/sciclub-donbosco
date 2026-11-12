@@ -19,6 +19,64 @@
 
 ## Richieste nuove
 
+- [ ] **Bilancio: post sponsorizzati, spese anticipate da rimborsare e fatture in PDF (12/11).**
+      Piano pronto per chi lo sviluppa. Regole: ramo `release/v3.1.0` da `main`; ogni fase con
+      /tdd-workflow (prova vista rossa, poi verde) e /ecc:code-review; interfaccia in italiano
+      professionale, codice in inglese; in produzione prima il backup, poi solo le istruzioni
+      nuove con `lock_timeout` (`docs/SVILUPPO.md`); PR verso `main`, merge senza squash, tag
+      `v3.1.0`. Le tre fasi sono indipendenti: una PR sola, un commit RED e uno GREEN per fase.
+      - **Com'è oggi.** `ledger_entries` (movimenti di Bilancio) ha già `social_event_id`, che
+        punta a `social_events`. Lo usa solo `web/social.html` nel riquadro delle campagne
+        (campi `spTipo`, `spData`, `spImporto`, pulsante `spSalva`; lettura alla riga con
+        `.eq("social_event_id", p.id)`): registra una spesa o un rimborso di Meta. In
+        `web/bilancio.html` i movimenti si leggono in `loadEntries()`, si aggiungono in `add()` e
+        si eliminano da `rowAction()`; il collegamento non si vede né si sceglie. Il tesoriere
+        (permesso `bilancio`) non legge `social_events` (RLS). Nessun file è salvato su Supabase
+        Storage. Prove: `test-browser/` (pagina + `fake-supabase.js`), `supabase/test_ruoli.sh`.
+      - **Fase 1. Spese collegate a un post sponsorizzato.** Scelta: un solo collegamento,
+        quello che c'è già, esteso dalle campagne a tutti i post (non una voce nuova sul post).
+        - Database: funzione `ledger_social_events()` security definer, solo col permesso
+          `bilancio`, che restituisce `id, kind, title, event_date` dei post della stagione in
+          corso, i più recenti prima. Niente altro dei post.
+        - `bilancio.html`: nel modulo del nuovo movimento una tendina facoltativa «Post o
+          campagna collegata» (vuota = nessuno), valida per entrate e uscite; nell'elenco, sotto
+          la descrizione, «Collegato a: <titolo> (<data>)».
+        - `social.html`: il riquadro «Spese delle inserzioni» compare su ogni post, non solo
+          sulle campagne; mostra il totale speso e rimborsato leggendo gli stessi movimenti.
+        - Prove: tendina salvata con `social_event_id`; elenco che mostra il titolo; in
+          `test_ruoli.sh` la funzione risponde al tesoriere e non a chi è senza `bilancio`.
+      - **Fase 2. Spesa anticipata da rimborsare.** È un'altra cosa rispetto al «rimborso» di
+        Meta delle campagne (quello è un'entrata): qui un socio paga di tasca sua e il club gli
+        deve restituire i soldi.
+        - Database: `ledger_entries.advanced_by text` (chi ha anticipato; vuoto = pagata dal
+          club) e `refunded_on date` (vuoto = ancora da rimborsare). Vincolo: `refunded_on` solo
+          se `advanced_by` è scritto; entrambi solo per `kind = 'USCITA'`.
+        - `bilancio.html`: per le uscite, campo «Anticipata da» (facoltativo). Nell'elenco:
+          etichetta rossa «Da rimborsare a <nome>» con il pulsante «Segna come rimborsata»
+          (conferma in finestra, data di oggi), oppure etichetta verde «Rimborsata il <data>».
+          In alto il totale «Da rimborsare: € …» quando non è zero.
+        - Prove: uscita anticipata che compare da rimborsare e nel totale; segnata, diventa
+          verde ed esce dal totale; un'entrata non ha il campo; vincoli in `test_ruoli.sh`.
+      - **Fase 3. Fattura o ricevuta in PDF.** Fattibile col piano gratuito di Supabase: circa
+        1 GB di spazio per i file e 50 MB al massimo per file; una fattura pesa 0,1-0,5 MB,
+        quindi ce ne stanno migliaia. Il database è a 31 MB su 500.
+        - Database e Storage: bucket privato `receipts`, solo `application/pdf`, massimo 5 MB;
+          policy su `storage.objects` per leggere, caricare ed eliminare solo col permesso
+          `bilancio`; colonna `ledger_entries.receipt_path text`. In `schema.sql` il blocco dello
+          Storage va protetto con «se esiste lo schema `storage`» (in `test_ruoli.sh` non c'è).
+        - `bilancio.html`: nel modulo «Fattura o ricevuta (PDF, massimo 5 MB)»; il file va in
+          `receipts/<stagione>/<id movimento>.pdf`. Nell'elenco «Apri la fattura» (indirizzo
+          firmato, valido 60 secondi) e «Sostituisci». Eliminando il movimento si elimina anche
+          il file. File non PDF o troppo grande: messaggio chiaro, niente salvataggio a metà.
+        - Backup: `backup-db.yml` oggi salva solo il database. Aggiungere la copia dei file del
+          bucket nello stesso archivio cifrato, e la riga in `docs/BACKUP.md`.
+        - Prove: caricamento finto in `fake-supabase.js` (va aggiunto `storage.from()`); file
+          rifiutato se non PDF o oltre 5 MB; movimento eliminato che elimina il file.
+      - **Rischi.** Le fatture hanno dati personali: bucket privato, mai indirizzi pubblici. Lo
+        Storage non è nel backup finché la fase 3 non lo aggiunge. Il piano gratuito mette in
+        pausa un progetto fermo da una settimana: il sito è in uso e il backup gira tre volte a
+        settimana, quindi non succede, ma i file non sarebbero raggiungibili durante una pausa.
+
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
       testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
