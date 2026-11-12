@@ -108,6 +108,7 @@ if [ "$(psql_ -q -A -t -c "select to_regclass('public.ledger_receipts') is not n
     printf '%s' "$contenuto" | base64 -d > "$OUT/fatture/$id-$nome"
     FATTURE=$((FATTURE + 1))
   done < <(psql_ -q -A -t -F $'\t' -c "select entry_id, file_name, replace(encode(content, 'base64'), E'\n', '') from public.ledger_receipts order by uploaded_at")
+  if [ "$FATTURE" -eq 0 ]; then rmdir "$OUT/fatture"; fi
 fi
 
 # Il BOM fa capire a Excel che il file è UTF-8 (senza, «NICOLÒ» diventa «NICOLÃ’»).

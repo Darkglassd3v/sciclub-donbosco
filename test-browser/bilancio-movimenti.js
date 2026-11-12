@@ -9,6 +9,7 @@
 // - Fase 3: la fattura in PDF si allega col movimento (set_ledger_receipt, in base64). Un file che
 //   non è un PDF, o oltre i 2 MB, ferma il salvataggio con un messaggio. Nell'elenco «Apri la
 //   fattura» per chi ce l'ha (ledger_receipt), «Allega la fattura» per chi non ce l'ha.
+//   Se il movimento si salva ma la fattura no, l'avviso resta visibile (review del 12/11).
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const POSTS = [{ id: "P1", kind: "evento", title: "PRESCIISTICA", event_date: "2026-10-16" }];
@@ -36,7 +37,11 @@
     if (t === "ledger_receipts") return [{ entry_id: "E2", file_name: "pullman.pdf" }];
     return [];
   };
-  FAKE.errore = (t, r) => { if (t.startsWith("rpc:")) rpcs.push([t.slice(4), r.parametri]); return null; };
+  let failUpload = false;
+  FAKE.errore = (t, r) => {
+    if (t.startsWith("rpc:")) rpcs.push([t.slice(4), r.parametri]);
+    return failUpload && t === "rpc:set_ledger_receipt" ? { message: "rete giù" } : null;
+  };
   // Niente download veri durante la prova.
   URL.createObjectURL = () => "blob:prova";
   HTMLAnchorElement.prototype.click = function () { rpcs.push(["download", this.download]); };
@@ -130,6 +135,25 @@
     await wait(400);
     test("apreFattura", rpcs.some((x) => x[0] === "ledger_receipt" && x[1]?.entry_id === "E2") && rpcs.some((x) => x[0] === "download"),
       JSON.stringify(rpcs.map((x) => x[0])));
+
+    // «Allega la fattura» su un movimento già registrato.
+    rpcs.length = 0;
+    row("E1").querySelector('[data-azione="allega"]').click();
+    pick(el("allegaFattura"), makeFile("%PDF-1.4 allegata", "allegata.pdf", "application/pdf"));
+    el("allegaFattura").dispatchEvent(new Event("change"));
+    await wait(400);
+    const attached = rpcs.find((x) => x[0] === "set_ledger_receipt")?.[1];
+    test("allegaDallaRiga", attached?.entry_id === "E1" && attached?.file_name === "allegata.pdf", JSON.stringify(attached)?.slice(0, 120));
+
+    // Movimento salvato ma fattura non caricata: l'avviso resta, non lo copre «Movimento aggiunto».
+    failUpload = true;
+    fill("USCITA");
+    pick(el("mFattura"), makeFile("%PDF-1.4 fattura", "fattura.pdf", "application/pdf"));
+    el("formMovimento").requestSubmit();
+    await wait(600);
+    const toast = text(el("statusToast"));
+    test("avvisoFatturaMancata", /non è stata allegata/.test(toast) && el("statusToast")?.classList.contains("is-warning"), `avviso «${toast}»`);
+    failUpload = false;
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

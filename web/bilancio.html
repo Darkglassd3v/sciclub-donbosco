@@ -489,6 +489,7 @@
     }
     const kind = document.querySelector("input[name=mTipo]:checked").value;
     el("btnAggiungi").disabled = true;
+    let receiptProblem = null;
     const ok = await write(async () => {
       const { data, error } = await sb.from("ledger_entries").insert({
         entry_date: el("mData").value,
@@ -502,15 +503,17 @@
       }).select("id").single();
       if (error) return { error };
       if (file) {
-        // Il movimento è salvato: se la fattura non passa lo si dice, e si allega dalla riga.
-        try { await uploadReceipt(data.id, file, receipt); } catch (uploadError) {
-          showToast("Movimento salvato, ma la fattura non è stata allegata: " + errorMessage(uploadError)
-            + " Allegarla dalla riga del movimento.", "is-warning");
-        }
+        // Il movimento è salvato: se la fattura non passa lo si dice (dopo, così l'avviso non
+        // lo copre «Movimento aggiunto»), e si allega dalla riga.
+        try { await uploadReceipt(data.id, file, receipt); } catch (uploadError) { receiptProblem = uploadError; }
       }
       return { error: null };
     }, "Movimento aggiunto.");
     el("btnAggiungi").disabled = false;
+    if (receiptProblem) {
+      showToast("Movimento salvato, ma la fattura non è stata allegata: " + errorMessage(receiptProblem)
+        + ". Allegarla dalla riga del movimento con «Allega la fattura».", "is-warning");
+    }
     if (ok) {
       // Data e tipo restano: spesso si registrano più movimenti dello stesso giorno.
       for (const id of ["mVoce", "mDescrizione", "mPrezzo", "mAnticipata", "mPost", "mFattura"]) el(id).value = "";
