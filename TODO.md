@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-10-23
+# TODO — aggiornato il 2026-11-12
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -25,16 +25,52 @@
       sono) e il livello vero; i testi sono una proposta. SQL e loghi in
       `supabase/migration/campagne-sponsor-2026-10-29/` (fuori da git), `annulla.sql` li toglie.
 
-- [ ] **Sito WordPress del club da rifare nella grafica** (29/10, richiesta dell'utente).
-      `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4 su hosting proprio (Apache, non
-      wordpress.com), tema Enfold (a pagamento, già comprato) con tema figlio. Proposta fatta:
-      tema gratuito leggero (o lo stesso Enfold) nello stile dei post del club, prima bozze della
-      home da scegliere, backup completo (UpdraftPlus o pannello dell'hosting), se possibile su
-      una copia di prova. Aspetta dall'utente: chi gestisce l'hosting, e l'accesso a `/wp-admin`
-      fatto da lui nel suo Chrome (le password non le scrive Claude; l'estensione di Chrome va
-      collegata con lo stesso account di Claude Code). Il sito rimanda ancora al profilo
-      Instagram `instagram.com/sciclubdonboscoasti`, che non esiste più: il link va cambiato in
-      `instagram.com/sciclubdonbosco_asti` (30/10).
+- [ ] **Sito WordPress del club: sistemare i problemi e rifare la grafica** (29/10; analisi del
+      12/11/2026 fatta in sola lettura dal Chrome dell'utente, nessuna modifica al sito).
+      `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4 aggiornato, tema Enfold 8.3 (a pagamento,
+      già comprato) con tema figlio, plugin Wordfence, Yoast SEO, WP-Optimize e Menu Icons, tutti
+      aggiornati. Le password non le scrive Claude: l'utente entra in `/wp-admin` nel suo Chrome.
+      Problemi da sistemare a mano, in ordine di urgenza (valgono con qualsiasi tema):
+      1. PHP 7.4.33, fuori supporto (WordPress chiede almeno la 8.3): cambiarlo dal pannello
+         dell'hosting (server LiteSpeed) dopo un backup completo, provando che Enfold e il tema
+         figlio funzionino.
+      2. Verifica in due passaggi (2FA) spenta per l'amministratore: Wordfence > Login Security >
+         My 2FA. Entrambi gli utenti sono amministratori: chi scrive solo articoli può essere Editore.
+      3. Firewall di Wordfence al 48%: completare «Optimize the Wordfence Web Application Firewall».
+      4. Aggiornamenti automatici spenti per i 4 plugin: accenderli dalla pagina Plugin.
+      5. Nessun tema predefinito di riserva: installare Twenty Twenty-Five.
+      6. Nessun banner dei cookie, mentre Contatti e Sponsor caricano le mappe di Google e la barra
+         in alto collega Facebook e YouTube; la pagina privacy è un modello del 2016. Enfold ha le
+         opzioni «Privacy e cookie» per il banner e per bloccare le mappe fino al consenso.
+      7. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache, adatto
+         al server, oppure la cache di WP-Optimize, oggi spenta.
+      8. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
+         974 KB), 768 KB di CSS e 490 KB di JavaScript di Enfold. Comprimere le immagini e convertirle
+         in WebP (WP-Optimize). Nel PHP dell'hosting `post_max_size` (512 MB) è minore di
+         `upload_max_filesize` (1 GB).
+      9. Fuso orario UTC+0: impostare «Roma» in Impostazioni > Generali (gli orari degli articoli,
+         anche programmati, sono sbagliati di una o due ore).
+      10. Il link Instagram della barra in alto porta ancora a `instagram.com/sciclubdonboscoasti/`,
+          che non esiste più: va cambiato in `instagram.com/sciclubdonbosco_asti`.
+      11. Link di uno sponsor morto: `servellosnc.it` (il dominio non esiste più); gli altri 25
+          rispondono.
+      12. Ultima notizia del 19/09/2026, con il titolo da correggere («STA' PER INIZIARE» senza
+          apostrofo); la pagina «Gara Sociale 2025» è ancora pubblicata e ci sono 2 bozze ferme.
+          Il calendario delle gite non indica l'anno e non porta all'iscrizione.
+      13. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
+          configurazione iniziale di Yoast SEO non è stata fatta.
+      Grafica nuova: i 76 articoli sono testo semplice e passano a qualsiasi tema; 8 pagine su 9 sono
+      fatte con il costruttore di Enfold e vanno rifatte se si cambia tema. Opzioni valutate:
+      A. Enfold con una delle 43 demo incluse (Travel, GYM, Academy, Modern): nessuna pagina da
+         rifare, ma resta pesante e l'import della demo azzera le opzioni del tema.
+      B. Astra con i modelli gratuiti «Outdoor Adventure» o «Travel & Tourism» (quelli sport sono a
+         pagamento).
+      C. Ollie o Twenty Twenty-Five (temi a blocchi, oltre 50 sezioni pronte): i più leggeri e
+         semplici da mantenere, da vestire nello stile dei post social (blu e giallo, logo tondo).
+      D. Kadence: buon tema, ma i modelli gratuiti sono generici.
+      Proposta: prima i punti 1-11, poi la grafica con C (o B partendo da un modello), lavorando su
+      una copia di prova con backup completo. Da decidere con l'utente: chi gestisce l'hosting e
+      quale opzione; poi un abbozzo piccolo della home in due varianti da scegliere.
 
 - [ ] **Normalizzazione dei soci (29/10): fatta, restano 14 schede da sistemare a mano.**
       Email in minuscolo, anagrafica e indirizzi in maiuscolo, città e luoghi di nascita col nome
