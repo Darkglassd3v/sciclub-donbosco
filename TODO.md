@@ -43,39 +43,45 @@
       `supabase/migration/campagne-sponsor-2026-10-29/` (fuori da git), `annulla.sql` li toglie.
 
 - [ ] **Sito WordPress del club: sistemare i problemi e rifare la grafica** (29/10; analisi del
-      12/11/2026 fatta in sola lettura dal Chrome dell'utente, nessuna modifica al sito).
-      `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4 aggiornato, tema Enfold 8.3 (a pagamento,
-      già comprato) con tema figlio, plugin Wordfence, Yoast SEO, WP-Optimize e Menu Icons, tutti
-      aggiornati. Le password non le scrive Claude: l'utente entra in `/wp-admin` nel suo Chrome.
-      Problemi da sistemare a mano, in ordine di urgenza (valgono con qualsiasi tema):
+      12/11/2026 in sola lettura, prime correzioni fatte lo stesso giorno dal Chrome dell'utente).
+      `https://www.sciclubdonboscoasti.it/`: WordPress 7.1.4, tema Enfold 8.3 (a pagamento, già
+      comprato) con tema figlio, hosting Host.it (server LiteSpeed, PHP 7.4.33). Le password non le
+      scrive Claude: l'utente entra in `/wp-admin` nel suo Chrome.
+      Fatto il 12/11/2026: backup completo con UpdraftPlus (installato; 4,1 GB in 15 archivi del
+      12/11 alle 17:43, sul server con eliminazione solo manuale e scaricati nella cartella Download
+      del PC dell'utente), fuso orario «Roma» con data «12 novembre 2026» e ora «17:43», link
+      Instagram nuovo nella barra in alto (menu «icon menu», voce 551), nelle icone social di Enfold
+      e nei profili di Yoast SEO, aggiornamenti automatici accesi per i 5 plugin, Twenty Twenty-Five
+      installato come tema di riserva (non attivo), firewall di Wordfence ottimizzato («Extended
+      Protection», configurazione LiteSpeed/lsapi; copia del `.htaccess` di prima nella cartella
+      Download), logo dello sponsor Servello nella pagina Sponsor collegato al sito nuovo
+      `https://servellogroup.it/` al posto di `servellosnc.it`, che non esiste più. Il titolo
+      dell'articolo «STA' PER INIZIARE» resta com'è (scelta dell'utente).
+      Restano, in ordine di urgenza:
       1. PHP 7.4.33, fuori supporto (WordPress chiede almeno la 8.3): cambiarlo dal pannello
-         dell'hosting (server LiteSpeed) dopo un backup completo, provando che Enfold e il tema
-         figlio funzionino.
+         dell'hosting dopo il backup, provando che Enfold e il tema figlio funzionino.
       2. Verifica in due passaggi (2FA) spenta per l'amministratore: Wordfence > Login Security >
          My 2FA. Entrambi gli utenti sono amministratori: chi scrive solo articoli può essere Editore.
-      3. Firewall di Wordfence al 48%: completare «Optimize the Wordfence Web Application Firewall».
-      4. Aggiornamenti automatici spenti per i 4 plugin: accenderli dalla pagina Plugin.
-      5. Nessun tema predefinito di riserva: installare Twenty Twenty-Five.
-      6. Nessun banner dei cookie, mentre Contatti e Sponsor caricano le mappe di Google e la barra
-         in alto collega Facebook e YouTube; la pagina privacy è un modello del 2016. Enfold ha le
-         opzioni «Privacy e cookie» per il banner e per bloccare le mappe fino al consenso.
-      7. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache, adatto
-         al server, oppure la cache di WP-Optimize, oggi spenta.
-      8. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
+      3. Banner dei cookie spento in Enfold (Opzioni tema > Privacy e cookie: «Disattivare i messaggi
+         di consenso dei cookie», con tutti i cookie accettati al primo caricamento), mentre Contatti
+         e Sponsor caricano le mappe di Google e la barra in alto collega Facebook e YouTube; la
+         pagina privacy è un modello del 2016. Il testo del banner è già scritto: va acceso con i
+         servizi esterni bloccati fino al consenso.
+      4. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache,
+         adatto al server, oppure la cache di WP-Optimize, oggi spenta.
+      5. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
          974 KB), 768 KB di CSS e 490 KB di JavaScript di Enfold. Comprimere le immagini e convertirle
          in WebP (WP-Optimize). Nel PHP dell'hosting `post_max_size` (512 MB) è minore di
          `upload_max_filesize` (1 GB).
-      9. Fuso orario UTC+0: impostare «Roma» in Impostazioni > Generali (gli orari degli articoli,
-         anche programmati, sono sbagliati di una o due ore).
-      10. Il link Instagram della barra in alto porta ancora a `instagram.com/sciclubdonboscoasti/`,
-          che non esiste più: va cambiato in `instagram.com/sciclubdonbosco_asti`.
-      11. Link di uno sponsor morto: `servellosnc.it` (il dominio non esiste più); gli altri 25
-          rispondono.
-      12. Ultima notizia del 19/09/2026, con il titolo da correggere («STA' PER INIZIARE» senza
-          apostrofo); la pagina «Gara Sociale 2025» è ancora pubblicata e ci sono 2 bozze ferme.
-          Il calendario delle gite non indica l'anno e non porta all'iscrizione.
-      13. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
-          configurazione iniziale di Yoast SEO non è stata fatta.
+      6. Spazio: la cartella di WordPress senza temi, plugin e caricamenti pesa 3,48 GB (i file di
+         WordPress sono circa 70 MB) e i caricamenti 4,12 GB: capire cosa c'è nella cartella principale
+         (copie vecchie, backup, archivi) prima di toglierlo.
+      7. La pagina «Gara Sociale 2025 Memorial Gioele Torchio» (del 9/3/2025) è ancora pubblicata:
+         chiedere all'utente se metterla in bozza, visto che è dedicata a una persona. Ci sono 2 bozze
+         ferme; il calendario delle gite non indica l'anno e non porta all'iscrizione.
+      8. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
+         configurazione iniziale di Yoast SEO non è stata fatta (manca anche la pagina Facebook fra
+         i profili).
       Grafica nuova: i 76 articoli sono testo semplice e passano a qualsiasi tema; 8 pagine su 9 sono
       fatte con il costruttore di Enfold e vanno rifatte se si cambia tema. Opzioni valutate:
       A. Enfold con una delle 43 demo incluse (Travel, GYM, Academy, Modern): nessuna pagina da
@@ -85,9 +91,9 @@
       C. Ollie o Twenty Twenty-Five (temi a blocchi, oltre 50 sezioni pronte): i più leggeri e
          semplici da mantenere, da vestire nello stile dei post social (blu e giallo, logo tondo).
       D. Kadence: buon tema, ma i modelli gratuiti sono generici.
-      Proposta: prima i punti 1-11, poi la grafica con C (o B partendo da un modello), lavorando su
-      una copia di prova con backup completo. Da decidere con l'utente: chi gestisce l'hosting e
-      quale opzione; poi un abbozzo piccolo della home in due varianti da scegliere.
+      Proposta: prima i punti 1-7, poi la grafica con C (o B partendo da un modello), lavorando su
+      una copia di prova. Da decidere con l'utente: chi gestisce l'hosting e quale opzione; poi un
+      abbozzo piccolo della home in due varianti da scegliere.
 
 - [ ] **Normalizzazione dei soci (29/10): fatta, restano 14 schede da sistemare a mano.**
       Email in minuscolo, anagrafica e indirizzi in maiuscolo, città e luoghi di nascita col nome
