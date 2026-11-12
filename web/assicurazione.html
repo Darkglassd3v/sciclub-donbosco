@@ -435,15 +435,15 @@
   // -------------------------------------------------------------------------
 
   /**
-   * Una lista per l'assicurazione. Colonne nell'ordine che chiede l'assicurazione: Decorrenza,
-   * Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
-   * Sci club, Numero lista. Nessuna colonna col numero di riga.
+   * Una lista per l'assicurazione. Colonne nell'ordine che chiede l'assicurazione: Nr. (numero
+   * progressivo della riga), Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il comune),
+   * Data di nascita, Codice fiscale, Sci club, Numero lista.
    */
   async function excelList(t, number, startDate, members) {
     await loadXlsx();
     const rows = [
-      ["Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"],
-      ...members.map((s) => [dataExcel(startDate), t.nome, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
+      ["Nr.", "Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"],
+      ...members.map((s, i) => [i + 1, dataExcel(startDate), t.nome, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
         dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });

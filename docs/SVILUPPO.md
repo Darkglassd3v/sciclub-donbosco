@@ -308,8 +308,8 @@ le lancia il deploy.
   Pagamenti (`insurance_members().debt`, da `member_debt()` sulla vista `households`; il familiare
   a carico segue il capofamiglia). L'esclusione fino al saldo del 7/11 (`members.insurance_hold`,
   `set_insurance_hold()`) è stata tolta.
-- Fogli Excel per l'assicurazione (tracciato del 12/11/2026, uguale per ogni tipo): Decorrenza,
-  Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
+- Fogli Excel per l'assicurazione (tracciato del 12/11/2026, uguale per ogni tipo): Nr. (numero
+  progressivo della riga), Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
   Sci club, Numero lista; tutte le celle centrate, carattere 14. Si scrivono in `excelList()`
   di `assicurazione.html`; le liste già inviate si riscaricano con `insurance_list_members()`.
 - Lo scarico dell'Excel è un'anteprima. Il socio diventa assicurato solo con "Segna come inviata":

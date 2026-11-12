@@ -1,8 +1,8 @@
 // Assicurazione (assicurazione.html): le liste in Excel per l'assicurazione col carattere più grande
 // (Calibri 14 invece dell'11 di Excel) e le righe più alte; date sempre nel loro formato, nessun altro stile.
-// Tracciato dell'assicurazione (12/11): Decorrenza, Polizza, Cognome, Nome, Luogo di nascita (solo il
-// comune), Data di nascita, Codice fiscale, Sci club, Numero lista; senza la colonna «Nr.»; «Polizza»
-// in ogni foglio, anche per la Reale Total Sport; tutte le celle centrate.
+// Tracciato dell'assicurazione (12/11): Nr. (numero progressivo della riga), Decorrenza, Polizza,
+// Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale, Sci club,
+// Numero lista; «Polizza» in ogni foglio, anche per la Reale Total Sport; tutte le celle centrate.
 const BOOKS = [];
 const letters = (c) => String.fromCharCode(65 + c);
 window.XLSX = { utils: {
@@ -24,16 +24,16 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const cells = Object.entries(sheet).filter(([a]) => a[0] !== "!");
   const small = cells.filter(([, c]) => c.s?.font?.sz !== 14).map(([a]) => a);
   const dates = cells.filter(([, c]) => c.t === "d");
-  const EXPECTED = ["Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"];
-  const header = Array.from({ length: 10 }, (_, c) => sheet[letters(c) + "1"]?.v).filter((v) => v !== undefined);
+  const EXPECTED = ["Nr.", "Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"];
+  const header = Array.from({ length: 11 }, (_, c) => sheet[letters(c) + "1"]?.v).filter((v) => v !== undefined);
   // La riga del socio, senza le due date (decorrenza e nascita): restano i testi e il numero della lista.
-  const values = Array.from({ length: 10 }, (_, c) => sheet[letters(c) + "2"]).filter((x) => x && x.t !== "d").map((x) => x.v);
+  const values = Array.from({ length: 11 }, (_, c) => sheet[letters(c) + "2"]).filter((x) => x && x.t !== "d").map((x) => x.v);
   document.title = "RISULTATO"
     + ` carattere14=${cells.length && !small.length ? "ok" : `NO(${small.length} celle senza 14: ${small.slice(0, 4)})`}`
     + ` date=${dates.length && dates.every(([, c]) => c.s?.numFmt === "dd/mm/yyyy") ? "ok" : "NO(formato delle date perso)"}`
     + ` righe=${(sheet["!rows"] || []).length === 2 && sheet["!rows"].every((x) => x.hpt >= 20) ? "ok" : "NO(righe non alzate)"}`
     + ` senzaColori=${cells.every(([, c]) => !c.s?.fill && !c.s?.font?.bold) ? "ok" : "NO(stili in più)"}`
     + ` colonne=${header.join("|") === EXPECTED.join("|") ? "ok" : `NO(${header.join("|")})`}`
-    + ` riga=${values.join("|") === "Sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO|7" ? "ok" : `NO(${values.join("|")})`}`
+    + ` riga=${values.join("|") === "1|Sport|ROSSI|ANNA|ASTI|RSSNNA80E42A479X|DON BOSCO|7" ? "ok" : `NO(${values.join("|")})`}`
     + ` centrate=${cells.length && cells.every(([, c]) => c.s?.alignment?.horizontal === "center" && c.s?.alignment?.vertical === "center") ? "ok" : "NO(celle non centrate)"}`;
 } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 600));
