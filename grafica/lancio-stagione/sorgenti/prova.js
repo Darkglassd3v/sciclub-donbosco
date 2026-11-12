@@ -4,6 +4,8 @@
 // - Post 2, «Si parte!»: la prima gita il 1° dicembre, il calendario di dicembre, la prova gratuita con
 //   i maestri del 13 dicembre, il Dream Weekend dall'11 al 13 dicembre e i corsi dal 9 gennaio.
 // - Reel: la copia del video da 19 s con il finale della serata al posto di «Seguici».
+// - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 15 s, un'inquadratura nuova
+//   almeno ogni 1,5 s e lo stesso finale della serata.
 // Le prove controllano i dati, le didascalie (niente prezzi, profilo Instagram nuovo), i testi del
 // finale del video, le misure delle immagini e del video prodotti e, se la variabile DB porta la
 // connessione, l'evento salvato nel database.
@@ -92,15 +94,43 @@ prova("immagini dei due post e delle storie", () => {
   }
 });
 
-prova("video della serata", () => {
-  const file = path.join(GRAFICA, "video-presentazione", "renders", "invito-serata-19s.mp4");
-  assert.ok(fs.existsSync(file), "manca il video (npx hyperframes render in grafica/video-presentazione)");
+/** Controlla che il video esista, sia verticale 1080×1920 e duri `secondi` (con 0,2 s di tolleranza). */
+function controllaVideo(progetto, nome, secondi) {
+  const file = path.join(GRAFICA, progetto, "renders", nome);
+  assert.ok(fs.existsSync(file), `manca il video (npx hyperframes render in grafica/${progetto})`);
   const out = execFileSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries",
     "stream=width,height:format=duration", "-of", "json", file], { encoding: "utf8" });
   const info = JSON.parse(out);
-  assert.deepStrictEqual([info.streams[0].width, info.streams[0].height], [1080, 1920], "il video non è 1080×1920");
-  assert.ok(Math.abs(Number(info.format.duration) - 19) < 0.2, `il video dura ${info.format.duration} s invece di 19`);
+  assert.deepStrictEqual([info.streams[0].width, info.streams[0].height], [1080, 1920], `${nome} non è 1080×1920`);
+  assert.ok(Math.abs(Number(info.format.duration) - secondi) < 0.2, `${nome} dura ${info.format.duration} s invece di ${secondi}`);
+}
+
+prova("video della serata", () => controllaVideo("video-presentazione", "invito-serata-19s.mp4", 19));
+
+prova("montaggio veloce per Instagram", () => {
+  const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
+  assert.match(indice, /data-composition-id="main"[^>]*data-duration="15"/, "il video veloce non dura 15 s");
+  for (const scena of ["00-veloce.html", "05-serata.html"]) {
+    assert.ok(indice.includes(`compositions/frames/${scena}`), `il video veloce non usa ${scena}`);
+  }
+  const FINALE = Number((indice.match(/id="f05-serata"[^>]*data-start="([\d.]+)"/) || [])[1]);
+  assert.strictEqual(FINALE, 8, "il finale della serata deve partire a 8 s");
+  const montaggio = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "00-veloce.html"));
+  const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
+  const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({ src: attr(tag, "src"), inizio: Number(attr(tag, "data-start")) }));
+  assert.ok(clip.length >= 7, `solo ${clip.length} inquadrature nel montaggio`);
+  // Un'inquadratura nuova almeno ogni 1,5 s, dall'inizio fino al finale della serata
+  const tagli = [...clip.map((c) => c.inizio).sort((a, b) => a - b), FINALE];
+  assert.strictEqual(tagli[0], 0, "il montaggio non parte da 0");
+  tagli.slice(1).forEach((t, i) => assert.ok(t - tagli[i] <= 1.5, `inquadratura di ${(t - tagli[i]).toFixed(2)} s da ${tagli[i]} s`));
+  const verticali = path.join(GRAFICA, "video-stagione");
+  for (const c of clip) assert.ok(fs.existsSync(path.join(verticali, c.src)), `manca la clip ${c.src} (prepara-clip.sh)`);
+  for (const atteso of ["Stagione", "2026/27", "Nuove gite,", "settimana bianca", "e corsi"]) {
+    assert.ok(montaggio.includes(atteso), `manca «${atteso}» nel montaggio`);
+  }
 });
+
+prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "invito-serata-veloce-15s.mp4", 15));
 
 /** Una query al database: solo l'errore di psql, perché il messaggio di Node riporterebbe il comando con la password. */
 function psql(sql) {
