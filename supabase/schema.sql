@@ -1783,16 +1783,18 @@ $$;
 
 comment on function public.insurance_undo is 'Annulla l''ultima lista mandata di un tipo: i suoi soci tornano da assicurare.';
 
--- I soci di una lista già mandata, per riscaricarne l'Excel uguale.
+-- I soci di una lista già mandata, per riscaricarne l'Excel uguale. Dal 12/11/2026 anche il
+-- luogo di nascita (tracciato dell'assicurazione): cambiano le colonne, quindi la si ricrea.
+drop function if exists public.insurance_list_members(uuid);
 create or replace function public.insurance_list_members(list_id uuid)
-returns table (last_name text, first_name text, birth_date date, tax_code text,
+returns table (last_name text, first_name text, birth_place text, birth_date date, tax_code text,
                kind text, number int, starts_on date)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select m.last_name, m.first_name, m.birth_date, m.tax_code, l.kind, l.number, l.starts_on
+  select m.last_name, m.first_name, m.birth_place, m.birth_date, m.tax_code, l.kind, l.number, l.starts_on
     from public.insurance_lists l
     join public.members m on m.insurance_list_id = l.id
    where public.can('polizze')

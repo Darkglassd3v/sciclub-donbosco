@@ -234,13 +234,10 @@
 
   const el = (id) => document.getElementById(id);
 
-  // I tipi sono le assicurazioni di Impostazioni (tabella insurances), con la
-  // colonna dei fogli che l'assicurazione usa (vedi legacy/dati26/): "1 Lista
-  // Neve Base.xlsx", colonna "Polizza"; la Global Sport ha "Tipo" al posto di
-  // "Polizza". shortcut: tracciato provvisorio, da rifare con le specifiche
-  // dell'assicurazione (TODO).
+  // I tipi sono le assicurazioni di Impostazioni (tabella insurances): il nome va nella colonna
+  // «Polizza» dei fogli (tracciato dell'assicurazione del 12/11/2026, uguale per tutti i tipi).
   let TIPI = [];
-  const typeName = (kind) => TIPI.find((t) => t.kind === kind) || { kind, nome: kind, colonna: "Polizza" };
+  const typeName = (kind) => TIPI.find((t) => t.kind === kind) || { kind, nome: kind };
 
   let toInsure = [];   // tesserati ancora da assicurare, di tutti i tipi
   let sentLists = [];   // liste mandate in questa stagione
@@ -275,7 +272,7 @@
         sb.from("insurances").select("code, name").order("price").order("name")
           .then(({ data, error }) => { if (error) throw error; return data; }),
       ]);
-      TIPI = insurances.map((a) => ({ kind: a.code, nome: a.name, colonna: a.code === "SPORT" ? "Tipo" : "Polizza" }));
+      TIPI = insurances.map((a) => ({ kind: a.code, nome: a.name }));
       toInsure = members;
       sentLists = sent;
       draw();
@@ -434,22 +431,30 @@
   }
 
   // -------------------------------------------------------------------------
-  // Excel come i fogli dell'assicurazione (legacy/dati26/)
+  // Excel col tracciato dell'assicurazione (12/11/2026)
   // -------------------------------------------------------------------------
 
+  /**
+   * Una lista per l'assicurazione. Colonne nell'ordine che chiede l'assicurazione: Decorrenza,
+   * Polizza, Cognome, Nome, Luogo di nascita (solo il comune), Data di nascita, Codice fiscale,
+   * Sci club, Numero lista. Nessuna colonna col numero di riga.
+   */
   async function excelList(t, number, startDate, members) {
     await loadXlsx();
     const rows = [
-      ["Nr.", "Decorrenza", t.colonna, "Cognome", "Nome", "Data di nascita", "Codice Fiscale", "Sci Club", "Nr. lista"],
-      ...members.map((s, i) => [i + 1, dataExcel(startDate), t.nome, s.last_name, s.first_name,
+      ["Decorrenza", "Polizza", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", "Codice fiscale", "Sci club", "Numero lista"],
+      ...members.map((s) => [dataExcel(startDate), t.nome, s.last_name, s.first_name, (s.birth_place || "").toUpperCase(),
         dataExcel(s.birth_date), (s.tax_code || "").toUpperCase(), "DON BOSCO", number]),
     ];
     const sheet = XLSX.utils.aoa_to_sheet(rows, { dateNF: "dd/mm/yyyy" });
-    // Carattere 14 (Excel da solo usa l'11, si leggeva poco: richiesta del 29/10), con colonne e
-    // righe adatte; per il resto (foglio, colonne, date, niente colori) resta come lo vuole
-    // l'assicurazione finché non dà il tracciato. Il formato delle date va dentro lo stile.
+    // Carattere 14 (Excel da solo usa l'11, si leggeva poco: richiesta del 29/10), tutte le celle
+    // centrate (richiesta del 12/11), colonne e righe adatte; niente colori. Il formato delle
+    // date va dentro lo stile.
     for (const [address, cell] of Object.entries(sheet)) {
-      if (address[0] !== "!") cell.s = { font: { name: "Calibri", sz: 14 }, ...(cell.z ? { numFmt: cell.z } : {}) };
+      if (address[0] !== "!") {
+        cell.s = { font: { name: "Calibri", sz: 14 }, alignment: { horizontal: "center", vertical: "center" },
+          ...(cell.z ? { numFmt: cell.z } : {}) };
+      }
     }
     sheet["!cols"] = columnWidths(rows, 0, 1.3);
     sheet["!rows"] = rows.map(() => ({ hpt: 22 }));
