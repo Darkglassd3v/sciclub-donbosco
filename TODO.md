@@ -57,29 +57,35 @@
       Download), logo dello sponsor Servello nella pagina Sponsor collegato al sito nuovo
       `https://servellogroup.it/` al posto di `servellosnc.it`, che non esiste più. Il titolo
       dell'articolo «STA' PER INIZIARE» resta com'è (scelta dell'utente).
+      Decisioni dell'utente del 12/11/2026, da non riproporre: la pagina «Gara Sociale 2025 Memorial
+      Gioele Torchio» resta pubblicata, il banner dei cookie resta com'è, niente verifica in due
+      passaggi.
       Restano, in ordine di urgenza:
-      1. PHP 7.4.33, fuori supporto (WordPress chiede almeno la 8.3): cambiarlo dal pannello
-         dell'hosting dopo il backup, provando che Enfold e il tema figlio funzionino.
-      2. Verifica in due passaggi (2FA) spenta per l'amministratore: Wordfence > Login Security >
-         My 2FA. Entrambi gli utenti sono amministratori: chi scrive solo articoli può essere Editore.
-      3. Banner dei cookie spento in Enfold (Opzioni tema > Privacy e cookie: «Disattivare i messaggi
-         di consenso dei cookie», con tutti i cookie accettati al primo caricamento), mentre Contatti
-         e Sponsor caricano le mappe di Google e la barra in alto collega Facebook e YouTube; la
-         pagina privacy è un modello del 2016. Il testo del banner è già scritto: va acceso con i
-         servizi esterni bloccati fino al consenso.
-      4. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache,
+      1. PHP 7.4.33, fuori supporto (WordPress chiede almeno la 8.3). Prova del 12/11/2026 su due
+         copie locali fatte dal backup (Docker, PHP 7.4.33 e 8.3.36, rete esterna bloccata): 97 pagine
+         pubbliche, 32 pagine di amministrazione, salvataggio della pagina Sponsor col costruttore di
+         Enfold e 32 eventi programmati danno lo stesso risultato sulle due versioni, senza errori né
+         deprecazioni da Enfold 8.3 (con LayerSlider 8.4.1), tema figlio (senza codice proprio) e
+         plugin; con 8.3 la memoria usata scende da 44 a 35 MB. L'analisi statica PHPCompatibility non
+         trova niente di bloccante. Resta il controllo dell'hosting (Host.it, CloudLinux, PHP Selector):
+         per la 8.3 attivare le stesse estensioni della 7.4 (mysqli/nd_mysqli e pdo_mysql, mysqlnd, gd,
+         imagick, intl, mbstring, zip, exif, curl, openssl, sodium, opcache, ionCube) e le stesse
+         opzioni (memory_limit 2G, max_execution_time 300, max_input_vars 10000, post_max_size 512M,
+         upload_max_filesize 1G); senza mysqli il sito si ferma con «missing the MySQL extension».
+         Il cambio lo fa l'utente dal pannello; subito dopo si controllano home, un articolo, Sponsor,
+         amministrazione, opzioni di Enfold e firewall di Wordfence, e in caso di problemi si torna a
+         7.4 dal pannello. Le copie locali restano utili per provare il nuovo tema e le immagini.
+      2. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache,
          adatto al server, oppure la cache di WP-Optimize, oggi spenta.
-      5. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
+      3. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
          974 KB), 768 KB di CSS e 490 KB di JavaScript di Enfold. Comprimere le immagini e convertirle
          in WebP (WP-Optimize). Nel PHP dell'hosting `post_max_size` (512 MB) è minore di
          `upload_max_filesize` (1 GB).
-      6. Spazio: la cartella di WordPress senza temi, plugin e caricamenti pesa 3,48 GB (i file di
+      4. Spazio: la cartella di WordPress senza temi, plugin e caricamenti pesa 3,48 GB (i file di
          WordPress sono circa 70 MB) e i caricamenti 4,12 GB: capire cosa c'è nella cartella principale
          (copie vecchie, backup, archivi) prima di toglierlo.
-      7. La pagina «Gara Sociale 2025 Memorial Gioele Torchio» (del 9/3/2025) è ancora pubblicata:
-         chiedere all'utente se metterla in bozza, visto che è dedicata a una persona. Ci sono 2 bozze
-         ferme; il calendario delle gite non indica l'anno e non porta all'iscrizione.
-      8. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
+      5. Ci sono 2 bozze ferme; il calendario delle gite non indica l'anno e non porta all'iscrizione.
+      6. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
          configurazione iniziale di Yoast SEO non è stata fatta (manca anche la pagina Facebook fra
          i profili).
       Grafica nuova: i 76 articoli sono testo semplice e passano a qualsiasi tema; 8 pagine su 9 sono
@@ -91,7 +97,7 @@
       C. Ollie o Twenty Twenty-Five (temi a blocchi, oltre 50 sezioni pronte): i più leggeri e
          semplici da mantenere, da vestire nello stile dei post social (blu e giallo, logo tondo).
       D. Kadence: buon tema, ma i modelli gratuiti sono generici.
-      Proposta: prima i punti 1-7, poi la grafica con C (o B partendo da un modello), lavorando su
+      Proposta: prima i punti 1-4, poi la grafica con C (o B partendo da un modello), lavorando su
       una copia di prova. Da decidere con l'utente: chi gestisce l'hosting e quale opzione; poi un
       abbozzo piccolo della home in due varianti da scegliere.
 
