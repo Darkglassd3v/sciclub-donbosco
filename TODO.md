@@ -19,6 +19,21 @@
 
 ## Richieste nuove
 
+- [ ] **Lancio della stagione 2026/27 (12/11): file pronti, da pubblicare.** In `grafica/lancio-stagione/`
+      (calendario e file nel README, testi in `didascalie.md`) e Reel in
+      `grafica/video-presentazione/renders/invito-serata-19s.mp4`. L'evento del 25/11 in produzione ha già
+      testi e foto. Restano:
+      1. L'utente pubblica il post 1 (invito alla serata) entro il 15/11, su Facebook con l'immagine e su
+         Instagram con il Reel e una musica libera da diritti.
+      2. Poi Claude prepara in Gestione inserzioni le due bozze con «Usa post esistente» (Facebook 3 € e
+         Instagram 2 € al giorno fino al 24/11, regole di `docs/META-ADS.md`); «Pubblica» e il pagamento li fa
+         l'utente.
+      3. Storie di promemoria il 22/11 (con il conto alla rovescia) e il 25/11.
+      4. Il 26/11 il carosello «Si parte!» e il Reel della stagione, collegato alla campagna già in bozza
+         (riaccendere la campagna prima di pubblicare), sponsorizzazione fino al 6/12.
+      5. Controllo nel Chrome dell'utente della pagina Social con l'evento aggiornato (estensione
+         scollegata il 12/11).
+
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
       creati in Social > Campagne con logo e colori dai loro siti (livello «Sponsor», titolo,
       testo, pulsante e inserzione Meta proposti). Mancano i profili Instagram (sui siti non ci
