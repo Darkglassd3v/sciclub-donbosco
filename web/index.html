@@ -10,7 +10,7 @@
   <style>
     body { margin: 0; }
     /* Numeri tessera forse dimenticati: si devono vedere. */
-    #tessereLibere { color: var(--errore); font-weight: 600; }
+    #tessereLibere, #tesseraDoppia { color: var(--errore); font-weight: 600; }
     #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; }
 
     /* La barra dei totali resta incollata in basso, ma smette di sembrare una
@@ -246,7 +246,8 @@
     <div class="columns mt-1 mb-0">
       <div class="column is-4">
         <label class="label" for="f_numero_tessera">Numero tessera</label><input class="input campo-admin" id="f_numero_tessera" inputmode="numeric" autocomplete="off" placeholder="Es. 21">
-        <p id="notaTessera" class="help" hidden>Proposto automaticamente: il successivo all'ultimo assegnato. Modificabile.</p>
+        <p id="tesseraDoppia" class="help" hidden>Numero tessera già assegnato a un altro socio.</p>
+        <p id="notaTessera" class="help" hidden>Proposto automaticamente: il primo numero libero. Modificabile.</p>
         <p id="tessereLibere" class="help" hidden></p>
       </div>
     </div>
@@ -866,8 +867,8 @@
   }
 
   /**
-   * Mette nel campo vuoto il numero tessera successivo all'ultimo dato. Un
-   * numero già scritto (socio che ce l'ha, o scritto a mano) resta com'è.
+   * Mette nel campo vuoto il primo numero tessera libero (next_card_number()).
+   * Un numero già scritto (socio che ce l'ha, o scritto a mano) resta com'è.
    * Prima rilegge i numeri dati, per quelli liberi sotto il campo.
    */
   async function proposeCardNumber() {
@@ -911,6 +912,7 @@
    * Contano solo i numeri di sole cifre, come in next_card_number().
    */
   function showFreeCards() {
+    showDuplicateCard();
     if (!usedCards) { el("tessereLibere").hidden = true; return; }
     const number = (v) => (/^\d{1,15}$/.test(v || "") ? Number(v) : null);
     const otherOnes = usedCards.filter((t) => t.id !== el("f_id").value).map((t) => t.card_number);
@@ -928,9 +930,29 @@
   }
 
   /** Numero tessera come va salvato: "0021" e "21" sono lo stesso numero. */
-  function cardNumber() {
-    const v = el("f_numero_tessera").value.trim();
+  function normalCard(v) {
     return /^\d{1,15}$/.test(v) ? String(BigInt(v)) : v || null;
+  }
+  function cardNumber() {
+    return normalCard(el("f_numero_tessera").value.trim());
+  }
+
+  /**
+   * Il numero scritto è già di un altro socio: il campo diventa rosso e sotto lo
+   * si dice mentre si scrive (12/11/2026), prima del Salva. Il doppione lo ferma
+   * comunque il database. Il numero del socio aperto non conta.
+   */
+  function showDuplicateCard() {
+    const field = el("f_numero_tessera");
+    const written = cardNumber();
+    const duplicate = !!written && !!usedCards?.some((t) => t.id !== el("f_id").value && normalCard(t.card_number) === written);
+    field.classList.toggle("campo-errore", duplicate);
+    // Per il lettore di schermo: campo non valido, e il perché è la riga sotto.
+    for (const [name, theValue] of [["aria-invalid", "true"], ["aria-describedby", "tesseraDoppia"]]) {
+      if (duplicate) field.setAttribute(name, theValue);
+      else field.removeAttribute(name);
+    }
+    el("tesseraDoppia").hidden = !duplicate;
   }
 
   /**

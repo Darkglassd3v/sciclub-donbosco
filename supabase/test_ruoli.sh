@@ -864,6 +864,15 @@ set role authenticated;
 do $$ begin
   perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert public.next_card_number() = 22, 'numero tessera proposto sbagliato (atteso 22: 21 più uno, A-7 non conta)';
+  -- Una tessera chiesta fuori sequenza (il 100, come le due del 12/11/2026): la proposta è il
+  -- primo numero libero da card_gaps_from in su, non il più alto più uno.
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.members set card_number = '100' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
+  assert public.next_card_number() = 22, 'numero tessera proposto sbagliato con un buco (atteso 22, il primo libero, non 101)';
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  update public.members set card_number = 'A-7' where id = 'aaaaaaaa-0000-0000-0000-000000000002';
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   -- Mai sotto il numero delle Impostazioni (card_gaps_from): i posti prima sono del
   -- direttivo e della famiglia, e a inizio stagione la proposta partiva da 1.
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
