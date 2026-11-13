@@ -115,6 +115,14 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   da 13 a 17 non si possono scegliere (Unione Europea), il minimo è 18.
 - I raggi delle città si cambiano con le frecce del campo (o i pulsanti «+»/«−»): il numero scritto non viene
   preso. Meta propone 80 km.
+- Un Reel pubblicato con una **musica con licenza** si può sponsorizzare: nel selettore ha un triangolo di avviso e,
+  dopo averlo scelto, Gestione inserzioni chiede un'altra musica solo per l'inserzione (automatica o scelta a mano);
+  il post originale resta com'è. Con «Usa post esistenti» Instagram chiede anche il link: profilo del club.
+- Per un post Facebook senza pulsante, «Aggiungi pulsante» nell'inserzione **modifica il post originale** (lo
+  dice la finestra): il pulsante poi resta sul post.
+- «Pubblica» dalla tabella dei gruppi selezionati apre «Esamina le bozze» con le schede Campagna, Gruppi e
+  Inserzioni: lì si controlla che siano spuntate solo le bozze giuste (il 13/11 la bozza del Reel della stagione
+  è rimasta esclusa da sola perché senza post).
 - Nella campagna presciistica (al 13/11, età 45+) le interazioni per età sono state: Facebook 45–54 8, 55–64 18,
   65+ 35; Instagram 18–24 2 (fuori fascia, con l'età come suggerimento), 45–54 7, 55–64 9, 65+ 6.
 
