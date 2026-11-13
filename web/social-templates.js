@@ -783,7 +783,7 @@ function monthK(titleText, rows, month, story = false) {
 
 // --- Carosello --------------------------------------------------------------------
 //
-// Tre pagine 4:5 (2/11/2026, dal carosello della presciistica in grafica/presciistica-carosello/):
+// Tre pagine 4:5 (2/11/2026, dal carosello della presciistica, la cui cartella di grafica è stata tolta il 13/11/2026):
 // la copertina col logo grande sul blu, il bollino nel colore del post (s.badge, di solito «Novità») e la
 // linguetta rossa «Scorri»; il post K con la stessa linguetta; il finale fisso, come l'outro del
 // video della stagione (grafica/video-stagione/compositions/frames/05-seguici.html).

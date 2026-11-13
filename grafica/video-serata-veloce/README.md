@@ -9,8 +9,7 @@ presentazione della stagione 2026/27 (mercoledì 25 novembre 2026, ore 21, Circo
   secondi (sciatore, pista, funivia, scarpone) e poi lo spruzzo verso la camera per 1,7 secondi, la cui
   neve copre l'obiettivo all'arrivo del finale; sopra, «Stagione 2026/27» e «Nuove gite, settimana bianca
   e corsi».
-- **9–16 s**: il finale della serata `compositions/frames/05-serata.html`, lo stesso del Reel da 19 secondi
-  (`../video-presentazione/`).
+- **9–16 s**: il finale della serata `compositions/frames/05-serata.html`.
 
 `assets` e `compositions` sono collegamenti a `../video-stagione`; le clip in `assets/clip/verticali/` le
 prepara `../video-stagione/prepara-clip.sh` (fuori da git).
