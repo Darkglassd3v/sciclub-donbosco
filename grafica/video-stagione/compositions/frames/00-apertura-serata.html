@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it">
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Barlow Condensed"; font-weight: 800; src: url("assets/fonts/barlow-condensed-800.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 600; src: url("assets/fonts/barlow-600.woff2") format("woff2"); }
+        @font-face { font-family: "Barlow"; font-weight: 700; src: url("assets/fonts/barlow-700.woff2") format("woff2"); }
+        /* Apertura del secondo Reel della serata (../../../video-serata-post, 13/11/2026), copia di 05-serata.html:
+         * le stesse scritte e lo stesso riquadro giallo della scheda finale, ma sulla foto del post (foto-gruppo.jpg,
+         * copia di ../lancio-stagione/sorgenti/foto-gruppo.jpg) con un velo blu più leggero in alto; il logo lo
+         * disegna il Reel, che lo fa rimbalzare qui e poi volare nell'angolo. Testi fra 270 e 1580 px, fuori dalle
+         * zone coperte da Instagram. */
+        #root { position: absolute; inset: 0; overflow: hidden; color: #fff; font-family: "Barlow Condensed", sans-serif; background: #06396a; }
+        #f00-apertura-cam { position: absolute; inset: 0; }
+        #f00-apertura-cam img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+        /* Velo più leggero in alto, dove si vede la foto, e pieno sotto le scritte perché restino leggibili */
+        #f00-apertura-velo { position: absolute; inset: 0;
+          background: linear-gradient(180deg, rgba(8, 76, 141, 0.45) 0%, rgba(8, 76, 141, 0.72) 32%, rgba(8, 76, 141, 0.9) 60%, rgba(8, 76, 141, 0.92) 100%); }
+        #f00-apertura-luce { position: absolute; left: 140px; top: 40px; width: 800px; height: 800px; border-radius: 50%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.12) 38%, rgba(255, 255, 255, 0) 68%); }
+        #f00-apertura-col { position: absolute; left: 64px; right: 64px; top: 270px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+        #f00-apertura-logo { width: 300px; height: 300px; display: block; border-radius: 50%;
+          box-shadow: 0 0 0 12px #fff, 0 0 0 18px #FCCF02, 0 16px 40px rgba(0, 0, 0, 0.4);
+          /* Il logo che si vede è quello del Reel (../../../video-serata-post/index.html), che rimbalza qui sopra e poi
+           * vola nell'angolo: questo tiene solo il posto, così le scritte restano dove sono nella scheda finale */
+          visibility: hidden; }
+        #f00-apertura-titolo { margin-top: 44px; font-size: 140px; font-weight: 800; line-height: 0.9; color: #FCCF02; text-transform: uppercase; white-space: nowrap; }
+        #f00-apertura-sotto { margin-top: 16px; font: 700 54px/1.15 Barlow, sans-serif; }
+        /* Data e ora nel riquadro giallo con l'angolo tagliato, come la tessera dei post K */
+        #f00-apertura-quando { margin-top: 54px; padding: 18px 40px 14px; background: #FCCF02; color: #084C8D;
+          clip-path: polygon(26px 0, 100% 0, 100% 100%, 0 100%, 0 26px); font-size: 92px; font-weight: 800; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+        #f00-apertura-ora { display: block; margin-top: 6px; font-size: 76px; }
+        #f00-apertura-dove { margin-top: 46px; display: flex; align-items: flex-start; gap: 18px; text-align: left; }
+        #f00-apertura-dove svg { width: 58px; height: 58px; flex: none; margin-top: 4px; }
+        #f00-apertura-luogo { font: 700 58px/1.1 Barlow, sans-serif; }
+        #f00-apertura-indirizzo { display: block; margin-top: 8px; font: 600 46px/1.1 Barlow, sans-serif; }
+        #f00-apertura-extra { margin-top: 40px; font: 700 50px/1.1 Barlow, sans-serif; color: #FCCF02; }
+      </style>
+      <div id="root" data-composition-id="f00-apertura-serata" data-width="1080" data-height="1920">
+        <div id="f00-apertura-cam">
+          <img id="f00-apertura-foto" src="assets/social/foto-gruppo.jpg" alt="" />
+        </div>
+        <div id="f00-apertura-velo"></div>
+        <div id="f00-apertura-luce"></div>
+        <div id="f00-apertura-col">
+          <img id="f00-apertura-logo" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
+          <div id="f00-apertura-titolo">Ti aspettiamo</div>
+          <div id="f00-apertura-sotto">Presentazione della stagione 2026/27</div>
+          <div id="f00-apertura-quando">Mercoledì 25 novembre<span id="f00-apertura-ora">ore 21</span></div>
+          <div id="f00-apertura-dove">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FCCF02" d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z" /></svg>
+            <div id="f00-apertura-luogo">Circolo Way Assauto<span id="f00-apertura-indirizzo">corso Pietro Chiesa 20, Asti</span></div>
+          </div>
+          <div id="f00-apertura-extra">Buffet e brindisi finale</div>
+        </div>
+      </div>
+      <script>
+        const tl = gsap.timeline({ paused: true });
+        const DUR = 4.8;
+        // I testi uno dopo l'altro, mentre il logo del Reel rimbalza al suo posto, tutti dentro entro 2 s perché ci
+        // sia il tempo di leggerli prima della tendina (3,9 s)
+        tl.fromTo("#f00-apertura-cam", { scale: 1.08 }, { scale: 1, duration: DUR, ease: "none" }, 0);
+        tl.fromTo("#f00-apertura-titolo", { scale: 1.5, filter: "blur(14px)", opacity: 0 }, { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.5, ease: "power4.out" }, 0.55);
+        tl.fromTo("#f00-apertura-sotto", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 0.8);
+        // La data entra da sinistra come la tessera dei post e fa un piccolo scatto, per farsi notare
+        tl.fromTo("#f00-apertura-quando", { x: -140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "expo.out" }, 1.0);
+        tl.to("#f00-apertura-quando", { scale: 1.06, duration: 0.18, ease: "power1.out", yoyo: true, repeat: 1 }, 1.5);
+        tl.fromTo("#f00-apertura-dove", { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "expo.out" }, 1.3);
+        tl.fromTo("#f00-apertura-extra", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }, 1.55);
+        window.__timelines["f00-apertura-serata"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

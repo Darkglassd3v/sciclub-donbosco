@@ -4,9 +4,9 @@ Testi da incollare sotto i post. Nessun prezzo; il profilo Instagram è `@sciclu
 
 ## Post 1: invito alla serata (dal 13 al 25 novembre)
 
-Immagini: `invito-post.jpg` (post), `invito-story.jpg` (storia) e il Reel veloce
-`../video-serata-veloce/renders/invito-serata-veloce-16s.mp4` (o quello da 19 s
-`../video-presentazione/renders/invito-serata-19s.mp4`).
+Immagini: `invito-post.jpg` (post su Facebook), `invito-story.jpg` (storia) e, su Instagram, uno dei due Reel
+proposti: `../video-serata-post/renders/invito-serata-post-16s.mp4` (apre con l'invito sulla foto del post) o
+`../video-serata-veloce/renders/invito-serata-veloce-16s.mp4` (apre col logo grande, l'invito arriva alla fine).
 
 ### Instagram
 
@@ -53,7 +53,7 @@ Su Instagram ci trovi come @sciclubdonbosco_asti
 
 Carosello di tre immagini, in quest'ordine: `si-parte-1.jpg` (copertina), `si-parte-2.jpg`
 (le gite di dicembre), `si-parte-3.jpg` (da non perdere). Insieme si pubblica il Reel della stagione
-`../video-stagione/renders/story-stagione-16s.mp4` (o la versione da 19 s), per la campagna già in bozza.
+`../video-stagione/renders/story-stagione-16s.mp4`, per la campagna già in bozza.
 
 ### Instagram
 

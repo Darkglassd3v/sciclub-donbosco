@@ -16,9 +16,8 @@ Story di Instagram per promuovere la stagione 2026/27 dello Sci Club Don Bosco A
 seguire i social: «devi seguirci per trovare info sulle nuove gite». Il video verrà anche
 sponsorizzato nelle storie con un'inserzione Meta, rivolta soprattutto a chi non conosce il club:
 per questo, dal 31/10, è corto, con il marchio riconoscibile fin dal primo secondo e le
-informazioni condensate in una sola frase. Ci sono due versioni con le stesse scene: 16 s, con
-cambi più frequenti (questa cartella), e 19 s, un po' più calma (`../video-stagione-19s/`, che usa
-gli stessi file tramite collegamenti).
+informazioni condensate in una sola frase. Dura 16 s, con cambi frequenti; la versione da 19 s, più
+calma, è stata tolta il 13/11/2026.
 
 ## Assets
 

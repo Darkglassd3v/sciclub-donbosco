@@ -19,17 +19,20 @@
 
 ## Richieste nuove
 
-- [ ] **Lancio della stagione 2026/27 (12/11): file pronti, da pubblicare.** In `grafica/lancio-stagione/`
-      (calendario, file e sponsorizzazione nel README, testi in `didascalie.md`) e Reel veloce per
-      Instagram in `grafica/video-serata-veloce/renders/invito-serata-veloce-16s.mp4` (quello da 19 s resta
-      in `grafica/video-presentazione/renders/`). L'evento del 25/11 in produzione ha già testi e foto.
+- [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pronta in bozza, mancano i post.** In
+      `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla
+      serata del 25/11: su Facebook il post `invito-post.jpg`, su Instagram uno dei due Reel da 16 s,
+      `grafica/video-serata-post/renders/invito-serata-post-16s.mp4` (apre con l'invito sulla foto del post, finale
+      «Seguici») o `grafica/video-serata-veloce/renders/invito-serata-veloce-16s.mp4`; la storia `invito-story.jpg` su
+      entrambi. L'evento del 25/11 in produzione ha già testi e foto. In Gestione inserzioni c'è la campagna «Serata
+      25/11 - Invito - Copertura Facebook e Instagram» in bozza (dettagli nel README del lancio).
       Restano:
-      1. L'utente pubblica il post 1 (invito alla serata) entro il 15/11, su Facebook con l'immagine e su
-         Instagram con il Reel veloce e una musica libera da diritti.
-      2. Poi Claude prepara in Gestione inserzioni le due bozze con «Usa post esistente», con il pubblico
-         allargato proposto il 12/11 (Facebook 35–65 a 2 € al giorno, Instagram 18–55 a 3 € al giorno, fino al
-         24/11; dettagli nel README del lancio e regole in `docs/META-ADS.md`); «Pubblica» e il pagamento li fa
-         l'utente.
+      1. L'utente pubblica il post su Facebook e il Reel su Instagram (musica dalla libreria senza diritti, copertina
+         su un fotogramma con data e luogo, «Consiglia su Facebook» spento) e nel canale WhatsApp l'immagine del post
+         con il sondaggio «Ci vediamo mercoledì 25?».
+      2. Claude collega i due post alle inserzioni con «Usa post esistente» (pulsante «Scopri di più»), ricontrolla
+         date, budget, età e posizionamenti dei due gruppi; «Pubblica» e il pagamento li fa l'utente. Dopo 3 giorni
+         «Dettagli» › per regione e per età (raggio di 45 km da Asti).
       3. Storie di promemoria il 22/11 (con il conto alla rovescia) e il 25/11.
       4. Il 26/11 il carosello «Si parte!» e il Reel della stagione, collegato alla campagna già in bozza
          (riaccendere la campagna prima di pubblicare), sponsorizzazione fino al 6/12.

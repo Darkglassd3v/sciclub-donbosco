@@ -23,9 +23,8 @@ con la neve.
 
 Il 31/10 la versione lunga e calma (24 s) è stata sostituita da questa, corta, per
 l'inserzione nelle storie: marchio subito riconoscibile, informazioni in una frase sola. I tempi
-qui sotto sono quelli della versione da 16 s (`index.html`); la versione da 19 s
-(`../video-stagione-19s/index.html`) ha le stesse scene: stagione 2,5–6,5 s, frase 6,5–11 s
-(`03-gite-19s.html`: tavola 3 s, poi lo spruzzo), finale 11–19 s.
+qui sotto sono quelli della versione da 16 s (`index.html`), l'unica rimasta: quella da 19 s è stata
+tolta il 13/11/2026.
 
 Clip in `assets/clip/verticali/` (fuori da git, le rifà `prepara-clip.sh`): Mixkit (Stock Video
 Free License) e due Pexels (licenza Pexels), ritagliate in verticale.

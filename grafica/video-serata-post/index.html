@@ -1,0 +1,89 @@
+<!doctype html>
+<!-- Seconda proposta di Reel per Instagram dell'invito alla serata di presentazione (25/11/2026): 16 s, nello stile
+     del Reel veloce (../video-serata-veloce). Apre con il logo che entra rimbalzando e, sotto, le scritte della scheda
+     finale della serata identiche, sulla foto del post (compositions/frames/00-apertura-serata.html); a 3,9 s una
+     tendina a 45° come nel video della stagione porta ai tagli veloci di 00-veloce.html, partiti mezzo secondo dopo
+     che nel Reel veloce per lasciare il tempo di leggere; a 9,5 s, con la neve dello spruzzo, resta solo «Seguici»
+     (05-seguici-serata.html). Il logo è sempre visibile: rimbalza sopra le scritte dell'invito, gira e va nell'angolo
+     prima della tendina, resta lì per tutti i tagli e se ne va col lampo, quando il finale mostra il suo al centro.
+     assets e compositions sono collegamenti a ../video-stagione. -->
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #06396a; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .scena { position: absolute; inset: 0; }
+      /* Tendina a 45° del video della stagione: una banda gialla con il filo blu scende lungo la diagonale */
+      .banda { position: absolute; left: 0; top: 0; width: 1080px; height: 1160px; pointer-events: none; }
+      .banda i { position: absolute; inset: 0; }
+      .banda .pieno { clip-path: polygon(0 1080px, 100% 0, 100% 52px, 0 1132px); }
+      .banda .filo { clip-path: polygon(0 1140px, 100% 60px, 100% 74px, 0 1154px); }
+      .banda.gialla .pieno { background: #FCCF02; }
+      .banda.gialla .filo { background: #084C8D; }
+      /* Logo blu tondo con l'anello bianco e il filo giallo della scheda: nell'angolo in alto a sinistra, sotto la
+       * fascia coperta da Instagram; all'inizio è ingrandito sopra le scritte dell'invito (300 px al centro).
+       * Il tempo sta sullo strato a tutto schermo: un <img> a tempo prende il formato pieno e si stira. */
+      #logo-strato { position: absolute; inset: 0; pointer-events: none; }
+      #logo-fisso { position: absolute; left: 64px; top: 270px; width: 210px; height: 210px; border-radius: 50%;
+        box-shadow: 0 0 0 8px #fff, 0 0 0 12px #FCCF02, 0 12px 30px rgba(0, 0, 0, 0.4); }
+      /* Stacco verso il finale: la neve dello spruzzo copre l'obiettivo, un lampo bianco la completa e il
+       * finale si schiarisce da sotto */
+      #neve { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+        background: radial-gradient(circle at 32% 44%, #ffffff 0%, #f1f5fa 45%, #d9e3ee 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="16" data-width="1080" data-height="1920">
+      <div class="scena" id="f00-veloce" data-composition-id="f00-veloce" data-composition-src="compositions/frames/00-veloce.html"
+        data-start="0.5" data-duration="9.6" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f05-seguici-serata" data-composition-id="f05-seguici-serata" data-composition-src="compositions/frames/05-seguici-serata.html"
+        data-start="9.5" data-duration="6.5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div class="scena" id="f00-apertura-serata" data-composition-id="f00-apertura-serata" data-composition-src="compositions/frames/00-apertura-serata.html"
+        data-start="0" data-duration="4.8" data-track-index="1" data-width="1080" data-height="1920"></div>
+      <div class="banda gialla" id="banda-apertura"><i class="pieno"></i><i class="filo"></i></div>
+      <div id="logo-strato" class="clip" data-start="0" data-duration="9.5" data-track-index="3">
+        <img id="logo-fisso" src="assets/logo/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti" />
+      </div>
+      <div id="neve"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // Il logo cade dall'alto al posto di quello della scheda (300 px, centro a 540, 420 px: dal centro dell'angolo
+      // 169, 375 px sono x 371, y 45, scala 300/210), si schiaccia come una gomma e rimbalza come nel Reel veloce;
+      // poi gira sempre più veloce (tre giri), si rimpicciolisce e vola nell'angolo prima della tendina.
+      const S = 300 / 210;
+      const CENTRO = { x: 371, y: 45 };
+      tl.fromTo("#logo-fisso", { x: CENTRO.x, y: CENTRO.y - 700, scaleX: 0.6 * S, scaleY: 0.6 * S, opacity: 0 }, {
+        keyframes: [
+          { y: CENTRO.y, scaleX: 0.8 * S, scaleY: 1.15 * S, opacity: 1, duration: 0.32, ease: "power2.in" },
+          { scaleX: 1.2 * S, scaleY: 0.8 * S, duration: 0.12, ease: "power2.out" },
+          { y: CENTRO.y - 90, scaleX: 0.92 * S, scaleY: 1.1 * S, duration: 0.22, ease: "power2.out" },
+          { y: CENTRO.y, scaleX: 1.1 * S, scaleY: 0.9 * S, duration: 0.2, ease: "power2.in" },
+          { scaleX: S, scaleY: S, duration: 0.24, ease: "elastic.out(1, 0.5)" },
+        ],
+      }, 0.05);
+      tl.fromTo("#logo-fisso", { rotation: 0 }, { rotation: 1080, duration: 1.35, ease: "power3.inOut", immediateRender: false }, 2.45);
+      tl.to("#logo-fisso", { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.95, ease: "power3.inOut" }, 2.85);
+      // Tendina: l'invito sparisce dall'alto lungo una linea a 45° che scende con la sua banda e scopre i tagli
+      // veloci; nel Reel veloce il primo taglio (lo sciatore) arriva a 3,5 s dall'inizio di 00-veloce, cioè a 4 s qui.
+      const TENDINA = 3.9;
+      const sotto = (a) => `polygon(0px ${a + 1080}px, 1080px ${a}px, 1080px 1920px, 0px 1920px)`;
+      tl.fromTo("#f00-apertura-serata", { clipPath: sotto(-1160) }, { clipPath: sotto(1920), duration: 0.8, ease: "power2.inOut" }, TENDINA);
+      tl.fromTo("#banda-apertura", { y: -1160 }, { y: 1920, duration: 0.8, ease: "power2.inOut" }, TENDINA);
+      // Finale: lampo bianco quando la neve dello spruzzo copre l'obiettivo (9 s in 00-veloce, cioè 9,5 s qui),
+      // poi «Seguici» si schiarisce dal bianco e torna a fuoco
+      const FINALE = 9.5;
+      tl.fromTo("#neve", { opacity: 0 }, { opacity: 1, duration: 0.12, ease: "power2.out" }, FINALE - 0.08);
+      tl.to("#neve", { opacity: 0, duration: 0.55, ease: "power1.out" }, FINALE + 0.08);
+      tl.fromTo("#f05-seguici-serata", { opacity: 0, filter: "blur(18px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }, FINALE);
+      // Il logo dell'angolo se ne va col lampo: il finale ha il suo, al centro
+      tl.to("#logo-fisso", { opacity: 0, duration: 0.2, ease: "power2.in" }, FINALE - 0.25);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

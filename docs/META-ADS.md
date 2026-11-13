@@ -95,6 +95,29 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
 - Su Facebook Meta tende già a spendere sulle fasce più anziane, e per il pubblico 45–65+ il
   costo per mille visualizzazioni è più alto.
 
+## Cose viste preparando la campagna dell'invito (13/11/2026)
+
+- Con l'obiettivo **Notorietà › copertura** il gruppo nasce con un **budget totale di 350 €**: va cambiato in
+  «Budget giornaliero». Con il budget giornaliero la «frequenza desiderata» diventa un limite (2 volte ogni 7
+  giorni). In questi gruppi la «spesa limitata per i posizionamenti esclusi» non c'è.
+- Scrivendo l'importo sopra quello vecchio senza cancellarlo prima, «3,00» è diventato **300,00 € al giorno**: si
+  seleziona tutto, si cancella e si scrive l'importo, poi si legge la frase «Spenderemo circa … al giorno».
+- Selezionando una riga nella tabella, al posto di «Duplica» compare **«Pubblica»**: prima di cliccare si guarda
+  l'etichetta del pulsante. La finestra «Esamina le bozze» si chiude con «Annulla».
+- **Duplica** propone di applicare tre «consigli» (posizionamenti Advantage+, pubblico Advantage+, persone
+  interessate ai luoghi) e poi «Raggiungi più persone che potrebbero rispondere»: si tolgono tutti. La copia può
+  perdere la **data di fine** e la spunta «Usa come suggerimento» dell'età torna accesa: si ricontrollano.
+- Dopo la copia Meta ha acceso da solo la **condivisione del 20% del budget** fra i gruppi: si spegne con
+  «Disattiva condivisione del budget del gruppo di inserzioni» (vale per tutti i gruppi).
+- La **strategia di offerta** può passare da sola a «Obiettivo di costo per risultato» senza importo (errore
+  #2490487 «Importo o limite dell'offerta richiesti»): si rimette «Volume più elevato».
+- Per l'età vera: «Limita ulteriormente il tuo pubblico» › «Raggiungi un pubblico limitato», poi l'età; le età
+  da 13 a 17 non si possono scegliere (Unione Europea), il minimo è 18.
+- I raggi delle città si cambiano con le frecce del campo (o i pulsanti «+»/«−»): il numero scritto non viene
+  preso. Meta propone 80 km.
+- Nella campagna presciistica (al 13/11, età 45+) le interazioni per età sono state: Facebook 45–54 8, 55–64 18,
+  65+ 35; Instagram 18–24 2 (fuori fascia, con l'età come suggerimento), 45–54 7, 55–64 9, 65+ 6.
+
 ## Facebook e Instagram insieme
 
 - Meta manda fino al 99% della spesa su Facebook e ignora le «regole per i valori» che chiedono
