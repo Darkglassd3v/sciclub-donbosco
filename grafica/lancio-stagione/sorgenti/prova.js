@@ -1,12 +1,13 @@
-// Prove del lancio della stagione 2026/27 (richiesta del 12/11/2026): due post e un Reel.
+// Prove del lancio della stagione 2026/27 (richiesta del 12/11/2026): due post e due proposte di Reel.
 // - Post 1, invito alla serata di presentazione: mercoledì 25 novembre 2026 alle 21, al Circolo Way
 //   Assauto, corso Pietro Chiesa 20, Asti, con buffet e brindisi finale.
 // - Post 2, «Si parte!»: la prima gita il 1° dicembre, il calendario di dicembre, la prova gratuita con
 //   i maestri del 13 dicembre, il Dream Weekend dall'11 al 13 dicembre e i corsi dal 9 gennaio.
-// - Reel: la copia del video da 19 s con il finale della serata al posto di «Seguici».
 // - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 16 s, l'apertura col logo grande
 //   al centro con un secondo di pausa in più, poi un'inquadratura nuova almeno ogni secondo, lo spruzzo
 //   più lungo come stacco e lo stesso finale della serata.
+// - Seconda proposta per Instagram (richiesta del 13/11/2026): apre con il logo che rimbalza e le scritte della
+//   scheda finale sulla foto del post, poi gli stessi tagli veloci e alla fine solo «Seguici».
 // Le prove controllano i dati, le didascalie (niente prezzi, profilo Instagram nuovo), i testi del
 // finale del video, le misure delle immagini e del video prodotti e, se la variabile DB porta la
 // connessione, l'evento salvato nel database.
@@ -72,7 +73,7 @@ prova("didascalie", () => {
 });
 
 prova("finale del video della serata", () => {
-  const indice = leggi(path.join(GRAFICA, "video-presentazione", "index.html"));
+  const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
   assert.ok(indice.includes("compositions/frames/05-serata.html"), "il video non usa il finale della serata");
   assert.ok(!indice.includes("compositions/frames/05-seguici.html"), "il video usa ancora il finale «Seguici»");
   const finale = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "05-serata.html"));
@@ -105,8 +106,6 @@ function controllaVideo(progetto, nome, secondi) {
   assert.deepStrictEqual([info.streams[0].width, info.streams[0].height], [1080, 1920], `${nome} non è 1080×1920`);
   assert.ok(Math.abs(Number(info.format.duration) - secondi) < 0.2, `${nome} dura ${info.format.duration} s invece di ${secondi}`);
 }
-
-prova("video della serata", () => controllaVideo("video-presentazione", "invito-serata-19s.mp4", 19));
 
 prova("montaggio veloce per Instagram", () => {
   const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
@@ -150,6 +149,66 @@ prova("montaggio veloce per Instagram", () => {
 });
 
 prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "invito-serata-veloce-16s.mp4", 16));
+
+// Seconda proposta di Reel per Instagram (richiesta del 13/11/2026), nello stile del Reel veloce: apre con il
+// logo che entra rimbalzando e, sotto, le scritte della scheda finale della serata identiche (titolo, data e ora
+// nel riquadro giallo, luogo) sulla foto del post; il logo gira e va nell'angolo, dove resta sempre visibile per
+// tutti i tagli; una tendina a 45° porta ai tagli veloci di prima («Stagione 2026/27») e alla fine resta solo
+// «Seguici», con Instagram, Facebook ed email, senza ripetere l'evento.
+prova("Reel che apre con l'invito sulla foto del post", () => {
+  const indice = leggi(path.join(GRAFICA, "video-serata-post", "index.html"));
+  const veloce = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
+  const frames = path.join(GRAFICA, "video-stagione", "compositions", "frames");
+  assert.match(indice, /data-composition-id="main"[^>]*data-duration="16"/, "la proposta non dura 16 s");
+  const scena = (html, id) => (html.match(new RegExp(`<div class="scena" id="${id}"[^>]*>`)) || [""])[0];
+  const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
+  const apertura = scena(indice, "f00-apertura-serata");
+  assert.strictEqual(attr(apertura, "data-composition-src"), "compositions/frames/00-apertura-serata.html", "manca l'apertura con l'invito");
+  assert.strictEqual(Number(attr(apertura, "data-start")), 0, "l'invito non apre il Reel");
+  // I tagli veloci sono gli stessi del Reel veloce, spostati di mezzo secondo per lasciare il tempo di leggere
+  const tagli = scena(indice, "f00-veloce"), tagliVeloce = scena(veloce, "f00-veloce");
+  assert.strictEqual(attr(tagli, "data-composition-src"), attr(tagliVeloce, "data-composition-src"), "i tagli veloci non sono quelli del Reel veloce");
+  assert.strictEqual(Number(attr(tagli, "data-start")), 0.5, "i tagli veloci devono partire a 0,5 s");
+  assert.ok(indice.includes("const FINALE = 9.5;"), "lo stacco della neve deve restare sincronizzato con lo spruzzo (9,5 s)");
+  assert.strictEqual(Number(attr(scena(indice, "f05-seguici-serata"), "data-start")), 9.5, "manca «Seguici» a 9,5 s");
+  // Una tendina a 45° fra l'invito e i tagli
+  assert.ok(/class="banda[^"]*" id="banda-apertura"/.test(indice) && indice.includes('tl.fromTo("#f00-apertura-serata", { clipPath'),
+    "manca la tendina a 45° dopo l'invito");
+  // Il logo sempre visibile: entra rimbalzando al posto di quello della scheda, gira, va nell'angolo prima della
+  // tendina e ci resta fino a «Seguici», dove se ne va col lampo perché il finale ha il suo
+  assert.ok(/tl\.fromTo\("#logo-fisso"[\s\S]*?keyframes[\s\S]*?elastic\.out/.test(indice), "il logo non entra rimbalzando");
+  const vola = indice.match(/tl\.to\("#logo-fisso", \{ x: 0, y: 0, scaleX: 1, scaleY: 1, duration: ([\d.]+)[^}]*\}, ([\d.]+)\);/);
+  assert.ok(vola && /rotation: \d+/.test(indice), "il logo non gira e non va nell'angolo");
+  assert.ok(Number(vola[1]) + Number(vola[2]) <= 3.9, "il logo arriva nell'angolo dopo la tendina");
+  assert.ok(indice.includes('tl.to("#logo-fisso", { opacity: 0, duration: 0.2, ease: "power2.in" }, FINALE - 0.25);'), "il logo non resta fino a «Seguici»");
+  assert.ok(/<div id="logo-strato"[^>]*data-duration="9\.5"/.test(indice),
+    "lo strato del logo non dura fino a «Seguici» (9,5 s)");
+  // Le scritte sono identiche a quelle della scheda finale della serata, riquadro giallo compreso
+  const inizio = leggi(path.join(frames, "00-apertura-serata.html"));
+  const serata = leggi(path.join(frames, "05-serata.html"));
+  const colonna = (html, pre) => (html.match(new RegExp(`<div id="${pre}-col">([\\s\\S]*?)\\n        </div>\\n      </div>`)) || [])[1];
+  const testo = (html) => (html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  assert.ok(testo(colonna(serata, "f05-serata")).length > 50, "testi della scheda finale non trovati");
+  assert.strictEqual(testo(colonna(inizio, "f00-apertura")), testo(colonna(serata, "f05-serata")), "le scritte dell'apertura sono diverse dalla scheda finale");
+  const regola = (html, pre) => ((html.match(new RegExp(`#${pre}-quando \\{([^}]*)\\}`)) || [])[1] || "").replace(/\s+/g, " ");
+  assert.strictEqual(regola(inizio, "f00-apertura"), regola(serata, "f05-serata"), "il riquadro giallo dell'apertura non è identico");
+  // Sotto, la foto del post; il logo della scheda tiene solo il posto, perché quello visibile è il logo del Reel
+  const foto = (inizio.match(/<img id="f00-apertura-foto"[^>]*src="([^"]+)"/) || [])[1];
+  assert.ok(foto && fs.readFileSync(path.join(GRAFICA, "video-stagione", foto)).equals(fs.readFileSync(path.join(QUI, "foto-gruppo.jpg"))),
+    "la foto dell'apertura non è quella del post (foto-gruppo.jpg)");
+  assert.ok(/#f00-apertura-logo \{[^}]*visibility: hidden/.test(inizio), "nella scheda c'è ancora un secondo logo sotto quello che vola");
+  // Alla fine solo «Seguici», senza l'evento
+  const finale = leggi(path.join(frames, "05-seguici-serata.html"));
+  for (const canale of ["Instagram", "Facebook", "Email"]) {
+    assert.ok(finale.includes(`aria-label="${canale}"`), `manca ${canale} nel finale`);
+  }
+  assert.ok(!finale.includes('aria-label="WhatsApp"'), "nel finale c'è ancora l'icona di WhatsApp");
+  const fine = testo(finale.slice(finale.indexOf("<body>")));
+  assert.ok(fine.includes("per non perdere nessuna novità"), "manca «per non perdere nessuna novità»");
+  assert.ok(!/25 novembre/i.test(fine), "il finale ripete ancora l'evento");
+});
+
+prova("video che apre con l'invito sulla foto del post", () => controllaVideo("video-serata-post", "invito-serata-post-16s.mp4", 16));
 
 /** Una query al database: solo l'errore di psql, perché il messaggio di Node riporterebbe il comando con la password. */
 function psql(sql) {
