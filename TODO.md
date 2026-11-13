@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-11-12
+# TODO — aggiornato il 2026-11-13
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -81,9 +81,9 @@
          7.4 dal pannello. Le copie locali restano utili per provare il nuovo tema e le immagini.
       2. Nessuna cache delle pagine (risposta del server in circa 1,2 s): plugin LiteSpeed Cache,
          adatto al server, oppure la cache di WP-Optimize, oggi spenta.
-      3. Home di circa 8 MB: foto dello slider da circa 1 MB l'una (slide_1.jpg 1.095 KB, slide_3.jpg
-         974 KB), 768 KB di CSS e 490 KB di JavaScript di Enfold. Comprimere le immagini e convertirle
-         in WebP (WP-Optimize). Nel PHP dell'hosting `post_max_size` (512 MB) è minore di
+      3. Immagini: conversione in WebP fatta il 12-13/11/2026 con Converter for Media (8.442 immagini,
+         strategia «Ottimale», originali conservati, nuove foto convertite da sole; la foto della home
+         passa da 729 KB a 111 KB). Resta, nel PHP dell'hosting, `post_max_size` (512 MB) minore di
          `upload_max_filesize` (1 GB).
       4. Spazio: la cartella di WordPress senza temi, plugin e caricamenti pesa 3,48 GB (i file di
          WordPress sono circa 70 MB) e i caricamenti 4,12 GB: capire cosa c'è nella cartella principale
@@ -92,18 +92,45 @@
       6. La home non ha un titolo H1, 16 immagini su 18 non hanno il testo alternativo e la
          configurazione iniziale di Yoast SEO non è stata fatta (manca anche la pagina Facebook fra
          i profili).
-      Grafica nuova: i 76 articoli sono testo semplice e passano a qualsiasi tema; 8 pagine su 9 sono
-      fatte con il costruttore di Enfold e vanno rifatte se si cambia tema. Opzioni valutate:
-      A. Enfold con una delle 43 demo incluse (Travel, GYM, Academy, Modern): nessuna pagina da
-         rifare, ma resta pesante e l'import della demo azzera le opzioni del tema.
-      B. Astra con i modelli gratuiti «Outdoor Adventure» o «Travel & Tourism» (quelli sport sono a
-         pagamento).
-      C. Ollie o Twenty Twenty-Five (temi a blocchi, oltre 50 sezioni pronte): i più leggeri e
-         semplici da mantenere, da vestire nello stile dei post social (blu e giallo, logo tondo).
-      D. Kadence: buon tema, ma i modelli gratuiti sono generici.
-      Proposta: prima i punti 1-4, poi la grafica con C (o B partendo da un modello), lavorando su
-      una copia di prova. Da decidere con l'utente: chi gestisce l'hosting e quale opzione; poi un
-      abbozzo piccolo della home in due varianti da scegliere.
+      Grafica nuova, decisa il 13/11/2026: tema Kadence gratuito con il plugin Kadence Blocks al posto di
+      Enfold (che resta installato come riserva), nello stile dell'anteprima «neve», con testi e foto presi
+      pari pari dal sito in produzione, nessun testo bianco sopra le foto e le gite in liste di tre colori
+      (martedì verde, sabato blu, domenica giallo). Neve e Astra sono stati valutati: applicabili anche
+      loro, ma la prova completa è stata fatta su Kadence.
+      Stato al 13/11/2026: tutte le pagine sono rifatte a blocchi sulla copia locale con PHP 8.3 e
+      verificate (controlli automatici 17/17 su home e Gite e Corsi, 27/27 sulle altre pagine: nessun
+      blocco non valido, nessuna parola persa rispetto al sito vero, nessun errore PHP). Il sito vero non
+      è stato toccato.
+      Per ripartire dopo lo spegnimento del PC:
+      - Tutto il lavoro sta in `~/sciclub-wp-prova/`, fuori dal repository. `riavvia-copie.sh` ricrea le
+        copie locali (PHP 7.4 con Enfold su `http://127.0.0.1:8074`, PHP 8.3 con Kadence su
+        `http://127.0.0.1:8083`; il database resta nel container `wpp-db-181927`). Le anteprime si
+        servono con `cd ~/sciclub-wp-prova/abbozzi-sito && python3 -m http.server 8090 --bind 127.0.0.1`
+        (`neve4-home.html` e seguenti sono la versione approvata).
+      - Stato dettagliato e decisioni: `~/sciclub-wp-prova/piano-stile-enfold.md` e
+        `piano-sito-moderno.md`. Script in `~/sciclub-wp-prova/strumenti-neve/`:
+        `kadence_impostazioni.php` (colori, caratteri Barlow serviti dal sito, logo tondo, menu, piè di
+        pagina e CSS aggiuntivo `kadence-stile.css` di 180 righe), `kadence_blocchi.py` (home e Gite e
+        Corsi), `kadence_pagine.py` (le altre pagine), controlli `prova_kadence.py` e `prova_pagine.py`.
+        I blocchi li crea l'editor di WordPress dal Chrome dell'utente (sessione locale), così sono
+        sempre validi; WP-CLI della copia 8.3 in `wp-php/wp83.sh`.
+      - Salvataggi del database della copia: `wp-php/wp83-prima-di-kadence.sql` (con Enfold) e
+        `wp-php/wp83-kadence-13-11.sql` (con Kadence).
+      Prossimi passi:
+      a. Far vedere all'utente la copia locale completa e raccogliere le ultime modifiche (per esempio la
+         pagina Gite e Corsi ha il titolo centrato, mentre nell'anteprima era a sinistra con una foto).
+      b. Provare sulla copia il ritorno a Enfold (riattivare il tema e ripristinare le revisioni delle
+         pagine) e misurare quanto dura il passaggio.
+      c. Messa in linea in una sera tranquilla: backup UpdraftPlus scaricato; Kadence e Kadence Blocks
+         installati; tema attivato; impostazioni riportate; contenuto delle pagine incollato a blocchi;
+         la pagina «footer» di Enfold messa in bozza (con Kadence diventerebbe pubblica e mostrerebbe il
+         codice di Enfold); formato della data «j F Y» in Impostazioni > Generali (oggi «F j, Y»);
+         traduzione italiana di Kadence (sulla copia manca perché la rete esterna è bloccata); controllo
+         pagina per pagina e di un articolo, poi i due script di controllo puntati al sito vero.
+      d. Fino ad allora sul sito vero non si attiva nessun tema nuovo: le pagine fatte con Enfold
+         mostrerebbero il loro codice.
+      e. Refusi del sito lasciati come sono, perché i testi si copiano pari pari; da decidere con
+         l'utente: «Zermat», «ASSICURAZOINI», «Pivacy», «GIOLE».
 
 - [ ] **Normalizzazione dei soci (29/10): fatta, restano 14 schede da sistemare a mano.**
       Email in minuscolo, anagrafica e indirizzi in maiuscolo, città e luoghi di nascita col nome
