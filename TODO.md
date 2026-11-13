@@ -95,16 +95,22 @@
       Grafica nuova, decisa il 13/11/2026: tema Kadence gratuito con il plugin Kadence Blocks al posto di
       Enfold (che resta installato come riserva), nello stile dell'anteprima «neve», con testi e foto presi
       pari pari dal sito in produzione, nessun testo bianco sopra le foto e le gite in liste di tre colori
-      (martedì verde, sabato blu, domenica giallo). Neve e Astra sono stati valutati: applicabili anche
-      loro, ma la prova completa è stata fatta su Kadence.
+      (martedì rosso, sabato blu, domenica giallo; niente verde). Scelte del 13/11 sera: le news della home
+      in un riquadro giallo pieno; i pulsanti Facebook, Instagram e Mail sempre visibili (blu, fissi a metà
+      altezza sul lato destro del PC, barra fissa in basso sul telefono: elemento «Social» del piè di
+      pagina di Kadence spostato dal CSS); le schede delle gite come pulsanti grandi colorati. Lo stile
+      «Apple» provato lo stesso giorno è stato bocciato (troppo spazio vuoto, apertura senza foto) e resta
+      solo come storia in `strumenti-neve/stile-apple.css`. Neve e Astra sono stati valutati: applicabili
+      anche loro, ma la prova completa è stata fatta su Kadence.
       Stato al 13/11/2026: tutte le pagine sono rifatte a blocchi sulla copia locale con PHP 8.3 e
       verificate (controlli automatici 17/17 su home e Gite e Corsi, 27/27 sulle altre pagine: nessun
       blocco non valido, nessuna parola persa rispetto al sito vero, nessun errore PHP). Il sito vero non
       è stato toccato.
       Per ripartire dopo lo spegnimento del PC:
       - Tutto il lavoro sta in `~/sciclub-wp-prova/`, fuori dal repository. `riavvia-copie.sh` ricrea le
-        copie locali (PHP 7.4 con Enfold su `http://127.0.0.1:8074`, PHP 8.3 con Kadence su
-        `http://127.0.0.1:8083`; il database resta nel container `wpp-db-181927`). Le anteprime si
+        copie locali (PHP 7.4 su `http://127.0.0.1:8074` e PHP 8.3 su `http://127.0.0.1:8083`, dal 13/11
+        sera tutte e due con Kadence e lo stesso stile, così si vede che funziona anche con il PHP di
+        produzione; il database resta nel container `wpp-db-181927`). Le anteprime si
         servono con `cd ~/sciclub-wp-prova/abbozzi-sito && python3 -m http.server 8090 --bind 127.0.0.1`
         (`neve4-home.html` e seguenti sono la versione approvata).
       - Stato dettagliato e decisioni: `~/sciclub-wp-prova/piano-stile-enfold.md` e
@@ -113,9 +119,9 @@
         pagina e CSS aggiuntivo `kadence-stile.css` di 180 righe), `kadence_blocchi.py` (home e Gite e
         Corsi), `kadence_pagine.py` (le altre pagine), controlli `prova_kadence.py` e `prova_pagine.py`.
         I blocchi li crea l'editor di WordPress dal Chrome dell'utente (sessione locale), così sono
-        sempre validi; WP-CLI della copia 8.3 in `wp-php/wp83.sh`.
-      - Salvataggi del database della copia: `wp-php/wp83-prima-di-kadence.sql` (con Enfold) e
-        `wp-php/wp83-kadence-13-11.sql` (con Kadence).
+        sempre validi; WP-CLI in `wp-php/wp83.sh` e `wp-php/wp74.sh`.
+      - Salvataggi del database delle copie: `wp-php/wp83-prima-di-kadence.sql` e `wp-php/wp74-enfold-13-11.sql`
+        (con Enfold), `wp-php/wp83-kadence-13-11.sql` (con Kadence).
       Prossimi passi:
       a. Far vedere all'utente la copia locale completa e raccogliere le ultime modifiche (per esempio la
          pagina Gite e Corsi ha il titolo centrato, mentre nell'anteprima era a sinistra con una foto).
