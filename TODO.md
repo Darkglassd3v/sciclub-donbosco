@@ -136,14 +136,28 @@
          legali e Pagina 404 non hanno nessuna revisione con il contenuto di Enfold. In produzione il
          ritorno è quindi: UpdraftPlus > Ripristina, solo il database, dal backup fatto la sera stessa
          prima del cambio (qualche minuto); Enfold resta installato.
-      c. Messa in linea in una sera tranquilla: backup UpdraftPlus scaricato; Kadence e Kadence Blocks
-         installati; tema attivato; impostazioni riportate; contenuto delle pagine incollato a blocchi;
-         la pagina «footer» di Enfold messa in bozza (con Kadence diventerebbe pubblica e mostrerebbe il
-         codice di Enfold); formato della data «j F Y» in Impostazioni > Generali (oggi «F j, Y»);
-         traduzione italiana di Kadence (sulla copia manca perché la rete esterna è bloccata); controllo
-         pagina per pagina e di un articolo, poi i due script di controllo puntati al sito vero.
+      c. Messa in linea in una sera tranquilla, preparata il 13/11/2026. Sul sito vero sono già installati,
+         non attivi, Kadence 1.6.0 e Kadence Blocks 3.9.1 (le stesse versioni provate sulle copie); il
+         sito è ancora su Enfold. Il cambio lo fa uno script nel Chrome dell'utente, con la sessione di
+         amministrazione già aperta: `strumenti-neve/prepara_cambio.py` scrive i dati dalla copia PHP 7.4,
+         `strumenti-neve/cambio_tema.js` li applica in due passi (controlli, originali per il ritorno,
+         caratteri Barlow nella libreria dei caratteri di WordPress e Kadence Blocks attivo; poi, dal
+         Personalizza di Kadence, impostazioni, tema attivo, pagine a blocchi, pagina «footer» in bozza,
+         widget del piè di pagina, formato della data «j F Y» e verifica). Provato due volte sulla copia
+         PHP 7.4 riportata a Enfold: 15,7 s in tutto, pagine col codice di Enfold per circa 2 s, risultato
+         identico alla copia di riferimento (impostazioni, CSS, pagine, widget) e controlli 40/40 e 23/23;
+         ritorno rapido `cambioKadence.ritorna()` in 3,9 s, pagine identiche al salvataggio di Enfold.
+         Il 13/11 sono stati corretti anche i loghi della pagina Sponsor, che nella copia avevano perso
+         i 28 link ai siti degli sponsor (ora con il loro testo alternativo).
+         La sera del cambio: backup UpdraftPlus del database subito prima; `prepara_cambio.py` rifatto
+         (lo script si ferma se una pagina del sito vero è stata modificata dopo la conversione); dopo
+         il cambio, controllo pagina per pagina e di un articolo dal PC e dal telefono, traduzione
+         italiana di Kadence (sulla copia manca perché la rete esterna è bloccata), i due script di
+         controllo puntati al sito vero.
       d. Fino ad allora sul sito vero non si attiva nessun tema nuovo: le pagine fatte con Enfold
          mostrerebbero il loro codice.
+      f. Da decidere con l'utente prima del cambio: la testata delle copie mostra la scritta «Sci Club Don
+         Bosco Asti» senza il logo tondo (il logo caricato sulla copia non è impostato nel tema).
       e. Refusi del sito lasciati come sono, perché i testi si copiano pari pari; da decidere con
          l'utente: «Zermat», «ASSICURAZOINI», «Pivacy», «GIOLE».
 
