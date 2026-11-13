@@ -125,8 +125,13 @@
       Prossimi passi:
       a. Far vedere all'utente la copia locale completa e raccogliere le ultime modifiche (per esempio la
          pagina Gite e Corsi ha il titolo centrato, mentre nell'anteprima era a sinistra con una foto).
-      b. Provare sulla copia il ritorno a Enfold (riattivare il tema e ripristinare le revisioni delle
-         pagine) e misurare quanto dura il passaggio.
+      b. Ritorno a Enfold provato il 13/11 sulla copia PHP 7.4: ripristino del database dal salvataggio
+         fatto prima del cambio (2,4 s), Enfold di nuovo attivo, le 9 pagine e il memoriale rispondono
+         200 con la grafica di prima, menu intatto, nessun errore PHP; poi di nuovo Kadence dal suo
+         salvataggio (2,5 s, controlli 19/19 e 27/27). Le revisioni non bastano come ritorno: News, Note
+         legali e Pagina 404 non hanno nessuna revisione con il contenuto di Enfold. In produzione il
+         ritorno è quindi: UpdraftPlus > Ripristina, solo il database, dal backup fatto la sera stessa
+         prima del cambio (qualche minuto); Enfold resta installato.
       c. Messa in linea in una sera tranquilla: backup UpdraftPlus scaricato; Kadence e Kadence Blocks
          installati; tema attivato; impostazioni riportate; contenuto delle pagine incollato a blocchi;
          la pagina «footer» di Enfold messa in bozza (con Kadence diventerebbe pubblica e mostrerebbe il
