@@ -19,20 +19,21 @@
 
 ## Richieste nuove
 
-- [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pronta in bozza, mancano i post.** In
+- [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pubblicata il 13/11.** In
       `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla
       serata del 25/11: su Facebook il post `invito-post.jpg`, su Instagram uno dei due Reel da 16 s,
       `grafica/video-serata-post/renders/invito-serata-post-16s.mp4` (apre con l'invito sulla foto del post, finale
       «Seguici») o `grafica/video-serata-veloce/renders/invito-serata-veloce-16s.mp4`; la storia `invito-story.jpg` su
-      entrambi. L'evento del 25/11 in produzione ha già testi e foto. In Gestione inserzioni c'è la campagna «Serata
-      25/11 - Invito - Copertura Facebook e Instagram» in bozza (dettagli nel README del lancio).
+      entrambi. L'evento del 25/11 in produzione ha già testi e foto. Il 13/11 l'utente ha pubblicato il post su
+      Facebook e il Reel che apre con l'invito su Instagram; la campagna «Serata 25/11 - Invito - Copertura Facebook e
+      Instagram» è stata pubblicata lo stesso giorno su conferma esplicita dell'utente (circa 87 € al massimo, dal 13/11
+      alle 14:00 al 25/11 alle 18:00; dettagli nel README del lancio). Inserzione Facebook con il post e «Scopri di più»
+      verso la pagina (il pulsante è stato aggiunto al post), inserzione Instagram con il Reel, «Scopri di più» verso il
+      profilo e musica scelta da Meta fra quelle consentite (il Reel ha una musica con licenza, che resta sul post).
       Restano:
-      1. L'utente pubblica il post su Facebook e il Reel su Instagram (musica dalla libreria senza diritti, copertina
-         su un fotogramma con data e luogo, «Consiglia su Facebook» spento) e nel canale WhatsApp l'immagine del post
-         con il sondaggio «Ci vediamo mercoledì 25?».
-      2. Claude collega i due post alle inserzioni con «Usa post esistente» (pulsante «Scopri di più»), ricontrolla
-         date, budget, età e posizionamenti dei due gruppi; «Pubblica» e il pagamento li fa l'utente. Dopo 3 giorni
-         «Dettagli» › per regione e per età (raggio di 45 km da Asti).
+      1. Nel canale WhatsApp l'immagine del post con il sondaggio «Ci vediamo mercoledì 25?» (lo fa l'utente).
+      2. Dopo 3 giorni (16/11) in Gestione inserzioni «Dettagli» › per regione e per età (raggio di 45 km da Asti):
+         se la spesa finisce soprattutto nella cintura di Torino, tornare a Asti 35 km più Alessandria 25 km.
       3. Storie di promemoria il 22/11 (con il conto alla rovescia) e il 25/11.
       4. Il 26/11 il carosello «Si parte!» e il Reel della stagione, collegato alla campagna già in bozza
          (riaccendere la campagna prima di pubblicare), sponsorizzazione fino al 6/12.
