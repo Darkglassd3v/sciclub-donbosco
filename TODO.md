@@ -148,7 +148,9 @@
          identico alla copia di riferimento (impostazioni, CSS, pagine, widget) e controlli 40/40 e 23/23;
          ritorno rapido `cambioKadence.ritorna()` in 3,9 s, pagine identiche al salvataggio di Enfold.
          Il 13/11 sono stati corretti anche i loghi della pagina Sponsor, che nella copia avevano perso
-         i 28 link ai siti degli sponsor (ora con il loro testo alternativo).
+         i 28 link ai siti degli sponsor (ora con il loro testo alternativo), e, su richiesta
+         dell'utente, la testata ha il logo tondo accanto al nome del club: lo script lo carica nei
+         media del sito vero e lo imposta nel tema (prova del 13/11: controlli 40/40 e 25/25).
          La sera del cambio: backup UpdraftPlus del database subito prima; `prepara_cambio.py` rifatto
          (lo script si ferma se una pagina del sito vero è stata modificata dopo la conversione); dopo
          il cambio, controllo pagina per pagina e di un articolo dal PC e dal telefono, traduzione
@@ -156,8 +158,6 @@
          controllo puntati al sito vero.
       d. Fino ad allora sul sito vero non si attiva nessun tema nuovo: le pagine fatte con Enfold
          mostrerebbero il loro codice.
-      f. Da decidere con l'utente prima del cambio: la testata delle copie mostra la scritta «Sci Club Don
-         Bosco Asti» senza il logo tondo (il logo caricato sulla copia non è impostato nel tema).
       e. Refusi del sito lasciati come sono, perché i testi si copiano pari pari; da decidere con
          l'utente: «Zermat», «ASSICURAZOINI», «Pivacy», «GIOLE».
 
