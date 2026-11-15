@@ -210,6 +210,23 @@ prova("Reel che apre con l'invito sulla foto del post", () => {
 
 prova("video che apre con l'invito sulla foto del post", () => controllaVideo("video-serata-post", "invito-serata-post-16s.mp4", 16));
 
+// Post che annuncia il profilo TikTok, nello stile di quello del canale WhatsApp. Il nome utente ha un refuso
+// (@sciculbdonboscoasti) correggibile solo dal 15/12/2026: il post fa cercare il nome del club, mai la @.
+prova("post del profilo TikTok", () => {
+  const cartella = path.join(GRAFICA, "profilo-tiktok");
+  const file = path.join(cartella, "post-profilo-tiktok.jpg");
+  assert.ok(fs.existsSync(file), "manca profilo-tiktok/post-profilo-tiktok.jpg (sorgenti/rendi.sh)");
+  assert.deepStrictEqual(misureJpeg(file), [1080, 1350], "il post non è 1080×1350");
+  // Senza i commenti: contano le scritte del post, non le note su da dove viene
+  const html = leggi(path.join(cartella, "sorgenti", "post.html")).replace(/<!--[\s\S]*?-->/g, "");
+  for (const testo of ["Seguici!", "Il nostro profilo", "TikTok", "Cerca", "Sci Club Don Bosco Asti", "Segui"]) {
+    assert.ok(html.includes(testo), `nel post manca «${testo}»`);
+  }
+  assert.ok(html.includes("logo-ufficiale-blu-tondo.svg"), "nel post manca il logo tondo ufficiale");
+  assert.ok(!/sciculb|@scicl/i.test(html), "il post non deve mostrare il nome utente TikTok");
+  assert.ok(!html.includes("WhatsApp"), "nel post restano scritte del canale WhatsApp");
+});
+
 /** Una query al database: solo l'errore di psql, perché il messaggio di Node riporterebbe il comando con la password. */
 function psql(sql) {
   try {
