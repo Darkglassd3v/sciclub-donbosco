@@ -8,6 +8,7 @@ versione 1.x) sta in [`../legacy/`](../legacy/).
 | [`logo/`](logo/) | il logo in alta qualità (SVG, PNG, JPG) e gli strumenti con cui è stato fatto |
 | [`proposte-post-social/`](proposte-post-social/) | K · Piani, la grafica ufficiale dei post social: la tavola con corso, gita, evento e calendario, i post uno per uno in `post/` |
 | [`canale-whatsapp/`](canale-whatsapp/) | il cartello A4 col QR del canale WhatsApp da lasciare in negozio, la story per Instagram e Facebook e i QR |
+| [`profilo-tiktok/`](profilo-tiktok/) | il post per Instagram e Facebook che annuncia il profilo TikTok del club, con la didascalia |
 | [`font/barlow/`](font/barlow/) | il carattere Barlow (licenza OFL) usato da tutte le pagine qui sotto, in locale |
 | [`volantino/`](volantino/) | il volantino A5 fronte-retro della stagione 2026/2027 |
 | [`lancio-stagione/`](lancio-stagione/) | lancio della stagione 2026/27: invito alla serata di presentazione del 25/11 (post, storie) e carosello «Si parte!», con le didascalie |
