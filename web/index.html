@@ -1477,6 +1477,8 @@
       if (error) throw error;
 
       el("f_id").value = member.id;
+      // Aperta un'altra scheda, l'id del socio nuovo tentato prima non vale più.
+      newMemberId = null;
       Object.entries(TEXT_FIELDS).forEach(([field, column]) => {
         el("f_" + field).value = member[column] ?? "";
       });

@@ -1129,7 +1129,9 @@ function listenMembers(callback) {
  */
 function isNetworkError(error) {
   return ["TimeoutError", "AbortError"].includes(error?.name)
-    || /Failed to fetch|NetworkError|Load failed|timed out|aborted/i.test(error?.message || "");
+    // supabase-js riporta l'errore del browser come «<nome>: <messaggio>». Solo questi: anche il database
+    // ha errori che parlano di «aborted» e «timeout», e quelli vanno mostrati come sono.
+    || /^(TypeError: )?(Failed to fetch|NetworkError when attempting|Load failed)|^(TimeoutError|AbortError): /.test(error?.message || "");
 }
 
 /** Errore leggibile a partire da un errore Supabase. */

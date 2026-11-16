@@ -34,6 +34,11 @@
       test(`messaggio${m.split(" ")[1]}`, italian({ message: m }), `«${errorMessage({ message: m })}»`);
     }
     test("altriErrori", errorMessage({ message: "numero tessera già usato" }) === "numero tessera già usato", "un errore del database è stato cambiato");
+    // Un errore del database che parla di transazioni interrotte o di tempi non è un errore di rete.
+    for (const m of ["current transaction is aborted, commands ignored until end of transaction block", "canceling statement due to lock timeout: timed out"]) {
+      test(`database${m.split(" ")[0]}`, errorMessage({ message: m, code: "25P02" }) === m, `«${errorMessage({ message: m })}»`);
+    }
+    test("interrottaDaSupabase", italian({ message: "TimeoutError: signal timed out" }) && italian({ message: "AbortError: signal is aborted without reason" }), "l'errore riportato da supabase-js non è riconosciuto");
 
     el("f_cognome").value = "Prova"; el("f_nome").value = "Senzarete"; el("f_telefono").value = "333";
     [...el("f_tipologia_tessera").querySelectorAll("input")][0].click();

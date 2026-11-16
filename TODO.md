@@ -17,6 +17,16 @@
 
 ## Richieste nuove
 
+- [ ] **Serata del 25/11: rilasciare la 3.3.0 qualche giorno prima.** Sul ramo `release/v3.3.0` c'è il salvataggio
+      dei soci che regge la rete assente (richiesta del 16/11: due PC su hotspot): tempo massimo di 20 s per le
+      richieste, errore di rete in italiano, e il socio nuovo ritrovato se la risposta dell'inserimento si è persa
+      (`recoverLostInsert()` in `web/index.html`; prove `test-browser/rete-assente.js` e `risposta-persa.js`).
+      Prima del rilascio: provare la pagina Soci nel Chrome dell'utente staccando la rete. Non si rilascia e non si
+      applica lo schema il 25. Limite noto: se a perdersi è la risposta di una modifica a un socio già esistente,
+      il Salva successivo dice «modificato da un altro utente» anche se la modifica era arrivata; si riapre la
+      scheda e si controlla. Per la persona nuova che iscrive soltanto: ruolo Social con il solo permesso «soci»
+      (Gestione › Ruoli e permessi), senza ruoli nuovi.
+
 - [ ] **Reel della serata per TikTok (richiesta del 16/11): video pubblicato, da sponsorizzare.** Il video è
       `grafica/video-serata-post/renders/invito-serata-tiktok.mp4` (17 s, sotto i 10 MB, fuori da git; si rifà con
       `grafica/video-serata-post/rendi-tiktok.sh`), didascalia nel README della cartella. Resta all'utente, dall'app:
