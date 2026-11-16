@@ -3,11 +3,10 @@
 //   Assauto, corso Pietro Chiesa 20, Asti, con buffet e brindisi finale.
 // - Post 2, «Si parte!»: la prima gita il 1° dicembre, il calendario di dicembre, la prova gratuita con
 //   i maestri del 13 dicembre, il Dream Weekend dall'11 al 13 dicembre e i corsi dal 9 gennaio.
-// - Reel veloce per le inserzioni Instagram (richiesta del 12/11/2026): 16 s, l'apertura col logo grande
-//   al centro con un secondo di pausa in più, poi un'inquadratura nuova almeno ogni secondo, lo spruzzo
-//   più lungo come stacco e lo stesso finale della serata.
-// - Seconda proposta per Instagram (richiesta del 13/11/2026): apre con il logo che rimbalza e le scritte della
-//   scheda finale sulla foto del post, poi gli stessi tagli veloci e alla fine solo «Seguici».
+// - Reel per Instagram (richiesta del 13/11/2026): apre con il logo che rimbalza e le scritte della scheda
+//   finale della serata sulla foto del post, poi i tagli veloci del montaggio 00-veloce.html (un'inquadratura
+//   nuova almeno ogni secondo, lo spruzzo più lungo come stacco) e alla fine solo «Seguici». La prima proposta,
+//   il Reel veloce col logo grande, è stata tolta il 16/11/2026: ne restano le scene in video-stagione.
 // Le prove controllano i dati, le didascalie (niente prezzi, profilo Instagram nuovo), i testi del
 // finale del video, le misure delle immagini e del video prodotti e, se la variabile DB porta la
 // connessione, l'evento salvato nel database.
@@ -72,10 +71,8 @@ prova("didascalie", () => {
   assert.ok(!/!{3,}/.test(t), "punti esclamativi ripetuti");
 });
 
-prova("finale del video della serata", () => {
-  const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
-  assert.ok(indice.includes("compositions/frames/05-serata.html"), "il video non usa il finale della serata");
-  assert.ok(!indice.includes("compositions/frames/05-seguici.html"), "il video usa ancora il finale «Seguici»");
+// La scheda della serata (05-serata.html) è il modello delle scritte che aprono il Reel
+prova("scheda della serata", () => {
   const finale = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "05-serata.html"));
   for (const atteso of ["Ti aspettiamo", "Presentazione della stagione 2026/27", "Mercoledì 25 novembre", "ore 21",
     "Circolo Way Assauto", "corso Pietro Chiesa 20, Asti", "Buffet e brindisi finale"]) {
@@ -107,16 +104,15 @@ function controllaVideo(progetto, nome, secondi) {
   assert.ok(Math.abs(Number(info.format.duration) - secondi) < 0.2, `${nome} dura ${info.format.duration} s invece di ${secondi}`);
 }
 
-prova("montaggio veloce per Instagram", () => {
-  const indice = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
-  assert.match(indice, /data-composition-id="main"[^>]*data-duration="16"/, "il video veloce non dura 16 s");
-  for (const scena of ["00-veloce.html", "05-serata.html"]) {
-    assert.ok(indice.includes(`compositions/frames/${scena}`), `il video veloce non usa ${scena}`);
-  }
-  // L'apertura resta quella del video della stagione: il logo grande cade al centro dello schermo
-  assert.ok(/const CENTRO = /.test(indice) && /tl\.fromTo\("#logo-fisso", \{ x: CENTRO\.x/.test(indice), "manca il logo grande al centro all'apertura");
-  const FINALE = Number((indice.match(/id="f05-serata"[^>]*data-start="([\d.]+)"/) || [])[1]);
-  assert.strictEqual(FINALE, 9, "il finale della serata deve partire a 9 s");
+// Il montaggio dei tagli veloci, come lo usa il Reel: parte a 0,5 s e finisce nel lampo dello spruzzo a 9,5 s,
+// cioè dopo 9 s di montaggio
+prova("montaggio dei tagli veloci", () => {
+  const indice = leggi(path.join(GRAFICA, "video-serata-post", "index.html"));
+  const scenaTagli = (indice.match(/<div class="scena" id="f00-veloce"[^>]*>/) || [""])[0];
+  assert.ok(scenaTagli.includes('data-composition-src="compositions/frames/00-veloce.html"'), "il Reel non usa il montaggio 00-veloce.html");
+  const partenza = Number((scenaTagli.match(/data-start="([\d.]+)"/) || [])[1]);
+  const FINALE = Number((indice.match(/const FINALE = ([\d.]+);/) || [])[1]) - partenza;
+  assert.strictEqual(FINALE, 9, "il montaggio deve arrivare al finale dopo 9 s");
   const montaggio = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "00-veloce.html"));
   const attr = (tag, nome) => (tag.match(new RegExp(`\\b${nome}="([^"]*)"`)) || [])[1];
   const clip = [...montaggio.matchAll(/<video\b[^>]*>/g)].map(([tag]) => ({
@@ -148,8 +144,6 @@ prova("montaggio veloce per Instagram", () => {
   }
 });
 
-prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "invito-serata-veloce-16s.mp4", 16));
-
 // Seconda proposta di Reel per Instagram (richiesta del 13/11/2026), nello stile del Reel veloce: apre con il
 // logo che entra rimbalzando e, sotto, le scritte della scheda finale della serata identiche (titolo, data e ora
 // nel riquadro giallo, luogo) sulla foto del post; il logo gira e va nell'angolo, dove resta sempre visibile per
@@ -157,7 +151,6 @@ prova("video veloce della serata", () => controllaVideo("video-serata-veloce", "
 // «Seguici», con Instagram, Facebook ed email, senza ripetere l'evento.
 prova("Reel che apre con l'invito sulla foto del post", () => {
   const indice = leggi(path.join(GRAFICA, "video-serata-post", "index.html"));
-  const veloce = leggi(path.join(GRAFICA, "video-serata-veloce", "index.html"));
   const frames = path.join(GRAFICA, "video-stagione", "compositions", "frames");
   assert.match(indice, /data-composition-id="main"[^>]*data-duration="16"/, "la proposta non dura 16 s");
   const scena = (html, id) => (html.match(new RegExp(`<div class="scena" id="${id}"[^>]*>`)) || [""])[0];
@@ -165,9 +158,9 @@ prova("Reel che apre con l'invito sulla foto del post", () => {
   const apertura = scena(indice, "f00-apertura-serata");
   assert.strictEqual(attr(apertura, "data-composition-src"), "compositions/frames/00-apertura-serata.html", "manca l'apertura con l'invito");
   assert.strictEqual(Number(attr(apertura, "data-start")), 0, "l'invito non apre il Reel");
-  // I tagli veloci sono gli stessi del Reel veloce, spostati di mezzo secondo per lasciare il tempo di leggere
-  const tagli = scena(indice, "f00-veloce"), tagliVeloce = scena(veloce, "f00-veloce");
-  assert.strictEqual(attr(tagli, "data-composition-src"), attr(tagliVeloce, "data-composition-src"), "i tagli veloci non sono quelli del Reel veloce");
+  // I tagli veloci partono mezzo secondo dopo, per lasciare il tempo di leggere
+  const tagli = scena(indice, "f00-veloce");
+  assert.strictEqual(attr(tagli, "data-composition-src"), "compositions/frames/00-veloce.html", "i tagli veloci non sono quelli del montaggio");
   assert.strictEqual(Number(attr(tagli, "data-start")), 0.5, "i tagli veloci devono partire a 0,5 s");
   assert.ok(indice.includes("const FINALE = 9.5;"), "lo stacco della neve deve restare sincronizzato con lo spruzzo (9,5 s)");
   assert.strictEqual(Number(attr(scena(indice, "f05-seguici-serata"), "data-start")), 9.5, "manca «Seguici» a 9,5 s");

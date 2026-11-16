@@ -4,7 +4,7 @@ Due post e i Reel per far conoscere la stagione e il suo inizio (piano del 12/11
 
 | Quando | Cosa | File |
 |---|---|---|
-| 13 novembre | Post 1, invito alla serata di presentazione: post su Facebook, Reel su Instagram, storia su entrambi | `invito-post.jpg`, `invito-story.jpg` e uno dei due Reel: `../video-serata-post/renders/invito-serata-post-16s.mp4` o `../video-serata-veloce/renders/invito-serata-veloce-16s.mp4` |
+| 13 novembre | Post 1, invito alla serata di presentazione: post su Facebook, Reel su Instagram, storia su entrambi | `invito-post.jpg`, `invito-story.jpg` e il Reel `../video-serata-post/renders/invito-serata-post-16s.mp4` |
 | 22 novembre | Storia «Mercoledì ci vediamo», con il conto alla rovescia | `promemoria-mercoledi.jpg` |
 | 25 novembre | Storia «Stasera alle 21», poi le storie dalla serata | `promemoria-stasera.jpg` |
 | 26 novembre | Post 2, carosello «Si parte!» e Reel della stagione | `si-parte-1.jpg`, `si-parte-2.jpg`, `si-parte-3.jpg`, `../video-stagione/renders/story-stagione-16s.mp4` |
@@ -20,8 +20,8 @@ il post si può riscaricare da lì.
     le scritte della scheda della serata (data e ora nel riquadro giallo, luogo), così chi scorre via nei
     primi secondi sa già cosa, quando e dove; poi una tendina a 45°, i tagli veloci con «Stagione 2026/27» e
     alla fine solo «Seguici» (Instagram, Facebook, email);
-  - `../video-serata-veloce/` (prima proposta, 12/11): l'apertura del video della stagione col logo grande al
-    centro, i tagli veloci e a 9 s la scheda della serata (`05-serata.html`).
+  - la prima proposta, `video-serata-veloce` (12/11: logo grande al centro, tagli veloci e a 9 s la scheda della
+    serata), non è stata pubblicata ed è stata tolta il 16/11/2026; le sue scene restano in `../video-stagione/`.
 - **Post 2**: la copertina con il logo e la prima gita del 1° dicembre, il calendario di dicembre del
   generatore (le 6 gite salvate) e «Da non perdere» (prova gratuita del 13 dicembre, Dream Weekend
   dall'11 al 13 dicembre, corsi dal 9 gennaio).
@@ -52,8 +52,8 @@ il pagamento li fa l'utente.
 
 - Immagini: `sorgenti/rendi.sh` (ogni pagina deve dire «PRONTO []», cioè nessun testo che non ci sta).
 - Reel: in `../video-serata-post`, `npm run check` e poi
-  `npx --yes hyperframes@0.8.174 render -o renders/invito-serata-post-16s.mp4`; lo stesso in `../video-serata-veloce`
-  con `-o renders/invito-serata-veloce-16s.mp4`. Il video è muto: la musica, libera da diritti se il Reel va
+  `npx --yes hyperframes@0.8.174 render -o renders/invito-serata-post-16s.mp4` (prima, una volta sola,
+  `../video-stagione/prepara-clip.sh` per scaricare le clip, che restano fuori da git). Il video è muto: la musica, libera da diritti se il Reel va
   sponsorizzato, si aggiunge in Instagram.
 - Prova di tutto: `node sorgenti/prova.js` (con `DB="$(cat supabase/.postgre_connect)"` controlla anche
   l'evento nel database).

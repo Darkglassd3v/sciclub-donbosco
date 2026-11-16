@@ -19,9 +19,9 @@
 
 - [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pubblicata il 13/11.** In
       `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla
-      serata del 25/11: su Facebook il post `invito-post.jpg`, su Instagram uno dei due Reel da 16 s,
+      serata del 25/11: su Facebook il post `invito-post.jpg`, su Instagram il Reel da 16 s
       `grafica/video-serata-post/renders/invito-serata-post-16s.mp4` (apre con l'invito sulla foto del post, finale
-      «Seguici») o `grafica/video-serata-veloce/renders/invito-serata-veloce-16s.mp4`; la storia `invito-story.jpg` su
+      «Seguici»); la storia `invito-story.jpg` su
       entrambi. L'evento del 25/11 in produzione ha già testi e foto. Il 13/11 l'utente ha pubblicato il post su
       Facebook e il Reel che apre con l'invito su Instagram; la campagna «Serata 25/11 - Invito - Copertura Facebook e
       Instagram» è stata pubblicata lo stesso giorno su conferma esplicita dell'utente (circa 87 € al massimo, dal 13/11
