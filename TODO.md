@@ -17,16 +17,16 @@
 
 ## Richieste nuove
 
-- [ ] **Reel della serata per TikTok (richiesta del 16/11): video pronto, da pubblicare e sponsorizzare.** Il video è
+- [ ] **Reel della serata per TikTok (richiesta del 16/11): video pubblicato, da sponsorizzare.** Il video è
       `grafica/video-serata-post/renders/invito-serata-tiktok.mp4` (17 s, sotto i 10 MB, fuori da git; si rifà con
       `grafica/video-serata-post/rendi-tiktok.sh`), didascalia nel README della cartella. Resta all'utente, dall'app:
       1. Il video del 15/11 non si può sponsorizzare: la sua musica non è della Commercial Music Library e la
          sostituzione del suono chiesta da TikTok è fallita (notifica «Modifica del suono del video incompleta»). La
          promozione del 15/11 risulta «in fase di analisi»: va annullata o lasciata rifiutare, controllando che le
          monete (1400, acquistate il 15/11) tornino nel saldo.
-      2. Pubblicare il video nuovo scegliendo la musica solo fra i suoni commerciali («Commercial Music Library»),
-         poi «Promuovi» su quello. Didascalia per la promozione: «Buffet finale», senza «brindisi» e senza 🥂 (non è
-         vietato, ma evita una revisione per alcol).
+      2. Il video nuovo è pubblicato il 16/11 con il brano commerciale «Give it to me like» e la didascalia con
+         «Buffet finale»: resta da premere «Promuovi» su quello. In TikTok Studio la ricerca per nome dei suoni non
+         rispetta il filtro «Uso commerciale»: i brani commerciali si trovano scorrendo l'elenco filtrato.
       3. TikTok: nome utente `@sciculbdonboscoasti` con un refuso, modificabile solo dal 15/12/2026 (il nome
          visualizzato dal 22/11); «Promuovi» solo dall'app («Raggiungi più persone», 5 giorni, 5–8 € al giorno).
          Monetizzazione: nessun programma idoneo con l'account di oggi.
