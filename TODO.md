@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-11-13
+# TODO — aggiornato il 2026-11-16
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -16,6 +16,24 @@
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
+
+- [ ] **Reel della serata rifatto per TikTok (richiesta del 16/11), sul ramo `release/v3.3.0`.** Partire da
+      `grafica/video-serata-post/` (16 s, muto, scene e clip in `grafica/video-stagione/`) e adattarlo a TikTok per
+      ripubblicarlo sul profilo del club (il 15/11 è già stata pubblicata la versione per Instagram, con musica e
+      copertina scelte dall'utente in TikTok Studio). Cose da sapere:
+      1. Le 5 clip del montaggio (`grafica/video-stagione/assets/clip/`, fuori da git) sono state cancellate dal
+         disco il 16/11: vanno riscaricate con `grafica/video-stagione/prepara-clip.sh` (3 da Mixkit, 2 da Pexels,
+         licenze gratuite). L'utente deve dare il via libero al download; fino ad allora fallisce in locale la
+         prova «montaggio dei tagli veloci» di `grafica/lancio-stagione/sorgenti/prova.js`.
+      2. Anche il Reel della stagione per il 26/11 (`grafica/video-stagione/renders/story-stagione-16s.mp4`) è
+         sparito: va rifatto con le clip, prima del 26/11.
+      3. TikTok: nome utente `@sciculbdonboscoasti` con un refuso, modificabile solo dal 15/12/2026 (il nome
+         visualizzato dal 22/11); account aziendale (solo musica della Commercial Music Library); «Promuovi» solo
+         dall'app sul telefono (scelto: «Raggiungi più persone», 5 giorni, 5–8 € al giorno, lo fa l'utente).
+         Monetizzazione: nessun programma idoneo con l'account di oggi.
+      4. Il file caricato su TikTok si ricomprime sotto i 10 MB (limite del caricamento dal Chrome): il 15/11
+         `ffmpeg` a due passate, 4,6 Mbit/s, 1080×1920. Didascalia e copertina del 15/11 come riferimento.
+      Nuove funzionalità: prima la prova (RED), poi il codice (GREEN), poi la revisione del codice.
 
 - [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pubblicata il 13/11.** In
       `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla
