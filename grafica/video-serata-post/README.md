@@ -26,5 +26,36 @@ npx --yes hyperframes@0.8.174 render -o renders/invito-serata-post-16s.mp4
 node ../lancio-stagione/sorgenti/prova.js
 ```
 
+## Versione per TikTok
+
+Richiesta del 16/11/2026: lo stesso Reel con, alla fine, anche il profilo TikTok e il canale WhatsApp.
+`rendi-tiktok.sh` prende i primi 9,5 s di `renders/invito-serata-post-16s.mp4` (fino al lampo della neve), rende
+`finale-tiktok.html` (7,5 s, il finale `compositions/frames/05-seguici-tiktok.html` con Instagram, Facebook, TikTok,
+canale WhatsApp ed email, sulla foto del post al posto della clip del bosco) e li unisce in
+`renders/invito-serata-tiktok.mp4`: 17 s, 1080×1920, sotto i 10 MB per il caricamento dal browser. Il profilo TikTok
+è indicato con il nome del club, perché il nome utente ha un refuso correggibile solo dal 15/12/2026.
+
+```bash
+./rendi-tiktok.sh
+```
+
+Su TikTok la musica va scelta fra i suoni commerciali (Commercial Music Library): con un altro brano il video non
+si può promuovere, e il 15/11 la sostituzione del suono chiesta da TikTok è fallita. Didascalia:
+
+```text
+Presentazione della stagione 2026/27 ❄️
+Mercoledì 25 novembre alle 21:00 ti aspettiamo al Circolo Way Assauto, corso Pietro Chiesa 20, Asti, per scoprire
+insieme gite, corsi e novità della nuova stagione.
+Buffet finale. Tutto il direttivo ti aspetta: non mancare!
+📸 Instagram: sciclubdonbosco_asti
+👍 Facebook: Sci Club Don Bosco Asti
+💬 Canale WhatsApp: Sci Club Don Bosco Asti
+#sciclubdonbosco #asti #sci #snowboard #stagione2026 #montagna
+```
+
+«Brindisi» non è vietato dalle regole di TikTok sull'alcol, che riguardano le inserzioni che promuovono o vendono
+bevande alcoliche; nella didascalia della promozione si scrive comunque solo «Buffet finale», senza 🥂, per non
+far scattare la revisione automatica. Nel video resta la scritta della scheda, «Buffet e brindisi finale».
+
 La musica, libera da diritti perché il Reel va sponsorizzato, si aggiunge in Instagram. Calendario,
 didascalie e sponsorizzazione sono in `../lancio-stagione/`.

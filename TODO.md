@@ -1,4 +1,4 @@
-# TODO — aggiornato il 2026-11-13
+# TODO — aggiornato il 2026-11-16
 
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
@@ -16,6 +16,33 @@
 - Da dove ripartire: `PROJECT-CONTEXT.md`, poi questo file, poi `docs/SVILUPPO.md`.
 
 ## Richieste nuove
+
+- [ ] **Serata del 25/11: due PC su hotspot iscrivono i soci.** Con la 3.3.0 (16/11) il salvataggio dei soci regge
+      la rete assente o caduta a metà. Resta da fare, a chi segue il sito:
+      1. Per la persona nuova che iscrive soltanto: in Gestione › Ruoli e permessi lasciare al ruolo Social il solo
+         permesso «soci», poi creare il suo account in Utenti con ruolo Social e farle fare un accesso di prova
+         (al primo accesso cambia la password). Provato sulla copia locale: `test-reale/rete-caduta.js`.
+      2. Il 25 non si rilascia e non si applica lo schema: terrebbe fermo il sito per qualche minuto.
+      3. Limite noto: se a perdersi è la risposta di una modifica a un socio già esistente, il Salva successivo
+         dice «modificato da un altro utente» anche se la modifica era arrivata; si riapre la scheda e si controlla.
+
+- [ ] **Reel della serata per TikTok (richiesta del 16/11): video pubblicato, da sponsorizzare.** Il video è
+      `grafica/video-serata-post/renders/invito-serata-tiktok.mp4` (17 s, sotto i 10 MB, fuori da git; si rifà con
+      `grafica/video-serata-post/rendi-tiktok.sh`), didascalia nel README della cartella. Resta all'utente, dall'app:
+      1. Il video del 15/11 non si può sponsorizzare: la sua musica non è della Commercial Music Library e la
+         sostituzione del suono chiesta da TikTok è fallita (notifica «Modifica del suono del video incompleta»). La
+         promozione del 15/11 risulta «in fase di analisi»: va annullata o lasciata rifiutare, controllando che le
+         monete (1400, acquistate il 15/11) tornino nel saldo.
+      2. Il video nuovo è pubblicato il 16/11 con il brano commerciale «Give it to me like» e la didascalia con
+         «Buffet finale»: resta da premere «Promuovi» su quello. In TikTok Studio la ricerca per nome dei suoni non
+         rispetta il filtro «Uso commerciale»: i brani commerciali si trovano scorrendo l'elenco filtrato.
+      3. TikTok: nome utente `@sciculbdonboscoasti` con un refuso, modificabile solo dal 15/12/2026 (il nome
+         visualizzato dal 22/11); «Promuovi» solo dall'app («Raggiungi più persone», 5 giorni, 5–8 € al giorno).
+         Monetizzazione: nessun programma idoneo con l'account di oggi.
+      4. Le 5 clip del montaggio (`grafica/video-stagione/assets/clip/`, fuori da git) sono state cancellate il 16/11:
+         servono solo per rifare l'inizio del Reel (`grafica/video-stagione/prepara-clip.sh`, con il via libero
+         dell'utente al download); fino ad allora fallisce in locale la prova «montaggio dei tagli veloci». Il Reel
+         della stagione del 26/11 non si rifà (decisione del 16/11: è uguale a quello della serata).
 
 - [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pubblicata il 13/11.** In
       `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla

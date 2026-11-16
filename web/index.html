@@ -445,7 +445,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261106citta"></script>
+<script src="shared.js?v=20261116rete"></script>
 <script src="vendor/dayjs-1.11.23.js"></script>
 <script src="vendor/dayjs-utc-1.11.23.js"></script>
 <script src="vendor/belfiore-connector-3.0.0.js"></script>
@@ -485,6 +485,9 @@
   // Il socio caricato nel modulo (null = socio nuovo): lo dice la testata in
   // cima e il pulsante Salva.
   let openedMember = null;
+  // L'id del socio nuovo lo decide la pagina (newMemberId, al primo Salva): se l'inserimento arriva al
+  // database ma la risposta si perde, il Salva successivo ritrova proprio quel socio e non un omonimo.
+  let newMemberId = null;
 
   // Il modulo com'era all'apertura (socio caricato o modulo vuoto), vedi
   // signature(): se è cambiato, "Chiudi scheda", un altro socio o uscire dalla
@@ -1350,6 +1353,24 @@
    * fermarsi (true). Lo chiede save() prima della domanda e write() subito
    * prima di scrivere: nel frattempo un altro operatore può averlo inserito.
    */
+  /**
+   * Un inserimento già tentato da questa scheda può essere arrivato al database anche se la risposta si
+   * è persa (rete caduta). Se il socio con l'id deciso dalla pagina (newMemberId) c'è, la scheda diventa
+   * la sua, col blocco su updated_at come ogni altra modifica, e dice true: il Salva prosegue come una
+   * modifica e completa gli abbonamenti, senza l'avviso dei doppioni su sé stesso.
+   */
+  async function recoverLostInsert() {
+    if (el("f_id").value || !newMemberId) return false;
+    const { data, error } = await sb.from("members").select("id, updated_at").eq("id", newMemberId).limit(1);
+    if (error) throw error;
+    if (!data.length) return false;
+    el("f_id").value = newMemberId;
+    openedMember = { id: newMemberId, updated_at: data[0].updated_at,
+      last_name: el("f_cognome").value.trim().toUpperCase(), first_name: el("f_nome").value.trim().toUpperCase() };
+    updateBand();
+    return true;
+  }
+
   async function stopIfDuplicates() {
     const duplicates = await findDuplicates();
     if (!duplicates.length) return false;
@@ -1456,6 +1477,8 @@
       if (error) throw error;
 
       el("f_id").value = member.id;
+      // Aperta un'altra scheda, l'id del socio nuovo tentato prima non vale più.
+      newMemberId = null;
       Object.entries(TEXT_FIELDS).forEach(([field, column]) => {
         el("f_" + field).value = member[column] ?? "";
       });
@@ -1740,7 +1763,7 @@
       button.disabled = true;
       setLoading(true);
       try {
-        if (await stopIfDuplicates()) return;
+        if (!await recoverLostInsert() && await stopIfDuplicates()) return;
       } catch (error) {
         showToast(errorMessage(error), "is-danger");
         return;
@@ -1838,6 +1861,9 @@
       // hanno bisogno del suo id, e se il socio non passa (es. numero tessera
       // già preso) non resta niente di scritto a metà.
       let id = el("f_id").value;
+      // Un inserimento già tentato da questa scheda può essere arrivato anche se la risposta si è persa
+      // (rete caduta): se il socio c'è, si prosegue come una modifica e si completano gli abbonamenti.
+      if (!id && await recoverLostInsert()) id = el("f_id").value;
       // Di nuovo, subito prima di scrivere: mentre la domanda era aperta un
       // altro operatore può aver inserito la stessa persona.
       if (!id && await stopIfDuplicates()) return;
@@ -1868,7 +1894,8 @@
         }
         openedMember.updated_at = data[0].updated_at;
       } else {
-        const { data, error } = await sb.from("members").insert(member).select("id, updated_at").single();
+        newMemberId ??= crypto.randomUUID();
+        const { data, error } = await sb.from("members").insert({ ...member, id: newMemberId }).select("id, updated_at").single();
         if (error) throw error;
         id = data.id;
         // Da qui il socio esiste: se gli abbonamenti falliscono e si ripreme
@@ -1899,6 +1926,9 @@
     } catch (error) {
       if (error.code === "23505" && /members_card_number_key/.test(error.message || "")) {
         await cardNumberAlreadyUsed();
+      } else if (isNetworkError(error)) {
+        showToast("Connessione assente o troppo lenta: il salvataggio potrebbe non essere arrivato. La scheda è rimasta "
+          + "compilata: controllare la rete e premere di nuovo Salva, senza rischio di doppioni.", "is-danger");
       } else {
         showToast(errorMessage(error), "is-danger");
       }
@@ -1925,6 +1955,7 @@
     el("searchInput").value = "";
     el("searchResults").innerHTML = "";
     openedMember = null;
+    newMemberId = null;
     updateBand();
     hideDuplicates();
     disablePayerSection();

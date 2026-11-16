@@ -12,7 +12,7 @@ versione 1.x) sta in [`../legacy/`](../legacy/).
 | [`font/barlow/`](font/barlow/) | il carattere Barlow (licenza OFL) usato da tutte le pagine qui sotto, in locale |
 | [`volantino/`](volantino/) | il volantino A5 fronte-retro della stagione 2026/2027 |
 | [`lancio-stagione/`](lancio-stagione/) | lancio della stagione 2026/27: invito alla serata di presentazione del 25/11 (post, storie) e carosello «Si parte!», con le didascalie |
-| [`video-serata-post/`](video-serata-post/) | Reel per Instagram dell'invito alla serata: 16 s, il logo che entra rimbalzando con le scritte della scheda della serata sulla foto del post, una tendina a 45°, gli stessi tagli veloci e alla fine solo «Seguici» |
+| [`video-serata-post/`](video-serata-post/) | Reel dell'invito alla serata: per Instagram 16 s, il logo che entra rimbalzando con le scritte della scheda della serata sulla foto del post, una tendina a 45°, gli stessi tagli veloci e alla fine solo «Seguici»; per TikTok 17 s, con TikTok e canale WhatsApp nel finale |
 | [`video-stagione/`](video-stagione/) | video della stagione da 16 s (Reel del 26/11) e le scene e le clip usate da tutti i Reel |
 
 Ogni cartella ha il suo README e, in `sorgenti/`, le pagine HTML e gli script
