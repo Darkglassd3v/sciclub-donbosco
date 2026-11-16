@@ -179,6 +179,22 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   dettaglio per posizionamento mostra come spazzatura: a fine campagna si guarda la suddivisione
   per posizionamento prima di decidere la successiva.
 
+## Controllo della campagna dell'invito (16/11/2026, dopo 3 giorni)
+
+- **Zona:** Meta divide la spesa in Italia solo per regione, non per provincia o città: col raggio di
+  45 km da Asti il Piemonte è il 98% del pubblico raggiunto su Facebook (12.737 persone su 13.027, il
+  resto in Lombardia e Liguria). Non si può quindi sapere quanto finisce nella cintura di Torino: il
+  raggio resta di 45 km.
+- **Età su Facebook (35–65+):** 55–64 e 65+ sono il 67% delle persone raggiunte (4.378 e 4.392 su
+  13.027), allo stesso costo delle fasce più giovani (circa 0,62 € ogni 1000 persone).
+- **Età su Instagram (18–50):** 18–24 è il 41% delle persone raggiunte (6.771 su 16.565), 25–34 il 34%.
+- **Perché un Reel con circa 20.000 visualizzazioni ha 11 «Mi piace» e quasi nessun follower in più:**
+  con l'obiettivo «Copertura» Meta cerca le persone che costano meno da raggiungere, non quelle che
+  interagiscono. Sono soprattutto ragazzi che scorrono i Reel, e la visualizzazione si conta anche dopo
+  un attimo. Per «Mi piace» e follower servono l'obiettivo «Interazioni» o le visite al profilo, a un
+  costo per persona molto più alto. La copertura resta la scelta giusta per far sapere della serata a
+  più persone possibile; la crescita dei follower va fatta con una campagna a parte.
+
 ## Obiettivo e budget
 
 - Per far crescere like e commenti sulla pagina: obiettivo **Interazioni**, luogo della
