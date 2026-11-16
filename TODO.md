@@ -32,12 +32,10 @@
       profilo e musica scelta da Meta fra quelle consentite (il Reel ha una musica con licenza, che resta sul post).
       Restano:
       1. Nel canale WhatsApp l'immagine del post con il sondaggio «Ci vediamo mercoledì 25?» (lo fa l'utente).
-      2. Dopo 3 giorni (16/11) in Gestione inserzioni «Dettagli» › per regione e per età (raggio di 45 km da Asti):
-         se la spesa finisce soprattutto nella cintura di Torino, tornare a Asti 35 km più Alessandria 25 km.
-      3. Storie di promemoria il 22/11 (con il conto alla rovescia) e il 25/11.
-      4. Il 26/11 il carosello «Si parte!» e il Reel della stagione, collegato alla campagna già in bozza
+      2. Storie di promemoria il 22/11 (con il conto alla rovescia) e il 25/11.
+      3. Il 26/11 il carosello «Si parte!» e il Reel della stagione, collegato alla campagna già in bozza
          (riaccendere la campagna prima di pubblicare), sponsorizzazione fino al 6/12.
-      5. Controllo nel Chrome dell'utente della pagina Social con l'evento aggiornato (estensione
+      4. Controllo nel Chrome dell'utente della pagina Social con l'evento aggiornato (estensione
          scollegata il 12/11).
 
 - [ ] **Campagne Target BMW e Gimax Rent (29/10): sul sito, da controllare.** Sponsor e campagna
