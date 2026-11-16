@@ -96,3 +96,11 @@ Il modulo lo dice e propone quello giusto: controlla con il socio e premi
 Non riprovare dieci volte. Scrivi a chi segue il sito:
 **nome del socio, pagina, cosa hai premuto, cosa è comparso** (una foto
 dello schermo va benissimo).
+
+## Se dati dei soci finiscono nel posto sbagliato
+
+Un'email con l'elenco dei soci mandata alle persone sbagliate o con tutti gli indirizzi in vista, un
+file esportato finito in un gruppo, un telefono perso con il sito aperto, una password scoperta: avvisa
+**subito** il presidente e chi segue il sito, anche se è solo un sospetto, e non cancellare niente prima
+di averne fatto una foto. Il club ha **72 ore** per decidere se avvisare il Garante della privacy: cosa
+succede dopo è in `docs/VIOLAZIONE-DATI.md`.
