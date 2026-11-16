@@ -35,11 +35,22 @@ function showWaiting(active) {
   }
   label.hidden = !active;
 }
+// Una richiesta senza risposta (rete caduta, hotspot lento) non resta appesa con «Caricamento…»: dopo
+// questo tempo si interrompe da sola e la pagina mostra l'errore di connessione (errorMessage()).
+let requestTimeoutMs = 20000;
 async function fetchWithWaiting(input, init) {
   pendingRequests++;
   waitingTimer ??= setTimeout(() => showWaiting(true), 400);
+  // Non per i file (ricevute del bilancio): un caricamento lento ma vivo non va interrotto. E non nei
+  // browser senza AbortSignal.timeout/any (prima del 2024): lì le richieste restano senza tempo massimo.
+  const isFile = String(input?.url || input).includes("/storage/v1/");
+  let signal = init?.signal;
+  if (!isFile && AbortSignal.timeout && (!signal || AbortSignal.any)) {
+    const limit = AbortSignal.timeout(requestTimeoutMs);
+    signal = signal ? AbortSignal.any([signal, limit]) : limit;
+  }
   try {
-    return await fetchRetryingFutureToken(input, init);
+    return await fetchRetryingFutureToken(input, signal ? { ...init, signal } : init);
   } finally {
     if (--pendingRequests === 0) { clearTimeout(waitingTimer); waitingTimer = null; showWaiting(false); }
   }
@@ -1111,11 +1122,24 @@ function listenMembers(callback) {
     .subscribe();
 }
 
+/**
+ * true se l'errore viene dalla rete e non dal database: richiesta mai partita («Failed to fetch» in
+ * Chrome, «NetworkError» in Firefox, «Load failed» in Safari) o interrotta dal tempo massimo di
+ * fetchWithWaiting(). In questi casi non si sa se la richiesta è arrivata.
+ */
+function isNetworkError(error) {
+  return ["TimeoutError", "AbortError"].includes(error?.name)
+    || /Failed to fetch|NetworkError|Load failed|timed out|aborted/i.test(error?.message || "");
+}
+
 /** Errore leggibile a partire da un errore Supabase. */
 function errorMessage(error) {
   if (!error) return "Errore sconosciuto";
   if (error.code === "PGRST301" || error.status === 401) {
     return "Sessione scaduta: effettuare di nuovo l'accesso.";
+  }
+  if (isNetworkError(error)) {
+    return "Connessione assente o troppo lenta: controllare la rete e riprovare.";
   }
   return error.message || String(error);
 }
