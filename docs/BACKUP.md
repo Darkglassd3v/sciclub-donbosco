@@ -101,7 +101,7 @@ Sul PC del club:
    `drive.file` (rclone vede solo i file che crea lui), poi l'accesso con l'account Google del
    club nel browser.
 3. `gh secret set RCLONE_CONFIG -R darkglassd3v/sciclub-donbosco < ~/.config/rclone/rclone.conf`
-4. Su GitHub: **Actions** → **Backup del database** → **Run workflow** (branch `dev`). Su Drive
+4. Su GitHub: **Actions** → **Backup del database** → **Run workflow** (branch `main`). Su Drive
    compare la cartella `SciClubDonBosco-backup` coi due file.
 
 Il file di rclone contiene la chiave di accesso a quel Drive: resta solo sul PC e nei secret di

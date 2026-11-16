@@ -3,13 +3,11 @@
 > Le richieste nuove si scrivono qui in cima, in "Richieste nuove". Quando una cosa è fatta si
 > toglie subito: la storia resta nei commit (`git log`). Come si lavora: `docs/SVILUPPO.md`.
 
-## Stato del repository (27/10/2026)
+## Stato del repository (16/11/2026)
 
-- Online `3.0-SNAPSHOT` (stile Material, menu a colonna, tema scuro, telefono), `dev` allineato a
-  lui; niente tag 3.0 (tolto: si resta su `3.0-SNAPSHOT`). La 2.9 è nel tag `2.9`. Su GitHub
-  restano i branch `2.9` e `2.9-SNAPSHOT`, già dentro il tag: cancellarli lo fa l'utente
-  (`git push origin --delete refs/heads/2.9 refs/heads/2.9-SNAPSHOT`, a Claude il comando è
-  bloccato dai permessi).
+- Su GitHub c'è solo il ramo `main` (pulizia del 16/11/2026: tolti `dev`, `2.9`, `2.9-SNAPSHOT`,
+  `3.0-SNAPSHOT`, i rami `release/` già rilasciati e quelli di documenti e grafica già uniti; tutto
+  era già dentro `main` e i rilasci restano nei tag).
 - Produzione: lo schema intero ci mette qualche minuto e tiene fermo il sito; di giorno solo le
   istruzioni nuove con `lock_timeout` (`docs/SVILUPPO.md`).
 - Backup: dump cifrato e `dati-AAAA-MM-GG.7z` per Excel, su GitHub, sul PC del club (timer
