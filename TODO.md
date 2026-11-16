@@ -17,23 +17,23 @@
 
 ## Richieste nuove
 
-- [ ] **Reel della serata rifatto per TikTok (richiesta del 16/11), sul ramo `release/v3.3.0`.** Partire da
-      `grafica/video-serata-post/` (16 s, muto, scene e clip in `grafica/video-stagione/`) e adattarlo a TikTok per
-      ripubblicarlo sul profilo del club (il 15/11 è già stata pubblicata la versione per Instagram, con musica e
-      copertina scelte dall'utente in TikTok Studio). Cose da sapere:
-      1. Le 5 clip del montaggio (`grafica/video-stagione/assets/clip/`, fuori da git) sono state cancellate dal
-         disco il 16/11: vanno riscaricate con `grafica/video-stagione/prepara-clip.sh` (3 da Mixkit, 2 da Pexels,
-         licenze gratuite). L'utente deve dare il via libero al download; fino ad allora fallisce in locale la
-         prova «montaggio dei tagli veloci» di `grafica/lancio-stagione/sorgenti/prova.js`.
-      2. Anche il Reel della stagione per il 26/11 (`grafica/video-stagione/renders/story-stagione-16s.mp4`) è
-         sparito: va rifatto con le clip, prima del 26/11.
+- [ ] **Reel della serata per TikTok (richiesta del 16/11): video pronto, da pubblicare e sponsorizzare.** Il video è
+      `grafica/video-serata-post/renders/invito-serata-tiktok.mp4` (17 s, sotto i 10 MB, fuori da git; si rifà con
+      `grafica/video-serata-post/rendi-tiktok.sh`), didascalia nel README della cartella. Resta all'utente, dall'app:
+      1. Il video del 15/11 non si può sponsorizzare: la sua musica non è della Commercial Music Library e la
+         sostituzione del suono chiesta da TikTok è fallita (notifica «Modifica del suono del video incompleta»). La
+         promozione del 15/11 risulta «in fase di analisi»: va annullata o lasciata rifiutare, controllando che le
+         monete (1400, acquistate il 15/11) tornino nel saldo.
+      2. Pubblicare il video nuovo scegliendo la musica solo fra i suoni commerciali («Commercial Music Library»),
+         poi «Promuovi» su quello. Didascalia per la promozione: «Buffet finale», senza «brindisi» e senza 🥂 (non è
+         vietato, ma evita una revisione per alcol).
       3. TikTok: nome utente `@sciculbdonboscoasti` con un refuso, modificabile solo dal 15/12/2026 (il nome
-         visualizzato dal 22/11); account aziendale (solo musica della Commercial Music Library); «Promuovi» solo
-         dall'app sul telefono (scelto: «Raggiungi più persone», 5 giorni, 5–8 € al giorno, lo fa l'utente).
+         visualizzato dal 22/11); «Promuovi» solo dall'app («Raggiungi più persone», 5 giorni, 5–8 € al giorno).
          Monetizzazione: nessun programma idoneo con l'account di oggi.
-      4. Il file caricato su TikTok si ricomprime sotto i 10 MB (limite del caricamento dal Chrome): il 15/11
-         `ffmpeg` a due passate, 4,6 Mbit/s, 1080×1920. Didascalia e copertina del 15/11 come riferimento.
-      Nuove funzionalità: prima la prova (RED), poi il codice (GREEN), poi la revisione del codice.
+      4. Le 5 clip del montaggio (`grafica/video-stagione/assets/clip/`, fuori da git) sono state cancellate il 16/11:
+         servono solo per rifare l'inizio del Reel (`grafica/video-stagione/prepara-clip.sh`, con il via libero
+         dell'utente al download); fino ad allora fallisce in locale la prova «montaggio dei tagli veloci». Il Reel
+         della stagione del 26/11 non si rifà (decisione del 16/11: è uguale a quello della serata).
 
 - [ ] **Lancio della stagione 2026/27 (12/11): campagna dell'invito pubblicata il 13/11.** In
       `grafica/lancio-stagione/` (calendario, campagna e file nel README, testi in `didascalie.md`). Per l'invito alla

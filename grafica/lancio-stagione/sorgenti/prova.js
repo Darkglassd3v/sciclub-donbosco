@@ -203,6 +203,28 @@ prova("Reel che apre con l'invito sulla foto del post", () => {
 
 prova("video che apre con l'invito sulla foto del post", () => controllaVideo("video-serata-post", "invito-serata-post-16s.mp4", 16));
 
+// Versione per TikTok del Reel della serata (richiesta del 16/11/2026): gli stessi primi 9,5 s del video
+// pubblicato su Instagram, poi un finale «Seguici» che aggiunge il canale WhatsApp e il profilo TikTok. Il nome
+// utente TikTok ha un refuso correggibile solo dal 15/12/2026, quindi il finale mostra il nome del club.
+prova("Reel della serata per TikTok", () => {
+  const cartella = path.join(GRAFICA, "video-serata-post");
+  const radice = leggi(path.join(cartella, "finale-tiktok.html"));
+  assert.match(radice, /data-composition-src="compositions\/frames\/05-seguici-tiktok\.html"/, "il finale per TikTok non usa 05-seguici-tiktok.html");
+  assert.ok(fs.existsSync(path.join(cartella, "rendi-tiktok.sh")), "manca rendi-tiktok.sh, che unisce l'inizio del Reel e il finale");
+  const finale = leggi(path.join(GRAFICA, "video-stagione", "compositions", "frames", "05-seguici-tiktok.html"));
+  for (const canale of ["Instagram", "Facebook", "TikTok", "WhatsApp", "Email"]) {
+    assert.ok(finale.includes(`aria-label="${canale}"`), `manca ${canale} nel finale per TikTok`);
+  }
+  const fine = finale.slice(finale.indexOf("<body>")).replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]+>/g, " ");
+  assert.ok(fine.includes("Canale WhatsApp"), "manca la scritta «Canale WhatsApp»");
+  assert.ok(!/sciculb/i.test(fine), "il finale non deve mostrare il nome utente TikTok con il refuso");
+  assert.ok(!/25 novembre/i.test(fine), "il finale ripete ancora l'evento");
+  assert.ok(!/clip\/verticali/.test(finale), "il finale per TikTok non deve dipendere dalle clip fuori da git");
+  const video = path.join(cartella, "renders", "invito-serata-tiktok.mp4");
+  controllaVideo("video-serata-post", "invito-serata-tiktok.mp4", 17);
+  assert.ok(fs.statSync(video).size < 10 * 1024 * 1024, "il video per TikTok supera i 10 MB caricabili dal browser");
+});
+
 // Post che annuncia il profilo TikTok, nello stile di quello del canale WhatsApp. Il nome utente ha un refuso
 // (@sciculbdonboscoasti) correggibile solo dal 15/12/2026: il post fa cercare il nome del club, mai la @.
 prova("post del profilo TikTok", () => {

@@ -1,0 +1,37 @@
+<!doctype html>
+<!-- Finale della versione per TikTok del Reel della serata (richiesta del 16/11/2026). Si rende da solo e
+     rendi-tiktok.sh lo attacca ai primi 9,5 s del Reel già pubblicato su Instagram (renders/invito-serata-post-16s.mp4),
+     nel lampo bianco della neve dello spruzzo: il finale parte dal bianco pieno, come in index.html dopo FINALE, e
+     mostra «Seguici» con Instagram, Facebook, TikTok, il canale WhatsApp e l'email (05-seguici-tiktok.html).
+     Così il Reel per TikTok si rifà senza le clip dei tagli veloci, che stanno fuori da git. -->
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #06396a; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; }
+      .scena { position: absolute; inset: 0; }
+      /* Lo stesso lampo di neve di index.html, qui già al massimo al primo fotogramma */
+      #neve { position: absolute; inset: 0; pointer-events: none;
+        background: radial-gradient(circle at 32% 44%, #ffffff 0%, #f1f5fa 45%, #d9e3ee 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="7.5" data-width="1080" data-height="1920">
+      <div class="scena" id="f05-seguici-tiktok" data-composition-id="f05-seguici-tiktok" data-composition-src="compositions/frames/05-seguici-tiktok.html"
+        data-start="0" data-duration="7.5" data-track-index="0" data-width="1080" data-height="1920"></div>
+      <div id="neve"></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // Come in index.html da FINALE in poi: la neve si dirada mentre «Seguici» si schiarisce e torna a fuoco
+      tl.fromTo("#neve", { opacity: 1 }, { opacity: 0, duration: 0.55, ease: "power1.out" }, 0.05);
+      tl.fromTo("#f05-seguici-tiktok", { opacity: 0, filter: "blur(18px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.6, ease: "power2.out" }, 0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>
