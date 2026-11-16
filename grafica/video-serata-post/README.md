@@ -1,8 +1,8 @@
-# Seconda proposta di Reel per l'invito alla serata
+# Reel dell'invito alla serata
 
 Reel di 16 secondi (1080×1920, muto) per pubblicare e sponsorizzare su Instagram l'invito alla serata di
 presentazione della stagione 2026/27 (mercoledì 25 novembre 2026, ore 21, Circolo Way Assauto), nello stile del
-Reel veloce (`../video-serata-veloce/`, prima proposta). Richiesta del 13/11/2026: l'invito subito all'inizio, con
+Reel veloce della prima proposta (tolta il 16/11/2026). Richiesta del 13/11/2026: l'invito subito all'inizio, con
 le stesse scritte della scheda finale, e alla fine solo «Seguici».
 
 - **0–3,9 s**: `compositions/frames/00-apertura-serata.html`. Il logo cade dall'alto e rimbalza; sotto, le scritte
