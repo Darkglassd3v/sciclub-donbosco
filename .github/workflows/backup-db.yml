@@ -22,7 +22,7 @@ name: Backup del database
 #   RCLONE_CONFIG       (facoltativo) il file di rclone con un remote «drive»
 #                       verso il Google Drive del club: docs/BACKUP.md dice come farlo
 #
-# GitHub fa partire gli orari solo dal branch predefinito (dev), e in un
+# GitHub fa partire gli orari solo dal branch predefinito (main), e in un
 # repository pubblico li sospende dopo 60 giorni senza commit: d'estate
 # controllare in Actions che il workflow sia ancora attivo.
 #

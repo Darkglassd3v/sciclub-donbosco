@@ -17,7 +17,9 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
   dal TODO: la storia resta nei commit.
 - Rami (dal 12/11/2026, regola valida per tutti i progetti): il ramo predefinito è `main`,
   uguale all'ultimo rilascio; ogni versione si sviluppa su `release/v<versione>` creato da
-  `main`. `dev` e `3.0-SNAPSHOT` sono rami vecchi, fermi alla 3.0.0.
+  `main`; a lavoro unito il ramo si cancella (`gh pr merge --merge --delete-branch`). Dal 16/11/2026
+  su GitHub c'è solo `main`: i rami vecchi (`dev`, `X.Y-SNAPSHOT`, `release/` rilasciati) sono stati
+  cancellati, tutto era già dentro `main`.
 - `gh` serve per seguire i deploy: `gh run list --workflow deploy-pages.yml --limit 3`.
 
 ## Rilasciare una versione (dalla 3.0.1)
@@ -32,8 +34,8 @@ in breve per una sessione nuova: `PROJECT-CONTEXT.md`; cosa c'è da fare: `TODO.
    sito e `web/versione.json` dice `v<versione>`.
 5. Correzioni urgenti a una versione pubblicata: `hotfix/v<x.y.z>` dal tag, stessa PR.
 
-Fino alla 3.0.0 si pubblicava da un ramo `X.Y-SNAPSHOT` con il merge in `dev`: la storia resta
-nei tag `2.5` … `2.9` e `v3.0.0`.
+Fino alla 3.0.0 si pubblicava da un ramo `X.Y-SNAPSHOT` con il merge in `dev` (rami cancellati il
+16/11/2026): la storia resta nei tag `2.5` … `2.9` e `v3.0.0`.
 
 La versione online si vede in Gestione > Amministrazione (`web/versione.json`).
 
@@ -60,7 +62,7 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   Le tessere già nel listino restano come sono; una tessera nuova del foglio entra col prezzo
   pieno (assicurazione dentro) e senza assicurazione: in Impostazioni sceglierla e abbassare la
   quota. I prezzi sono in euro interi (il database rifiuta i centesimi).
-- Backup automatico: `.github/workflows/backup-db.yml` su `dev`, martedì, giovedì e sabato
+- Backup automatico: `.github/workflows/backup-db.yml` su `main`, martedì, giovedì e sabato
   (frase in `supabase/.backup_passphrase`): il dump cifrato e `dati-AAAA-MM-GG.7z` con ogni
   tabella per Excel (`supabase/scripts/esporta-tutto.sh`). Seconda copia sul PC del club
   (`supabase/scripts/scarica-backup.sh`, timer di systemd) e, col secret `RCLONE_CONFIG`, su
