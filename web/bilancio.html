@@ -62,6 +62,9 @@
     .tabella-movimenti .da-rimborsare { color: var(--errore); font-weight: 600; }
     .tabella-movimenti .rimborsata { color: var(--ok); font-weight: 600; }
     .tabella-movimenti .nota .button { margin-left: 8px; }
+    /* Sotto il totale da rimborsare: quanto spetta a ciascuno. */
+    .per-persona { list-style: none; margin: 8px 0 0; padding: 0; font-size: .9375rem; }
+    .per-persona li { display: flex; justify-content: space-between; gap: 12px; }
 
   </style>
 </head>
@@ -130,7 +133,7 @@
     <div class="kpi"><div class="kpi-label">Altre entrate</div><div class="kpi-value" id="kExtra">—</div></div>
     <div class="kpi"><div class="kpi-label">Totale entrate</div><div class="kpi-value" id="kTotale">—</div></div>
     <div class="kpi"><div class="kpi-label">Uscite</div><div class="kpi-value" id="kUscite">—</div></div>
-    <div class="kpi" id="kpiDaRimborsare" hidden><div class="kpi-label">Spese anticipate da rimborsare</div><div class="kpi-value uscita" id="kDaRimborsare">—</div></div>
+    <div class="kpi" id="kpiDaRimborsare" hidden><div class="kpi-label">Spese anticipate da rimborsare</div><div class="kpi-value uscita" id="kDaRimborsare">—</div><ul class="per-persona" id="kDaRimborsarePersone"></ul></div>
   </div>
 
   <section class="riquadro sezione pagamento">
@@ -197,7 +200,9 @@
         <!-- Solo per le uscite: chi ha pagato di tasca sua e va rimborsato dal club. -->
         <div class="field" id="campoAnticipata" hidden>
           <label class="label" for="mAnticipata">Anticipata da</label>
-          <input class="input" id="mAnticipata" autocomplete="off" placeholder="Cognome e nome">
+          <div class="select is-fullwidth">
+            <select id="mAnticipata"><option value="">Pagata dal club</option></select>
+          </div>
         </div>
         <div class="field">
           <label class="label" for="mQuantita">Quantità</label>
@@ -228,6 +233,23 @@
     </div>
     <!-- Per allegare la fattura a un movimento già registrato («Allega la fattura»). -->
     <input type="file" id="allegaFattura" accept="application/pdf,.pdf" hidden>
+    <!-- «Aggiungi una persona…» di «Anticipata da»: la rubrica delle persone da rimborsare (dalla 3.5). -->
+    <dialog id="dlgPersona" class="finestra" aria-labelledby="dlgPersonaTitolo">
+      <h2 class="title is-5" id="dlgPersonaTitolo">Aggiungi una persona da rimborsare</h2>
+      <div class="field">
+        <label class="label" for="pCognome">Cognome</label>
+        <input class="input" id="pCognome" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="label" for="pNome">Nome</label>
+        <input class="input" id="pNome" autocomplete="off">
+      </div>
+      <p class="help is-danger" id="pErrore" role="alert" hidden></p>
+      <div class="buttons">
+        <button type="button" class="button is-medium" id="pAnnulla">Annulla</button>
+        <button type="button" class="button is-medium is-link" id="pSalva">Aggiungi</button>
+      </div>
+    </dialog>
     </div>
   </section>
   </div>
@@ -242,6 +264,9 @@
   let seasonValue = null; // season della vista season_balance: filtra i movimenti
   let postsById = new Map();   // post della stagione da collegare (ledger_social_events)
   let entriesById = new Map(); // movimenti mostrati, per le azioni di ogni riga
+  let people = [];             // rubrica delle persone da rimborsare (ledger_people)
+  let chosenPerson = "";       // scelta di «Anticipata da» prima di «Aggiungi una persona…»
+  const NEW_PERSON = "__nuova";
   const MAX_RECEIPT = 2 * 1024 * 1024;
 
   (async function init() {
@@ -255,7 +280,14 @@
     for (const r of document.querySelectorAll("input[name=mTipo]")) r.addEventListener("change", updateAdvance);
     el("mFattura").addEventListener("change", () => (el("erroreFattura").hidden = true));
     el("allegaFattura").addEventListener("change", attachToEntry);
+    el("mAnticipata").addEventListener("change", choosePerson);
+    el("pSalva").addEventListener("click", savePerson);
+    el("pAnnulla").addEventListener("click", () => el("dlgPersona").close());
+    el("dlgPersona").addEventListener("close", () => {
+      if (el("mAnticipata").value === NEW_PERSON) el("mAnticipata").value = chosenPerson;
+    });
     await loadPosts();
+    await loadPeople();
     await reload();
   })();
 
@@ -272,7 +304,54 @@
   function updateAdvance() {
     const outflow = document.querySelector("input[name=mTipo]:checked")?.value === "USCITA";
     el("campoAnticipata").hidden = !outflow;
-    if (!outflow) el("mAnticipata").value = "";
+    if (!outflow) el("mAnticipata").value = chosenPerson = "";
+  }
+
+  const personName = (p) => `${p.last_name} ${p.first_name}`;
+  /** Le parole di un nome, senza accenti né segni, in ordine: come person_key() nel database. */
+  const personKey = (t) => String(t || "").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .split(/\s+/).map((w) => w.replace(/[^A-Z]/g, "")).filter(Boolean).sort().join(" ");
+
+  /** La rubrica delle persone da rimborsare, in ordine alfabetico, con in fondo «Aggiungi una persona…». */
+  async function loadPeople(selected = el("mAnticipata").value) {
+    const { data, error } = await sb.from("ledger_people").select("id,last_name,first_name");
+    if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
+    people = [...data].sort((a, b) => personName(a).localeCompare(personName(b), "it"));
+    el("mAnticipata").replaceChildren(new Option("Pagata dal club", ""), ...people.map((p) => new Option(personName(p), p.id)),
+      new Option("Aggiungi una persona…", NEW_PERSON));
+    el("mAnticipata").value = people.some((p) => p.id === selected) ? selected : "";
+    chosenPerson = el("mAnticipata").value;
+  }
+
+  /** «Aggiungi una persona…» apre la finestra; ogni altra scelta resta quella buona. */
+  function choosePerson() {
+    if (el("mAnticipata").value !== NEW_PERSON) { chosenPerson = el("mAnticipata").value; return; }
+    el("pCognome").value = "";
+    el("pNome").value = "";
+    el("pErrore").hidden = true;
+    el("dlgPersona").showModal();
+    el("pCognome").focus();
+  }
+
+  /** Una persona nuova, in maiuscolo. Se c'è già con le stesse parole, anche in un altro ordine, si sceglie quella. */
+  async function savePerson() {
+    const last = el("pCognome").value.trim().toUpperCase(), first = el("pNome").value.trim().toUpperCase();
+    const fail = (text) => { el("pErrore").textContent = text; el("pErrore").hidden = false; };
+    if (!last || !first) return fail("Scrivere cognome e nome.");
+    const same = people.find((p) => personKey(personName(p)) === personKey(`${last} ${first}`));
+    if (same) {
+      el("mAnticipata").value = chosenPerson = same.id;
+      el("dlgPersona").close();
+      showToast(`${personName(same)} è già nell'elenco: è stata scelta quella.`);
+      return;
+    }
+    el("pSalva").disabled = true;
+    const { data, error } = await sb.from("ledger_people").insert({ last_name: last, first_name: first }).select("id").single();
+    el("pSalva").disabled = false;
+    if (error) return fail(error.code === "23505" ? "Questa persona è già nell'elenco: ricaricare la pagina e sceglierla." : errorMessage(error));
+    chosenPerson = data.id;
+    await loadPeople(data.id);
+    el("dlgPersona").close();
   }
 
   const postLabel = (p) => `${p.title}${p.event_date ? ` (${dataIt(p.event_date)})` : ""}`;
@@ -322,9 +401,15 @@
     if (error) throw error;
     entriesById = new Map(data.map((m) => [m.id, m]));
     // Chi deve ancora riavere i soldi anticipati: il totale sta in alto, vicino al saldo.
-    const owed = data.filter((m) => m.advanced_by && !m.refunded_on).reduce((s, m) => s + num(m.amount), 0);
+    const toRefund = data.filter((m) => m.advanced_by && !m.refunded_on);
+    const owed = toRefund.reduce((s, m) => s + num(m.amount), 0);
     el("kpiDaRimborsare").hidden = owed <= 0;
     el("kDaRimborsare").textContent = fmt(owed);
+    // E quanto spetta a ciascuno, dal più alto.
+    const byPerson = new Map();
+    for (const m of toRefund) byPerson.set(m.advanced_by, (byPerson.get(m.advanced_by) || 0) + num(m.amount));
+    el("kDaRimborsarePersone").innerHTML = [...byPerson].sort((a, b) => b[1] - a[1])
+      .map(([who, amount]) => `<li><span>${esc(who)}</span><span>${fmt(amount)}</span></li>`).join("");
     if (!data.length) {
       el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento registrato nella stagione in corso.</td></tr>`;
       return;
@@ -499,7 +584,9 @@
         quantity: num(el("mQuantita").value),
         unit_price: num(el("mPrezzo").value),
         social_event_id: el("mPost").value || null,
-        advanced_by: kind === "USCITA" ? el("mAnticipata").value.trim().toUpperCase() || null : null,
+        // La persona della rubrica: il nome nel testo (advanced_by) lo scrive il database.
+        advanced_by_id: kind === "USCITA" ? el("mAnticipata").value || null : null,
+        advanced_by: null,
       }).select("id").single();
       if (error) return { error };
       if (file) {
@@ -517,6 +604,7 @@
     if (ok) {
       // Data e tipo restano: spesso si registrano più movimenti dello stesso giorno.
       for (const id of ["mVoce", "mDescrizione", "mPrezzo", "mAnticipata", "mPost", "mFattura"]) el(id).value = "";
+      chosenPerson = "";
       el("mQuantita").value = 1;
       updateDescription();
       preview();

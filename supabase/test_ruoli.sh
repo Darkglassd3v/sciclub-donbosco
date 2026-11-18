@@ -2466,10 +2466,12 @@ end $$;
 set role authenticated;
 do $$
 declare
-  cossetta uuid := (select id from public.ledger_people where last_name = 'COSSETTA');
+  cossetta uuid;
   nuova uuid;
 begin
+  -- Il tesoriere, che tiene il Bilancio: sotto RLS la rubrica la legge solo lui.
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  cossetta := (select id from public.ledger_people where last_name = 'COSSETTA');
   -- La pagina di prima scrive ancora il testo: in minuscolo e con spazi in più è la stessa persona.
   insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by)
   values ('USCITA', 'PROVA RIMBORSO 2', 1, 5, '  federico   cossetta ') returning advanced_by_id into nuova;
@@ -2501,5 +2503,6 @@ begin
 end $$;
 reset role;
 delete from public.ledger_entries where category like 'PROVA RIMBORSO%';
+SQL
 
 echo "test ruoli: tutto a posto"

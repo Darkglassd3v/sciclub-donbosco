@@ -52,7 +52,7 @@
       && options.join("|") === ":Pagata dal club|PC:COSSETTA FEDERICO|PV:VERDI LUCA|__nuova:Aggiungi una persona…", `opzioni ${options.join(" | ")}`);
 
     const owed = text(el("kpiDaRimborsare"));
-    test("totalePerPersona", /60,50/.test(owed) && /COSSETTA FEDERICO\s*50,50/.test(owed) && /VERDI LUCA\s*10,00/.test(owed) && !/99,00/.test(owed),
+    test("totalePerPersona", /60,50/.test(owed) && /COSSETTA FEDERICO\s*€?\s*50,50/.test(owed) && /VERDI LUCA\s*€?\s*10,00/.test(owed) && !/99,00/.test(owed),
       `riquadro «${owed}»`);
 
     // La stessa persona con le parole al contrario: niente persona nuova, si sceglie quella che c'è.

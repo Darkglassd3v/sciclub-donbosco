@@ -4047,6 +4047,144 @@ create trigger members_no_double_insert
   before insert on public.members
   for each row execute function public.members_no_double_insert();
 
+-- ---------------------------------------------------------------------------
+-- Rubrica delle persone da rimborsare (dalla 3.5). «Anticipata da» era testo libero e la stessa
+-- persona finiva scritta in due modi («FEDERICO COSSETTA» e «COSSETTA FEDERICO»): il Bilancio non
+-- sapeva dire quanto spetta a chi. Ora una spesa anticipata punta a una persona della rubrica
+-- (advanced_by_id); advanced_by resta e lo scrive il database col nome della persona, così chi legge
+-- il testo (Excel dei movimenti, la pagina di prima) continua a vederlo. Le persone non sono account:
+-- si rimborsa anche chi non entra nel gestionale.
+-- ---------------------------------------------------------------------------
+
+-- Le parole di un nome, senza accenti né segni, in ordine alfabetico: «Federico  Cossetta» e
+-- «COSSETTA FEDERICO» danno la stessa chiave. Vuota se non c'è nessuna parola.
+create or replace function public.person_key(t text)
+returns text
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $$
+  select coalesce(string_agg(w, ' ' order by w), '')
+    from (select public.norm_name(x) w from regexp_split_to_table(coalesce(t, ''), '\s+') x) parole
+   where w <> '';
+$$;
+
+comment on function public.person_key is 'Parole di un nome normalizzate (norm_name) e in ordine alfabetico: la stessa persona in qualunque ordine.';
+
+create table if not exists public.ledger_people (
+  id         uuid primary key default gen_random_uuid(),
+  last_name  text not null check (btrim(last_name) <> ''),
+  first_name text not null check (btrim(first_name) <> ''),
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists ledger_people_key_idx on public.ledger_people (public.person_key(last_name || ' ' || first_name));
+
+comment on table public.ledger_people is 'Persone a cui il club rimborsa le spese anticipate (Bilancio); non sono account.';
+
+alter table public.ledger_people enable row level security;
+drop policy if exists ledger_people_all on public.ledger_people;
+create policy ledger_people_all on public.ledger_people
+  for all to authenticated using ((select public.can('bilancio'))) with check ((select public.can('bilancio')));
+
+alter table public.ledger_entries add column if not exists advanced_by_id uuid
+  references public.ledger_people (id) on delete restrict;
+create index if not exists ledger_entries_advanced_by_idx on public.ledger_entries (advanced_by_id);
+alter table public.ledger_entries drop constraint if exists ledger_entries_advance_person_valid;
+alter table public.ledger_entries add constraint ledger_entries_advance_person_valid
+  check (advanced_by_id is null or kind = 'USCITA');
+
+comment on column public.ledger_entries.advanced_by_id is 'Persona della rubrica che ha anticipato la spesa; vuoto = pagata dal club. Il testo in advanced_by lo scrive il database.';
+
+-- La persona di un nome scritto a mano: quella con le stesse parole, o una nuova con la prima parola
+-- come cognome (la pagina chiedeva «Cognome e nome»). null se il nome è vuoto.
+create or replace function public.ledger_person_for(written text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  chiave text := public.person_key(written);
+  parole text[] := regexp_split_to_array(upper(btrim(coalesce(written, ''))), '\s+');
+  trovata uuid;
+begin
+  if chiave = '' then
+    return null;
+  end if;
+  if auth.uid() is not null and not public.can('bilancio') then
+    raise exception 'Solo chi tiene il Bilancio può aggiungere persone da rimborsare.';
+  end if;
+  select p.id into trovata from public.ledger_people p where public.person_key(p.last_name || ' ' || p.first_name) = chiave;
+  if trovata is null then
+    insert into public.ledger_people (last_name, first_name)
+    values (parole[1], coalesce(nullif(array_to_string(parole[2:], ' '), ''), parole[1]))
+    returning id into trovata;
+  end if;
+  return trovata;
+end;
+$$;
+
+comment on function public.ledger_person_for is 'Persona della rubrica per un nome scritto a mano (stesse parole in qualunque ordine), creata se manca. Permesso bilancio.';
+
+-- advanced_by_id e advanced_by vanno insieme: la pagina nuova manda la persona e qui si scrive il nome;
+-- la pagina di prima manda il nome e qui si trova la persona.
+create or replace function public.ledger_entries_person()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.advanced_by_id is null and nullif(btrim(coalesce(new.advanced_by, '')), '') is not null then
+    new.advanced_by_id := public.ledger_person_for(new.advanced_by);
+  end if;
+  if new.advanced_by_id is null then
+    new.advanced_by := null;
+  else
+    new.advanced_by := (select p.last_name || ' ' || p.first_name from public.ledger_people p where p.id = new.advanced_by_id);
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists ledger_entries_person on public.ledger_entries;
+create trigger ledger_entries_person
+  before insert or update of advanced_by, advanced_by_id on public.ledger_entries
+  for each row execute function public.ledger_entries_person();
+
+-- Le spese scritte col solo nome: per ogni scrittura, dalla più recente, la persona con le stesse parole.
+-- Così il nome della persona è la scrittura usata per ultima. Rieseguibile: tocca solo le spese senza
+-- persona.
+create or replace function public.link_ledger_advances()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  scritto text;
+begin
+  if auth.uid() is not null and not public.can('bilancio') then
+    raise exception 'Solo chi tiene il Bilancio può collegare le spese anticipate.';
+  end if;
+  for scritto in
+    select e.advanced_by from public.ledger_entries e
+     where e.advanced_by_id is null and nullif(btrim(e.advanced_by), '') is not null
+     group by e.advanced_by order by max(e.created_at) desc
+  loop
+    perform public.ledger_person_for(scritto);
+  end loop;
+  update public.ledger_entries e set advanced_by = e.advanced_by
+   where e.advanced_by_id is null and nullif(btrim(e.advanced_by), '') is not null;
+end;
+$$;
+
+comment on function public.link_ledger_advances is 'Collega a una persona della rubrica le spese anticipate scritte col solo nome. Rieseguibile.';
+
+select public.link_ledger_advances();
+
 -- Le schede eliminate, intere: il socio e le righe che se ne vanno con lui
 -- (abbonamenti, storico degli importi). Nessuna policy e nessun permesso: ci
 -- scrive solo delete_member(), si legge dalla dashboard, e una scheda
