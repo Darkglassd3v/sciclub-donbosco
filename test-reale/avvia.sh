@@ -60,6 +60,12 @@ psql_ -c "\copy auth.users (id, email) from '$COPIA/utenti.csv' csv" >/dev/null 
 # Lo schema public c'è già (lo crea Postgres): quell'errore del ripristino non conta.
 pg_restore -d "$URL_PG" --no-owner --no-privileges "$COPIA/public.dump" 2> "$TMP/ripristino.txt"
 grep -v 'schema "public" already exists\|errors ignored on restore\|^pg_restore: from TOC entry\|^pg_restore: error: could not execute query: ERROR:  schema "public"\|^Command was: CREATE SCHEMA public' "$TMP/ripristino.txt" | grep -i "error" | head -5
+# MIGRAZIONE=file.sql: le istruzioni nuove di un rilascio non ancora in produzione, provate sulla copia prima
+# di applicarle davvero (come in produzione: una transazione sola, ferma al primo errore).
+if [ -n "${MIGRAZIONE:-}" ]; then
+  psql_ -1 -f "$MIGRAZIONE" >/dev/null || { echo "$MIGRAZIONE non va"; exit 1; }
+  echo "migrazione applicata: $MIGRAZIONE"
+fi
 psql_ -f "$QUI/dopo.sql" >/dev/null || { echo "dopo.sql non va"; exit 1; }
 echo "copia pronta: $(psql "$URL_PG" -X -At -c 'select count(*) from public.members') soci"
 

@@ -8,20 +8,64 @@
   <link rel="stylesheet" href="brand.css?v=20261118elenco">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
-    /* Elenco dei soci della stagione (dal 18/11/2026). */
-    .strumenti-elenco { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-    .strumenti-elenco .field { flex: 1 1 18rem; margin: 0; }
-    .tessere-libere { margin: 12px 0 0; color: var(--testo-soft); overflow-wrap: anywhere; }
+    /* Elenco dei soci della stagione (dal 18/11/2026), nello stile dei Pagamenti: le classi qui sotto sono quelle
+     * di admin.html. Restano nella pagina e non in brand.css perché .custom-table serve anche a una tabella di
+     * index.html con margini suoi. */
+    .comandi { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
+    .comandi .field { flex: 1 1 20rem; margin-bottom: 0; }
+    .comandi .scarica { display: flex; flex-wrap: wrap; gap: 12px; }
+    .comandi .scarica[hidden] { display: none; }
+    .unit-card { padding: 0; overflow: hidden; }
+    .unit-header { padding: 24px 28px 8px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+    .unit-title { font-weight: 600; font-size: 1.35rem; letter-spacing: -.022em; color: var(--testo); }
+    .custom-table { width: 100%; border-collapse: collapse; }
+    .custom-table th { text-align: left; padding: 10px 28px; }
+    .custom-table td { padding: 12px 28px; vertical-align: top; }
+    .row-dependent td:first-child { padding-left: 44px; }
+    .a-carico { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: var(--pillola);
+                background: var(--blu-light); color: var(--blu-dark); font-size: .9375rem; font-weight: 600; }
+    .numero-tessera { margin-top: 2px; font-weight: 600; }
+    .numero-tessera.senza { font-weight: 400; color: var(--testo-soft); }
+
+    .tessere-libere { margin: 16px 0 0; color: var(--testo-soft); overflow-wrap: anywhere; }
     .tessere-libere b { color: var(--testo); }
-    .tabella-elenco { width: 100%; border-collapse: collapse; }
-    .tabella-elenco th { text-align: left; padding: 10px 8px; color: var(--testo-soft); font-weight: 600; border-bottom: 1px solid var(--filo); white-space: nowrap; }
-    .tabella-elenco td { padding: 10px 8px; border-top: 1px solid var(--filo); vertical-align: top; }
-    .tabella-elenco .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .tabella-elenco .vuota { color: var(--testo-soft); }
-    .pagine { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-    .colonne-scelta { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 8px 16px; }
-    .colonne-scelta label { display: flex; gap: 10px; align-items: center; font-size: 1.0625rem; }
-    .colonne-scelta input { width: 22px; height: 22px; }
+    /* Il nucleo: una fascia azzurra col capofamiglia, poi le sue righe col filo blu a sinistra, senza righe alterne. */
+    .elenco-soci tr.riga-nucleo th { background: var(--blu-light); color: var(--blu-dark); font-size: 1rem; font-weight: 600;
+                                     padding: 10px 28px; border-top: 1px solid var(--filo); border-bottom: 0; }
+    .elenco-soci tbody.nucleo tr:nth-child(even) { background: none; }
+    .elenco-soci tbody.nucleo td:first-child { box-shadow: inset 4px 0 var(--blu); }
+    /* Chi la ricerca ha trovato, dentro il nucleo intero. */
+    .elenco-soci tr.trovato td { background: var(--giallo-light); }
+    .elenco-soci .vuota { color: var(--testo-soft); }
+    .pagine { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 28px 16px; }
+    .pagine + .tabella-scorrevole, .tabella-scorrevole + .pagine { border-top: 1px solid var(--filo); }
+    .unit-title:focus { outline: none; }
+    .unit-title:focus-visible { outline: 3px solid var(--blu-dark); outline-offset: 4px; }
+
+    /* La finestra delle colonne: una riga per colonna, la casella e i pulsanti Su e Giù (mai solo trascinare). */
+    .colonne-scelta { list-style: none; margin: 0; padding: 0; }
+    .colonne-scelta li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-top: 1px solid var(--filo); }
+    .colonne-scelta li:first-child { border-top: 0; }
+    .colonne-scelta .checkbox { flex: 1; font-size: 1.0625rem; }
+    .colonne-scelta .button { min-height: var(--tocco); gap: 6px; }
+
+    @media screen and (max-width: 768px) {
+      .custom-table th, .custom-table td, .elenco-soci tr.riga-nucleo th { padding-left: 20px; padding-right: 20px; }
+      .unit-header, .pagine { padding-left: 20px; padding-right: 20px; }
+    }
+    /* Sul telefono ogni socio è una scheda (table.a-schede di brand.css); il nucleo è la fascia sopra le schede. */
+    @media (max-width: 600px) {
+      .custom-table td:first-child { padding-top: 10px; padding-bottom: 6px; }
+      .row-dependent td:first-child { padding-left: 28px; }
+      .elenco-soci tr.riga-nucleo th { display: block; padding: 10px 16px; }
+      .elenco-soci tbody.nucleo td:first-child { box-shadow: none; }
+      .elenco-soci tbody.nucleo tr[data-socio] { box-shadow: inset 4px 0 var(--blu); }
+      .elenco-soci td[data-etichetta]:empty { display: none; }
+      .pagine { padding: 12px 16px; }
+      .pagine .button { flex: 1 1 40%; }
+      .pagine span { order: -1; flex-basis: 100%; }
+      .colonne-scelta .button span { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -81,42 +125,61 @@
 
 <div class="container-main" role="main">
   <h1 class="title is-4" id="titolo">Elenco soci</h1>
-  <p class="occhiello">I soci della stagione in corso in ordine di numero di tessera. Per modificare un socio, aprirne la scheda dal nome.</p>
+  <p class="occhiello">I soci della stagione in corso in ordine di numero di tessera, con i nuclei familiari uniti come nei
+    Pagamenti. Per modificare un socio, aprirne la scheda dal nome.</p>
 
-  <div class="riquadro">
-    <div class="strumenti-elenco">
-      <div class="field">
-        <label class="label" for="cercaSoci">Cerca per cognome, nome o codice fiscale</label>
-        <input id="cercaSoci" class="input" type="search" autocomplete="off" placeholder="Cognome, nome o codice fiscale">
-      </div>
-      <button type="button" class="button is-link is-outlined" id="btnColonne">Colonne</button>
-    </div>
-    <p class="tessere-libere" id="tessereLibere"></p>
-    <!-- L'Excel con tutti i dati personali: solo per chi ha il permesso riepilogo (prima stava nel Riepilogo). -->
-    <div class="buttons mt-3" id="zonaScarica" hidden>
-      <button type="button" class="button is-link" id="btnScaricaTutti">Scarica tutti (Excel completo)</button>
-      <button type="button" class="button is-link is-outlined" id="btnScaricaFiltrato">Scarica l'elenco filtrato</button>
-    </div>
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="numSoci">—</div></div>
+    <div class="kpi"><div class="kpi-label">Nuclei familiari</div><div class="kpi-value" id="numNuclei">—</div></div>
+    <div class="kpi"><div class="kpi-label">Familiari a carico</div><div class="kpi-value" id="numFamiliari">—</div></div>
+    <div class="kpi"><div class="kpi-label">Numeri di tessera liberi</div><div class="kpi-value" id="numLiberi">—</div></div>
   </div>
 
   <div class="riquadro">
-    <div class="tabella-scorrevole">
-      <table class="tabella-elenco">
-        <thead><tr id="testataSoci"></tr></thead>
-        <tbody id="elencoSoci"><tr><td class="vuota">Caricamento…</td></tr></tbody>
-      </table>
+    <h2>Ricerca e colonne</h2>
+    <div class="comandi">
+      <div class="field">
+        <label class="label" for="cercaSoci">Cerca per cognome, nome o codice fiscale</label>
+        <input id="cercaSoci" class="input" type="search" autocomplete="off" placeholder="Cognome, nome o codice fiscale di un componente del nucleo">
+      </div>
+      <button type="button" class="button is-link is-outlined" id="btnColonne">Colonne</button>
+      <!-- L'Excel con tutti i dati personali: solo per chi ha il permesso riepilogo (prima stava nel Riepilogo). -->
+      <div class="scarica" id="zonaScarica" hidden>
+        <button type="button" class="button is-link" id="btnScaricaTutti">Scarica tutti (Excel completo)</button>
+        <button type="button" class="button is-link is-outlined" id="btnScaricaFiltrato">Scarica l'elenco filtrato</button>
+      </div>
     </div>
-    <div class="pagine">
+    <p class="tessere-libere" id="tessereLibere"></p>
+  </div>
+
+  <section class="riquadro unit-card" aria-labelledby="titoloElenco">
+    <div class="unit-header">
+      <h2 class="unit-title" id="titoloElenco" tabindex="-1">Soci per numero di tessera</h2>
+    </div>
+    <nav class="pagine" aria-label="Pagine dell'elenco">
       <button type="button" class="button" id="pagPrecedente">Precedente</button>
       <span id="paginaSoci" aria-live="polite"></span>
       <button type="button" class="button" id="pagSuccessiva">Successiva</button>
+    </nav>
+    <div class="tabella-scorrevole">
+      <table class="custom-table a-schede elenco-soci" id="elencoSoci">
+        <tbody><tr><td class="vuota">Caricamento…</td></tr></tbody>
+      </table>
     </div>
-  </div>
+    <nav class="pagine" aria-label="Pagine dell'elenco, in fondo">
+      <button type="button" class="button" id="pagPrecedenteSotto">Precedente</button>
+      <span id="paginaSociSotto"></span>
+      <button type="button" class="button" id="pagSuccessivaSotto">Successiva</button>
+    </nav>
+  </section>
 </div>
 
 <dialog id="dlgColonne" class="finestra" aria-labelledby="dlgColonneTitolo">
   <h2 class="title is-5" id="dlgColonneTitolo">Colonne dell'elenco</h2>
-  <div class="colonne-scelta" id="sceltaColonne"></div>
+  <p class="occhiello">La prima colonna è sempre il socio, con nome e numero di tessera. Spuntare le colonne da mostrare
+    e cambiarne l'ordine con «Su» e «Giù».</p>
+  <ol class="colonne-scelta" id="sceltaColonne"></ol>
+  <p class="is-sr-only" id="annuncioColonne" aria-live="polite"></p>
   <div class="buttons">
     <button type="button" class="button is-medium" id="annullaColonne">Annulla</button>
     <button type="button" class="button is-medium" id="predefiniteColonne">Colonne di partenza</button>
@@ -128,23 +191,27 @@
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261118permesso"></script>
 <script>
-  // Elenco dei soci della stagione (richiesta del 18/11/2026): in ordine di tessera, con i numeri liberi, a pagine
-  // da 50, con la ricerca della pagina Soci e le colonne scelte da chi lo usa. L'Excel dei soci, prima nel
-  // Riepilogo, si scarica da qui: tutto o solo quello trovato dalla ricerca.
+  // Elenco dei soci della stagione (richieste del 18/11/2026): in ordine di tessera, con i numeri liberi, a pagine,
+  // con la ricerca della pagina Soci e le colonne scelte (e ordinate) da chi lo usa. Nello stile dei Pagamenti: i
+  // nuclei familiari restano uniti, al posto della loro tessera più bassa. L'Excel dei soci, prima nel Riepilogo, si
+  // scarica da qui: tutto o solo quello trovato dalla ricerca.
   const el = (id) => document.getElementById(id);
-  const PAGE_SIZE = 50;
+  const PAGE_SIZE = 50;   // persone per pagina al massimo; un nucleo non si spezza mai fra due pagine
   const COLUMNS_KEY = "sciclub-elenco-colonne";
-  let members = [];   // i soci della stagione, già in ordine di tessera
-  let shown = [];     // quelli che la ricerca lascia
+  let members = [];          // i soci della stagione, in ordine di tessera (anche per l'Excel)
+  let households = [];       // i nuclei: { key, head, headName, headListed, people }, in ordine di tessera
+  let shownHouseholds = [];  // quelli che la ricerca lascia
+  let shown = [];            // i loro soci, in ordine di tessera (per l'Excel filtrato)
+  let found = new Set();     // gli id dei soci trovati dalla ricerca, evidenziati nel loro nucleo
   let page = 0;
   let seasonLabel = "";
 
   const courseOf = (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type);
+  const fullName = (s) => (s ? `${s.last_name || ""} ${s.first_name || ""}`.trim() : "");
 
-  /* Le colonne dell'elenco a schermo: [chiave, intestazione, valore, classe]. Le prime cinque sono quelle di partenza. */
+  /* Le colonne dopo quella del socio (nome e tessera, sempre la prima): [chiave, intestazione, valore].
+   * Le prime tre sono quelle di partenza. */
   const LIST_COLUMNS = [
-    ["tessera", "N° tessera", (s) => s.card_number, "num"],
-    ["nome", "Cognome e nome", null],
     ["tipo", "Tipo tessera", (s) => s.card_type],
     ["abbonamento", "Abbonamento", (s) => s.passes.join(" + ")],
     ["corso", "Corso", courseOf],
@@ -158,7 +225,8 @@
     ["citta", "Città", (s) => s.city],
     ["cap", "CAP", (s) => s.postal_code],
   ];
-  const DEFAULT_COLUMNS = ["tessera", "nome", "tipo", "abbonamento", "corso"];
+  const DEFAULT_COLUMNS = ["tipo", "abbonamento", "corso"];
+  const columnLabel = (key) => LIST_COLUMNS.find(([k]) => k === key)[1];
 
   /* Colonne dell'Excel dei soci, a gruppi ognuno col suo colore (richieste del 29/10, spostato dal Riepilogo).
    * Un campo nuovo va letto anche in loadMembers(). */
@@ -210,19 +278,30 @@
     el("btnScaricaTutti").addEventListener("click", () => downloadMembers(false));
     el("btnScaricaFiltrato").addEventListener("click", () => downloadMembers(true));
     el("cercaSoci").addEventListener("input", () => { page = 0; applySearch(); });
-    el("pagPrecedente").addEventListener("click", () => { page--; draw(); });
-    el("pagSuccessiva").addEventListener("click", () => { page++; draw(); });
+    // In fondo all'elenco il cambio pagina riporta all'inizio: la pagina nuova si legge dall'alto.
+    for (const [id, step, toTop] of [["pagPrecedente", -1, false], ["pagSuccessiva", 1, false],
+      ["pagPrecedenteSotto", -1, true], ["pagSuccessivaSotto", 1, true]]) {
+      el(id).addEventListener("click", () => {
+        page += step;
+        draw();
+        if (toTop || el(id).disabled) el("titoloElenco").focus();
+      });
+    }
     el("btnColonne").addEventListener("click", openColumns);
+    el("sceltaColonne").addEventListener("click", moveColumn);
     el("annullaColonne").addEventListener("click", () => el("dlgColonne").close());
-    el("predefiniteColonne").addEventListener("click", () => tickColumns(DEFAULT_COLUMNS));
+    el("predefiniteColonne").addEventListener("click", () => {
+      fillColumns(LIST_COLUMNS.map(([key]) => key), DEFAULT_COLUMNS);
+      el("annuncioColonne").textContent = "Ripristinate le colonne di partenza.";
+    });
     el("applicaColonne").addEventListener("click", applyColumns);
     await loadMembers();
   })();
 
   /**
    * I tesserati della stagione in corso (con la tessera o coperti da presciistica o agevolazione famiglia,
-   * card_holder()), con gli abbonamenti della stagione, in ordine di tessera. Una lettura sola: ricerca, pagine
-   * ed Excel lavorano su questi.
+   * card_holder()), con gli abbonamenti della stagione, in ordine di tessera; poi, in una richiesta a parte, il
+   * nome dei capofamiglia che quest'anno non sono tesserati. Ricerca, pagine ed Excel lavorano su questi.
    */
   async function loadMembers() {
     setLoading(true);
@@ -232,7 +311,7 @@
       const [rows, passes, cards] = await Promise.all([
         allRows(() => sb
           .from("members")
-          .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, name_key, "
+          .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, name_key, payer_id, "
             + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label, member_insurance")
           .not("enrolled_at", "is", null)
           .is("card_holder", true)
@@ -245,17 +324,59 @@
       members = rows.map((s) => ({ ...s, card_type: ownCard(s) ? s.card_type : coveringCard(cards, s.member_insurance),
         passes: passesOf.get(s.id) || [] }))
         .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
+      const listed = new Set(members.map((s) => s.id));
+      const missing = [...new Set(members.map((s) => s.payer_id).filter((p) => p && !listed.has(p)))];
+      const outside = missing.length
+        ? await allRows(() => sb.from("members").select("id, last_name, first_name, tax_code, name_key").in("id", missing).order("id"))
+        : [];
+      households = buildHouseholds(outside);
       const year = new Date(seasonValue).getFullYear();
       seasonLabel = `${year}/${String(year + 1).slice(2)}`;
       el("titolo").textContent = `Elenco soci ${seasonLabel}`;
+      el("numSoci").textContent = members.length;
+      el("numNuclei").textContent = households.length;
+      el("numFamiliari").textContent = members.filter((s) => s.payer_id).length;
       drawFreeCards();
       applySearch();
     } catch (error) {
-      el("elencoSoci").innerHTML = `<tr><td class="vuota">Elenco non caricato: ${esc(errorMessage(error))}</td></tr>`;
+      el("elencoSoci").innerHTML = `<tbody><tr><td class="vuota">Elenco non caricato: ${esc(errorMessage(error))}</td></tr></tbody>`;
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * I nuclei come nei Pagamenti: chi ha un pagante (payer_id) sta col suo capofamiglia, il capofamiglia prima e poi
+   * i familiari per tessera. Ogni nucleo sta al posto della sua tessera più bassa; chi è da solo è un nucleo di uno.
+   * Il capofamiglia non tesserato quest'anno non è fra i soci: se ne mostra solo il nome, letto a parte.
+   */
+  function buildHouseholds(outside) {
+    const byId = new Map(members.map((s) => [s.id, s]));
+    const outsideById = new Map(outside.map((s) => [s.id, s]));
+    const groups = new Map();
+    for (const s of members) {
+      const key = s.payer_id || s.id;
+      groups.set(key, [...(groups.get(key) || []), s]);
+    }
+    return [...groups].map(([key, people]) => {
+      const head = byId.get(key) || outsideById.get(key) || null;
+      const ordered = people.some((s) => s.id === key) ? [byId.get(key), ...people.filter((s) => s.id !== key)] : people;
+      return { key, head, headName: fullName(head), headListed: byId.has(key), people: ordered, first: Math.min(...people.map(cardOrder)) };
+    }).sort((a, b) => a.first - b.first || byName(a.people[0], b.people[0]));
+  }
+
+  /** Un nucleo con più persone, o un familiare il cui capofamiglia non è in elenco: ha la sua fascia. */
+  const isFamily = (h) => h.people.length > 1 || h.people[0].id !== h.key;
+
+  /** «Nucleo ROSSI MARIO · 3 persone · tessere 3, 40, 41», e se il capofamiglia quest'anno non è tesserato lo dice. */
+  function householdTitle(h) {
+    const cards = h.people.filter((s) => Number.isFinite(cardOrder(s))).map((s) => s.card_number);
+    return [`Nucleo ${h.headName || "familiare"}`,
+      ...(h.headListed ? [] : ["capofamiglia non tesserato quest'anno"]),
+      h.people.length === 1 ? "1 persona" : `${h.people.length} persone`,
+      ...(cards.length ? [`${cards.length === 1 ? "tessera" : "tessere"} ${cards.join(", ")}`] : []),
+    ].join(" · ");
   }
 
   /** I numeri di tessera liberi fra 1 e il più alto assegnato, con gli intervalli scritti «da–a». */
@@ -268,6 +389,7 @@
       const last = free[free.length - 1];
       if (last && last[1] === n - 1) last[1] = n; else free.push([n, n]);
     }
+    el("numLiberi").textContent = free.reduce((count, [a, b]) => count + b - a + 1, 0);
     el("tessereLibere").innerHTML = !top ? "Nessun numero di tessera assegnato."
       : free.length ? `Numeri di tessera liberi fino al ${top}: <b>${free.map(([a, b]) => (a === b ? a : `${a}–${b}`)).join(", ")}</b>`
       : `Nessun numero di tessera libero fino al ${top}.`;
@@ -275,68 +397,149 @@
 
   /**
    * La ricerca della pagina Soci: ogni parola deve stare in cognome, nome o codice fiscale, oppure nella chiave
-   * del nome (nameKey(), così «DANGELO» trova «D'ANGELO»). Sui soci già letti, senza altre richieste.
+   * del nome (nameKey(), così «DANGELO» trova «D'ANGELO»). Come nei Pagamenti si vede il nucleo intero di chi è
+   * trovato, anche cercando il capofamiglia non tesserato. Sui soci già letti, senza altre richieste.
    */
   function applySearch() {
     const words = el("cercaSoci").value.trim().toUpperCase().split(/\s+/).filter(Boolean);
-    shown = !words.length ? members : members.filter((s) => {
+    const matches = (s) => {
       const text = `${s.last_name || ""} ${s.first_name || ""} ${s.tax_code || ""}`.toUpperCase();
       const key = s.name_key || nameKey(`${s.last_name || ""} ${s.first_name || ""}`);
       return words.every((w) => text.includes(w) || (nameKey(w) && key.includes(nameKey(w))));
-    });
+    };
+    found = new Set(words.length ? members.filter(matches).map((s) => s.id) : []);
+    shownHouseholds = !words.length ? households
+      : households.filter((h) => h.people.some((s) => found.has(s.id)) || (!h.headListed && h.head && matches(h.head)));
+    const ids = new Set(shownHouseholds.flatMap((h) => h.people.map((s) => s.id)));
+    shown = members.filter((s) => ids.has(s.id));
     draw();
   }
 
-  /** Le colonne scelte, nell'ordine dell'elenco; quelle di partenza se non c'è una scelta valida. */
-  function chosenColumns() {
+  /** Le chiavi delle colonne scelte, nel loro ordine; quelle di partenza se non c'è una scelta salvata. */
+  function chosenKeys() {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(COLUMNS_KEY)); } catch (e) { /* scelta illeggibile: si riparte */ }
-    const keys = Array.isArray(saved) && saved.some((k) => LIST_COLUMNS.some(([key]) => key === k)) ? saved : DEFAULT_COLUMNS;
-    return LIST_COLUMNS.filter(([key]) => keys.includes(key));
+    // Le chiavi della 3.7 («tessera», «nome») ora stanno nella colonna del socio e si lasciano cadere.
+    return Array.isArray(saved) ? [...new Set(saved)].filter((k) => LIST_COLUMNS.some(([key]) => key === k)) : DEFAULT_COLUMNS;
+  }
+
+  /** Le pagine: nuclei interi, fino a PAGE_SIZE persone (un nucleo più grande sta da solo in una pagina). */
+  function paginate(list) {
+    const pages = [[]];
+    let count = 0;
+    for (const h of list) {
+      if (count && count + h.people.length > PAGE_SIZE) { pages.push([]); count = 0; }
+      pages[pages.length - 1].push(h);
+      count += h.people.length;
+    }
+    return pages;
   }
 
   function draw() {
-    const columns = chosenColumns();
-    el("testataSoci").innerHTML = columns.map(([, label, , cls]) => `<th${cls ? ` class="${cls}"` : ""}>${esc(label)}</th>`).join("");
-    const pages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-    page = Math.min(Math.max(page, 0), pages - 1);
-    const slice = shown.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-    el("elencoSoci").innerHTML = slice.length ? slice.map((s) => `<tr>${columns.map(([key, , value, cls]) => {
-      const content = key === "nome"
-        ? `<a href="index.html?socio=${encodeURIComponent(s.id)}">${esc(`${s.last_name || ""} ${s.first_name || ""}`.trim())}</a>`
-        : esc(value(s) ?? "");
-      return `<td${cls ? ` class="${cls}"` : ""}>${content}</td>`;
-    }).join("")}</tr>`).join("")
-      : `<tr><td class="vuota" colspan="${columns.length}">Nessun socio trovato.</td></tr>`;
-    el("paginaSoci").textContent = `Pagina ${page + 1} di ${pages} · ${shown.length === 1 ? "1 socio" : `${shown.length} soci`}`;
-    el("pagPrecedente").disabled = page === 0;
-    el("pagSuccessiva").disabled = page >= pages - 1;
+    const columns = chosenKeys().map((key) => LIST_COLUMNS.find(([k]) => k === key));
+    const pages = paginate(shownHouseholds);
+    page = Math.min(Math.max(page, 0), pages.length - 1);
+    const head = `<thead><tr><th scope="col">Socio</th>${columns.map(([, label]) => `<th scope="col">${esc(label)}</th>`).join("")}</tr></thead>`;
+    el("elencoSoci").innerHTML = head + (pages[page].length ? householdBodies(pages[page], columns)
+      : `<tbody><tr><td class="vuota" colspan="${columns.length + 1}">Nessun socio trovato.</td></tr></tbody>`);
+    const people = shown.length;
+    const label = `Pagina ${page + 1} di ${pages.length} · ${people === 1 ? "1 socio" : `${people} soci`} in `
+      + `${shownHouseholds.length === 1 ? "1 nucleo" : `${shownHouseholds.length} nuclei`}`;
+    el("paginaSoci").textContent = label;
+    el("paginaSociSotto").textContent = label;
+    for (const id of ["pagPrecedente", "pagPrecedenteSotto"]) el(id).disabled = page === 0;
+    for (const id of ["pagSuccessiva", "pagSuccessivaSotto"]) el(id).disabled = page >= pages.length - 1;
   }
 
-  /** La finestra delle colonne, con le caselle della scelta di adesso. */
+  /** Un <tbody> per nucleo, con la sua fascia; i soci da soli uno dopo l'altro, a righe alterne. */
+  function householdBodies(list, columns) {
+    let html = "";
+    let singles = "";
+    const flush = () => { if (singles) html += `<tbody>${singles}</tbody>`; singles = ""; };
+    for (const h of list) {
+      if (!isFamily(h)) { singles += memberRow(h.people[0], columns); continue; }
+      flush();
+      html += `<tbody class="nucleo"><tr class="riga-nucleo"><th scope="rowgroup" colspan="${columns.length + 1}">${esc(householdTitle(h))}</th></tr>`
+        + `${h.people.map((s) => memberRow(s, columns)).join("")}</tbody>`;
+    }
+    flush();
+    return html;
+  }
+
+  /** La riga del socio come nei Pagamenti: nome (alla scheda), «a carico», tessera; poi le colonne scelte. */
+  function memberRow(s, columns) {
+    const dependant = Boolean(s.payer_id);
+    const hit = found.has(s.id);
+    const classes = [dependant ? "row-dependent" : "", hit ? "trovato" : ""].filter(Boolean).join(" ");
+    return `<tr data-socio="${esc(s.id)}"${classes ? ` class="${classes}"` : ""}><td>`
+      + `<a href="index.html?socio=${encodeURIComponent(s.id)}"><b>${esc(fullName(s))}</b></a>`
+      + (dependant ? '<span class="a-carico">a carico</span>' : "")
+      + (hit ? '<span class="is-sr-only"> (trovato dalla ricerca)</span>' : "")
+      + (Number.isFinite(cardOrder(s)) ? `<div class="numero-tessera">Tessera n° ${esc(s.card_number)}</div>`
+        : '<div class="numero-tessera senza">Senza numero tessera</div>')
+      + `</td>${columns.map(([, label, value]) => `<td data-etichetta="${esc(label)}">${esc(value(s) ?? "")}</td>`).join("")}</tr>`;
+  }
+
+  /** La finestra delle colonne: prima quelle mostrate nel loro ordine, poi le altre. */
   function openColumns() {
-    el("sceltaColonne").innerHTML = LIST_COLUMNS.map(([key, label]) =>
-      `<label><input type="checkbox" value="${key}">${esc(label)}</label>`).join("");
-    tickColumns(chosenColumns().map(([key]) => key));
+    const keys = chosenKeys();
+    fillColumns([...keys, ...LIST_COLUMNS.map(([key]) => key).filter((key) => !keys.includes(key))], keys);
+    el("annuncioColonne").textContent = "";
     el("dlgColonne").showModal();
   }
 
-  function tickColumns(keys) {
-    for (const box of el("sceltaColonne").querySelectorAll("input")) box.checked = keys.includes(box.value);
+  const ARROW = { su: '<path d="m6 15 6-6 6 6"/>', giu: '<path d="m6 9 6 6 6-6"/>' };
+  function fillColumns(order, ticked) {
+    const arrow = (dir, key, label) => `<button type="button" class="button is-light" data-colonna="${key}" data-sposta="${dir}" `
+      + `aria-label="Sposta ${esc(label)} più ${dir === "su" ? "su" : "giù"}"><svg class="icona" viewBox="0 0 24 24" fill="none" `
+      + `stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ARROW[dir]}</svg>`
+      + `<span>${dir === "su" ? "Su" : "Giù"}</span></button>`;
+    el("sceltaColonne").innerHTML = order.map((key) => {
+      const label = columnLabel(key);
+      return `<li><label class="checkbox"><input type="checkbox" value="${key}"${ticked.includes(key) ? " checked" : ""}> ${esc(label)}</label>`
+        + `${arrow("su", key, label)}${arrow("giu", key, label)}</li>`;
+    }).join("");
+    markEnds();
   }
 
-  /** Almeno una colonna; la scelta resta nel browser, come tema e grandezza del testo. */
+  /** Il primo non sale e l'ultimo non scende. */
+  function markEnds() {
+    const items = [...el("sceltaColonne").children];
+    items.forEach((li, i) => {
+      li.querySelector('[data-sposta="su"]').disabled = i === 0;
+      li.querySelector('[data-sposta="giu"]').disabled = i === items.length - 1;
+    });
+  }
+
+  /**
+   * «Su» e «Giù» spostano la colonna di un posto; il lettore di schermo sente dove è finita (la colonna del socio
+   * è la prima) e il fuoco resta sul pulsante, o passa all'altro se questo arriva in cima o in fondo.
+   */
+  function moveColumn(event) {
+    const button = event.target.closest("[data-sposta]");
+    if (!button || button.disabled) return;
+    const item = button.closest("li");
+    const up = button.dataset.sposta === "su";
+    const other = up ? item.previousElementSibling : item.nextElementSibling;
+    if (!other) return;
+    if (up) other.before(item); else other.after(item);
+    markEnds();
+    const items = [...el("sceltaColonne").children];
+    el("annuncioColonne").textContent = `${columnLabel(button.dataset.colonna)} ora è la colonna ${items.indexOf(item) + 2} di ${items.length + 1}.`;
+    (button.disabled ? item.querySelector(`[data-sposta="${up ? "giu" : "su"}"]`) : button).focus();
+  }
+
+  /** Le colonne spuntate, nell'ordine della finestra; la scelta resta nel browser, come tema e grandezza del testo. */
   function applyColumns() {
     const keys = [...el("sceltaColonne").querySelectorAll("input:checked")].map((box) => box.value);
-    if (!keys.length) { showToast("Scegliere almeno una colonna.", "is-warning"); return; }
     try { localStorage.setItem(COLUMNS_KEY, JSON.stringify(keys)); } catch (e) { /* storage negato: vale fino alla prossima pagina */ }
     el("dlgColonne").close();
     draw();
   }
 
   /**
-   * L'Excel dei soci: tutti, o solo quelli trovati dalla ricerca (con la ricerca nel titolo e nel nome del file).
-   * La stagione è scritta dentro il file: rinominato o copiato, dice ancora di che stagione è.
+   * L'Excel dei soci: tutti, o solo quelli che la ricerca mostra (i nuclei interi, con la ricerca nel titolo e nel
+   * nome del file). La stagione è scritta dentro il file: rinominato o copiato, dice ancora di che stagione è.
    */
   async function downloadMembers(onlyFiltered = false) {
     const query = el("cercaSoci").value.trim();
