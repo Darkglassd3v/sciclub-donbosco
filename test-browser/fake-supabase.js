@@ -8,7 +8,7 @@
 // se no con FINTO.risposta; i parametri sono in richiesta.parametri.
 // FINTO.errore(tabella, richiesta), se dà qualcosa, è l'errore della risposta.
 // L'accesso: FINTO.email è l'email della sessione (null: senza); le chiamate di
-// auth (signInWithPassword, updateUser, signOut) finiscono in FINTO.auth. Le
+// auth (signInWithPassword, signInWithOAuth, updateUser, signOut) finiscono in FINTO.auth. Le
 // callback del realtime (channel().on()) stanno in FINTO.realtime: la prova le chiama.
 window.FAKE = {
   ritardo: () => 20,
@@ -53,6 +53,7 @@ window.supabase = {
       onAuthStateChange() {},
       signOut: async (options) => { window.FAKE.auth.push(["signOut", options || {}]); return {}; },
       signInWithPassword: async (records) => { window.FAKE.auth.push(["signIn", records]); return { error: null }; },
+      signInWithOAuth: async (records) => { window.FAKE.auth.push(["signInWithOAuth", records]); return { data: {}, error: null }; },
       updateUser: async (records) => { window.FAKE.auth.push(["updateUser", records]); return { error: null }; },
     },
     from: (table) => new Request(table),
