@@ -14,7 +14,6 @@
     .comandi { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 20px; }
     .comandi .field { flex: 1 1 20rem; margin-bottom: 0; }
     .comandi .scarica { display: flex; flex-wrap: wrap; gap: 12px; }
-    .comandi .scarica[hidden] { display: none; }
     .unit-card { padding: 0; overflow: hidden; }
     .unit-header { padding: 24px 28px 8px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 10px; }
     .unit-title { font-weight: 600; font-size: 1.35rem; letter-spacing: -.022em; color: var(--testo); }
@@ -326,6 +325,8 @@
         .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
       const listed = new Set(members.map((s) => s.id));
       const missing = [...new Set(members.map((s) => s.payer_id).filter((p) => p && !listed.has(p)))];
+      // shortcut: un solo in() con tutti gli id (0 il 18/11/2026); con centinaia di capofamiglia fuori elenco l'indirizzo
+      // della richiesta si allunga troppo, allora va letto a blocchi.
       const outside = missing.length
         ? await allRows(() => sb.from("members").select("id, last_name, first_name, tax_code, name_key").in("id", missing).order("id"))
         : [];
@@ -363,7 +364,7 @@
       const head = byId.get(key) || outsideById.get(key) || null;
       const ordered = people.some((s) => s.id === key) ? [byId.get(key), ...people.filter((s) => s.id !== key)] : people;
       return { key, head, headName: fullName(head), headListed: byId.has(key), people: ordered, first: Math.min(...people.map(cardOrder)) };
-    }).sort((a, b) => a.first - b.first || byName(a.people[0], b.people[0]));
+    }).sort((a, b) => a.first - b.first || byName(a.head || a.people[0], b.head || b.people[0]));
   }
 
   /** Un nucleo con più persone, o un familiare il cui capofamiglia non è in elenco: ha la sua fascia. */

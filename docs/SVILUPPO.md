@@ -145,12 +145,16 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   piena in alto, il colore dice di cosa si parla ed è lo stesso in tutto il sito (blu persone,
   verde tessera e assicurazione, viola gite e corsi, arancio soldi). Le usano Soci, Riepilogo,
   Assicurazione e Bilancio; non servono dove la pagina ha una sola parte o ha già i suoi colori.
-- Elenco soci (`web/elenco.html`, dalla 3.7.0, permesso `soci` o `riepilogo`): i tesserati della stagione
-  (`card_holder()`) in ordine di tessera come numero, i numeri liberi fino al più alto, pagine da 50, la
-  ricerca della pagina Soci fatta sui soci già letti (`nameKey()`), colonne scelte nella finestra «Colonne» e
-  ricordate in `localStorage` (`sciclub-elenco-colonne`). Il nome porta a `index.html?socio=<id>`
+- Elenco soci (`web/elenco.html`, dalla 3.7.0; dalla 3.8.0 permesso suo `elenco`, voce nel menu dopo Soci,
+  nello stile dei Pagamenti): i tesserati della stagione (`card_holder()`) in ordine di tessera come numero, i
+  numeri liberi fino al più alto. I nuclei (`payer_id`, come nei Pagamenti) restano uniti al posto della tessera
+  più bassa, ognuno nel suo `<tbody class="nucleo">` con la fascia `th scope="rowgroup"`; il nome del capofamiglia
+  non tesserato si legge con un `in()` a parte. Pagine fino a 50 persone senza spezzare un nucleo. La ricerca
+  della pagina Soci (`nameKey()`) mostra il nucleo intero di chi trova. Colonne e ordine scelti nella finestra
+  «Colonne» (pulsanti Su/Giù, annuncio `aria-live`) e ricordati in `localStorage` (`sciclub-elenco-colonne`,
+  array ordinato; la colonna del socio è sempre la prima). Il nome porta a `index.html?socio=<id>`
   (`openFromAddress()`, solo un id valido). L'Excel dei soci, prima nel Riepilogo, si scarica da qui, tutto o
-  solo il filtrato, e i pulsanti li vede solo chi ha `riepilogo`.
+  solo il filtrato, e i pulsanti li vede solo chi ha anche `riepilogo`.
 - Pagina Soci: testata con il nome e i pulsanti Stampa (scarica il PDF) ed Elimina; quattro
   sezioni (Anagrafica, Tessera, Gite e corsi, Pagamento). Le voci del listino sono righe radio
   grandi, nell'ordine del modulo di carta del tesseramento (`prices.position`), e così i campi:
@@ -272,7 +276,9 @@ fuori da git; i due comandi per farla sono in cima a `avvia.sh`). Postgres 17 co
 PostgREST vero davanti e `servi.py` che fa da Supabase sullo stesso indirizzo: la pagina usa
 supabase-js vero, con filtri, rpc e RLS veri, e un account per ruolo. Una prova dice in testa
 `// PAGINA:`, `// RUOLO:` e se serve `// LARGHEZZA:`; un `.sql` accanto (stesso nome) prepara i
-dati sulla copia e dà `window.ATTESO`, quello che la pagina deve mostrare calcolato dal database.
+dati sulla copia e dà `window.EXPECTED`, quello che la pagina deve mostrare calcolato dal database.
+`MIGRAZIONE=file.sql` applica alla copia, in una transazione, le istruzioni nuove di un rilascio non ancora in
+produzione: le pagine si provano con lo schema nuovo e la migrazione stessa si prova sui dati veri.
 Chrome va a tempo reale (`chrome.js`). `TIENI=1` lascia tutto acceso per guardare a mano;
 `FOTO=cartella` fotografa ogni pagina a 1280 e 500 px e segnala errori JavaScript e tabelle che
 escono dallo schermo (le foto hanno dati veri: tenerle fuori da git). Con `TIENI=1` ogni pagina

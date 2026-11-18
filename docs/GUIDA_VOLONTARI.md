@@ -66,10 +66,14 @@ per il prossimo.
 
 ## Vedere tutti i soci della stagione
 
-Nella pagina Soci, accanto a «Cerca un socio», c'è **Elenco soci**: tutti i tesserati della stagione in ordine
-di numero di tessera, con in alto i **numeri di tessera liberi**. Si cerca per cognome, nome o codice fiscale;
-con **Colonne** si scelgono i dati da vedere (telefono, email, data di nascita...). Toccando il nome si apre la
-scheda del socio per modificarla.
+Nel menu, sotto Soci, c'è **Elenco soci** (anche accanto a «Cerca un socio» nella pagina Soci): tutti i
+tesserati della stagione in ordine di numero di tessera, con in alto quanti sono, i nuclei familiari, i familiari
+a carico e i **numeri di tessera liberi**. Come nei Pagamenti, ogni famiglia resta unita: una fascia azzurra col
+nome del capofamiglia, poi lui e i familiari con la scritta «a carico». Si cerca per cognome, nome o codice
+fiscale: si vede la famiglia intera, con in giallo la persona trovata. Con **Colonne** si scelgono i dati da
+vedere (telefono, email, data di nascita...) e il loro ordine, coi pulsanti **Su** e **Giù**; la prima colonna è
+sempre il socio. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
+chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
 ## Stampare la scheda
 
