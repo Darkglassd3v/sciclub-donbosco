@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Impostazioni — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261103caricamento">
+  <link rel="stylesheet" href="brand.css?v=20261118elenco">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
     /* 1100px come le altre pagine: a 960 e testo grande la colonna Salva del
@@ -83,6 +83,7 @@
      aperto. In fondo, sul telefono, chi è entrato, tema, A+ ed Esci (sul computer stanno in alto). -->
 <nav class="barra-voci" id="menu" aria-label="Menu principale">
     <a href="index.html" data-permesso="soci" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a7 7 0 0 1 14 0v1"/></svg><span>Soci</span></a>
+    <a href="elenco.html" data-permesso="elenco" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Elenco soci</span></a>
     <a href="admin.html" data-permesso="pagamenti" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 6.5A7 7 0 1 0 17 17.5"/><path d="M4 10h9M4 14h9"/></svg><span>Pagamenti</span></a>
     <a href="riepilogo.html" data-permesso="riepilogo" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-7M21 20H3"/></svg><span>Riepilogo</span></a>
     <a class="voce-cerca" href="ricerca/index.html" data-permesso="cerca" hidden><svg class="icona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Cerca socio</span></a>
@@ -219,7 +220,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261118elenco"></script>
+<script src="shared.js?v=20261118permesso"></script>
 <script>
   const el = (id) => document.getElementById(id);
 

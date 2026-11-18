@@ -630,6 +630,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
  * controlla il permesso da sé, e il database le policy.
  * `~=` cerca una parola in un elenco separato da spazi: "soci riepilogo …". */
 html[data-permessi~="soci"]      .barra-voci [data-permesso="soci"][hidden],
+html[data-permessi~="elenco"]    .barra-voci [data-permesso="elenco"][hidden],
 html[data-permessi~="pagamenti"] .barra-voci [data-permesso="pagamenti"][hidden],
 html[data-permessi~="riepilogo"] .barra-voci [data-permesso="riepilogo"][hidden],
 html[data-permessi~="cerca"]     .barra-voci [data-permesso="cerca"][hidden],

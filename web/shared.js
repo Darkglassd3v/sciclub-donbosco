@@ -75,6 +75,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { globa
  */
 const LANDING_PAGES = [
   ["soci", "index.html"],
+  ["elenco", "elenco.html"],
   ["pagamenti", "admin.html"],
   ["riepilogo", "riepilogo.html"],
   ["bilancio", "bilancio.html"],

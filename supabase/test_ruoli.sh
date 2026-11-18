@@ -2167,7 +2167,8 @@ SQL
 # ---------------------------------------------------------------------------
 psql_ <<'SQL'
 alter table public.role_grants drop constraint role_grants_permission_valid;
-delete from public.role_grants where permission in ('cerca', 'stampe');
+-- Allora non c'era nemmeno l'Elenco soci (3.8).
+delete from public.role_grants where permission in ('cerca', 'stampe', 'elenco');
 alter table public.role_grants add constraint role_grants_permission_check
   check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'gite', 'polizze', 'social'));
 do $$ begin
@@ -2556,6 +2557,33 @@ begin
   perform public.set_role_grants(vecchi);
 end $$;
 reset role;
+FINE
+
+# Il passaggio della produzione dalla 3.7: check senza «elenco», nessuna riga «elenco». Chi ha soci o riepilogo lo
+# riceve una volta sola; rifatto lo schema, chi l'ha perso non lo riprende.
+psql_ <<'FINE'
+delete from public.role_grants where permission = 'elenco';
+alter table public.role_grants drop constraint role_grants_permission_valid;
+alter table public.role_grants add constraint role_grants_permission_valid
+  check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social'));
+insert into public.role_grants (role, permission) values ('assicurazione', 'soci') on conflict do nothing;
+FINE
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ <<'FINE'
+do $$ begin
+  assert 'elenco' = any (public.role_permissions('assicurazione')), 'passaggio 3.8: assicurazione con soci non ha l''elenco';
+  assert 'elenco' = any (public.role_permissions('tesoriere')), 'passaggio 3.8: tesoriere con riepilogo non ha l''elenco';
+  assert 'elenco' = any (public.role_permissions('admin')), 'passaggio 3.8: admin non ha l''elenco';
+  assert not ('elenco' = any (public.role_permissions('gite'))), 'passaggio 3.8: gite ha ricevuto l''elenco';
+end $$;
+delete from public.role_grants where role = 'assicurazione' and permission = 'elenco';
+FINE
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ <<'FINE'
+do $$ begin
+  assert not ('elenco' = any (public.role_permissions('assicurazione'))), 'schema rifatto: l''elenco tolto è tornato';
+end $$;
+delete from public.role_grants where role = 'assicurazione' and permission = 'soci';
 FINE
 
 echo "test ruoli: tutto a posto"
