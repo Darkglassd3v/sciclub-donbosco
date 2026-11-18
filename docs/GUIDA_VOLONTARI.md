@@ -75,6 +75,14 @@ vedere (telefono, email, data di nascita...) e il loro ordine, coi pulsanti **Su
 sempre il socio. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
+## Quanti soci sono assicurati
+
+Chi ha la pagina **Assicurazione** trova in alto quattro numeri: i **soci tesserati** della stagione, quanti sono
+già **assicurati** (mandati all'assicurazione con una lista), quanti sono **da assicurare** (in rosso, con quanti
+non hanno ancora il codice fiscale) e quanti hanno una tessera **senza assicurazione**. I conti tornano sempre:
+tesserati = assicurati + da assicurare + senza assicurazione. Dopo «Segna come assicurati» i numeri si
+aggiornano da soli.
+
 ## Stampare la scheda
 
 In alto, il pulsante blu **Stampa**: scarica la scheda compilata, un PDF

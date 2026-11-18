@@ -320,6 +320,11 @@ le lancia il deploy.
   quanti sono senza codice fiscale. Dopo Salva si resta sulla pagina; un codice fiscale scritto e
   non salvato si chiede prima di cambiare pagina. Excel e «Segna come assicurati» prendono tutti i
   selezionati, anche quelli delle altre pagine.
+- Riepilogo in cima (dalla 3.9.0): Soci tesserati, Assicurati, Da assicurare (rosso finché ce n'è uno, con quanti
+  sono senza codice fiscale) e Senza assicurazione, da `insurance_summary()`. Solo numeri: chi ha soltanto
+  `polizze` non legge `members`. Conta fra i tesserati (`card_holder()`), quindi tesserati = assicurati + da
+  assicurare + senza assicurazione; «Da assicurare» coincide con `insurance_members()` (lo verifica
+  `test-reale/assicurazione-riepilogo.js`). Si rilegge con `load()`, anche dopo un invio o un annullamento.
 - «Da assicurare» (dall'11/11/2026): ogni socio con il codice fiscale ha la casella «Assicura»,
   accesa di default; spenta, il socio resta fuori da Excel e invio e rimane da assicurare. «Tutti»
   nel titolo del gruppo vale per l'intero tipo. La scelta non si salva (dopo un invio o ricaricando
