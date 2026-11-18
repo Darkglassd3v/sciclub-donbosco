@@ -74,6 +74,8 @@
     .label { margin-bottom: .3rem; }
     .totale-mano { display: flex; align-items: center; gap: 8px; min-height: 1.5rem; margin-bottom: .3rem; font-weight: 600; }
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
+    /* Sotto il nome di un risultato: nascita, residenza, codice fiscale (memberHint()). */
+    .anteprima-socio { display: block; margin-top: 2px; font-size: .9375rem; color: var(--testo-soft); overflow-wrap: anywhere; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: var(--superficie); box-shadow: var(--ombra); }
 
     /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
@@ -1241,14 +1243,24 @@
       ? results.map((s) => `
           <div class="result-item box p-2 mb-1" data-id="${esc(s.id)}">
             <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
-            ${s.tax_code ? `<span class="tag is-light ml-2">${esc(s.tax_code)}</span>` : ""}
             ${s.card_number ? `<span class="tag is-info is-light ml-2">N° ${esc(s.card_number)}</span>` : ""}
+            ${memberHint(s)}
           </div>`).join("")
       : '<p class="help">Nessun risultato.</p>';
 
     box.querySelectorAll(".result-item").forEach((row) => {
       row.addEventListener("click", () => openMember(row.dataset.id));
     });
+  }
+
+  /**
+   * La riga sotto il nome di un risultato di ricerca: data di nascita, residenza e codice fiscale, solo quelli
+   * scritti. Solo un socio su cinque ha il codice fiscale: con due omonimi è la data o il comune a dire chi è.
+   */
+  function memberHint(s) {
+    const home = [s.address, s.city].map((v) => String(v || "").trim()).filter(Boolean).join(", ");
+    const parts = [s.birth_date ? `nato/a il ${dataIt(s.birth_date)}` : "", home, String(s.tax_code || "").trim()].filter(Boolean);
+    return parts.length ? `<span class="anteprima-socio">${parts.map(esc).join(" · ")}</span>` : "";
   }
 
   async function searchDatabase(query, limitValue, excludeId) {
@@ -1608,7 +1620,7 @@
     box.innerHTML = results.map((s) => `
       <div class="result-item" data-id="${esc(s.id)}" data-nome="${esc(`${s.last_name} ${s.first_name}`)}">
         <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
-        <span class="tag is-light ml-2">${esc(s.tax_code || "No CF")}</span>
+        ${memberHint(s)}
       </div>`).join("");
 
     box.querySelectorAll(".result-item").forEach((row) => {
