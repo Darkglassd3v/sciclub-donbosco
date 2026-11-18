@@ -2033,6 +2033,17 @@ begin
   perform set_config('test.jwt', '{"amr": [{"method": "password", "timestamp": 1}]}', false);
   assert (select change_password from public.my_access()), 'con la password iniziale l''obbligo è sparito';
   assert not public.can('pagamenti'), 'con la password iniziale ha i permessi';
+  -- La password iniziale non resta in vita: entrato con Google, retire_initial_password() la sostituisce con una
+  -- casuale che nessuno conosce, e l'obbligo sparisce anche per l'accesso con la password.
+  perform public.retire_initial_password();
+  assert (select change_password from public.my_access()), 'con la password ha ritirato la password iniziale';
+  perform set_config('test.jwt', '{"amr": [{"method": "oauth", "timestamp": 1}]}', false);
+  perform public.retire_initial_password();
+  perform set_config('test.jwt', '{"amr": [{"method": "password", "timestamp": 1}]}', false);
+  assert not (select change_password from public.my_access()), 'entrato con Google ma la password iniziale è ancora valida';
+  assert not exists (select 1 from auth.users where id = tesoriere
+                       and encrypted_password = extensions.crypt('donbosco26!', encrypted_password)),
+    'la password iniziale funziona ancora';
   perform set_config('test.jwt', '', false);
 
   -- Il tesoriere torna con la password sua, per le prove dopo.

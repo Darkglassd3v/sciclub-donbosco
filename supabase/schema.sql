@@ -990,6 +990,30 @@ $$;
 
 comment on function public.role_grant_history is 'Ultime 20 modifiche ai permessi dei ruoli. Solo superadmin.';
 
+-- Chi entra con Google e ha ancora la password iniziale (pubblica, nel repository): la si sostituisce con
+-- una casuale che nessuno conosce. Senza questo la password iniziale resterebbe valida per sempre, perché
+-- chi entra con Google non la cambia mai, e chiunque la conosca potrebbe entrare con quella e cambiarla al
+-- posto del titolare. Il trigger password_changed toglie l'obbligo. Con una sessione nata dalla password
+-- non fa niente. Se poi serve la password, il superadmin la reimposta dal pannello Utenti.
+create or replace function public.retire_initial_password()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.signed_in_with_oauth() then
+    return;
+  end if;
+  update auth.users u
+     set encrypted_password = extensions.crypt(encode(extensions.gen_random_bytes(32), 'base64'), extensions.gen_salt('bf', 10))
+   where u.id = auth.uid()
+     and exists (select 1 from public.pending_password_changes c where c.user_id = u.id);
+end;
+$$;
+
+comment on function public.retire_initial_password is 'Entrato con Google: sostituisce la password iniziale ancora da cambiare con una casuale. Con la password non fa niente.';
+
 -- Supabase dà execute ad anon di default: senza login le funzioni non
 -- farebbero comunque niente, ma la porta resta chiusa.
 do $$
@@ -998,6 +1022,7 @@ declare
 begin
   foreach f in array array[
     'public.can(text[])', 'public.my_access()', 'public.set_view_as(text)',
+    'public.signed_in_with_oauth()', 'public.retire_initial_password()',
     'public.accounts_without_role()', 'public.restore_account(uuid, text)',
     'public.delete_account(uuid)', 'public.reset_password(uuid, text)', 'public.role_permissions(text)',
     'public.role_grants_matrix()', 'public.set_role_grants(jsonb)',

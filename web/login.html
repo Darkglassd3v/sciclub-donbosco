@@ -61,7 +61,8 @@
   // indirizzo completo, che porterebbe altrove chi ha appena fatto l'accesso.
   const request = new URLSearchParams(location.search);
   const next = request.get("next");
-  const requestedPage = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
+  const isPageOfThisSite = (page) => /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(page || "");
+  const requestedPage = isPageOfThisSite(next) ? next : null;
 
   bindShowPassword();
 
@@ -86,21 +87,25 @@
     return "Accesso con Google non riuscito: riprovare, oppure entrare con email e password.";
   }
 
-  const googleReturn = googleError(location.hash);
+  const googleReturn = googleError(location.hash) || googleError(location.search);
   if (googleReturn) {
     showError(googleReturn);
     history.replaceState(null, "", location.pathname + location.search);
   }
 
-  // Si torna a questa stessa pagina, con la pagina richiesta (?next=): al ritorno la sessione c'è e
-  // getSession() qui sotto entra come con la password.
+  // Si torna a questa stessa pagina, con la sola pagina richiesta (?next=): al ritorno la sessione c'è e
+  // getSession() qui sotto entra come con la password. Non «?senza=1», che chiuderebbe la sessione nuova.
+  function googleReturnAddress() {
+    const page = new URLSearchParams(location.search).get("next");
+    return location.origin + location.pathname + (isPageOfThisSite(page) ? `?next=${encodeURIComponent(page)}` : "");
+  }
   document.getElementById("btnGoogle").addEventListener("click", async () => {
     const button = document.getElementById("btnGoogle");
     err.style.display = "none";
     button.classList.add("is-loading");
     const { error } = await sb.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: location.origin + location.pathname + location.search },
+      options: { redirectTo: googleReturnAddress() },
     });
     if (error) {
       button.classList.remove("is-loading");
@@ -122,6 +127,9 @@
    * qui. Con la password iniziale ancora da cambiare, prima si cambia quella.
    */
   async function enter() {
+    // Entrato con Google, la password iniziale (pubblica) viene sostituita: il database lo fa solo per una
+    // sessione Google con la password ancora da cambiare. Se non riesce si entra lo stesso e si riprova la volta dopo.
+    await sb.rpc("retire_initial_password").then(() => null, () => null);
     const access = await getProfile();
     const landing = landingPage(access);
     if (!landing) {
