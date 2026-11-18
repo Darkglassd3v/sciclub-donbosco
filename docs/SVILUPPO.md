@@ -110,6 +110,12 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   sponsor esiste solo sulle campagne.
 - Spesa anticipata da un socio: `advanced_by` (chi ha pagato) e `refunded_on` (quando il club
   gliel'ha restituita), solo per le uscite. In alto il totale ancora da rimborsare.
+- Rubrica delle persone da rimborsare (dalla 3.5.0): «Anticipata da» si sceglie da `ledger_people`
+  (cognome e nome, anche senza account), con «Aggiungi una persona…» in una finestra. Le stesse
+  parole in qualunque ordine sono la stessa persona (`person_key()`, indice unico). La spesa salva
+  `advanced_by_id`; il trigger `ledger_entries_person` scrive il nome in `advanced_by` (lo leggono
+  l'elenco e l'Excel) e, se arriva solo il testo, ritrova o crea la persona. `link_ledger_advances()`
+  collega le spese scritte col solo nome. Il riquadro in alto dice quanto spetta a ciascuno.
 - Fatture in PDF nel database (`ledger_receipts`, al massimo 2 MB, iniziano con `%PDF`), così
   stanno nel backup cifrato senza altre chiavi; si scrivono con `set_ledger_receipt()` e si
   leggono con `ledger_receipt()`, in base64, col permesso bilancio. Il piano gratuito ha 500 MB

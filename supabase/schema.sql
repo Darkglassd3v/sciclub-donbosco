@@ -4119,7 +4119,8 @@ begin
   select p.id into trovata from public.ledger_people p where public.person_key(p.last_name || ' ' || p.first_name) = chiave;
   if trovata is null then
     insert into public.ledger_people (last_name, first_name)
-    values (parole[1], coalesce(nullif(array_to_string(parole[2:], ' '), ''), parole[1]))
+    -- Una parola sola: il nome resta «-», che la chiave ignora, così la stessa parola ritrova la persona.
+    values (parole[1], coalesce(nullif(array_to_string(parole[2:], ' '), ''), '-'))
     returning id into trovata;
   end if;
   return trovata;

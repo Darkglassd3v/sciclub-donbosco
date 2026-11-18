@@ -2476,6 +2476,11 @@ begin
   insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by)
   values ('USCITA', 'PROVA RIMBORSO 2', 1, 5, '  federico   cossetta ') returning advanced_by_id into nuova;
   assert nuova = cossetta, 'il testo scritto dalla pagina di prima non trova la persona';
+  -- Un nome di una parola sola, scritto due volte: la stessa persona, non un errore.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by) values ('USCITA', 'PROVA RIMBORSO 2', 1, 7, 'Zeta');
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by) values ('USCITA', 'PROVA RIMBORSO 2', 1, 8, 'ZETA');
+  assert (select count(distinct advanced_by_id) from public.ledger_entries where category = 'PROVA RIMBORSO 2' and unit_price in (7, 8)) = 1,
+    'un nome di una parola sola non ritrova la sua persona';
   -- La pagina nuova manda la persona: il testo lo scrive il database.
   insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by_id)
   values ('USCITA', 'PROVA RIMBORSO 2', 1, 6, cossetta);
