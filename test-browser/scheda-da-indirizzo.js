@@ -1,6 +1,7 @@
 // Soci (index.html): l'Elenco soci porta alla scheda con index.html?socio=<id> (18/11/2026).
 // - Con un id valido nell'indirizzo la pagina apre quella scheda.
 // - Con un valore che non è un id non chiede niente al database.
+// - Con il permesso elenco c'è il pulsante «Elenco soci» accanto alla ricerca.
 {
   const asked = [];
   FAKE.risposta = (t, r) => { if (t === "members") asked.push(r.filtri.filter((f) => f[0] === "eq").map((f) => f.slice(1).join("="))); return []; };
@@ -17,6 +18,8 @@
     await openFromAddress("?socio=1;drop");
     await wait(200);
     test("idNonValido", asked.length === 0, JSON.stringify(asked));
+    // Il pulsante «Elenco soci» accanto alla ricerca c'è per chi ha il permesso elenco (dalla 3.8).
+    test("pulsanteElenco", el("vaiElenco") && !el("vaiElenco").hidden, "pulsante assente o nascosto con il permesso elenco");
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 500));
 }

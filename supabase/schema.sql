@@ -502,8 +502,8 @@ language sql
 immutable
 as $$
   select case role
-    when 'admin'         then array['soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe']
-    when 'tesoriere'     then array['pagamenti', 'riepilogo', 'storico', 'bilancio']
+    when 'admin'         then array['soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe']
+    when 'tesoriere'     then array['elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio']
     when 'assicurazione' then array['polizze']
     when 'gite'          then array['cerca', 'gite', 'stampe']
     when 'social'        then array['social']
@@ -525,7 +525,7 @@ begin
   if to_regclass('public.role_grants') is null then
     create table public.role_grants (
       role       text not null check (role in ('admin', 'tesoriere', 'assicurazione', 'gite', 'social')),
-      permission text not null check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico',
+      permission text not null check (permission in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'storico',
                                                      'bilancio', 'cerca', 'gite', 'stampe',
                                                      'polizze', 'social')),
       primary key (role, permission)
@@ -548,12 +548,38 @@ begin
   end if;
   alter table public.role_grants drop constraint if exists role_grants_permission_check;
   alter table public.role_grants add constraint role_grants_permission_valid
-    check (permission in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+    check (permission in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
                           'cerca', 'gite', 'stampe', 'polizze', 'social'));
   insert into public.role_grants (role, permission)
   select g.role, nuovo
     from public.role_grants g, unnest(array['cerca', 'stampe']) nuovo
    where g.permission = 'gite'
+  on conflict do nothing;
+  -- Un database di prima della 2.8 riceve qui anche l'Elenco soci della 3.8 (il blocco sotto non parte più,
+  -- perché questo check lo conosce già): come lì, a chi ha soci o riepilogo.
+  insert into public.role_grants (role, permission)
+  select distinct g.role, 'elenco'
+    from public.role_grants g
+   where g.permission in ('soci', 'riepilogo')
+  on conflict do nothing;
+end $$;
+
+-- Dalla 3.8 l'Elenco soci ha un permesso suo, «elenco». Una volta sola (parte finché il check non lo conosce):
+-- chi lo apriva nella 3.7, cioè chi ha soci o riepilogo, lo riceve, così nessuno lo perde. Riapplicato, lo
+-- schema non lo ridà a chi il superadmin lo ha tolto dopo.
+do $$
+begin
+  if pg_get_constraintdef((select oid from pg_constraint where conname = 'role_grants_permission_valid')) like '%elenco%' then
+    return;
+  end if;
+  alter table public.role_grants drop constraint role_grants_permission_valid;
+  alter table public.role_grants add constraint role_grants_permission_valid
+    check (permission in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+                          'cerca', 'gite', 'stampe', 'polizze', 'social'));
+  insert into public.role_grants (role, permission)
+  select distinct g.role, 'elenco'
+    from public.role_grants g
+   where g.permission in ('soci', 'riepilogo')
   on conflict do nothing;
 end $$;
 
@@ -583,10 +609,10 @@ set search_path = ''
 as $$
   select case
     when role_permissions.role = 'superadmin' then
-      array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social', 'gestione']
+      array['soci', 'elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social', 'gestione']
     else coalesce((
       select array_agg(g.permission order by array_position(
-               array['soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social'],
+               array['soci', 'elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social'],
                g.permission))
         from public.role_grants g
        where g.role = role_permissions.role), array[]::text[])
@@ -653,12 +679,17 @@ comment on function public.can is 'true se il ruolo di chi chiama (vedi come com
 -- nome scritto nelle pagine. Al massimo 20 lettere: la barra deve stare sul
 -- telefono. Li leggono tutti i collegati, perché tutti vedono la barra.
 create table if not exists public.nav_labels (
-  key   text primary key check (key in ('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe',
+  key   text primary key check (key in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe',
                                         'polizze', 'bilancio', 'social', 'gestione')),
   label text not null check (label = btrim(label) and length(label) between 1 and 20)
 );
 
 comment on table public.nav_labels is 'Nomi delle voci della barra scelti dal superadmin; senza riga vale il nome scritto nelle pagine.';
+
+-- Il check scritto nel create table non cambia su una tabella che c'è già: dalla 3.8 anche «elenco».
+alter table public.nav_labels drop constraint if exists nav_labels_key_check;
+alter table public.nav_labels add constraint nav_labels_key_check
+  check (key in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe', 'polizze', 'bilancio', 'social', 'gestione'));
 
 alter table public.nav_labels enable row level security;
 drop policy if exists nav_labels_select on public.nav_labels;
@@ -950,7 +981,7 @@ begin
     end if;
     nuovi := array(select distinct jsonb_array_elements_text(valore));
     if exists (select 1 from unnest(nuovi) x
-                where x not in ('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
+                where x not in ('soci', 'elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio',
                                 'cerca', 'gite', 'stampe', 'polizze', 'social')) then
       raise exception 'Permesso non assegnabile al ruolo % (Gestione resta del superadmin).', ruolo;
     end if;
@@ -1118,7 +1149,7 @@ alter table public.insurances enable row level security;
 drop policy if exists insurances_select on public.insurances;
 drop policy if exists insurances_write  on public.insurances;
 create policy insurances_select on public.insurances
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe', 'polizze')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe', 'polizze')));
 create policy insurances_write on public.insurances
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
@@ -1892,7 +1923,7 @@ drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 
 create policy members_select on public.members
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
 
 create policy members_insert on public.members
   for insert to authenticated with check ((select public.can('soci')));
@@ -2026,7 +2057,7 @@ drop function if exists public.check_policy_number();
 drop policy if exists prices_select on public.prices;
 drop policy if exists prices_write  on public.prices;
 create policy prices_select on public.prices
-  for select to authenticated using ((select public.can('soci', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe')));
 create policy prices_write on public.prices
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
@@ -3495,7 +3526,7 @@ drop policy if exists member_passes_insert on public.member_passes;
 drop policy if exists member_passes_delete on public.member_passes;
 
 create policy member_passes_select on public.member_passes
-  for select to authenticated using ((select public.can('soci', 'cerca', 'gite', 'stampe', 'riepilogo')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'cerca', 'gite', 'stampe', 'riepilogo')));
 create policy member_passes_insert on public.member_passes
   for insert to authenticated with check ((select public.can('soci')));
 create policy member_passes_delete on public.member_passes

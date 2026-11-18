@@ -218,6 +218,8 @@ fieldset.campo-errore, [role="radiogroup"].campo-errore {
 @media (max-width: 600px) {
   table.a-schede thead { display: none; }
   table.a-schede, table.a-schede tbody, table.a-schede tr, table.a-schede td { display: block; width: 100%; }
+  /* Larghezza col margine interno compreso: nel Bilancio a 500 px una cella usciva ogni tanto di 32 px (18/11). */
+  table.a-schede tr, table.a-schede td { box-sizing: border-box; max-width: 100%; }
   table.a-schede tr { padding: 8px 0; border-top: 1px solid var(--filo); }
   table.a-schede td { border: 0; padding: 4px 16px; text-align: left; }
   table.a-schede td[data-etichetta] { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
@@ -630,6 +632,7 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
  * controlla il permesso da sé, e il database le policy.
  * `~=` cerca una parola in un elenco separato da spazi: "soci riepilogo …". */
 html[data-permessi~="soci"]      .barra-voci [data-permesso="soci"][hidden],
+html[data-permessi~="elenco"]    .barra-voci [data-permesso="elenco"][hidden],
 html[data-permessi~="pagamenti"] .barra-voci [data-permesso="pagamenti"][hidden],
 html[data-permessi~="riepilogo"] .barra-voci [data-permesso="riepilogo"][hidden],
 html[data-permessi~="cerca"]     .barra-voci [data-permesso="cerca"][hidden],
