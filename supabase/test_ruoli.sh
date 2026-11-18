@@ -176,6 +176,8 @@ values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA 10 VIAGGI SABATO');
 insert into public.trip_uses (member_id, pass_id)
 select member_id, id from public.member_passes where member_id = 'bbbbbbbb-0000-0000-0000-000000000001';
 insert into public.ledger_entries (kind, category, quantity, unit_price) values ('ENTRATA', 'PROVA MATRICE', 1, 1);
+-- Una persona della rubrica dei rimborsi del Bilancio (dalla 3.5).
+insert into public.ledger_people (last_name, first_name) values ('PROVA', 'MATRICE');
 -- Una stagione chiusa l'anno scorso: la stagione aperta resta quella del
 -- calendario (current_season() è quella dopo l'ultima chiusa).
 insert into public.season_history (season, members) values (public.season_of(now()) - interval '1 year', 0);
@@ -251,6 +253,9 @@ begin
     -- Le spese di una campagna restano dati di Bilancio: chi ha solo social non le vede.
     ('leggi',  'select 1 from public.ledger_entries where social_event_id is not null', 'SxSxxxx'),
     ('leggi',  'select 1 from public.season_history',                            'SxSxxxx'),
+    -- La rubrica delle persone da rimborsare: dati di Bilancio come i movimenti.
+    ('leggi',  'select 1 from public.ledger_people',                             'SxSxxxx'),
+    ('scrivi', 'insert into public.ledger_people (last_name, first_name) values (''PROVA'', '''' || gen_random_uuid())', 'SxSxxxx'),
     ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
     ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
     ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
@@ -2419,5 +2424,82 @@ end $$;
 reset role;
 delete from public.social_events where id in ('dddddddd-7777-0000-0000-000000000001', 'dddddddd-7777-0000-0000-000000000002');
 SQL
+
+# ---------------------------------------------------------------------------
+# Rubrica delle persone da rimborsare (dalla 3.5): «Anticipata da» non è più testo libero. La stessa
+# persona scritta in due ordini («FEDERICO COSSETTA» e «COSSETTA FEDERICO») è una persona sola.
+# ---------------------------------------------------------------------------
+psql_ <<'SQL'
+-- Spese scritte dalla pagina di prima, solo col testo: senza trigger, come nel database di oggi.
+set session_replication_role = replica;
+insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by, created_at) values
+  ('USCITA', 'PROVA RIMBORSO', 1, 10, 'FEDERICO COSSETTA', now() - interval '5 days'),
+  ('USCITA', 'PROVA RIMBORSO', 1, 20, 'FEDERICO COSSETTA', now() - interval '4 days'),
+  ('USCITA', 'PROVA RIMBORSO', 1, 30, 'COSSETTA FEDERICO', now() - interval '1 day'),
+  ('USCITA', 'PROVA RIMBORSO', 1, 40, 'VERDI  LUCA', now() - interval '2 days');
+set session_replication_role = origin;
+do $$
+declare
+  persone int;
+begin
+  -- Lo spostamento: per ogni nome, la persona con le stesse parole in qualunque ordine. Il nome
+  -- della persona è la scrittura usata per ultima.
+  perform public.link_ledger_advances();
+  assert (select count(*) from public.ledger_people where public.person_key(last_name || ' ' || first_name) = 'COSSETTA FEDERICO') = 1,
+    'COSSETTA FEDERICO e FEDERICO COSSETTA non sono una persona sola';
+  assert exists (select 1 from public.ledger_people where last_name = 'COSSETTA' and first_name = 'FEDERICO'),
+    'il nome della persona non è la scrittura usata per ultima (COSSETTA FEDERICO)';
+  assert (select count(distinct advanced_by_id) from public.ledger_entries
+           where category = 'PROVA RIMBORSO' and advanced_by in ('COSSETTA FEDERICO', 'FEDERICO COSSETTA')) = 1,
+    'le spese della stessa persona non sono collegate alla stessa persona';
+  assert not exists (select 1 from public.ledger_entries where category = 'PROVA RIMBORSO' and advanced_by_id is null),
+    'una spesa anticipata è rimasta senza persona';
+  assert (select count(*) from public.ledger_entries where category = 'PROVA RIMBORSO' and advanced_by = 'COSSETTA FEDERICO') = 3,
+    'il testo delle spese non dice il nome della persona';
+  assert exists (select 1 from public.ledger_people where last_name = 'VERDI' and first_name = 'LUCA'),
+    'VERDI  LUCA (due spazi) non è diventata VERDI LUCA';
+  persone := (select count(*) from public.ledger_people);
+  perform public.link_ledger_advances();
+  assert (select count(*) from public.ledger_people) = persone, 'lo spostamento rifatto crea persone nuove';
+end $$;
+
+set role authenticated;
+do $$
+declare
+  cossetta uuid := (select id from public.ledger_people where last_name = 'COSSETTA');
+  nuova uuid;
+begin
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  -- La pagina di prima scrive ancora il testo: in minuscolo e con spazi in più è la stessa persona.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by)
+  values ('USCITA', 'PROVA RIMBORSO 2', 1, 5, '  federico   cossetta ') returning advanced_by_id into nuova;
+  assert nuova = cossetta, 'il testo scritto dalla pagina di prima non trova la persona';
+  -- La pagina nuova manda la persona: il testo lo scrive il database.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by_id)
+  values ('USCITA', 'PROVA RIMBORSO 2', 1, 6, cossetta);
+  assert (select advanced_by from public.ledger_entries where category = 'PROVA RIMBORSO 2' and unit_price = 6) = 'COSSETTA FEDERICO',
+    'con la sola persona il testo della spesa resta vuoto';
+  -- Tolta la persona, la spesa torna pagata dal club.
+  update public.ledger_entries set advanced_by_id = null, advanced_by = null where category = 'PROVA RIMBORSO 2' and unit_price = 6;
+  assert (select advanced_by is null from public.ledger_entries where category = 'PROVA RIMBORSO 2' and unit_price = 6),
+    'tolta la persona, il testo è rimasto';
+  begin
+    insert into public.ledger_people (last_name, first_name) values ('Federico', 'Cossetta');
+    raise exception 'la stessa persona con nome e cognome scambiati è entrata due volte';
+  exception when unique_violation then null;
+  end;
+  begin
+    insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by_id) values ('ENTRATA', 'PROVA', 1, 1, cossetta);
+    raise exception 'un''entrata è stata anticipata da una persona';
+  exception when check_violation then null;
+  end;
+  begin
+    delete from public.ledger_people where id = cossetta;
+    raise exception 'si è cancellata una persona con delle spese';
+  exception when foreign_key_violation then null;
+  end;
+end $$;
+reset role;
+delete from public.ledger_entries where category like 'PROVA RIMBORSO%';
 
 echo "test ruoli: tutto a posto"
