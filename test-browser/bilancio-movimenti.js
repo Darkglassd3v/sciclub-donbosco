@@ -2,7 +2,8 @@
 // - Fase 1: la tendina «Post o campagna collegata» elenca i post della stagione
 //   (ledger_social_events); scelto un post, il movimento lo salva in social_event_id e l'elenco
 //   dice «Collegato a: <titolo>».
-// - Fase 2: «Anticipata da» compare solo per le uscite e si salva in advanced_by. Nell'elenco la
+// - Fase 2: «Anticipata da» compare solo per le uscite e si salva in advanced_by_id (dalla 3.5 una
+//   persona della rubrica, bilancio-rimborsi.js). Nell'elenco la
 //   spesa da rimborsare ha l'etichetta e il pulsante «Segna come rimborsata» (conferma in
 //   finestra, poi refunded_on); quella rimborsata dice «Rimborsata il …». In alto il totale da
 //   rimborsare.
@@ -24,6 +25,7 @@
   const writes = [];
   const rpcs = [];
   FAKE.rpc.ledger_social_events = POSTS;
+  const PEOPLE = [{ id: "PV", last_name: "VERDI", first_name: "LUCA" }];
   FAKE.rpc.set_ledger_receipt = null;
   FAKE.rpc.ledger_receipt = [{ file_name: "fattura.pdf", content_base64: btoa("%PDF-1.4 prova") }];
   FAKE.risposta = (t, r) => {
@@ -34,6 +36,7 @@
       if (writing) { writes.push([writing[0], writing[1], r.filtri.filter((f) => f[0] === "eq")]); return [{ id: "NUOVO" }]; }
       return ENTRIES;
     }
+    if (t === "ledger_people") return PEOPLE;
     if (t === "ledger_receipts") return [{ entry_id: "E2", file_name: "pullman.pdf" }];
     return [];
   };
@@ -109,7 +112,7 @@
     // Fase 3: file non PDF, il movimento non si salva.
     writes.length = 0;
     fill("USCITA");
-    el("mAnticipata").value = "Verdi Luca";
+    el("mAnticipata").value = "PV";
     pick(el("mFattura"), makeFile("ciao", "foto.jpg", "image/jpeg"));
     el("formMovimento").requestSubmit();
     await wait(400);
@@ -122,7 +125,7 @@
     el("formMovimento").requestSubmit();
     await wait(600);
     const insert = writes.find((w) => w[0] === "insert")?.[1];
-    test("salvaCollegamentoEAnticipo", insert?.social_event_id === "P1" && insert?.advanced_by === "VERDI LUCA",
+    test("salvaCollegamentoEAnticipo", insert?.social_event_id === "P1" && insert?.advanced_by_id === "PV",
       JSON.stringify(insert));
     const upload = rpcs.find((x) => x[0] === "set_ledger_receipt")?.[1];
     test("caricaFattura", upload?.entry_id === "NUOVO" && upload?.file_name === "fattura.pdf" && atob(upload?.content_base64 || "").startsWith("%PDF"),
