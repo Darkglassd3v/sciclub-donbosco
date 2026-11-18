@@ -17,6 +17,16 @@
 
 ## Richieste nuove
 
+- [ ] **Accesso con Google (3.4.0, 18/11): da provare e da annunciare ai volontari.** Configurazione fatta il 18/11
+      (progetto Google Cloud «Sci Club gestionale», client «Gestionale web», provider Google attivo in Supabase,
+      registrazione libera spenta, Site URL e Redirect URLs del sito; procedura in `docs/ACCOUNT.md`). Resta:
+      1. Prova vera dal sito: entrare con un account Google uguale all'email di un account del gestionale, poi
+         provare con un account Google non registrato (deve comparire «non è registrato nel gestionale»).
+      2. Il client secret di Google va nel KeePass di chi segue il sito, mai nel repository.
+      3. Dire ai volontari che possono entrare con Google solo se l'email del loro account è quella di Google;
+         altrimenti si cambia l'email dell'account in Utenti o si continua con la password. Chi entra con Google
+         perde la password iniziale (sostituita da una casuale): se poi la vuole, la reimposta il superadmin.
+
 - [ ] **Serata del 25/11: due PC su hotspot iscrivono i soci.** Con la 3.3.0 (16/11) il salvataggio dei soci regge
       la rete assente o caduta a metà. Resta da fare, a chi segue il sito:
       1. Per la persona nuova che iscrive soltanto: in Gestione › Ruoli e permessi lasciare al ruolo Social il solo
