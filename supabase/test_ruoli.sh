@@ -259,6 +259,8 @@ begin
     ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
     ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
     ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
+    -- Il riepilogo della pagina Assicurazione (dalla 3.9): solo numeri, solo a chi ha polizze.
+    ('leggi',  'select 1 from public.insurance_summary()',                       'SxxSxxx'),
     ('leggi',  'select 1 from public.social_events',                             'SxxxxSx'),
     ('leggi',  'select 1 from public.sponsors',                                  'SxxxxSx'),
     ('leggi',  'select 1 from public.trip_days',                                 'SxxxxSx'),
@@ -914,8 +916,18 @@ declare
   anna  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
   luca  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000002';
   prima uuid;
+  tesserati int;
+  riepilogo record;
 begin
+  -- Quanti sono i tesserati lo sa chi legge i soci; l'assicurazione li conta con insurance_summary().
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  select count(*) into tesserati from public.members m where m.enrolled_at is not null and public.card_holder(m);
   perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  -- Riepilogo in cima alla pagina (dalla 3.9): tesserati, assicurati, da assicurare, senza assicurazione; i conti tornano.
+  select * into riepilogo from public.insurance_summary();
+  assert riepilogo.card_holders = tesserati, format('riepilogo: %s tesserati invece di %s', riepilogo.card_holders, tesserati);
+  assert riepilogo.insured = 0 and riepilogo.to_insure = 2, format('riepilogo: %s assicurati e %s da assicurare, attesi 0 e 2', riepilogo.insured, riepilogo.to_insure);
+  assert riepilogo.card_holders = riepilogo.insured + riepilogo.to_insure + riepilogo.uninsured, 'riepilogo: i conti non tornano';
   assert public.can('polizze'), 'assicurazione non riconosciuta';
   assert not public.can('soci', 'gite', 'riepilogo'), 'assicurazione ha i permessi di chi gestisce i soci';
   assert (select count(*) from public.members) = 0, 'assicurazione legge la tabella members';
@@ -939,6 +951,8 @@ begin
 
   assert public.insurance_send('BASE', 1, array[anna, luca]) = 1, 'nella lista doveva entrare solo Anna';
   assert (select count(*) from public.insurance_members()) = 1, 'Anna è ancora da assicurare';
+  assert (select insured || '/' || to_insure || '/' || card_holders from public.insurance_summary()) = '1/1/' || tesserati,
+         'riepilogo dopo la lista 1: attesi 1 assicurato e 1 da assicurare';
 
   -- Lo stesso numero due volte no.
   perform public.set_tax_code(luca, 'VRDLCU90A01F205Z');
