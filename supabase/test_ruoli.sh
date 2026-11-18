@@ -317,7 +317,15 @@ do $$ begin
          'my_access: permessi del tesoriere sbagliati';
   perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
   assert (select count(*) from public.my_access()) = 0, 'my_access: chi non ha ruolo riceve qualcosa';
-  assert not public.can('soci', 'gite', 'polizze', 'social', 'gestione'), 'senza ruolo deve sempre dire di no';
+  assert not public.can('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social', 'gestione'),
+    'senza ruolo deve sempre dire di no';
+  -- Un account nato da solo (registrazione libera accesa per sbaglio, o un accesso Google sconosciuto) ha
+  -- il minimo: nessuna riga in profiles, quindi nessun ruolo, anche se entra con Google (dalla 3.4).
+  perform set_config('test.jwt', '{"amr": [{"method": "oauth", "timestamp": 1}]}', false);
+  assert (select count(*) from public.my_access()) = 0, 'entrato con Google senza ruolo riceve qualcosa';
+  assert not public.can('soci', 'pagamenti', 'riepilogo', 'storico', 'bilancio', 'cerca', 'gite', 'stampe', 'polizze', 'social', 'gestione'),
+    'entrato con Google senza ruolo ha dei permessi';
+  perform set_config('test.jwt', '', false);
   perform set_config('test.uid', '', false);
   assert not public.can('soci'), 'senza login deve sempre dire di no';
 end $$;

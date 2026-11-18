@@ -183,6 +183,10 @@ già un account creato dal pannello Utenti **con lo stesso indirizzo email** del
 collega l'accesso Google all'account che esiste. Un account Google sconosciuto non crea niente, perché
 «Allow new users to sign up» resta spento, e la pagina dice a chi rivolgersi. Email e password restano.
 
+Un account che nasce senza passare dal pannello Utenti (registrazione libera accesa per sbaglio, o un
+accesso Google sconosciuto se la registrazione fosse accesa) ha il minimo: nessuna riga in `profiles`,
+quindi nessun ruolo e nessun permesso, anche entrando con Google (lo prova `supabase/test_ruoli.sh`).
+
 Chi entra con Google non deve cambiare la password iniziale: al primo accesso con Google il database la
 sostituisce con una casuale che nessuno conosce (`retire_initial_password()`), così la password iniziale, che
 è pubblica, non resta valida. Se poi quella persona vuole entrare anche con la password, il superadmin la
