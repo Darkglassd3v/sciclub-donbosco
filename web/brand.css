@@ -218,6 +218,8 @@ fieldset.campo-errore, [role="radiogroup"].campo-errore {
 @media (max-width: 600px) {
   table.a-schede thead { display: none; }
   table.a-schede, table.a-schede tbody, table.a-schede tr, table.a-schede td { display: block; width: 100%; }
+  /* Larghezza col margine interno compreso: nel Bilancio a 500 px una cella usciva ogni tanto di 32 px (18/11). */
+  table.a-schede tr, table.a-schede td { box-sizing: border-box; max-width: 100%; }
   table.a-schede tr { padding: 8px 0; border-top: 1px solid var(--filo); }
   table.a-schede td { border: 0; padding: 4px 16px; text-align: left; }
   table.a-schede td[data-etichetta] { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

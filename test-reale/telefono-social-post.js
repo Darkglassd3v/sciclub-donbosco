@@ -25,7 +25,10 @@
     outcome("testaBassa", headerEl.offsetHeight > 130 ? [`alta ${headerEl.offsetHeight} px`] : []);
     const W = document.documentElement.clientWidth;
     const side = document.querySelector(".lato");
-    const outside = [...side.querySelectorAll("*")].filter((x) => x.getClientRects().length && !x.closest(".fuori"))
+    // Dentro la cornice dell'anteprima (overflow: hidden) le foto a vivo escono dal disegno e sono ritagliate:
+    // conta la cornice, non i pezzi ritagliati.
+    const outside = [...side.querySelectorAll("*")].filter((x) => x.getClientRects().length && !x.closest(".fuori")
+      && !x.parentElement?.closest(".cornice"))
       .filter((x) => { const b = x.getBoundingClientRect(); return b.width > 0 && (b.right > W + 1 || b.left < -1); })
       .map((x) => `${x.tagName.toLowerCase()}${x.className && typeof x.className === "string" ? "." + x.className.split(" ")[0] : ""} fino a ${Math.round(x.getBoundingClientRect().right)}`);
     outcome("anteprima", outside.filter((x, i, t) => t.indexOf(x) === i));

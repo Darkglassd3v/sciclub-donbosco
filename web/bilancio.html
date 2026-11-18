@@ -65,6 +65,13 @@
     /* Sotto il totale da rimborsare: quanto spetta a ciascuno. */
     .per-persona { list-style: none; margin: 8px 0 0; padding: 0; font-size: .9375rem; }
     .per-persona li { display: flex; justify-content: space-between; gap: 12px; }
+    /* Sul telefono (schede di brand.css) la descrizione con le sue note va a capo sotto l'etichetta e i pulsanti
+     * della riga vanno a capo: «Da rimborsare a …» col suo pulsante ed Elimina uscivano dalla scheda (18/11/2026). */
+    @media (max-width: 600px) {
+      table.tabella-movimenti td[data-etichetta="Descrizione"], table.tabella-movimenti td[data-etichetta="Descrizione"]::before { display: block; }
+      table.tabella-movimenti td.azioni { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; white-space: normal; }
+      table.tabella-movimenti .azioni .button + .button { margin-left: 0; }
+    }
 
   </style>
 </head>
@@ -233,7 +240,7 @@
       </table>
     </div>
     <!-- Per allegare la fattura a un movimento già registrato («Allega la fattura»). -->
-    <input type="file" id="allegaFattura" accept="application/pdf,.pdf" hidden>
+    <input type="file" id="allegaFattura" accept="application/pdf,.pdf" aria-label="Fattura in PDF da allegare al movimento" hidden>
     <!-- «Aggiungi una persona…» di «Anticipata da»: la rubrica delle persone da rimborsare (dalla 3.5). -->
     <dialog id="dlgPersona" class="finestra" aria-labelledby="dlgPersonaTitolo">
       <h2 class="title is-5" id="dlgPersonaTitolo">Aggiungi una persona da rimborsare</h2>
