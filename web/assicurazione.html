@@ -76,6 +76,8 @@
       .tabella-assic tr.gruppo td { padding: 10px 8px; }
       .tabella-assic td[data-etichetta]::before { content: attr(data-etichetta); display: block; font-weight: 600; color: var(--testo-soft); }
     }
+    /* Il riepilogo in cima (dalla 3.9): le cifre di brand.css, con una riga di spiegazione sotto il numero. */
+    .kpi-nota { margin-top: 4px; font-size: .9375rem; color: var(--testo-soft); }
   </style>
 </head>
 <body>
@@ -142,6 +144,17 @@
     nelle liste successive. Numero e decorrenza (il giorno dopo) sono proposti automaticamente e
     possono essere modificati.
   </p>
+
+  <!-- Il riepilogo dei tesserati della stagione (richiesta del 18/11/2026): i conti tornano, tesserati =
+       assicurati + da assicurare + senza assicurazione. -->
+  <div class="cifre">
+    <div class="kpi"><div class="kpi-label">Soci tesserati</div><div class="kpi-value" id="numTesserati">—</div></div>
+    <div class="kpi"><div class="kpi-label">Assicurati</div><div class="kpi-value" id="numAssicurati">—</div></div>
+    <div class="kpi"><div class="kpi-label">Da assicurare</div><div class="kpi-value" id="numDaAssicurare">—</div>
+      <div class="kpi-nota" id="notaDaAssicurare" hidden></div></div>
+    <div class="kpi"><div class="kpi-label">Senza assicurazione</div><div class="kpi-value" id="numSenza">—</div>
+      <div class="kpi-nota">Tessera senza assicurazione</div></div>
+  </div>
 
   <section class="riquadro sezione tessera" id="invio">
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Liste da inviare</h2>
@@ -273,15 +286,17 @@
   async function load() {
     setLoading(true);
     try {
-      const [members, sent, insurances] = await Promise.all([
+      const [members, sent, insurances, summary] = await Promise.all([
         allRows(() => sb.rpc("insurance_members")),
         sb.rpc("insurance_sent_lists").then(({ data, error }) => { if (error) throw error; return data; }),
         sb.from("insurances").select("code, name").order("price").order("name")
           .then(({ data, error }) => { if (error) throw error; return data; }),
+        sb.rpc("insurance_summary").then(({ data, error }) => { if (error) throw error; return data?.[0] || null; }),
       ]);
       TIPI = insurances.map((a) => ({ kind: a.code, nome: a.name }));
       toInsure = members;
       sentLists = sent;
+      drawSummary(summary);
       draw();
     } catch (error) {
       el("tipi").innerHTML = '<div class="riquadro">Elenco non disponibile.</div>';
@@ -289,6 +304,24 @@
     } finally {
       setLoading(false);
     }
+  }
+
+  /**
+   * Il riepilogo in cima: tesserati, assicurati, da assicurare (rosso finché ce n'è uno, con quanti sono senza
+   * codice fiscale, le righe rosse dell'elenco) e senza assicurazione. Si rilegge con la pagina, quindi anche
+   * dopo un invio o un annullamento.
+   */
+  function drawSummary(summary) {
+    const number = (v) => (summary ? String(v) : "—");
+    el("numTesserati").textContent = number(summary?.card_holders);
+    el("numAssicurati").textContent = number(summary?.insured);
+    el("numDaAssicurare").textContent = number(summary?.to_insure);
+    el("numSenza").textContent = number(summary?.uninsured);
+    el("numDaAssicurare").classList.toggle("rosso", Boolean(summary?.to_insure));
+    el("numDaAssicurare").classList.toggle("verde", Boolean(summary) && !summary.to_insure);
+    const withoutCode = toInsure.filter((s) => !conCF(s)).length;
+    el("notaDaAssicurare").hidden = !withoutCode;
+    el("notaDaAssicurare").textContent = withoutCode ? `di cui ${withoutCode} senza codice fiscale` : "";
   }
 
   function draw() {
