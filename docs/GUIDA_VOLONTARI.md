@@ -64,6 +64,13 @@ nascita. Se sono giusti premi **Sì, salva** e aspetta il messaggio verde;
 se no **Annulla** e correggi. Dopo il salvataggio il modulo si svuota, pronto
 per il prossimo.
 
+## Vedere tutti i soci della stagione
+
+Nella pagina Soci, accanto a «Cerca un socio», c'è **Elenco soci**: tutti i tesserati della stagione in ordine
+di numero di tessera, con in alto i **numeri di tessera liberi**. Si cerca per cognome, nome o codice fiscale;
+con **Colonne** si scelgono i dati da vedere (telefono, email, data di nascita...). Toccando il nome si apre la
+scheda del socio per modificarla.
+
 ## Stampare la scheda
 
 In alto, il pulsante blu **Stampa**: scarica la scheda compilata, un PDF
