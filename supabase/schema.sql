@@ -613,6 +613,21 @@ alter table public.pending_password_changes enable row level security;
 
 comment on table public.pending_password_changes is 'Account che devono ancora cambiare la password iniziale. Senza riga: già cambiata.';
 
+-- true se la sessione di chi chiama è nata da un accesso con Google (dalla 3.4) e non con la password: lo
+-- dice il token di Supabase («amr», il metodo di accesso). L'obbligo di cambiare la password iniziale
+-- serve perché quella password è pubblica; chi entra con Google non la usa, quindi per lui non vale,
+-- mentre la stessa password resta bloccata per chiunque provi a entrare con quella.
+create or replace function public.signed_in_with_oauth()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(auth.jwt() -> 'amr' @> '[{"method": "oauth"}]'::jsonb, false);
+$$;
+
+comment on function public.signed_in_with_oauth is 'true se la sessione di chi chiama viene da un accesso con Google (amr oauth) e non dalla password.';
+
 -- true se chi ha fatto la richiesta ha almeno uno dei permessi passati.
 -- Nelle policy va scritta dentro una select, `(select public.can('soci'))`:
 -- così Postgres la calcola una volta per query e non per ognuna delle
@@ -627,10 +642,11 @@ as $$
   -- Con la password iniziale ancora da cambiare, nessun permesso: è pubblica (nel
   -- repository), e l'obbligo di cambiarla lo facevano solo le pagine, non l'API.
   select coalesce(public.role_permissions(public.current_role()) && perms, false)
-     and not exists (select 1 from public.pending_password_changes c where c.user_id = auth.uid());
+     and (public.signed_in_with_oauth()
+          or not exists (select 1 from public.pending_password_changes c where c.user_id = auth.uid()));
 $$;
 
-comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi e ha già cambiato la password iniziale.';
+comment on function public.can is 'true se il ruolo di chi chiama (vedi come compreso) ha almeno uno dei permessi e ha già cambiato la password iniziale, o è entrato con Google.';
 
 -- I nomi delle voci della barra (dalla 2.8), scelti dal superadmin in Gestione
 -- > Ruoli: la chiave è il permesso della voce. Una voce senza riga tiene il
@@ -705,7 +721,8 @@ security definer
 set search_path = ''
 as $$
   select p.email, public.current_role(), p.role, public.role_permissions(public.current_role()),
-         exists (select 1 from public.pending_password_changes c where c.user_id = p.user_id)
+         not public.signed_in_with_oauth()
+           and exists (select 1 from public.pending_password_changes c where c.user_id = p.user_id)
     from public.profiles p
    where p.user_id = auth.uid();
 $$;
