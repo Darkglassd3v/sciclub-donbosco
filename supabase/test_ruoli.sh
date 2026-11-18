@@ -313,7 +313,8 @@ end $$;
 do $$ begin
   perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
   assert (select role from public.my_access()) = 'tesoriere', 'my_access: ruolo sbagliato';
-  assert (select permissions from public.my_access()) = array['pagamenti', 'riepilogo', 'storico', 'bilancio'],
+  -- Dalla 3.8 il tesoriere ha anche l'Elenco soci: prima ci arrivava col Riepilogo (permesso dato una volta sola).
+  assert (select permissions from public.my_access()) = array['elenco', 'pagamenti', 'riepilogo', 'storico', 'bilancio'],
          'my_access: permessi del tesoriere sbagliati';
   perform set_config('test.uid', '55555555-5555-5555-5555-555555555555', false);
   assert (select count(*) from public.my_access()) = 0, 'my_access: chi non ha ruolo riceve qualcosa';
@@ -2517,5 +2518,44 @@ end $$;
 reset role;
 delete from public.ledger_entries where category like 'PROVA RIMBORSO%';
 SQL
+
+# ---------------------------------------------------------------------------
+# Elenco soci (dalla 3.8): un permesso suo, da dare ai ruoli in Gestione > Ruoli, con la voce della barra
+# rinominabile. Chi ha solo «elenco» legge i soci della stagione ma non li modifica.
+# ---------------------------------------------------------------------------
+psql_ <<'FINE'
+do $$
+begin
+  assert 'elenco' = any (public.role_permissions('superadmin')), 'il superadmin non ha l''Elenco soci';
+  assert 'elenco' = any (public.default_role_permissions('admin')), 'l''admin non parte con l''Elenco soci';
+  assert 'elenco' = any (public.default_role_permissions('tesoriere')), 'il tesoriere non parte con l''Elenco soci';
+  assert (select array_position(public.role_permissions('superadmin'), 'elenco')) = 2, 'Elenco soci non è subito dopo Soci';
+end $$;
+set role authenticated;
+do $$
+declare
+  vecchi jsonb;
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  vecchi := jsonb_build_object('social', to_jsonb(public.role_permissions('social')));
+  perform public.set_role_grants('{"social": ["elenco"]}');
+  assert public.role_permissions('social') = array['elenco'], 'set_role_grants non accetta elenco';
+  insert into public.nav_labels (key, label) values ('elenco', 'Tesserati') on conflict (key) do update set label = excluded.label;
+  delete from public.nav_labels where key = 'elenco';
+  perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);
+  assert public.can('elenco'), 'con elenco can(elenco) dice no';
+  assert exists (select 1 from public.members), 'con solo elenco non legge i soci';
+  assert exists (select 1 from public.member_passes), 'con solo elenco non legge gli abbonamenti';
+  assert exists (select 1 from public.prices), 'con solo elenco non legge il listino';
+  begin
+    insert into public.members (last_name, first_name) values ('PROVA', 'ELENCO');
+    raise exception 'con solo elenco ha scritto un socio';
+  exception when insufficient_privilege then null;
+  end;
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  perform public.set_role_grants(vecchi);
+end $$;
+reset role;
+FINE
 
 echo "test ruoli: tutto a posto"

@@ -15,7 +15,7 @@ window.FAKE = {
   risposta: () => [],
   rpc: {
     my_access: [{ email: "prova@sciclub.it", role: "superadmin", real_role: "superadmin", change_password: false,
-      permissions: ["soci", "pagamenti", "riepilogo", "storico", "bilancio", "cerca", "gite", "stampe", "polizze", "social", "gestione"] }],
+      permissions: ["soci", "elenco", "pagamenti", "riepilogo", "storico", "bilancio", "cerca", "gite", "stampe", "polizze", "social", "gestione"] }],
     next_card_number: 100,
   },
   email: "prova@sciclub.it",

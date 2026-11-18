@@ -58,4 +58,23 @@ for (const [page, ids] of Object.entries(LISTS)) {
 for (const f of ["web/shared.js", "ricerca/comune.js"])
   assert.ok(/fetch: fetchWithWaiting/.test(fs.readFileSync(path.join(root, f), "utf8")), `${f}: le richieste non mostrano «Caricamento…»`);
 
+// Elenco soci (dalla 3.8): una voce del menu in ogni pagina, subito dopo Soci, col suo permesso «elenco»; il
+// superadmin lo dà ai ruoli e ne sceglie il nome in Gestione > Ruoli; chi ha solo quello arriva lì.
+for (const f of file.filter((x) => /\.html$/.test(x))) {
+  const text = fs.readFileSync(f, "utf8");
+  if (!text.includes('class="barra-voci"')) continue;
+  const nome = path.relative(root, f);
+  const soci = text.indexOf('data-permesso="soci"'), elenco = text.search(/<a href="(\.\.\/)?elenco\.html" data-permesso="elenco"/);
+  assert.ok(elenco > soci && soci > 0, `${nome}: manca la voce «Elenco soci» (data-permesso="elenco") dopo Soci nel menu`);
+  assert.ok(!/data-permesso="pagamenti"/.test(text.slice(soci, elenco)), `${nome}: la voce «Elenco soci» non è subito dopo Soci`);
+}
+const elencoPage = fs.readFileSync(path.join(root, "web/elenco.html"), "utf8");
+assert.ok(/<a href="elenco\.html" data-permesso="elenco" hidden aria-current="page">/.test(elencoPage), "elenco.html: la voce segnata non è Elenco soci");
+assert.ok(/requirePermission\("elenco"\)/.test(elencoPage), "elenco.html: non chiede il permesso elenco");
+const management = fs.readFileSync(path.join(root, "web/gestione.html"), "utf8");
+assert.ok(/\["elenco", "Elenco soci", "[^"]+", true\]/.test(management), "gestione.html: «Elenco soci» manca fra i permessi dei ruoli");
+assert.ok(/\["elenco", "Elenco soci"\]/.test(management), "gestione.html: «Elenco soci» manca fra i nomi della barra");
+assert.ok(/\["soci", "index\.html"\],\s*\["elenco", "elenco\.html"\]/.test(fs.readFileSync(path.join(root, "web/shared.js"), "utf8")),
+  "shared.js: chi ha solo elenco non ha una pagina di arrivo");
+
 console.log("test-pagine: tutto a posto");
