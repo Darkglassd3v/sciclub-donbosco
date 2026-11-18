@@ -1,4 +1,7 @@
-// Riepilogo (riepilogo.html): l'Excel di tutti i soci della stagione, per capire la stagione in corso.
+// Elenco soci (elenco.html): l'Excel dei soci della stagione, spostato qui dal Riepilogo il 18/11/2026.
+// - «Scarica tutti (Excel completo)»: tutti i soci dell'elenco; «Scarica l'elenco filtrato»: solo quelli trovati
+//   dalla ricerca, con la ricerca scritta nel titolo. I pulsanti li vede solo chi ha il permesso riepilogo, come
+//   prima nel Riepilogo: l'Excel ha tutti i dati personali.
 // - In ordine di numero di tessera, contato come numero (2, 10, 100); senza numero (o «NO») in fondo, per cognome.
 // - Colonne a gruppi, ognuno col suo colore nella riga sopra i nomi delle colonne (richiesta del 29/10):
 //   TESSERA (numero, tipo), ANAGRAFICA (cognome, nome, data, luogo e provincia di nascita, codice fiscale),
@@ -93,5 +96,16 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     ? frozenPaneXml('<worksheet><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetData/></worksheet>', 2, 4) : "";
   test("bloccoNelFoglio", xml.includes('<sheetView workbookViewId="0"><pane xSplit="4" ySplit="2" topLeftCell="E3" activePane="bottomRight" state="frozen"/>')
     && xml.endsWith("<sheetData/></worksheet>"), xml.slice(0, 100) || "frozenPaneXml mancante");
+  test("pulsanti", !el("zonaScarica")?.hidden && Boolean(el("btnScaricaTutti")) && Boolean(el("btnScaricaFiltrato")), "pulsanti di scarico nascosti o mancanti");
+  // Solo quelli trovati dalla ricerca.
+  el("cercaSoci").value = "rossi";
+  el("cercaSoci").dispatchEvent(new Event("input"));
+  await new Promise((ok) => setTimeout(ok, 300));
+  await downloadMembers(true);
+  const [filtered = []] = SHEETS[SHEETS.length - 1] || [];
+  const [[filteredTitle = ""] = [], , , ...filteredData] = filtered;
+  test("filtrato", filteredData.length === 1 && filteredData[0][2] === "ROSSI" && /ricerca «rossi»/.test(filteredTitle) && /· 1 socio$/.test(filteredTitle),
+    `${filteredData.length} righe, «${filteredTitle}»`);
+  test("nomeFiltrato", /^soci-stagione-2026-27-ricerca-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[saved.length - 1]?.[1] || ""), saved[saved.length - 1]?.[1]);
   document.title = "RISULTATO " + r.join(" ");
 } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 600));

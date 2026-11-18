@@ -202,7 +202,8 @@ async function requirePermission(permission) {
     location.replace("password.html");
     return null;
   }
-  if (access && access.permissions.includes(permission)) return currentSession;
+  // Uno o più permessi: basta averne uno (es. l'Elenco soci, per soci o riepilogo).
+  if (access && [].concat(permission).some((p) => access.permissions.includes(p))) return currentSession;
   const landing = landingPage(access);
   location.replace(landing || "login.html?senza=1");
   return null;

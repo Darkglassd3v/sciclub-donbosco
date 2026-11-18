@@ -132,11 +132,10 @@
     <div class="corpo">
     <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
     <p class="occhiello" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
-    <!-- L'elenco completo dei tesserati per l'assicurazione sta qui e non nella
-         pagina Assicurazione: chi ha quel ruolo non deve poterlo scaricare.
-         Solo per la stagione in corso. -->
+    <!-- L'Excel dei soci dal 18/11/2026 si scarica dall'Elenco soci (tutto o filtrato), sempre col permesso
+         riepilogo: chi ha solo l'assicurazione non deve poterlo scaricare. Solo per la stagione in corso. -->
     <div class="azioni" id="zonaScarica" hidden>
-      <button type="button" class="button is-link is-outlined" id="btnScaricaSoci">Scarica tutti i soci della stagione (Excel)</button>
+      <a class="button is-link is-outlined" href="elenco.html">Elenco soci ed Excel della stagione</a>
     </div>
     </div>
   </section>
@@ -186,7 +185,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261116rete"></script>
+<script src="shared.js?v=20261118elenco"></script>
 <script>
   const el = (id) => document.getElementById(id);
 
@@ -204,7 +203,6 @@
     if (permissions.includes("storico")) showClosedSeasons();
     if (!SEASON) {
       el("zonaScarica").hidden = false;
-      el("btnScaricaSoci").addEventListener("click", downloadMembers);
     }
     await load();
     // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
@@ -220,92 +218,6 @@
       return `<a href="riepilogo.html?stagione=${String(season).slice(0, 10)}">${year}/${String(year + 1).slice(2)}</a>`;
     }).join(" · ");
     el("zonaStagioni").hidden = false;
-  }
-
-  /* Colonne dell'Excel dei soci del Riepilogo, a gruppi ognuno col suo colore (richieste del 29/10).
-   * Un campo nuovo va letto anche in downloadMembers(). */
-  const SUMMARY_GROUPS = [
-    ["TESSERA", "084C8D", [
-      ["Numero tessera", (s) => s.card_number],
-      ["Tipo tessera", (s) => s.card_type]]],
-    ["ANAGRAFICA", "0B6E69", [
-      ["Cognome", (s) => s.last_name],
-      ["Nome", (s) => s.first_name],
-      ["Data di nascita", (s) => dataIt(s.birth_date)],
-      ["Luogo di nascita", (s) => s.birth_place],
-      ["Provincia di nascita", (s) => s.birth_province],
-      ["Codice fiscale", (s) => s.tax_code]]],
-    ["CORSI E ABBONAMENTI", "8A5300", [
-      ["Corso", (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type)],
-      ["Abbonamento", (s) => s.passes.join(" + ")],
-      ["Presciistica", (s) => s.preski_label]]],
-    ["RECAPITI", "4A5868", [
-      ["Telefono", (s) => s.phone],
-      ["Email", (s) => s.email],
-      ["Indirizzo", (s) => s.address],
-      ["Città", (s) => s.city],
-      ["Provincia", (s) => s.province],
-      ["CAP", (s) => s.postal_code]]],
-  ];
-  const SUMMARY_COLUMNS = SUMMARY_GROUPS.flatMap(([, , columns]) => columns);
-  // Mentre si scorre restano ferme le tre righe d'intestazione (titolo, gruppi, colonne) e le
-  // colonne da Numero tessera a Nome.
-  const SUMMARY_FROZEN = { righe: 3, colonne: 4 };
-
-  /** Il numero di tessera come numero (2 prima di 10); senza numero, o «NO», in fondo. */
-  const cardOrder = (s) => { const n = parseInt(s.card_number, 10); return Number.isNaN(n) ? Infinity : n; };
-  const ownCard = (s) => s.card_type && s.card_type.toUpperCase() !== "NO";
-  /**
-   * La tessera di chi è tesserato con la presciistica o con l'agevolazione famiglia, che non ne
-   * hanno una loro: quella ordinaria della loro assicurazione (la più cara fra le tessere per
-   * tutti con quell'assicurazione, quindi mai la scontata né il direttivo). Richiesta del 6/11.
-   */
-  const coveringCard = (cards, insurance) => cards
-    .filter((p) => (p.min_role || "utente") === "utente" && (p.insurance || null) === (insurance || null))
-    .sort((a, b) => Number(b.price) - Number(a.price))[0]?.name || null;
-  const byName = (a, b) => (a.last_name || "").localeCompare(b.last_name || "", "it") || (a.first_name || "").localeCompare(b.first_name || "", "it");
-
-  /**
-   * Tutti i tesserati della stagione in corso, in Excel, per capire la stagione: in ordine di
-   * tessera, con corso, abbonamenti della stagione (member_passes) e presciistica. Lo può fare chi
-   * ha il permesso riepilogo. "NO" come tessera vale come nessuna tessera, come nel resto del Riepilogo.
-   */
-  async function downloadMembers() {
-    setLoading(true);
-    try {
-      const { data: seasonValue, error } = await sb.rpc("current_season");
-      if (error) throw error;
-      const [members, passes, cards] = await Promise.all([
-        allRows(() => sb
-          .from("members")
-          .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, "
-            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label, member_insurance")
-          .not("enrolled_at", "is", null)
-          // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
-          .is("card_holder", true)
-          .order("id")),
-        allRows(() => sb.from("member_passes").select("member_id, pass_type").eq("season", seasonValue).order("id")),
-        allRows(() => sb.from("prices").select("name, price, insurance, min_role").eq("category", "TESSERA").order("name")),
-      ]);
-      const passesOf = new Map();
-      for (const p of passes) passesOf.set(p.member_id, [...(passesOf.get(p.member_id) || []), p.pass_type]);
-      const rows = members.map((s) => ({ ...s, card_type: ownCard(s) ? s.card_type : coveringCard(cards, s.member_insurance),
-        passes: passesOf.get(s.id) || [] }))
-        .sort((a, b) => cardOrder(a) - cardOrder(b) || byName(a, b));
-      // La stagione scritta dentro il file (titolo e nome del foglio), non solo nel nome del file:
-      // rinominato o copiato, dice ancora di che stagione è.
-      const year = new Date(seasonValue).getFullYear(), label = `${year}/${String(year + 1).slice(2)}`;
-      const now = new Date();
-      const title = `Soci della stagione ${label} · scaricato il ${now.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-        + ` alle ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })} · ${rows.length === 1 ? "1 socio" : `${rows.length} soci`}`;
-      await downloadExcel(rows, `soci-stagione-${label.replace("/", "-")}`, SUMMARY_COLUMNS, {
-        gruppi: SUMMARY_GROUPS.map(([nome, colore, columns]) => ({ nome, colore, colonne: columns.length })),
-        blocca: SUMMARY_FROZEN, titolo: title, foglio: `Soci ${label.replace("/", "-")}` });
-    } catch (error) {
-      showToast("Errore: " + errorMessage(error), "is-danger");
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function currentData() {

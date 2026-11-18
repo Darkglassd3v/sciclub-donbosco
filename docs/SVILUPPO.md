@@ -145,6 +145,12 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   piena in alto, il colore dice di cosa si parla ed è lo stesso in tutto il sito (blu persone,
   verde tessera e assicurazione, viola gite e corsi, arancio soldi). Le usano Soci, Riepilogo,
   Assicurazione e Bilancio; non servono dove la pagina ha una sola parte o ha già i suoi colori.
+- Elenco soci (`web/elenco.html`, dalla 3.7.0, permesso `soci` o `riepilogo`): i tesserati della stagione
+  (`card_holder()`) in ordine di tessera come numero, i numeri liberi fino al più alto, pagine da 50, la
+  ricerca della pagina Soci fatta sui soci già letti (`nameKey()`), colonne scelte nella finestra «Colonne» e
+  ricordate in `localStorage` (`sciclub-elenco-colonne`). Il nome porta a `index.html?socio=<id>`
+  (`openFromAddress()`, solo un id valido). L'Excel dei soci, prima nel Riepilogo, si scarica da qui, tutto o
+  solo il filtrato, e i pulsanti li vede solo chi ha `riepilogo`.
 - Pagina Soci: testata con il nome e i pulsanti Stampa (scarica il PDF) ed Elimina; quattro
   sezioni (Anagrafica, Tessera, Gite e corsi, Pagamento). Le voci del listino sono righe radio
   grandi, nell'ordine del modulo di carta del tesseramento (`prices.position`), e così i campi:

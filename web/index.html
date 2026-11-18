@@ -76,6 +76,9 @@
     .totale-mano input { width: 20px; height: 20px; margin: 0; }
     /* Sotto il nome di un risultato: nascita, residenza, codice fiscale (memberHint()). */
     .anteprima-socio { display: block; margin-top: 2px; font-size: .9375rem; color: var(--testo-soft); overflow-wrap: anywhere; }
+    /* «Elenco soci» accanto al titolo della ricerca. */
+    .cerca-titolo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .cerca-titolo h2 { margin-bottom: 0; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: var(--superficie); box-shadow: var(--ombra); }
 
     /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
@@ -207,7 +210,7 @@
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
   <div id="searchZone" class="riquadro">
-    <h2>Cerca un socio</h2>
+    <div class="cerca-titolo"><h2>Cerca un socio</h2><a class="button is-link is-light is-small" href="elenco.html">Elenco soci</a></div>
     <label class="label" for="searchInput">Cognome, nome o codice fiscale</label>
     <input id="searchInput" class="input" type="search" placeholder="Cognome, nome o codice fiscale" autocomplete="off">
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
@@ -447,7 +450,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
-<script src="shared.js?v=20261116rete"></script>
+<script src="shared.js?v=20261118elenco"></script>
 <script src="vendor/dayjs-1.11.23.js"></script>
 <script src="vendor/dayjs-utc-1.11.23.js"></script>
 <script src="vendor/belfiore-connector-3.0.0.js"></script>
@@ -603,6 +606,8 @@
     } finally {
       setLoading(false);
     }
+    // Arrivati dall'Elenco soci col socio da aprire (index.html?socio=<id>).
+    await openFromAddress();
   })();
 
   /**
@@ -1479,6 +1484,15 @@
   // scheda del secondo. Una risposta di un turno vecchio non scrive più niente.
   let cardTurn = 0;
 
+  /**
+   * L'Elenco soci porta qui con index.html?socio=<id>: si apre quella scheda. Solo un id valido: l'indirizzo
+   * lo può scrivere chiunque, e un valore strano non deve arrivare al database.
+   */
+  async function openFromAddress(search = location.search) {
+    const wanted = new URLSearchParams(search).get("socio");
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wanted || "")) await loadMember(wanted);
+  }
+
   async function loadMember(id) {
     const turn = ++cardTurn;
     const oldOne = () => turn !== cardTurn;
@@ -1620,6 +1634,7 @@
     box.innerHTML = results.map((s) => `
       <div class="result-item" data-id="${esc(s.id)}" data-nome="${esc(`${s.last_name} ${s.first_name}`)}">
         <strong>${esc(s.last_name)} ${esc(s.first_name)}</strong>
+        ${s.card_number ? `<span class="tag is-info is-light ml-2">N° ${esc(s.card_number)}</span>` : ""}
         ${memberHint(s)}
       </div>`).join("");
 

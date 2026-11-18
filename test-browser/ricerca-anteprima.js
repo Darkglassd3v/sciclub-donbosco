@@ -3,7 +3,7 @@
 // - Sotto il nome: data di nascita («nato/a il …») e residenza, se scritta («indirizzo, COMUNE»).
 // - Il codice fiscale solo se c'è: niente «No CF», niente virgole o puntini rimasti vuoti.
 // - Un nome o un indirizzo con caratteri HTML si legge come testo.
-// - La ricerca del familiare pagante ha la stessa riga.
+// - La ricerca del familiare pagante ha la stessa riga e il numero di tessera (dalla 3.7).
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const SOCI = [
@@ -39,6 +39,7 @@
     await searchPayer();
     await wait(200);
     const payer = [...el("payerResults").querySelectorAll(".result-item")].map(text);
+    test("paganteTessera", /N° 12/.test(payer[1] || "") && !/N°/.test(payer[0] || ""), `«${payer[1]}» «${payer[0]}»`);
     test("pagante", /nato\/a il 11\/02\/2000/.test(payer[0] || "") && /CASTAGNOLE LANZE/.test(payer[0] || "") && !/No CF/.test(payer.join(" ")),
       `«${payer[0]}»`);
     document.title = "RISULTATO " + r.join(" ");

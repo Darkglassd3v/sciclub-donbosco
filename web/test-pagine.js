@@ -46,6 +46,7 @@ const LISTS = {
   "web/gestione.html": ["storicoPermessi", "tabellaPermessi"],
   "web/assicurazione.html": ["tipi", "elencoDa", "elencoListe"],
   "web/bilancio.html": ["elencoMovimenti"],
+  "web/elenco.html": ["elencoSoci"],
   "web/stagione.html": ["tabellaStagioni", "tabellaChiuse"],
   "web/impostazioni.html": ["tabellaPrezzi", "tabellaAssicurazioni", "tabellaPartenze"],
   "web/utenti.html": ["tabellaUtenti"],
