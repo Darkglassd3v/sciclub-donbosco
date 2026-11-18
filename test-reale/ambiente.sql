@@ -19,6 +19,10 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(current_setting('request.jwt.claim.sub', true),
                          current_setting('request.jwt.claims', true)::jsonb ->> 'sub'), '')::uuid;
 $$;
+-- Come su Supabase: tutte le rivendicazioni del token (serve a signed_in_with_oauth(), dalla 3.4).
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb;
+$$;
 create or replace function auth.role() returns text language sql stable as $$
   select coalesce(current_setting('request.jwt.claim.role', true),
                   current_setting('request.jwt.claims', true)::jsonb ->> 'role');

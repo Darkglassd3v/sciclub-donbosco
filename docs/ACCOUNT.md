@@ -176,6 +176,36 @@ pannello glielo assegna subito dopo averlo creato. Se un giorno quell'interrutto
 per sbaglio, chi si registrasse otterrebbe un account cieco, in fondo all'elenco fra quelli
 **senza accesso**, invece che l'accesso all'anagrafica dei soci.
 
+### Accesso con Google (dalla 3.4)
+
+Nella pagina di accesso, sotto email e password, c'è il pulsante **«Accedi con Google»**. Entra solo chi ha
+già un account creato dal pannello Utenti **con lo stesso indirizzo email** del suo account Google: Supabase
+collega l'accesso Google all'account che esiste. Un account Google sconosciuto non crea niente, perché
+«Allow new users to sign up» resta spento, e la pagina dice a chi rivolgersi. Email e password restano.
+
+Chi entra con Google non deve cambiare la password iniziale: al primo accesso con Google il database la
+sostituisce con una casuale che nessuno conosce (`retire_initial_password()`), così la password iniziale, che
+è pubblica, non resta valida. Se poi quella persona vuole entrare anche con la password, il superadmin la
+reimposta dal pannello Utenti.
+
+Configurazione, una volta sola:
+
+1. **Google Cloud Console** (con l'account Google del club), progetto nuovo «Sci Club Don Bosco gestionale»:
+   - *Google Auth Platform › Branding*: nome dell'app, email di assistenza, logo facoltativo;
+   - *Audience*: tipo **Esterno**, poi **Pubblica l'app** (con i soli dati di base, email e profilo, Google
+     non chiede la verifica);
+   - *Clients › Crea client*: tipo **Applicazione web**, *URI di reindirizzamento autorizzati*:
+     `https://<progetto>.supabase.co/auth/v1/callback` (l'indirizzo esatto lo mostra Supabase nel passo 2).
+     Si copiano **ID client** e **client secret**: il secret va solo nel pannello di Supabase e nel KeePass,
+     mai nel repository.
+2. **Supabase › Authentication › Sign In / Providers › Google**: attivare, incollare ID client e secret,
+   salvare. «Allow new users to sign up» resta **spento**.
+3. **Supabase › Authentication › URL Configuration**: *Site URL* l'indirizzo del sito
+   (`https://darkglassd3v.github.io/sciclub-donbosco/`) e, in *Redirect URLs*,
+   `https://darkglassd3v.github.io/sciclub-donbosco/**`, perché si torna a `login.html` anche con `?next=`.
+4. Prova: un account del gestionale entra con Google; un account Google non registrato vede il messaggio
+   «non è registrato nel gestionale».
+
 ### Un solo indirizzo per tutti
 
 Il link da dare a chiunque è la radice del sito (`https://darkglassd3v.github.io/sciclub-donbosco/`):

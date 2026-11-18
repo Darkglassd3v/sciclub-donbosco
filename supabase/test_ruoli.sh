@@ -43,6 +43,10 @@ values ('a0000000-0000-0000-0000-0000000000ee', 'esistente@test', 'vecchia');
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('test.uid', true), '')::uuid;
 $$;
+-- Come su Supabase: le rivendicazioni del token di chi chiama; qui da una variabile di sessione.
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('test.jwt', true), ''), '{}')::jsonb;
+$$;
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated; end if;
   -- anon too, as on Supabase: the API without login.
@@ -2020,6 +2024,28 @@ begin
   exception when raise_exception then
     if sqlerrm not like '%almeno 8%' then raise; end if;
   end;
+  -- Entrato con Google (accesso dalla 3.4): l'obbligo di cambiare la password non vale per quella sessione,
+  -- che non usa la password; la password iniziale resta bloccata se qualcuno la usa.
+  perform set_config('test.uid', tesoriere::text, false);
+  perform set_config('test.jwt', '{"amr": [{"method": "oauth", "timestamp": 1}]}', false);
+  assert not (select change_password from public.my_access()), 'entrato con Google ma deve cambiare la password';
+  assert public.can('pagamenti'), 'entrato con Google ma niente permessi';
+  perform set_config('test.jwt', '{"amr": [{"method": "password", "timestamp": 1}]}', false);
+  assert (select change_password from public.my_access()), 'con la password iniziale l''obbligo è sparito';
+  assert not public.can('pagamenti'), 'con la password iniziale ha i permessi';
+  -- La password iniziale non resta in vita: entrato con Google, retire_initial_password() la sostituisce con una
+  -- casuale che nessuno conosce, e l'obbligo sparisce anche per l'accesso con la password.
+  perform public.retire_initial_password();
+  assert (select change_password from public.my_access()), 'con la password ha ritirato la password iniziale';
+  perform set_config('test.jwt', '{"amr": [{"method": "oauth", "timestamp": 1}]}', false);
+  perform public.retire_initial_password();
+  perform set_config('test.jwt', '{"amr": [{"method": "password", "timestamp": 1}]}', false);
+  assert not (select change_password from public.my_access()), 'entrato con Google ma la password iniziale è ancora valida';
+  assert not exists (select 1 from auth.users where id = tesoriere
+                       and encrypted_password = extensions.crypt('donbosco26!', encrypted_password)),
+    'la password iniziale funziona ancora';
+  perform set_config('test.jwt', '', false);
+
   -- Il tesoriere torna con la password sua, per le prove dopo.
   update auth.users set encrypted_password = 'ricambiata' where id = tesoriere;
   delete from public.profiles where user_id = nuovo;

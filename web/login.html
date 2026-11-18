@@ -11,6 +11,8 @@
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
     .card-login { max-width: 420px; width: 100%; background: var(--superficie); padding: 44px 40px; border-radius: var(--raggio-card); box-shadow: var(--ombra); }
     .card-login .title { font-size: 1.9rem; letter-spacing: -.022em; }
+    .card-login .oppure { text-align: center; color: var(--testo-soft); margin: 1.25rem 0 .75rem; }
+    #btnGoogle { border: 1px solid var(--bordo, #c9ced6); }
     .card-login .sottotitolo { color: var(--testo-soft); text-align: center; margin-top: -.5rem; margin-bottom: 1.75rem; }
   </style>
 </head>
@@ -37,6 +39,12 @@
     <button class="button is-link is-fullwidth has-text-weight-bold" id="btnLogin" type="submit">Entra</button>
   </form>
 
+  <p class="oppure" aria-hidden="true">oppure</p>
+  <button type="button" class="button is-fullwidth has-text-weight-bold" id="btnGoogle">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style="margin-right:10px"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.5 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>
+    Accedi con Google
+  </button>
+
   <p id="errore" class="notification is-danger is-light mt-4" role="alert" style="display:none"></p>
 </div>
 
@@ -53,7 +61,8 @@
   // indirizzo completo, che porterebbe altrove chi ha appena fatto l'accesso.
   const request = new URLSearchParams(location.search);
   const next = request.get("next");
-  const requestedPage = /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(next || "") ? next : null;
+  const isPageOfThisSite = (page) => /^(ricerca\/)?[a-z]+\.html(\?[\w=&-]*)?$/i.test(page || "");
+  const requestedPage = isPageOfThisSite(next) ? next : null;
 
   bindShowPassword();
 
@@ -62,6 +71,47 @@
     err.textContent = text;
     err.style.display = "block";
   }
+
+  /**
+   * Messaggio per il ritorno da Google con un errore (frammento «#error=...» dell'indirizzo), o "" se non ce
+   * n'è. «Signups not allowed»: l'account Google non corrisponde a nessun account del gestionale, perché qui
+   * gli account li crea solo il pannello Utenti e la registrazione libera è spenta (docs/ACCOUNT.md).
+   */
+  function googleError(fragment) {
+    const values = new URLSearchParams(String(fragment || "").replace(/^#/, ""));
+    if (!values.get("error")) return "";
+    if (values.get("error_code") === "signup_disabled" || /signups? not allowed/i.test(values.get("error_description") || "")) {
+      return "Questo account Google non è registrato nel gestionale: rivolgersi all'amministratore degli utenti del club, "
+        + "che può creare l'account con lo stesso indirizzo email, oppure entrare con email e password.";
+    }
+    return "Accesso con Google non riuscito: riprovare, oppure entrare con email e password.";
+  }
+
+  const googleReturn = googleError(location.hash) || googleError(location.search);
+  if (googleReturn) {
+    showError(googleReturn);
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+
+  // Si torna a questa stessa pagina, con la sola pagina richiesta (?next=): al ritorno la sessione c'è e
+  // getSession() qui sotto entra come con la password. Non «?senza=1», che chiuderebbe la sessione nuova.
+  function googleReturnAddress() {
+    const page = new URLSearchParams(location.search).get("next");
+    return location.origin + location.pathname + (isPageOfThisSite(page) ? `?next=${encodeURIComponent(page)}` : "");
+  }
+  document.getElementById("btnGoogle").addEventListener("click", async () => {
+    const button = document.getElementById("btnGoogle");
+    err.style.display = "none";
+    button.classList.add("is-loading");
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: googleReturnAddress() },
+    });
+    if (error) {
+      button.classList.remove("is-loading");
+      showError("Accesso con Google non riuscito: " + errorMessage(error));
+    }
+  });
 
   const WITHOUT_ROLE = "Questo account non ha ancora un ruolo assegnato e non può accedere ad alcuna sezione. "
     + "Rivolgersi all'amministratore degli utenti del club per l'assegnazione.";
@@ -77,6 +127,9 @@
    * qui. Con la password iniziale ancora da cambiare, prima si cambia quella.
    */
   async function enter() {
+    // Entrato con Google, la password iniziale (pubblica) viene sostituita: il database lo fa solo per una
+    // sessione Google con la password ancora da cambiare. Se non riesce si entra lo stesso e si riprova la volta dopo.
+    await sb.rpc("retire_initial_password").then(() => null, () => null);
     const access = await getProfile();
     const landing = landingPage(access);
     if (!landing) {
