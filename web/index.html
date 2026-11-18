@@ -78,6 +78,7 @@
     .anteprima-socio { display: block; margin-top: 2px; font-size: .9375rem; color: var(--testo-soft); overflow-wrap: anywhere; }
     /* «Elenco soci» accanto al titolo della ricerca. */
     .cerca-titolo { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .cerca-titolo h2 { margin-bottom: 0; }
     #payerResults { border: 1px solid var(--filo); border-radius: var(--raggio); display: none; position: relative; z-index: 100; background: var(--superficie); box-shadow: var(--ombra); }
 
     /* Testata della scheda: socio nuovo o quale socio è aperto, con Stampa
@@ -209,7 +210,7 @@
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
   <div id="searchZone" class="riquadro">
-    <h2 class="cerca-titolo">Cerca un socio <a class="button is-link is-light is-small" href="elenco.html">Elenco soci</a></h2>
+    <div class="cerca-titolo"><h2>Cerca un socio</h2><a class="button is-link is-light is-small" href="elenco.html">Elenco soci</a></div>
     <label class="label" for="searchInput">Cognome, nome o codice fiscale</label>
     <input id="searchInput" class="input" type="search" placeholder="Cognome, nome o codice fiscale" autocomplete="off">
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
