@@ -26,7 +26,7 @@
   const rpcCalls = [];
   const sent = [];
   FAKE.errore = (t, request) => {
-    if (t.startsWith("rpc:") && !["rpc:my_access", "rpc:insurance_members", "rpc:insurance_sent_lists"].includes(t)) rpcCalls.push(t);
+    if (t.startsWith("rpc:") && !["rpc:my_access", "rpc:insurance_members", "rpc:insurance_sent_lists", "rpc:insurance_summary"].includes(t)) rpcCalls.push(t);
     if (t === "rpc:insurance_send_all") sent.push(request.parametri);
     return null;
   };
