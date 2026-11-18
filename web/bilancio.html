@@ -282,10 +282,10 @@
     el("allegaFattura").addEventListener("change", attachToEntry);
     el("mAnticipata").addEventListener("change", choosePerson);
     el("pSalva").addEventListener("click", savePerson);
-    el("pAnnulla").addEventListener("click", () => el("dlgPersona").close());
-    el("dlgPersona").addEventListener("close", () => {
-      if (el("mAnticipata").value === NEW_PERSON) el("mAnticipata").value = chosenPerson;
-    });
+    // Annulla, Esc o la finestra chiusa in altro modo: si torna alla scelta di prima.
+    const backToChoice = () => { if (el("mAnticipata").value === NEW_PERSON) el("mAnticipata").value = chosenPerson; };
+    el("pAnnulla").addEventListener("click", () => { backToChoice(); el("dlgPersona").close(); });
+    el("dlgPersona").addEventListener("close", backToChoice);
     await loadPosts();
     await loadPeople();
     await reload();
