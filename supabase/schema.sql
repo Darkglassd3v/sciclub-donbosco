@@ -1730,6 +1730,29 @@ $$;
 
 comment on function public.insurance_sent_lists is 'Liste mandate all''assicurazione nella stagione aperta, con il numero di soci.';
 
+-- Il riepilogo in cima alla pagina Assicurazione (dalla 3.9): solo numeri, mai nomi, perché chi ha soltanto il
+-- permesso polizze non legge i soci. Fra i tesserati della stagione (card_holder(), come l'Elenco soci): assicurati
+-- (in una lista inviata), da assicurare (con un'assicurazione, non ancora in lista: gli stessi di
+-- insurance_members()) e senza assicurazione (la tessera non la comprende). Senza polizze nessuna riga.
+create or replace function public.insurance_summary()
+returns table (card_holders bigint, insured bigint, to_insure bigint, uninsured bigint)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select count(*),
+         count(*) filter (where t.insurance_list_id is not null),
+         count(*) filter (where t.insurance_list_id is null and t.tipo is not null),
+         count(*) filter (where t.insurance_list_id is null and t.tipo is null)
+    from (select m.insurance_list_id, public.member_insurance(m) as tipo
+            from public.members m
+           where m.enrolled_at is not null and public.card_holder(m)) t
+  having public.can('polizze');
+$$;
+
+comment on function public.insurance_summary is 'Riepilogo della pagina Assicurazione: tesserati della stagione, assicurati, da assicurare e senza assicurazione. Solo con polizze.';
+
 -- "Segna come inviata": crea la lista con il numero e la decorrenza scelti
 -- (la pagina propone l'ultimo numero più uno e oggi) e ci mette i soci
 -- dell'Excel appena scaricato (member_ids), non tutti quelli da assicurare
