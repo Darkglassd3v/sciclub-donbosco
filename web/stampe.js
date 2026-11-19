@@ -25,6 +25,14 @@ function departureName(text) {
 }
 
 /**
+ * Le partenze scritte nella scheda: chi ne spunta due le ha separate da virgola («ASTI, FELIZZANO», vedi
+ * selectedDepartures() in index.html). Ognuna ripulita come departureName(), senza doppioni.
+ */
+function departureList(text) {
+  return [...new Set(String(text || "").split(",").map(departureName).filter(Boolean))];
+}
+
+/**
  * Nome del foglio di lavoro Excel: "Partenza da NIZZA M." → "NIZZA M.". Excel
  * rifiuta [ ] : * ? / \ e più di 31 caratteri, e il file non si aprirebbe.
  */
@@ -73,9 +81,8 @@ function groupsByDeparture(rows, withDepartures) {
   if (!rows.length) return [];
   const byDeparture = new Map();
   for (const [member, dayList] of rows) {
-    const places = withDepartures
-      ? new Set(dayList.map((g) => departureName(member[DEPARTURE_COLUMN[g]])).filter(Boolean))
-      : new Set();
+    // Chi ha due partenze sta nel foglio di ognuna: un foglio «ASTI, FELIZZANO» non è di nessun pullman.
+    const places = withDepartures ? new Set(dayList.flatMap((g) => departureList(member[DEPARTURE_COLUMN[g]]))) : new Set();
     for (const placeName of places.size ? places : [""]) {
       if (!byDeparture.has(placeName)) byDeparture.set(placeName, new Map());
       byDeparture.get(placeName).set(member.id, member);
@@ -87,6 +94,32 @@ function groupsByDeparture(rows, withDepartures) {
       titolo: placeName ? `Partenza da ${placeName}` : withDepartures ? "Senza partenza" : "",
       soci: [...byDeparture.get(placeName).values()].sort(perNome),
     }));
+}
+
+/**
+ * L'elenco intero di un foglio, primo nel file (richiesta del 19/11/2026): tutti, per cognome, con la partenza
+ * di quei giorni scritta accanto, vuota per chi non l'ha. La partenza non è obbligatoria: chi non l'aveva finiva
+ * solo nell'ultima linguetta, «Senza partenza», e aprendo il file sembrava che mancasse.
+ */
+function allGroup(rows) {
+  return { titolo: "Tutti", tutti: true, soci: rows.map(([member]) => member).sort(perNome),
+    partenze: new Map(rows.map(([member, dayList]) => [member.id,
+      [...new Set(dayList.flatMap((g) => departureList(member[DEPARTURE_COLUMN[g]])))].join(", ")])) };
+}
+
+/** Quanti soci ha un foglio: persone, non righe (chi è in «Tutti» e in una partenza conta una volta). */
+function sheetPeople(sheet) {
+  return new Set(sheet.gruppi.flatMap((g) => g.soci.map((s) => s.id))).size;
+}
+
+/** L'anteprima sotto il pulsante di un giorno, una voce per file: ["Corsisti: 5", "Abbonamenti 5 gite: 6", "Jolly: 4"]. */
+function previewParts(keyName, members, passList) {
+  return daySheets(keyName, members, passList).map((f) => `${f.titolo}: ${sheetPeople(f)}`);
+}
+
+/** La stessa anteprima in una riga: «Corsisti: 5 · Abbonamenti 5 gite: 6 · Jolly: 4». */
+function previewText(keyName, members, passList) {
+  return previewParts(keyName, members, passList).join(" · ");
 }
 
 /**
@@ -121,5 +154,8 @@ function daySheets(keyName, members, passList) {
   sheets.push({ titolo: "Jolly", nota: "valido per tutti i giorni", gite: ["JOLLY"], righe: members
     .filter((s) => daysOf.get(s.id)?.has("JOLLY"))
     .map((s) => [s, g.giorni]) });
-  return sheets.map(({ titolo: titleText, nota: note, gite: tripList, righe: rows }) => ({ titolo: titleText, nota: note, gite: tripList, gruppi: groupsByDeparture(rows, g.partenze) }));
+  // Con le partenze (sabato e domenica) prima l'elenco intero, poi un foglio per pullman; senza, il gruppo unico
+  // è già l'elenco intero.
+  return sheets.map(({ titolo: titleText, nota: note, gite: tripList, righe: rows }) => ({ titolo: titleText, nota: note, gite: tripList,
+    gruppi: [...(g.partenze && rows.length ? [allGroup(rows)] : []), ...groupsByDeparture(rows, g.partenze)] }));
 }

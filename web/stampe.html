@@ -12,6 +12,10 @@
     /* Un pulsante per giorno, con il colore delle gite (.giorno-azione in
      * brand.css) e il giorno scritto: il colore aiuta, ma chi vede poco legge. */
     .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; }
+    /* Sotto ogni pulsante quanti soci ci saranno in ogni file (dal 19/11/2026). */
+    .giorno-stampa { display: flex; flex-direction: column; gap: 8px; }
+    .anteprima-giorno { margin: 0; color: var(--testo-soft); font-size: .9375rem; }
+    .anteprima-giorno span { white-space: nowrap; }   /* «Jolly: 4» non si spezza a metà */
 
     .esito ul { margin: 0; padding-left: 1.2em; }
     .esito li { padding: 4px 0; }
@@ -74,19 +78,30 @@
 
 <div class="container-main" role="main">
   <h1 class="title is-4">Fogli dei soci</h1>
-  <p class="occhiello">Fogli Excel di corsisti, abbonamenti e jolly per ciascun giorno di gita, con un foglio per ogni partenza.</p>
+  <p class="occhiello">Fogli Excel di corsisti, abbonamenti e jolly per ciascun giorno di gita, con l'elenco completo e un foglio per ogni partenza.</p>
 
   <div class="riquadro">
     <h2>Download dei fogli</h2>
     <p class="occhiello">
       Fino a tre file per giorno, solo se contengono almeno un socio: corsisti (sabato e domenica),
-      abbonamenti del giorno e jolly. Ogni file contiene un foglio per partenza, in ordine alfabetico.
+      abbonamenti del giorno e jolly. Ogni file comincia con il foglio «Tutti», con tutti i soci e la loro
+      partenza, anche chi non l'ha indicata; seguono i fogli per partenza, uno per pullman, in ordine alfabetico.
+      Sotto ogni pulsante, quanti soci ci saranno in ogni file.
       Al primo download il browser può chiedere l'autorizzazione a scaricare più file: confermare.
     </p>
     <div class="giorni-stampa">
-      <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
-      <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
-      <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
+      <div class="giorno-stampa">
+        <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
+        <p class="anteprima-giorno" data-anteprima="SABATO">Caricamento…</p>
+      </div>
+      <div class="giorno-stampa">
+        <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
+        <p class="anteprima-giorno" data-anteprima="DOMENICA">Caricamento…</p>
+      </div>
+      <div class="giorno-stampa">
+        <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
+        <p class="anteprima-giorno" data-anteprima="MARTEDI">Caricamento…</p>
+      </div>
     </div>
   </div>
 
@@ -96,7 +111,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script src="config.js?v=20261016d"></script>
 <script src="shared.js?v=20261118permesso"></script>
-<script src="stampe.js?v=20261023fogli"></script>
+<script src="stampe.js?v=20261119tutti"></script>
 <script>
   // Chi ha il permesso gite (ruolo gite, admin, superadmin) legge soci e
   // abbonamenti della stagione: è quello che serve sul pullman.
@@ -107,7 +122,24 @@
     if (!(await requirePermission("stampe"))) return;
     document.querySelectorAll(".giorni-stampa [data-giorno]").forEach((b) =>
       b.addEventListener("click", () => download(b.dataset.giorno, b)));
+    try {
+      drawPreviews(await readData());
+    } catch (error) {
+      // Senza conteggi i pulsanti funzionano lo stesso: lo scarico rilegge i dati.
+      document.querySelectorAll("[data-anteprima]").forEach((p) => { p.textContent = "Conteggio non disponibile."; });
+    }
   })();
+
+  /** Sotto ogni pulsante quanti soci ci saranno in ogni file, con i dati appena letti. */
+  function drawPreviews({ soci: members, abbonamenti: passList }) {
+    document.querySelectorAll("[data-anteprima]").forEach((p) => {
+      p.replaceChildren(...previewParts(p.dataset.anteprima, members, passList).flatMap((part, i) => {
+        const span = document.createElement("span");
+        span.textContent = part;
+        return i ? [" · ", span] : [span];
+      }));
+    });
+  }
 
   /** Soci della stagione e abbonamenti letti al momento: si stampa quello che c'è ora. */
   async function readData() {
@@ -126,7 +158,9 @@
     button.disabled = true;
     setLoading(true);
     try {
-      const { soci: members, abbonamenti: passList } = await readData();
+      const data = await readData();
+      const { soci: members, abbonamenti: passList } = data;
+      drawPreviews(data);   // i conteggi di adesso, uguali a quelli dei file
       // Solo i fogli con qualcuno: il martedì, per esempio, niente corsi.
       const sheets = daySheets(keyName, members, passList).filter((f) => f.gruppi.length);
       const dayName = PRINT_DAYS[keyName].nome.toLowerCase();
@@ -155,17 +189,18 @@
     const today = new Date().toLocaleDateString("sv-SE");   // AAAA-MM-GG
     const book = XLSX.utils.book_new();
     const usedNames = new Set();   // excelSheetName(): due fogli uguali fermerebbero lo scarico
-    let howManyOnes = 0;
     for (const g of sheet.gruppi) {
-      howManyOnes += g.soci.length;
       // Luogo e data di nascita: sul pullman servono a essere sicuri della persona (due MARIO ROSSI).
       // Nei fogli degli abbonamenti anche le gite fatte ("1/5"), contate al momento dello scarico.
+      // Nel foglio «Tutti» anche la partenza, vuota per chi non l'ha indicata.
       const tripList = sheet.gite ? (s) => [tripsDone(passList, s.id, sheet.gite)] : () => [];
+      const departure = g.tutti ? (s) => [g.partenze.get(s.id) || ""] : () => [];
       const rows = [
         [excelTitle(keyName, sheet.titolo)],
-        ["N. tessera", "Cognome", "Nome", "Luogo di nascita", "Data di nascita", ...(sheet.gite ? ["Gite fatte"] : []), "Telefono"],
-        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, s.birth_place || "", dataExcel(s.birth_date),
-          ...tripList(s), s.phone || ""]),
+        ["N. tessera", "Cognome", "Nome", ...(g.tutti ? ["Partenza"] : []), "Luogo di nascita", "Data di nascita",
+          ...(sheet.gite ? ["Gite fatte"] : []), "Telefono"],
+        ...g.soci.map((s) => [s.card_number || "", s.last_name, s.first_name, ...departure(s), s.birth_place || "",
+          dataExcel(s.birth_date), ...tripList(s), s.phone || ""]),
       ];
       // Il titolo in grassetto su tutta la riga, poi le colonne: vedi readableSheet().
       const work = readableSheet(rows, { intestazione: 1, dateNF: "dd/mm/yyyy" });
@@ -173,8 +208,11 @@
     }
     const file = `${sheet.titolo} ${dayName.toLowerCase()} ${today}.xlsx`;
     downloadPrintableExcel(book, file);
-    const departures = sheet.gruppi.length > 1 ? `, ${sheet.gruppi.length} partenze` : "";
-    return `${file}: ${howManyOnes} ${howManyOnes === 1 ? "socio" : "soci"}${departures}`;
+    // Persone, non righe: chi è in «Tutti» e nel foglio della sua partenza conta una volta.
+    const people = sheetPeople(sheet);
+    const departureSheets = sheet.gruppi.filter((g) => !g.tutti).length;
+    const departures = departureSheets > 1 ? `, ${departureSheets} partenze` : "";
+    return `${file}: ${people} ${people === 1 ? "socio" : "soci"}${departures}`;
   }
 
   function showOutcome(text, file) {
