@@ -351,6 +351,14 @@ le lancia il deploy.
   comunque il vincolo `members_card_number_key`.
 - Stampe: fogli corsisti, abbonamenti 5 gite e SEMPRE jolly, divisi per partenza, in ordine
   alfabetico: un pulsante per sabato, domenica e martedì, ognuno con fino a tre file Excel.
+  Dalla 3.10.0 (19/11/2026) ogni file del sabato e della domenica comincia con il foglio «Tutti»
+  (`allGroup()` in `web/stampe.js`): tutti i soci del file con la colonna Partenza, vuota per chi non
+  l'ha. La partenza non è obbligatoria e chi non l'aveva stava solo nell'ultima linguetta «Senza
+  partenza», che aprendo il file non si vede: sembrava che cinque corsisti su sei mancassero. Chi ha
+  spuntato due partenze («ASTI, FELIZZANO», `selectedDepartures()` in `index.html`) sta nel foglio di
+  ognuna (`departureList()`). Sotto ogni pulsante l'anteprima di quanti soci ci saranno in ogni file
+  (`previewParts()`, persone e non righe: `sheetPeople()`), letta all'apertura e a ogni scarico;
+  `test-reale/stampe-fogli.js` la confronta col database.
 - Corsi: ogni socio sceglie se fare il corso di sabato o di domenica (voce nuova nel database e nel
   form Soci), indipendentemente dal tipo di corso.
 - Secondo abbonamento: dal telefono "Nuovo abbonamento · pagato / da pagare" per tutti; nel form

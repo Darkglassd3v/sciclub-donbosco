@@ -9,8 +9,8 @@ const fs = require("fs");
 const path = require("path");
 
 const source = fs.readFileSync(path.join(__dirname, "stampe.js"), "utf8");
-const { daySheets, departureName, excelSheetName, excelTitle, tripsDone } =
-  (0, eval)(`(() => { ${source}; return { daySheets, departureName, excelSheetName, excelTitle, tripsDone }; })()`);
+const { daySheets, departureName, excelSheetName, excelTitle, tripsDone, sheetPeople } =
+  (0, eval)(`(() => { ${source}; return { daySheets, departureName, excelSheetName, excelTitle, tripsDone, sheetPeople }; })()`);
 
 const member = (id, last_name, extra = {}) => ({ id, last_name, first_name: "A", ...extra });
 const members = [
@@ -38,25 +38,53 @@ const passList = [
 
 const summary = (sheets) => sheets.map((f) => [f.titolo, f.gruppi.map((g) => [g.titolo, g.soci.map((s) => s.id)])]);
 
-// Sabato: corsisti del sabato, abbonamenti del sabato, jolly. Per partenza,
-// "Senza partenza" in fondo, per cognome dentro il gruppo, una riga sola con
-// due abbonamenti. Chi ha abbonamento e corso è su tutti e due i fogli.
+// Sabato: corsisti del sabato, abbonamenti del sabato, jolly. Ogni file comincia con «Tutti», l'elenco intero
+// del giorno con o senza partenza (richiesta del 19/11/2026: la partenza non è obbligatoria e chi non l'aveva
+// finiva nell'ultima linguetta, che nessuno apriva). Poi un foglio per partenza, "Senza partenza" in fondo, per
+// cognome dentro il gruppo, una riga sola con due abbonamenti. Chi ha abbonamento e corso è su tutti e due i fogli.
 assert.deepStrictEqual(summary(daySheets("SABATO", members, passList)), [
-  ["Corsisti", [["Partenza da FELIZZANO", ["corso"]]]],
+  ["Corsisti", [["Tutti", ["corso"]], ["Partenza da FELIZZANO", ["corso"]]]],
   ["Abbonamenti 5 gite", [
+    ["Tutti", ["alfa", "corso", "felix", "nessa", "zeta"]],
     ["Partenza da ASTI", ["alfa", "zeta"]],
     ["Partenza da FELIZZANO", ["corso", "felix"]],
     ["Senza partenza", ["nessa"]],
   ]],
-  ["Jolly", [["Partenza da ASTI", ["jolly"]]]],
+  ["Jolly", [["Tutti", ["jolly"]], ["Partenza da ASTI", ["jolly"]]]],
 ]);
 
 // Domenica: le partenze della domenica, jolly compreso.
 assert.deepStrictEqual(summary(daySheets("DOMENICA", members, passList)), [
-  ["Corsisti", [["Partenza da ASTI", ["dom"]]]],
-  ["Abbonamenti 5 gite", [["Senza partenza", ["fuori"]]]],               // fuori: domenica senza partenza
-  ["Jolly", [["Partenza da NIZZA M.", ["jolly"]]]],
+  ["Corsisti", [["Tutti", ["dom"]], ["Partenza da ASTI", ["dom"]]]],
+  ["Abbonamenti 5 gite", [["Tutti", ["fuori"]], ["Senza partenza", ["fuori"]]]],   // fuori: domenica senza partenza
+  ["Jolly", [["Tutti", ["jolly"]], ["Partenza da NIZZA M.", ["jolly"]]]],
 ]);
+
+// Il caso del 19/11/2026: corsisti del sabato senza partenza (o con quella della sola domenica) e chi ha
+// spuntato due partenze. Nel foglio «Tutti» ci sono tutti, con la partenza scritta; chi ne ha due sta nel foglio
+// di ognuna, non in un foglio «ASTI, FELIZZANO» che non è un pullman.
+{
+  const course = [
+    member("c1", "BETA", { course_type: "CORSO SCI 10 - 14", course_day: "SABATO" }),
+    member("c2", "ALFA", { course_type: "CORSO SCI ADULTI", course_day: "SABATO", sunday_departure: "OPESSINA - MONTEGROSSO" }),
+    member("c3", "GAMMA", { course_type: "CORSO SCI ADULTI", course_day: "SABATO", saturday_departure: "ASTI, felizzano" }),
+    member("c4", "DELTA", { course_type: "CORSO SCI BABY FINO 10", course_day: "DOMENICA" }),
+  ];
+  const [courseSheet] = daySheets("SABATO", course, []);
+  assert.deepStrictEqual(summary([courseSheet]), [["Corsisti", [
+    ["Tutti", ["c2", "c1", "c3"]],
+    ["Partenza da ASTI", ["c3"]],
+    ["Partenza da FELIZZANO", ["c3"]],
+    ["Senza partenza", ["c2", "c1"]],
+  ]]], "corsisti del sabato");
+  const all = courseSheet.gruppi[0];
+  assert.strictEqual(all.tutti, true, "il primo gruppo è l'elenco intero");
+  assert.deepStrictEqual(all.soci.map((s) => all.partenze.get(s.id)), ["", "", "ASTI, FELIZZANO"], "partenze nel foglio Tutti");
+  // Quanti soci ha il foglio (l'anteprima della pagina e l'esito dello scarico): persone, non righe dei fogli.
+  assert.strictEqual(sheetPeople(courseSheet), 3, "corsisti del sabato contati due volte");
+  assert.strictEqual(sheetPeople(daySheets("DOMENICA", course, [])[0]), 1);
+  assert.strictEqual(sheetPeople(daySheets("MARTEDI", members, passList)[0]), 1, "martedì: un gruppo solo, senza Tutti");
+}
 
 // Martedì: niente corsi e niente partenze, jolly sempre.
 assert.deepStrictEqual(summary(daySheets("MARTEDI", members, passList)), [
