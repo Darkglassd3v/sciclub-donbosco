@@ -145,6 +145,13 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   piena in alto, il colore dice di cosa si parla ed è lo stesso in tutto il sito (blu persone,
   verde tessera e assicurazione, viola gite e corsi, arancio soldi). Le usano Soci, Riepilogo,
   Assicurazione e Bilancio; non servono dove la pagina ha una sola parte o ha già i suoi colori.
+- Pagina Soci, provincia di nascita e di residenza (dalla 3.10.1): segue sempre la città, vuota o già scritta
+  (`syncProvince()` in `index.html`), uscendo dal campo («change» e «blur»: la città riscritta uguale non dà
+  «change») e al Salva prima di ogni controllo (`settleProvinces()`). Non mentre si scrive: a metà parola un altro
+  comune (CASTELNUOVO è in TN) la riscriverebbe. Ordine: resta la provincia scritta se ha un comune con quel nome
+  (SAMONE in AO e in TN); poi la più usata con la città nelle schede (`member_places`), perché CALLIANO (AT) dal
+  2021 è CALLIANO MONFERRATO e nell'elenco di oggi «CALLIANO» è solo in TN; poi l'elenco ufficiale. Città
+  sconosciuta o stato estero: invariata. Il CAP cambia solo se cambia la città. Prova: `provincia-dalla-citta.js`.
 - Elenco soci (`web/elenco.html`, dalla 3.7.0; dalla 3.8.0 permesso suo `elenco`, voce nel menu dopo Soci,
   nello stile dei Pagamenti): i tesserati della stagione (`card_holder()`) in ordine di tessera come numero, i
   numeri liberi fino al più alto. I nuclei (`payer_id`, come nei Pagamenti) restano uniti al posto della tessera
