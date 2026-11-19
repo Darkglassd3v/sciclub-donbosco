@@ -2,7 +2,8 @@
 // - Finché i dati non arrivano, l'elenco dei post e i riassunti delle Impostazioni dicono «Caricamento…»: prima
 //   dicevano «Nessun post da fare» e «Nessuno sponsor», e sembrava che fosse sparito tutto.
 // - Arrivati i dati, la scritta lascia il posto all'elenco.
-// - Ogni richiesta al database che dura più di 400 ms mostra l'etichetta «Caricamento…»; una più breve no.
+// - Ogni richiesta al database che dura più di 400 ms mostra «Caricamento…» (dal 19/11/2026 il velo che blocca la
+//   pagina, caricamento-velo.js); una più breve no. Tolto un attimo dopo la risposta (150 ms), per le richieste di fila.
 const POSTS = [{ id: "P1", kind: "gita", event_date: "2027-01-17", title: "Sestriere", subtitle: null, hook: null, stops: [["6:30", "Asti"]],
   prices: [], show_price: true, facts: [], contacts: [], course: false, published_at: null, caption: null, card_stop: null, deadline: null, sponsor_id: null }];
 history.replaceState(null, "", "#impostazioni");
@@ -41,7 +42,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await wait(450);
   test("etichetta", label() && text("caricamento") === "Caricamento…" && el("caricamento").getAttribute("role") === "status", el("caricamento")?.outerHTML);
   await slow;
-  await wait(50);
+  await wait(250);
   test("etichettaSparita", !label(), "ancora visibile");
   const fast = fetchWithWaiting("x?ms=100");
   await wait(600);
