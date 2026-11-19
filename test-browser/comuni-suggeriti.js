@@ -39,7 +39,8 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const lu = options(el("f_luogo_nascita")).split(",");
   test("nascitaAllaData", lu[0] === "LU" && !lu.includes("LU E CUCCARO MONFERRATO"), lu.slice(0, 5).join(",") || "nessun suggerimento");
   // Come chi usa la pagina: entra nel campo, scrive o sceglie, esce.
-  const choose = (id, value) => { el(id).dispatchEvent(new Event("focus")); el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); };
+  // Uscendo dal campo il browser manda «change» e subito dopo «blur»: tutti e due, come davvero.
+  const choose = (id, value) => { el(id).dispatchEvent(new Event("focus")); el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); el(id).dispatchEvent(new Event("blur")); };
   el("f_provincia").value = ""; el("f_cap").value = "";
   choose("f_citta", "NIZZA MONFERRATO");
   await new Promise((ok) => setTimeout(ok, 300));
