@@ -1,13 +1,13 @@
 // Soci (index.html): Città di nascita e Città di residenza suggeriscono, mentre si scrive, l'elenco
 // ufficiale della libreria (searchPlaces, 6/11), il nome uguale per primo; scelto il comune, la
-// provincia si compila dall'elenco, se il campo è vuoto: uno già scritto non si cambia.
+// provincia si compila dall'elenco (dal 19/11/2026 sempre, anche sopra una scritta: provincia-dalla-citta.js).
 // - Nascita: comuni e stati esteri esistiti alla data di nascita (nel 1957 c'è LU, non Lu e Cuccaro
 //   Monferrato, nato nel 2019).
 // - Residenza: solo i comuni di oggi (LU E CUCCARO MONFERRATO, non LU). Il CAP, che l'elenco non ha,
 //   viene dalle schede (vista member_places), il più usato col comune.
 // - Scelta una voce, l'elenco non si ricarica: Chrome lo riaprirebbe e la voce andrebbe scelta due volte.
 // - Città cambiata (es. da NIZZA MONFERRATO ad ALESSANDRIA): provincia e CAP seguono il comune nuovo
-//   (CAP dalle schede, o vuoto). Stessa città scelta di nuovo: provincia e CAP scritti restano.
+//   (CAP dalle schede, o vuoto). Stessa città scelta di nuovo: il CAP scritto resta.
 FAKE.risposta = (t) => t === "member_places" ? [
   { kind: "citta", place: "NIZZA MONFERRATO", province: "AT", postal_code: "14049", n: 202 },
   { kind: "citta", place: "ASTI", province: "AT", postal_code: "14100", n: 300 },
@@ -39,7 +39,8 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const lu = options(el("f_luogo_nascita")).split(",");
   test("nascitaAllaData", lu[0] === "LU" && !lu.includes("LU E CUCCARO MONFERRATO"), lu.slice(0, 5).join(",") || "nessun suggerimento");
   // Come chi usa la pagina: entra nel campo, scrive o sceglie, esce.
-  const choose = (id, value) => { el(id).dispatchEvent(new Event("focus")); el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); };
+  // Uscendo dal campo il browser manda «change» e subito dopo «blur»: tutti e due, come davvero.
+  const choose = (id, value) => { el(id).dispatchEvent(new Event("focus")); el(id).value = value; el(id).dispatchEvent(new Event("change", { bubbles: true })); el(id).dispatchEvent(new Event("blur")); };
   el("f_provincia").value = ""; el("f_cap").value = "";
   choose("f_citta", "NIZZA MONFERRATO");
   await new Promise((ok) => setTimeout(ok, 300));

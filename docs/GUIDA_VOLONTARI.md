@@ -23,7 +23,8 @@ il testo.
    nascita, data di nascita e premi **M** o **F**, il modulo propone il codice:
    controllalo sulla tessera sanitaria e premi **Usa il codice proposto**. Per
    una città da cui non è mai arrivato nessun socio non lo propone: scrivilo a
-   mano.
+   mano. La **provincia** si scrive da sola appena esci dalla città (di nascita e
+   di residenza), anche sopra quella che c'era, e di nuovo quando premi Salva.
 4. Se compare il riquadro rosso **"Questa persona forse è già in archivio"**, fermati: apri la
    scheda che c'è già invece di crearne una nuova.
 
