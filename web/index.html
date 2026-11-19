@@ -555,7 +555,7 @@
       });
       el("f_tipologia_corso").addEventListener("change", updateCourseDay);
       // Suggerimenti dei comuni: senza (rete lenta, errore) il form funziona come prima.
-      loadPlaces().catch(() => {});
+      placesReady = loadPlaces().catch(() => {});
       // Città di residenza e di nascita: l'elenco ufficiale della libreria mentre si scrive, e uscendo dal campo
       // la provincia del comune; il CAP della residenza dalle schede (fillFromPlace).
       for (const { city: input, list, province, cap, date, onlyCities, kind } of PLACE_FIELDS) {
@@ -1412,6 +1412,7 @@
   // ufficiale dei comuni (suggestPlaces) non li ha. Anche le province più usate con ogni città, di residenza e
   // di nascita: decidono quando l'elenco di oggi dà un altro comune con lo stesso nome (syncProvince).
   const PLACES = { citta: new Map(), nascita: new Map() };  // comune -> [{ province, postal_code, n }]
+  let placesReady = Promise.resolve();   // la lettura di PLACES: syncProvince() la aspetta
 
   async function loadPlaces() {
     const rows = await allRows(() => sb.from("member_places").select("kind, place, province, postal_code, n").order("kind").order("place"));
@@ -1467,7 +1468,8 @@
     const turn = provinceTurn[cityId] = (provinceTurn[cityId] || 0) + 1;
     const city = el(cityId).value.trim().toUpperCase();
     const written = el(provinceId).value.trim().toUpperCase();
-    const place = city ? await findPlace(city, written, date) : null;
+    // Le schede del club servono al punto 2: aperta la pagina, la loro lettura può essere ancora in corso.
+    const [place] = await Promise.all([city ? findPlace(city, written, date) : null, placesReady]);
     if (turn !== provinceTurn[cityId] || el(cityId).value.trim().toUpperCase() !== city) return null;
     const province = !city ? "" : place?.province && place.province === written ? written
       : mostUsedProvince(kind, city) || place?.province || "";
@@ -1492,8 +1494,11 @@
   async function fillFromPlace(input, provinceId, capId, date, kind) {
     const city = el(input).value.trim().toUpperCase();
     const changed = city !== el(input).dataset.prima;
-    el(input).dataset.prima = city;
     const province = await syncProvince(input, provinceId, date, kind);
+    // Uscendo arrivano «change» e «blur»: la ricerca superata (null) non segna la città come vista, così quella
+    // che vale sa ancora che la città è cambiata e riscrive il CAP.
+    if (province === null) return;
+    el(input).dataset.prima = city;
     if (!province || !capId || (!changed && el(capId).value.trim())) return;
     el(capId).value = mostUsedCap(city);
     el(capId).dispatchEvent(new Event("input", { bubbles: true }));
