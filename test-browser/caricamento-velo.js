@@ -52,6 +52,22 @@
       watch.disconnect();
       test("diFila", between && hides === 1 && !shown(), `fra le due ${between ? "velo" : "niente"}, chiuso ${hides} volte`);
 
+      // Con una finestra aperta (es. «Nuovo utente»): la finestra sta nello strato in cima del browser, e il velo deve
+      // starle sopra, se no la si vede bloccata senza «Caricamento…». Il velo entra anche lui nello strato in cima.
+      const dialog = Object.assign(document.createElement("dialog"), { innerHTML: '<button type="button">Crea</button>' });
+      document.body.append(dialog);
+      dialog.showModal();
+      dialog.querySelector("button").focus();
+      const inDialog = fetchWithWaiting("x?ms=1000");
+      await wait(600);
+      test("sopraLaFinestra", veil() && box().matches(":popover-open") && Boolean(dialog.closest("[inert]")),
+        `velo ${veil()}, strato in cima ${box().matches(":popover-open")}, finestra inert ${Boolean(dialog.closest("[inert]"))}`);
+      await inDialog;
+      await wait(300);
+      test("finestraLibera", !shown() && document.activeElement === dialog.querySelector("button"), document.activeElement?.outerHTML.slice(0, 60));
+      dialog.close();
+      dialog.remove();
+
       // Scrivendo nella ricerca: l'etichetta, non il velo; il campo resta usabile.
       el("searchInput").focus();
       const typing = fetchWithWaiting("x?ms=1000");
