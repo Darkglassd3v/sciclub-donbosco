@@ -18,7 +18,7 @@
       const veil = () => shown() && box().classList.contains("velo");
       const inert = () => [...document.querySelectorAll("[inert]")];
 
-      const button = document.querySelector(".barra-azioni .voce-testo");
+      const button = el("btnSalva");   // visibile a 1280 e a 500 px
       button.focus();
       const slow = fetchWithWaiting("x?ms=1200");
       await wait(150);
@@ -33,7 +33,8 @@
       el("searchInput").focus();
       test("tastieraBloccata", document.activeElement !== el("searchInput"), "il campo della ricerca prende il fuoco");
       const card = box().getBoundingClientRect();
-      test("alCentro", Math.abs(card.left + card.width / 2 - innerWidth / 2) < 2 && Math.abs(card.top + card.height / 2 - innerHeight / 2) < 2,
+      const { clientWidth: W, clientHeight: H } = document.documentElement;   // lo schermo visibile, senza la barra di scorrimento
+      test("alCentro", Math.abs(card.left + card.width / 2 - W / 2) < 2 && Math.abs(card.top + card.height / 2 - H / 2) < 2,
         `${Math.round(card.left)},${Math.round(card.top)} ${Math.round(card.width)}×${Math.round(card.height)}`);
       await slow;
       await wait(300);
