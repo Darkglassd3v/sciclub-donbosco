@@ -50,6 +50,13 @@ function showWaiting(active) {
   }
   label.classList.toggle("velo", veil);
   label.hidden = !active;
+  // Nello strato in cima del browser, come le finestre di dialogo: una finestra aperta (es. «Nuovo utente») starebbe
+  // sopra il velo, bloccata e senza «Caricamento…». Aperto dopo la finestra, il velo le sta sopra.
+  if (label.showPopover) {
+    label.popover = "manual";
+    if (active && !label.matches(":popover-open")) label.showPopover();
+    if (!active && label.matches(":popover-open")) label.hidePopover();
+  }
 }
 // Una richiesta senza risposta (rete caduta, hotspot lento) non resta appesa con «Caricamento…»: dopo
 // questo tempo si interrompe da sola e la pagina mostra l'errore di connessione (errorMessage()).

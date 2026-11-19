@@ -565,6 +565,8 @@ body:has(> .barra-voci) { padding: var(--barra-h) 0 0 var(--menu-l); }
 /* «Caricamento…» (fetchWithWaiting() in shared.js): sopra la pagina, non sposta niente e non blocca i clic. */
 #caricamento { position: fixed; z-index: 9000; top: 76px; left: 50%; transform: translateX(-50%); padding: 6px 18px; border-radius: 999px;
   background: var(--giallo); color: #084C8D; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, .3); pointer-events: none; }
+/* È un popover (strato in cima): via i margini e il bordo che il browser gli dà. */
+#caricamento { inset: auto; top: 76px; left: 50%; margin: 0; border: 0; overflow: visible; }
 /* Dal 19/11/2026 il velo (showWaiting() in shared.js): un riquadro grande al centro con il giro e «Caricamento…»;
  * l'ombra enorme scurisce tutta la pagina, che intanto è inert: niente clic né tasto Tab finché la richiesta non torna. */
 #caricamento.velo { top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 16px;
