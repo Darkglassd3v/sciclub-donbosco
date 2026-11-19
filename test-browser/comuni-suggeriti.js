@@ -1,13 +1,13 @@
 // Soci (index.html): Città di nascita e Città di residenza suggeriscono, mentre si scrive, l'elenco
 // ufficiale della libreria (searchPlaces, 6/11), il nome uguale per primo; scelto il comune, la
-// provincia si compila dall'elenco, se il campo è vuoto: uno già scritto non si cambia.
+// provincia si compila dall'elenco (dal 19/11/2026 sempre, anche sopra una scritta: provincia-dalla-citta.js).
 // - Nascita: comuni e stati esteri esistiti alla data di nascita (nel 1957 c'è LU, non Lu e Cuccaro
 //   Monferrato, nato nel 2019).
 // - Residenza: solo i comuni di oggi (LU E CUCCARO MONFERRATO, non LU). Il CAP, che l'elenco non ha,
 //   viene dalle schede (vista member_places), il più usato col comune.
 // - Scelta una voce, l'elenco non si ricarica: Chrome lo riaprirebbe e la voce andrebbe scelta due volte.
 // - Città cambiata (es. da NIZZA MONFERRATO ad ALESSANDRIA): provincia e CAP seguono il comune nuovo
-//   (CAP dalle schede, o vuoto). Stessa città scelta di nuovo: provincia e CAP scritti restano.
+//   (CAP dalle schede, o vuoto). Stessa città scelta di nuovo: il CAP scritto resta.
 FAKE.risposta = (t) => t === "member_places" ? [
   { kind: "citta", place: "NIZZA MONFERRATO", province: "AT", postal_code: "14049", n: 202 },
   { kind: "citta", place: "ASTI", province: "AT", postal_code: "14100", n: 300 },

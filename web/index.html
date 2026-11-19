@@ -556,18 +556,16 @@
       el("f_tipologia_corso").addEventListener("change", updateCourseDay);
       // Suggerimenti dei comuni: senza (rete lenta, errore) il form funziona come prima.
       loadPlaces().catch(() => {});
-      // Città di residenza e di nascita: l'elenco ufficiale della libreria mentre si scrive, e scelto il
-      // comune la sua provincia; il CAP della residenza dalle schede (fillFromPlace).
-      const today = () => new Date().toISOString().slice(0, 10);
-      const birthDate = () => el("f_data_nascita").value;
-      for (const [input, list, province, cap, date, onlyCities] of [["f_citta", "comuniResidenza", "f_provincia", "f_cap", today, true],
-        ["f_luogo_nascita", "comuniNascita", "f_provincia_nascita", null, birthDate, false]]) {
+      // Città di residenza e di nascita: l'elenco ufficiale della libreria mentre si scrive, e uscendo dal campo
+      // la provincia del comune; il CAP della residenza dalle schede (fillFromPlace).
+      for (const { city: input, list, province, cap, date, onlyCities, kind } of PLACE_FIELDS) {
         document.body.append(Object.assign(document.createElement("datalist"), { id: list }));
         el(input).setAttribute("list", list);
         el(input).addEventListener("input", () => suggestPlaces(input, list, { date: date(), provincia: el(province).value, onlyCities }));
-        // La città com'era entrando nel campo: se cambia, provincia e CAP la seguono (fillFromPlace).
+        // La città com'era entrando nel campo: se cambia, il CAP la segue (fillFromPlace).
         el(input).addEventListener("focus", () => { el(input).dataset.prima = el(input).value.trim().toUpperCase(); });
-        el(input).addEventListener("change", () => fillFromPlace(input, province, cap, date()));
+        // Anche «blur»: la città riscritta uguale non dà «change», e la provincia vuota o sbagliata restava (19/11/2026).
+        for (const type of ["change", "blur"]) el(input).addEventListener(type, () => fillFromPlace(input, province, cap, date(), kind));
       }
       el("f_acconto").addEventListener("input", recompute);
       el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
@@ -1411,8 +1409,9 @@
   // -------------------------------------------------------------------------
 
   // I CAP della Città di residenza, dai dati già nelle schede (vista member_places): l'elenco
-  // ufficiale dei comuni (suggestPlaces) non li ha.
-  const PLACES = { citta: new Map() };  // comune -> [{ province, postal_code, n }]
+  // ufficiale dei comuni (suggestPlaces) non li ha. Anche le province più usate con ogni città, di residenza e
+  // di nascita: decidono quando l'elenco di oggi dà un altro comune con lo stesso nome (syncProvince).
+  const PLACES = { citta: new Map(), nascita: new Map() };  // comune -> [{ province, postal_code, n }]
 
   async function loadPlaces() {
     const rows = await allRows(() => sb.from("member_places").select("kind, place, province, postal_code, n").order("kind").order("place"));
@@ -1437,23 +1436,67 @@
   }
 
   /**
-   * Scelta una città dell'elenco ufficiale, la sua provincia e, per la residenza, il CAP più usato con
-   * lei nelle schede (vuoto se non c'è: l'elenco non ha i CAP). Se la città è cambiata li si riscrive,
-   * perché quelli di prima erano della città vecchia; se è la stessa, si compilano solo i campi vuoti.
+   * Le città della scheda, ognuna con la sua provincia, il CAP (solo la residenza) e la data a cui cercarla:
+   * la residenza fra i comuni di oggi, la nascita fra comuni e stati esteri esistiti alla data di nascita.
    */
-  async function fillFromPlace(input, provinceId, capId, date) {
+  const PLACE_FIELDS = [
+    { city: "f_citta", list: "comuniResidenza", province: "f_provincia", cap: "f_cap", onlyCities: true, kind: "citta",
+      date: () => new Date().toISOString().slice(0, 10) },
+    { city: "f_luogo_nascita", list: "comuniNascita", province: "f_provincia_nascita", cap: null, onlyCities: false, kind: "nascita",
+      date: () => el("f_data_nascita").value },
+  ];
+
+  /** La provincia più usata con la città nelle schede del club (residenza o nascita), o "". */
+  function mostUsedProvince(kind, city) {
+    const counts = new Map();
+    for (const r of PLACES[kind]?.get(city) || []) if (r.province) counts.set(r.province, (counts.get(r.province) || 0) + r.n);
+    return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+  }
+
+  /**
+   * La provincia segue sempre la città (richiesta del 19/11/2026): vuota o già scritta, si riscrive. Nell'ordine:
+   *   1. resta quella scritta se ha un comune con quel nome (findPlace() cerca prima lì: SAMONE c'è in AO e in TN);
+   *   2. quella più usata con la città nelle schede del club: CALLIANO (AT) dal 2021 è CALLIANO MONFERRATO e oggi
+   *      «CALLIANO» nell'elenco è solo in TN, ma i soci di CALLIANO sono di Asti;
+   *   3. quella del comune dell'elenco ufficiale.
+   * Città sconosciuta o stato estero (senza provincia): la provincia resta com'è.
+   * Restituisce la provincia ("" se non si sa), o null se intanto è partita una ricerca più nuova per la stessa città.
+   */
+  const provinceTurn = {};
+  async function syncProvince(cityId, provinceId, date, kind) {
+    const turn = provinceTurn[cityId] = (provinceTurn[cityId] || 0) + 1;
+    const city = el(cityId).value.trim().toUpperCase();
+    const written = el(provinceId).value.trim().toUpperCase();
+    const place = city ? await findPlace(city, written, date) : null;
+    if (turn !== provinceTurn[cityId] || el(cityId).value.trim().toUpperCase() !== city) return null;
+    const province = !city ? "" : place?.province && place.province === written ? written
+      : mostUsedProvince(kind, city) || place?.province || "";
+    if (province && province !== written) {
+      el(provinceId).value = province;
+      // «change» anche: la provincia di nascita rifà il controllo del codice fiscale.
+      for (const type of ["input", "change"]) el(provinceId).dispatchEvent(new Event(type, { bubbles: true }));
+    }
+    return province;
+  }
+
+  /** Prima di salvare, la provincia di ogni città scritta: anche se la città è arrivata senza eventi. */
+  function settleProvinces() {
+    return Promise.all(PLACE_FIELDS.map((f) => syncProvince(f.city, f.province, f.date(), f.kind)));
+  }
+
+  /**
+   * Uscendo dalla città: la sua provincia, sempre (syncProvince), e per la residenza il CAP più usato con lei nelle
+   * schede (vuoto se non c'è: l'elenco non ha i CAP). Il CAP si riscrive solo se la città è cambiata, perché quello di
+   * prima era della città vecchia; se è la stessa, si compila solo se vuoto.
+   */
+  async function fillFromPlace(input, provinceId, capId, date, kind) {
     const city = el(input).value.trim().toUpperCase();
     const changed = city !== el(input).dataset.prima;
     el(input).dataset.prima = city;
-    const place = await findPlace(city, "", date);
-    if (!place || el(input).value.trim().toUpperCase() !== city) return;
-    const write = (id, value) => {
-      if (!changed && el(id).value.trim()) return;
-      el(id).value = value;
-      el(id).dispatchEvent(new Event("input", { bubbles: true }));
-    };
-    if (place.province) write(provinceId, place.province);
-    if (capId) write(capId, mostUsedCap(city));
+    const province = await syncProvince(input, provinceId, date, kind);
+    if (!province || !capId || (!changed && el(capId).value.trim())) return;
+    el(capId).value = mostUsedCap(city);
+    el(capId).dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   /** Il CAP più usato con la città nelle schede, o "". */
@@ -1766,6 +1809,8 @@
    */
   async function save() {
     const form = el("memberForm");
+    // La provincia dalla città prima di ogni controllo: si salva quella giusta anche se dalla città non si è usciti.
+    await settleProvinces();
     if (el("pagaFamiliare").checked && selectedName("f_agevolazioni_famiglia")) {
       markError(el("f_agevolazioni_famiglia"), "L'agevolazione famiglia si assegna al capofamiglia: i familiari a carico ne sono già coperti.");
       return;

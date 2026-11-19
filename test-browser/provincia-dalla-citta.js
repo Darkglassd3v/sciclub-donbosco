@@ -1,18 +1,25 @@
 // Soci (index.html): la provincia segue sempre la città, di nascita e di residenza (richiesta del 19/11/2026:
 // «se inserisco la città, che la provincia sia vuota o scritta, deve essere sempre popolata e sovrascritta»).
 // - Città riscritta uguale (nessun «change» del browser) con la provincia vuota o sbagliata: la provincia si
-//   riempie mentre si scrive.
+//   riempie uscendo dal campo. Non mentre si scrive: a metà parola un altro comune (CASTELNUOVO è in TN)
+//   riscriverebbe la provincia giusta.
 // - Stessa città confermata uscendo dal campo: una provincia sbagliata si sovrascrive (prima restava).
 // - Al Salva la provincia si ricava dalla città prima di scrivere: una città arrivata senza eventi (riempimento
 //   automatico, campo mai lasciato) non salva più una provincia vuota o sbagliata.
-// - Restano: la provincia scritta se ha un comune con quel nome (SAMONE c'è in TO e in TN), quella di una città
+// - Restano: la provincia scritta se ha un comune con quel nome (SAMONE c'è in AO e in TN), quella di una città
 //   che non è nell'elenco (scritta male) e il vuoto degli stati esteri.
+// - Un nome che nell'elenco di oggi è di un'altra provincia decide con le schede del club: CALLIANO (AT) dal 2021
+//   si chiama CALLIANO MONFERRATO e «CALLIANO» oggi è solo in TN, ma i 42 soci di CALLIANO sono di Asti.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const PRICE_LIST = [{ category: "TESSERA", name: "TESSERA ORDINARIA - REALE MUTUA NEVE", price: 40, min_role: "utente" }];
   const inserted = [];
   FAKE.risposta = (t, r) => {
     if (t === "prices") return PRICE_LIST;
+    if (t === "member_places") return [
+      { kind: "citta", place: "CALLIANO", province: null, postal_code: "14031", n: 41 },
+      { kind: "citta", place: "CALLIANO", province: "AT", postal_code: "14031", n: 1 },
+    ];
     if (t === "members" && r.filtri.some((f) => f[0] === "insert")) {
       inserted.push(r.filtri.find((f) => f[0] === "insert")[1]);
       return { id: "NUOVO", updated_at: "2" };
@@ -20,10 +27,11 @@
     return [];
   };
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
-  const typeSame = async (id, value) => {   // entra, cancella e riscrive lo stesso valore: «input» sì, «change» no
+  const typeSame = async (id, value) => {   // entra, riscrive (anche lo stesso valore) ed esce: «blur» sì, «change» no
     el(id).dispatchEvent(new Event("focus"));
     el(id).value = value;
     el(id).dispatchEvent(new Event("input", { bubbles: true }));
+    el(id).dispatchEvent(new Event("blur"));
     await wait(400);
   };
   const leave = async (id) => { el(id).dispatchEvent(new Event("change", { bubbles: true })); await wait(400); };
@@ -49,12 +57,18 @@
       await typeSame("f_luogo_nascita", "CANELLI");
       test("nascitaSovrascrive", el("f_provincia_nascita").value === "AT", `«${el("f_provincia_nascita").value}»`);
 
-      el("f_provincia").value = "TO";
+      el("f_provincia").value = "TN";
       await typeSame("f_citta", "SAMONE");
-      test("omonimoResta", el("f_provincia").value === "TO", `«${el("f_provincia").value}»`);
+      test("omonimoResta", el("f_provincia").value === "TN", `«${el("f_provincia").value}»`);
       el("f_provincia").value = "AT";
       await typeSame("f_citta", "SAMONE");
-      test("omonimoCambia", ["TO", "TN"].includes(el("f_provincia").value), `«${el("f_provincia").value}»`);
+      test("omonimoCambia", ["AO", "TN"].includes(el("f_provincia").value), `«${el("f_provincia").value}»`);
+      el("f_provincia").value = "";
+      await typeSame("f_citta", "CALLIANO");
+      test("schedeDelClub", el("f_provincia").value === "AT", `«${el("f_provincia").value}»`);
+      el("f_provincia").value = "TO";
+      await typeSame("f_citta", "CALLIANO");
+      test("schedeSovrascrivono", el("f_provincia").value === "AT", `«${el("f_provincia").value}»`);
       el("f_provincia").value = "AT";
       await typeSame("f_citta", "CITTANONESISTE");
       await leave("f_citta");
