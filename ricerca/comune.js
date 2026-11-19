@@ -168,8 +168,13 @@ async function fetchRetryingFutureToken(input, init) {
 }
 
 // Come in web/shared.js. Regola del sito (3/11/2026): ogni richiesta al database che dura più di 400 ms mostra la scritta
-// «Caricamento…»; più breve non si vede, per non far lampeggiare la pagina.
-let pendingRequests = 0, waitingTimer = null;
+// «Caricamento…»; più breve non si vede, per non far lampeggiare la pagina. Dal 19/11/2026 (richiesta: «quando carica
+// il sito non si capisce») è un velo su tutta la pagina, con la scritta al centro, che blocca clic e tasto Tab (inert)
+// finché la richiesta non torna; poi il fuoco torna dov'era. Mentre si scrive in un campo (le ricerche mentre si digita)
+// resta l'etichetta in alto, che non blocca: il velo coprirebbe il campo a ogni lettera.
+let pendingRequests = 0, waitingTimer = null, hidingTimer = null, focusBeforeVeil = null;
+const isTyping = () => Boolean(document.activeElement?.matches?.("textarea, [contenteditable], "
+  + "input:not([type=button]):not([type=submit]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range])"));
 function showWaiting(active) {
   let label = document.getElementById("caricamento");
   if (!label && !active) return;
@@ -180,15 +185,33 @@ function showWaiting(active) {
     label.textContent = "Caricamento…";
     document.body.append(label);
   }
+  const wasVeil = label.classList.contains("velo");
+  const veil = active && (wasVeil || !isTyping());
+  if (veil && !wasVeil) {
+    focusBeforeVeil = document.activeElement;
+    for (const x of document.body.children) if (x !== label) x.inert = true;
+  } else if (!veil && wasVeil) {
+    for (const x of document.body.children) x.inert = false;
+    if (focusBeforeVeil?.isConnected && focusBeforeVeil !== document.body) focusBeforeVeil.focus({ preventScroll: true });
+    focusBeforeVeil = null;
+  }
+  label.classList.toggle("velo", veil);
   label.hidden = !active;
 }
 async function fetchWithWaiting(input, init) {
   pendingRequests++;
+  clearTimeout(hidingTimer);
+  hidingTimer = null;
   waitingTimer ??= setTimeout(() => showWaiting(true), 400);
   try {
     return await fetchRetryingFutureToken(input, init);
   } finally {
-    if (--pendingRequests === 0) { clearTimeout(waitingTimer); waitingTimer = null; showWaiting(false); }
+    if (--pendingRequests === 0) {
+      clearTimeout(waitingTimer);
+      waitingTimer = null;
+      // Un attimo prima di togliere la scritta: fra due richieste di fila il velo resta, non sparisce e ricompare.
+      hidingTimer = setTimeout(() => { hidingTimer = null; if (!pendingRequests) showWaiting(false); }, 150);
+    }
   }
 }
 
