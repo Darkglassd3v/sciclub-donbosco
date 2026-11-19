@@ -75,6 +75,13 @@ vedere (telefono, email, data di nascita...) e il loro ordine, coi pulsanti **Su
 sempre il socio. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
+## Fogli per le gite e i corsi
+
+Nella pagina **Stampe** c'è un pulsante per giorno (sabato, domenica, martedì) e sotto ognuno quanti soci ci
+saranno in ogni file: corsisti, abbonamenti e jolly. Ogni file comincia con il foglio **Tutti**, con tutti i soci
+e la loro partenza; chi non l'ha indicata c'è lo stesso, con la partenza vuota. Dopo ci sono i fogli per
+partenza, uno per pullman (le linguette in basso nell'Excel).
+
 ## Quanti soci sono assicurati
 
 Chi ha la pagina **Assicurazione** trova in alto quattro numeri: i **soci tesserati** della stagione, quanti sono
