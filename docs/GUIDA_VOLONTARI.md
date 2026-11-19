@@ -12,6 +12,12 @@ il testo.
 3. Controlla telefono, indirizzo e **codice fiscale**.
 4. Vai al punto **Tessera, gite e corsi** qui sotto.
 
+## Quando il sito carica
+
+Mentre il sito legge o salva i dati compare al centro il riquadro **Caricamento…** e la pagina si scurisce: aspetta
+che sparisca, intanto non si può cliccare niente. Mentre scrivi in una ricerca c'è solo una piccola scritta gialla in
+alto, così puoi continuare a scrivere.
+
 ## Il socio è nuovo
 
 1. Pagina **Soci**: prima **cercalo** comunque (potrebbe esserci già).

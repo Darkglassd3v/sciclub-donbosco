@@ -205,7 +205,10 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   scritta nell'HTML, mai vuoto o con «Nessun…» prima che i dati arrivino; un avviso d'errore rosso (`showToast`) cambia
   quelle ancora in attesa in «Elenco non disponibile». In più ogni richiesta al database che dura oltre 400 ms mostra l'etichetta `#caricamento`
   (`fetchWithWaiting()` in `shared.js` e `ricerca/comune.js`). `web/test-pagine.js` controlla gli elenchi: una pagina
-  nuova va aggiunta lì.
+  nuova va aggiunta lì. Dalla 3.11.0 (19/11/2026) `#caricamento` è un velo (classe `velo`): riquadro al centro col giro,
+  pagina scurita e `inert` (niente clic né Tab), fuoco rimesso dov'era alla fine, tolto 150 ms dopo l'ultima richiesta
+  così fra due di fila non lampeggia. Mentre si scrive in un campo (`isTyping()`: le ricerche mentre si digita) resta
+  l'etichetta in alto, che non blocca. Prova: `test-browser/caricamento-velo.js`.
 - Social, tipi di post (2/11/2026): Gita, Evento (i corsi, le cene, le gare e i servizi di prima: la
   stessa grafica, un tipo solo) e Weekend e settimane bianche (`kind = 'weekend'`, dal giorno `event_date`
   all'ultimo `end_date`, senza prezzi: solo luogo, dettagli essenziali e scadenza). Eventi e weekend hanno
