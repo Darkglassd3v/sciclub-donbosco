@@ -117,11 +117,6 @@ function previewParts(keyName, members, passList) {
   return daySheets(keyName, members, passList).map((f) => `${f.titolo}: ${sheetPeople(f)}`);
 }
 
-/** La stessa anteprima in una riga: «Corsisti: 5 · Abbonamenti 5 gite: 6 · Jolly: 4». */
-function previewText(keyName, members, passList) {
-  return previewParts(keyName, members, passList).join(" · ");
-}
-
 /**
  * I fogli di un pulsante, in ordine: [{ titolo, nota, gite, gruppi }]. `gite`:
  * i giorni degli abbonamenti di cui contare le gite fatte (giteFatte), solo nei
