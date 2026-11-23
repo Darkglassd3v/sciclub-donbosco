@@ -303,8 +303,8 @@
            il prezzo, serve solo a contarli nel Riepilogo e a vederli nell'Elenco soci. -->
       <div class="field">
         <label class="label" for="f_club">Sci club di provenienza</label>
-        <div class="select"><select id="f_club"><option value="">Nessuno</option></select></div>
-        <p class="help">Solo per chi arriva da uno sci club affiliato al nostro.</p>
+        <div class="select"><select id="f_club" aria-describedby="aiutoClub"><option value="">Nessuno</option></select></div>
+        <p class="help" id="aiutoClub">Solo per chi arriva da uno sci club affiliato al nostro.</p>
       </div>
     </div>
     </section>
@@ -1559,7 +1559,7 @@
     const oldOne = () => turn !== cardTurn;
     setLoading(true);
     try {
-      const { data: member, error } = await sb.from("members").select("*").eq("id", id).single();
+      const { data: member, error } = await sb.from("members").select("*, club:affiliated_clubs(name)").eq("id", id).single();
       if (oldOne()) return;
       if (error) throw error;
 
@@ -1569,6 +1569,12 @@
       Object.entries(TEXT_FIELDS).forEach(([field, column]) => {
         el("f_" + field).value = member[column] ?? "";
       });
+      // Un club aggiunto in Impostazioni dopo l'apertura della pagina non è nel menu: senza la sua voce il menu
+      // resterebbe su «Nessuno» e il salvataggio toglierebbe il club al socio.
+      if (member.club_id != null && el("f_club").value !== String(member.club_id)) {
+        el("f_club").insertAdjacentHTML("beforeend", `<option value="${member.club_id}">${esc(member.club?.name || "")}</option>`);
+        el("f_club").value = String(member.club_id);
+      }
 
       Object.keys(CATEGORY_SELECT).forEach((idSelect) =>
         selectByName(idSelect, member[DB_SELECT_FIELDS[idSelect]]));
