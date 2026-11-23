@@ -152,6 +152,17 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   (SAMONE in AO e in TN); poi la più usata con la città nelle schede (`member_places`), perché CALLIANO (AT) dal
   2021 è CALLIANO MONFERRATO e nell'elenco di oggi «CALLIANO» è solo in TN; poi l'elenco ufficiale. Città
   sconosciuta o stato estero: invariata. Il CAP cambia solo se cambia la città. Prova: `provincia-dalla-citta.js`.
+- Sci club affiliati (dalla 3.12.0, 23/11/2026): club che si sono uniti al nostro (Sci Club Moncalvo); i loro soci
+  li tesseriamo e li incassiamo noi, il bilancio non cambia. Tabella `affiliated_clubs` (letta come `insurances`,
+  scritta solo da `gestione`, riquadro in Impostazioni) e `members.club_id` con `on delete restrict` (un club con
+  soci non si elimina, 23503); la chiusura della stagione non lo azzera e archivia i soci per club in
+  `season_breakdown` (categoria `CLUB`). In Soci il menu `#f_club` nella sezione Tessera (`loadMember()` aggiunge la
+  voce di un club nato dopo l'apertura della pagina, se no il salvataggio lo toglierebbe). Il Riepilogo legge la
+  vista `club_counts` (stesse regole e nomi di `card_counts`, `preski_counts`, `pass_counts`, `course_counts`: se
+  cambia una, cambia anche lei) per il riquadro «Sci club affiliati» e i «di cui …» delle tabelle; nelle stagioni
+  chiuse solo i conteggi. Elenco soci: colonna `club` fra quelle di partenza e nell'Excel dopo il codice fiscale.
+  Prove: `sci-club.js`, `impostazioni-sciclub.js`, `riepilogo-sciclub.js`, `elenco-soci.js`, `elenco-excel.js`,
+  `supabase/test_ruoli.sh`.
 - Elenco soci (`web/elenco.html`, dalla 3.7.0; dalla 3.8.0 permesso suo `elenco`, voce nel menu dopo Soci,
   nello stile dei Pagamenti): i tesserati della stagione (`card_holder()`) in ordine di tessera come numero, i
   numeri liberi fino al più alto. I nuclei (`payer_id`, come nei Pagamenti) restano uniti al posto della tessera

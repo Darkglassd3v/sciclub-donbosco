@@ -299,6 +299,13 @@
       <p id="notaPresciistica" class="help" hidden>La tessera è compresa nella presciistica e non va selezionata, anche senza assicurazione.</p>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
       <p id="notaFamiglia" class="help" hidden></p>
+      <!-- Dalla 3.12: lo sci club affiliato da cui arriva il socio (Impostazioni). Tesseriamo e incassiamo noi: non cambia
+           il prezzo, serve solo a contarli nel Riepilogo e a vederli nell'Elenco soci. -->
+      <div class="field">
+        <label class="label" for="f_club">Sci club di provenienza</label>
+        <div class="select"><select id="f_club" aria-describedby="aiutoClub"><option value="">Nessuno</option></select></div>
+        <p class="help" id="aiutoClub">Solo per chi arriva da uno sci club affiliato al nostro.</p>
+      </div>
     </div>
     </section>
 
@@ -537,6 +544,9 @@
       drawPasses();
 
       const departures = await loadDepartures();
+      const { data: clubs, error: clubsError } = await sb.from("affiliated_clubs").select("id, name").order("name");
+      if (clubsError) throw clubsError;
+      el("f_club").insertAdjacentHTML("beforeend", clubs.map((c) => `<option value="${c.id}">${esc(c.name)}</option>`).join(""));
       fillDepartures("check_sabato", departures.SABATO);
       fillDepartures("check_domenica", departures.DOMENICA);
 
@@ -1518,7 +1528,7 @@
     provincia_nascita: "birth_province", codice_fiscale: "tax_code", data_nascita: "birth_date",
     indirizzo: "address", citta: "city", provincia: "province", cap: "postal_code",
     telefono: "phone", email: "email",
-    numero_tessera: "card_number", acconto: "paid",
+    numero_tessera: "card_number", acconto: "paid", club: "club_id",
   };
 
   const DB_SELECT_FIELDS = {
@@ -1549,7 +1559,7 @@
     const oldOne = () => turn !== cardTurn;
     setLoading(true);
     try {
-      const { data: member, error } = await sb.from("members").select("*").eq("id", id).single();
+      const { data: member, error } = await sb.from("members").select("*, club:affiliated_clubs(name)").eq("id", id).single();
       if (oldOne()) return;
       if (error) throw error;
 
@@ -1559,6 +1569,12 @@
       Object.entries(TEXT_FIELDS).forEach(([field, column]) => {
         el("f_" + field).value = member[column] ?? "";
       });
+      // Un club aggiunto in Impostazioni dopo l'apertura della pagina non è nel menu: senza la sua voce il menu
+      // resterebbe su «Nessuno» e il salvataggio toglierebbe il club al socio.
+      if (member.club_id != null && el("f_club").value !== String(member.club_id)) {
+        el("f_club").insertAdjacentHTML("beforeend", `<option value="${member.club_id}">${esc(member.club?.name || "")}</option>`);
+        el("f_club").value = String(member.club_id);
+      }
 
       Object.keys(CATEGORY_SELECT).forEach((idSelect) =>
         selectByName(idSelect, member[DB_SELECT_FIELDS[idSelect]]));
@@ -1881,6 +1897,8 @@
       // Lo ha ogni iscritto, anche chi è coperto da presciistica o agevolazione: vuoto, si legge
       // «non scritto» in rosso.
       ["Numero tessera", el("f_numero_tessera").value.trim()],
+      // Solo se scelto (dalla 3.12): vuoto è un socio nostro, non un dato mancante.
+      ...(el("f_club").value ? [["Sci club di provenienza", el("f_club").selectedOptions[0].textContent]] : []),
     ];
   }
 
@@ -1934,6 +1952,7 @@
       total_manual: manualTotal(),
       paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
+      club_id: el("f_club").value ? Number(el("f_club").value) : null,
     };
 
     try {
@@ -2124,7 +2143,8 @@
       ["Residenza e contatti", [["Residenza", residence], ["Telefono", el("f_telefono").value.trim()],
         ["Email", el("f_email").value.trim()]]],
       ["Tessera", [["Numero tessera", cardNumber()], ["Tessera", selectedName("f_tipologia_tessera")],
-        ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")]]],
+        ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")],
+        ["Sci club di provenienza", el("f_club").value && el("f_club").selectedOptions[0].textContent]]],
       ["Gite e corsi", [["Abbonamenti", passList], ["Presciistica", selectedName("f_presciistica")],
         ["Assicurazione della presciistica", preskiWithCard() && (PRICES.ASSICURAZIONE.find((a) => a.code === selectedName("f_assicurazione_presciistica"))?.name || "Nessuna")],
         ["Partenza della domenica", selectedDepartures("check_domenica")],

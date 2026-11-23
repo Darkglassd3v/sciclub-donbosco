@@ -215,6 +215,26 @@
       </div>
       </div>
     </section>
+
+    <section class="riquadro sezione anagrafica">
+      <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 13c-3.3 0-6 1.8-6 4v2h12v-2c0-2.2-2.7-4-6-4Zm8 0c-.6 0-1.2.1-1.8.2 1.1.9 1.8 2.1 1.8 3.8v2h6v-2c0-2.2-2.7-4-6-4Z"/></svg>Sci club affiliati <span class="cosa">Club da cui arrivano i soci</span></h2>
+      <div class="corpo">
+      <p class="occhiello">Sci club che si sono uniti al nostro: i loro soci li tesseriamo noi e l'incasso è nostro, quindi
+        il bilancio non cambia. Nella scheda del socio si sceglie da quale club arriva («Sci club di provenienza»), e il
+        Riepilogo e l'Elenco soci li contano. Rinominando un club il nome cambia per tutti i suoi soci; un club che ha
+        ancora soci non si può eliminare.</p>
+      <div class="tabella-scorrevole">
+        <table class="tabella-costi">
+          <thead><tr><th>Nome</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
+          <tbody id="tabellaClub"><tr><td colspan="2" class="vuota">Caricamento…</td></tr></tbody>
+          <tfoot><tr class="riga-nuova">
+            <td data-etichetta="Nome del club nuovo"><textarea class="textarea campo-nome" id="nuovoClubNome" rows="1" placeholder="Nome" aria-label="Nome dello sci club nuovo"></textarea></td>
+            <td><button type="button" class="button is-link" id="btnAggiungiClub">+ Aggiungi</button></td>
+          </tr></tfoot>
+        </table>
+      </div>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -229,10 +249,11 @@
     el("btnAggiungiPrezzo").addEventListener("click", addPrice);
     el("btnAggiungiPartenza").addEventListener("click", addDeparture);
     el("btnAggiungiAss").addEventListener("click", addInsurance);
+    el("btnAggiungiClub").addEventListener("click", addClub);
     el("btnSalvaTessereDa").addEventListener("click", saveCardsFrom);
     // Il listino usa i nomi e i prezzi delle assicurazioni: prima loro.
     await loadInsurances();
-    await Promise.all([loadAllPrices(), loadAllDepartures(), loadCardsFrom()]);
+    await Promise.all([loadAllPrices(), loadAllDepartures(), loadCardsFrom(), loadClubs()]);
   })();
 
   // ---------------------------------------------------------------------
@@ -730,6 +751,104 @@
       await loadAllDepartures();
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Sci club affiliati (dalla 3.12)
+  //
+  // I soci li scelgono per id (members.club_id): rinominare un club cambia il
+  // nome per tutti, eliminarlo si può solo se nessun socio lo ha (23503).
+  // I nomi in maiuscolo, come i dati dei soci.
+  // ---------------------------------------------------------------------
+
+  const NO_CLUB_ROW = '<tr><td colspan="2" class="vuota">Nessuno sci club affiliato.</td></tr>';
+  const clubName = (field) => cleanName(field).toUpperCase();
+
+  function clubRow(c) {
+    return `
+      <tr data-id="${c.id}">
+        <td data-etichetta="Nome">${nameField(c.name, "data-nome", "Nome dello sci club")}</td>
+        <td><div class="buttons">
+          <button type="button" class="button" data-salva>Salva</button>
+          <button type="button" class="button is-danger is-outlined" data-togli>Elimina</button>
+        </div></td>
+      </tr>`;
+  }
+
+  function enableClubRow(row) {
+    row.querySelector("[data-salva]").addEventListener("click", () => saveClub(row));
+    row.querySelector("[data-togli]").addEventListener("click", () => askRemoveClub(row));
+    watchRow(row);
+  }
+
+  async function loadClubs() {
+    try {
+      const { data, error } = await sb.from("affiliated_clubs").select("id, name").order("name");
+      if (error) throw error;
+      el("tabellaClub").innerHTML = data.length ? data.map(clubRow).join("") : NO_CLUB_ROW;
+      el("tabellaClub").querySelectorAll("tr[data-id]").forEach(enableClubRow);
+      fitAll();
+    } catch (error) {
+      showToast("Errore di caricamento degli sci club: " + errorMessage(error), "is-danger");
+    }
+  }
+
+  async function saveClub(row) {
+    const name = clubName(row.querySelector("[data-nome]"));
+    if (!name) { markError(row.querySelector("[data-nome]"), "Inserire il nome dello sci club."); return; }
+    const button = row.querySelector("[data-salva]");
+    button.disabled = true;
+    try {
+      checkSaved(await sb.from("affiliated_clubs").update({ name }).eq("id", row.dataset.id).select("id"));
+      row.querySelector("[data-nome]").value = name;
+      markSaved(row);
+      showToast("Sci club aggiornato.");
+    } catch (error) {
+      showToast("Errore: " + (error.code === "23505" ? "esiste già uno sci club con questo nome." : errorMessage(error)), "is-danger");
+    } finally {
+      button.disabled = false;
+    }
+  }
+
+  // Eliminare: due finestre, una dopo l'altra, come per le assicurazioni.
+  function askRemoveClub(row) {
+    const name = row.querySelector("[data-nome]").value;
+    const where = row.querySelector(".buttons");
+    ask(where, `Eliminare lo sci club ${name}?`, "Prosegui", () =>
+      ask(where, `Confermare l'eliminazione? ${name} verrà tolto dagli sci club affiliati e non potrà essere ripristinato da questa pagina.`,
+        `Elimina ${name}`, () => removeClub(row)));
+  }
+
+  async function removeClub(row) {
+    try {
+      checkSaved(await sb.from("affiliated_clubs").delete().eq("id", row.dataset.id).select("id"));
+      row.remove();
+      if (!el("tabellaClub").querySelector("tr")) el("tabellaClub").innerHTML = NO_CLUB_ROW;
+      showToast("Sci club eliminato.");
+    } catch (error) {
+      showToast("Eliminazione non riuscita: " + (error.code === "23503"
+        ? "lo sci club ha ancora soci. Togliere prima il club dalle loro schede, oppure rinominarlo."
+        : errorMessage(error)), "is-danger");
+    }
+  }
+
+  async function addClub() {
+    if (rowToSave("tabellaClub")) return;
+    const name = clubName(el("nuovoClubNome"));
+    if (!name) { markError(el("nuovoClubNome"), "Inserire il nome dello sci club."); return; }
+    const button = el("btnAggiungiClub");
+    button.disabled = true;
+    try {
+      const { error } = await sb.from("affiliated_clubs").insert({ name });
+      if (error) throw error;
+      el("nuovoClubNome").value = "";
+      showToast("Sci club aggiunto: ora si può scegliere nella scheda del socio.");
+      await loadClubs();
+    } catch (error) {
+      showToast("Errore: " + (error.code === "23505" ? "esiste già uno sci club con questo nome." : errorMessage(error)), "is-danger");
     } finally {
       button.disabled = false;
     }

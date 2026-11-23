@@ -209,11 +209,13 @@
   const fullName = (s) => (s ? `${s.last_name || ""} ${s.first_name || ""}`.trim() : "");
 
   /* Le colonne dopo quella del socio (nome e tessera, sempre la prima): [chiave, intestazione, valore].
-   * Le prime tre sono quelle di partenza. */
+   * Quelle di partenza sono in DEFAULT_COLUMNS. */
   const LIST_COLUMNS = [
     ["tipo", "Tipo tessera", (s) => s.card_type],
     ["abbonamento", "Abbonamento", (s) => s.passes.join(" + ")],
     ["corso", "Corso", courseOf],
+    // Dalla 3.12: lo sci club affiliato da cui arriva il socio, vuoto per i nostri.
+    ["club", "Sci club", (s) => s.club?.name],
     ["presciistica", "Presciistica", (s) => s.preski_label],
     ["nascita", "Data di nascita", (s) => dataIt(s.birth_date)],
     ["luogo", "Luogo di nascita", (s) => s.birth_place],
@@ -224,7 +226,7 @@
     ["citta", "Città", (s) => s.city],
     ["cap", "CAP", (s) => s.postal_code],
   ];
-  const DEFAULT_COLUMNS = ["tipo", "abbonamento", "corso"];
+  const DEFAULT_COLUMNS = ["tipo", "abbonamento", "corso", "club"];
   const columnLabel = (key) => LIST_COLUMNS.find(([k]) => k === key)[1];
 
   /* Colonne dell'Excel dei soci, a gruppi ognuno col suo colore (richieste del 29/10, spostato dal Riepilogo).
@@ -239,7 +241,8 @@
       ["Data di nascita", (s) => dataIt(s.birth_date)],
       ["Luogo di nascita", (s) => s.birth_place],
       ["Provincia di nascita", (s) => s.birth_province],
-      ["Codice fiscale", (s) => s.tax_code]]],
+      ["Codice fiscale", (s) => s.tax_code],
+      ["Sci club di provenienza", (s) => s.club?.name]]],
     ["CORSI E ABBONAMENTI", "8A5300", [
       ["Corso", courseOf],
       ["Abbonamento", (s) => s.passes.join(" + ")],
@@ -311,7 +314,8 @@
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, name_key, payer_id, "
-            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label, member_insurance")
+            + "phone, email, address, city, province, postal_code, card_type, card_number, course_type, course_day, preski_label, member_insurance, "
+            + "club:affiliated_clubs(name)")
           .not("enrolled_at", "is", null)
           .is("card_holder", true)
           .order("id")),

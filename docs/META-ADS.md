@@ -195,6 +195,36 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   costo per persona molto più alto. La copertura resta la scelta giusta per far sapere della serata a
   più persone possibile; la crescita dei follower va fatta con una campagna a parte.
 
+## Consigli applicati alla campagna dell'invito (20/11/2026, controllo del 23/11)
+
+Il 20/11 alle 19:42 sono stati applicati i consigli di Meta: nel gruppo Facebook posizionamenti Advantage+ e
+pubblico Advantage+, nel gruppo Instagram pubblico Advantage+ (posizionamenti rimasti manuali). Il punteggio
+opportunità è salito a 96. Confronto fra 14–19/11 (prima) e 21–22/11 (dopo):
+
+- **Costo:** il costo giornaliero per 1000 persone raggiunte non è sceso, anzi è salito: Facebook da circa
+  0,50 € a 0,58 €, Instagram da circa 0,53 € a 0,60 €. Anche rispetto al fine settimana precedente (14–15/11)
+  è più alto del 10–13%, e il gruppo Instagram, a cui i posizionamenti non sono stati cambiati, è salito
+  quanto quello Facebook: il risparmio promesso dai consigli non si vede.
+- **Posizionamenti del gruppo Facebook:** prima il 100% della spesa andava nel Feed di Facebook. Dopo, su
+  7,90 €: Facebook Reels 3,65 € (46%), Marketplace 1,57 € (20%), Feed 2,13 € (27%), Instagram 0,47 € (6%),
+  storie e ricerca 0,08 €.
+  Il Feed è risultato il posizionamento più economico (0,54 € ogni 1000 persone), Marketplace il più caro
+  (0,90 €). Un invito con una foto statica su Reels e Marketplace viene scorso senza essere letto: due terzi
+  della spesa sono finiti dove l'attenzione è più bassa, senza nessun risparmio.
+- **Età:** nel gruppo Facebook (35–65+) il 14% delle persone raggiunte ha 18–34 anni; nel gruppo Instagram
+  (18–50) il 23% ha 55 anni o più (prima 0%), e i 18–34 sono scesi dal 72% al 55%. I due gruppi ora si
+  sovrappongono sulle stesse persone.
+- Conclusione: per le campagne di copertura del club i posizionamenti Advantage+ si tolgono sempre (Feed e
+  storie scelti a mano); il pubblico Advantage+ va spento se la fascia d'età conta. Cambiare a pochi giorni
+  dalla fine riavvia l'apprendimento: le impostazioni si decidono prima di pubblicare.
+- Ripristino (23/11): togliendo una spunta fra i posizionamenti l'etichetta torna «Advantage+ non attivo»,
+  ma il gruppo «Feed» resta intero: va aperto con la freccia e vanno tolti a mano Feed di Instagram, profilo
+  Instagram, Marketplace, Esplora e Threads. Con l'obiettivo Notorietà «Notifiche di Facebook» non è
+  disponibile. Per il pubblico, nel pannello «Età» del pubblico Advantage+ non c'è la spunta «Usa come
+  suggerimento»: si passa da «Limita ulteriormente il tuo pubblico» › «Raggiungi un pubblico limitato» ›
+  «Continua». A quel punto l'età riparte da 18–65+ e va rimessa; per un attimo i luoghi mostrano «Tutti i
+  luoghi» e poi tornano a Asti (+45 km): si ricontrollano prima di pubblicare.
+
 ## Obiettivo e budget
 
 - Per far crescere like e commenti sulla pagina: obiettivo **Interazioni**, luogo della
