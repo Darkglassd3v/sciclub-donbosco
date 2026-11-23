@@ -205,7 +205,8 @@
       + [...el("contenuto").querySelectorAll("select")].filter((s) => !s.parentElement.classList.contains("select")).length;
     test("campiDelSito", bare === 0, `${bare} campi senza lo stile del sito`);
     const stripes = el("contenuto").querySelectorAll("section.riquadro.sezione > h2.striscia").length;
-    test("riquadriAStriscia", stripes === 3, `${stripes} riquadri a striscia`);
+    // Listino, Assicurazioni, Partenze e, dalla 3.12, Sci club affiliati.
+    test("riquadriAStriscia", stripes === 4, `${stripes} riquadri a striscia`);
     // Né la pagina né le tabelle scorrono di lato: le colonne nascoste non si vedrebbero.
     const wideOnes = [document.documentElement, ...document.querySelectorAll("#contenuto .tabella-scorrevole")]
       .filter((c) => c.scrollWidth > c.clientWidth + 1).length;

@@ -1153,6 +1153,30 @@ create policy insurances_select on public.insurances
 create policy insurances_write on public.insurances
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
+-- Sci club affiliati (dalla 3.12, 23/11/2026): club che si sono uniti al nostro, come lo Sci Club Moncalvo. I loro
+-- soci li tesseriamo noi e l'incasso è nostro, quindi il bilancio non cambia: il club serve solo a sapere da dove
+-- arriva il socio (members.club_id), nel Riepilogo e nell'Elenco soci. L'elenco si scrive in Impostazioni.
+create table if not exists public.affiliated_clubs (
+  id    bigint generated always as identity primary key,
+  name  text not null unique check (btrim(name) <> '')
+);
+
+comment on table public.affiliated_clubs is 'Sci club affiliati da cui può arrivare un socio (Sci club di provenienza della scheda).';
+
+alter table public.affiliated_clubs enable row level security;
+drop policy if exists affiliated_clubs_select on public.affiliated_clubs;
+drop policy if exists affiliated_clubs_write  on public.affiliated_clubs;
+create policy affiliated_clubs_select on public.affiliated_clubs
+  for select to authenticated using ((select public.can('soci', 'elenco', 'pagamenti', 'riepilogo', 'cerca', 'gite', 'stampe', 'polizze')));
+create policy affiliated_clubs_write on public.affiliated_clubs
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+
+-- Un club che ha ancora soci non si elimina (restrict): prima si tolgono dai soci, o si rinomina.
+-- La chiusura della stagione non lo azzera: chi arriva da un club ci resta anche l'anno dopo.
+alter table public.members add column if not exists club_id bigint references public.affiliated_clubs (id) on delete restrict;
+create index if not exists members_club_id_idx on public.members (club_id) where club_id is not null;
+comment on column public.members.club_id is 'Sci club affiliato da cui arriva il socio; vuoto per i soci del Don Bosco.';
+
 -- Il tipo di assicurazione di ogni tessera; vuoto = la tessera non assicura
 -- (SOLO TESSERA, SCONTATA - NO ASSICURAZIONE). La scontata dei nati prima del
 -- 1947 ha la Base, il direttivo la Global Sport, la più completa.
@@ -2323,7 +2347,7 @@ comment on function public.current_season is 'Inizio della stagione aperta: quel
 -- la stessa lettura del Riepilogo ma di un anno archiviato.
 create table if not exists public.season_breakdown (
   season  timestamptz not null,
-  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE')),
+  category text not null check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE', 'CLUB')),
   label   text not null,
   -- Valorizzato solo per le partenze (SABATO/DOMENICA), stringa vuota altrove:
   -- fa parte della chiave, quindi non può essere NULL.
@@ -2337,9 +2361,10 @@ create table if not exists public.season_breakdown (
 
 -- COURSE_INCOME: una riga sola, l'incasso dei corsi (iscritti x listino), che
 -- il Riepilogo di una stagione chiusa mostra come riquadro e non come corso.
+-- CLUB (dalla 3.12): quanti soci arrivavano da ogni sci club affiliato, label = nome del club.
 alter table public.season_breakdown drop constraint if exists season_breakdown_category_check;
 alter table public.season_breakdown add constraint season_breakdown_category_check
-  check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE'));
+  check (category in ('CARD', 'PASS', 'COURSE', 'COURSE_INCOME', 'PRESKI', 'DEPARTURE', 'CLUB'));
 
 comment on table public.season_breakdown is 'Conteggi per tipologia (tessere/abbonamenti/corsi/partenze) di una stagione chiusa. Scrive solo close_season().';
 
@@ -2611,6 +2636,13 @@ begin
     join da_chiudere t on t.id = m.id, unnest(string_to_array(m.sunday_departure, ',')) as place
     where m.sunday_departure is not null and upper(m.sunday_departure) <> 'NO' and trim(place) <> ''
     group by trim(place)
+    union all
+    -- I soci arrivati da ogni sci club affiliato (dalla 3.12): club_id non si azzera, il nome si archivia.
+    select which, 'CLUB', c.name, '', count(*), null
+    from public.members m
+    join da_chiudere t on t.id = m.id
+    join public.affiliated_clubs c on c.id = m.club_id
+    group by c.name
     on conflict (season, category, label, day) do update set
       count = public.season_breakdown.count + excluded.count,
       total = coalesce(public.season_breakdown.total, 0) + coalesce(excluded.total, 0);
@@ -3323,6 +3355,51 @@ where mp.season = public.current_season()
 group by mp.pass_type;
 
 alter view public.pass_counts set (security_invoker = true);
+
+-- Riepilogo, sci club affiliati (dalla 3.12): per ogni club quanti soci tesserati ne arrivano (sezione SOCI, nome
+-- vuoto) e quante voci di ogni tabella sono loro, con le stesse regole e gli stessi nomi di card_counts (TESSERE),
+-- preski_counts (PRESCIISTICA), pass_counts (ABBONAMENTI) e course_counts (CORSI): nel Riepilogo diventa
+-- «di cui SCI CLUB MONCALVO: 2» accanto alla riga con lo stesso nome. Se cambia una di quelle viste, cambia anche qui.
+create or replace view public.club_counts as
+select c.name as club, v.section, v.name, count(*) as count
+from (
+  select m.club_id, 'SOCI' as section, '' as name
+    from public.members m
+   where m.enrolled_at is not null and public.card_holder(m)
+  union all
+  select m.club_id, 'TESSERE', m.card_type
+    from public.members m
+   where m.enrolled_at is not null
+     and m.card_type is not null
+     and upper(m.card_type) <> 'NO'
+     and not exists (select 1 from public.prices pp
+                      where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+  union all
+  select m.club_id, 'TESSERE', public.preski_card(m)
+    from public.members m
+   where m.enrolled_at is not null and public.preski_card(m) is not null
+  union all
+  select m.club_id, 'TESSERE', m.family_discount
+    from public.members m
+   where m.enrolled_at is not null and m.family_discount is not null
+  union all
+  select m.club_id, 'PRESCIISTICA', m.preski_type
+    from public.members m
+   where m.enrolled_at is not null and m.preski_type is not null and upper(m.preski_type) <> 'NO'
+  union all
+  select m.club_id, 'CORSI', m.course_type
+    from public.members m
+   where m.enrolled_at is not null and m.course_type is not null and upper(m.course_type) <> 'NO'
+  union all
+  select m.club_id, 'ABBONAMENTI', mp.pass_type
+    from public.member_passes mp
+    join public.members m on m.id = mp.member_id
+   where mp.season = public.current_season()
+) v
+join public.affiliated_clubs c on c.id = v.club_id
+group by c.name, v.section, v.name;
+
+alter view public.club_counts set (security_invoker = true);
 
 /**
  * Scala una gita dall'abbonamento di un socio.

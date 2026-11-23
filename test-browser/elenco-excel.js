@@ -69,21 +69,21 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("colonne", head.join("|") === "Numero tessera|Tipo tessera|Cognome|Nome|Data di nascita|Luogo di nascita|Provincia di nascita|Codice fiscale"
     + "|Sci club di provenienza|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
   const merges = (sheet["!merges"] || []).map(({ s, e }) => `${letters(s.c)}${s.r + 1}:${letters(e.c)}${e.r + 1}`).join(" ");
-  test("unioni", merges === "A1:Q1 A2:B2 C2:H2 I2:K2 L2:Q2", merges);
+  test("unioni", merges === "A1:R1 A2:B2 C2:I2 J2:L2 M2:R2", merges);
   const fill = (a) => sheet[a]?.s?.fill?.fgColor?.rgb;
-  test("colori", fill("A2") === "084C8D" && fill("C2") === "0B6E69" && fill("I2") === "8A5300" && fill("L2") === "4A5868"
+  test("colori", fill("A2") === "084C8D" && fill("C2") === "0B6E69" && fill("J2") === "8A5300" && fill("M2") === "4A5868"
     && sheet.A2.s.font.color.rgb === "FFFFFF" && sheet.C3.s.font.color.rgb === "0B6E69" && fill("C3") && fill("C3") !== "0B6E69",
-    `${fill("A2")} ${fill("C2")} ${fill("I2")} ${fill("L2")} testa ${fill("C3")}`);
+    `${fill("A2")} ${fill("C2")} ${fill("J2")} ${fill("M2")} testa ${fill("C3")}`);
   test("blocco", saved.length === 1 && saved[0][2]?.righe === 3 && saved[0][2]?.colonne === 4 && /^soci-stagione-2026-27-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[0][1]),
     JSON.stringify(saved.map((s) => s.slice(1))).slice(0, 80));
   test("ordineTessere", data.map((d) => d[2]).join(",") === "BIANCHI,ROSSI,VERDI,ALFA,ZETA", data.map((d) => d[2]).join(","));
   const rossi = data.find((d) => d[2] === "ROSSI") || [];
   test("riga", rossi.slice(0, 12).join("|") === "10|ORDINARIA|ROSSI|ANNA|02/05/1980|ASTI|AT|RSSNNA80E42A479X|SCI CLUB MONCALVO|CORSO SCI ADULTI (SABATO)|10 VIAGGI SABATO + 5 VIAGGI DOMENICA|",
     rossi.join("|").slice(0, 120));
-  test("telefono", rossi[11] === "333 1234567" && rossi[12] === "anna@example.it" && rossi[14] === "ASTI", `${rossi[11]} ${rossi[12]} ${rossi[14]}`);
+  test("telefono", rossi[12] === "333 1234567" && rossi[13] === "anna@example.it" && rossi[15] === "ASTI", `${rossi[12]} ${rossi[13]} ${rossi[15]}`);
   const verdi = data.find((d) => d[2] === "VERDI") || [], bianchi = data.find((d) => d[2] === "BIANCHI") || [];
-  test("corsoSenzaGiorno", verdi[8] === "CORSO SCI BABY" && verdi[9] === "STAGIONALE", `${verdi[8]} ${verdi[9]}`);
-  test("presciistica", bianchi[10] === "CORSO PRESCIISTICA + REALE MUTUA NEVE" && bianchi[8] === "", `${bianchi[10]} «${bianchi[8]}»`);
+  test("corsoSenzaGiorno", verdi[9] === "CORSO SCI BABY" && verdi[10] === "STAGIONALE", `${verdi[9]} ${verdi[10]}`);
+  test("presciistica", bianchi[11] === "CORSO PRESCIISTICA + REALE MUTUA NEVE" && bianchi[9] === "", `${bianchi[11]} «${bianchi[9]}»`);
   const tipo = (cognome) => (data.find((d) => d[2] === cognome) || [])[1];
   test("tesseraCompresa", tipo("BIANCHI") === "TESSERA ORDINARIA - REALE MUTUA NEVE" && tipo("ALFA") === "TESSERA ORDINARIA - REALE TOTAL SPORT"
     && tipo("ZETA") === "SOLO TESSERA - NO ASSICURAZIONE" && tipo("ROSSI") === "ORDINARIA",
