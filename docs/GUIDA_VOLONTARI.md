@@ -59,6 +59,9 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
   completa scegli **REALE TOTAL SPORT** (115 €). Con «Nessuna» non finisce
   nell'elenco da assicurare. Chi è coperto da un'agevolazione famiglia ha la
   **CORSO PRESCIISTICA - FAMIGLIA** (50 €, solo il corso).
+- **Sci club di provenienza** (nella parte Tessera): se il socio arriva dallo **Sci Club Moncalvo** (o da un altro
+  club che si è unito al nostro), sceglilo qui; per i nostri soci resta **Nessuno**. Il prezzo non cambia: lo
+  tesseriamo noi e incassiamo noi. Serve solo a sapere quanti e chi arrivano da quel club.
 - **Partenze**: spunta da dove parte il sabato e la domenica.
 - **Numero tessera** (nella parte Tessera): è già proposto, cambialo solo se serve.
 - **Acconto** (nella parte Pagamento): quanto ha già dato.
@@ -79,8 +82,14 @@ a carico e i **numeri di tessera liberi**. Come nei Pagamenti, ogni famiglia res
 nome del capofamiglia, poi lui e i familiari con la scritta «a carico». Si cerca per cognome, nome o codice
 fiscale: si vede la famiglia intera, con in giallo la persona trovata. Con **Colonne** si scelgono i dati da
 vedere (telefono, email, data di nascita...) e il loro ordine, coi pulsanti **Su** e **Giù**; la prima colonna è
-sempre il socio. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
+sempre il socio. La colonna **Sci club** dice chi arriva dallo Sci Club Moncalvo (vuota per i nostri soci); c'è
+anche nell'Excel. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
+
+Nel **Riepilogo** il riquadro **Sci club affiliati** dice quanti tesserati arrivano da ogni club e chi sono; nelle
+tabelle sotto, accanto a ogni voce, «di cui SCI CLUB MONCALVO: 2» dice quante sono loro. L'elenco dei club si
+cambia in **Impostazioni › Sci club affiliati** (solo chi ha la Gestione): un club che ha ancora soci non si può
+eliminare.
 
 ## Fogli per le gite e i corsi
 
