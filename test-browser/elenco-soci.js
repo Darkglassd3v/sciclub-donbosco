@@ -22,7 +22,8 @@
   for (let n = 1; n <= 63; n++) if (n !== 5 && n !== 12) SOCI.push({ id: id(n), card_number: String(n), last_name: `COGNOME${n}`, first_name: "NOME",
     card_type: "ORDINARIA", tax_code: null, course_type: null, course_day: null, phone: `333${n}`, member_insurance: null, payer_id: null });
   const socio = (n) => SOCI.find((s) => s.id === id(n));
-  Object.assign(socio(1), { last_name: "ROSSI", first_name: "MARIO", course_type: "CORSO SCI", course_day: "SABATO", tax_code: "RSSMRA80A01A479X" });
+  Object.assign(socio(1), { last_name: "ROSSI", first_name: "MARIO", course_type: "CORSO SCI", course_day: "SABATO", tax_code: "RSSMRA80A01A479X",
+    club: { name: "SCI CLUB MONCALVO" } });
   Object.assign(socio(2), { last_name: "D'ANGELO", first_name: "<i>ANNA</i>" });
   // Nucleo ROSSI: la tessera 40 è a carico della 1. Nucleo VERDI: il capofamiglia (900) quest'anno non è tesserato.
   Object.assign(socio(40), { last_name: "BIANCHI", first_name: "LUCIA", payer_id: id(1) });
@@ -63,7 +64,11 @@
     await wait(400);
     const table = el("elencoSoci");
     test("stile", table?.matches("table.custom-table.a-schede") && Boolean(document.querySelector(".cifre .kpi")), table?.className);
-    test("colonne", headers().join("|") === "Socio|Tipo tessera|Abbonamento|Corso", headers().join("|"));
+    test("colonne", headers().join("|") === "Socio|Tipo tessera|Abbonamento|Corso|Sci club", headers().join("|"));
+    // Lo sci club da cui arriva il socio (dalla 3.12), letto con la scheda: vuoto per chi non arriva da un club affiliato.
+    const rossi = rows().find((tr) => /ROSSI MARIO/.test(nameOf(tr)));
+    test("sciClub", cell(rossi, 4) === "SCI CLUB MONCALVO" && cell(rows().find((tr) => !/ROSSI/.test(nameOf(tr))), 4) === ""
+      && REQ.some(([t, c]) => t === "members" && /club:affiliated_clubs\(name\)/.test(c)), `«${cell(rossi, 4)}»`);
     const kpi = (i) => text(document.querySelectorAll(".cifre .kpi-value")[i]);
     test("cifre", [0, 1, 2, 3].map(kpi).join("|") === "64|61|4|38", [0, 1, 2, 3].map(kpi).join("|"));
     test("liberi", /5, 12, 64–99/.test(text(el("tessereLibere"))), text(el("tessereLibere")));
@@ -140,10 +145,10 @@
     test("inCima", itemKeys()[0] === "telefono" && document.activeElement === button("telefono", "giu"), `${itemKeys()[0]} ${document.activeElement?.outerHTML?.slice(0, 60)}`);
     el("applicaColonne").click();
     await wait(200);
-    test("applica", headers().join("|") === "Socio|Telefono|Abbonamento|Tipo tessera" && !el("dlgColonne").open, headers().join("|"));
+    test("applica", headers().join("|") === "Socio|Telefono|Abbonamento|Tipo tessera|Sci club" && !el("dlgColonne").open, headers().join("|"));
     test("telefono", cell(rows()[0], 1) === "3331", cell(rows()[0], 1));
     const saved = JSON.parse(localStorage.getItem("sciclub-elenco-colonne") || "[]");
-    test("ricordate", saved.join(",") === "telefono,abbonamento,tipo", JSON.stringify(saved));
+    test("ricordate", saved.join(",") === "telefono,abbonamento,tipo,club", JSON.stringify(saved));
 
     el("btnColonne").click();
     await wait(100);
@@ -155,7 +160,7 @@
       && el("sceltaColonne").querySelector('input[value="corso"]').checked, itemKeys().slice(0, 4).join(","));
     el("annullaColonne").click();
     await wait(100);
-    test("annulla", headers().join("|") === "Socio|Telefono|Abbonamento|Tipo tessera" && !el("dlgColonne").open, headers().join("|"));
+    test("annulla", headers().join("|") === "Socio|Telefono|Abbonamento|Tipo tessera|Sci club" && !el("dlgColonne").open, headers().join("|"));
 
     // Sul telefono: intestazioni nascoste, ogni socio una scheda, il nucleo una fascia sopra le sue schede.
     if (window.innerWidth <= 600) {

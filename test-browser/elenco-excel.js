@@ -4,7 +4,8 @@
 //   prima nel Riepilogo: l'Excel ha tutti i dati personali.
 // - In ordine di numero di tessera, contato come numero (2, 10, 100); senza numero (o «NO») in fondo, per cognome.
 // - Colonne a gruppi, ognuno col suo colore nella riga sopra i nomi delle colonne (richiesta del 29/10):
-//   TESSERA (numero, tipo), ANAGRAFICA (cognome, nome, data, luogo e provincia di nascita, codice fiscale),
+//   TESSERA (numero, tipo), ANAGRAFICA (cognome, nome, data, luogo e provincia di nascita, codice fiscale, sci club
+//   di provenienza dalla 3.12),
 //   CORSI E ABBONAMENTI (corso col giorno, abbonamenti della stagione uniti con « + », presciistica),
 //   RECAPITI (telefono, email, indirizzo, città, provincia, CAP).
 // - In cima una riga col titolo: stagione, quando è stato scaricato, quanti soci (richiesta del 29/10:
@@ -36,7 +37,7 @@ FAKE.risposta = (t, r) => {
   if (t === "members") return [
     { id: "a", last_name: "ROSSI", first_name: "ANNA", card_number: "10", card_type: "ORDINARIA", birth_date: "1980-05-02", birth_place: "ASTI",
       birth_province: "AT", tax_code: "RSSNNA80E42A479X", course_type: "CORSO SCI ADULTI", course_day: "SABATO", preski_type: null, city: "ASTI",
-      phone: "333 1234567", email: "anna@example.it" },
+      phone: "333 1234567", email: "anna@example.it", club: { name: "SCI CLUB MONCALVO" } },
     { id: "b", last_name: "BIANCHI", first_name: "LUCA", card_number: "2", card_type: null, member_insurance: "BASE", course_type: null, course_day: null, preski_type: "CORSO PRESCIISTICA", preski_label: "CORSO PRESCIISTICA + REALE MUTUA NEVE" },
     { id: "c", last_name: "VERDI", first_name: "ELIA", card_number: "100", card_type: "JUNIOR", course_type: "CORSO SCI BABY", course_day: null },
     { id: "d", last_name: "ZETA", first_name: "ZOE", card_number: null, card_type: null, member_insurance: null },
@@ -64,9 +65,9 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const [[title = ""] = [], groups = [], head = [], ...data] = rows;
   test("titolo", /^Soci della stagione 2026\/27 · scaricato il \d{2}\/\d{2}\/\d{4} alle \d{2}:\d{2} · 5 soci$/.test(title), title);
   test("foglio", SHEET_NAMES[SHEET_NAMES.length - 1] === "Soci 2026-27", SHEET_NAMES.join(","));
-  test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA||||||CORSI E ABBONAMENTI|||RECAPITI|||||", groups.join("|"));
+  test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA|||||||CORSI E ABBONAMENTI|||RECAPITI|||||", groups.join("|"));
   test("colonne", head.join("|") === "Numero tessera|Tipo tessera|Cognome|Nome|Data di nascita|Luogo di nascita|Provincia di nascita|Codice fiscale"
-    + "|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
+    + "|Sci club di provenienza|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
   const merges = (sheet["!merges"] || []).map(({ s, e }) => `${letters(s.c)}${s.r + 1}:${letters(e.c)}${e.r + 1}`).join(" ");
   test("unioni", merges === "A1:Q1 A2:B2 C2:H2 I2:K2 L2:Q2", merges);
   const fill = (a) => sheet[a]?.s?.fill?.fgColor?.rgb;
@@ -77,7 +78,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     JSON.stringify(saved.map((s) => s.slice(1))).slice(0, 80));
   test("ordineTessere", data.map((d) => d[2]).join(",") === "BIANCHI,ROSSI,VERDI,ALFA,ZETA", data.map((d) => d[2]).join(","));
   const rossi = data.find((d) => d[2] === "ROSSI") || [];
-  test("riga", rossi.slice(0, 11).join("|") === "10|ORDINARIA|ROSSI|ANNA|02/05/1980|ASTI|AT|RSSNNA80E42A479X|CORSO SCI ADULTI (SABATO)|10 VIAGGI SABATO + 5 VIAGGI DOMENICA|",
+  test("riga", rossi.slice(0, 12).join("|") === "10|ORDINARIA|ROSSI|ANNA|02/05/1980|ASTI|AT|RSSNNA80E42A479X|SCI CLUB MONCALVO|CORSO SCI ADULTI (SABATO)|10 VIAGGI SABATO + 5 VIAGGI DOMENICA|",
     rossi.join("|").slice(0, 120));
   test("telefono", rossi[11] === "333 1234567" && rossi[12] === "anna@example.it" && rossi[14] === "ASTI", `${rossi[11]} ${rossi[12]} ${rossi[14]}`);
   const verdi = data.find((d) => d[2] === "VERDI") || [], bianchi = data.find((d) => d[2] === "BIANCHI") || [];

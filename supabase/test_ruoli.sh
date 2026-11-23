@@ -173,6 +173,10 @@ insert into public.members (id, last_name, first_name, enrolled_at, card_type, t
 values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA', 'MATRICE', now(), 'PROVA TESSERA ORDINARIA', 'PRVMTR80A01F205X', 'ASTI');
 insert into public.member_passes (member_id, pass_type)
 values ('bbbbbbbb-0000-0000-0000-000000000001', 'PROVA 10 VIAGGI SABATO');
+-- Arriva da uno sci club affiliato (dalla 3.12): le righe da leggere della matrice.
+insert into public.affiliated_clubs (name) values ('PROVA SCI CLUB MONCALVO');
+update public.members set club_id = (select id from public.affiliated_clubs where name = 'PROVA SCI CLUB MONCALVO')
+ where id = 'bbbbbbbb-0000-0000-0000-000000000001';
 insert into public.trip_uses (member_id, pass_id)
 select member_id, id from public.member_passes where member_id = 'bbbbbbbb-0000-0000-0000-000000000001';
 insert into public.ledger_entries (kind, category, quantity, unit_price) values ('ENTRATA', 'PROVA MATRICE', 1, 1);
@@ -293,6 +297,11 @@ begin
     ('leggi',  'select 1 from public.insurances',                                'SSSSSxx'),
     ('scrivi', 'update public.insurances set price = price',                      'Sxxxxxx'),
     ('scrivi', 'update public.departures set place = place',                      'Sxxxxxx'),
+    -- Gli sci club affiliati (dalla 3.12): l'elenco lo legge chi legge le assicurazioni, lo cambia solo Gestione;
+    -- i conteggi per club del Riepilogo seguono i permessi dei soci.
+    ('leggi',  'select 1 from public.affiliated_clubs',                          'SSSSSxx'),
+    ('scrivi', 'insert into public.affiliated_clubs (name) values (''PROVA '' || gen_random_uuid())', 'Sxxxxxx'),
+    ('leggi',  'select 1 from public.club_counts',                               'SSSxSxx'),
     ('scrivi', 'insert into public.season_history (season, members) values (''1991-09-01'', 0)', 'Sxxxxxx'),
     ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx'),
     ('leggi',  'select 1 from public.pending_password_changes',                  'xxxxxxx'),
@@ -1686,6 +1695,17 @@ begin
   end;
 end $$;
 
+-- Uno sci club affiliato (dalla 3.12): la chiusura archivia quanti ne sono arrivati, e il club resta sulla
+-- persona per la stagione dopo.
+do $$
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  insert into public.affiliated_clubs (name) values ('PROVA CLUB CHIUSURA');
+  update public.members set club_id = (select id from public.affiliated_clubs where name = 'PROVA CLUB CHIUSURA')
+   where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+  assert found, 'sci club di provenienza: il superadmin non riesce a scriverlo';
+end $$;
+
 -- La chiusura conta gli abbonamenti venduti e li toglie dalla stagione nuova.
 do $$
 declare chiusa timestamptz;
@@ -1720,6 +1740,11 @@ begin
          'chiusura: agevolazione famiglia non contata';
   assert not (select total_manual from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000009'),
          'chiusura: totale a mano non azzerato';
+  assert (select count from public.season_breakdown
+           where season = chiusa and category = 'CLUB' and label = 'PROVA CLUB CHIUSURA') = 1,
+         'chiusura: i soci arrivati dallo sci club affiliato non sono archiviati';
+  assert (select club_id from public.members where id = 'aaaaaaaa-0000-0000-0000-000000000001') is not null,
+         'chiusura: lo sci club di provenienza è stato azzerato';
   assert (select count(*) from public.trip_passes) = 0, 'chiusura: abbonamenti vecchi ancora nella stagione nuova';
   assert (select count(*) from public.member_passes) > 0, 'chiusura: gli abbonamenti venduti sono stati cancellati';
 end $$;
