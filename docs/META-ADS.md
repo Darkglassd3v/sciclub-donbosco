@@ -217,6 +217,13 @@ opportunità è salito a 96. Confronto fra 14–19/11 (prima) e 21–22/11 (dopo
 - Conclusione: per le campagne di copertura del club i posizionamenti Advantage+ si tolgono sempre (Feed e
   storie scelti a mano); il pubblico Advantage+ va spento se la fascia d'età conta. Cambiare a pochi giorni
   dalla fine riavvia l'apprendimento: le impostazioni si decidono prima di pubblicare.
+- Ripristino (23/11): togliendo una spunta fra i posizionamenti l'etichetta torna «Advantage+ non attivo»,
+  ma il gruppo «Feed» resta intero: va aperto con la freccia e vanno tolti a mano Feed di Instagram, profilo
+  Instagram, Marketplace, Esplora e Threads. Con l'obiettivo Notorietà «Notifiche di Facebook» non è
+  disponibile. Per il pubblico, nel pannello «Età» del pubblico Advantage+ non c'è la spunta «Usa come
+  suggerimento»: si passa da «Limita ulteriormente il tuo pubblico» › «Raggiungi un pubblico limitato» ›
+  «Continua». A quel punto l'età riparte da 18–65+ e va rimessa; per un attimo i luoghi mostrano «Tutti i
+  luoghi» e poi tornano a Asti (+45 km): si ricontrollano prima di pubblicare.
 
 ## Obiettivo e budget
 
