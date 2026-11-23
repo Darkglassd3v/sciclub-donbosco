@@ -17,6 +17,12 @@
 
 ## Richieste nuove
 
+- [ ] **Prove sui dati veri di Pagamenti col ruolo tesoriere (23/11/2026).** Con la copia della produzione del 23/11 e
+      la migrazione 3.12.0, `test-reale/avvia.sh` dà «nessun risultato» per `pagamenti-agosto.js`,
+      `pagamenti-incasso.js` e `pagamenti-tanti.js` (tesoriere): la pagina aperta risulta `/elenco.html` invece di
+      `admin.html`. La 3.12 non tocca Pagamenti né i permessi: capire se la pagina d'arrivo del tesoriere o le prove
+      sono cambiate con la 3.8 (permesso `elenco`) e correggere le prove o il reindirizzamento.
+
 - [ ] **Accesso con Google (3.4.0, 18/11): da provare e da annunciare ai volontari.** Configurazione fatta il 18/11
       (progetto Google Cloud «Sci Club gestionale», client «Gestionale web», provider Google attivo in Supabase,
       registrazione libera spenta, Site URL e Redirect URLs del sito; procedura in `docs/ACCOUNT.md`). Resta:
