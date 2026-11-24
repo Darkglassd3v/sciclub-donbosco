@@ -302,6 +302,7 @@ begin
     ('leggi',  'select 1 from public.affiliated_clubs',                          'SSSSSxx'),
     ('scrivi', 'insert into public.affiliated_clubs (name) values (''PROVA '' || gen_random_uuid())', 'Sxxxxxx'),
     ('leggi',  'select 1 from public.club_counts',                               'SSSxSxx'),
+    ('leggi',  'select 1 from public.club_totals',                               'SSSxSxx'),
     ('scrivi', 'insert into public.season_history (season, members) values (''1991-09-01'', 0)', 'Sxxxxxx'),
     ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx'),
     ('leggi',  'select 1 from public.pending_password_changes',                  'xxxxxxx'),
@@ -1693,6 +1694,36 @@ begin
     raise exception 'ASSERZIONE: giorno del corso fuori elenco accettato';
   exception when check_violation then null;
   end;
+end $$;
+
+-- Riepilogo per sci club (dalla 3.12.2): club_counts divide ogni tabella fra Don Bosco (club vuoto) e i club affiliati,
+-- con numero, prezzo e totale. Sommati, i gruppi devono dare esattamente le viste del Riepilogo di prima.
+do $$
+begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  assert exists (select 1 from public.club_counts where club is null and section = 'TESSERE'),
+         'club_counts: manca il gruppo Don Bosco (soci senza club)';
+  assert exists (select 1 from public.club_counts where club = 'PROVA SCI CLUB MONCALVO' and section = 'TESSERE' and price is not null),
+         'club_counts: manca la tessera del socio di prova del club, col prezzo';
+  assert (select sum(count) from public.club_counts where section = 'TESSERE') = (select sum(count) from public.card_counts)
+     and (select sum(total) from public.club_counts where section = 'TESSERE') = (select sum(total) from public.card_counts),
+         'club_counts: le tessere dei gruppi non danno quelle di card_counts';
+  assert (select coalesce(sum(count), 0) from public.club_counts where section = 'PRESCIISTICA') = (select coalesce(sum(count), 0) from public.preski_counts)
+     and (select coalesce(sum(total), 0) from public.club_counts where section = 'PRESCIISTICA') = (select coalesce(sum(total), 0) from public.preski_counts),
+         'club_counts: la presciistica dei gruppi non dà quella di preski_counts';
+  assert (select coalesce(sum(count), 0) from public.club_counts where section = 'ABBONAMENTI') = (select coalesce(sum(count), 0) from public.pass_counts),
+         'club_counts: gli abbonamenti dei gruppi non danno quelli di pass_counts';
+  assert (select coalesce(sum(count), 0) from public.club_counts where section = 'CORSI') = (select coalesce(sum(count), 0) from public.course_counts),
+         'club_counts: i corsi dei gruppi non danno quelli di course_counts';
+  -- Gli incassi per gruppo (club_totals): sommati, quelli di season_totals.
+  assert exists (select 1 from public.club_totals where club is null)
+     and exists (select 1 from public.club_totals where club = 'PROVA SCI CLUB MONCALVO'),
+         'club_totals: mancano Don Bosco o il club di prova';
+  assert (select sum(members) from public.club_totals) = (select total_members from public.season_totals)
+     and (select sum(total_due) from public.club_totals) = (select total_due from public.season_totals)
+     and (select sum(total_collected) from public.club_totals) = (select total_collected from public.season_totals)
+     and (select sum(outstanding) from public.club_totals) = (select outstanding from public.season_totals),
+         'club_totals: gli incassi dei gruppi non danno quelli di season_totals';
 end $$;
 
 -- Uno sci club affiliato (dalla 3.12): la chiusura archivia quanti ne sono arrivati, e il club resta sulla
