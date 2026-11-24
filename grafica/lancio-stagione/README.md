@@ -31,6 +31,11 @@ Le storie del 24 e del 25 novembre hanno come sfondo il Monte Bianco del volanti
 con la vetta tra il logo e la data: la foto di gruppo, piccola (1600×835), nella storia usciva sgranata. Il post e
 le storie già pubblicati restano con la foto di gruppo.
 
+In alternativa, le stesse due storie in stile «poster da videogioco» (richiesta del 24/11: cielo al tramonto, collage
+di foto virate in riquadri col bordo nero, scritte enormi in corsivo condensato, logo ufficiale con un alone):
+`storia-gta-domani.jpg` e `storia-gta-stasera.jpg`, da `sorgenti/storie-gta.html#domani` e `#stasera`. Solo
+l'atmosfera del genere: niente logo, font o scritte del gioco, che sono marchi registrati.
+
 Le didascalie sono in `didascalie.md`.
 
 ## Sponsorizzazione
