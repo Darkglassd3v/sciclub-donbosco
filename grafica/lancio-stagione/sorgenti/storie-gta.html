@@ -24,31 +24,38 @@
     .nuvola { position: absolute; border-radius: 50%; filter: blur(18px); }
     .palme { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
 
-    /* La foto della montagna, frontale, con il bordo bianco sottile e l'ombra morbida. */
-    .foto { position: absolute; left: 150px; top: 430px; width: 780px; height: 440px; z-index: 3; border-radius: 18px; overflow: hidden;
-      border: 5px solid rgba(255, 255, 255, .92); box-shadow: 0 24px 60px rgba(60, 25, 80, .45); }
-    .foto img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 30%; display: block; filter: saturate(1.15); }
+    /* Due foto di sbieco (richiesta del 24/11): il Monte Bianco e il gruppo, con la cornice al neon rosa e azzurra. */
+    .foto { position: absolute; z-index: 3; border-radius: 18px; overflow: hidden; border: 6px solid #fff; }
+    .foto img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.3) contrast(1.05); }
+    .foto.monte { left: 50px; top: 420px; width: 600px; height: 390px; transform: rotate(-6deg);
+      box-shadow: 0 0 0 5px #ff3fa4, 0 0 34px 10px rgba(255, 63, 164, .8), 0 0 90px 24px rgba(255, 63, 164, .35); }
+    .foto.gruppo { left: 420px; top: 590px; width: 610px; height: 400px; transform: rotate(5deg); z-index: 4;
+      box-shadow: 0 0 0 5px #35e8ff, 0 0 34px 10px rgba(53, 232, 255, .8), 0 0 90px 24px rgba(53, 232, 255, .35); }
     .foto::after { content: ""; position: absolute; inset: 0; mix-blend-mode: soft-light;
-      background: linear-gradient(180deg, rgba(150, 120, 200, .55), rgba(255, 170, 130, .5)); }
+      background: linear-gradient(180deg, rgba(180, 110, 220, .5), rgba(255, 140, 120, .5)); }
 
     #logo { position: absolute; left: 50%; top: 160px; width: 210px; height: 210px; transform: translateX(-50%); z-index: 6;
-      border-radius: 50%; box-shadow: 0 0 0 5px rgba(255, 255, 255, .92), 0 16px 40px rgba(60, 25, 80, .45); }
+      border-radius: 50%; box-shadow: 0 0 0 5px #fff, 0 0 0 10px #ff3fa4, 0 0 40px 14px rgba(255, 63, 164, .7), 0 0 90px 30px rgba(53, 232, 255, .35); }
 
     /* Scritte: Pricedown bianco col bordo viola scuro, come le scritte del gioco; le informazioni in riquadri
      * velati col bordo bianco, che si leggono anche sul pesca del tramonto. */
-    .testi { position: absolute; left: 60px; right: 60px; top: 960px; z-index: 7; text-align: center; }
+    .testi { position: absolute; left: 60px; right: 60px; top: 1040px; z-index: 7; text-align: center; }
     .grande { font: 900 190px/0.9 Pricedown, sans-serif; letter-spacing: .01em; color: #fff;
-      -webkit-text-stroke: 8px #2d1846; paint-order: stroke fill; text-shadow: 0 12px 30px rgba(45, 24, 70, .55); }
+      -webkit-text-stroke: 8px #2d1846; paint-order: stroke fill;
+      text-shadow: 0 0 18px #ff3fa4, 0 0 42px rgba(255, 63, 164, .85), 0 12px 30px rgba(45, 24, 70, .55); }
     .ora { margin-top: 4px; font: 900 112px/1 Pricedown, sans-serif; letter-spacing: .02em;
       background: linear-gradient(180deg, #ffe7a3 0%, #ffb36b 55%, #ff6f91 100%); -webkit-background-clip: text; background-clip: text;
-      color: transparent; -webkit-text-stroke: 6px #2d1846; paint-order: stroke fill; filter: drop-shadow(0 10px 22px rgba(45, 24, 70, .5)); }
-    .riquadro { display: inline-block; margin-top: 22px; padding: 14px 30px; border: 3px solid rgba(255, 255, 255, .95); border-radius: 16px;
-      background: rgba(58, 30, 88, .55); backdrop-filter: blur(6px); }
+      color: transparent; -webkit-text-stroke: 6px #2d1846; paint-order: stroke fill;
+      filter: drop-shadow(0 0 14px rgba(53, 232, 255, .95)) drop-shadow(0 10px 22px rgba(45, 24, 70, .5)); }
+    .riquadro { display: inline-block; margin-top: 22px; padding: 14px 30px; border: 3px solid #35e8ff; border-radius: 16px;
+      background: rgba(48, 18, 82, .7); box-shadow: 0 0 22px 4px rgba(53, 232, 255, .65), inset 0 0 18px rgba(53, 232, 255, .3); }
+    .riquadro.info { border-color: #ff3fa4; box-shadow: 0 0 22px 4px rgba(255, 63, 164, .65), inset 0 0 18px rgba(255, 63, 164, .3); }
     .titolo { font: 900 46px/1.1 Pricedown, sans-serif; letter-spacing: .03em; }
     .info { font-size: 40px; font-weight: 700; line-height: 1.25; }
     .info b { font-weight: 800; color: #ffe08a; }
-    .spaziato { margin-top: 26px; font: 700 30px/1 Barlow, sans-serif; letter-spacing: .32em; text-transform: uppercase;
-      text-shadow: 0 2px 10px rgba(45, 24, 70, .6); }
+    .spaziato { margin-top: 26px; font: 800 34px/1 Barlow, sans-serif; letter-spacing: .3em; text-transform: uppercase;
+      font-weight: 800; color: #fff; -webkit-text-stroke: 5px #2d1846; paint-order: stroke fill;
+      text-shadow: 0 0 14px #ff3fa4, 0 0 30px rgba(255, 63, 164, .8); }
   </style>
 </head>
 <body>
@@ -125,7 +132,8 @@
 
     const storia = (quando) => `<div class="storia">
       ${NUVOLE}${PALME}
-      <div class="foto"><img src="foto-monte-bianco.jpg" alt=""></div>
+      <div class="foto monte"><img src="foto-monte-bianco.jpg" alt="" style="object-position: 70% 30%"></div>
+      <div class="foto gruppo"><img src="../../volantino/FOTO COPERTINA.JPG" alt="" style="object-position: 48% 55%"></div>
       <img id="logo" src="../../../web/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti">
       <div class="testi">
         <div class="grande">${quando}</div>
