@@ -174,18 +174,6 @@
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tCorsi"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
     </div>
   </section>
-  <section class="riquadro sezione pagamento solo-bilancio" hidden>
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Entrate extra</h2>
-    <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tEntrate"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
-    </div>
-  </section>
-  <section class="riquadro sezione pagamento solo-bilancio" hidden>
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Uscite</h2>
-    <div class="corpo">
-    <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
-    </div>
-  </section>
 
 </div>
 
@@ -200,11 +188,8 @@
 
   (async function init() {
     if (!(await requirePermission("riepilogo"))) return;
-    // Entrate e uscite sono del Bilancio: senza quel permesso il database le
-    // darebbe vuote, e due tabelle a zero sembrerebbero una stagione senza spese.
-    const { permissions } = await getProfile();
-    canBalance = permissions.includes("bilancio");
-    for (const section of document.querySelectorAll(".solo-bilancio")) section.hidden = !canBalance;
+    // Dal 24/11/2026 niente Entrate extra né Uscite: i movimenti di cassa si vedono nel Bilancio, il Riepilogo
+    // resta sulle quote dei soci.
     await load();
     // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
     if (!SEASON) listenMembers(() => load({ silenzioso: true }));
@@ -222,18 +207,13 @@
       sb.from("affiliated_clubs").select("name").order("name"),
       sb.from("club_totals").select("*"),
       sb.from("club_counts").select("*"),
-      // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
-      // Della stagione aperta (current_season() del database, non il 1° settembre), tutti.
-      sb.rpc("current_season").then(({ data: seasonValue, error }) => (error ? { error }
-        : allRows(() => sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").eq("season", seasonValue).order("id"))
-          .then((data) => ({ data }), (err) => ({ error: err })))),
       // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
       allRows(() => sb.from("members").select("id").not("enrolled_at", "is", null).is("card_holder", true).order("id"))
         .then((data) => ({ data }), (err) => ({ error: err })),
     ]);
     const err = responses.find((r) => r.error);
     if (err) throw err.error;
-    const [kpi, cards, passList, courses, preskiCourse, priceList, clubs, clubTotals, clubCounts, entries, holders] = responses.map((r) => r.data);
+    const [kpi, cards, passList, courses, preskiCourse, priceList, clubs, clubTotals, clubCounts, holders] = responses.map((r) => r.data);
 
     // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
     const withPrice = (rows, categoryName) => rows.map((r) => {
@@ -258,29 +238,7 @@
           abbonamenti: withPrice(of("ABBONAMENTI"), "ABBONAMENTO"), corsi: withPrice(of("CORSI"), "CORSO"),
         };
       }),
-      ...byItem(entries),
     };
-  }
-
-  /**
-   * Movimenti raggruppati per voce, separati in entrate e uscite. Il prezzo si
-   * mostra solo se è lo stesso per tutti i movimenti della voce.
-   */
-  function byItem(entries) {
-    const groups = (typeName) => {
-      const items = {};
-      for (const m of entries.filter((x) => x.kind === typeName)) {
-        const v = items[m.category] || (items[m.category] = { name: m.category, count: 0, total: 0, prezzi: new Set() });
-        v.count += Number(m.quantity);
-        v.total += Number(m.amount);
-        v.prezzi.add(Number(m.unit_price));
-      }
-      return Object.values(items).map((v) => ({
-        name: v.name, count: v.count, total: v.total,
-        price: v.prezzi.size === 1 ? [...v.prezzi][0] : null,
-      }));
-    };
-    return { entrate: groups("ENTRATA"), uscite: groups("USCITA") };
   }
 
   /**
@@ -292,14 +250,12 @@
   async function historyData(dayKey) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) throw new Error("Stagione non valida.");
     const season = `${dayKey}T00:00:00+00:00`;
-    const [historyItems, rows, entries] = await Promise.all([
+    const [historyItems, rows] = await Promise.all([
       sb.from("season_history").select("*").eq("season", season).maybeSingle(),
       sb.from("season_breakdown").select("*").eq("season", season),
-      sb.from("ledger_entries").select("kind, category, quantity, unit_price, amount").eq("season", season),
     ]);
     if (historyItems.error) throw historyItems.error;
     if (rows.error) throw rows.error;
-    if (entries.error) throw entries.error;
     if (!historyItems.data) throw new Error("Stagione non trovata o non consultabile con il ruolo attuale.");
 
     const di = (categoryName) => rows.data.filter((r) => r.category === categoryName);
@@ -316,7 +272,6 @@
       // Le stagioni chiuse prima della 2.3 hanno la presciistica fra gli abbonamenti.
       presciistica: di("PRESKI").map(withArchivedTotal),
       // Gli sci club affiliati: archiviati solo i conteggi (dalla 3.12), senza nomi né divisione per voce.
-      ...byItem(entries.data),
       incassoCorsi: takings ? takings.total : null,
       bancaInizio: historyItems.data.bank_opening, bancaFine: historyItems.data.bank_closing,
     };
@@ -360,8 +315,6 @@
       el("kInc").textContent = fmt(kpi.total_collected);
       el("kDa").textContent = fmt(kpi.outstanding);
 
-      fillItems("tEntrate", records.entrate);
-      fillItems("tUscite", records.uscite);
       lastRecords = records;
       drawChoice(records.gruppi || []);
     } catch (error) {
@@ -380,7 +333,6 @@
       + (others > 0 ? ` — ${withCard} con la tessera, ${others} coperti da presciistica o agevolazione famiglia` : "");
   }
 
-  let canBalance = false;   // permesso bilancio: Entrate extra e Uscite
   let lastRecords = null;   // gli ultimi dati letti, per cambiare gruppo senza rileggere
   let chosenGroup = "TUTTI";
 
@@ -427,8 +379,6 @@
       el("gInc").textContent = fmt(group.cifre.total_collected);
       el("gDa").textContent = fmt(group.cifre.outstanding);
     }
-    // Entrate extra e Uscite sono del bilancio intero: non si dividono per club.
-    for (const section of document.querySelectorAll(".solo-bilancio")) section.hidden = !canBalance || Boolean(group);
     drawCardHolders(data.tesserati, data.tessere);
     fillItems("tTess", data.tessere.map((r) => ({ ...r })));
     fillItems("tPresc", data.presciistica.map((r) => ({ ...r })));

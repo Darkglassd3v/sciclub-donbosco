@@ -174,7 +174,8 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   voce di un club nato dopo l'apertura della pagina, se no il salvataggio lo toglierebbe). Il Riepilogo (dalla 3.12.3) tiene in alto
   le cifre di tutti e subito sotto i pulsanti TUTTI, DON BOSCO (i soci senza club) e uno per club (pattern ARIA
   tablist, `drawChoice()`/`drawTables()`) che cambiano le tabelle; per un gruppo anche le sue cifre da `club_totals`,
-  le tabelle da `club_counts`, Entrate extra e Uscite nascoste (bilancio intero). Tolto il riquadro «Elenchi e
+  le tabelle da `club_counts`. Dal 24/11/2026 il Riepilogo non ha più Entrate extra né Uscite e non legge
+  `ledger_entries`: i movimenti di cassa si vedono nel Bilancio. Tolto il riquadro «Elenchi e
   stagioni chiuse»: le stagioni chiuse si aprono da Stagione, l'Elenco soci dal menu (in Soci niente pulsante) (club vuoto = Don Bosco; stesse regole,
   nomi e prezzi di `card_counts`, `preski_counts`, `pass_counts`, `course_counts`: se cambia una, cambia anche lei;
   `test_ruoli.sh` controlla che i gruppi sommati diano quelle viste e `season_totals`). Solo stagione in corso. Elenco soci: colonna `club` fra quelle di partenza e nell'Excel dopo il codice fiscale.

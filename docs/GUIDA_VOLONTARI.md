@@ -89,7 +89,8 @@ chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli
 Nel **Riepilogo**, in alto, ci sono le cifre di tutti i soci. Subito sotto, i pulsanti grandi **TUTTI**, **DON BOSCO**
 e uno per ogni club affiliato (**SCI CLUB MONCALVO**) cambiano le tabelle Tessere, Presciistica, Abbonamenti gite e
 Corsi: con un club scelto mostrano solo i suoi soci, con sopra quanti sono, il totale teorico, l'incassato e il da
-incassare di quel club. Le stagioni chiuse si aprono dalla pagina **Stagione**. L'elenco dei club si
+incassare di quel club. Le stagioni chiuse si aprono dalla pagina **Stagione**; entrate e uscite di cassa si
+vedono nel **Bilancio**. L'elenco dei club si
 cambia in **Impostazioni › Sci club affiliati** (solo chi ha la Gestione): un club che ha ancora soci non si può
 eliminare.
 
