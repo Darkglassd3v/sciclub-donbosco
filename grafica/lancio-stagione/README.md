@@ -31,9 +31,10 @@ Le storie del 24 e del 25 novembre hanno come sfondo il Monte Bianco del volanti
 con la vetta tra il logo e la data: la foto di gruppo, piccola (1600×835), nella storia usciva sgranata. Il post e
 le storie già pubblicati restano con la foto di gruppo.
 
-In alternativa, le stesse due storie in stile GTA (richieste del 24/11): la sola foto del Monte Bianco al centro,
-dietro il tramonto morbido (lavanda, rosa e pesca) con le palme in controluce viola semitrasparente su tre piani,
-disegnate in SVG con le foglie piumate, le scritte grandi in Pricedown e il logo ufficiale: `storia-gta-domani.jpg` e
+In alternativa, le stesse due storie in stile GTA (richieste del 24/11): due foto di sbieco, il Monte Bianco e il
+gruppo, con le cornici al neon rosa e azzurro; dietro il tramonto morbido (lavanda, rosa e pesca) con le palme in
+controluce viola semitrasparente su tre piani, disegnate in SVG con le foglie piumate; le scritte grandi in Pricedown
+con la luce al neon, i riquadri delle informazioni col bordo al neon e il logo ufficiale: `storia-gta-domani.jpg` e
 `storia-gta-stasera.jpg`, da `sorgenti/storie-gta.html#domani` e `#stasera`. Pricedown viene dalla raccolta
 gratuita di Typodermic Fonts (typodermicfonts.com, «Free font downloads»): la licenza desktop permette di usarlo
 nelle immagini ma non di ridistribuirlo, quindi non è nel repository; per rifare le storie va installato in
