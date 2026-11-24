@@ -212,7 +212,7 @@
 
       // I familiari a carico dei nuclei mostrati, in una sola query.
       const payerIds = nuclei.map((n) => n.head_id);
-      const familyMembers = (await inPieces(payerIds, (piece) => sb.from("members").select("*").in("payer_id", piece)))
+      const familyMembers = (await inPieces(payerIds, (piece) => sb.from("members").select(MEMBER_COLUMNS).in("payer_id", piece)))
         .sort((a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it"));
 
       lastOnes = [nuclei, await loadHouseholdHead(payerIds), familyMembers];
@@ -224,8 +224,13 @@
     }
   }
 
+  // Le colonne di members che la pagina usa (righe, importi, voci della stagione, recapiti dei solleciti): dalla 3.12.1
+  // non più select *. Una colonna nuova usata dalla pagina va aggiunta qui.
+  const MEMBER_COLUMNS = "id,enrolled_at,last_name,first_name,phone,email,card_type,family_discount,pass_type,course_type,"
+    + "preski_type,total,total_manual,paid,balance,card_number,payer_id";
+
   async function loadHouseholdHead(ids) {
-    const data = await inPieces(ids, (piece) => sb.from("members").select("*").in("id", piece));
+    const data = await inPieces(ids, (piece) => sb.from("members").select(MEMBER_COLUMNS).in("id", piece));
     return Object.fromEntries(data.map((s) => [s.id, s]));
   }
 

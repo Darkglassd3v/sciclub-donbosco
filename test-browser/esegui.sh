@@ -31,7 +31,8 @@ for prova in "index.html scheda-socio.js" "index.html doppioni.js" "index.html r
              "admin.html realtime.js" "admin.html pagamenti-cerca.js" "admin.html pagamenti-tessera.js" "admin.html pagamenti-tessera.js 500" "admin.html pagamenti-solleciti.js" "admin.html pagamenti-solleciti.js 500" "utenti.html utenti-superadmin.js" "stagione.html stagione.js" "password.html password.js" "login.html accesso-accessibile.js" "login.html accesso-google.js" "impostazioni.html impostazioni.js 1280" "impostazioni.html impostazioni.js 500" "index.html tessera-in-alto.js" "index.html jwt-futuro.js" "index.html comuni-suggeriti.js" "index.html provincia-dalla-citta.js" "index.html caricamento-velo.js" "index.html caricamento-velo.js 500" "index.html menu.js 1280" "stagione.html menu.js 1280" "index.html menu.js 500" \
              "index.html bar-steady.js 1280" "admin.html bar-steady.js 1280" "stagione.html bar-steady.js 1280" \
              "index.html bar-steady.js 500" "social.html bar-steady.js 500" "stampe.html bar-steady.js 500" "stampe.html stampe-anteprima.js" \
-             "index.html sci-club.js" "impostazioni.html impostazioni-sciclub.js 1280" "impostazioni.html impostazioni-sciclub.js 500" "riepilogo.html riepilogo-sciclub.js"; do
+             "index.html sci-club.js" "impostazioni.html impostazioni-sciclub.js 1280" "impostazioni.html impostazioni-sciclub.js 500" "riepilogo.html riepilogo-sciclub.js" \
+             "index.html proiezioni-soci.js" "admin.html proiezioni-pagamenti.js" "social.html proiezioni-social.js"; do
   read -r pagina script larghezza <<< "$prova"
   # Una copia della pagina per prova, accanto all'originale: i percorsi relativi restano giusti.
   copia="prova-${script%.js}${larghezza:+-$larghezza}.html"

@@ -1569,11 +1569,12 @@
     saving = true;
     setLoading(true);
     try {
+      // Si rilegge senza la foto (fino a 400 kB in base64): è quella appena mandata, resta quella del modulo.
       const { data, error } = isOpen && isOpen.id
-        ? await sb.from("social_events").update(row).eq("id", isOpen.id).select().single()
-        : await sb.from("social_events").insert(row).select().single();
+        ? await sb.from("social_events").update(row).eq("id", isOpen.id).select(LIST_COLUMNS).single()
+        : await sb.from("social_events").insert(row).select(LIST_COLUMNS).single();
       if (error) throw error;
-      isOpen = data;
+      isOpen = { ...data, photo: row.photo };
       savedOne = signature();
       markChanges();
       updateHeader();
@@ -1591,9 +1592,9 @@
   async function markPublished() {
     if (!isOpen || !isOpen.id) { showToast("Salvare prima il post.", "is-warning"); return; }
     const when = isOpen.published_at ? null : new Date().toISOString();
-    const { data, error } = await sb.from("social_events").update({ published_at: when }).eq("id", isOpen.id).select().single();
+    const { data, error } = await sb.from("social_events").update({ published_at: when }).eq("id", isOpen.id).select(LIST_COLUMNS).single();
     if (error) { showToast("Errore: " + errorMessage(error), "is-danger"); return; }
-    isOpen = data;
+    isOpen = { ...data, photo: isOpen.photo };
     updatePublished();
     updateHeader();
     await loadPosts();

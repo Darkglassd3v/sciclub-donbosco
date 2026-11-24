@@ -1750,6 +1750,28 @@ begin
 end $$;
 
 reset role;
+
+-- Ricerca soci (dalla 3.12.1): «rossi» cerca dentro cognome, nome, codice fiscale e chiave del nome
+-- (ilike '%rossi%'), che un indice btree non aiuta. Gli indici trigram (pg_trgm, GIN) sì: devono esserci e,
+-- senza scansioni sequenziali né per indice ordinato, la ricerca deve passare da loro.
+do $$
+declare
+  riga record;
+  piano text := '';
+begin
+  assert (select count(*) from pg_indexes
+           where schemaname = 'public' and tablename = 'members' and indexdef ilike '%gin_trgm_ops%') = 4,
+         'ricerca soci: mancano gli indici trigram su cognome, nome, codice fiscale e chiave del nome';
+  perform set_config('enable_seqscan', 'off', true);
+  perform set_config('enable_indexscan', 'off', true);
+  for riga in execute $q$explain select id from public.members
+      where last_name ilike '%ross%' or first_name ilike '%ross%' or tax_code ilike '%ross%' or name_key like '%ROSS%'$q$ loop
+    piano := piano || riga."QUERY PLAN" || E'\n';
+  end loop;
+  assert piano like '%members_last_name_trgm%' and piano like '%members_tax_code_trgm%',
+         'ricerca soci: il piano non usa gli indici trigram: ' || piano;
+end $$;
+
 delete from public.season_breakdown;
 delete from public.season_history;
 SQL
