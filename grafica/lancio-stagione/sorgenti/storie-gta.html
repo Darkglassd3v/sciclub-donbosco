@@ -1,9 +1,13 @@
 <!doctype html>
-<!-- Storie della serata del 25/11 in stile «poster da videogioco» (richiesta del 24/11/2026: «modalità GTA 6»):
-     cielo al tramonto rosa e arancio, collage di foto in riquadri col bordo nero, scritte enormi in corsivo
-     condensato. Solo l'atmosfera: niente logo, font o scritte del gioco (marchi registrati); il logo è quello
-     tondo ufficiale del club. Pagine: #domani (storia del 24/11) e #stasera (storia del 25/11).
-     Quando i caratteri e le foto sono pronti il titolo dice «PRONTO [...]» con i problemi trovati. -->
+<!-- Storie della serata del 25/11 in stile «poster da videogioco» (richieste del 24/11/2026: «modalità GTA 6», poi
+     «solo la foto della montagna frontale e sullo sfondo le palme stile Miami al tramonto e neon»): una sola foto,
+     il Monte Bianco, al centro con la cornice al neon; dietro il tramonto con il sole a righe, le palme in controluce
+     e le linee al neon sull'orizzonte. Solo l'atmosfera del genere: niente logo, font o scritte del gioco (marchi
+     registrati); palme e sole sono disegnati qui in SVG e CSS; il logo è quello tondo ufficiale del club.
+     Il carattere delle scritte grandi è Pricedown (Typodermic Fonts, raccolta gratuita), installato fuori dal
+     repository: senza, la pagina lo segnala nel titolo.
+     Pagine: #domani (storia del 24/11) e #stasera (storia del 25/11). Quando caratteri e foto sono pronti il titolo
+     dice «PRONTO [...]» con i problemi trovati. -->
 <html lang="it">
 <head>
   <meta charset="utf-8">
@@ -13,68 +17,106 @@
   <style>
     html, body { margin: 0; overflow: hidden; }
     .storia { position: relative; width: 1080px; height: 1920px; overflow: hidden; color: #fff; font-family: Barlow, sans-serif;
-      background: linear-gradient(180deg, #1a0638 0%, #4b0f6b 22%, #c2185b 48%, #ff5e62 66%, #ff9a3c 82%, #ffd166 100%); }
-    /* Il sole basso dietro al collage, a righe come nei poster anni '80. */
-    .sole { position: absolute; left: 190px; top: 760px; width: 700px; height: 700px; border-radius: 50%;
-      background: linear-gradient(180deg, #ffe066 0%, #ff9a3c 55%, #ff2e88 100%);
-      -webkit-mask: repeating-linear-gradient(180deg, #000 0 34px, transparent 34px 46px); opacity: .55; }
+      background: linear-gradient(180deg, #12032b 0, #3a0a5e 300px, #8e1a7a 620px, #e8336f 860px, #ff7a45 1000px, #ffb347 1090px,
+                                          #2a0b3d 1091px, #1a0730 1450px, #0d0420 1920px); }
+    /* Il sole basso sull'orizzonte (a 1090 px), a righe come nei poster anni '80, con un alone. */
+    .sole { position: absolute; left: 240px; top: 590px; width: 600px; height: 500px; overflow: hidden; }
+    .sole::before { content: ""; position: absolute; left: 0; top: 0; width: 600px; height: 600px; border-radius: 50%;
+      background: linear-gradient(180deg, #fff3a0 0%, #ffc04d 45%, #ff4f7b 100%);
+      -webkit-mask: linear-gradient(180deg, #000 0 52%, transparent 52% 55%, #000 55% 63%, transparent 63% 67%,
+                                    #000 67% 74%, transparent 74% 79%, #000 79% 84%, transparent 84% 91%, #000 91%); }
+    .alone { position: absolute; left: 140px; top: 520px; width: 800px; height: 600px; border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(255, 150, 80, .55), transparent); }
+    /* Il riflesso del sole sull'acqua e le linee al neon dell'orizzonte. */
+    .riflesso { position: absolute; left: 290px; top: 1094px; width: 500px; height: 300px;
+      background: repeating-linear-gradient(180deg, rgba(255, 140, 90, .55) 0 6px, transparent 6px 22px);
+      -webkit-mask: radial-gradient(ellipse 50% 100% at 50% 0, #000 30%, transparent 75%); }
+    .orizzonte { position: absolute; left: 0; right: 0; top: 1088px; height: 4px; background: #ff4fd8;
+      box-shadow: 0 0 12px 3px #ff4fd8, 0 0 40px 8px rgba(255, 79, 216, .6); }
+    .orizzonte.azzurro { top: 1106px; height: 3px; background: #3ef0ff; box-shadow: 0 0 12px 3px #3ef0ff, 0 0 36px 8px rgba(62, 240, 255, .5); }
+    .palme { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; }
 
-    /* Collage: riquadri inclinati col bordo nero spesso, le foto virate al tramonto. */
-    .riquadro { position: absolute; border: 12px solid #0b0b10; background: #0b0b10; overflow: hidden;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
-    .riquadro img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(1.5) contrast(1.15) brightness(.95); }
-    /* La virata al tramonto: il bianco della neve diventa rosa e arancio, come nelle copertine del genere. */
-    .riquadro::after { content: ""; position: absolute; inset: 0; mix-blend-mode: multiply;
-      background: linear-gradient(165deg, #ffb3d1 0%, #ff8fa3 45%, #ffb36b 100%); }
-    #r-monte  { left: -20px; top: 330px; width: 680px; height: 470px; transform: rotate(-4deg); }
-    #r-gruppo { left: 530px; top: 390px; width: 590px; height: 460px; transform: rotate(5deg); z-index: 2; }
-    #r-pista  { left: 40px;  top: 760px; width: 540px; height: 310px; transform: rotate(3deg); z-index: 3; }
-    #r-sera   { left: 560px; top: 790px; width: 500px; height: 290px; transform: rotate(-5deg); z-index: 3; }
+    /* La foto della montagna, frontale, con la cornice al neon rosa e la luce azzurra. */
+    .foto { position: absolute; left: 150px; top: 420px; width: 780px; height: 440px; z-index: 3;
+      border: 8px solid #0b0b10; outline: 5px solid #ff4fd8; outline-offset: 6px;
+      box-shadow: 0 0 40px 10px rgba(255, 79, 216, .75), 0 0 90px 30px rgba(62, 240, 255, .35); }
+    .foto img { width: 100%; height: 100%; object-fit: cover; object-position: 70% 30%; display: block;
+      filter: saturate(1.3) contrast(1.1); }
+    .foto::after { content: ""; position: absolute; inset: 0; mix-blend-mode: multiply;
+      background: linear-gradient(180deg, #ffd9ec 0%, #ffc2a8 100%); }
 
-    /* Il logo ufficiale, intatto, con un alone al neon intorno. */
-    #logo { position: absolute; left: 50%; top: 150px; width: 230px; height: 230px; transform: translateX(-50%); z-index: 6;
-      border-radius: 50%; box-shadow: 0 0 0 8px #0b0b10, 0 0 30px 10px rgba(255, 46, 136, .85), 0 0 80px 30px rgba(255, 154, 60, .45); }
+    /* Il logo ufficiale, intatto, con un anello al neon. */
+    #logo { position: absolute; left: 50%; top: 150px; width: 220px; height: 220px; transform: translateX(-50%); z-index: 6;
+      border-radius: 50%; box-shadow: 0 0 0 6px #0b0b10, 0 0 0 11px #3ef0ff, 0 0 40px 14px rgba(62, 240, 255, .7), 0 0 90px 30px rgba(255, 79, 216, .45); }
 
-    /* Le scritte: corsivo condensato pesante, riempite col tramonto e contornate di nero. */
-    .testi { position: absolute; left: 60px; right: 60px; top: 1100px; z-index: 7; }
+    /* Le scritte: corsivo condensato pesante, riempite col tramonto, contorno nero e luce al neon. */
+    .testi { position: absolute; left: 60px; right: 60px; top: 1110px; z-index: 7; }
     .riga { display: flex; align-items: flex-end; gap: 30px; white-space: nowrap; }
-    .grande { font: 800 190px/0.82 "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: -.01em;
-      transform: skewX(-10deg); transform-origin: left bottom;
+    /* Pricedown (Typodermic Fonts), il carattere delle scritte di GTA: installato solo sul PC che rende le immagini
+     * (~/.local/share/fonts), perché la licenza desktop permette le immagini ma non di ridistribuire il font. */
+    .grande { font: 900 165px/0.9 Pricedown, sans-serif; letter-spacing: .01em;
       background: linear-gradient(180deg, #fff6a8 0%, #ffd166 35%, #ff7a3c 70%, #ff2e88 100%);
       -webkit-background-clip: text; background-clip: text; color: transparent;
-      -webkit-text-stroke: 7px #0b0b10; paint-order: stroke fill; filter: drop-shadow(10px 12px 0 #0b0b10); }
-    .ora { margin-bottom: 4px; font: 800 110px/1 "Barlow Condensed", sans-serif; text-transform: uppercase; transform: skewX(-10deg);
-      color: #fff; -webkit-text-stroke: 5px #0b0b10; paint-order: stroke fill; filter: drop-shadow(7px 8px 0 #0b0b10); }
+      -webkit-text-stroke: 7px #0b0b10; paint-order: stroke fill;
+      filter: drop-shadow(8px 10px 0 #0b0b10) drop-shadow(0 0 24px rgba(255, 79, 216, .8)); }
+    .ora { margin-bottom: 10px; font: 900 92px/1 Pricedown, sans-serif;
+      color: #fff; -webkit-text-stroke: 5px #0b0b10; paint-order: stroke fill;
+      filter: drop-shadow(6px 7px 0 #0b0b10) drop-shadow(0 0 18px rgba(62, 240, 255, .9)); }
     .titolo { display: inline-block; margin-top: 26px; padding: 12px 22px 10px; background: #0b0b10; color: #fff;
-      font: 800 58px/1.02 "Barlow Condensed", sans-serif; text-transform: uppercase; transform: skewX(-8deg); }
+      font: 900 42px/1.05 Pricedown, sans-serif; letter-spacing: .02em; white-space: nowrap;
+      box-shadow: 0 0 0 3px #3ef0ff, 0 0 22px 4px rgba(62, 240, 255, .6); }
     .titolo b { color: #ffd166; }
     .info { margin-top: 18px; font-size: 40px; font-weight: 700; line-height: 1.2; }
-    .info .data { display: inline-block; padding: 8px 18px 6px; background: #ff2e88; color: #fff; font-weight: 800; transform: skewX(-8deg);
-      text-shadow: none; box-shadow: 6px 6px 0 #0b0b10; }
-    .info .buffet { display: inline-block; margin-left: 12px; padding: 8px 18px 6px; background: #ffd166; color: #0b0b10; font-weight: 800;
-      transform: skewX(-8deg); text-shadow: none; box-shadow: 6px 6px 0 #0b0b10; }
-    .info .dove { display: inline-flex; gap: 14px; align-items: flex-start; margin-top: 22px; padding: 10px 20px 8px;
+    .info .data, .info .buffet { display: inline-block; padding: 8px 18px 6px; font-weight: 800; transform: skewX(-8deg); }
+    .info .data { background: #ff2e88; color: #fff; box-shadow: 6px 6px 0 #0b0b10, 0 0 24px 4px rgba(255, 46, 136, .7); }
+    .info .buffet { margin-top: 18px; background: #ffd166; color: #0b0b10; box-shadow: 6px 6px 0 #0b0b10, 0 0 24px 4px rgba(255, 209, 102, .6); }
+    .info .dove { display: inline-flex; gap: 14px; align-items: flex-start; margin-top: 18px; padding: 10px 20px 8px;
       background: #0b0b10; transform: skewX(-8deg); }
-    .info .dove svg { flex: 0 0 auto; width: 42px; height: 42px; margin-top: 4px; fill: #ffd166; filter: drop-shadow(0 3px 0 #0b0b10); }
+    .info .dove svg { flex: 0 0 auto; width: 42px; height: 42px; margin-top: 4px; fill: #ffd166; }
   </style>
 </head>
 <body>
   <script>
     const PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+
+    /** Una palma in controluce: il tronco curvo dalla base (x, y) alla chioma, e le foglie a ventaglio che ricadono. */
+    function palma(x, y, altezza, piega, colore, chioma = 0.42) {
+      const cx = x + piega, cy = y - altezza, f = (n) => n.toFixed(1);
+      const tronco = `<path d="M${f(x - 18)} ${y} Q${f(x + piega * 0.25)} ${f(y - altezza * 0.55)} ${f(cx - 7)} ${f(cy)} L${f(cx + 7)} ${f(cy)}
+        Q${f(x + piega * 0.25 + 26)} ${f(y - altezza * 0.55)} ${f(x + 18)} ${y} Z" fill="${colore}"/>`;
+      // Foglie: [angolo in gradi (0 a destra, -90 in alto), lunghezza relativa, quanto ricadono].
+      const foglie = [[-178, 1, .45], [-150, .95, .3], [-120, .8, .12], [-62, .8, .12], [-30, .95, .3], [-2, 1, .45],
+                      [-165, .7, .75], [-15, .7, .75], [-90, .55, 0]];
+      const L = altezza * chioma;
+      const fronde = foglie.map(([a, k, giu]) => {
+        const r = (a * Math.PI) / 180, len = L * k;
+        const ex = cx + Math.cos(r) * len, ey = cy + Math.sin(r) * len + len * giu;
+        const mx = cx + Math.cos(r) * len * 0.55, my = cy + Math.sin(r) * len * 0.55 - len * 0.12;
+        const w = len * 0.11, nx = -Math.sin(r) * w, ny = Math.cos(r) * w;
+        return `<path d="M${f(cx)} ${f(cy)} Q${f(mx + nx)} ${f(my + ny)} ${f(ex)} ${f(ey)} Q${f(mx - nx)} ${f(my - ny)} ${f(cx)} ${f(cy)} Z" fill="${colore}"/>`;
+      }).join("");
+      return tronco + fronde;
+    }
+
+    // Due palme lontane sull'orizzonte (viola) e tre vicine ai lati (quasi nere), che incorniciano la storia.
+    const PALME = `<svg class="palme" viewBox="0 0 1080 1920" aria-hidden="true">
+      ${palma(110, 1090, 300, -20, "#4a1460")}${palma(985, 1090, 280, 25, "#4a1460")}
+      ${palma(30, 1920, 1180, 40, "#0b0318", 0.27)}${palma(1050, 1920, 1120, -40, "#0b0318", 0.27)}
+    </svg>`;
+
     const storia = (quando) => `<div class="storia">
-      <div class="sole"></div>
-      <div class="riquadro" id="r-monte"><img src="foto-monte-bianco.jpg" alt="" style="object-position: 70% 30%"></div>
-      <div class="riquadro" id="r-gruppo"><img src="../../volantino/FOTO COPERTINA.JPG" alt="" style="object-position: 45% 55%"></div>
-      <div class="riquadro" id="r-pista"><img src="../../volantino/sorgenti/foto/pista-san-bernardo.jpg" alt="" style="object-position: 50% 40%"></div>
-      <div class="riquadro" id="r-sera"><img src="../../volantino/sorgenti/foto/paramont.jpg" alt="" style="object-position: 50% 35%"></div>
+      <div class="alone"></div><div class="sole"></div><div class="riflesso"></div>
+      <div class="orizzonte"></div><div class="orizzonte azzurro"></div>
+      ${PALME}
+      <div class="foto"><img src="foto-monte-bianco.jpg" alt=""></div>
       <img id="logo" src="../../../web/logo-ufficiale-blu-tondo.svg" alt="Sci Club Don Bosco Asti">
       <div class="testi">
         <div class="riga"><div class="grande">${quando}</div><div class="ora">alle 21</div></div>
         <div class="titolo">Presentazione della <b>stagione 2026/27</b></div>
         <div class="info">
           <span class="data">Mercoledì 25 novembre · ore 21:00</span>
-          <div class="dove">${PIN}<span>Circolo Way Assauto, corso Pietro Chiesa 20, Asti</span></div>
-          <div style="margin-top: 18px"><span class="buffet" style="margin-left: 0">Buffet e brindisi finale</span></div>
+          <div><div class="dove">${PIN}<span>Circolo Way Assauto, corso Pietro Chiesa 20, Asti</span></div></div>
+          <span class="buffet">Buffet e brindisi finale</span>
         </div>
       </div>
     </div>`;
@@ -84,11 +126,12 @@
     window.addEventListener("load", () => document.fonts.ready.then(() => {
       const problemi = [];
       if (!PAGINE[nome]) problemi.push(`pagina sconosciuta: ${nome}`);
+      if (!document.fonts.check("100px Pricedown")) problemi.push("manca il font Pricedown (vedi il commento in testa)");
       for (const img of document.images) if (!img.complete || !img.naturalWidth) problemi.push(`immagine mancante: ${img.getAttribute("src")}`);
-      // Niente testo fuori dalla storia né nelle fasce coperte da Instagram (in alto e in basso 250 px).
+      // Niente testo nella fascia in basso coperta da Instagram (le risposte).
       const box = document.querySelector(".testi").getBoundingClientRect();
       if (box.bottom > 1920 - 230) problemi.push(`testi troppo in basso: ${Math.round(box.bottom)}`);
-      // Ogni riga di testo dentro i 960 px della storia (le scritte inclinate sporgono di poco: 20 px di tolleranza).
+      // Ogni riga di testo dentro la storia (le scritte inclinate sporgono di poco: 20 px di tolleranza).
       for (const el of document.querySelectorAll(".testi *")) {
         const r = el.getBoundingClientRect();
         if (r.width && (r.left < 40 || r.right > 1060)) problemi.push(`testo fuori: ${el.className || el.tagName} ${Math.round(r.left)}–${Math.round(r.right)}`);
