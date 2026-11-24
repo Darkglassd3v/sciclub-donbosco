@@ -52,9 +52,13 @@
     .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
-    /* Sci club affiliati (3.12): sotto la voce, quante sono dei soci arrivati da un club; l'elenco dei nomi. */
-    .di-cui { display: block; color: var(--testo-soft); font-size: .9rem; font-weight: 400; }
-    .elenco-club { list-style: disc; margin: 0 0 .75rem 1.5rem; columns: 16rem; }
+    /* Incassi per sci club (3.12.2): una tab per gruppo, il pannello con cifre e tabelle del gruppo. */
+    .tab-gruppi { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+    .tab-gruppi [role="tab"] { min-height: 44px; padding: .5rem 1.1rem; border-radius: var(--pillola); border: 2px solid var(--blu);
+      background: transparent; color: var(--blu-dark); font: inherit; font-weight: 700; cursor: pointer; }
+    .tab-gruppi [role="tab"][aria-selected="true"] { background: var(--blu); color: #fff; }
+    .tab-gruppi [role="tab"]:focus-visible { outline: 3px solid var(--giallo, #FCCF02); outline-offset: 2px; }
+    .titoletto-gruppo { font-weight: 700; margin: 1.25rem 0 .5rem; }
   </style>
 </head>
 <body>
@@ -144,13 +148,6 @@
     </div>
   </section>
 
-  <!-- Dalla 3.12: i soci arrivati dagli sci club affiliati (Impostazioni), quanti e chi; nelle tabelle sotto
-       «di cui …» dice quante voci sono loro. Nascosto se nessuno arriva da un club. -->
-  <section class="riquadro sezione anagrafica" id="zonaClub" hidden>
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 13c-3.3 0-6 1.8-6 4v2h12v-2c0-2.2-2.7-4-6-4Zm8 0c-.6 0-1.2.1-1.8.2 1.1.9 1.8 2.1 1.8 3.8v2h6v-2c0-2.2-2.7-4-6-4Z"/></svg>Sci club affiliati <span class="cosa">Soci arrivati da altri club</span></h2>
-    <div class="corpo" id="elencoClub"></div>
-  </section>
-
   <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. I colori
        sono quelli della scheda Soci: tessere verdi, gite e corsi viola, soldi arancio. -->
   <section class="riquadro sezione tessera">
@@ -190,6 +187,17 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 6h20v12H2V6Zm10 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM5 9v6h2V9H5Zm12 0v6h2V9h-2Z"/></svg>Uscite</h2>
     <div class="corpo">
     <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead><tbody id="tUscite"><tr><td colspan="4">Caricamento…</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- Dalla 3.12.2 (24/11/2026): sotto il Riepilogo di tutti, gli incassi divisi fra Don Bosco (i soci senza club) e
+       ogni sci club affiliato, una tab ciascuno: le stesse cifre e le stesse tabelle, solo dei soci del gruppo
+       (viste club_totals e club_counts). Solo per la stagione in corso e se in Impostazioni c'è almeno un club. -->
+  <section class="riquadro sezione anagrafica" id="zonaGruppi" hidden>
+    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 13c-3.3 0-6 1.8-6 4v2h12v-2c0-2.2-2.7-4-6-4Zm8 0c-.6 0-1.2.1-1.8.2 1.1.9 1.8 2.1 1.8 3.8v2h6v-2c0-2.2-2.7-4-6-4Z"/></svg>Incassi per sci club <span class="cosa">Don Bosco e club affiliati</span></h2>
+    <div class="corpo">
+      <div class="tab-gruppi" role="tablist" aria-label="Sci club" id="tabGruppi"></div>
+      <div id="pannelliGruppi"></div>
     </div>
   </section>
 </div>
@@ -239,6 +247,9 @@
       sb.from("course_counts").select("*"),
       sb.from("preski_counts").select("*"),
       sb.from("prices").select("category, name, price:card_price, day"),
+      // Gli sci club affiliati (Impostazioni) e, per gruppo, incassi e voci (dalla 3.12.2).
+      sb.from("affiliated_clubs").select("name").order("name"),
+      sb.from("club_totals").select("*"),
       sb.from("club_counts").select("*"),
       // I movimenti li legge solo chi ha il bilancio: per gli altri la RLS dà un elenco vuoto.
       // Della stagione aperta (current_season() del database, non il 1° settembre), tutti.
@@ -248,14 +259,10 @@
       // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
       allRows(() => sb.from("members").select("id").not("enrolled_at", "is", null).is("card_holder", true).order("id"))
         .then((data) => ({ data }), (err) => ({ error: err })),
-      // Chi arriva da uno sci club affiliato (dalla 3.12), fra i tesserati.
-      allRows(() => sb.from("members").select("id, last_name, first_name, card_number, club:affiliated_clubs(name)")
-        .not("enrolled_at", "is", null).is("card_holder", true).not("club_id", "is", null).order("id"))
-        .then((data) => ({ data }), (err) => ({ error: err })),
     ]);
     const err = responses.find((r) => r.error);
     if (err) throw err.error;
-    const [kpi, cards, passList, courses, preskiCourse, priceList, clubCounts, entries, holders, clubMembers] = responses.map((r) => r.data);
+    const [kpi, cards, passList, courses, preskiCourse, priceList, clubs, clubTotals, clubCounts, entries, holders] = responses.map((r) => r.data);
 
     // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
     const withPrice = (rows, categoryName) => rows.map((r) => {
@@ -269,7 +276,20 @@
       corsi: withPrice(courses, "CORSO"),
       // Il prezzo dipende dall'assicurazione scelta: lo dà la vista, una riga per voce e assicurazione.
       presciistica: preskiCourse.map((r) => ({ name: r.name, count: r.count, price: Number(r.price), total: Number(r.total) })),
-      club: { conteggi: clubCounts, soci: clubMembers },
+      // Don Bosco (club vuoto) e ogni club di Impostazioni, anche senza soci; nessun club: niente tab.
+      gruppi: !clubs.length ? [] : [null, ...clubs.map((c) => c.name)].map((club) => {
+        const of = (section) => clubCounts.filter((r) => r.club === club && r.section === section);
+        const totals = clubTotals.find((r) => r.club === club) || { members: 0, total_due: 0, total_collected: 0, outstanding: 0 };
+        return {
+          nome: club || "DON BOSCO", cifre: totals,
+          tabelle: [
+            ["TESSERE", "Tessere", of("TESSERE")],
+            ["PRESCIISTICA", "Presciistica", of("PRESCIISTICA")],
+            ["ABBONAMENTI", "Abbonamenti gite", withPrice(of("ABBONAMENTI"), "ABBONAMENTO")],
+            ["CORSI", "Corsi", withPrice(of("CORSI"), "CORSO")],
+          ],
+        };
+      }),
       ...byItem(entries),
     };
   }
@@ -328,7 +348,6 @@
       // Le stagioni chiuse prima della 2.3 hanno la presciistica fra gli abbonamenti.
       presciistica: di("PRESKI").map(withArchivedTotal),
       // Gli sci club affiliati: archiviati solo i conteggi (dalla 3.12), senza nomi né divisione per voce.
-      club: { conteggi: di("CLUB").map((r) => ({ club: r.label, section: "SOCI", name: "", count: r.count })), soci: null },
       ...byItem(entries.data),
       incassoCorsi: takings ? takings.total : null,
       bancaInizio: historyItems.data.bank_opening, bancaFine: historyItems.data.bank_closing,
@@ -373,13 +392,12 @@
       el("kInc").textContent = fmt(kpi.total_collected);
       el("kDa").textContent = fmt(kpi.outstanding);
 
-      clubCounts = records.club.conteggi;
-      drawClubs(records.club);
+      drawGroups(records.gruppi || []);
       drawCardHolders(records.tesserati, cards);
-      fillItems("tTess", cards, "TESSERE");
-      fillItems("tAbb", passList, "ABBONAMENTI");
-      fillItems("tCorsi", courses, "CORSI");
-      fillItems("tPresc", records.presciistica, "PRESCIISTICA");
+      fillItems("tTess", cards);
+      fillItems("tAbb", passList);
+      fillItems("tCorsi", courses);
+      fillItems("tPresc", records.presciistica);
       fillItems("tEntrate", records.entrate);
       fillItems("tUscite", records.uscite);
     } catch (error) {
@@ -398,35 +416,55 @@
       + (others > 0 ? ` — ${withCard} con la tessera, ${others} coperti da presciistica o agevolazione famiglia` : "");
   }
 
-  /** Conteggi della vista club_counts (o dell'archivio): { club, section, name, count }. */
-  let clubCounts = [];
-
-  /** Sotto il nome di una voce: «di cui SCI CLUB MONCALVO: 2», un club per riga; nulla se nessuno arriva da un club. */
-  function ofWhich(section, name) {
-    const totals = new Map();
-    for (const r of clubCounts) {
-      if (r.section === section && (name == null || r.name === name)) totals.set(r.club, (totals.get(r.club) || 0) + Number(r.count));
-    }
-    return [...totals].map(([club, n]) => `<small class="di-cui">di cui ${esc(club)}: ${n}</small>`).join("");
+  /**
+   * Incassi per sci club (dalla 3.12.2): una tab per gruppo (Don Bosco e ogni club affiliato) e il suo pannello con
+   * le cifre e le tabelle dei soli suoi soci, disegnate come quelle di tutti. Tab col pattern ARIA tablist: frecce
+   * sinistra e destra per spostarsi, una sola tab nell'ordine del Tab.
+   */
+  function drawGroups(groups) {
+    el("zonaGruppi").hidden = !groups.length;
+    const tabs = el("tabGruppi"), panels = el("pannelliGruppi");
+    const chosen = tabs.querySelector('[aria-selected="true"]')?.dataset.gruppo;
+    tabs.innerHTML = groups.map((g, i) => `<button type="button" role="tab" id="tabGruppo${i}" aria-controls="pannelloGruppo${i}"
+      data-gruppo="${esc(g.nome)}">${esc(g.nome)}</button>`).join("");
+    panels.innerHTML = groups.map((g, i) => `
+      <div role="tabpanel" id="pannelloGruppo${i}" aria-labelledby="tabGruppo${i}" data-gruppo="${esc(g.nome)}" tabindex="0">
+        <div class="cifre">
+          <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value">${g.cifre.members}</div></div>
+          <div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value">${fmt(g.cifre.total_due)}</div></div>
+          <div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value verde">${fmt(g.cifre.total_collected)}</div></div>
+          <div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value rosso">${fmt(g.cifre.outstanding)}</div></div>
+        </div>
+        ${g.tabelle.map(([key, title]) => `<h3 class="titoletto-gruppo">${title}</h3>
+        <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead>
+          <tbody data-tabella="${key}"></tbody></table></div>`).join("")}
+      </div>`).join("");
+    groups.forEach((g, i) => g.tabelle.forEach(([key, , rows]) =>
+      fillItems(panels.querySelector(`#pannelloGruppo${i} tbody[data-tabella="${key}"]`), rows.map((r) => ({ ...r })))));
+    const buttons = [...tabs.querySelectorAll('[role="tab"]')];
+    const select = (button, focus = false) => {
+      buttons.forEach((b) => {
+        const on = b === button;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        el(b.getAttribute("aria-controls")).hidden = !on;
+      });
+      if (focus) button.focus();
+    };
+    buttons.forEach((b, i) => {
+      b.addEventListener("click", () => select(b));
+      b.addEventListener("keydown", (event) => {
+        const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+        if (step) { event.preventDefault(); select(buttons[(i + step + buttons.length) % buttons.length], true); }
+      });
+    });
+    // Un aggiornamento in tempo reale ridisegna: resta aperta la tab scelta.
+    if (buttons.length) select(buttons.find((b) => b.dataset.gruppo === chosen) || buttons[0]);
   }
 
-  /** Il riquadro degli sci club: quanti tesserati da ognuno e, nella stagione in corso, chi sono. */
-  function drawClubs({ conteggi: counts, soci: members }) {
-    const clubs = counts.filter((r) => r.section === "SOCI").sort((a, b) => a.club.localeCompare(b.club));
-    el("zonaClub").hidden = !clubs.length;
-    const byCard = (a, b) => (parseInt(a.card_number, 10) || Infinity) - (parseInt(b.card_number, 10) || Infinity)
-      || `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`);
-    el("elencoClub").innerHTML = clubs.map(({ club, count }) => {
-      const names = (members || []).filter((s) => s.club?.name === club).sort(byCard)
-        .map((s) => `<li>${esc(`${s.last_name} ${s.first_name}`)}${s.card_number ? ` (tessera ${esc(s.card_number)})` : ""}</li>`);
-      return `<p class="mb-1"><b>${esc(club)}</b>: ${count} ${Number(count) === 1 ? "tesserato" : "tesserati"}</p>`
-        + (names.length ? `<ul class="elenco-club">${names.join("")}</ul>` : "");
-    }).join("");
-  }
-
-  /** Tabella di una voce di bilancio: numero, prezzo e totale, "—" dove manca; con la sezione, i «di cui» dei club. */
-  function fillItems(id, rows, section = null) {
-    const tbody = el(id);
+  /** Tabella di una voce di bilancio: numero, prezzo e totale, "—" dove manca. Il corpo per id o già trovato. */
+  function fillItems(target, rows) {
+    const tbody = typeof target === "string" ? el(target) : target;
     if (!rows.length) {
       tbody.innerHTML = '<tr><td colspan="4" class="has-text-centered py-3" style="color:var(--testo-soft)">—</td></tr>';
       return;
@@ -439,12 +477,12 @@
     tbody.innerHTML =
       sorted.map((r) => `
         <tr>
-          <td>${esc(r.name)} ${dayLabel(r.day)}${section ? ofWhich(section, r.name) : ""}</td>
+          <td>${esc(r.name)} ${dayLabel(r.day)}</td>
           <td><span class="badge badge-blue">${r.count}</span></td>
           <td>${r.price != null ? fmt(r.price) : "—"}</td>
           <td>${r.total != null ? fmt(r.total) : "—"}</td>
         </tr>`).join("") +
-      `<tr class="total-row"><td>Totale${section ? ofWhich(section, null) : ""}</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${withAmounts ? fmt(totEuro) : "—"}</td></tr>`;
+      `<tr class="total-row"><td>Totale</td><td><span class="badge badge-green">${totN}</span></td><td>—</td><td>${withAmounts ? fmt(totEuro) : "—"}</td></tr>`;
   }
 </script>
 </body>

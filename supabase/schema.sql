@@ -3356,50 +3356,75 @@ group by mp.pass_type;
 
 alter view public.pass_counts set (security_invoker = true);
 
--- Riepilogo, sci club affiliati (dalla 3.12): per ogni club quanti soci tesserati ne arrivano (sezione SOCI, nome
--- vuoto) e quante voci di ogni tabella sono loro, con le stesse regole e gli stessi nomi di card_counts (TESSERE),
--- preski_counts (PRESCIISTICA), pass_counts (ABBONAMENTI) e course_counts (CORSI): nel Riepilogo diventa
--- «di cui SCI CLUB MONCALVO: 2» accanto alla riga con lo stesso nome. Se cambia una di quelle viste, cambia anche qui.
+-- Riepilogo per sci club (dalla 3.12, riquadri dalla 3.12.2): le tabelle del Riepilogo divise fra Don Bosco (club
+-- vuoto: i soci senza club) e ogni sci club affiliato, con le stesse regole, gli stessi nomi e gli stessi prezzi di
+-- card_counts (TESSERE), preski_counts (PRESCIISTICA), pass_counts (ABBONAMENTI) e course_counts (CORSI); SOCI sono i
+-- tesserati (card_holder()). Abbonamenti e corsi senza prezzo, come le loro viste: lo mette la pagina dal listino.
+-- Sommati, i gruppi danno quelle viste (supabase/test_ruoli.sh): se ne cambia una, cambia anche qui.
 create or replace view public.club_counts as
-select c.name as club, v.section, v.name, count(*) as count
+select c.name as club, v.section, v.name, count(*) as count, v.price,
+       case when v.section in ('TESSERE', 'PRESCIISTICA') then count(*) * coalesce(v.price, 0) end as total
 from (
-  select m.club_id, 'SOCI' as section, '' as name
+  select m.club_id, 'SOCI' as section, '' as name, null::numeric as price
     from public.members m
    where m.enrolled_at is not null and public.card_holder(m)
   union all
-  select m.club_id, 'TESSERE', m.card_type
-    from public.members m
-   where m.enrolled_at is not null
-     and m.card_type is not null
-     and upper(m.card_type) <> 'NO'
-     and not exists (select 1 from public.prices pp
-                      where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+  select t.club_id, 'TESSERE', t.name, cp.price
+    from (
+      select m.club_id, m.card_type as name, 'TESSERA' as category
+        from public.members m
+       where m.enrolled_at is not null
+         and m.card_type is not null
+         and upper(m.card_type) <> 'NO'
+         and not exists (select 1 from public.prices pp
+                          where pp.category = 'PRESCIISTICA' and pp.name = m.preski_type and not pp.course_only)
+      union all
+      select m.club_id, public.preski_card(m), 'TESSERA'
+        from public.members m
+       where m.enrolled_at is not null and public.preski_card(m) is not null
+      union all
+      select m.club_id, m.family_discount, 'FAMIGLIA'
+        from public.members m
+       where m.enrolled_at is not null and m.family_discount is not null
+    ) t
+    left join lateral (
+      select public.card_price(p)::numeric(10, 2) as price
+        from public.prices p
+       where p.category = t.category and p.name = t.name
+    ) cp on true
   union all
-  select m.club_id, 'TESSERE', public.preski_card(m)
-    from public.members m
-   where m.enrolled_at is not null and public.preski_card(m) is not null
-  union all
-  select m.club_id, 'TESSERE', m.family_discount
-    from public.members m
-   where m.enrolled_at is not null and m.family_discount is not null
-  union all
-  select m.club_id, 'PRESCIISTICA', m.preski_type
+  select m.club_id, 'PRESCIISTICA', m.preski_type, public.preski_course_price(m)
     from public.members m
    where m.enrolled_at is not null and m.preski_type is not null and upper(m.preski_type) <> 'NO'
   union all
-  select m.club_id, 'CORSI', m.course_type
+  select m.club_id, 'CORSI', m.course_type, null
     from public.members m
    where m.enrolled_at is not null and m.course_type is not null and upper(m.course_type) <> 'NO'
   union all
-  select m.club_id, 'ABBONAMENTI', mp.pass_type
+  select m.club_id, 'ABBONAMENTI', mp.pass_type, null
     from public.member_passes mp
     join public.members m on m.id = mp.member_id
    where mp.season = public.current_season()
 ) v
-join public.affiliated_clubs c on c.id = v.club_id
-group by c.name, v.section, v.name;
+left join public.affiliated_clubs c on c.id = v.club_id
+group by c.name, v.section, v.name, v.price;
 
 alter view public.club_counts set (security_invoker = true);
+
+-- Gli incassi per gruppo (dalla 3.12.2): soci, totale teorico, incassato e da incassare di Don Bosco (club vuoto) e di
+-- ogni sci club affiliato, con le regole di season_totals (sommati la danno).
+create or replace view public.club_totals as
+select c.name as club,
+       count(*)                  as members,
+       coalesce(sum(m.total), 0)   as total_due,
+       coalesce(sum(m.paid), 0)    as total_collected,
+       coalesce(sum(m.balance), 0) as outstanding
+from public.members m
+left join public.affiliated_clubs c on c.id = m.club_id
+where m.enrolled_at is not null
+group by c.name;
+
+alter view public.club_totals set (security_invoker = true);
 
 /**
  * Scala una gita dall'abbonamento di un socio.

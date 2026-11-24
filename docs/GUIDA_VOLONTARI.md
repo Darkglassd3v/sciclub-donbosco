@@ -86,8 +86,10 @@ sempre il socio. La colonna **Sci club** dice chi arriva dallo Sci Club Moncalvo
 anche nell'Excel. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
-Nel **Riepilogo** il riquadro **Sci club affiliati** dice quanti tesserati arrivano da ogni club e chi sono; nelle
-tabelle sotto, accanto a ogni voce, «di cui SCI CLUB MONCALVO: 2» dice quante sono loro. L'elenco dei club si
+Nel **Riepilogo**, in alto, ci sono tutti i soci insieme, come sempre. In fondo, in **Incassi per sci club**, c'è
+una linguetta per **DON BOSCO** e una per ogni club affiliato (**SCI CLUB MONCALVO**): ognuna mostra soci, totale
+teorico, incassato e da incassare del suo gruppo, e le stesse tabelle Tessere, Presciistica, Abbonamenti gite e
+Corsi con i loro totali. L'elenco dei club si
 cambia in **Impostazioni › Sci club affiliati** (solo chi ha la Gestione): un club che ha ancora soci non si può
 eliminare.
 
