@@ -6,7 +6,8 @@ Due post e i Reel per far conoscere la stagione e il suo inizio (piano del 12/11
 |---|---|---|
 | 13 novembre | Post 1, invito alla serata di presentazione: post su Facebook, Reel su Instagram, storia su entrambi | `invito-post.jpg`, `invito-story.jpg` e il Reel `../video-serata-post/renders/invito-serata-post-16s.mp4` |
 | 22 novembre | Storia «Mercoledì ci vediamo», con il conto alla rovescia | `promemoria-mercoledi.jpg` |
-| 25 novembre | Storia «Stasera alle 21», poi le storie dalla serata | `promemoria-stasera.jpg` |
+| 24 novembre | Storia «Domani alle 21», sul Monte Bianco | `promemoria-domani.jpg` |
+| 25 novembre | Storia «Stasera alle 21», sul Monte Bianco, poi le storie dalla serata | `promemoria-stasera.jpg` |
 | 26 novembre | Post 2, carosello «Si parte!» e Reel della stagione | `si-parte-1.jpg`, `si-parte-2.jpg`, `si-parte-3.jpg`, `../video-stagione/renders/story-stagione-16s.mp4` |
 
 La serata: **mercoledì 25 novembre 2026 alle 21:00**, al Circolo Way Assauto, corso Pietro Chiesa 20,
@@ -25,6 +26,10 @@ il post si può riscaricare da lì.
 - **Post 2**: la copertina con il logo e la prima gita del 1° dicembre, il calendario di dicembre del
   generatore (le 6 gite salvate) e «Da non perdere» (prova gratuita del 13 dicembre, Dream Weekend
   dall'11 al 13 dicembre, corsi dal 9 gennaio).
+
+Le storie del 24 e del 25 novembre hanno come sfondo il Monte Bianco del volantino (`sorgenti/foto-monte-bianco.jpg`),
+con la vetta tra il logo e la data: la foto di gruppo, piccola (1600×835), nella storia usciva sgranata. Il post e
+le storie già pubblicati restano con la foto di gruppo.
 
 Le didascalie sono in `didascalie.md`.
 

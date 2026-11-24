@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 chrome() { google-chrome --headless=new --disable-gpu --hide-scrollbars --force-device-scale-factor=1 \
   --virtual-time-budget=8000 --allow-file-access-from-files "$@" 2>/dev/null; }
-for voce in invito-post:1350 invito-story:1920 promemoria-mercoledi:1920 promemoria-stasera:1920 \
+for voce in invito-post:1350 invito-story:1920 promemoria-mercoledi:1920 promemoria-domani:1920 promemoria-stasera:1920 \
             si-parte-1:1350 si-parte-2:1350 si-parte-3:1350; do
   nome=${voce%%:*} altezza=${voce##*:}
   titolo=$(chrome --window-size=1080,"$altezza" --dump-dom "file://$PWD/pagine.html#$nome" | grep -o '<title>[^<]*' || true)
