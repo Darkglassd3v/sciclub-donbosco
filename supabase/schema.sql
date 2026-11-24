@@ -4142,6 +4142,18 @@ comment on function public.norm_name is 'Cognome o nome con le sole lettere A-Z,
 alter table public.members add column if not exists name_key text
   generated always as (public.norm_name(last_name) || ' ' || public.norm_name(first_name)) stored;
 create index if not exists members_name_key_idx on public.members (name_key);
+
+-- Ricerca soci (dalla 3.12.1, analisi del 24/11/2026): la pagina Soci cerca a ogni tasto dentro cognome, nome,
+-- codice fiscale e chiave del nome (ilike '%rossi%', like '%ROSSI%'), che gli indici btree non aiutano: senza, ogni
+-- ricerca scorreva tutti i soci (26 ms con 5760 schede). Gli indici trigram (pg_trgm, GIN) servono proprio a questo.
+-- L'estensione sta nello schema extensions, come le altre di Supabase. In produzione gli indici si creano con
+-- «create index concurrently», che non blocca le scritture.
+create schema if not exists extensions;
+create extension if not exists pg_trgm with schema extensions;
+create index if not exists members_last_name_trgm  on public.members using gin (last_name extensions.gin_trgm_ops);
+create index if not exists members_first_name_trgm on public.members using gin (first_name extensions.gin_trgm_ops);
+create index if not exists members_tax_code_trgm   on public.members using gin (tax_code extensions.gin_trgm_ops);
+create index if not exists members_name_key_trgm   on public.members using gin (name_key extensions.gin_trgm_ops);
 comment on column public.members.name_key is 'Colonna generata: norm_name(cognome) || '' '' || norm_name(nome). Per ricerca e doppioni.';
 
 -- Due operatori che iscrivono la stessa persona nello stesso momento: il

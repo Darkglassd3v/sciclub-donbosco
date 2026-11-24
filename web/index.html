@@ -1279,9 +1279,12 @@
     return parts.length ? `<span class="anteprima-socio">${parts.map(esc).join(" · ")}</span>` : "";
   }
 
+  // Le colonne che i risultati mostrano (nome, tessera, memberHint()): la ricerca parte a ogni tasto, non serve tutto.
+  const SEARCH_COLUMNS = "id,last_name,first_name,card_number,birth_date,address,city,tax_code";
+
   async function searchDatabase(query, limitValue, excludeId) {
     const termini = query.split(/\s+/).filter(Boolean);
-    let request = sb.from("members").select("*").limit(limitValue);
+    let request = sb.from("members").select(SEARCH_COLUMNS).limit(limitValue);
 
     // Ogni termine deve comparire in cognome, nome o codice fiscale; o nella
     // chiave del nome, così "D'ANGELO" trova anche "DANGELO" e viceversa.

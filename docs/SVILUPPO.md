@@ -152,6 +152,20 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   (SAMONE in AO e in TN); poi la più usata con la città nelle schede (`member_places`), perché CALLIANO (AT) dal
   2021 è CALLIANO MONFERRATO e nell'elenco di oggi «CALLIANO» è solo in TN; poi l'elenco ufficiale. Città
   sconosciuta o stato estero: invariata. Il CAP cambia solo se cambia la città. Prova: `provincia-dalla-citta.js`.
+- Database, analisi del 24/11/2026 (3.12.1): con 5760 schede e 103 iscritti tutte le query stanno sotto i 30 ms.
+  - Ricerca soci: indici trigram (`pg_trgm` nello schema `extensions`, GIN) su `last_name`, `first_name`, `tax_code`
+    e `name_key`, perché `ilike '%…%'` non usa i btree; in produzione con `create index concurrently` e poi
+    `analyze public.members` (senza statistiche il piano li ignora).
+  - Colonne lette: la ricerca chiede `SEARCH_COLUMNS` (`index.html`), Pagamenti `MEMBER_COLUMNS` (`admin.html`: una
+    colonna nuova usata dalla pagina va aggiunta lì), Social dopo un salvataggio rilegge `LIST_COLUMNS` senza la foto
+    (fino a 400 kB in base64) e tiene quella del modulo. `select *` resta solo dove serve tutto (scheda del socio) o
+    su viste di poche righe.
+  - Niente N+1: Pagamenti legge familiari e capofamiglia con `in()` a blocchi (`inPieces()`).
+  - Niente CLUSTER né partizioni: le tabelle stanno in memoria (members 2,5 MB) e CLUSTER non si mantiene da solo.
+    Indici sulle chiavi esterne verso tabelle minuscole (`social_events.sponsor_id`, `prices.insurance`,
+    `members.preski_insurance`, `insurance_lists.kind`) non servono: si usano solo eliminando uno sponsor o
+    un'assicurazione.
+  - Da sapere: `social_events` pesa 14 MB per le foto in base64; spostarle in Supabase Storage sarebbe un lavoro a parte.
 - Sci club affiliati (dalla 3.12.0, 23/11/2026): club che si sono uniti al nostro (Sci Club Moncalvo); i loro soci
   li tesseriamo e li incassiamo noi, il bilancio non cambia. Tabella `affiliated_clubs` (letta come `insurances`,
   scritta solo da `gestione`, riquadro in Impostazioni) e `members.club_id` con `on delete restrict` (un club con
