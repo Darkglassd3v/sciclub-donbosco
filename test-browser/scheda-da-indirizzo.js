@@ -19,7 +19,8 @@
     await wait(200);
     test("idNonValido", asked.length === 0, JSON.stringify(asked));
     // Il pulsante «Elenco soci» accanto alla ricerca c'è per chi ha il permesso elenco (dalla 3.8).
-    test("pulsanteElenco", el("vaiElenco") && !el("vaiElenco").hidden, "pulsante assente o nascosto con il permesso elenco");
+    // Dal 24/11/2026 nella pagina Soci non c'è più il pulsante «Elenco soci» (resta nel menu).
+    test("senzaPulsanteElenco", !el("vaiElenco"), "pulsante Elenco soci ancora nella pagina Soci");
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 500));
 }
