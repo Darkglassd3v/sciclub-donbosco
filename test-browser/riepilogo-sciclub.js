@@ -3,13 +3,16 @@
 // - Le cifre della stagione in alto restano di tutti i soci; subito sotto, pulsanti grandi TUTTI, DON BOSCO (soci
 //   senza club) e uno per ogni sci club affiliato; all'apertura TUTTI, cioè il Riepilogo di sempre.
 // - Scelto un gruppo, le stesse tabelle Tessere, Presciistica, Abbonamenti gite e Corsi mostrano solo i suoi soci
-//   (club_counts), con sopra soci, totale teorico, incassato e da incassare del gruppo (club_totals). Entrate extra e
-//   Uscite sono del bilancio intero: si vedono solo con TUTTI.
+//   (club_counts), con sopra soci, totale teorico, incassato e da incassare del gruppo (club_totals).
+// - Niente Entrate extra né Uscite (stesso giorno: «quello lo vedi dal Bilancio»): il Riepilogo è delle quote dei
+//   soci, e i movimenti non si leggono più.
 // - Tolti il riquadro «Incassi per sci club» in fondo (3.12.2) e «Elenchi e stagioni chiuse»: le stagioni chiuse si
 //   aprono dalla pagina Stagione, l'Elenco soci dal menu.
 {
   const CLUB = "SCI CLUB MONCALVO";
+  const ASKED = [];
   FAKE.risposta = (t) => {
+    ASKED.push(t);
     if (t === "season_totals") return [{ total_members: 10, total_due: 500, total_collected: 300, outstanding: 200 }];
     if (t === "card_counts") return [{ name: "ORDINARIA", count: 6, price: 30, total: 180 }, { name: "JUNIOR", count: 3, price: 20, total: 60 }];
     if (t === "course_counts") return [{ name: "CORSO SCI ADULTI", count: 2 }];
@@ -58,7 +61,8 @@
       const cifre = [...(el("cifreGruppo")?.querySelectorAll(".kpi-value") || [])].map(text).join("|");
       test("donBosco", rowText(row("tTess", "ORDINARIA")) === "ORDINARIA 5 € 30,00 € 150,00" && rowText(row("tTess", "Totale")) === "Totale 8 — € 210,00"
         && el("cifreGruppo")?.hidden === false && cifre === "9|€ 430,00|€ 230,00|€ 200,00", `${rowText(row("tTess", "Totale"))} / ${cifre}`);
-      test("senzaBilancio", [...document.querySelectorAll(".solo-bilancio")].every((s) => s.hidden), "Entrate o Uscite visibili");
+      test("senzaEntrateUscite", !el("tEntrate") && !el("tUscite") && !ASKED.includes("ledger_entries"),
+        `${Boolean(el("tEntrate"))} ${Boolean(el("tUscite"))} ${ASKED.includes("ledger_entries")}`);
 
       buttons[2]?.click();
       await wait(100);
