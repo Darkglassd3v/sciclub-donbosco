@@ -55,7 +55,9 @@
     };
     const promemoria = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook }, "story"));
     // La vetta spostata a sinistra della data (photo_x 70), nello spazio libero fra il logo e la tessera verde.
-    const promemoriaMonte = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook, photo: "foto-monte-bianco.jpg", photo_x: 70, photo_y: 30 }, "story"));
+    // Senza la riga «Iscrizioni in negozio o via mail» (24/11): per ricordare la serata non serve.
+    const promemoriaMonte = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook, photo: "foto-monte-bianco.jpg", photo_x: 70, photo_y: 30 }, "story"))
+      + "<style>.isc { display: none !important; }</style>";
 
     const COPERTINA = `<div class="pagina">
       <img id="logo-grande" src="${SOCIAL.logoTondo}" alt="Sci Club Don Bosco Asti">
