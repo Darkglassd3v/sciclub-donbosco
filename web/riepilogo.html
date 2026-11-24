@@ -10,8 +10,6 @@
   <style>
     #loader { position: fixed; inset: 0; background: color-mix(in srgb, var(--superficie) 92%, transparent); z-index: 2000; display: none; align-items: center; justify-content: center; }
 
-    /* Il riquadro dei comandi sparisce se chi guarda non può né scaricare né aprire lo storico. */
-    #zonaComandi:not(:has(#zonaScarica:not([hidden]), #zonaStagioni:not([hidden]))) { display: none; }
     /* Su telefono la tabella scorre di lato (.tabella-scorrevole) invece di schiacciare le voci. */
     .rtable { width: 100%; min-width: 35rem; border-collapse: collapse; }
     .rtable th { text-align: left; padding: 10px 8px; font-size: 1rem; }
@@ -52,13 +50,12 @@
     .badge { display: inline-block; padding: 4px 14px; border-radius: var(--pillola); font-weight: 600; font-size: 1.1rem; }
     .badge-blue { background: var(--blu-light); color: var(--blu-dark); }
     .badge-green { background: var(--ok-bg); color: var(--ok); }
-    /* Incassi per sci club (3.12.2): una tab per gruppo, il pannello con cifre e tabelle del gruppo. */
+    /* Tabelle per sci club (3.12.3): pulsanti grandi sotto le cifre, quello scelto pieno. */
     .tab-gruppi { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
-    .tab-gruppi [role="tab"] { min-height: 44px; padding: .5rem 1.1rem; border-radius: var(--pillola); border: 2px solid var(--blu);
+    .tab-gruppi [role="tab"] { min-height: 52px; padding: .6rem 1.4rem; font-size: 1.1rem; border-radius: var(--pillola); border: 2px solid var(--blu);
       background: transparent; color: var(--blu-dark); font: inherit; font-weight: 700; cursor: pointer; }
     .tab-gruppi [role="tab"][aria-selected="true"] { background: var(--blu); color: #fff; }
     .tab-gruppi [role="tab"]:focus-visible { outline: 3px solid var(--giallo, #FCCF02); outline-offset: 2px; }
-    .titoletto-gruppo { font-weight: 700; margin: 1.25rem 0 .5rem; }
   </style>
 </head>
 <body>
@@ -135,18 +132,18 @@
     <div class="kpi"><div class="kpi-label" id="lDa">Da incassare</div><div class="kpi-value rosso" id="kDa">—</div></div>
   </div>
 
-  <section class="riquadro sezione anagrafica" id="zonaComandi">
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>Elenchi e stagioni chiuse</h2>
-    <div class="corpo">
-    <!-- Le stagioni chiuse, per chi ha il permesso storico (tesoriere, superadmin). -->
-    <p class="occhiello" id="zonaStagioni" hidden>Stagioni chiuse: <span id="elencoStagioni"></span></p>
-    <!-- L'Excel dei soci dal 18/11/2026 si scarica dall'Elenco soci (tutto o filtrato), sempre col permesso
-         riepilogo: chi ha solo l'assicurazione non deve poterlo scaricare. Solo per la stagione in corso. -->
-    <div class="azioni" id="zonaScarica" hidden>
-      <a class="button is-link is-outlined" href="elenco.html">Elenco soci ed Excel della stagione</a>
+  <!-- Dalla 3.12.3 (24/11/2026): le tabelle sotto per tutti o per un gruppo, Don Bosco (soci senza club) o uno sci club
+       affiliato; per un gruppo anche le sue cifre. Le cifre sopra restano di tutti. Solo stagione in corso e con almeno
+       un club in Impostazioni. -->
+  <div class="scelta-gruppo" id="zonaScelta" hidden>
+    <div class="tab-gruppi" role="tablist" aria-label="Tabelle per sci club" id="tabGruppi"></div>
+    <div class="cifre" id="cifreGruppo" hidden>
+      <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value" id="gSoci">—</div></div>
+      <div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value" id="gTeor">—</div></div>
+      <div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value verde" id="gInc">—</div></div>
+      <div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value rosso" id="gDa">—</div></div>
     </div>
-    </div>
-  </section>
+  </div>
 
   <!-- Solo voci di bilancio: ogni sezione con numero, prezzo e totale. I colori
        sono quelli della scheda Soci: tessere verdi, gite e corsi viola, soldi arancio. -->
@@ -190,16 +187,6 @@
     </div>
   </section>
 
-  <!-- Dalla 3.12.2 (24/11/2026): sotto il Riepilogo di tutti, gli incassi divisi fra Don Bosco (i soci senza club) e
-       ogni sci club affiliato, una tab ciascuno: le stesse cifre e le stesse tabelle, solo dei soci del gruppo
-       (viste club_totals e club_counts). Solo per la stagione in corso e se in Impostazioni c'è almeno un club. -->
-  <section class="riquadro sezione anagrafica" id="zonaGruppi" hidden>
-    <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM8 13c-3.3 0-6 1.8-6 4v2h12v-2c0-2.2-2.7-4-6-4Zm8 0c-.6 0-1.2.1-1.8.2 1.1.9 1.8 2.1 1.8 3.8v2h6v-2c0-2.2-2.7-4-6-4Z"/></svg>Incassi per sci club <span class="cosa">Don Bosco e club affiliati</span></h2>
-    <div class="corpo">
-      <div class="tab-gruppi" role="tablist" aria-label="Sci club" id="tabGruppi"></div>
-      <div id="pannelliGruppi"></div>
-    </div>
-  </section>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
@@ -216,28 +203,12 @@
     // Entrate e uscite sono del Bilancio: senza quel permesso il database le
     // darebbe vuote, e due tabelle a zero sembrerebbero una stagione senza spese.
     const { permissions } = await getProfile();
-    for (const section of document.querySelectorAll(".solo-bilancio")) {
-      section.hidden = !permissions.includes("bilancio");
-    }
-    if (permissions.includes("storico")) showClosedSeasons();
-    if (!SEASON) {
-      el("zonaScarica").hidden = !permissions.includes("elenco");
-    }
+    canBalance = permissions.includes("bilancio");
+    for (const section of document.querySelectorAll(".solo-bilancio")) section.hidden = !canBalance;
     await load();
     // Una stagione chiusa non cambia più: niente aggiornamento in tempo reale.
     if (!SEASON) listenMembers(() => load({ silenzioso: true }));
   })();
-
-  /** I link alle stagioni chiuse, dalla più recente. */
-  async function showClosedSeasons() {
-    const { data, error } = await sb.from("season_history").select("season").order("season", { ascending: false });
-    if (error || !data.length) return;
-    el("elencoStagioni").innerHTML = data.map(({ season }) => {
-      const year = Number(String(season).slice(0, 4));
-      return `<a href="riepilogo.html?stagione=${String(season).slice(0, 10)}">${year}/${String(year + 1).slice(2)}</a>`;
-    }).join(" · ");
-    el("zonaStagioni").hidden = false;
-  }
 
   async function currentData() {
     const responses = await Promise.all([
@@ -276,18 +247,15 @@
       corsi: withPrice(courses, "CORSO"),
       // Il prezzo dipende dall'assicurazione scelta: lo dà la vista, una riga per voce e assicurazione.
       presciistica: preskiCourse.map((r) => ({ name: r.name, count: r.count, price: Number(r.price), total: Number(r.total) })),
-      // Don Bosco (club vuoto) e ogni club di Impostazioni, anche senza soci; nessun club: niente tab.
+      // Don Bosco (club vuoto) e ogni club di Impostazioni, anche senza soci; nessun club: niente pulsanti.
       gruppi: !clubs.length ? [] : [null, ...clubs.map((c) => c.name)].map((club) => {
         const of = (section) => clubCounts.filter((r) => r.club === club && r.section === section);
         const totals = clubTotals.find((r) => r.club === club) || { members: 0, total_due: 0, total_collected: 0, outstanding: 0 };
         return {
           nome: club || "DON BOSCO", cifre: totals,
-          tabelle: [
-            ["TESSERE", "Tessere", of("TESSERE")],
-            ["PRESCIISTICA", "Presciistica", of("PRESCIISTICA")],
-            ["ABBONAMENTI", "Abbonamenti gite", withPrice(of("ABBONAMENTI"), "ABBONAMENTO")],
-            ["CORSI", "Corsi", withPrice(of("CORSI"), "CORSO")],
-          ],
+          tesserati: of("SOCI").reduce((sum, r) => sum + Number(r.count), 0),
+          tessere: of("TESSERE"), presciistica: of("PRESCIISTICA"),
+          abbonamenti: withPrice(of("ABBONAMENTI"), "ABBONAMENTO"), corsi: withPrice(of("CORSI"), "CORSO"),
         };
       }),
       ...byItem(entries),
@@ -384,7 +352,7 @@
     if (!quiet) setLoading(true);
     try {
       const records = SEASON ? await historyData(SEASON) : await currentData();
-      const { kpi: kpi, tessere: cards, abbonamenti: passList, corsi: courses } = records;
+      const { kpi: kpi } = records;
       if (SEASON) showHistoryBand(records);
 
       el("kSoci").textContent = kpi.total_members;
@@ -392,14 +360,10 @@
       el("kInc").textContent = fmt(kpi.total_collected);
       el("kDa").textContent = fmt(kpi.outstanding);
 
-      drawGroups(records.gruppi || []);
-      drawCardHolders(records.tesserati, cards);
-      fillItems("tTess", cards);
-      fillItems("tAbb", passList);
-      fillItems("tCorsi", courses);
-      fillItems("tPresc", records.presciistica);
       fillItems("tEntrate", records.entrate);
       fillItems("tUscite", records.uscite);
+      lastRecords = records;
+      drawChoice(records.gruppi || []);
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {
@@ -416,50 +380,60 @@
       + (others > 0 ? ` — ${withCard} con la tessera, ${others} coperti da presciistica o agevolazione famiglia` : "");
   }
 
+  let canBalance = false;   // permesso bilancio: Entrate extra e Uscite
+  let lastRecords = null;   // gli ultimi dati letti, per cambiare gruppo senza rileggere
+  let chosenGroup = "TUTTI";
+
   /**
-   * Incassi per sci club (dalla 3.12.2): una tab per gruppo (Don Bosco e ogni club affiliato) e il suo pannello con
-   * le cifre e le tabelle dei soli suoi soci, disegnate come quelle di tutti. Tab col pattern ARIA tablist: frecce
-   * sinistra e destra per spostarsi, una sola tab nell'ordine del Tab.
+   * Pulsanti TUTTI, DON BOSCO e uno per sci club (dalla 3.12.3), sotto le cifre della stagione: cambiano le tabelle,
+   * col pattern ARIA tablist (frecce sinistra e destra, una sola tab nell'ordine del Tab). Un aggiornamento in tempo
+   * reale ridisegna e il gruppo scelto resta.
    */
-  function drawGroups(groups) {
-    el("zonaGruppi").hidden = !groups.length;
-    const tabs = el("tabGruppi"), panels = el("pannelliGruppi");
-    const chosen = tabs.querySelector('[aria-selected="true"]')?.dataset.gruppo;
-    tabs.innerHTML = groups.map((g, i) => `<button type="button" role="tab" id="tabGruppo${i}" aria-controls="pannelloGruppo${i}"
-      data-gruppo="${esc(g.nome)}">${esc(g.nome)}</button>`).join("");
-    panels.innerHTML = groups.map((g, i) => `
-      <div role="tabpanel" id="pannelloGruppo${i}" aria-labelledby="tabGruppo${i}" data-gruppo="${esc(g.nome)}" tabindex="0">
-        <div class="cifre">
-          <div class="kpi"><div class="kpi-label">Soci</div><div class="kpi-value">${g.cifre.members}</div></div>
-          <div class="kpi"><div class="kpi-label">Totale teorico</div><div class="kpi-value">${fmt(g.cifre.total_due)}</div></div>
-          <div class="kpi"><div class="kpi-label">Incassato</div><div class="kpi-value verde">${fmt(g.cifre.total_collected)}</div></div>
-          <div class="kpi"><div class="kpi-label">Da incassare</div><div class="kpi-value rosso">${fmt(g.cifre.outstanding)}</div></div>
-        </div>
-        ${g.tabelle.map(([key, title]) => `<h3 class="titoletto-gruppo">${title}</h3>
-        <div class="tabella-scorrevole"><table class="rtable"><thead><tr><th>Voce</th><th>N.</th><th>Prezzo</th><th>Totale</th></tr></thead>
-          <tbody data-tabella="${key}"></tbody></table></div>`).join("")}
-      </div>`).join("");
-    groups.forEach((g, i) => g.tabelle.forEach(([key, , rows]) =>
-      fillItems(panels.querySelector(`#pannelloGruppo${i} tbody[data-tabella="${key}"]`), rows.map((r) => ({ ...r })))));
-    const buttons = [...tabs.querySelectorAll('[role="tab"]')];
-    const select = (button, focus = false) => {
-      buttons.forEach((b) => {
-        const on = b === button;
-        b.setAttribute("aria-selected", String(on));
-        b.tabIndex = on ? 0 : -1;
-        el(b.getAttribute("aria-controls")).hidden = !on;
-      });
-      if (focus) button.focus();
-    };
+  function drawChoice(groups) {
+    el("zonaScelta").hidden = !groups.length;
+    if (!groups.some((g) => g.nome === chosenGroup)) chosenGroup = "TUTTI";
+    const names = groups.length ? ["TUTTI", ...groups.map((g) => g.nome)] : [];
+    el("tabGruppi").innerHTML = names.map((n) => `<button type="button" role="tab" data-gruppo="${esc(n)}">${esc(n)}</button>`).join("");
+    const buttons = [...el("tabGruppi").querySelectorAll('[role="tab"]')];
     buttons.forEach((b, i) => {
-      b.addEventListener("click", () => select(b));
+      b.addEventListener("click", () => { chosenGroup = b.dataset.gruppo; drawTables(); });
       b.addEventListener("keydown", (event) => {
         const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
-        if (step) { event.preventDefault(); select(buttons[(i + step + buttons.length) % buttons.length], true); }
+        if (!step) return;
+        event.preventDefault();
+        const next = buttons[(i + step + buttons.length) % buttons.length];
+        chosenGroup = next.dataset.gruppo;
+        drawTables();
+        next.focus();
       });
     });
-    // Un aggiornamento in tempo reale ridisegna: resta aperta la tab scelta.
-    if (buttons.length) select(buttons.find((b) => b.dataset.gruppo === chosen) || buttons[0]);
+    drawTables();
+  }
+
+  /** Le tabelle (e i tesserati sopra le tessere) di tutti o del gruppo scelto; per un gruppo anche le sue cifre. */
+  function drawTables() {
+    const records = lastRecords;
+    const group = (records.gruppi || []).find((g) => g.nome === chosenGroup);
+    const data = group || records;
+    el("tabGruppi").querySelectorAll('[role="tab"]').forEach((b) => {
+      const on = b.dataset.gruppo === chosenGroup;
+      b.setAttribute("aria-selected", String(on));
+      b.tabIndex = on ? 0 : -1;
+    });
+    el("cifreGruppo").hidden = !group;
+    if (group) {
+      el("gSoci").textContent = group.cifre.members;
+      el("gTeor").textContent = fmt(group.cifre.total_due);
+      el("gInc").textContent = fmt(group.cifre.total_collected);
+      el("gDa").textContent = fmt(group.cifre.outstanding);
+    }
+    // Entrate extra e Uscite sono del bilancio intero: non si dividono per club.
+    for (const section of document.querySelectorAll(".solo-bilancio")) section.hidden = !canBalance || Boolean(group);
+    drawCardHolders(data.tesserati, data.tessere);
+    fillItems("tTess", data.tessere.map((r) => ({ ...r })));
+    fillItems("tPresc", data.presciistica.map((r) => ({ ...r })));
+    fillItems("tAbb", data.abbonamenti.map((r) => ({ ...r })));
+    fillItems("tCorsi", data.corsi.map((r) => ({ ...r })));
   }
 
   /** Tabella di una voce di bilancio: numero, prezzo e totale, "—" dove manca. Il corpo per id o già trovato. */

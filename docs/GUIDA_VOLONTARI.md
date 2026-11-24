@@ -76,7 +76,7 @@ per il prossimo.
 
 ## Vedere tutti i soci della stagione
 
-Nel menu, sotto Soci, c'è **Elenco soci** (anche accanto a «Cerca un socio» nella pagina Soci): tutti i
+Nel menu, sotto Soci, c'è **Elenco soci**: tutti i
 tesserati della stagione in ordine di numero di tessera, con in alto quanti sono, i nuclei familiari, i familiari
 a carico e i **numeri di tessera liberi**. Come nei Pagamenti, ogni famiglia resta unita: una fascia azzurra col
 nome del capofamiglia, poi lui e i familiari con la scritta «a carico». Si cerca per cognome, nome o codice
@@ -86,10 +86,10 @@ sempre il socio. La colonna **Sci club** dice chi arriva dallo Sci Club Moncalvo
 anche nell'Excel. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
-Nel **Riepilogo**, in alto, ci sono tutti i soci insieme, come sempre. In fondo, in **Incassi per sci club**, c'è
-una linguetta per **DON BOSCO** e una per ogni club affiliato (**SCI CLUB MONCALVO**): ognuna mostra soci, totale
-teorico, incassato e da incassare del suo gruppo, e le stesse tabelle Tessere, Presciistica, Abbonamenti gite e
-Corsi con i loro totali. L'elenco dei club si
+Nel **Riepilogo**, in alto, ci sono le cifre di tutti i soci. Subito sotto, i pulsanti grandi **TUTTI**, **DON BOSCO**
+e uno per ogni club affiliato (**SCI CLUB MONCALVO**) cambiano le tabelle Tessere, Presciistica, Abbonamenti gite e
+Corsi: con un club scelto mostrano solo i suoi soci, con sopra quanti sono, il totale teorico, l'incassato e il da
+incassare di quel club. Le stagioni chiuse si aprono dalla pagina **Stagione**. L'elenco dei club si
 cambia in **Impostazioni › Sci club affiliati** (solo chi ha la Gestione): un club che ha ancora soci non si può
 eliminare.
 
