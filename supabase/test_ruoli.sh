@@ -1701,6 +1701,12 @@ end $$;
 do $$
 begin
   perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false);
+  -- Un socio iscritto con la tessera passa al club di prova: il socio della matrice qui non è più iscritto.
+  update public.members set club_id = (select id from public.affiliated_clubs where name = 'PROVA SCI CLUB MONCALVO')
+   where id = (select id from public.members
+                where enrolled_at is not null and card_type is not null and upper(card_type) <> 'NO' and club_id is null
+                order by id limit 1);
+  assert found, 'club_counts: nessun socio iscritto con la tessera da dare al club di prova';
   assert exists (select 1 from public.club_counts where club is null and section = 'TESSERE'),
          'club_counts: manca il gruppo Don Bosco (soci senza club)';
   assert exists (select 1 from public.club_counts where club = 'PROVA SCI CLUB MONCALVO' and section = 'TESSERE' and price is not null),

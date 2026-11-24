@@ -171,10 +171,11 @@ tutte le pagine** (`sed -i 's/?v=VECCHIO/?v=NUOVO/g' web/*.html ricerca/*.html`)
   scritta solo da `gestione`, riquadro in Impostazioni) e `members.club_id` con `on delete restrict` (un club con
   soci non si elimina, 23503); la chiusura della stagione non lo azzera e archivia i soci per club in
   `season_breakdown` (categoria `CLUB`). In Soci il menu `#f_club` nella sezione Tessera (`loadMember()` aggiunge la
-  voce di un club nato dopo l'apertura della pagina, se no il salvataggio lo toglierebbe). Il Riepilogo legge la
-  vista `club_counts` (stesse regole e nomi di `card_counts`, `preski_counts`, `pass_counts`, `course_counts`: se
-  cambia una, cambia anche lei) per il riquadro «Sci club affiliati» e i «di cui …» delle tabelle; nelle stagioni
-  chiuse solo i conteggi. Elenco soci: colonna `club` fra quelle di partenza e nell'Excel dopo il codice fiscale.
+  voce di un club nato dopo l'apertura della pagina, se no il salvataggio lo toglierebbe). Il Riepilogo (dalla 3.12.2) tiene in alto
+  tutti i soci e sotto, in «Incassi per sci club», una tab (pattern ARIA tablist) per DON BOSCO, cioè i soci senza
+  club, e per ogni club: cifre da `club_totals` e tabelle da `club_counts` (club vuoto = Don Bosco; stesse regole,
+  nomi e prezzi di `card_counts`, `preski_counts`, `pass_counts`, `course_counts`: se cambia una, cambia anche lei;
+  `test_ruoli.sh` controlla che i gruppi sommati diano quelle viste e `season_totals`). Solo stagione in corso. Elenco soci: colonna `club` fra quelle di partenza e nell'Excel dopo il codice fiscale.
   Prove: `sci-club.js`, `impostazioni-sciclub.js`, `riepilogo-sciclub.js`, `elenco-soci.js`, `elenco-excel.js`,
   `supabase/test_ruoli.sh`.
 - Elenco soci (`web/elenco.html`, dalla 3.7.0; dalla 3.8.0 permesso suo `elenco`, voce nel menu dopo Soci,

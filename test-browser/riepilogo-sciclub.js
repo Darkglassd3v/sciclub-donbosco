@@ -1,7 +1,8 @@
 // Riepilogo (riepilogo.html), incassi per sci club (dalla 3.12.2, richiesta del 24/11/2026: «voglio differenziare gli
 // incassi tra Don Bosco e Moncalvo, in alto lascia il riepilogo che c'è ora che include tutto»).
 // - In alto tutto come prima: cifre e tabelle di tutti i soci (card_counts, course_counts, …), senza «di cui».
-// - Sotto, un riquadro per DON BOSCO (soci senza club) e uno per ogni sci club affiliato, sempre visibili: soci,
+// - Sotto, le tab DON BOSCO (soci senza club) e una per ogni sci club affiliato (proposta dell'utente, stesso giorno);
+//   all'apertura la prima. Ogni pannello: soci,
 //   totale teorico, incassato e da incassare del gruppo (club_totals) e le stesse tabelle di sopra, Tessere,
 //   Presciistica, Abbonamenti gite e Corsi, con voce, N., prezzo e totale solo dei suoi soci (club_counts).
 // - Un club senza voci in una tabella: «—», come sopra.
@@ -33,32 +34,41 @@
     return [];
   };
   const text = (node) => node?.textContent.replace(/\s+/g, " ").trim() || "";
+  // Una riga di tabella come si legge: le celle separate da uno spazio.
+  const rowText = (tr) => (tr ? [...tr.cells].map(text).join(" ") : "");
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     try {
       await new Promise((ok) => setTimeout(ok, 600));
       const row = (tbody, label) => [...(tbody?.querySelectorAll("tr") || [])].find((tr) => text(tr.cells[0]).startsWith(label));
-      test("sopraTutto", text(row(el("tTess"), "Totale")).startsWith("Totale 9") && !document.querySelector(".di-cui")
-        && !el("zonaClub"), text(row(el("tTess"), "Totale")));
+      test("sopraTutto", rowText(row(el("tTess"), "Totale")).startsWith("Totale 9") && !document.querySelector(".di-cui")
+        && !el("zonaClub"), rowText(row(el("tTess"), "Totale")));
 
-      const groups = [...document.querySelectorAll("section[data-gruppo]")];
-      test("gruppi", groups.map((s) => s.dataset.gruppo).join("|") === `DON BOSCO|${CLUB}`
-        && groups.every((s) => /DON BOSCO|SCI CLUB MONCALVO/.test(text(s.querySelector("h2")))), groups.map((s) => s.dataset.gruppo).join("|"));
+      const tabs = [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
+      test("tab", tabs.map(text).join("|") === `DON BOSCO|${CLUB}` && tabs[0]?.getAttribute("aria-selected") === "true"
+        && tabs[1]?.getAttribute("aria-selected") === "false", tabs.map((b) => `${text(b)}:${b.getAttribute("aria-selected")}`).join("|"));
+      const groups = [...document.querySelectorAll('[role="tabpanel"][data-gruppo]')];
+      test("pannelli", groups.length === 2 && !groups[0].hidden && groups[1].hidden && groups[1].getAttribute("role") === "tabpanel"
+        && groups[1].getAttribute("aria-labelledby") === tabs[1]?.id, groups.map((g) => `${g.dataset.gruppo}:${g.hidden}`).join("|"));
+      tabs[1]?.click();
+      test("cambiaTab", groups[0]?.hidden && !groups[1]?.hidden && tabs[1]?.getAttribute("aria-selected") === "true",
+        groups.map((g) => `${g.dataset.gruppo}:${g.hidden}`).join("|"));
+      test("gruppi", groups.map((s) => s.dataset.gruppo).join("|") === `DON BOSCO|${CLUB}`, groups.map((s) => s.dataset.gruppo).join("|"));
       const [db, club] = groups;
       const cifre = (s) => [...(s?.querySelectorAll(".kpi-value") || [])].map(text).join("|");
       test("incassiDonBosco", cifre(db) === "9|€ 430,00|€ 230,00|€ 200,00", cifre(db));
       test("incassiClub", cifre(club) === "1|€ 70,00|€ 70,00|€ 0,00", cifre(club));
 
       const table = (s, kind) => s?.querySelector(`tbody[data-tabella="${kind}"]`);
-      test("tessereDonBosco", text(row(table(db, "TESSERE"), "ORDINARIA")) === "ORDINARIA 5 € 30,00 € 150,00"
-        && text(row(table(db, "TESSERE"), "Totale")) === "Totale 8 — € 210,00", text(table(db, "TESSERE")));
-      test("tessereClub", text(row(table(club, "TESSERE"), "ORDINARIA")) === "ORDINARIA 1 € 30,00 € 30,00"
-        && text(row(table(club, "TESSERE"), "Totale")) === "Totale 1 — € 30,00", text(table(club, "TESSERE")));
-      test("corsiClub", text(row(table(club, "CORSI"), "CORSO SCI ADULTI")) === "CORSO SCI ADULTI 1 € 200,00 € 200,00",
+      test("tessereDonBosco", rowText(row(table(db, "TESSERE"), "ORDINARIA")) === "ORDINARIA 5 € 30,00 € 150,00"
+        && rowText(row(table(db, "TESSERE"), "Totale")) === "Totale 8 — € 210,00", text(table(db, "TESSERE")));
+      test("tessereClub", rowText(row(table(club, "TESSERE"), "ORDINARIA")) === "ORDINARIA 1 € 30,00 € 30,00"
+        && rowText(row(table(club, "TESSERE"), "Totale")) === "Totale 1 — € 30,00", text(table(club, "TESSERE")));
+      test("corsiClub", rowText(row(table(club, "CORSI"), "CORSO SCI ADULTI")) === "CORSO SCI ADULTI 1 € 200,00 € 200,00",
         text(table(club, "CORSI")));
-      test("abbonamentiDonBosco", text(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).startsWith("5 VIAGGI SABATO")
-        && text(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).endsWith("2 € 100,00 € 200,00"), text(table(db, "ABBONAMENTI")));
+      test("abbonamentiDonBosco", rowText(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).startsWith("5 VIAGGI SABATO")
+        && rowText(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).endsWith("2 € 100,00 € 200,00"), text(table(db, "ABBONAMENTI")));
       test("vuotaClub", text(table(club, "ABBONAMENTI")) === "—" && text(table(club, "PRESCIISTICA")) === "—",
         `${text(table(club, "ABBONAMENTI"))} / ${text(table(club, "PRESCIISTICA"))}`);
     } catch (e) { r.push(`eccezione=NO(${String(e?.message || e).slice(0, 120)})`); }
