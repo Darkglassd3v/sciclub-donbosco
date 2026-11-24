@@ -54,6 +54,8 @@
       photo: "foto-gruppo.jpg", photo_x: 50, photo_y: 40,
     };
     const promemoria = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook }, "story"));
+    // La vetta spostata a sinistra della data (photo_x 70), nello spazio libero fra il logo e la tessera verde.
+    const promemoriaMonte = (hook) => drawPost(postTemplate({ ...SERATA_EV, hook, photo: "foto-monte-bianco.jpg", photo_x: 70, photo_y: 30 }, "story"));
 
     const COPERTINA = `<div class="pagina">
       <img id="logo-grande" src="${SOCIAL.logoTondo}" alt="Sci Club Don Bosco Asti">
@@ -78,7 +80,9 @@
       "invito-post": () => drawPost(postTemplate(SERATA_EV, "post")),
       "invito-story": () => drawPost(postTemplate(SERATA_EV, "story")),
       "promemoria-mercoledi": () => promemoria("Mercoledì ci vediamo"),
-      "promemoria-stasera": () => promemoria("Stasera alle 21"),
+      // Dal 24/11 le storie della serata hanno il Monte Bianco: la foto di gruppo (1600×835) nella storia usciva sgranata.
+      "promemoria-domani": () => promemoriaMonte("Domani alle 21"),
+      "promemoria-stasera": () => promemoriaMonte("Stasera alle 21"),
       "si-parte-1": () => COPERTINA,
       "si-parte-2": () => drawCalendar("Le gite di dicembre", righe, "2026-12"),
       "si-parte-3": () => drawPost(postTemplate(NOVITA_EV, "post")),

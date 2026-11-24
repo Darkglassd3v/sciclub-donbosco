@@ -83,7 +83,7 @@ prova("scheda della serata", () => {
 prova("immagini dei due post e delle storie", () => {
   const attese = [
     ["invito-post.jpg", 1080, 1350], ["invito-story.jpg", 1080, 1920],
-    ["promemoria-mercoledi.jpg", 1080, 1920], ["promemoria-stasera.jpg", 1080, 1920],
+    ["promemoria-mercoledi.jpg", 1080, 1920], ["promemoria-domani.jpg", 1080, 1920], ["promemoria-stasera.jpg", 1080, 1920],
     ["si-parte-1.jpg", 1080, 1350], ["si-parte-2.jpg", 1080, 1350], ["si-parte-3.jpg", 1080, 1350],
   ];
   for (const [nome, w, h] of attese) {
