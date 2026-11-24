@@ -202,7 +202,7 @@
       sb.from("pass_counts").select("*"),
       sb.from("course_counts").select("*"),
       sb.from("preski_counts").select("*"),
-      sb.from("prices").select("category, name, price:card_price, day"),
+      sb.from("prices").select("category, name, price:card_price, day, course_only"),
       // Gli sci club affiliati (Impostazioni) e, per gruppo, incassi e voci (dalla 3.12.2).
       sb.from("affiliated_clubs").select("name").order("name"),
       sb.from("club_totals").select("*"),
@@ -210,10 +210,17 @@
       // Tesserati: con la tessera o coperti da presciistica o agevolazione famiglia (card_holder()).
       allRows(() => sb.from("members").select("id").not("enrolled_at", "is", null).is("card_holder", true).order("id"))
         .then((data) => ({ data }), (err) => ({ error: err })),
+      // Soci offerti (dalla 3.12.4): tipo di tessera vero e totale scritto a mano a 0 €. Pochi: niente pagine.
+      sb.from("members").select("card_type, family_discount, preski_type, preski_card, preski_course_price, course_type, "
+        + "club:affiliated_clubs(name), member_passes(pass_type, season)")
+        .not("enrolled_at", "is", null).eq("total_manual", true).eq("total", 0),
     ]);
     const err = responses.find((r) => r.error);
     if (err) throw err.error;
-    const [kpi, cards, passList, courses, preskiCourse, priceList, clubs, clubTotals, clubCounts, holders] = responses.map((r) => r.data);
+    const [kpi, cards, passList, courses, preskiCourse, priceList, clubs, clubTotals, clubCounts, holders, offeredMembers] = responses.map((r) => r.data);
+    const offered = offeredMembers.map((m) => ({ club: m.club?.name ?? null, ...offeredItems(m, priceList) }));
+    // Le voci dei soci offerti di un gruppo (club vuoto: Don Bosco), o di tutti con undefined.
+    const offeredOf = (section, club) => offered.filter((o) => club === undefined || o.club === club).flatMap((o) => o[section]);
 
     // Abbonamenti e corsi: le viste danno i conteggi, il prezzo è quello di listino.
     const withPrice = (rows, categoryName) => rows.map((r) => {
@@ -222,11 +229,12 @@
       return { name: r.name, day: item?.day, count: r.count, price: priceValue, total: priceValue != null ? priceValue * Number(r.count) : null };
     });
     return {
-      kpi: kpi, tessere: cards, tesserati: holders.length,
-      abbonamenti: withPrice(passList, "ABBONAMENTO"),
-      corsi: withPrice(courses, "CORSO"),
+      kpi: kpi, tessere: withOffered(cards, offeredOf("tessere")), tesserati: holders.length,
+      abbonamenti: withOffered(withPrice(passList, "ABBONAMENTO"), offeredOf("abbonamenti")),
+      corsi: withOffered(withPrice(courses, "CORSO"), offeredOf("corsi")),
       // Il prezzo dipende dall'assicurazione scelta: lo dà la vista, una riga per voce e assicurazione.
-      presciistica: preskiCourse.map((r) => ({ name: r.name, count: r.count, price: Number(r.price), total: Number(r.total) })),
+      presciistica: withOffered(preskiCourse.map((r) => ({ name: r.name, count: r.count, price: Number(r.price), total: Number(r.total) })),
+        offeredOf("presciistica")),
       // Don Bosco (club vuoto) e ogni club di Impostazioni, anche senza soci; nessun club: niente pulsanti.
       gruppi: !clubs.length ? [] : [null, ...clubs.map((c) => c.name)].map((club) => {
         const of = (section) => clubCounts.filter((r) => r.club === club && r.section === section);
@@ -234,11 +242,53 @@
         return {
           nome: club || "DON BOSCO", cifre: totals,
           tesserati: of("SOCI").reduce((sum, r) => sum + Number(r.count), 0),
-          tessere: of("TESSERE"), presciistica: of("PRESCIISTICA"),
-          abbonamenti: withPrice(of("ABBONAMENTI"), "ABBONAMENTO"), corsi: withPrice(of("CORSI"), "CORSO"),
+          tessere: withOffered(of("TESSERE"), offeredOf("tessere", club)),
+          presciistica: withOffered(of("PRESCIISTICA"), offeredOf("presciistica", club)),
+          abbonamenti: withOffered(withPrice(of("ABBONAMENTI"), "ABBONAMENTO"), offeredOf("abbonamenti", club)),
+          corsi: withOffered(withPrice(of("CORSI"), "CORSO"), offeredOf("corsi", club)),
         };
       }),
     };
+  }
+
+  /**
+   * Le voci di un socio offerto, con le regole delle viste: la tessera (quella compresa nella presciistica, se c'è, e
+   * allora non quella scritta), l'agevolazione famiglia, la parte della presciistica col suo prezzo, il corso e gli
+   * abbonamenti della stagione in corso (l'inizio come current_season(): 1 settembre).
+   */
+  function offeredItems(m, priceList) {
+    const valid = (v) => Boolean(v) && v.toUpperCase() !== "NO";
+    const preski = valid(m.preski_type) ? priceList.find((p) => p.category === "PRESCIISTICA" && p.name === m.preski_type) : null;
+    const card = m.preski_card || (valid(m.card_type) && !(preski && !preski.course_only) ? m.card_type : null);
+    const now = new Date();
+    const season = `${now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1}-09-01`;
+    return {
+      tessere: [card, m.family_discount].filter(Boolean).map((name) => ({ name })),
+      presciistica: valid(m.preski_type) ? [{ name: m.preski_type, price: m.preski_course_price }] : [],
+      corsi: valid(m.course_type) ? [{ name: m.course_type }] : [],
+      abbonamenti: (m.member_passes || []).filter((p) => String(p.season).slice(0, 10) === season).map((p) => ({ name: p.pass_type })),
+    };
+  }
+
+  /**
+   * Soci offerti (dalla 3.12.4): le viste contano ogni voce a prezzo di listino, anche col totale del socio scritto a
+   * mano a 0 €. Qui ogni voce offerta lascia la sua riga e va in «… (offerta)» a 0 €: il numero di voci resta, il
+   * totale della tabella torna con quello che i soci devono. Solo il disegno: viste e totali dei soci non cambiano.
+   * La presciistica si riconosce anche dal prezzo (una riga per voce e assicurazione).
+   */
+  function withOffered(rows, items) {
+    const out = rows.map((r) => ({ ...r, count: Number(r.count) }));
+    items.forEach(({ name, price }) => {
+      const paid = out.find((r) => r.name === name && r.count > 0 && (price === undefined || Number(r.price) === Number(price)));
+      if (!paid) return;
+      paid.count -= 1;
+      if (paid.total != null) paid.total = Number(paid.price || 0) * paid.count;
+      const label = `${name} (offerta)`;
+      const free = out.find((r) => r.name === label);
+      if (free) free.count += 1;
+      else out.push({ name: label, day: paid.day, count: 1, price: 0, total: 0 });
+    });
+    return out.filter((r) => r.count > 0);
   }
 
   /**
