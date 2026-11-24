@@ -42,7 +42,7 @@ assert.deepStrictEqual(wrongOnes, [], "librerie dal CDN:\n  " + wrongOnes.join("
 const LISTS = {
   "web/social.html": ["elencoPost", "riassuntoSponsor", "riassuntoContatti", "riassuntoGiorni"],
   "web/admin.html": ["displayArea"],
-  "web/riepilogo.html": ["tTess", "tPresc", "tAbb", "tCorsi", "tEntrate", "tUscite"],
+  "web/riepilogo.html": ["tTess", "tPresc", "tAbb", "tCorsi"],
   "web/gestione.html": ["storicoPermessi", "tabellaPermessi"],
   "web/assicurazione.html": ["tipi", "elencoDa", "elencoListe"],
   "web/bilancio.html": ["elencoMovimenti"],

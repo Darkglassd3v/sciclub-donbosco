@@ -1,21 +1,25 @@
-// Riepilogo (riepilogo.html), incassi per sci club (dalla 3.12.2, richiesta del 24/11/2026: «voglio differenziare gli
-// incassi tra Don Bosco e Moncalvo, in alto lascia il riepilogo che c'è ora che include tutto»).
-// - In alto tutto come prima: cifre e tabelle di tutti i soci (card_counts, course_counts, …), senza «di cui».
-// - Sotto, le tab DON BOSCO (soci senza club) e una per ogni sci club affiliato (proposta dell'utente, stesso giorno);
-//   all'apertura la prima. Ogni pannello: soci,
-//   totale teorico, incassato e da incassare del gruppo (club_totals) e le stesse tabelle di sopra, Tessere,
-//   Presciistica, Abbonamenti gite e Corsi, con voce, N., prezzo e totale solo dei suoi soci (club_counts).
-// - Un club senza voci in una tabella: «—», come sopra.
+// Riepilogo (riepilogo.html), tabelle per sci club (dalla 3.12.3, richiesta del 24/11/2026: «io voglio le stesse
+// tabelle di prima selezionabili per sci club tramite pulsanti grandi in alto, messi sotto il riepilogo stagione»).
+// - Le cifre della stagione in alto restano di tutti i soci; subito sotto, pulsanti grandi TUTTI, DON BOSCO (soci
+//   senza club) e uno per ogni sci club affiliato; all'apertura TUTTI, cioè il Riepilogo di sempre.
+// - Scelto un gruppo, le stesse tabelle Tessere, Presciistica, Abbonamenti gite e Corsi mostrano solo i suoi soci
+//   (club_counts), con sopra soci, totale teorico, incassato e da incassare del gruppo (club_totals).
+// - Niente Entrate extra né Uscite (stesso giorno: «quello lo vedi dal Bilancio»): il Riepilogo è delle quote dei
+//   soci, e i movimenti non si leggono più.
+// - Tolti il riquadro «Incassi per sci club» in fondo (3.12.2) e «Elenchi e stagioni chiuse»: le stagioni chiuse si
+//   aprono dalla pagina Stagione, l'Elenco soci dal menu.
 {
   const CLUB = "SCI CLUB MONCALVO";
+  const ASKED = [];
   FAKE.risposta = (t) => {
+    ASKED.push(t);
     if (t === "season_totals") return [{ total_members: 10, total_due: 500, total_collected: 300, outstanding: 200 }];
     if (t === "card_counts") return [{ name: "ORDINARIA", count: 6, price: 30, total: 180 }, { name: "JUNIOR", count: 3, price: 20, total: 60 }];
     if (t === "course_counts") return [{ name: "CORSO SCI ADULTI", count: 2 }];
     if (t === "pass_counts") return [{ name: "5 VIAGGI SABATO", count: 2 }];
     if (t === "prices") return [{ category: "CORSO", name: "CORSO SCI ADULTI", price: 200, day: null },
       { category: "ABBONAMENTO", name: "5 VIAGGI SABATO", price: 100, day: "SABATO" }];
-    if (t === "affiliated_clubs") return [{ id: 1, name: CLUB }];
+    if (t === "affiliated_clubs") return [{ name: CLUB }];
     if (t === "club_totals") return [
       { club: null, members: 9, total_due: 430, total_collected: 230, outstanding: 200 },
       { club: CLUB, members: 1, total_due: 70, total_collected: 70, outstanding: 0 },
@@ -34,43 +38,41 @@
     return [];
   };
   const text = (node) => node?.textContent.replace(/\s+/g, " ").trim() || "";
-  // Una riga di tabella come si legge: le celle separate da uno spazio.
   const rowText = (tr) => (tr ? [...tr.cells].map(text).join(" ") : "");
+  const row = (id, label) => [...el(id).querySelectorAll("tr")].find((tr) => text(tr.cells[0]).startsWith(label));
+  const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     try {
-      await new Promise((ok) => setTimeout(ok, 600));
-      const row = (tbody, label) => [...(tbody?.querySelectorAll("tr") || [])].find((tr) => text(tr.cells[0]).startsWith(label));
-      test("sopraTutto", rowText(row(el("tTess"), "Totale")).startsWith("Totale 9") && !document.querySelector(".di-cui")
-        && !el("zonaClub"), rowText(row(el("tTess"), "Totale")));
+      await wait(600);
+      const bar = document.querySelector('[role="tablist"]');
+      const buttons = [...(bar?.querySelectorAll('[role="tab"]') || [])];
+      test("pulsanti", buttons.map(text).join("|") === `TUTTI|DON BOSCO|${CLUB}`
+        && buttons[0].getAttribute("aria-selected") === "true", buttons.map((b) => `${text(b)}:${b.getAttribute("aria-selected")}`).join("|"));
+      test("sottoLeCifre", Boolean(bar) && document.querySelector(".cifre")?.nextElementSibling?.contains(bar), bar?.parentElement?.className);
+      test("grandi", buttons.length > 0 && buttons.every((b) => b.getBoundingClientRect().height >= 44),
+        buttons.map((b) => Math.round(b.getBoundingClientRect().height)).join(","));
+      test("tolti", !el("zonaGruppi") && !el("zonaComandi"), `${Boolean(el("zonaGruppi"))} ${Boolean(el("zonaComandi"))}`);
+      test("tutti", rowText(row("tTess", "Totale")) === "Totale 9 — € 240,00" && el("cifreGruppo")?.hidden === true, rowText(row("tTess", "Totale")));
 
-      const tabs = [...document.querySelectorAll('[role="tablist"] [role="tab"]')];
-      test("tab", tabs.map(text).join("|") === `DON BOSCO|${CLUB}` && tabs[0]?.getAttribute("aria-selected") === "true"
-        && tabs[1]?.getAttribute("aria-selected") === "false", tabs.map((b) => `${text(b)}:${b.getAttribute("aria-selected")}`).join("|"));
-      const groups = [...document.querySelectorAll('[role="tabpanel"][data-gruppo]')];
-      test("pannelli", groups.length === 2 && !groups[0].hidden && groups[1].hidden && groups[1].getAttribute("role") === "tabpanel"
-        && groups[1].getAttribute("aria-labelledby") === tabs[1]?.id, groups.map((g) => `${g.dataset.gruppo}:${g.hidden}`).join("|"));
-      tabs[1]?.click();
-      test("cambiaTab", groups[0]?.hidden && !groups[1]?.hidden && tabs[1]?.getAttribute("aria-selected") === "true",
-        groups.map((g) => `${g.dataset.gruppo}:${g.hidden}`).join("|"));
-      test("gruppi", groups.map((s) => s.dataset.gruppo).join("|") === `DON BOSCO|${CLUB}`, groups.map((s) => s.dataset.gruppo).join("|"));
-      const [db, club] = groups;
-      const cifre = (s) => [...(s?.querySelectorAll(".kpi-value") || [])].map(text).join("|");
-      test("incassiDonBosco", cifre(db) === "9|€ 430,00|€ 230,00|€ 200,00", cifre(db));
-      test("incassiClub", cifre(club) === "1|€ 70,00|€ 70,00|€ 0,00", cifre(club));
+      buttons[1]?.click();
+      await wait(100);
+      const cifre = [...(el("cifreGruppo")?.querySelectorAll(".kpi-value") || [])].map(text).join("|");
+      test("donBosco", rowText(row("tTess", "ORDINARIA")) === "ORDINARIA 5 € 30,00 € 150,00" && rowText(row("tTess", "Totale")) === "Totale 8 — € 210,00"
+        && el("cifreGruppo")?.hidden === false && cifre === "9|€ 430,00|€ 230,00|€ 200,00", `${rowText(row("tTess", "Totale"))} / ${cifre}`);
+      test("senzaEntrateUscite", !el("tEntrate") && !el("tUscite") && !ASKED.includes("ledger_entries"),
+        `${Boolean(el("tEntrate"))} ${Boolean(el("tUscite"))} ${ASKED.includes("ledger_entries")}`);
 
-      const table = (s, kind) => s?.querySelector(`tbody[data-tabella="${kind}"]`);
-      test("tessereDonBosco", rowText(row(table(db, "TESSERE"), "ORDINARIA")) === "ORDINARIA 5 € 30,00 € 150,00"
-        && rowText(row(table(db, "TESSERE"), "Totale")) === "Totale 8 — € 210,00", text(table(db, "TESSERE")));
-      test("tessereClub", rowText(row(table(club, "TESSERE"), "ORDINARIA")) === "ORDINARIA 1 € 30,00 € 30,00"
-        && rowText(row(table(club, "TESSERE"), "Totale")) === "Totale 1 — € 30,00", text(table(club, "TESSERE")));
-      test("corsiClub", rowText(row(table(club, "CORSI"), "CORSO SCI ADULTI")) === "CORSO SCI ADULTI 1 € 200,00 € 200,00",
-        text(table(club, "CORSI")));
-      test("abbonamentiDonBosco", rowText(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).startsWith("5 VIAGGI SABATO")
-        && rowText(row(table(db, "ABBONAMENTI"), "5 VIAGGI SABATO")).endsWith("2 € 100,00 € 200,00"), text(table(db, "ABBONAMENTI")));
-      test("vuotaClub", text(table(club, "ABBONAMENTI")) === "—" && text(table(club, "PRESCIISTICA")) === "—",
-        `${text(table(club, "ABBONAMENTI"))} / ${text(table(club, "PRESCIISTICA"))}`);
+      buttons[2]?.click();
+      await wait(100);
+      test("club", rowText(row("tTess", "ORDINARIA")) === "ORDINARIA 1 € 30,00 € 30,00" && rowText(row("tTess", "Totale")) === "Totale 1 — € 30,00"
+        && rowText(row("tCorsi", "CORSO SCI ADULTI")) === "CORSO SCI ADULTI 1 € 200,00 € 200,00" && text(el("tAbb")) === "—"
+        && buttons[2]?.getAttribute("aria-selected") === "true", `${rowText(row("tTess", "Totale"))} / ${text(el("tAbb"))}`);
+
+      buttons[0]?.click();
+      await wait(100);
+      test("tornaTutti", rowText(row("tTess", "Totale")) === "Totale 9 — € 240,00" && el("cifreGruppo")?.hidden === true, rowText(row("tTess", "Totale")));
     } catch (e) { r.push(`eccezione=NO(${String(e?.message || e).slice(0, 120)})`); }
     document.title = "RISULTATO " + r.join(" ");
   }, 400));

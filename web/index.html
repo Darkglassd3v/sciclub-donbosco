@@ -211,7 +211,7 @@
   <!-- La ricerca sta sempre in cima: quasi ogni iscrizione è un rinnovo, e
        prima stava nascosta dietro il pulsante "Modifica socio". -->
   <div id="searchZone" class="riquadro">
-    <div class="cerca-titolo"><h2>Cerca un socio</h2><a class="button is-link is-light is-small" href="elenco.html" id="vaiElenco" hidden>Elenco soci</a></div>
+    <div class="cerca-titolo"><h2>Cerca un socio</h2></div>
     <label class="label" for="searchInput">Cognome, nome o codice fiscale</label>
     <input id="searchInput" class="input" type="search" placeholder="Cognome, nome o codice fiscale" autocomplete="off">
     <div id="searchResults" style="max-height:220px;overflow-y:auto" class="mt-2"></div>
@@ -531,8 +531,6 @@
     setLoading(true);
     try {
       access = await getProfile();
-      // L'Elenco soci si apre col suo permesso (dalla 3.8).
-      el("vaiElenco").hidden = !access.permissions.includes("elenco");
 
       PRICES = await loadPrices();
       // Dalla meno cara: la prima è quella proposta con la presciistica.
