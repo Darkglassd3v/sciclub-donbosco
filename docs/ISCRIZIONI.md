@@ -36,6 +36,12 @@ repository:
 /loop 15m lancia supabase/scripts/controlli.sh e avvisami solo se ci sono anomalie nuove rispetto al giro prima, con nome e cosa fare. Non modificare mai dati.
 ```
 
+**Sorveglianza dal vivo** (dalla serata del 25/11/2026): `supabase/scripts/sorveglia.sh [secondi] [HH:MM di fine]`
+ripete gli stessi controlli ogni 2 minuti (di default fino alle 23:59) e stampa solo i cambiamenti: al primo giro le
+anomalie già presenti (BASE), poi le anomalie NUOVE con il nome del socio, quelle RISOLTE, il numero degli ISCRITTI
+quando cambia ed ERRORE se il database non risponde. In Claude Code si lancia in sottofondo (Monitor), così ogni
+riga nuova arriva come avviso.
+
 I controlli usano l'utente `monitor` del database (`supabase/.monitor_connect`),
 che può solo leggere: né lo script né Claude possono cambiare un dato.
 Le correzioni le fa un volontario dal sito (Soci, Pagamenti), o il
