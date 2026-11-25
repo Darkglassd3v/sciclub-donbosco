@@ -24,7 +24,7 @@ alto, così puoi continuare a scrivere.
 2. Se non c'è, scrivi i suoi dati nel modulo: in alto c'è scritto **Socio
    nuovo**. Se avevi aperto un altro socio, premi **Chiudi scheda** accanto al
    suo nome.
-3. Scrivi almeno **Cognome, Nome, Telefono**. Il **codice fiscale** serve
+3. Scrivi almeno **Cognome** e **Nome**; il **telefono** è facoltativo. Il **codice fiscale** serve
    per l'assicurazione: senza, il socio non è assicurato. Se scrivi città di
    nascita, data di nascita e premi **M** o **F**, il modulo propone il codice:
    controllalo sulla tessera sanitaria e premi **Usa il codice proposto**. Per
@@ -69,8 +69,9 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
   cerca il suo cognome.
 
 In fondo allo schermo vedi **Totale** e **Residuo**. Premi il pulsante
-giallo **Salva**: compare una finestra con nome, codice fiscale e data di
-nascita. Se sono giusti premi **Sì, salva** e aspetta il messaggio verde;
+giallo **Salva**: compare una finestra con, in cima, il **numero di tessera** e il **tipo di
+tessera** (o da cosa è coperto il socio: presciistica o agevolazione famiglia), poi nome, codice
+fiscale e data di nascita. Se sono giusti premi **Sì, salva** e aspetta il messaggio verde;
 se no **Annulla** e correggi. Dopo il salvataggio il modulo si svuota, pronto
 per il prossimo.
 
