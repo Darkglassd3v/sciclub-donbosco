@@ -284,7 +284,7 @@
       <div class="column is-6"><label class="label" for="f_citta">Città di residenza</label><input class="input" id="f_citta"></div>
       <div class="column is-3"><label class="label" for="f_provincia">Provincia</label><input class="input" id="f_provincia" maxlength="2"></div>
       <div class="column is-3"><label class="label" for="f_cap">CAP</label><input class="input" id="f_cap"></div>
-      <div class="column is-4"><label class="label" for="f_telefono">Telefono*</label><input class="input" id="f_telefono" required></div>
+      <div class="column is-4"><label class="label" for="f_telefono">Telefono</label><input class="input" id="f_telefono" type="tel" autocomplete="off"></div>
       <div class="column is-8"><label class="label" for="f_email">Email</label><input class="input" type="email" id="f_email"></div>
     </div>
 
@@ -1888,16 +1888,30 @@
     return cityName ? (abbrev ? `${cityName} (${abbrev})` : cityName) : "";
   };
 
-  /** I dati della domanda prima di salvare, dal modulo: chi è, uno per riga. */
+  /**
+   * Il tipo di tessera che si registra (per la conferma): quella scelta, oppure da cosa è coperto il socio,
+   * cioè l'agevolazione famiglia sua o del capofamiglia, o la presciistica che comprende la tessera.
+   */
+  function cardKind() {
+    const own = selectedName("f_agevolazioni_famiglia");
+    if (own) return `Agevolazione famiglia (${own})`;
+    const c = cover();
+    if (c?.capo) return `Agevolazione famiglia di ${c.capo.nome} (${c.agevolazione.name})`;
+    if (preskiWithCard()) return `Compresa nella presciistica (${selectedName("f_presciistica")})`;
+    return selectedName("f_tipologia_tessera");
+  }
+
+  /** I dati della domanda prima di salvare, dal modulo: in cima numero e tipo di tessera, poi chi è. */
   function saveData() {
     return [
+      // Lo ha ogni iscritto, anche chi è coperto da presciistica o agevolazione: vuoto, si legge
+      // «non scritto» in rosso. In cima dal 25/11/2026, col tipo di tessera sotto.
+      ["Numero tessera", el("f_numero_tessera").value.trim()],
+      ["Tipo di tessera", cardKind()],
       ["Nome e cognome", nameInForm()],
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
       ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
       ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
-      // Lo ha ogni iscritto, anche chi è coperto da presciistica o agevolazione: vuoto, si legge
-      // «non scritto» in rosso.
-      ["Numero tessera", el("f_numero_tessera").value.trim()],
       // Solo se scelto (dalla 3.12): vuoto è un socio nostro, non un dato mancante.
       ...(el("f_club").value ? [["Sci club di provenienza", el("f_club").selectedOptions[0].textContent]] : []),
     ];
@@ -1936,7 +1950,8 @@
       city: el("f_citta").value.trim().toUpperCase() || null,
       province: el("f_provincia").value.trim().toUpperCase() || null,
       postal_code: el("f_cap").value.trim() || null,
-      phone: el("f_telefono").value.trim(),
+      // Facoltativo dal 25/11/2026: vuoto è null, come l'email.
+      phone: el("f_telefono").value.trim() || null,
       email: el("f_email").value.trim() || null,
       card_type: selectedName("f_tipologia_tessera"),
       family_discount: selectedName("f_agevolazioni_famiglia"),

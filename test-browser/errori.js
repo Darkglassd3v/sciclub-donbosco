@@ -23,12 +23,13 @@
     window.scrollTo(0, document.body.scrollHeight);
     await save();
     await wait(300);
-    test("obbligatoriRossi", red("f_cognome") && red("f_nome") && red("f_telefono"),
+    // Il telefono è facoltativo dal 25/11/2026: resta senza bordo rosso e non compare nell'elenco.
+    test("obbligatoriRossi", red("f_cognome") && red("f_nome") && !red("f_telefono"),
       `cognome ${red("f_cognome")}, nome ${red("f_nome")}, telefono ${red("f_telefono")}`);
     test("sceltaRossa", red("f_tipologia_tessera"), "il gruppo Tipologia tessera non è bordato");
     test("scorreAlPrimo", visible("f_cognome") && document.activeElement === el("f_cognome"),
       `si vede ${visible("f_cognome")}, fuoco su ${document.activeElement?.id}`);
-    test("diceQuali", /Cognome/.test(toast()) && /Telefono/.test(toast()), `messaggio «${toast()}»`);
+    test("diceQuali", /Cognome/.test(toast()) && /Tipologia tessera/.test(toast()) && !/Telefono/.test(toast()), `messaggio «${toast()}»`);
 
     el("f_cognome").value = "Rossi";
     el("f_cognome").dispatchEvent(new Event("input", { bubbles: true }));
