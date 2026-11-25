@@ -1472,6 +1472,43 @@ begin
   assert public.insurance_send('SPORT', 30, array[sola]) = 1, 'presciistica senza tessera: non è entrato nella lista Sport';
 end $$;
 
+-- Senza assicurazione nel nucleo (dalla 3.13, 25/11/2026): un membro coperto da un'agevolazione «con
+-- assicurazione» può essere segnato senza (members.no_insurance), il capofamiglia o un familiare. Per lui
+-- member_insurance() è vuota e non entra fra i da assicurare; gli altri del nucleo restano assicurati. La
+-- casella vale solo per la copertura dell'agevolazione: chi ha la sua tessera o la presciistica con
+-- l'assicurazione scelta resta assicurato come sempre.
+reset role;
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, family_discount, no_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000030', 'NERI', 'CAPO', now(), 'NRICPA80A01F205X', 'PROVA 3 PERSONE CON ASSICURAZIONE', true);
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, payer_id, no_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000031', 'NERI', 'FIGLIO', now(), 'NRIFGL80A01F205X', 'aaaaaaaa-0000-0000-0000-000000000030', false),
+  ('aaaaaaaa-0000-0000-0000-000000000032', 'NERI', 'FIGLIA', now(), 'NRIFGA80A01F205X', 'aaaaaaaa-0000-0000-0000-000000000030', true);
+insert into public.members (id, last_name, first_name, enrolled_at, tax_code, card_type, no_insurance) values
+  ('aaaaaaaa-0000-0000-0000-000000000033', 'NERI', 'TESSERATO', now(), 'NRITSS80A01F205X', 'PROVA TESSERA ORDINARIA', true);
+set role authenticated;
+do $$
+declare
+  capo    constant uuid := 'aaaaaaaa-0000-0000-0000-000000000030';
+  figlio  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000031';
+  figlia  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000032';
+  tessera constant uuid := 'aaaaaaaa-0000-0000-0000-000000000033';
+begin
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  assert (select public.member_insurance(m) from public.members m where id = capo) is null,
+         'capofamiglia senza assicurazione: member_insurance non è vuota';
+  assert (select public.member_insurance(m) from public.members m where id = figlia) is null,
+         'familiare senza assicurazione: member_insurance non è vuota';
+  assert (select public.member_insurance(m) from public.members m where id = figlio) = 'BASE',
+         'il resto del nucleo deve restare assicurato con l''agevolazione';
+  assert (select public.member_insurance(m) from public.members m where id = tessera) is not null,
+         'la casella vale solo per l''agevolazione: chi ha la sua tessera resta assicurato';
+  assert not exists (select 1 from public.insurance_members() where id in (capo, figlia)),
+         'chi è senza assicurazione è ancora fra i da assicurare';
+  assert (select insurance from public.insurance_members() where id = figlio) = 'BASE',
+         'il familiare assicurato non è fra i da assicurare';
+end $$;
+
 -- La ricerca dell'assicurazione si ferma a 20 risultati.
 reset role;
 do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
