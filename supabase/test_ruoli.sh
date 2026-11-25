@@ -1494,7 +1494,8 @@ declare
   figlia  constant uuid := 'aaaaaaaa-0000-0000-0000-000000000032';
   tessera constant uuid := 'aaaaaaaa-0000-0000-0000-000000000033';
 begin
-  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
+  -- member_insurance() legge anche il capofamiglia: con l'admin, che vede tutti i soci come la pagina Soci.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', false);
   assert (select public.member_insurance(m) from public.members m where id = capo) is null,
          'capofamiglia senza assicurazione: member_insurance non è vuota';
   assert (select public.member_insurance(m) from public.members m where id = figlia) is null,
@@ -1503,11 +1504,16 @@ begin
          'il resto del nucleo deve restare assicurato con l''agevolazione';
   assert (select public.member_insurance(m) from public.members m where id = tessera) is not null,
          'la casella vale solo per l''agevolazione: chi ha la sua tessera resta assicurato';
+  perform set_config('test.uid', '66666666-6666-6666-6666-666666666666', false);
   assert not exists (select 1 from public.insurance_members() where id in (capo, figlia)),
          'chi è senza assicurazione è ancora fra i da assicurare';
   assert (select insurance from public.insurance_members() where id = figlio) = 'BASE',
          'il familiare assicurato non è fra i da assicurare';
 end $$;
+-- Il nucleo di prova non resta: le prove della chiusura contano le agevolazioni della stagione.
+reset role;
+delete from public.members where id in ('aaaaaaaa-0000-0000-0000-000000000031', 'aaaaaaaa-0000-0000-0000-000000000032',
+  'aaaaaaaa-0000-0000-0000-000000000033', 'aaaaaaaa-0000-0000-0000-000000000030');
 
 -- La ricerca dell'assicurazione si ferma a 20 risultati.
 reset role;

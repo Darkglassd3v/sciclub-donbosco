@@ -299,6 +299,12 @@
       <p id="notaPresciistica" class="help" hidden>La tessera è compresa nella presciistica e non va selezionata, anche senza assicurazione.</p>
       <fieldset class="scelte" id="f_agevolazioni_famiglia"><legend class="label">Agevolazione famiglia</legend><div class="scelte-opzioni"></div></fieldset>
       <p id="notaFamiglia" class="help" hidden></p>
+      <!-- Dalla 3.13: chi è coperto da un'agevolazione «con assicurazione» (sua o del capofamiglia) può non essere
+           assicurato: non entra nelle liste dell'assicurazione e il capofamiglia non la paga. -->
+      <div id="zonaSenzaAssicurazione" hidden>
+        <label class="checkbox" for="f_senza_assicurazione"><input type="checkbox" id="f_senza_assicurazione"> Senza assicurazione: l'agevolazione non assicura questa persona</label>
+        <p id="notaSenzaAssicurazione" class="help" hidden></p>
+      </div>
       <!-- Dalla 3.12: lo sci club affiliato da cui arriva il socio (Impostazioni). Tesseriamo e incassiamo noi: non cambia
            il prezzo, serve solo a contarli nel Riepilogo e a vederli nell'Elenco soci. -->
       <div class="field">
@@ -577,6 +583,7 @@
       }
       el("f_acconto").addEventListener("input", recompute);
       el("f_totale_a_mano").addEventListener("change", () => { updateManualTotal({ daListino: true }); recompute(); });
+      el("f_senza_assicurazione").addEventListener("change", recompute);
       el("f_totale_manuale").addEventListener("input", recompute);
       el("searchInput").addEventListener("input", searchMembers);
       el("f_payerDisplay").addEventListener("input", searchPayer);
@@ -1007,8 +1014,20 @@
     const items = Object.keys(CATEGORY_SELECT)
       .filter((id) => !(withPreski && id === "f_tipologia_tessera"))
       .reduce((sum, id) => sum + (parseFloat(choiceOf(id)?.value) || 0), 0);
-    return items + passesToCount().reduce((sum, a) => sum + num(a.price), 0);
+    // Il capofamiglia senza assicurazione non la paga (dalla 3.13); per un familiare la paga il capofamiglia.
+    const withoutInsurance = noInsurance() && !cover()?.capo ? num(familyInsurance().price) : 0;
+    return items + passesToCount().reduce((sum, a) => sum + num(a.price), 0) - withoutInsurance;
   }
+
+  /** L'assicurazione dell'agevolazione che copre il socio, sua o del capofamiglia ({ code, name, price }); null senza. */
+  function familyInsurance() {
+    const c = cover();
+    if (!c?.famiglia || !c.agevolazione?.insurance) return null;
+    return (PRICES.ASSICURAZIONE || []).find((a) => a.code === c.agevolazione.insurance) || null;
+  }
+
+  /** Spuntato «Senza assicurazione», e la casella conta: solo con un'agevolazione che assicura. */
+  const noInsurance = () => el("f_senza_assicurazione").checked && Boolean(familyInsurance());
 
   /**
    * Il totale di un socio già salvato non segue i prezzi nuovi del listino: quello fatto
@@ -1125,6 +1144,13 @@
     note.textContent = text;
     note.hidden = !text;
     note.classList.toggle("is-danger", notice);
+    const insurance = familyInsurance();
+    el("zonaSenzaAssicurazione").hidden = !insurance;
+    const insuranceNote = el("notaSenzaAssicurazione");
+    insuranceNote.textContent = !noInsurance() ? "" : c.capo
+      ? `La quota la paga ${c.capo.nome}: nella sua scheda abbassare il totale di ${fmt(insurance.price)} (Totale manuale).`
+      : `Tolti dal totale ${fmt(insurance.price)} dell'assicurazione ${insurance.name}.`;
+    insuranceNote.hidden = !insuranceNote.textContent;
     const family = Boolean(c?.famiglia);
     el("f_presciistica").querySelectorAll("input").forEach((r) => {
       const item = (PRICES.PRESCIISTICA || []).find((p) => p.name === r.dataset.nome);
@@ -1584,6 +1610,7 @@
       el("f_giorno_corso").querySelectorAll("input").forEach((r) => (r.checked = r.value === member.course_day));
       updateCourseDay();
       el("f_totale_a_mano").checked = Boolean(member.total_manual);
+      el("f_senza_assicurazione").checked = Boolean(member.no_insurance);
       updateManualTotal();
       if (member.total_manual) el("f_totale_manuale").value = num(member.total);
       tickDepartures("check_sabato", member.saturday_departure);
@@ -1908,6 +1935,7 @@
       // «non scritto» in rosso. In cima dal 25/11/2026, col tipo di tessera sotto.
       ["Numero tessera", el("f_numero_tessera").value.trim()],
       ["Tipo di tessera", cardKind()],
+      ...(noInsurance() ? [["Assicurazione", "Nessuna (senza assicurazione)"]] : []),
       ["Nome e cognome", nameInForm()],
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
       ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
@@ -1966,6 +1994,7 @@
       card_number: cardNumber(),
       total: individualTotal(),
       total_manual: manualTotal(),
+      no_insurance: noInsurance(),
       paid: parseFloat(el("f_acconto").value) || 0,
       payer_id: el("f_payer_id").value || null,
       club_id: el("f_club").value ? Number(el("f_club").value) : null,
@@ -2160,6 +2189,7 @@
         ["Email", el("f_email").value.trim()]]],
       ["Tessera", [["Numero tessera", cardNumber()], ["Tessera", selectedName("f_tipologia_tessera")],
         ["Agevolazione famiglia", selectedName("f_agevolazioni_famiglia")],
+        ["Assicurazione", noInsurance() && "Nessuna (senza assicurazione)"],
         ["Sci club di provenienza", el("f_club").value && el("f_club").selectedOptions[0].textContent]]],
       ["Gite e corsi", [["Abbonamenti", passList], ["Presciistica", selectedName("f_presciistica")],
         ["Assicurazione della presciistica", preskiWithCard() && (PRICES.ASSICURAZIONE.find((a) => a.code === selectedName("f_assicurazione_presciistica"))?.name || "Nessuna")],

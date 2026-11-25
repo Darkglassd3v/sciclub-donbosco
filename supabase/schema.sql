@@ -1541,10 +1541,18 @@ alter table public.members drop column if exists insurance_hold;
 -- l'elenco completo dei soci chiamando l'API a mano. L'elenco completo è del
 -- Riepilogo (permesso riepilogo, che legge members con la sua RLS); qui restano
 -- chi è da assicurare e una ricerca con pochi risultati per le correzioni.
+-- Senza assicurazione nel nucleo (dalla 3.13, 25/11/2026): chi è coperto da un'agevolazione famiglia «con
+-- assicurazione», capofamiglia o familiare, può non essere assicurato (la pagina Soci toglie l'assicurazione
+-- dal totale del capofamiglia). Vale solo per la copertura dell'agevolazione, non per una tessera propria né
+-- per la presciistica, che ha la sua assicurazione scelta.
+alter table public.members add column if not exists no_insurance boolean not null default false;
+comment on column public.members.no_insurance is 'Coperto dall''agevolazione famiglia ma senza assicurazione (dalla 3.13).';
+
 -- L'assicurazione di un socio. Con la presciistica che comprende la tessera è quella
 -- scelta con lei, anche nessuna: una tessera rimasta da prima non assicura chi ha
 -- detto no. Altrimenti, nell'ordine: della tessera, dell'agevolazione famiglia che ha
 -- scelto, o di quella del capofamiglia che paga per lui. NULL = non assicurato.
+-- Con no_insurance l'agevolazione (sua o del capofamiglia) non lo assicura.
 create or replace function public.member_insurance(m public.members)
 returns text
 language sql
@@ -1557,11 +1565,12 @@ as $$
       then m.preski_insurance
     else coalesce(
       (select p.insurance from public.prices p where p.category = 'TESSERA' and p.name = m.card_type),
-      (select p.insurance from public.prices p where p.category = 'FAMIGLIA' and p.name = m.family_discount),
+      (select p.insurance from public.prices p where p.category = 'FAMIGLIA' and p.name = m.family_discount
+          and not m.no_insurance),
       -- Chi ha la sua tessera (nucleo pieno) non è coperto dal capofamiglia.
       (select p.insurance from public.members c
          join public.prices p on p.category = 'FAMIGLIA' and p.name = c.family_discount
-        where c.id = m.payer_id and c.enrolled_at is not null and m.card_type is null))
+        where c.id = m.payer_id and c.enrolled_at is not null and m.card_type is null and not m.no_insurance))
   end;
 $$;
 
@@ -2690,6 +2699,7 @@ begin
     total              = 0,
     paid               = 0,
     total_manual       = false,
+    no_insurance       = false,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null
@@ -2762,6 +2772,7 @@ begin
     total              = 0,
     paid               = 0,
     total_manual       = false,
+    no_insurance       = false,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null

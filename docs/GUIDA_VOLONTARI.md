@@ -49,6 +49,10 @@ alto: **Anagrafica** (blu), **Tessera** (verde), **Gite e corsi** (viola),
   o senza assicurazione). Il prezzo comprende l'assicurazione di ognuno. La
   nota dice quante persone ci sono nel nucleo: se un familiare in più non ci
   sta, gli serve la sua tessera.
+- **Senza assicurazione nel nucleo**: se una persona coperta da un'agevolazione «con assicurazione» (il
+  capofamiglia o un familiare) non va assicurata, spunta **Senza assicurazione** sotto l'agevolazione. Non
+  entra nelle liste dell'assicurazione. Sul capofamiglia il totale scende da solo del prezzo
+  dell'assicurazione; su un familiare la nota ricorda di abbassare il totale del capofamiglia, che paga lui.
 - **Abbonamenti gite**: premi **+ Aggiungi** sull'abbonamento. Se lo paga
   subito sul pullman, spunta **già pagato**.
 - **Corso**: sceglilo e poi scegli il **giorno** (sabato o domenica).
