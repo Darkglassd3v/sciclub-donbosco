@@ -1562,6 +1562,19 @@ begin
   assert (select debt from public.insurance_members() where id = credito) = 0, 'chi è a credito risulta a debito';
   assert (select debt from public.insurance_members() where id = pari) = 0, 'chi è in pari risulta a debito';
 
+  -- Dal 26/11/2026 (3.15.1) anche il nucleo e quanto ha versato sul totale, come in Pagamenti: la
+  -- pagina distingue chi ha dato un acconto da chi non ha versato nulla e raggruppa i nuclei.
+  assert (select household_id from public.insurance_members() where id = figlio) = capo,
+         'il familiare a carico non porta il nucleo del capofamiglia';
+  assert (select household_id from public.insurance_members() where id = credito) = credito,
+         'chi paga per sé non è il nucleo di se stesso';
+  assert (select (household_paid, household_total) from public.insurance_members() where id = figlio)
+         = (40::numeric, 135::numeric),
+         'versato e totale del nucleo diversi da Pagamenti: attesi 40 su 100 + 35 = 135';
+  assert (select (household_paid, household_total) from public.insurance_members() where id = credito)
+         = (50::numeric, 35::numeric),
+         'versato e totale di chi paga per sé diversi da Pagamenti';
+
   -- Si manda chi è nel file scelto dalla pagina, anche se è a debito; gli altri restano da assicurare.
   assert public.insurance_send_all(array['BASE'], array[40], array[capo, pari]) = 2,
          'la lista con i soli soci scelti non parte';

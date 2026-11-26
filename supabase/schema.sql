@@ -1647,13 +1647,16 @@ end $$;
 -- I tesserati della stagione aperta ancora da assicurare, con il tipo della
 -- loro tessera (o quello scelto con la presciistica). Ci sono anche quelli
 -- senza codice fiscale: la pagina li mostra, perché lo si scriva, ma in una
--- lista non entrano. debt è il saldo da versare del nucleo: la pagina segna in
--- rosso chi è a debito.
+-- lista non entrano. debt è il saldo da versare del nucleo; household_id (il
+-- capofamiglia), household_paid e household_total sono il nucleo come in Pagamenti
+-- (dalla 3.15.1): la pagina distingue chi ha dato un acconto da chi non ha versato
+-- nulla e mostra insieme i soci dello stesso nucleo.
 create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
                card_type text, card_number text, insurance text,
-               debt numeric)
+               debt numeric, household_id uuid, household_paid numeric,
+               household_total numeric)
 language sql
 stable
 security definer
@@ -1661,19 +1664,22 @@ set search_path = ''
 as $$
   select t.id, t.last_name, t.first_name, t.birth_date,
          t.birth_place, t.birth_province, t.tax_code,
-         t.card_type, t.card_number, t.tipo, t.debt
-    from (select m.*, public.member_insurance(m) as tipo, public.member_debt(m) as debt
+         t.card_type, t.card_number, t.tipo, t.debt, t.nucleo,
+         coalesce(h.household_paid, 0), coalesce(h.household_total, 0)
+    from (select m.*, public.member_insurance(m) as tipo, public.member_debt(m) as debt,
+                 coalesce(m.payer_id, m.id) as nucleo
             from public.members m
            where public.can('polizze')
              and m.enrolled_at is not null
              and m.insurance_list_id is null) t
+    left join public.households h on h.head_id = t.nucleo
    where t.tipo is not null
    -- id in fondo: con omonimi l'ordine resta lo stesso fra una pagina e
    -- l'altra (la pagina legge a blocchi di 1000, vedi allRows()).
    order by t.tipo, t.last_name, t.first_name, t.id;
 $$;
 
-comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (member_insurance(): presciistica, tessera o agevolazione famiglia), e il debito del nucleo.';
+comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (member_insurance(): presciistica, tessera o agevolazione famiglia), il debito del nucleo e il nucleo con versato e totale come in Pagamenti.';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)

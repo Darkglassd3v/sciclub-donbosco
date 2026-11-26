@@ -121,6 +121,17 @@ non hanno ancora il codice fiscale) e quanti hanno una tessera **senza assicuraz
 tesserati = assicurati + da assicurare + senza assicurazione. Dopo «Segna come assicurati» i numeri si
 aggiornano da soli.
 
+Nell'elenco dei soci da assicurare il colore della riga dice quanto ha pagato il nucleo familiare:
+
+- **gialla**, «Acconto: versati € X su € Y»: ha dato un acconto; la casella **Assicura** è accesa;
+- **rossa**, «Nessun acconto: da pagare € Y»: non ha versato nulla; la casella **Assicura** è spenta e il socio
+  non entra nelle liste, a meno di accenderla a mano;
+- bianca: ha saldato; una riga grigia è un socio tolto a mano dalla lista.
+
+I soci dello stesso nucleo familiare stanno uno sotto l'altro, col capofamiglia per primo, uniti da un filo
+blu a sinistra e con la scritta «Nucleo familiare: N soci». Gli Excel scaricati restano in ordine di cognome.
+Dopo «Segna come assicurati» le caselle tornano come all'inizio.
+
 ## Stampare la scheda
 
 In alto, il pulsante blu **Stampa**: scarica la scheda compilata, un PDF

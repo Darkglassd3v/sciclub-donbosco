@@ -1,10 +1,11 @@
 // Assicurazione (assicurazione.html): si sceglie chi assicurare, socio per socio.
 // - Ogni riga con il codice fiscale ha la casella «Assicura», accesa di default per tutti.
 //   Spenta, il socio resta fuori dai file Excel e dall'invio, e i conteggi dicono quanti non
-//   sono selezionati. La scelta non si salva nel database. La riga non selezionata è tutta
-//   gialla, anche se il socio è a debito.
-// - Chi ha un importo da saldare resta selezionato, con la riga rossa e l'importo accanto; la
-//   vecchia casella «Escludi dalla lista fino al saldo» non c'è più.
+//   sono selezionati. La scelta non si salva nel database. La riga non selezionata ha un colore
+//   suo (dalla 3.15.1 il giallo è di chi ha dato un acconto, il rosso di chi non ha versato nulla:
+//   assicurazione-acconto.js), e la riga dell'acconto spenta resta gialla.
+// - Chi ha dato un acconto resta selezionato, con quanto ha versato sul totale; la vecchia casella
+//   «Escludi dalla lista fino al saldo» non c'è più.
 // - Nel titolo di ogni gruppo la casella «Tutti» spegne e riaccende i soci di quel tipo; con
 //   solo alcuni spenti è «a metà», e il clic li riaccende tutti.
 // - Cambiata la selezione dopo lo scarico, le liste vanno scaricate di nuovo.
@@ -12,9 +13,10 @@
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const member = (id, typeName, debt) => ({ id, last_name: id, first_name: "PROVA", birth_date: "1980-01-01",
-    tax_code: "RSSMRA80A01F205X", insurance: typeName, debt });
+    tax_code: "RSSMRA80A01F205X", insurance: typeName, debt, household_id: id,
+    household_paid: debt ? 20 : 35, household_total: debt ? 20 + debt : 35 });
   FAKE.rpc.insurance_members = [
-    member("DEBITO", "BASE", 45),     // importo da saldare: selezionato, riga rossa
+    member("DEBITO", "BASE", 45),     // acconto (versati 20 su 65): selezionato, riga gialla
     member("PARI", "BASE", 0),
     member("ALTRO", "BASE", 0),
     member("SPORT1", "SPORT", 0),
@@ -50,8 +52,8 @@
     test("tutteAccese", ids.every((id) => box(id)?.checked === true),
       ids.map((id) => `${id} ${box(id)?.checked}`).join(", "));
     test("etichetta", clean(box("PARI")?.closest("label")) === "Assicura", `etichetta «${clean(box("PARI")?.closest("label"))}»`);
-    test("debitoRosso", row("DEBITO")?.classList.contains("a-debito") && clean(row("DEBITO")).includes("Importo da saldare")
-      && clean(row("DEBITO")).includes("45,00") && !row("PARI")?.classList.contains("a-debito")
+    test("accontoGiallo", row("DEBITO")?.classList.contains("con-acconto") && clean(row("DEBITO")).includes("Acconto: versati € 20,00 su € 65,00")
+      && !row("PARI")?.classList.contains("con-acconto")
       && !/Escludi/.test(clean(document.getElementById("elencoDa"))),
       `classi «${row("DEBITO")?.className}», riga «${clean(row("DEBITO")).slice(0, 100)}»`);
     if (!box("PARI")) { document.title = "RISULTATO " + r.join(" "); return; }
@@ -61,17 +63,17 @@
     box("PARI").click();
     await wait(100);
     test("annullaScarico", el("btnSegna").disabled, `segna spento ${el("btnSegna").disabled}`);
-    // La riga non selezionata è tutta gialla, anche quella di chi è a debito (rossa).
+    // La riga non selezionata è tutta di un colore suo, diverso dall'acconto; l'acconto spento resta giallo.
     const bg = (id) => getComputedStyle(row(id).querySelector("td")).backgroundColor;
-    const yellow = bg("PARI");
-    test("rigaGialla", row("PARI")?.classList.contains("non-selezionata") && [...row("PARI").querySelectorAll("td")].every((td) => getComputedStyle(td).backgroundColor === yellow)
-      && yellow !== bg("ALTRO"), `classi «${row("PARI")?.className}», sfondo ${yellow} contro ${bg("ALTRO")}`);
+    const off = bg("PARI");
+    const yellow = bg("DEBITO");
+    test("rigaSpenta", row("PARI")?.classList.contains("non-selezionata") && [...row("PARI").querySelectorAll("td")].every((td) => getComputedStyle(td).backgroundColor === off)
+      && off !== bg("ALTRO") && off !== yellow, `classi «${row("PARI")?.className}», sfondo ${off} contro ${bg("ALTRO")} e ${yellow}`);
     box("DEBITO").click();
     await wait(100);
-    test("debitoGiallo", bg("DEBITO") === yellow, `sfondo ${bg("DEBITO")} contro ${yellow}`);
+    test("accontoSpentoGiallo", bg("DEBITO") === yellow && !box("DEBITO").checked, `sfondo ${bg("DEBITO")} contro ${yellow}`);
     box("DEBITO").click();
     await wait(100);
-    test("debitoTornaRosso", bg("DEBITO") !== yellow && bg("DEBITO") !== bg("ALTRO"), `sfondo ${bg("DEBITO")}`);
     test("conteggi", count("BASE").startsWith("2 da assicurare") && count("BASE").includes("1 non selezionato"),
       `conta «${count("BASE")}»`);
     test("excelSenza", await download() === "BASE:DEBITO+ALTRO,SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);

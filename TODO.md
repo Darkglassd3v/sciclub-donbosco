@@ -17,6 +17,14 @@
 
 ## Richieste nuove
 
+- [ ] **Audit di sicurezza completo** (26/11/2026, dopo la 3.15.1): skill `/security-audit`, modalità audit
+  completo, rapporto in `~/security-audit-skill/sciclub-donbosco/run-<N>`; prove solo locali in sandbox.
+- [ ] **Bot Telegram da pubblicare** (v3.15.0, `docs/TELEGRAM.md`): mancano il token del bot
+  (`~/.config/telegram/sciclub_bot_token`) e il token personale di Supabase (`~/.config/supabase/access_token`),
+  li salva l'utente. Poi: segreti `TELEGRAM_BOT_TOKEN` e `TELEGRAM_WEBHOOK_SECRET`, pubblicazione della funzione
+  `bot-telegram` senza verifica JWT (API di gestione Supabase, la CLI non c'è), `setWebhook` con `secret_token`,
+  numeri dei volontari in `telegram_phones`.
+
 - [ ] **Prove sui dati veri di Pagamenti col ruolo tesoriere (23/11/2026).** Con la copia della produzione del 23/11 e
       la migrazione 3.12.0, `test-reale/avvia.sh` dà «nessun risultato» per `pagamenti-agosto.js`,
       `pagamenti-incasso.js` e `pagamenti-tanti.js` (tesoriere): la pagina aperta risulta `/elenco.html` invece di
