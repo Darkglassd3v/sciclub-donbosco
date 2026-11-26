@@ -1,6 +1,6 @@
 // Elenco soci (elenco.html): l'Excel dei soci della stagione, spostato qui dal Riepilogo il 18/11/2026.
-// - «Scarica tutti (Excel completo)»: tutti i soci dell'elenco; «Scarica l'elenco filtrato»: solo quelli trovati
-//   dalla ricerca, con la ricerca scritta nel titolo. I pulsanti li vede solo chi ha il permesso riepilogo, come
+// - «Scarica tutti (Excel completo)»: tutti i soci dell'elenco; «Scarica quello che vedi»: solo quelli mostrati,
+//   con la ricerca scritta nel titolo. I pulsanti li vede solo chi ha il permesso riepilogo, come
 //   prima nel Riepilogo: l'Excel ha tutti i dati personali.
 // - In ordine di numero di tessera, contato come numero (2, 10, 100); senza numero (o «NO») in fondo, per cognome.
 // - Colonne a gruppi, ognuno col suo colore nella riga sopra i nomi delle colonne (richiesta del 29/10):
