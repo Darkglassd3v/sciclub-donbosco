@@ -2823,6 +2823,41 @@ do $$ begin
   end;
 end $$;
 reset role;
+-- Risposte del bot cancellate dopo 10 minuti (dalla 3.15.3): la funzione del bot ricorda ogni risposta in
+-- telegram_replies; telegram_take_due_replies() toglie e restituisce quelle più vecchie, da cancellare su Telegram.
+insert into public.telegram_replies (chat_id, message_id, sent_at) values
+  (111, 1, now() - interval '11 minutes'), (111, 2, now() - interval '1 minute');
+do $$ begin
+  assert (select array_agg(message_id) from public.telegram_take_due_replies(10)) = array[1::bigint],
+         'telegram: le risposte scadute non sono solo quella di 11 minuti fa';
+  assert (select array_agg(message_id) from public.telegram_replies) = array[2::bigint],
+         'telegram: la risposta scaduta resta da cancellare, o quella nuova è sparita';
+  assert not exists (select 1 from public.telegram_take_due_replies(10)), 'telegram: la stessa risposta presa due volte';
+end $$;
+set role authenticated;
+do $$ begin
+  begin
+    perform 1 from public.telegram_replies;
+    raise exception 'ASSERZIONE: authenticated legge le risposte del bot';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.telegram_take_due_replies(10);
+    raise exception 'ASSERZIONE: authenticated prende le risposte del bot da cancellare';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+set role anon;
+do $$ begin
+  begin
+    insert into public.telegram_replies (chat_id, message_id) values (1, 1);
+    raise exception 'ASSERZIONE: anon scrive le risposte del bot';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+delete from public.telegram_replies where chat_id = 111;
 delete from public.telegram_users where chat_id = 111;
 delete from public.telegram_phones where phone = '3331234567';
 delete from public.members where id in ('cccccccc-0000-0000-0000-000000000902', 'cccccccc-0000-0000-0000-000000000901',

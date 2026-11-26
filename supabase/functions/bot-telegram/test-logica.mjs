@@ -1,7 +1,7 @@
 // Prove della logica del bot Telegram (node supabase/functions/bot-telegram/test-logica.mjs): comandi, chat non
 // abilitate, testi delle risposte. Il database e Telegram non ci sono: li sostituisce `db` finto.
 import assert from "node:assert/strict";
-import { rispondi } from "./logica.js";
+import { rispondi, pulisci } from "./logica.js";
 
 const chiamate = [];
 const db = {
@@ -68,5 +68,14 @@ assert.match(r, /almeno 2 lettere/);
 const sporco = { ...db, cerca: async () => [{ card_number: "1", last_name: "<b>X", first_name: "&Y", phone: "1", enrolled: true }] };
 r = (await rispondi({ chat: 42, testo: "/telefono xx" }, sporco)).testo;
 assert.ok(r.includes("&lt;b&gt;X &amp;Y"), r);
+
+// Risposte cancellate dopo 10 minuti (dalla 3.15.3): la pulizia prende dal database le risposte scadute e le
+// cancella su Telegram una per una; una che non si cancella (già tolta a mano, più di 48 ore) non ferma le altre.
+const cancellate = [];
+const esito = await pulisci(
+  { risposteScadute: async (minuti) => { cancellate.push(["minuti", minuti]); return [{ chat_id: 42, message_id: 5 }, { chat_id: 42, message_id: 6 }, { chat_id: 7, message_id: 9 }]; } },
+  { cancella: async (chat, id) => { if (id === 6) throw new Error("message to delete not found"); cancellate.push([chat, id]); } });
+assert.deepEqual(cancellate, [["minuti", 10], [42, 5], [7, 9]]);
+assert.deepEqual(esito, { cancellate: 2, errori: 1 });
 
 console.log("bot telegram: logica a posto");
