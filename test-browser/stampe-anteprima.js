@@ -71,7 +71,7 @@
       const doubled = BOOKS.find(([f]) => /^Abbonamenti 5 gite sabato /.test(f));
       test("duePartenze", doubled?.[1].join("|") === "Tutti|ASTI|FELIZZANO", doubled?.[1].join("|"));
       test("esito", /Corsisti sabato [^:]*: 3 soci, 2 partenze/.test(text(el("esito"))), text(el("esito")).slice(0, 160));
-      test("anteprimaDopo", preview("SABATO") === "Corsisti: 3 · Abbonamenti 5 gite: 1 · Jolly: 1", preview("SABATO"));
+      test("anteprimaDopo", blocks("SABATO") === "Corsisti=3 | Abbonamenti 5 gite=1 | Jolly=1", blocks("SABATO"));
     } catch (e) { r.push(`eccezione=NO(${String(e?.message || e).slice(0, 120)})`); }
     document.title = "RISULTATO " + r.join(" ");
   }, 800));

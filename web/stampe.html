@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Fogli dei soci — Sci Club Don Bosco</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css" integrity="sha384-HmYpsz2Aa9Gh3JlkCoh8kUJ2mUKJKTnkyC2Lzt8aLzpPOpnDe8KpFE2xNiBpMDou" crossorigin="anonymous">
-  <link rel="stylesheet" href="brand.css?v=20261119velo">
+  <link rel="stylesheet" href="brand.css?v=20261126cifre">
   <script>try{const r=JSON.parse(localStorage.getItem("sciclub-ruolo")),h=document.documentElement;if(r&&r.permissions){h.dataset.ruolo=r.role;h.dataset.permessi=r.permissions.join(" ");if(r.email){h.dataset.chi="";h.style.setProperty("--chi",JSON.stringify(r.email));h.style.setProperty("--ruolo",JSON.stringify(r.roleName||r.role))}}const t=localStorage.getItem("sciclub-testo");if(t>0)h.dataset.testo=t;if(localStorage.getItem("sciclub-tema")==="scuro")h.dataset.tema="scuro"}catch(e){}</script>
   <style>
 
@@ -14,8 +14,12 @@
     .giorni-stampa { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 12px; }
     /* Sotto ogni pulsante quanti soci ci saranno in ogni file (dal 19/11/2026). */
     .giorno-stampa { display: flex; flex-direction: column; gap: 8px; }
-    .anteprima-giorno { margin: 0; color: var(--testo-soft); font-size: .9375rem; }
-    .anteprima-giorno span { white-space: nowrap; }   /* «Jolly: 4» non si spezza a metà */
+    /* Dal 26/11/2026 a blocchi, come le cifre delle altre pagine: un riquadro per file, etichetta e numero grande. */
+    .anteprima-giorno { display: flex; flex-wrap: wrap; gap: 8px; color: var(--testo-soft); font-size: 1.0625rem; }
+    .blocco-anteprima { flex: 1 1 6.5rem; padding: 10px 14px; background: var(--superficie); border-radius: var(--raggio-card);
+      box-shadow: var(--ombra); }
+    .blocco-etichetta { font-size: 1.0625rem; font-weight: 600; line-height: 1.25; }
+    .blocco-numero { margin-top: 2px; font-size: 1.875rem; font-weight: 700; line-height: 1.1; color: var(--testo); }
 
     .esito ul { margin: 0; padding-left: 1.2em; }
     .esito li { padding: 4px 0; }
@@ -92,15 +96,15 @@
     <div class="giorni-stampa">
       <div class="giorno-stampa">
         <button type="button" class="giorno-azione" data-giorno="SABATO">Scarica fogli sabato</button>
-        <p class="anteprima-giorno" data-anteprima="SABATO">Caricamento…</p>
+        <div class="anteprima-giorno" data-anteprima="SABATO">Caricamento…</div>
       </div>
       <div class="giorno-stampa">
         <button type="button" class="giorno-azione" data-giorno="DOMENICA">Scarica fogli domenica</button>
-        <p class="anteprima-giorno" data-anteprima="DOMENICA">Caricamento…</p>
+        <div class="anteprima-giorno" data-anteprima="DOMENICA">Caricamento…</div>
       </div>
       <div class="giorno-stampa">
         <button type="button" class="giorno-azione" data-giorno="MARTEDI">Scarica fogli martedì</button>
-        <p class="anteprima-giorno" data-anteprima="MARTEDI">Caricamento…</p>
+        <div class="anteprima-giorno" data-anteprima="MARTEDI">Caricamento…</div>
       </div>
     </div>
   </div>
@@ -130,13 +134,17 @@
     }
   })();
 
-  /** Sotto ogni pulsante quanti soci ci saranno in ogni file, con i dati appena letti. */
+  /** Sotto ogni pulsante quanti soci ci saranno in ogni file, con i dati appena letti: un blocco per file. */
   function drawPreviews({ soci: members, abbonamenti: passList }) {
     document.querySelectorAll("[data-anteprima]").forEach((p) => {
-      p.replaceChildren(...previewParts(p.dataset.anteprima, members, passList).flatMap((part, i) => {
-        const span = document.createElement("span");
-        span.textContent = part;
-        return i ? [" · ", span] : [span];
+      p.replaceChildren(...previewParts(p.dataset.anteprima, members, passList).map((part) => {
+        const cut = part.lastIndexOf(": ");   // «Abbonamenti 5 gite: 1»: etichetta e numero
+        const block = document.createElement("div");
+        block.className = "blocco-anteprima";
+        block.innerHTML = `<div class="blocco-etichetta"></div><div class="blocco-numero"></div>`;
+        block.firstChild.textContent = part.slice(0, cut);
+        block.lastChild.textContent = part.slice(cut + 2);
+        return block;
       }));
     });
   }
