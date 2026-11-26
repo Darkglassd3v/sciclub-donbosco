@@ -113,4 +113,12 @@ assert.ok(!p.menu && p.chiediContatto);
 p = await rispondi({ chat: 7, mittente: 70, contatto: { telefono: "393331234567", utente: 70 } }, db);
 assert.deepEqual(p.menu, ["Tessere libere", "Numero di telefono"], "appena abilitata mancano i pulsanti");
 
+// Cosa si cancella dopo 10 minuti (dalla 3.15.9): solo le risposte con i telefoni dei soci (e, in index.ts, tutti i
+// messaggi del volontario). Le altre restano: con l'ultima restano anche i pulsanti, se no Telegram li toglie.
+assert.equal((await rispondi({ chat: 42, testo: "rossi" }, db)).cancella, true, "la risposta con i telefoni non si cancella");
+for (const t of ["/start", "Tessere libere", "Numero di telefono", "nessuno", "/telefono a"]) {
+  assert.ok(!(await rispondi({ chat: 42, testo: t }, db)).cancella, `«${t}»: si cancellerebbe anche una risposta senza telefoni`);
+}
+assert.ok(!(await rispondi({ chat: 7, testo: "/start" }, db)).cancella);
+
 console.log("bot telegram: logica a posto");
