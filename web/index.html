@@ -1937,7 +1937,7 @@
       ["Numero tessera", el("f_numero_tessera").value.trim()],
       ["Tipo di tessera", cardKind()],
       ...(noInsurance() ? [["Assicurazione", "Nessuna (senza assicurazione)"]] : []),
-      ["Nome e cognome", nameInForm()],
+      ["Cognome e nome", nameInForm()],
       ["Codice fiscale", el("f_codice_fiscale").value.trim().toUpperCase()],
       ["Luogo di nascita", birthPlace(el("f_luogo_nascita").value, el("f_provincia_nascita").value)],
       ["Data di nascita", el("f_data_nascita").value ? dataIt(el("f_data_nascita").value) : ""],
@@ -1948,7 +1948,7 @@
 
   /** Gli stessi dati della scheda salvata (per l'eliminazione: si elimina quella, non il modulo). */
   const personData = (s) => [
-    ["Nome e cognome", `${s.last_name} ${s.first_name}`],
+    ["Cognome e nome", `${s.last_name} ${s.first_name}`],
     ["Codice fiscale", s.tax_code || ""],
     ["Luogo di nascita", birthPlace(s.birth_place, s.birth_province)],
     ["Data di nascita", s.birth_date ? dataIt(s.birth_date) : ""],
