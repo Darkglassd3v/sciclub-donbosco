@@ -57,11 +57,16 @@ const meeting = { ...trip, card_stop: "Asti", meeting_time: "6:15" };
 for (const fmt of ["post", "story"]) {
   const html = drawPost(postTemplate(meeting, fmt));
   assert.ok(html.includes(">ritrovo 6:15<") && !html.includes(">ore 6:30<"), `${fmt}: nella tessera non c'è il ritrovo`);
-  const asti = (html.match(/<div class="fermata">.*?<\/div>/g) || []).find((f) => f.includes("Asti")) || "";
-  assert.ok(asti.includes("<b>6:30</b>") && asti.includes("ritrovo 6:15"), `${fmt}: la fermata di Asti senza ritrovo: ${asti}`);
-  const moncalvo = (html.match(/<div class="fermata">.*?<\/div>/g) || []).find((f) => f.includes("Moncalvo")) || "";
-  assert.ok(moncalvo && !moncalvo.includes("ritrovo"), `${fmt}: il ritrovo anche sull'altra fermata`);
+  // Nei riquadri delle partenze il ritrovo non si ripete: andava a capo e stringeva il luogo (26/11/2026).
+  const fermate = (html.match(/<div class="fermata">.*?<\/div>/g) || []).join("");
+  assert.ok(fermate.includes("<b>6:30</b>") && !fermate.includes("ritrovo"), `${fmt}: il ritrovo ripetuto nelle partenze`);
 }
+// La fascia dell'ora nella tessera (26/11/2026): gialla con la scritta blu per ogni giorno, come le ore delle
+// partenze; sul riquadro giallo della domenica invece blu con la scritta gialla, se no non si vedrebbe.
+const band = (date) => (drawPost(postTemplate({ ...meeting, event_date: date }, "post")).match(/--em:([^;]+);--em-ink:([^;"]+)/) || []).slice(1).join(" ");
+assert.strictEqual(band("2027-01-12"), "#FCCF02 #084C8D", "martedì: la fascia non è gialla con la scritta blu");
+assert.strictEqual(band("2027-01-16"), "#FCCF02 #084C8D", "sabato: la fascia non è gialla con la scritta blu");
+assert.strictEqual(band("2027-01-17"), "#084C8D #FCCF02", "domenica: la fascia non è blu con la scritta gialla");
 assert.match(postText(meeting), /Ritrovo alle 6:15, partenza alle 6:30 da Asti\nAltre partenze: ore 6:45 Moncalvo/);
 assert.doesNotMatch(postText(meeting), /Partenze: /, "le partenze ripetute dopo il ritrovo");
 // Senza fermata scelta il ritrovo vale per la prima; con una fermata sola niente «Altre partenze».
