@@ -1195,7 +1195,8 @@
     const household = dependants.length > 0;
     band.append(item("totale", household ? "Totale del nucleo" : "Totale", totalAmount),
       item("acconto", household ? "Versato dal nucleo" : "Acconto versato", totalAmount - balance),
-      item("residuo", balance > 0 ? "Residuo" : balance < 0 ? "A credito" : "Saldato", Math.abs(balance), barColor(balance)));
+      // Sempre «Residuo» (a € 0,00 in verde quando è saldato), come la barra; sotto zero è un credito.
+      item("residuo", balance < 0 ? "A credito" : "Residuo", Math.abs(balance), barColor(balance)));
     return band;
   }
 

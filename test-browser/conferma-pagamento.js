@@ -46,7 +46,7 @@
     };
     await check("residuo", 10, "Residuo");
     await check("saldato", num(total.replace(/[^\d,]/g, "").replace(",", ".")), "Residuo");
-    test("saldatoAZero", lastResidual === "Residuo € 0,00", `residuo «${lastResidual}»`);
+    test("saldatoAZero", lastResidual.replace(/\s/g, "") === "Residuo€0,00", `residuo «${lastResidual}»`);
     await check("credito", 100, "A credito");
 
     dependants.push({ id: "FIGLIO", last_name: "PROVA", first_name: "FIGLIO", total: 20, paid: 0 });

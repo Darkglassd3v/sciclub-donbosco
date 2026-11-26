@@ -55,7 +55,7 @@ Cosa controllano (`supabase/scripts/controlli.sql`):
 | Tesserato senza codice fiscale | Chiederlo al socio: senza non si assicura |
 | Codice fiscale scritto male | Correggerlo in Soci (il modulo propone quello giusto) |
 | Tessera senza numero | Aprire il socio in Soci e salvare: il numero viene proposto |
-| Abbonamento o corso senza tessera | Scegliere la tessera in Soci |
+| Abbonamento o corso senza tessera (non conta chi è coperto da agevolazione famiglia o presciistica) | Scegliere la tessera in Soci |
 | Corso senza giorno | Scegliere sabato o domenica in Soci |
 | Pagato più del dovuto | Controllare in Pagamenti > Storico; correggere con Modifica importi |
 | Pagato da un familiare non iscritto | Iscrivere il familiare, o togliere "A carico di un familiare" |

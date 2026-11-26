@@ -14,7 +14,15 @@ with iscritti as (
   select m.*,
          nullif(nullif(upper(trim(m.card_type)), 'NO'), '')   as tessera,
          nullif(nullif(upper(trim(m.course_type)), 'NO'), '') as corso,
-         nullif(nullif(upper(trim(m.pass_type)), 'NO'), '')   as abbonamento
+         nullif(nullif(upper(trim(m.pass_type)), 'NO'), '')   as abbonamento,
+         -- Coperto senza una tessera sua (dal 26/11/2026): agevolazione famiglia sua o del capofamiglia iscritto,
+         -- o presciistica che comprende la tessera. Come card_holder() del database, letto qui con le sole tabelle
+         -- perché l'utente monitor non può chiamare le funzioni.
+         (m.family_discount is not null
+          or exists (select 1 from public.members c
+                      where c.id = m.payer_id and c.enrolled_at is not null and c.family_discount is not null)
+          or exists (select 1 from public.prices p
+                      where p.category = 'PRESCIISTICA' and p.name = m.preski_type and not p.course_only)) as coperto
     from public.members m
    where m.enrolled_at is not null
 ),
@@ -48,7 +56,7 @@ anomalie (controllo, chi) as (
     from iscritti where tessera is not null and nullif(trim(card_number), '') is null
   union all
   select 'Abbonamento o corso senza tessera', last_name || ' ' || first_name
-    from iscritti where tessera is null and (corso is not null or abbonamento is not null)
+    from iscritti where tessera is null and not coperto and (corso is not null or abbonamento is not null)
   union all
   select 'Corso senza giorno (sabato o domenica)', last_name || ' ' || first_name
     from iscritti where corso is not null and course_day is null
