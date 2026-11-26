@@ -58,7 +58,8 @@ Poi:
        url := 'https://<progetto>.supabase.co/functions/v1/bot-telegram',
        headers := jsonb_build_object('Content-Type', 'application/json', 'X-Pulizia-Bot',
          (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_cleanup_secret')),
-       body := '{}'::jsonb)
+       body := '{}'::jsonb,
+       timeout_milliseconds := 30000)   -- la funzione appena pubblicata può metterci più di 5 secondi
      where exists (select 1 from public.telegram_replies where sent_at < now() - interval '10 minutes');
    $$);
    ```
