@@ -2776,6 +2776,27 @@ do $$ begin
   end;
 end $$;
 reset role;
+-- Abilitare per numero di telefono (26/11/2026): il superadmin mette i numeri in telegram_phones; chi condivide
+-- dal bot il suo numero ed è in lista viene abilitato da solo. Il numero si confronta senza spazi, + e prefisso 39.
+insert into public.telegram_phones (phone, name) values ('3331234567', 'VOLONTARIO DI PROVA') on conflict do nothing;
+do $$ begin
+  assert public.telegram_enable_by_phone(111, '+39 333 1234567') = 'VOLONTARIO DI PROVA', 'telegram: numero in lista non abilitato';
+  assert exists (select 1 from public.telegram_users where chat_id = 111 and name = 'VOLONTARIO DI PROVA'), 'telegram: chat non scritta fra le abilitate';
+  assert public.telegram_enable_by_phone(111, '393331234567') = 'VOLONTARIO DI PROVA', 'telegram: seconda volta non va';
+  assert public.telegram_enable_by_phone(222, '3339999999') is null, 'telegram: numero fuori lista abilitato';
+  assert not exists (select 1 from public.telegram_users where chat_id = 222), 'telegram: chat fuori lista scritta';
+end $$;
+set role authenticated;
+do $$ begin
+  begin
+    perform public.telegram_enable_by_phone(333, '3331234567');
+    raise exception 'ASSERZIONE: authenticated abilita chat del bot';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+delete from public.telegram_users where chat_id = 111;
+delete from public.telegram_phones where phone = '3331234567';
 delete from public.members where id in ('cccccccc-0000-0000-0000-000000000902', 'cccccccc-0000-0000-0000-000000000901',
   'cccccccc-0000-0000-0000-000000000903');
 FINE
