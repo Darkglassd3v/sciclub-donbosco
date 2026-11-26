@@ -7,8 +7,12 @@
 // di chi scrive ed è fra quelli abilitati (telegram_phones), la chat si abilita da sola. Altrimenti il bot dice solo
 // il numero della chat, da dare all'amministratore.
 
-const AIUTO = "Comandi:\n/liberi — i primi numeri di tessera liberi\n/telefono COGNOME NOME — il telefono di un socio "
-  + "(basta anche solo il cognome, o scriverlo senza comando)";
+// I pulsanti sempre visibili alla chat abilitata (dalla 3.15.8): toccarli manda al bot il loro testo.
+export const MENU = ["Tessere libere", "Numero di telefono"];
+
+const AIUTO = "Tocca un pulsante qui sotto:\n• «Tessere libere»: i primi numeri di tessera liberi\n• «Numero di telefono»: "
+  + "il telefono di un socio, scrivendo poi cognome e nome\nOppure i comandi /liberi e /telefono COGNOME NOME.";
+const CHIEDI_NOME = "Scrivi il cognome del socio (e il nome, se serve), per esempio: rossi mario";
 
 /** Testo per il parse_mode HTML di Telegram: i nomi dei soci non diventano tag. */
 export const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -41,27 +45,34 @@ function rigaSocio(s) {
  * Ritorna { testo } in HTML di Telegram, con `chiediContatto` quando va mostrato il pulsante del numero.
  */
 export async function rispondi(messaggio, db) {
-  return { testo: await testoRisposta(messaggio, db), ...(await chiediContatto(messaggio, db)) };
+  const { testo, abilitata } = await testoRisposta(messaggio, db);
+  // Alla chat abilitata i pulsanti; a quella non abilitata il pulsante del numero (non dopo un numero già mandato).
+  return { testo, ...(abilitata ? { menu: MENU } : messaggio.contatto ? {} : { chiediContatto: true }) };
 }
-
-const chiediContatto = async ({ chat, contatto }, db) => (contatto || (await db.abilitata(chat)) ? {} : { chiediContatto: true });
 
 async function testoRisposta({ chat, testo, mittente, contatto }, db) {
   if (contatto) {
     await db.registra(chat, "(numero condiviso)", false);
     // Telegram manda anche i contatti di altre persone: vale solo il numero di chi scrive.
-    if (contatto.utente !== mittente) return "Condividi solo il tuo numero, col pulsante «Condividi il mio numero».";
+    if (contatto.utente !== mittente) return { testo: "Condividi solo il tuo numero, col pulsante «Condividi il mio numero»." };
     const chi = await db.abilitaDaTelefono(chat, contatto.telefono);
-    return chi ? `Ciao ${esc(chi)}, ora puoi usare il bot.\n${AIUTO}`
-      : `Il tuo numero non è fra quelli abilitati. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}`;
+    return chi ? { testo: `Ciao ${esc(chi)}, ora puoi usare il bot.\n${AIUTO}`, abilitata: true }
+      : { testo: `Il tuo numero non è fra quelli abilitati. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}` };
   }
   const scritto = String(testo ?? "").trim();
   const ok = await db.abilitata(chat);
   await db.registra(chat, scritto.slice(0, 200), ok);
   if (!ok) {
-    return "Questa chat non è abilitata. Tocca «Condividi il mio numero» qui sotto: se il tuo numero è fra quelli "
-      + `abilitati dallo Sci Club, il bot si attiva. Oppure comunica all'amministratore il numero della chat: ${chat}`;
+    return { testo: "Questa chat non è abilitata. Tocca «Condividi il mio numero» qui sotto: se il tuo numero è fra quelli "
+      + `abilitati dallo Sci Club, il bot si attiva. Oppure comunica all'amministratore il numero della chat: ${chat}` };
   }
+  return { testo: await testoAbilitata(scritto, db), abilitata: true };
+}
+
+/** La risposta a una chat abilitata: i pulsanti valgono i comandi, un nome scritto è una ricerca. */
+async function testoAbilitata(scritto, db) {
+  if (scritto === MENU[1]) return CHIEDI_NOME;
+  if (scritto === MENU[0]) scritto = "/liberi";
 
   const [comando, ...resto] = scritto.split(/\s+/);
   const nome = comando.startsWith("/") ? resto.join(" ") : scritto;

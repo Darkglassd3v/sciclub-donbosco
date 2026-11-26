@@ -76,10 +76,12 @@ const telegram = {
   },
 };
 
-// Con `chiediContatto` sotto il messaggio il pulsante che manda il numero di chi lo tocca; senza, la tastiera sparisce.
-async function manda(chat: number, testo: string, chiediContatto = false) {
+// Con `chiediContatto` sotto il messaggio il pulsante che manda il numero di chi lo tocca; con `menu` (chat abilitata,
+// dalla 3.15.8) i pulsanti sempre visibili «Tessere libere» e «Numero di telefono»; senza, la tastiera sparisce.
+async function manda(chat: number, testo: string, chiediContatto = false, menu?: string[]) {
   const tastiera = chiediContatto
     ? { keyboard: [[{ text: "Condividi il mio numero", request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }
+    : menu ? { keyboard: [menu.map((text) => ({ text }))], resize_keyboard: true, is_persistent: true }
     : { remove_keyboard: true };
   const r = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
     method: "POST",
@@ -118,7 +120,7 @@ Deno.serve(async (richiesta) => {
   if (typeof chat !== "number" || (typeof messaggio?.text !== "string" && !contatto)) return new Response("ok");
   try {
     const r = await rispondi({ chat, testo: messaggio.text, mittente: messaggio.from?.id, contatto }, db);
-    await manda(chat, r.testo, r.chiediContatto);
+    await manda(chat, r.testo, r.chiediContatto, r.menu);
   } catch (errore) {
     console.error("bot:", errore);
     await manda(chat, "Errore del sito, riprova fra poco.");
