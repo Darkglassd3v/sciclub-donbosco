@@ -4519,3 +4519,132 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Bot Telegram (dalla 3.15, 26/11/2026): i volontari chiedono al bot i primi numeri di tessera liberi e il
+-- telefono di un socio. Lo interroga solo la Edge Function bot-telegram, con la service_role, dopo aver
+-- controllato che la chat sia abilitata (telegram_users). Ogni domanda resta in telegram_queries.
+-- Nessuna pagina e nessun utente del sito le può leggere: sta qui in fondo, dopo il grant a tutte le funzioni,
+-- perché le revoke sotto non vengano riaperte.
+-- ---------------------------------------------------------------------------
+create table if not exists public.telegram_users (
+  chat_id    bigint primary key,
+  name       text not null check (btrim(name) <> ''),
+  created_at timestamptz not null default now()
+);
+comment on table public.telegram_users is 'Chat Telegram abilitate al bot (le aggiunge il superadmin dall''SQL Editor).';
+
+create table if not exists public.telegram_queries (
+  id      bigint generated always as identity primary key,
+  chat_id bigint not null,
+  text    text not null,
+  allowed boolean not null,
+  at      timestamptz not null default now()
+);
+comment on table public.telegram_queries is 'Registro delle domande fatte al bot Telegram, anche dalle chat non abilitate.';
+
+-- I numeri di telefono che possono usare il bot (26/11/2026): chi li condivide dal bot (pulsante «Condividi il mio
+-- numero») viene abilitato da solo. Il superadmin li mette dall'SQL Editor; il numero si confronta senza spazi,
+-- simboli, 00 o +39 davanti.
+create table if not exists public.telegram_phones (
+  phone      text primary key check (phone ~ '^[0-9]{6,15}$'),
+  name       text not null check (btrim(name) <> ''),
+  created_at timestamptz not null default now()
+);
+comment on table public.telegram_phones is 'Numeri di telefono abilitati al bot Telegram (solo cifre, senza prefisso 39).';
+
+alter table public.telegram_users enable row level security;
+alter table public.telegram_queries enable row level security;
+alter table public.telegram_phones enable row level security;
+
+-- Il numero senza spazi, simboli, 00 o +39 davanti: «+39 333 123 4567» e «393331234567» sono «3331234567».
+create or replace function public.telegram_phone_key(phone text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when d ~ '^39[0-9]{9,10}$' then substr(d, 3) else d end
+    from (select regexp_replace(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), '^00', '') as d) x;
+$$;
+
+-- Abilita la chat se il numero condiviso è in telegram_phones; restituisce il nome, o null se il numero non c'è.
+create or replace function public.telegram_enable_by_phone(chat bigint, phone text)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare who text;
+begin
+  select p.name into who from public.telegram_phones p
+   where public.telegram_phone_key(p.phone) = public.telegram_phone_key(telegram_enable_by_phone.phone);
+  if who is null then return null; end if;
+  insert into public.telegram_users (chat_id, name) values (chat, who)
+  on conflict (chat_id) do update set name = excluded.name;
+  return who;
+end;
+$$;
+
+-- I primi numeri di tessera liberi da card_gaps_from (Impostazioni) in su, come la pagina Soci: un numero è
+-- preso se un socio, iscritto o no, lo ha. Al massimo 50.
+create or replace function public.telegram_free_cards(how_many int default 10)
+returns setof int
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with da as (select coalesce((select value::int from public.settings where key = 'card_gaps_from'), 1) as n),
+       usati as (select card_number::bigint as n from public.members where card_number ~ '^[0-9]{1,9}$')
+  select g::int
+    from da, generate_series(da.n, da.n + (select count(*) from usati)::int + 50) as g
+   where g not in (select n from usati)
+   order by g
+   limit least(greatest(coalesce(how_many, 10), 1), 50);
+$$;
+
+-- Il telefono di un socio: ogni parola (almeno 2 lettere in tutto) deve stare nel cognome o nel nome, anche senza
+-- apostrofi né accenti (name_key), come la ricerca della pagina Soci. Senza telefono suo, quello di chi paga per
+-- lui. Prima gli iscritti di quest'anno; al massimo 5.
+create or replace function public.telegram_phone_search(query text)
+returns table (card_number text, last_name text, first_name text, phone text, payer_name text, payer_phone text, enrolled boolean)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with parole as (select public.norm_name(w) as w
+                    from regexp_split_to_table(btrim(coalesce(query, '')), '\s+') as w
+                   where public.norm_name(w) <> '')
+  select m.card_number, m.last_name, m.first_name, m.phone,
+         nullif(btrim(coalesce(p.last_name, '') || ' ' || coalesce(p.first_name, '')), ''), p.phone,
+         m.enrolled_at is not null
+    from public.members m
+    left join public.members p on p.id = m.payer_id
+   where (select coalesce(sum(length(w)), 0) from parole) >= 2
+     and not exists (select 1 from parole where position(parole.w in m.name_key) = 0)
+   order by (m.enrolled_at is null), m.last_name, m.first_name
+   limit 5;
+$$;
+
+revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from public;
+revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
+  public.telegram_enable_by_phone(bigint, text) from public;
+do $$
+declare r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    if exists (select 1 from pg_roles where rolname = r) then
+      execute format('revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from %I', r);
+      execute format('revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text), '
+        || 'public.telegram_enable_by_phone(bigint, text) from %I', r);
+    end if;
+  end loop;
+  if exists (select 1 from pg_roles where rolname = 'service_role') then
+    grant select on public.telegram_users to service_role;
+    grant insert on public.telegram_queries to service_role;
+    grant execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
+      public.telegram_enable_by_phone(bigint, text) to service_role;
+  end if;
+end $$;
