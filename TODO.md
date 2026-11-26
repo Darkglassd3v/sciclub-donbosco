@@ -17,6 +17,28 @@
 
 ## Richieste nuove
 
+- [ ] **Assicurazione: acconto e nuclei** (26/11/2026, confermato, ramo `release/v3.15.1` già creato da `main`).
+  1. `insurance_members()` restituisce anche `household_id` (coalesce(payer_id, id)), `household_paid` e
+     `household_total` (dalla vista `households`, come `member_debt`). Cambiano le colonne: in produzione `drop` +
+     `create` con gli stessi permessi, dopo backup e prova con rollback.
+  2. Pagina `web/assicurazione.html`, elenco da assicurare:
+     - acconto (versato > 0 e resta da pagare): riga **gialla**, «Acconto: versati € X su € Y», casella **accesa**;
+     - nessun acconto (versato 0 e resta da pagare): riga **rossa**, «Nessun acconto: da pagare € Y», casella
+       **spenta** di default (si può accendere a mano; dopo un invio le regole ripartono);
+     - saldato: come oggi.
+  3. **Solo a schermo** i soci dello stesso nucleo stanno raggruppati (capofamiglia prima, segno visivo del nucleo);
+     i file scaricati e l'invio restano nell'ordine di adesso (tipo, cognome, nome).
+  4. TDD: `test_ruoli.sh` (colonne nuove = valori dei Pagamenti) e un test browser nuovo
+     (`assicurazione-acconto.js`, sul modello di `test-browser/assicurazione-selezione.js`); poi code review, PR,
+     CI, merge, tag `v3.15.1`, `versione.json`.
+- [ ] **Audit di sicurezza completo** (26/11/2026, dopo il punto sopra): skill `/security-audit`, modalità audit
+  completo, rapporto in `~/security-audit-skill/sciclub-donbosco/run-<N>`; prove solo locali in sandbox.
+- [ ] **Bot Telegram da pubblicare** (v3.15.0, `docs/TELEGRAM.md`): mancano il token del bot
+  (`~/.config/telegram/sciclub_bot_token`) e il token personale di Supabase (`~/.config/supabase/access_token`),
+  li salva l'utente. Poi: segreti `TELEGRAM_BOT_TOKEN` e `TELEGRAM_WEBHOOK_SECRET`, pubblicazione della funzione
+  `bot-telegram` senza verifica JWT (API di gestione Supabase, la CLI non c'è), `setWebhook` con `secret_token`,
+  numeri dei volontari in `telegram_phones`.
+
 - [ ] **Prove sui dati veri di Pagamenti col ruolo tesoriere (23/11/2026).** Con la copia della produzione del 23/11 e
       la migrazione 3.12.0, `test-reale/avvia.sh` dà «nessun risultato» per `pagamenti-agosto.js`,
       `pagamenti-incasso.js` e `pagamenti-tanti.js` (tesoriere): la pagina aperta risulta `/elenco.html` invece di
