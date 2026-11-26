@@ -2,7 +2,8 @@
 // in fondo alla pagina, con gli stessi importi e gli stessi colori, per capire subito se il
 // socio ha saldato.
 // - Acconto minore del totale: «Residuo» in giallo, con la cifra della barra.
-// - Acconto uguale al totale: «Saldato» in verde.
+// - Acconto uguale al totale: sempre «Residuo», a € 0,00 in verde (dal 26/11/2026: «Saldato» con la cifra del
+//   totale non si capiva).
 // - Acconto maggiore del totale: «A credito» in azzurro.
 // - Capofamiglia con familiari a carico: i numeri sono del nucleo, come nella barra, e le
 //   etichette lo dicono («Totale del nucleo», «Versato dal nucleo»).
@@ -27,11 +28,13 @@
     await wait(300);
     const total = el("v_totale").textContent.trim();
 
+    let lastResidual = "";
     const check = async (nome, deposit, label) => {
       el("f_acconto").value = deposit;
       el("f_acconto").dispatchEvent(new Event("input"));
       await save(); await wait(300);
       const residual = part("residuo");
+      lastResidual = text(residual);
       test(nome, Boolean(band())
         && text(part("totale")).includes(total)
         && text(part("acconto")).includes(fmt(deposit))
@@ -42,7 +45,8 @@
       close();
     };
     await check("residuo", 10, "Residuo");
-    await check("saldato", num(total.replace(/[^\d,]/g, "").replace(",", ".")), "Saldato");
+    await check("saldato", num(total.replace(/[^\d,]/g, "").replace(",", ".")), "Residuo");
+    test("saldatoAZero", lastResidual.replace(/\s/g, "") === "Residuo€0,00", `residuo «${lastResidual}»`);
     await check("credito", 100, "A credito");
 
     dependants.push({ id: "FIGLIO", last_name: "PROVA", first_name: "FIGLIO", total: 20, paid: 0 });
