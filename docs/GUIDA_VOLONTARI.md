@@ -121,11 +121,17 @@ non hanno ancora il codice fiscale) e quanti hanno una tessera **senza assicuraz
 tesserati = assicurati + da assicurare + senza assicurazione. Dopo «Segna come assicurati» i numeri si
 aggiornano da soli.
 
-Nell'elenco dei soci da assicurare il colore della riga dice quanto ha pagato il nucleo familiare:
+Nell'elenco dei soci da assicurare si vede **una lista alla volta**: i pulsanti grandi in alto (**REALE MUTUA
+NEVE**, **REALE TOTAL SPORT**) scelgono quale, e dicono quanti soci ha ognuna. Sopra e sotto la tabella c'è la
+pagina in cui sei, per esempio «Pagina 2 di 3 · soci 26–50 di 60», con **Pagina precedente** e **Pagina
+successiva**. Gli Excel e «Segna come assicurati» prendono comunque tutte le liste.
+
+Il colore della riga dice quanto ha pagato il nucleo familiare:
 
 - **gialla**, «Acconto: versati € X su € Y»: ha dato un acconto; la casella **Assicura** è accesa;
 - **rossa**, «Nessun acconto: da pagare € Y»: non ha versato nulla; la casella **Assicura** è spenta e il socio
-  non entra nelle liste, a meno di accenderla a mano;
+  non entra nelle liste, a meno di accenderla a mano. Questi soci stanno **in cima** alla lista, così si vede
+  subito chi resterebbe fuori (solo a schermo: negli Excel l'ordine resta per cognome);
 - bianca: ha saldato; una riga grigia è un socio tolto a mano dalla lista.
 
 I soci dello stesso nucleo familiare stanno uno sotto l'altro, col capofamiglia per primo, uniti da un filo

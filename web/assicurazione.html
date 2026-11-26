@@ -25,11 +25,6 @@
     [data-kind="BASE"]  { --colore-tipo: var(--blu); }
     [data-kind="SPORT"] { --colore-tipo: var(--ok); }
 
-    /* Il tipo nella lista: il nome scritto, con il colore della sua scheda. */
-    .tipo { display: inline-block; padding: 3px 12px; border-radius: var(--pillola); font-weight: 600; white-space: nowrap; }
-    .tipo[data-kind]         { background: var(--giallo-light); color: var(--giallo-dark); }
-    .tipo[data-kind="BASE"]  { background: var(--blu-light);    color: var(--blu-dark); }
-    .tipo[data-kind="SPORT"] { background: var(--ok-bg);        color: var(--ok); }
 
     .azioni-lista { display: flex; flex-wrap: wrap; gap: 10px; }
     .azioni-lista .button { white-space: normal; height: auto; min-height: var(--tocco); }
@@ -48,19 +43,41 @@
     .tabella-assic .cf { letter-spacing: .04em; text-transform: uppercase; }
     .tabella-assic .vuota { color: var(--testo-soft); font-weight: 400; }
     .tabella-assic tr.salvata td { background: var(--ok-bg); }
-    .tabella-assic tr.gruppo td { background: var(--riga-alt); font-weight: 700; font-size: 1.1rem; }
-    .tabella-assic tr.pagine .buttons { justify-content: center; align-items: center; margin: 0; }
-    .tabella-assic tr.pagine .buttons .button { margin-bottom: 0; }
-    .tabella-assic .pagine-testo { font-weight: 600; margin: 0 .75rem; }
+    /* Le liste (3.15.2): pulsanti grandi come le schede del Riepilogo, quello scelto pieno nel colore
+     * del tipo (blu la Neve, verde la Sport); sotto il titolo della lista e le pagine. */
+    .tab-liste { display: flex; flex-wrap: wrap; gap: .75rem; margin: 8px 0 16px; }
+    .tab-liste [role="tab"] { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 60px;
+      padding: .6rem 1.4rem; border-radius: var(--raggio-card); border: 2px solid var(--colore-tipo); background: transparent;
+      color: var(--testo); font: inherit; text-align: left; cursor: pointer; }
+    .tab-liste .nome-lista { font-size: 1.15rem; font-weight: 700; }
+    .tab-liste .conta-lista { font-weight: 600; color: var(--testo-soft); }
+    /* Pieno coi colori «pieni» di brand.css: nel tema scuro --blu e --ok schiariscono e il bianco non si leggerebbe. */
+    .tab-liste [data-kind="BASE"]  { --colore-pieno: var(--blu-pieno); }
+    .tab-liste [data-kind="SPORT"] { --colore-pieno: var(--ok-pieno); }
+    .tab-liste [role="tab"][aria-selected="true"] { background: var(--colore-pieno, var(--colore-tipo)); }
+    .tab-liste [role="tab"][aria-selected="true"] :is(.nome-lista, .conta-lista) { color: #fff; }
+    .tab-liste [role="tab"][aria-selected="true"]:not([data-kind="BASE"]):not([data-kind="SPORT"]) :is(.nome-lista, .conta-lista) { color: #14202E; }
+    .tab-liste [role="tab"]:focus-visible { outline: 3px solid var(--giallo); outline-offset: 2px; }
+    .testata-lista { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+      padding: 12px 16px; border-left: 6px solid var(--colore-tipo); background: var(--riga-alt); border-radius: 4px; }
+    .testata-lista .titolo-lista { margin: 0; font-size: 1.25rem; font-weight: 700; }
+    .pagine-assic { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0; }
+    .pagine-assic .button { margin: 0; min-height: var(--tocco); }
+    .pagine-assic .pagine-testo { font-weight: 700; font-size: 1.05rem; }
+    @media screen and (max-width: 600px) {
+      .pagine-assic .button { flex: 1 1 40%; white-space: normal; height: auto; }
+      .pagine-assic .pagine-testo { order: -1; flex-basis: 100%; text-align: center; }
+    }
     /* Senza codice fiscale non si assicura: la riga si vede, e dice perché. */
     .tabella-assic tr.senza-cf td { background: var(--errore-bg); }
     .tabella-assic .motivo { display: block; color: var(--errore); font-weight: 600; margin-top: 4px; }
     .tabella-assic .stato { display: block; color: var(--testo-soft); margin-top: 4px; }
-    /* La casella «Assicura» di ogni socio (e «Tutti» nel titolo del gruppo): chi entra nella lista. */
+    /* La casella «Assicura» di ogni socio (e «Tutti» nel titolo della lista): chi entra nella lista. */
     .tabella-assic .assicura-scelta { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco);
                                       font-weight: 600; cursor: pointer; }
     .tabella-assic .assicura-scelta input { flex: none; width: 1.25rem; height: 1.25rem; margin: 0; cursor: pointer; }
-    .tabella-assic tr.gruppo .assicura-scelta { float: right; min-height: 0; font-size: 1rem; }
+    .testata-lista .assicura-scelta { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tocco); font-weight: 700; cursor: pointer; }
+    .testata-lista .assicura-scelta input { width: 1.25rem; height: 1.25rem; margin: 0; cursor: pointer; }
     /* Non selezionato, quindi non assicurato con questa lista: tutta la riga in grigio. Le regole
      * dell'acconto vengono dopo e vincono: il colore dice quanto ha pagato, la casella se si assicura. */
     .tabella-assic tr.non-selezionata td { background: var(--riga-alt); color: var(--testo-soft); }
@@ -80,7 +97,6 @@
       .tabella-assic tr, .tabella-assic td { display: block; width: 100% !important; }
       .tabella-assic td { border-top: 0; padding: 6px 0; }
       .tabella-assic tr { border-top: 1px solid var(--filo); padding: 10px 0; }
-      .tabella-assic tr.gruppo td { padding: 10px 8px; }
       .tabella-assic td[data-etichetta]::before { content: attr(data-etichetta); display: block; font-weight: 600; color: var(--testo-soft); }
     }
     /* Il riepilogo in cima (dalla 3.9): le cifre di brand.css, con una riga di spiegazione sotto il numero. */
@@ -182,19 +198,23 @@
     <h2 class="striscia"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3Zm-1 13.5l6-6-1.4-1.4L11 12.7 8.4 10.1 7 11.5l4 4Z"/></svg>Soci da assicurare <span class="conta" id="quanti"></span></h2>
     <div class="corpo">
     <p class="occhiello">
-      Tesserati non ancora assicurati, suddivisi per tipo di assicurazione e in ordine alfabetico.
-      I soci privi di codice fiscale non possono essere assicurati: la riga resta evidenziata in
-      rosso fino all'inserimento e al salvataggio del codice. La casella «Assicura» sceglie chi entra
-      nei file Excel e nell'invio: è accesa per tutti, e «Tutti» nel titolo del gruppo la accende o
-      la spegne per l'intero tipo. Chi resta fuori rimane da assicurare. I soci con un importo ancora
-      da saldare sono evidenziati in rosso.
+      Tesserati non ancora assicurati, una lista per tipo di assicurazione: si sceglie la lista con i
+      pulsanti qui sotto, e i soci sono in ordine alfabetico, con i nuclei familiari uniti. I soci privi
+      di codice fiscale non possono essere assicurati: la riga resta evidenziata in rosso fino
+      all'inserimento e al salvataggio del codice. La casella «Assicura» sceglie chi entra nei file Excel
+      e nell'invio, e «Tutti» la accende o la spegne per l'intera lista. Chi resta fuori rimane da
+      assicurare. In giallo chi ha dato un acconto, in rosso (non selezionato, in cima alla lista) chi non ha versato nulla.
     </p>
+    <div class="tab-liste" role="tablist" aria-label="Liste da assicurare" id="tabListe"></div>
+    <div class="testata-lista" id="testataLista"></div>
+    <nav class="pagine-assic" data-dove="sopra" aria-label="Pagine della lista" hidden></nav>
     <div class="tabella-scorrevole">
       <table class="tabella-assic">
-        <thead><tr><th>Socio</th><th>Assicurazione</th><th>Data di nascita</th><th>Codice fiscale</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
-        <tbody id="elencoDa"><tr><td colspan="5" class="vuota">Caricamento…</td></tr></tbody>
+        <thead><tr><th>Socio</th><th>Data di nascita</th><th>Codice fiscale</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
+        <tbody id="elencoDa"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
       </table>
     </div>
+    <nav class="pagine-assic" data-dove="sotto" aria-label="Pagine della lista, in fondo" hidden></nav>
     </div>
   </section>
 
@@ -527,56 +547,64 @@
   // Lista unica dei da assicurare, per tipo e in ordine alfabetico
   // -------------------------------------------------------------------------
 
-  // A pagine di 25, una per tipo: con centinaia di tesserati la lista allungava
-  // la pagina. Gli Excel e «Segna come assicurati» prendono sempre tutti.
+  // Una lista alla volta (dalla 3.15.2): un pulsante grande per tipo, come le schede del Riepilogo, e
+  // la lista scelta a pagine di 25, con le pagine sopra e sotto. Gli Excel e «Segna come assicurati»
+  // prendono sempre tutti i soci di tutte le liste.
   const PER_PAGE = 25;
   const pageOf = {};   // tipo → pagina mostrata, da 0
+  let openKind = null; // tipo della lista mostrata
 
   function drawToInsure() {
     el("quanti").textContent = `(${toInsure.length})`;
     const bodyText = el("elencoDa");
-    if (!toInsure.length) {
-      bodyText.innerHTML = '<tr><td colspan="5" class="vuota">Tutti i tesserati risultano assicurati.</td></tr>';
+    const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
+    const lists = TIPI.map((t) => ({ t, members: byHousehold(toInsure.filter((s) => s.insurance === t.kind).sort(perNome), perNome) }))
+      .filter((l) => l.members.length);
+    if (!lists.length) {
+      el("tabListe").replaceChildren();
+      el("testataLista").replaceChildren();
+      drawPages(null);
+      bodyText.innerHTML = '<tr><td colspan="4" class="vuota">Tutti i tesserati risultano assicurati.</td></tr>';
       return;
     }
-    const perNome = (a, b) => `${a.last_name} ${a.first_name}`.localeCompare(`${b.last_name} ${b.first_name}`, "it");
+    // La lista aperta svuotata (liste segnate): si apre la prima che ha soci.
+    if (!lists.some((l) => l.t.kind === openKind)) openKind = lists[0].t.kind;
     // Salva di una riga ridisegna la lista: i codici scritti e non salvati
-    // nelle altre righe restano (cambiando pagina, invece, lo si chiede prima).
+    // nelle altre righe restano (cambiando pagina o lista, invece, lo si chiede prima).
     const written = new Map(unsavedCodes().map((tr) => [tr.dataset.id, tr.querySelector(".cf").value]));
-    bodyText.replaceChildren(...TIPI.flatMap((t) => {
-      const members = byHousehold(toInsure.filter((s) => s.insurance === t.kind).sort(perNome), perNome);
-      if (!members.length) return [];
-      // Le righe rosse sono sparse fra le pagine: il titolo dice quante sono.
-      const without = members.filter((s) => !conCF(s)).length;
-      const off = notSelected(members);
-      const pages = Math.ceil(members.length / PER_PAGE);
-      // Lista accorciata (codice salvato, liste segnate): l'ultima pagina che c'è.
-      const page = Math.min(pageOf[t.kind] || 0, pages - 1);
-      pageOf[t.kind] = page;
-      const titleText = document.createElement("tr");
-      titleText.className = "gruppo";
-      titleText.dataset.kind = t.kind;
-      const withCode = members.filter(conCF);
-      titleText.innerHTML = `<td colspan="5">${esc(t.nome)} · ${howManyOnes(members.length, "socio", "soci")}${
-        without ? ` · ${without} senza codice fiscale` : ""}${off ? ` · ${notSelectedText(off)}` : ""}${
-        withCode.length ? `<label class="assicura-scelta"><input type="checkbox" class="assicura-tutti"${off ? "" : " checked"}
-          aria-label="Assicura tutti i soci ${esc(t.nome)}"> Tutti</label>` : ""}</td>`;
-      const allBox = titleText.querySelector(".assicura-tutti");
-      if (allBox) {
-        allBox.indeterminate = off > 0 && off < withCode.length;
-        allBox.addEventListener("change", () => changeSelection(withCode, allBox.checked, `.gruppo[data-kind="${t.kind}"] .assicura-tutti`));
-      }
-      const size = new Map();
-      for (const s of members) size.set(nucleoOf(s), (size.get(nucleoOf(s)) || 0) + 1);
-      // shortcut: un nucleo a cavallo di due pagine si spezza; con 25 righe per pagina capita di rado.
-      const rows = members.slice(page * PER_PAGE, (page + 1) * PER_PAGE).map((s, i, shown) => {
-        const n = size.get(nucleoOf(s));
-        const first = i === 0 || nucleoOf(shown[i - 1]) !== nucleoOf(s);
-        const tr = row(s, { conTipo: true, nucleo: n > 1 && first ? n : 0 });
-        tr.classList.toggle("in-nucleo", n > 1);
-        return tr;
-      });
-      return [titleText, ...rows, ...(pages > 1 ? [pagesRow(t, page, pages, members.length)] : [])];
+    drawTabs(lists);
+
+    const { t, members } = lists.find((l) => l.t.kind === openKind);
+    // Le righe rosse sono sparse fra le pagine: il titolo dice quante sono.
+    const without = members.filter((s) => !conCF(s)).length;
+    const off = notSelected(members);
+    const withCode = members.filter(conCF);
+    const head = el("testataLista");
+    head.dataset.kind = t.kind;
+    head.innerHTML = `<h3 class="titolo-lista">Lista ${esc(t.nome)}: ${howManyOnes(members.length, "socio da assicurare", "soci da assicurare")}${
+      without ? ` · ${without} senza codice fiscale` : ""}${off ? ` · ${notSelectedText(off)}` : ""}</h3>${
+      withCode.length ? `<label class="assicura-scelta"><input type="checkbox" class="assicura-tutti"${off ? "" : " checked"}
+        aria-label="Assicura tutti i soci della lista ${esc(t.nome)}"> Tutti</label>` : ""}`;
+    const allBox = head.querySelector(".assicura-tutti");
+    if (allBox) {
+      allBox.indeterminate = off > 0 && off < withCode.length;
+      allBox.addEventListener("change", () => changeSelection(withCode, allBox.checked, "#testataLista .assicura-tutti"));
+    }
+
+    const pages = Math.ceil(members.length / PER_PAGE);
+    // Lista accorciata (codice salvato, liste segnate): l'ultima pagina che c'è.
+    const page = Math.min(pageOf[t.kind] || 0, pages - 1);
+    pageOf[t.kind] = page;
+    drawPages({ t, page, pages, total: members.length });
+    const size = new Map();
+    for (const s of members) size.set(nucleoOf(s), (size.get(nucleoOf(s)) || 0) + 1);
+    // shortcut: un nucleo a cavallo di due pagine si spezza; con 25 righe per pagina capita di rado.
+    bodyText.replaceChildren(...members.slice(page * PER_PAGE, (page + 1) * PER_PAGE).map((s, i, shown) => {
+      const n = size.get(nucleoOf(s));
+      const first = i === 0 || nucleoOf(shown[i - 1]) !== nucleoOf(s);
+      const tr = row(s, { conTipo: true, nucleo: n > 1 && first ? n : 0 });
+      tr.classList.toggle("in-nucleo", n > 1);
+      return tr;
     }));
     bodyText.querySelectorAll("tr[data-id]").forEach((tr) => {
       if (!written.has(tr.dataset.id)) return;
@@ -586,12 +614,73 @@
     });
   }
 
+  /**
+   * I pulsanti delle liste («REALE MUTUA NEVE · 60 soci»), col pattern ARIA tablist come nel Riepilogo:
+   * frecce sinistra e destra, un solo pulsante nell'ordine del Tab, quello scelto pieno nel colore del tipo.
+   */
+  function drawTabs(lists) {
+    const box = el("tabListe");
+    box.replaceChildren(...lists.map(({ t, members }) => {
+      const b = document.createElement("button");
+      const on = t.kind === openKind;
+      const off = notSelected(members);
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(on));
+      b.setAttribute("aria-controls", "elencoDa");
+      b.tabIndex = on ? 0 : -1;
+      b.dataset.kind = t.kind;
+      b.innerHTML = `<span class="nome-lista">${esc(t.nome)}</span>
+        <span class="conta-lista">${howManyOnes(members.length, "socio", "soci")}${off ? ` · ${notSelectedText(off)}` : ""}</span>`;
+      return b;
+    }));
+    const buttons = [...box.querySelectorAll('[role="tab"]')];
+    buttons.forEach((b, i) => {
+      b.addEventListener("click", () => openList(b.dataset.kind));
+      b.addEventListener("keydown", (event) => {
+        const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+        if (!step) return;
+        event.preventDefault();
+        openList(buttons[(i + step + buttons.length) % buttons.length].dataset.kind);
+      });
+    });
+  }
+
+  /** Apre la lista di un tipo, col fuoco sul suo pulsante; un codice fiscale non salvato lo si chiede prima. */
+  function openList(kind) {
+    if (kind === openKind) return;
+    leaveList(el("tabListe"), "Cambiare lista comunque?", "Cambia lista", () => {
+      openKind = kind;
+      drawToInsure();
+      el("tabListe").querySelector(`[data-kind="${CSS.escape(kind)}"]`)?.focus();
+    });
+  }
+
+  /**
+   * «‹ Pagina precedente · Pagina 2 di 3 · soci 26–50 di 60 · Pagina successiva ›», uguale sopra e sotto la
+   * tabella; con una pagina sola (o nessuna lista) non si vede.
+   */
+  function drawPages(state) {
+    document.querySelectorAll(".pagine-assic").forEach((nav) => {
+      nav.hidden = !state || state.pages < 2;
+      if (nav.hidden) { nav.replaceChildren(); return; }
+      const { t, page, pages, total } = state;
+      nav.innerHTML = `<button type="button" class="button" data-indietro ${page === 0 ? "disabled" : ""}>‹ Pagina precedente</button>
+        <span class="pagine-testo">Pagina ${page + 1} di ${pages} · soci ${page * PER_PAGE + 1}–${Math.min((page + 1) * PER_PAGE, total)} di ${total}</span>
+        <button type="button" class="button" data-avanti ${page === pages - 1 ? "disabled" : ""}>Pagina successiva ›</button>`;
+      const where = nav.dataset.dove;
+      nav.querySelector("[data-indietro]").addEventListener("click", () => changePage(t, page - 1, where, "[data-indietro]"));
+      nav.querySelector("[data-avanti]").addEventListener("click", () => changePage(t, page + 1, where, "[data-avanti]"));
+    });
+  }
+
   const nucleoOf = (s) => s.household_id || s.id;
 
   /**
-   * Solo a schermo: i soci dello stesso nucleo uno dopo l'altro, capofamiglia prima, al posto del
-   * nome del capofamiglia (o del primo del nucleo, se il capofamiglia non è in questa lista). I file e
-   * l'invio usano toInsure, nell'ordine del database.
+   * Solo a schermo: in cima i nuclei che non hanno dato l'acconto (non selezionati di partenza: si vede
+   * subito chi resterebbe fuori), poi gli altri; i soci dello stesso nucleo uno dopo l'altro, capofamiglia
+   * prima, al posto del nome del capofamiglia (o del primo del nucleo, se il capofamiglia non è in questa
+   * lista). I file e l'invio usano toInsure, nell'ordine del database.
    */
   function byHousehold(members, perNome) {
     const lead = new Map();
@@ -600,7 +689,8 @@
       if (!lead.has(k) || s.id === k) lead.set(k, s);
     }
     const head = (s) => (s.id === nucleoOf(s) ? 0 : 1);
-    return [...members].sort((a, b) => perNome(lead.get(nucleoOf(a)), lead.get(nucleoOf(b)))
+    const unpaid = (s) => (noDeposit(lead.get(nucleoOf(s))) ? 0 : 1);
+    return [...members].sort((a, b) => unpaid(a) - unpaid(b) || perNome(lead.get(nucleoOf(a)), lead.get(nucleoOf(b)))
       || nucleoOf(a).localeCompare(nucleoOf(b)) || head(a) - head(b) || perNome(a, b));
   }
 
@@ -612,42 +702,29 @@
     });
   }
 
-  /** «‹ Indietro · 26–50 di 60 · Avanti ›», sotto il gruppo. */
-  function pagesRow(t, page, pages, totalAmount) {
-    const tr = document.createElement("tr");
-    tr.className = "pagine";
-    tr.dataset.kind = t.kind;
-    tr.innerHTML = `<td colspan="5"><div class="buttons">
-      <button type="button" class="button" data-indietro ${page === 0 ? "disabled" : ""}>‹ Indietro</button>
-      <span class="pagine-testo">${page * PER_PAGE + 1}–${Math.min((page + 1) * PER_PAGE, totalAmount)} di ${totalAmount}</span>
-      <button type="button" class="button" data-avanti ${page === pages - 1 ? "disabled" : ""}>Avanti ›</button>
-    </div></td>`;
-    tr.querySelector("[data-indietro]").addEventListener("click", () => changePage(t, page - 1, "[data-indietro]"));
-    tr.querySelector("[data-avanti]").addEventListener("click", () => changePage(t, page + 1, "[data-avanti]"));
-    return tr;
-  }
-
   /**
-   * Cambiando pagina la lista si ridisegna: un codice fiscale scritto e non
-   * salvato andrebbe perso, quindi prima lo si chiede. Poi si torna in cima al
-   * gruppo, col fuoco sullo stesso pulsante (chi va avanti con la tastiera).
+   * Cambiando pagina la lista si ridisegna: un codice fiscale scritto e non salvato andrebbe perso,
+   * quindi prima lo si chiede. Poi si torna in cima alla lista, col fuoco sullo stesso pulsante delle
+   * stesse pagine, sopra o sotto (chi va avanti con la tastiera).
    */
-  function changePage(t, page, theButton) {
-    const go = () => {
+  function changePage(t, page, where, theButton) {
+    leaveList(document.querySelector(`.pagine-assic[data-dove="${where}"]`), "Cambiare pagina comunque?", "Cambia pagina", () => {
       pageOf[t.kind] = page;
       drawToInsure();
-      el("elencoDa").querySelector(`tr.gruppo[data-kind="${t.kind}"]`)?.scrollIntoView({ block: "start" });
+      el("tabListe").scrollIntoView({ block: "start" });
       // All'ultima (o alla prima) pagina quel pulsante è spento: allora l'altro.
-      const pages = el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`);
+      const pages = document.querySelector(`.pagine-assic[data-dove="${where}"]`);
       (pages?.querySelector(`${theButton}:not([disabled])`) || pages?.querySelector("button:not([disabled])"))
         ?.focus({ preventScroll: true });
-    };
+    });
+  }
+
+  /** Con codici fiscali scritti e non salvati, prima di ridisegnare la lista si chiede (vicino a `anchor`). */
+  function leaveList(anchor, question, label, go) {
     const unsaved = unsavedCodes().length;
     if (!unsaved) { go(); return; }
-    ask(el("elencoDa").querySelector(`tr.pagine[data-kind="${t.kind}"]`),
-      `${unsaved === 1 ? "Un codice fiscale inserito non è stato salvato e andrà perso"
-        : `${unsaved} codici fiscali inseriti non sono stati salvati e andranno persi`}. Cambiare pagina comunque?`,
-      "Cambia pagina", go);
+    ask(anchor, `${unsaved === 1 ? "Un codice fiscale inserito non è stato salvato e andrà perso"
+      : `${unsaved} codici fiscali inseriti non sono stati salvati e andranno persi`}. ${question}`, label, go);
   }
 
   // -------------------------------------------------------------------------
@@ -736,7 +813,6 @@
         ${nothingPaid ? `<span class="debito">Nessun acconto: da pagare <span class="importo">${esc(fmt(s.debt))}</span></span>` : ""}
         ${withType && conCF(s) ? `<label class="assicura-scelta"><input type="checkbox" class="assicura"${selected(s) ? " checked" : ""}
           aria-label="Assicura ${esc(s.last_name)} ${esc(s.first_name)}"> Assicura</label>` : ""}</td>
-      ${withType ? `<td data-etichetta="Assicurazione"><span class="tipo" data-kind="${esc(s.insurance)}">${esc(typeName(s.insurance)?.nome || s.insurance)}</span></td>` : ""}
       <td data-etichetta="Data di nascita">${esc(dataIt(s.birth_date)) || "—"}
         ${s.birth_place ? `<br>${esc(s.birth_place)}${s.birth_province ? ` (${esc(s.birth_province)})` : ""}` : ""}</td>
       <td class="campo-cf" data-etichetta="Codice fiscale">
