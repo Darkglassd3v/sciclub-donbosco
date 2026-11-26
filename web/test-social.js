@@ -346,9 +346,10 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   const stile = (ugly.match(/--immagine:url\(&quot;(.*?)&quot;\)/) || [])[1] || "";
   // Dentro url("…") la stringa CSS si chiude solo con " \ e gli a capo (\n \r \f): nessuno deve restare.
   assert.ok(stile.includes("%0C") && !/["\\\n\r\f]|&quot;/.test(stile), "la foto esce dall'url() del CSS");
-  assert.ok(drawPost(postTemplate(trip, "post")).includes("ore 7:00"), "senza scelta va sotto la data la prima partenza");
-  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Montegrosso" }, "post")).includes("ore 6:45"), "la partenza scelta non va sotto la data");
-  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Altrove" }, "post")).includes("ore 7:00"), "un luogo tolto deve tornare alla prima");
+  // Sotto la data il ritrovo della partenza scelta, 15 minuti prima (dalla 3.15.6).
+  assert.ok(drawPost(postTemplate(trip, "post")).includes("ore 6:45<"), "senza scelta va sotto la data la prima partenza");
+  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Montegrosso" }, "post")).includes("ore 6:30<"), "la partenza scelta non va sotto la data");
+  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Altrove" }, "post")).includes("ore 6:45<"), "un luogo tolto deve tornare alla prima");
   assert.ok(drawPost(postTemplate({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_zoom: 150 }, "post")).includes("--zoom:1.5"));
   assert.ok(!drawPost(postTemplate({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo_x: 10 }, "post")).includes("--pos"), "senza foto niente posizione");
 }
