@@ -1,7 +1,7 @@
 // Prove della logica del bot Telegram (node supabase/functions/bot-telegram/test-logica.mjs): comandi, chat non
 // abilitate, testi delle risposte. Il database e Telegram non ci sono: li sostituisce `db` finto.
 import assert from "node:assert/strict";
-import { rispondi, pulisci } from "./logica.js";
+import { rispondi, pulisci, telefonoDaChiamare } from "./logica.js";
 
 const chiamate = [];
 const db = {
@@ -54,8 +54,8 @@ assert.match(r, /22, 25, 26/);
 // /telefono con un cognome: righe con tessera, nome e telefono; senza telefono quello di chi paga.
 r = (await rispondi({ chat: 42, testo: "/telefono rossi" }, db)).testo;
 assert.deepEqual(chiamate.find(([c]) => c === "cerca"), ["cerca", "rossi"]);
-assert.match(r, /21 · ROSSI MARIO · <b>333 1111111<\/b>/);
-assert.match(r, /ROSSI LUCA · nessun telefono, paga ROSSI MARIO: <b>333 1111111<\/b>/);
+assert.match(r, /21 · ROSSI MARIO · <b>\+393331111111<\/b>/);
+assert.match(r, /ROSSI LUCA · nessun telefono, paga ROSSI MARIO: <b>\+393331111111<\/b>/);
 assert.match(r, /non iscritto quest'anno/);
 
 // Nome scritto senza comando: vale come /telefono. Nessun risultato e testo troppo corto.
@@ -77,5 +77,17 @@ const esito = await pulisci(
   { cancella: async (chat, id) => { if (id === 6) throw new Error("message to delete not found"); cancellate.push([chat, id]); } });
 assert.deepEqual(cancellate, [["minuti", 10], [42, 5], [7, 9]]);
 assert.deepEqual(esito, { cancellate: 2, errori: 1 });
+
+// Telefoni da toccare per chiamare (dalla 3.15.4): Telegram li riconosce solo in formato internazionale e senza
+// spazi; con un prefisso diverso da +39 il numero resta com'è scritto, senza spazi.
+assert.equal(telefonoDaChiamare("333 1111111"), "+393331111111");
+assert.equal(telefonoDaChiamare("336581527"), "+39336581527");
+assert.equal(telefonoDaChiamare("+39 333 1111111"), "+393331111111");
+assert.equal(telefonoDaChiamare("0039 333 1111111"), "+393331111111");
+assert.equal(telefonoDaChiamare("393331111111"), "+393331111111");
+assert.equal(telefonoDaChiamare("0141 123456"), "+390141123456");
+assert.equal(telefonoDaChiamare("+41 79 123 45 67"), "+41791234567");
+assert.equal(telefonoDaChiamare("0041 79 123 45 67"), "+41791234567");
+assert.equal(telefonoDaChiamare("12"), "12");
 
 console.log("bot telegram: logica a posto");
