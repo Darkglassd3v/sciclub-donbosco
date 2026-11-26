@@ -643,6 +643,21 @@ const meetingOf = (ev) => String(ev.meeting_time || "").trim().replace(/^ore\s*/
 /** La partenza sotto la data: quella scelta (card_stop) o la prima. È anche quella del ritrovo. */
 const cardDeparture = (stops, cardStop) => stops.find(([, l]) => cardStop && l === cardStop) || stops[0];
 
+/**
+ * Il ritrovo di regola (dalla 3.15.6): 15 minuti prima della partenza, scritto come l'orario («06:45» → «06:30»,
+ * «7.00» → «6.45»). Un orario che non si legge non ha ritrovo: "".
+ */
+function fifteenBefore(time) {
+  const m = /^(\d{1,2})([:.])(\d{2})$/.exec(String(time || "").trim().replace(/^ore\s*/i, ""));
+  if (!m) return "";
+  const minutes = (Number(m[1]) * 60 + Number(m[3]) - 15 + 1440) % 1440;
+  const hours = String(Math.floor(minutes / 60));
+  return `${m[1].length === 2 ? hours.padStart(2, "0") : hours}${m[2]}${String(minutes % 60).padStart(2, "0")}`;
+}
+
+/** Il ritrovo della gita: quello scritto nel post, se no 15 minuti prima della partenza sotto la data. */
+const meetingFor = (stops, cardStop, written) => written || fifteenBefore((cardDeparture(stops, cardStop) || [])[0]);
+
 const icoMail = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>';
 
 /** In fondo a ogni post: come ci si iscrive (in negozio, via mail) e i telefoni scelti per il post, su una riga. */
@@ -697,8 +712,10 @@ function cardK(s) {
   if (!d) return s.kind === "gita" || s.kind === "weekend" ? `<div class="tessera vuota"><span data-fit style="font-size:${story ? 62 : 54}px">giorno</span><b>––</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">mese</span></div>` : "";
   const p = departures(s), choice = cardDeparture(p, s.cardStop);
-  // Nella gita l'ora del ritrovo, se c'è (le persone arrivano all'ora scritta in alto); se no l'ora di partenza.
-  const ora = s.kind === "gita" ? (s.meeting ? `ore ${s.meeting}` : choice && choice[0] ? `ore ${choice[0]}` : "")
+  // Nella gita l'ora del ritrovo (le persone arrivano all'ora scritta in alto): quella scritta, o 15 minuti prima
+  // della partenza; con un orario che non si legge, l'ora di partenza com'è.
+  const meeting = s.kind === "gita" ? meetingFor(p, s.cardStop, s.meeting) : "";
+  const ora = s.kind === "gita" ? (meeting ? `ore ${meeting}` : choice && choice[0] ? `ore ${choice[0]}` : "")
     : ((findFact(s.facts || [], TIME) || [])[1] || "");
   // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
   // blu con le scritte bianche, il martedì rossa; [fondo, scritte, fascia, sua scritta]. La fascia dell'ora
@@ -1155,7 +1172,7 @@ function postText(ev, sp, seasonValue) {
     rows.push(p ? `🚌 Gita a ${oneRow(ev.title)}${was}` : `🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
-    const stops = departures(ev), meeting = meetingOf(ev), first = cardDeparture(stops, ev.card_stop);
+    const stops = departures(ev), first = cardDeparture(stops, ev.card_stop), meeting = meetingFor(stops, ev.card_stop, meetingOf(ev));
     if (meeting && first) {
       // Il ritrovo con la sua partenza, poi le altre fermate (dalla 3.15.5).
       rows.push("", `Ritrovo alle ${meeting}, partenza alle ${first[0]} da ${first[1]}`);

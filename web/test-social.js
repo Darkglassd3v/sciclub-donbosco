@@ -72,9 +72,18 @@ assert.doesNotMatch(postText(meeting), /Partenze: /, "le partenze ripetute dopo 
 // Senza fermata scelta il ritrovo vale per la prima; con una fermata sola niente «Altre partenze».
 assert.match(postText({ ...trip, stops: [["6:30", "Asti"]], meeting_time: "6:15" }), /Ritrovo alle 6:15, partenza alle 6:30 da Asti\n/);
 assert.doesNotMatch(postText({ ...trip, stops: [["6:30", "Asti"]], meeting_time: "6:15" }), /Altre partenze/);
-// Senza ritrovo tutto come prima.
-assert.ok(drawPost(postTemplate(trip, "post")).includes(">ore 6:30<"), "senza ritrovo la tessera non dice più la partenza");
-assert.doesNotMatch(postText(trip), /Ritrovo/);
+// Senza ritrovo scritto (dalla 3.15.6): il ritrovo è sempre 15 minuti prima della partenza sotto la data, anche
+// nei post già fatti; il campo «Ritrovo» serve solo quando è diverso.
+assert.ok(drawPost(postTemplate(trip, "post")).includes(">ore 6:15<"), "senza ritrovo scritto la tessera non dice 15 minuti prima");
+assert.match(postText(trip), /Ritrovo alle 6:15, partenza alle 6:30 da Asti\nAltre partenze: ore 6:45 Moncalvo/);
+const autoBand = (t) => (drawPost(postTemplate({ ...trip, stops: [[t, "Asti"]] }, "post")).match(/<em data-fit[^>]*>([^<]*)<\/em>/) || [])[1];
+assert.strictEqual(autoBand("06:45"), "ore 06:30", "lo zero davanti all'ora va tenuto");
+assert.strictEqual(autoBand("7:05"), "ore 6:50", "a cavallo dell'ora");
+assert.strictEqual(autoBand("07.00"), "ore 06.45", "col punto");
+assert.strictEqual(autoBand("ore 7:00"), "ore 6:45", "con «ore» davanti");
+assert.strictEqual(autoBand("mattina"), "ore mattina", "un orario che non si legge resta com'è, senza ritrovo");
+assert.doesNotMatch(postText({ ...trip, stops: [["mattina", "Asti"]] }), /Ritrovo/);
+assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Moncalvo" }, "post")).includes(">ore 6:30<"), "il ritrovo non segue la partenza sotto la data");
 
 const withoutPrice = { ...trip, show_price: false };
 assert.deepStrictEqual(postTemplate(withoutPrice, "post").prices, [], "prezzo nascosto ma ancora nel disegno");
@@ -87,7 +96,7 @@ assert.deepStrictEqual(postTemplate({ ...trip, prices: [["Adulti", ""]] }, "post
 
 const text = postText(trip);
 assert.match(text, /^🚌 Martedì 12 gennaio: gita a La Thuile!/);
-assert.match(text, /Partenze: ore 6:30 Asti, ore 6:45 Moncalvo/);
+assert.match(text, /Ritrovo alle 6:15, partenza alle 6:30 da Asti\nAltre partenze: ore 6:45 Moncalvo/);
 assert.match(text, /Iscrizioni entro domenica 10\/1\n/);
 assert.match(text, /#lathuile/);
 // Senza contatti il testo non ha la riga dei telefoni (vuota).
@@ -221,7 +230,7 @@ assert.strictEqual(dayOfMonth(null), "");
     assert.strictEqual((html.match(/class="fermata"/g) || []).length, ev.stops.length, `k ${fmt}: un riquadro per partenza`);
     assert.ok(html.includes("<b>6:30</b>") && !html.includes("Partenze: "), `k ${fmt}: partenze ancora in riga`);
     assert.ok(html.includes('class="tit meta" data-cede'), `k ${fmt}: il titolo non cede lo spazio`);
-    assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:30<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
+    assert.ok(html.includes("data-adatta") && html.includes(">domenica<") && html.includes(">ore 6:15<") && !html.includes("ore ore"), `k ${fmt}: tessera o adattamento`);
     assert.ok(html.includes("sciclubdonboscoasti@gmail.com") && html.includes("333 1") && html.includes("giovedì 14 gennaio"), `k ${fmt}: iscrizioni, telefono o scadenza`);
     assert.ok(html.includes(`height:${fmt === "story" ? 1920 : 1350}px`) && html.includes(" senza-foto"), `k ${fmt}: misura o fondo senza foto`);
     assert.strictEqual(html.includes(" story"), fmt === "story");
@@ -337,9 +346,10 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
   const stile = (ugly.match(/--immagine:url\(&quot;(.*?)&quot;\)/) || [])[1] || "";
   // Dentro url("…") la stringa CSS si chiude solo con " \ e gli a capo (\n \r \f): nessuno deve restare.
   assert.ok(stile.includes("%0C") && !/["\\\n\r\f]|&quot;/.test(stile), "la foto esce dall'url() del CSS");
-  assert.ok(drawPost(postTemplate(trip, "post")).includes("ore 7:00"), "senza scelta va sotto la data la prima partenza");
-  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Montegrosso" }, "post")).includes("ore 6:45"), "la partenza scelta non va sotto la data");
-  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Altrove" }, "post")).includes("ore 7:00"), "un luogo tolto deve tornare alla prima");
+  // Sotto la data il ritrovo della partenza scelta, 15 minuti prima (dalla 3.15.6).
+  assert.ok(drawPost(postTemplate(trip, "post")).includes("ore 6:45<"), "senza scelta va sotto la data la prima partenza");
+  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Montegrosso" }, "post")).includes("ore 6:30<"), "la partenza scelta non va sotto la data");
+  assert.ok(drawPost(postTemplate({ ...trip, card_stop: "Altrove" }, "post")).includes("ore 6:45<"), "un luogo tolto deve tornare alla prima");
   assert.ok(drawPost(postTemplate({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo: "data:image/jpeg;base64,AA", photo_zoom: 150 }, "post")).includes("--zoom:1.5"));
   assert.ok(!drawPost(postTemplate({ kind: "gita", title: "Pila", event_date: "2027-01-17", photo_x: 10 }, "post")).includes("--pos"), "senza foto niente posizione");
 }
