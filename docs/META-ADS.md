@@ -40,6 +40,13 @@ preparare una campagna si leggono queste note; ciò che si scopre di nuovo si ag
   sulla cella Budget › importo › «Salva bozza». Dopo ogni modifica si ricontrolla anche la data di
   fine, che può sparire (colonna «Fine» con «Continue» vuol dire senza fine).
 - La pubblicazione richiede un numero di telefono verificato sull'account pubblicitario.
+- Il 26/11/2026, nel campo del budget giornaliero di un gruppo di copertura, «2,00» scritto dopo aver svuotato il
+  campo è diventato **200,00 €**: si scrive solo «2» e si legge la frase «Spenderemo circa € 2,00 al giorno».
+- Per una gita nuova si duplica la campagna della serata del 25/11 (copertura, Facebook e Instagram separati): nella
+  finestra di duplicazione si tolgono tutti i consigli e «Raggiungi più persone che potrebbero rispondere». Le copie
+  tengono budget, date e post della serata: in ogni gruppo si cambiano budget e data di fine, in ogni inserzione il
+  post (nel selettore resta spuntato quello vecchio, va tolto) e i «Miglioramenti delle creatività» (la copia ne
+  riaccende uno o due). Con l'obiettivo copertura e un post Instagram il pulsante è «Vedi dettagli» e non si cambia.
 
 ## Posizionamenti
 
