@@ -1,13 +1,14 @@
-// Assicurazione (assicurazione.html): «Da assicurare» a pagine di 25, per tipo.
-// - Sotto ogni gruppo «‹ Indietro · 26–50 di 60 · Avanti ›»; con 25 o meno niente pulsanti.
-// - Nel titolo del gruppo quanti sono senza codice fiscale (le righe rosse, sparse fra le pagine).
+// Assicurazione (assicurazione.html): «Da assicurare» a pagine di 25, una lista alla volta.
+// - Sopra e sotto la lista «Pagina 2 di 3 · soci 26–50 di 60»; con 25 o meno niente pagine
+//   (dalla 3.15.2: assicurazione-liste.js).
+// - Nel titolo della lista quanti sono senza codice fiscale (le righe rosse, sparse fra le pagine).
 // - Dopo Salva si resta sulla pagina, e un codice scritto e non salvato su un'altra riga resta;
 //   lista accorciata: l'ultima pagina che c'è.
 // - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
 // - Un codice fiscale sbagliato dice solo «Codice fiscale errato» (e il proposto), senza il motivo.
 // - Un codice valido ma diverso dalla scheda (qui la data) dice che cosa non torna, senza proporne un altro.
-// - Cambiata pagina il fuoco resta su Indietro/Avanti (tastiera), anche all'ultima.
+// - Cambiata pagina il fuoco resta sul pulsante della pagina (tastiera), anche all'ultima.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const number = (i) => String(i).padStart(3, "0");
@@ -26,10 +27,12 @@
 
   const wait = (ms) => new Promise((fine) => setTimeout(fine, ms));
   const rows = (letter) => [...document.querySelectorAll(`#elencoDa tr[data-id^="${letter}"]`)];
-  const pages = (kind) => document.querySelector(`#elencoDa tr.pagine[data-kind="${kind}"]`);
-  const text = (kind) => pages(kind)?.querySelector(".pagine-testo")?.textContent.trim();
-  const forward = (kind) => pages(kind).querySelector("[data-avanti]");
-  const back = (kind) => pages(kind).querySelector("[data-indietro]");
+  // La lista aperta è una sola: `kind` resta per leggibilità, le pagine sono quelle sopra la tabella.
+  const pages = () => { const p = document.querySelector('.pagine-assic[data-dove="sopra"]'); return p && !p.hidden ? p : null; };
+  const text = () => pages()?.querySelector(".pagine-testo")?.textContent.replace(/\s+/g, " ").trim();
+  const forward = () => pages().querySelector("[data-avanti]");
+  const back = () => pages().querySelector("[data-indietro]");
+  const openList = async (kind) => { document.querySelector(`#tabListe [data-kind="${kind}"]`)?.click(); await wait(100); };
   const question = () => document.getElementById("finestraDomanda");
 
   window.addEventListener("load", () => setTimeout(async () => {
@@ -37,15 +40,17 @@
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     if (!pages("BASE")) { document.title = `RISULTATO pagine=NO(nessuna riga tr.pagine, ${rows("B").length} righe Base)`; return; }
 
-    const baseTitle = [...document.querySelectorAll("#elencoDa tr.gruppo")].find((t) => t.textContent.includes("REALE MUTUA NEVE"));
-    test("prima", rows("B").length === 25 && text("BASE") === "1–25 di 60" && back("BASE").disabled,
+    const baseTitle = document.querySelector("#testataLista .titolo-lista");
+    test("prima", rows("B").length === 25 && text("BASE") === "Pagina 1 di 3 · soci 1–25 di 60" && back("BASE").disabled,
       `${rows("B").length} righe, «${text("BASE")}», indietro spento ${back("BASE").disabled}`);
+    await openList("SPORT");
     await wait(500);
     const mismatch = rows("S").find((t) => t.textContent.includes("ROSSI"))?.querySelector(".avviso-cf");
     const mismatchText = mismatch && !mismatch.hidden ? mismatch.textContent.replace(/\s+/g, " ").trim() : "";
     test("cfValidoDiverso", mismatchText.includes("data di nascita") && mismatchText.includes("01/01/1980") && !mismatch.querySelector("button"),
       `avviso «${mismatchText}»`);
     test("pocheSenzaPagine", rows("S").length === 3 && !pages("SPORT"), `${rows("S").length} Sport, pagine ${Boolean(pages("SPORT"))}`);
+    await openList("BASE");
     test("senzaCF", baseTitle?.textContent.includes("3 senza codice fiscale"), `titolo «${baseTitle?.textContent.trim()}»`);
 
     const taxCodeNotice = rows("B")[0]?.querySelector(".avviso-cf");
@@ -53,7 +58,7 @@
     test("cfGenerico", taxCodeText.startsWith("Codice fiscale errato") && !/dovrebbe|lettere|carattere/i.test(taxCodeText), `avviso «${taxCodeText}»`);
 
     forward("BASE").click();
-    test("avanti", rows("B")[0]?.dataset.id === "B026" && rows("B").length === 25 && text("BASE") === "26–50 di 60",
+    test("avanti", rows("B")[0]?.dataset.id === "B026" && rows("B").length === 25 && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60",
       `prima ${rows("B")[0]?.dataset.id}, «${text("BASE")}»`);
 
     const b026 = rows("B")[0];
@@ -61,24 +66,24 @@
     rows("B")[2].querySelector(".cf").value = "ABC";   // B028, scritto e non salvato
     b026.querySelector(".salva-riga").click();
     await wait(300);
-    test("salvaResta", text("BASE") === "26–50 di 60" && rows("B")[0]?.dataset.id === "B026", `«${text("BASE")}»`);
+    test("salvaResta", text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60" && rows("B")[0]?.dataset.id === "B026", `«${text("BASE")}»`);
     const b028 = rows("B")[2]?.querySelector(".cf");
     test("salvaNonPerde", b028?.value === "ABC", `B028 «${b028?.value}»`);
 
     rows("B")[1].querySelector(".cf").value = "ABC";
     forward("BASE").click();
-    test("chiede", Boolean(question()) && text("BASE") === "26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
+    test("chiede", Boolean(question()) && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
     question()?.querySelector("[data-no]").click();
-    test("annulla", !question() && text("BASE") === "26–50 di 60" && rows("B")[1].querySelector(".cf").value === "ABC",
+    test("annulla", !question() && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60" && rows("B")[1].querySelector(".cf").value === "ABC",
       `domanda ${Boolean(question())}, «${text("BASE")}»`);
     forward("BASE").click();
     question()?.querySelector("[data-si]").click();
-    test("ultima", rows("B").length === 10 && text("BASE") === "51–60 di 60" && forward("BASE").disabled,
+    test("ultima", rows("B").length === 10 && text("BASE") === "Pagina 3 di 3 · soci 51–60 di 60" && forward("BASE").disabled,
       `${rows("B").length} righe, «${text("BASE")}», avanti spento ${forward("BASE")?.disabled}`);
     // All'ultima pagina Avanti è spento: il fuoco va su Indietro, non si perde.
     test("fuoco", document.activeElement === back("BASE"), `fuoco su ${document.activeElement?.tagName} ${document.activeElement?.textContent.trim().slice(0, 20)}`);
     back("BASE").click();
-    test("indietro", !question() && text("BASE") === "26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
+    test("indietro", !question() && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
     forward("BASE").click();
 
     const downloaded = [];
@@ -88,7 +93,7 @@
 
     FAKE.rpc.insurance_members = [...base(30), ...SPORT];
     await load();
-    test("accorciata", text("BASE") === "26–30 di 30" && rows("B").length === 5, `«${text("BASE")}», ${rows("B").length} righe`);
+    test("accorciata", text("BASE") === "Pagina 2 di 2 · soci 26–30 di 30" && rows("B").length === 5, `«${text("BASE")}», ${rows("B").length} righe`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

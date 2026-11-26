@@ -6,7 +6,7 @@
 //   assicurazione-acconto.js), e la riga dell'acconto spenta resta gialla.
 // - Chi ha dato un acconto resta selezionato, con quanto ha versato sul totale; la vecchia casella
 //   «Escludi dalla lista fino al saldo» non c'è più.
-// - Nel titolo di ogni gruppo la casella «Tutti» spegne e riaccende i soci di quel tipo; con
+// - Nel titolo della lista aperta la casella «Tutti» spegne e riaccende i soci di quel tipo; con
 //   solo alcuni spenti è «a metà», e il clic li riaccende tutti.
 // - Cambiata la selezione dopo lo scarico, le liste vanno scaricate di nuovo.
 // - «Segna come assicurati» manda solo i soci selezionati del file.
@@ -36,7 +36,9 @@
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   const row = (id) => document.querySelector(`#elencoDa tr[data-id="${id}"]`);
   const box = (id) => row(id)?.querySelector(".assicura");
-  const all = (kind) => document.querySelector(`#elencoDa tr.gruppo[data-kind="${kind}"] .assicura-tutti`);
+  // Si vede una lista alla volta (dalla 3.15.2): «Tutti» è quella della lista aperta.
+  const all = () => document.querySelector("#testataLista .assicura-tutti");
+  const openList = async (kind) => { document.querySelector(`#tabListe [data-kind="${kind}"]`)?.click(); await wait(100); };
   const clean = (node) => node?.textContent.replace(/\s+/g, " ").trim() || "";
   const count = (kind) => clean(document.querySelector(`#tipi .progressivo[data-kind="${kind}"] .conta`));
 
@@ -48,9 +50,12 @@
     const download = async () => { downloaded.length = 0; await downloadAll(); return downloaded.join(","); };
     el("decorrenza").value = "2026-11-15";
 
-    const ids = ["DEBITO", "PARI", "ALTRO", "SPORT1"];
-    test("tutteAccese", ids.every((id) => box(id)?.checked === true),
-      ids.map((id) => `${id} ${box(id)?.checked}`).join(", "));
+    const ids = ["DEBITO", "PARI", "ALTRO"];
+    await openList("SPORT");
+    const sport = box("SPORT1")?.checked;
+    await openList("BASE");
+    test("tutteAccese", ids.every((id) => box(id)?.checked === true) && sport === true,
+      ids.map((id) => `${id} ${box(id)?.checked}`).join(", ") + `, SPORT1 ${sport}`);
     test("etichetta", clean(box("PARI")?.closest("label")) === "Assicura", `etichetta «${clean(box("PARI")?.closest("label"))}»`);
     test("accontoGiallo", row("DEBITO")?.classList.contains("con-acconto") && clean(row("DEBITO")).includes("Acconto: versati € 20,00 su € 65,00")
       && !row("PARI")?.classList.contains("con-acconto")
@@ -87,7 +92,7 @@
       `caselle ${["DEBITO", "PARI", "ALTRO"].map((id) => box(id)?.checked).join(",")}`);
     all("BASE").click();
     await wait(100);
-    test("tuttiSpenti", ["DEBITO", "PARI", "ALTRO"].every((id) => !box(id)?.checked) && box("SPORT1")?.checked
+    test("tuttiSpenti", ["DEBITO", "PARI", "ALTRO"].every((id) => !box(id)?.checked)
       && await download() === "SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
     all("BASE").click();
     await wait(100);
