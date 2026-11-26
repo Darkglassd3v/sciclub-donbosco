@@ -1103,22 +1103,24 @@ function period(a, b) {
   return `da ${DAYS[d.getDay()]} ${d.getDate()}${same ? "" : ` ${MONTHS[d.getMonth()]}`} a ${dayOfMonth(b)}`;
 }
 
-/* Hashtag (3/11): prima quelli del club, poi quelli della località (nome, comprensorio, regione), poi quelli del
- * tipo di post; al massimo 15. La località si cerca nella meta della gita, nel titolo e nel luogo. I nomi sono quelli
- * più usati: le stazioni non pubblicano un elenco ufficiale. */
-const CLUB_TAGS = ["sciclubdonbosco", "sciclubdonboscoasti", "asti"];
-const TRIP_TAGS = ["settimanabianca", "weekendinmontagna", "sci", "neve", "montagna"];
+/* Hashtag: al massimo 5 (dal 26/11/2026, il limite di Instagram e Facebook). Fissi #sciclubdonboscoasti #sci
+ * #montagna (#sciclubdonbosco e #asti tolti su richiesta), poi i primi due della località (nome e comprensorio);
+ * senza località quelli del tipo di post. La località si cerca nella meta della gita, nel titolo e nel luogo. I nomi
+ * sono quelli più usati: le stazioni non pubblicano un elenco ufficiale. */
+const MAX_TAGS = 5;
+const CLUB_TAG = "sciclubdonboscoasti";
+const FIXED_TAGS = [CLUB_TAG, "sci", "montagna"];
 const KIND_TAGS = {
-  gita: TRIP_TAGS,
-  weekend: TRIP_TAGS,
-  evento: ["sciclub", "sci"],
+  gita: ["neve"],
+  weekend: ["weekendinmontagna", "neve"],
+  evento: ["snowboard", "sciclub"],
 };
 const PLACE_TAGS = [
   [/sestriere/, ["sestriere", "vialattea", "piemonte"]],
   [/monginevro|montgenevre/, ["monginevro", "montgenevre", "vialattea"]],
   [/sauze/, ["sauzedoulx", "vialattea", "piemonte"]],
   [/bardonecchia/, ["bardonecchia", "piemonte"]],
-  [/cervinia/, ["cervinia", "breuilcervinia", "matterhornskiparadise", "valledaosta"]],
+  [/cervinia/, ["cervinia", "matterhornskiparadise", "breuilcervinia", "valledaosta"]],
   [/valtournenche/, ["valtournenche", "matterhornskiparadise", "valledaosta"]],
   [/zermatt/, ["zermatt", "matterhorn"]],
   [/courmayeur/, ["courmayeur", "montebianco", "valledaosta"]],
@@ -1138,7 +1140,8 @@ function hashtags(ev) {
   const place = PLACE_TAGS.filter(([re]) => re.test(where)).flatMap(([, t]) => t);
   // Una meta che non è nell'elenco: almeno il suo nome.
   if (ev.kind === "gita" && !place.length && simple(ev.title)) place.push(simple(ev.title));
-  return [...new Set([...CLUB_TAGS, ...place, ...(KIND_TAGS[ev.kind] || KIND_TAGS.evento)])].slice(0, 15).map((t) => `#${t}`).join(" ");
+  return [...new Set([...FIXED_TAGS, ...place.slice(0, 2), ...(KIND_TAGS[ev.kind] || KIND_TAGS.evento)])].slice(0, MAX_TAGS)
+    .map((t) => `#${t}`).join(" ");
 }
 
 /** «, 2 notti» (o «, 1 notte») fra il primo e l'ultimo giorno; senza l'ultimo, niente. */
@@ -1161,7 +1164,7 @@ function postText(ev, sp, seasonValue) {
     if (sp.handle) rows.push(`@${sp.handle.replace(/^@/, "")}`);
     if (sp.alcohol) rows.push("", SOCIAL.avvertenzaAlcol);
     // Una campagna è pubblicità: si dichiara (#adv).
-    rows.push("", `#adv #sciclubdonbosco #${simple(sp.name)}`);
+    rows.push("", `#adv #${CLUB_TAG} #${simple(sp.name)}`);
     return rows.join("\n");
   }
   const p = postponedOf(ev);
