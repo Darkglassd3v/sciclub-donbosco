@@ -476,6 +476,8 @@ assert.strictEqual(zoomPhoto({ photo_zoom: 999 }), 3);
 
 // Le campagne sono pubblicità: il testo lo dichiara (#adv), quello delle gite no.
 assert.match(postText(campaign, santero, "2026/27"), /#adv\b/);
+// Anche nelle campagne l'hashtag del club è solo #sciclubdonboscoasti (26/11/2026).
+assert.match(postText(campaign, santero, "2026/27"), /#adv #sciclubdonboscoasti #958santero\b/);
 assert.ok(!postText(campaign, santero, "2026/27").includes("Canale WhatsApp"), "l'invito al canale del club nel testo di una campagna");
 assert.ok(!postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, null, "2026/27").includes("#adv"));
 
@@ -554,7 +556,7 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   // su Instagram il link sta nella bio, su Facebook c'è il link breve che conta i clic.
   const lines = postText(ev).split("\n");
   assert.deepStrictEqual(lines.slice(-4), ["🔗 Canale WhatsApp «Sci Club Don Bosco Asti»: link in bio (su Facebook https://is.gd/sciclubdb_fb)",
-    "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonbosco #sciclubdonboscoasti #asti #sciclub #sci"], lines.slice(-4).join(" | "));
+    "🔔 Attiva la campanella per non perdere i prossimi eventi!", "", "#sciclubdonboscoasti #sci #montagna #snowboard #sciclub"], lines.slice(-4).join(" | "));
   assert.ok(postText({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).includes("🔔 Attiva la campanella"), "gita senza l'invito al canale");
   // Il bollino ha il colore del post, come la tessera: gli eventi e i weekend il loro, le gite quello del giorno.
   // Giallo e blu no: il giallo è già il suo, e il blu sparirebbe sul fondo blu della copertina (resta giallo).
@@ -687,30 +689,25 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.ok(postText(wk).includes("• Mezza pensione in camera doppia\n• Con o senza skipass Vialattea\n• Prezzi ridotti per ragazzi"), postText(wk));
 }
 
-// --- Hashtag (3/11) -----------------------------------------------------------------
-// In ogni post quelli del club, quelli della località (nome, comprensorio, regione) e quelli del tipo di post.
+// --- Hashtag (dal 26/11/2026 al massimo 5, il limite di Instagram e Facebook) --------------------------------
+// Fissi #sciclubdonboscoasti #sci #montagna (26/11/2026), poi due della località (nome e comprensorio); senza località
+// quelli del tipo di post.
 {
-  const tags = (ev) => postText(ev).trim().split("\n").pop().split(" ");
-  const check = (ev, wanted, what) => {
-    const t = tags(ev);
-    assert.deepStrictEqual(t.slice(0, 3), ["#sciclubdonbosco", "#sciclubdonboscoasti", "#asti"], `${what}: prima quelli del club`);
-    for (const w of wanted) assert.ok(t.includes(w), `${what}: manca ${w} in ${t.join(" ")}`);
-    assert.strictEqual(new Set(t).size, t.length, `${what}: hashtag ripetuti`);
-    assert.ok(t.length <= 15 && t.every((x) => /^#[a-z0-9]+$/.test(x)), `${what}: ${t.join(" ")}`);
-  };
-  check({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, ["#sestriere", "#vialattea", "#piemonte", "#sci", "#neve"], "Sestriere");
-  // L'elenco chiesto dall'utente il 4/11: una gita al Sestriere lo riporta identico, le altre con la propria località.
-  assert.strictEqual(tags({ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }).join(" "),
-    "#sciclubdonbosco #sciclubdonboscoasti #asti #sestriere #vialattea #piemonte #settimanabianca #weekendinmontagna #sci #neve #montagna");
-  assert.strictEqual(tags({ kind: "gita", title: "Val Thorens", event_date: "2027-01-17" }).join(" "),
-    "#sciclubdonbosco #sciclubdonboscoasti #asti #valthorens #3vallees #settimanabianca #weekendinmontagna #sci #neve #montagna");
-  check({ kind: "gita", title: "Cervinia\nZermatt", event_date: "2027-01-17" }, ["#cervinia", "#matterhornskiparadise", "#zermatt", "#valledaosta"], "Cervinia");
-  check({ kind: "gita", title: "La Thuile", event_date: "2027-01-17" }, ["#lathuile", "#espacesanbernardo"], "La Thuile");
-  check({ kind: "gita", title: "Val di Fassa", event_date: "2027-01-17" }, ["#valdifassa", "#dolomiti"], "Val di Fassa");
-  check({ kind: "gita", title: "Alpe Devero", event_date: "2027-01-17" }, ["#alpedevero"], "meta senza hashtag suoi");
-  check({ kind: "weekend", title: "Dream Weekend", place: "*Hotel Fronte Piste, Sestriere*", event_date: "2026-12-11", end_date: "2026-12-13" },
-    ["#sestriere", "#vialattea", "#settimanabianca"], "weekend");
-  check({ kind: "evento", title: "Presentazione della stagione", place: "Way Assauto, Asti", event_date: "2026-11-25" }, ["#sciclub"], "evento");
+  const tags = (ev) => postText(ev).trim().split("\n").pop();
+  const each = [
+    [{ kind: "gita", title: "Sestriere", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #sestriere #vialattea"],
+    [{ kind: "gita", title: "Val Thorens", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #valthorens #3vallees"],
+    [{ kind: "gita", title: "Cervinia\nValtournenche", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #cervinia #matterhornskiparadise"],
+    [{ kind: "gita", title: "La Thuile", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #lathuile #espacesanbernardo"],
+    [{ kind: "gita", title: "Pila", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #pila #valledaosta"],
+    [{ kind: "gita", title: "Alpe Devero", event_date: "2027-01-17" }, "#sciclubdonboscoasti #sci #montagna #alpedevero #neve"],
+    [{ kind: "weekend", title: "Dream Weekend", place: "*Hotel Fronte Piste, Sestriere*", event_date: "2026-12-11", end_date: "2026-12-13" },
+      "#sciclubdonboscoasti #sci #montagna #sestriere #vialattea"],
+    [{ kind: "evento", title: "Presentazione della stagione", place: "Way Assauto, Asti", event_date: "2026-11-25" },
+      "#sciclubdonboscoasti #sci #montagna #snowboard #sciclub"],
+  ];
+  for (const [ev, wanted] of each) assert.strictEqual(tags(ev), wanted, `hashtag di ${ev.title}`);
+  for (const [ev] of each) assert.ok(tags(ev).split(" ").length <= 5, `più di 5 hashtag: ${tags(ev)}`);
   assert.ok(!tags({ kind: "evento", title: "Cena", place: "Asti" }).includes("#vialattea"), "hashtag di una località in un evento ad Asti");
 }
 
