@@ -5,7 +5,8 @@ Dalla 3.15 (26/11/2026) i volontari abilitati chiedono a un bot Telegram:
 - `/liberi`: i primi 10 numeri di tessera liberi, contati dal numero delle Impostazioni (`card_gaps_from`) in su,
   come nella pagina Soci;
 - `/telefono COGNOME NOME` (o solo il cognome, o scritto senza comando): fino a 5 soci con tessera e telefono; chi
-  non ha un telefono suo ha quello di chi paga per lui. Prima gli iscritti di quest'anno.
+  non ha un telefono suo ha quello di chi paga per lui. Prima gli iscritti di quest'anno. I telefoni sono scritti in formato internazionale
+  (`+39…`, senza spazi; dalla 3.15.4): così Telegram li rende toccabili per chiamare.
 
 Le risposte del bot si **cancellano da sole dopo 10 minuti** (dalla 3.15.3): contengono i telefoni dei soci e
 non devono restare sui telefoni dei volontari.
