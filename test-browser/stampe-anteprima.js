@@ -47,9 +47,16 @@
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     try {
       window.downloadPrintableExcel = (book, file) => BOOKS.push([file, [...book.SheetNames]]);
-      test("anteprimaSabato", preview("SABATO") === "Corsisti: 3 · Abbonamenti 5 gite: 1 · Jolly: 1", preview("SABATO"));
-      test("anteprimaDomenica", preview("DOMENICA") === "Corsisti: 1 · Abbonamenti 5 gite: 0 · Jolly: 1", preview("DOMENICA"));
-      test("anteprimaMartedi", preview("MARTEDI") === "Abbonamenti 5 gite: 0 · Jolly: 1", preview("MARTEDI"));
+      // Dal 26/11/2026 a blocchi, come le cifre delle altre pagine: etichetta e numero grande, uno per file.
+      const blocks = (day) => [...document.querySelectorAll(`[data-anteprima="${day}"] .blocco-anteprima`)]
+        .map((b) => `${text(b.querySelector(".blocco-etichetta"))}=${text(b.querySelector(".blocco-numero"))}`).join(" | ");
+      test("anteprimaSabato", blocks("SABATO") === "Corsisti=3 | Abbonamenti 5 gite=1 | Jolly=1", blocks("SABATO"));
+      test("anteprimaDomenica", blocks("DOMENICA") === "Corsisti=1 | Abbonamenti 5 gite=0 | Jolly=1", blocks("DOMENICA"));
+      test("anteprimaMartedi", blocks("MARTEDI") === "Abbonamenti 5 gite=0 | Jolly=1", blocks("MARTEDI"));
+      const number = document.querySelector('[data-anteprima="SABATO"] .blocco-numero');
+      const label = document.querySelector('[data-anteprima="SABATO"] .blocco-etichetta');
+      test("leggibile", number && parseFloat(getComputedStyle(number).fontSize) >= 28 && parseFloat(getComputedStyle(label).fontSize) >= 17,
+        `numero ${number && getComputedStyle(number).fontSize}, etichetta ${label && getComputedStyle(label).fontSize}`);
 
       document.querySelector('.giorni-stampa [data-giorno="SABATO"]').click();
       await wait(800);
@@ -64,7 +71,7 @@
       const doubled = BOOKS.find(([f]) => /^Abbonamenti 5 gite sabato /.test(f));
       test("duePartenze", doubled?.[1].join("|") === "Tutti|ASTI|FELIZZANO", doubled?.[1].join("|"));
       test("esito", /Corsisti sabato [^:]*: 3 soci, 2 partenze/.test(text(el("esito"))), text(el("esito")).slice(0, 160));
-      test("anteprimaDopo", preview("SABATO") === "Corsisti: 3 · Abbonamenti 5 gite: 1 · Jolly: 1", preview("SABATO"));
+      test("anteprimaDopo", blocks("SABATO") === "Corsisti=3 | Abbonamenti 5 gite=1 | Jolly=1", blocks("SABATO"));
     } catch (e) { r.push(`eccezione=NO(${String(e?.message || e).slice(0, 120)})`); }
     document.title = "RISULTATO " + r.join(" ");
   }, 800));

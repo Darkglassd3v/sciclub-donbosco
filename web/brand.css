@@ -763,7 +763,8 @@ html[data-ruolo="superadmin"] .container-main, html[data-ruolo="superadmin"] .wr
 /* Le cifre: caselle con un numero, in fila sopra i riquadri. */
 .cifre { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 .kpi { background: var(--superficie); border-radius: var(--raggio-card); box-shadow: var(--ombra); padding: 22px 24px; height: 100%; }
-.kpi-label { font-size: .9375rem; color: var(--testo-soft); }
+/* Etichette più grandi e in grassetto dal 26/11/2026: «Totale da incassare» si leggeva a fatica. */
+.kpi-label { font-size: 1.0625rem; font-weight: 600; color: var(--testo-soft); }
 .kpi-value { font-size: 2rem; font-weight: 700; letter-spacing: -.022em; line-height: 1.15; margin-top: 4px;
              font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 /* Da incassare in rosso, incassato in verde: i colori di Bulma non si leggevano sul bianco. */
