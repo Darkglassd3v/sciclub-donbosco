@@ -47,9 +47,16 @@
     const test = (nome, passed, why) => r.push(`${nome}=${passed ? "ok" : `NO(${why})`}`);
     try {
       window.downloadPrintableExcel = (book, file) => BOOKS.push([file, [...book.SheetNames]]);
-      test("anteprimaSabato", preview("SABATO") === "Corsisti: 3 · Abbonamenti 5 gite: 1 · Jolly: 1", preview("SABATO"));
-      test("anteprimaDomenica", preview("DOMENICA") === "Corsisti: 1 · Abbonamenti 5 gite: 0 · Jolly: 1", preview("DOMENICA"));
-      test("anteprimaMartedi", preview("MARTEDI") === "Abbonamenti 5 gite: 0 · Jolly: 1", preview("MARTEDI"));
+      // Dal 26/11/2026 a blocchi, come le cifre delle altre pagine: etichetta e numero grande, uno per file.
+      const blocks = (day) => [...document.querySelectorAll(`[data-anteprima="${day}"] .blocco-anteprima`)]
+        .map((b) => `${text(b.querySelector(".blocco-etichetta"))}=${text(b.querySelector(".blocco-numero"))}`).join(" | ");
+      test("anteprimaSabato", blocks("SABATO") === "Corsisti=3 | Abbonamenti 5 gite=1 | Jolly=1", blocks("SABATO"));
+      test("anteprimaDomenica", blocks("DOMENICA") === "Corsisti=1 | Abbonamenti 5 gite=0 | Jolly=1", blocks("DOMENICA"));
+      test("anteprimaMartedi", blocks("MARTEDI") === "Abbonamenti 5 gite=0 | Jolly=1", blocks("MARTEDI"));
+      const number = document.querySelector('[data-anteprima="SABATO"] .blocco-numero');
+      const label = document.querySelector('[data-anteprima="SABATO"] .blocco-etichetta');
+      test("leggibile", number && parseFloat(getComputedStyle(number).fontSize) >= 28 && parseFloat(getComputedStyle(label).fontSize) >= 17,
+        `numero ${number && getComputedStyle(number).fontSize}, etichetta ${label && getComputedStyle(label).fontSize}`);
 
       document.querySelector('.giorni-stampa [data-giorno="SABATO"]').click();
       await wait(800);
