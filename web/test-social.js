@@ -51,6 +51,26 @@ assert.deepStrictEqual(postTemplate(trip, "post").prices, [[null, "€ 52"]]);
 assert.strictEqual(postTemplate(trip, "post").deadline, "entro domenica 10/1");
 assert.match(postText(trip), /Quota soci: € 52/);
 
+// Ritrovo (dalla 3.15.5): l'ora in cui presentarsi alla partenza sotto la data. Nella tessera c'è il ritrovo al posto
+// della partenza, nel riquadro di quella fermata «ritrovo …», nel testo «Ritrovo alle …, partenza alle … da …».
+const meeting = { ...trip, card_stop: "Asti", meeting_time: "6:15" };
+for (const fmt of ["post", "story"]) {
+  const html = drawPost(postTemplate(meeting, fmt));
+  assert.ok(html.includes(">ritrovo 6:15<") && !html.includes(">ore 6:30<"), `${fmt}: nella tessera non c'è il ritrovo`);
+  const asti = (html.match(/<div class="fermata">.*?<\/div>/g) || []).find((f) => f.includes("Asti")) || "";
+  assert.ok(asti.includes("<b>6:30</b>") && asti.includes("ritrovo 6:15"), `${fmt}: la fermata di Asti senza ritrovo: ${asti}`);
+  const moncalvo = (html.match(/<div class="fermata">.*?<\/div>/g) || []).find((f) => f.includes("Moncalvo")) || "";
+  assert.ok(moncalvo && !moncalvo.includes("ritrovo"), `${fmt}: il ritrovo anche sull'altra fermata`);
+}
+assert.match(postText(meeting), /Ritrovo alle 6:15, partenza alle 6:30 da Asti\nAltre partenze: ore 6:45 Moncalvo/);
+assert.doesNotMatch(postText(meeting), /Partenze: /, "le partenze ripetute dopo il ritrovo");
+// Senza fermata scelta il ritrovo vale per la prima; con una fermata sola niente «Altre partenze».
+assert.match(postText({ ...trip, stops: [["6:30", "Asti"]], meeting_time: "6:15" }), /Ritrovo alle 6:15, partenza alle 6:30 da Asti\n/);
+assert.doesNotMatch(postText({ ...trip, stops: [["6:30", "Asti"]], meeting_time: "6:15" }), /Altre partenze/);
+// Senza ritrovo tutto come prima.
+assert.ok(drawPost(postTemplate(trip, "post")).includes(">ore 6:30<"), "senza ritrovo la tessera non dice più la partenza");
+assert.doesNotMatch(postText(trip), /Ritrovo/);
+
 const withoutPrice = { ...trip, show_price: false };
 assert.deepStrictEqual(postTemplate(withoutPrice, "post").prices, [], "prezzo nascosto ma ancora nel disegno");
 assert.doesNotMatch(postText(withoutPrice), /€/, "prezzo nascosto ma ancora nel testo del post");
