@@ -2,7 +2,7 @@
 // - Chi ha dato un acconto (il nucleo ha versato qualcosa ma resta da pagare): riga gialla,
 //   «Acconto: versati € X su € Y», casella «Assicura» accesa di default.
 // - Chi non ha dato nessun acconto (il nucleo non ha versato nulla): riga rossa, «Nessun acconto:
-//   da pagare € Y», casella spenta di default; si accende a mano, e dopo un invio le regole ripartono.
+//   da pagare € Y», casella spenta di default; si accende a mano e la scelta resta salvata.
 // - Chi ha saldato: riga normale, casella accesa. Una riga spenta a mano non si confonde con
 //   l'acconto (giallo) né con chi non ha pagato (rosso).
 // - Solo a schermo i soci dello stesso nucleo stanno insieme, capofamiglia prima, con il segno del
@@ -24,10 +24,14 @@
   ];
   FAKE.rpc.insurance_sent_lists = [];
   FAKE.rpc.insurance_send_all = 5;
+  FAKE.rpc.set_insurance_choice = 1;
   FAKE.risposta = (t) => (t === "insurances" ? [{ code: "BASE", name: "REALE MUTUA NEVE" }] : []);
   const sent = [];
   FAKE.errore = (t, request) => {
     if (t === "rpc:insurance_send_all") sent.push(request.parametri);
+    if (t === "rpc:set_insurance_choice") {   // come il database: la scelta resta per chi riapre la pagina
+      for (const s of FAKE.rpc.insurance_members) if (request.parametri.member_ids.includes(s.id)) s.insurance_choice = request.parametri.choice;
+    }
     return null;
   };
 
@@ -90,7 +94,8 @@
     const sentIds = sent.at(-1)?.member_ids?.join("+");
     test("inviaInOrdine", sentIds === "ACCONTO+ALFA+BONINO+CARLO+MEZZO", `inviati ${sentIds}`);
     await wait(200);
-    test("dopoInvioRegole", box("BONINO") && !box("BONINO").checked && box("ACCONTO")?.checked,
+    // La scelta è salvata nel database (dalla 3.15.2): BONINO acceso a mano resta acceso.
+    test("dopoInvioSalvata", box("BONINO")?.checked === true && box("ACCONTO")?.checked,
       `BONINO ${box("BONINO")?.checked}, ACCONTO ${box("ACCONTO")?.checked}`);
 
     document.title = "RISULTATO " + r.join(" ");

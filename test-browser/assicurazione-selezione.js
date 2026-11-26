@@ -1,7 +1,7 @@
 // Assicurazione (assicurazione.html): si sceglie chi assicurare, socio per socio.
 // - Ogni riga con il codice fiscale ha la casella «Assicura», accesa di default per tutti.
 //   Spenta, il socio resta fuori dai file Excel e dall'invio, e i conteggi dicono quanti non
-//   sono selezionati. La scelta non si salva nel database. La riga non selezionata ha un colore
+//   sono selezionati. Dalla 3.15.2 la scelta si salva nel database (assicurazione-salvata.js). La riga non selezionata ha un colore
 //   suo (dalla 3.15.1 il giallo è di chi ha dato un acconto, il rosso di chi non ha versato nulla:
 //   assicurazione-acconto.js), e la riga dell'acconto spenta resta gialla.
 // - Chi ha dato un acconto resta selezionato, con quanto ha versato sul totale; la vecchia casella
@@ -24,12 +24,16 @@
   FAKE.rpc.insurance_sent_lists = [];
   FAKE.rpc.set_tax_code = null;
   FAKE.rpc.insurance_send_all = 2;
+  FAKE.rpc.set_insurance_choice = 1;
   FAKE.risposta = (t) => (t === "insurances" ? [{ code: "BASE", name: "REALE MUTUA NEVE" }, { code: "SPORT", name: "REALE TOTAL SPORT" }] : []);
   const rpcCalls = [];
   const sent = [];
   FAKE.errore = (t, request) => {
     if (t.startsWith("rpc:") && !["rpc:my_access", "rpc:insurance_members", "rpc:insurance_sent_lists", "rpc:insurance_summary"].includes(t)) rpcCalls.push(t);
     if (t === "rpc:insurance_send_all") sent.push(request.parametri);
+    if (t === "rpc:set_insurance_choice") {   // come il database: la scelta resta per chi riapre la pagina
+      for (const s of FAKE.rpc.insurance_members) if (request.parametri.member_ids.includes(s.id)) s.insurance_choice = request.parametri.choice;
+    }
     return null;
   };
 
@@ -82,7 +86,7 @@
     test("conteggi", count("BASE").startsWith("2 da assicurare") && count("BASE").includes("1 non selezionato"),
       `conta «${count("BASE")}»`);
     test("excelSenza", await download() === "BASE:DEBITO+ALTRO,SPORT:SPORT1", `scaricati ${downloaded.join(",")}`);
-    test("nienteNelDatabase", rpcCalls.length === 0, `chiamate ${rpcCalls.join(",")}`);
+    test("salvaNelDatabase", rpcCalls.length > 0 && rpcCalls.every((c) => c === "rpc:set_insurance_choice"), `chiamate ${rpcCalls.join(",")}`);
 
     // Con un socio spento «Tutti» è a metà: il primo clic riaccende tutti, il secondo li spegne.
     test("tuttiAMeta", all("BASE")?.indeterminate === true, `a metà ${all("BASE")?.indeterminate}`);
@@ -104,7 +108,8 @@
     const sentIds = sent.at(-1)?.member_ids?.join("+");
     test("inviaSelezionati", sentIds === "DEBITO+PARI+SPORT1", `inviati ${sentIds}`);
     await wait(200);
-    test("dopoInvioTutti", box("ALTRO")?.checked === true, `ALTRO ${box("ALTRO")?.checked}`);
+    // La scelta è salvata nel database (dalla 3.15.2): dopo l'invio ALTRO resta spento.
+    test("dopoInvioSalvata", box("ALTRO")?.checked === false, `ALTRO ${box("ALTRO")?.checked}`);
 
     document.title = "RISULTATO " + r.join(" ");
   }, 500));

@@ -263,6 +263,8 @@ begin
     ('leggi',  'select 1 from public.profiles where user_id <> auth.uid()',      'Sxxxxxx'),
     ('leggi',  'select 1 from public.accounts_without_role()',                   'Sxxxxxx'),
     ('leggi',  'select 1 from public.insurance_members()',                       'SxxSxxx'),
+    -- La casella «Assicura» salvata (dalla 3.15.2): la cambia solo chi ha polizze.
+    ('scrivi', 'select public.set_insurance_choice(array[' || m || ']::uuid[], false)', 'SxxSxxx'),
     -- Il riepilogo della pagina Assicurazione (dalla 3.9): solo numeri, solo a chi ha polizze.
     ('leggi',  'select 1 from public.insurance_summary()',                       'SxxSxxx'),
     ('leggi',  'select 1 from public.social_events',                             'SxxxxSx'),
@@ -738,7 +740,7 @@ do $$ begin
 end $$;
 
 insert into public.season_history (season, members, bank_closing) values ('2030-09-01', 0, 500);
-update public.members set paid = 50 where id = '99999999-9999-9999-9999-999999999999';
+update public.members set paid = 50, insurance_choice = true where id = '99999999-9999-9999-9999-999999999999';
 
 set role authenticated;
 do $$
@@ -778,6 +780,8 @@ begin
   assert public.current_season() = '2032-09-01', 'dopo la chiusura la stagione aperta non avanza';
   assert (select count(*) from public.open_season) = 0, 'dopo la chiusura resta una stagione aperta';
   assert (select members_collected from public.season_balance) = 0, 'dopo la chiusura restano quote nel bilancio';
+  assert (select insurance_choice from public.members where id = '99999999-9999-9999-9999-999999999999') is null,
+         'dopo la chiusura resta la scelta «Assicura» della stagione vecchia';
 end $$;
 
 reset role;
@@ -1574,6 +1578,17 @@ begin
   assert (select (household_paid, household_total) from public.insurance_members() where id = credito)
          = (50::numeric, 35::numeric),
          'versato e totale di chi paga per sé diversi da Pagamenti';
+
+  -- La casella «Assicura» si salva nel database (dalla 3.15.2): chi apre la pagina dopo la ritrova.
+  -- null = la regola della pagina (accesa tranne per chi non ha versato nulla).
+  assert (select insurance_choice from public.insurance_members() where id = figlio) is null,
+         'senza scelta la casella non segue la regola della pagina';
+  assert public.set_insurance_choice(array[figlio, credito], false) = 2, 'la scelta non si salva per i due soci';
+  assert (select insurance_choice from public.insurance_members() where id = figlio) = false,
+         'la scelta salvata non torna nella lista';
+  assert public.set_insurance_choice(array[credito], null) = 1, 'la scelta non torna alla regola';
+  assert (select insurance_choice from public.insurance_members() where id = credito) is null,
+         'tornata alla regola la scelta resta salvata';
 
   -- Si manda chi è nel file scelto dalla pagina, anche se è a debito; gli altri restano da assicurare.
   assert public.insurance_send_all(array['BASE'], array[40], array[capo, pari]) = 2,
