@@ -7,7 +7,8 @@ Dalla 3.15 (26/11/2026) i volontari abilitati chiedono a un bot Telegram:
 - `/telefono COGNOME NOME` (o solo il cognome, o scritto senza comando): fino a 5 soci con tessera e telefono; chi
   non ha un telefono suo ha quello di chi paga per lui. Prima gli iscritti di quest'anno.
 
-Chi non è abilitato riceve solo il numero della sua chat, da comunicare all'amministratore.
+Chi non è abilitato riceve il pulsante «Condividi il mio numero»: se il suo numero è fra quelli della lista
+(`telegram_phones`), il bot si attiva da solo; altrimenti gli dice il numero della sua chat, da comunicare all'amministratore.
 
 ## Come funziona
 
@@ -41,7 +42,19 @@ Poi:
 
 ## Abilitare un volontario
 
-Il volontario scrive `/start` al bot e riceve il numero della sua chat. Il superadmin lo abilita dall'SQL Editor:
+**Col numero di telefono** (il modo normale): il superadmin mette il numero nella lista, una volta sola, dall'SQL
+Editor (solo cifre, senza +39):
+
+```sql
+insert into public.telegram_phones (phone, name) values ('3331234567', 'Nome del volontario');
+```
+
+Il volontario scrive `/start` al bot e tocca **«Condividi il mio numero»**: Telegram manda al bot il suo numero
+(solo il suo, verificato da Telegram) e, se è in lista, la chat si abilita da sola. Per togliere un numero:
+`delete from public.telegram_phones where phone = '3331234567';` (e la sua chat da `telegram_users`, sotto).
+
+**Con il numero della chat**, per chi non vuole condividere il telefono: il volontario scrive `/start` e riceve il
+numero della sua chat. Il superadmin lo abilita dall'SQL Editor:
 
 ```sql
 insert into public.telegram_users (chat_id, name) values (123456789, 'Nome del volontario');

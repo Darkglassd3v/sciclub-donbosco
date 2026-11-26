@@ -38,6 +38,11 @@ const db = {
     if (error) throw error;
     return data;
   },
+  abilitaDaTelefono: async (chat: number, telefono: string) => {
+    const { data, error } = await sb.rpc("telegram_enable_by_phone", { chat, phone: telefono });
+    if (error) throw error;
+    return data as string | null;
+  },
   registra: async (chat: number, testo: string, abilitata: boolean) => {
     // Il registro non deve fermare la risposta: un errore qui si scrive solo nel log della funzione.
     const { error } = await sb.from("telegram_queries").insert({ chat_id: chat, text: testo, allowed: abilitata });
@@ -45,11 +50,15 @@ const db = {
   },
 };
 
-async function manda(chat: number, testo: string) {
+// Con `chiediContatto` sotto il messaggio il pulsante che manda il numero di chi lo tocca; senza, la tastiera sparisce.
+async function manda(chat: number, testo: string, chiediContatto = false) {
+  const tastiera = chiediContatto
+    ? { keyboard: [[{ text: "Condividi il mio numero", request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }
+    : { remove_keyboard: true };
   const r = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chat, text: testo, parse_mode: "HTML", disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chat, text: testo, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: tastiera }),
   });
   if (!r.ok) console.error("risposta non mandata:", r.status, await r.text());
 }
@@ -63,10 +72,14 @@ Deno.serve(async (richiesta) => {
   try { update = await richiesta.json(); } catch { return new Response("ok"); }
   const messaggio = update?.message;
   const chat = messaggio?.chat?.id;
-  // Solo i messaggi di testo; il resto (foto, modifiche, entrate nei gruppi) si ignora.
-  if (typeof chat !== "number" || typeof messaggio?.text !== "string") return new Response("ok");
+  // Solo testo e numeri condivisi; il resto (foto, modifiche, entrate nei gruppi) si ignora.
+  const contatto = messaggio?.contact
+    ? { telefono: String(messaggio.contact.phone_number ?? ""), utente: messaggio.contact.user_id }
+    : null;
+  if (typeof chat !== "number" || (typeof messaggio?.text !== "string" && !contatto)) return new Response("ok");
   try {
-    await manda(chat, await rispondi({ chat, testo: messaggio.text }, db));
+    const r = await rispondi({ chat, testo: messaggio.text, mittente: messaggio.from?.id, contatto }, db);
+    await manda(chat, r.testo, r.chiediContatto);
   } catch (errore) {
     console.error("bot:", errore);
     await manda(chat, "Errore del sito, riprova fra poco.");

@@ -4543,8 +4543,48 @@ create table if not exists public.telegram_queries (
 );
 comment on table public.telegram_queries is 'Registro delle domande fatte al bot Telegram, anche dalle chat non abilitate.';
 
+-- I numeri di telefono che possono usare il bot (26/11/2026): chi li condivide dal bot (pulsante «Condividi il mio
+-- numero») viene abilitato da solo. Il superadmin li mette dall'SQL Editor; il numero si confronta senza spazi,
+-- simboli, 00 o +39 davanti.
+create table if not exists public.telegram_phones (
+  phone      text primary key check (phone ~ '^[0-9]{6,15}$'),
+  name       text not null check (btrim(name) <> ''),
+  created_at timestamptz not null default now()
+);
+comment on table public.telegram_phones is 'Numeri di telefono abilitati al bot Telegram (solo cifre, senza prefisso 39).';
+
 alter table public.telegram_users enable row level security;
 alter table public.telegram_queries enable row level security;
+alter table public.telegram_phones enable row level security;
+
+-- Il numero senza spazi, simboli, 00 o +39 davanti: «+39 333 123 4567» e «393331234567» sono «3331234567».
+create or replace function public.telegram_phone_key(phone text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when d ~ '^39[0-9]{9,10}$' then substr(d, 3) else d end
+    from (select regexp_replace(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), '^00', '') as d) x;
+$$;
+
+-- Abilita la chat se il numero condiviso è in telegram_phones; restituisce il nome, o null se il numero non c'è.
+create or replace function public.telegram_enable_by_phone(chat bigint, phone text)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare who text;
+begin
+  select p.name into who from public.telegram_phones p
+   where public.telegram_phone_key(p.phone) = public.telegram_phone_key(telegram_enable_by_phone.phone);
+  if who is null then return null; end if;
+  insert into public.telegram_users (chat_id, name) values (chat, who)
+  on conflict (chat_id) do update set name = excluded.name;
+  return who;
+end;
+$$;
 
 -- I primi numeri di tessera liberi da card_gaps_from (Impostazioni) in su, come la pagina Soci: un numero è
 -- preso se un socio, iscritto o no, lo ha. Al massimo 50.
@@ -4588,20 +4628,23 @@ as $$
    limit 5;
 $$;
 
-revoke all on public.telegram_users, public.telegram_queries from public;
-revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text) from public;
+revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from public;
+revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
+  public.telegram_enable_by_phone(bigint, text) from public;
 do $$
 declare r text;
 begin
   foreach r in array array['anon', 'authenticated'] loop
     if exists (select 1 from pg_roles where rolname = r) then
-      execute format('revoke all on public.telegram_users, public.telegram_queries from %I', r);
-      execute format('revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text) from %I', r);
+      execute format('revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from %I', r);
+      execute format('revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text), '
+        || 'public.telegram_enable_by_phone(bigint, text) from %I', r);
     end if;
   end loop;
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select on public.telegram_users to service_role;
     grant insert on public.telegram_queries to service_role;
-    grant execute on function public.telegram_free_cards(int), public.telegram_phone_search(text) to service_role;
+    grant execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
+      public.telegram_enable_by_phone(bigint, text) to service_role;
   end if;
 end $$;

@@ -3,7 +3,9 @@
 //   /start, /aiuto   i comandi
 //   /liberi          i primi 10 numeri di tessera liberi
 //   /telefono NOME   il telefono di un socio (cognome, o cognome e nome); scrivere solo il nome vale lo stesso
-// Una chat non abilitata riceve solo il suo numero, da dare all'amministratore che la abilita.
+// Una chat non abilitata riceve il pulsante «Condividi il mio numero» (dal 26/11/2026): se il numero condiviso è
+// di chi scrive ed è fra quelli abilitati (telegram_phones), la chat si abilita da sola. Altrimenti il bot dice solo
+// il numero della chat, da dare all'amministratore.
 
 const AIUTO = "Comandi:\n/liberi — i primi numeri di tessera liberi\n/telefono COGNOME NOME — il telefono di un socio "
   + "(basta anche solo il cognome, o scriverlo senza comando)";
@@ -20,14 +22,32 @@ function rigaSocio(s) {
 }
 
 /**
- * La risposta a un messaggio ({ chat, testo }). `db`: { abilitata(chat), liberi(quanti), cerca(testo),
- * registra(chat, testo, abilitata) }. Ritorna il testo da mandare, in HTML di Telegram.
+ * La risposta a un messaggio ({ chat, testo, mittente, contatto: { telefono, utente } }). `db`: { abilitata(chat),
+ * abilitaDaTelefono(chat, telefono), liberi(quanti), cerca(testo), registra(chat, testo, abilitata) }.
+ * Ritorna { testo } in HTML di Telegram, con `chiediContatto` quando va mostrato il pulsante del numero.
  */
-export async function rispondi({ chat, testo }, db) {
+export async function rispondi(messaggio, db) {
+  return { testo: await testoRisposta(messaggio, db), ...(await chiediContatto(messaggio, db)) };
+}
+
+const chiediContatto = async ({ chat, contatto }, db) => (contatto || (await db.abilitata(chat)) ? {} : { chiediContatto: true });
+
+async function testoRisposta({ chat, testo, mittente, contatto }, db) {
+  if (contatto) {
+    await db.registra(chat, "(numero condiviso)", false);
+    // Telegram manda anche i contatti di altre persone: vale solo il numero di chi scrive.
+    if (contatto.utente !== mittente) return "Condividi solo il tuo numero, col pulsante «Condividi il mio numero».";
+    const chi = await db.abilitaDaTelefono(chat, contatto.telefono);
+    return chi ? `Ciao ${esc(chi)}, ora puoi usare il bot.\n${AIUTO}`
+      : `Il tuo numero non è fra quelli abilitati. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}`;
+  }
   const scritto = String(testo ?? "").trim();
   const ok = await db.abilitata(chat);
   await db.registra(chat, scritto.slice(0, 200), ok);
-  if (!ok) return `Questa chat non è abilitata. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}`;
+  if (!ok) {
+    return "Questa chat non è abilitata. Tocca «Condividi il mio numero» qui sotto: se il tuo numero è fra quelli "
+      + `abilitati dallo Sci Club, il bot si attiva. Oppure comunica all'amministratore il numero della chat: ${chat}`;
+  }
 
   const [comando, ...resto] = scritto.split(/\s+/);
   const nome = comando.startsWith("/") ? resto.join(" ") : scritto;
