@@ -7,20 +7,25 @@ Dalla 3.15 (26/11/2026) i volontari abilitati chiedono a un bot Telegram:
 - `/telefono COGNOME NOME` (o solo il cognome, o scritto senza comando): fino a 5 soci con tessera e telefono; chi
   non ha un telefono suo ha quello di chi paga per lui. Prima gli iscritti di quest'anno.
 
+Le risposte del bot si **cancellano da sole dopo 10 minuti** (dalla 3.15.3): contengono i telefoni dei soci e
+non devono restare sui telefoni dei volontari.
+
 Chi non è abilitato riceve il pulsante «Condividi il mio numero»: se il suo numero è fra quelli della lista
 (`telegram_phones`), il bot si attiva da solo; altrimenti gli dice il numero della sua chat, da comunicare all'amministratore.
 
 ## Come funziona
 
 ```
-Telegram → webhook → Edge Function bot-telegram → database (sola lettura)
+Telegram → webhook → Edge Function bot-telegram → database (sola lettura, più il registro e le risposte mandate)
+pg_cron, ogni minuto → Edge Function bot-telegram (X-Pulizia-Bot) → deleteMessage delle risposte di più di 10 minuti
 ```
 
 - `supabase/functions/bot-telegram/index.ts`: riceve i messaggi, controlla il segreto del webhook, legge il
   database con la service_role e risponde. Cosa rispondere lo decide `logica.js`, provato con
   `node supabase/functions/bot-telegram/test-logica.mjs` (anche nella CI).
 - Database (`schema.sql`, in fondo): `telegram_users` (le chat abilitate), `telegram_queries` (il registro di
-  tutte le domande), `telegram_free_cards()` e `telegram_phone_search()`. Né le pagine né gli utenti del sito
+  tutte le domande), `telegram_replies` (le risposte da cancellare), `telegram_free_cards()`,
+  `telegram_phone_search()` e `telegram_take_due_replies()`. Né le pagine né gli utenti del sito
   possono leggerle o chiamarle: solo la funzione del bot (`supabase/test_ruoli.sh`).
 
 ## Pubblicazione (una volta sola)
@@ -39,6 +44,26 @@ Poi:
    il segreto del webhook);
 3. `setWebhook` di Telegram verso `https://<progetto>.supabase.co/functions/v1/bot-telegram` con
    `secret_token` uguale a `TELEGRAM_WEBHOOK_SECRET` e `allowed_updates: ["message"]`.
+
+4. pulizia delle risposte (dalla 3.15.3): segreto della funzione `TELEGRAM_CLEANUP_SECRET` (una stringa casuale),
+   la stessa nel Vault del database, e l'attività pianificata, dall'SQL Editor:
+
+   ```sql
+   create extension if not exists pg_net;
+   create extension if not exists pg_cron;
+   select vault.create_secret('<TELEGRAM_CLEANUP_SECRET>', 'telegram_cleanup_secret');
+   select cron.schedule('bot-telegram-pulizia', '* * * * *', $$
+     select net.http_post(
+       url := 'https://<progetto>.supabase.co/functions/v1/bot-telegram',
+       headers := jsonb_build_object('Content-Type', 'application/json', 'X-Pulizia-Bot',
+         (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_cleanup_secret')),
+       body := '{}'::jsonb)
+     where exists (select 1 from public.telegram_replies where sent_at < now() - interval '10 minutes');
+   $$);
+   ```
+
+   La funzione si chiama solo quando c'è qualcosa da cancellare. Telegram lascia cancellare a un bot i suoi
+   messaggi fino a 48 ore dopo: se la pulizia resta ferma più a lungo, quelle risposte vanno tolte a mano.
 
 ## Abilitare un volontario
 

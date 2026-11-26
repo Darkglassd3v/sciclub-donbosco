@@ -63,3 +63,21 @@ async function testoRisposta({ chat, testo, mittente, contatto }, db) {
   if (!soci.length) return `Nessun socio trovato per «${esc(nome)}».`;
   return soci.map(rigaSocio).join("\n") + (soci.length === 5 ? "\n(solo i primi 5: aggiungi il nome per restringere)" : "");
 }
+
+/**
+ * Cancella su Telegram le risposte del bot più vecchie di `minuti` (dalla 3.15.3: contengono i telefoni dei soci).
+ * `db.risposteScadute(minuti)` le toglie dal database e le restituisce ({ chat_id, message_id }); `telegram.cancella`
+ * le cancella una per una. Una che non si cancella (tolta a mano, più vecchia di 48 ore) non ferma le altre.
+ */
+export async function pulisci(db, telegram, minuti = 10) {
+  let cancellate = 0, errori = 0;
+  for (const r of await db.risposteScadute(minuti)) {
+    try {
+      await telegram.cancella(r.chat_id, r.message_id);
+      cancellate++;
+    } catch {
+      errori++;
+    }
+  }
+  return { cancellate, errori };
+}

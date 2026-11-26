@@ -9,14 +9,20 @@
 //   le chat in telegram_users; le due funzioni del database del bot non le può chiamare nessun altro.
 // - Ogni domanda resta in telegram_queries, anche quelle delle chat non abilitate.
 //
-// Pubblicazione: senza verifica del JWT (Telegram non ne manda), con i segreti TELEGRAM_BOT_TOKEN e
-// TELEGRAM_WEBHOOK_SECRET; vedi docs/TELEGRAM.md.
+// - Le risposte si cancellano da Telegram dopo 10 minuti (dalla 3.15.3): ognuna resta in telegram_replies e ogni
+//   minuto un'attività pianificata del database (pg_cron) chiama questa funzione con l'intestazione
+//   X-Pulizia-Bot uguale a TELEGRAM_CLEANUP_SECRET; la funzione cancella quelle scadute.
+//
+// Pubblicazione: senza verifica del JWT (Telegram non ne manda), con i segreti TELEGRAM_BOT_TOKEN,
+// TELEGRAM_WEBHOOK_SECRET e TELEGRAM_CLEANUP_SECRET; vedi docs/TELEGRAM.md.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { rispondi } from "./logica.js";
+import { pulisci, rispondi } from "./logica.js";
 
 const TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN") ?? "";
 const SEGRETO = Deno.env.get("TELEGRAM_WEBHOOK_SECRET") ?? "";
+const PULIZIA = Deno.env.get("TELEGRAM_CLEANUP_SECRET") ?? "";
+const MINUTI = 10;   // dopo quanto si cancellano le risposte
 
 const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -48,6 +54,26 @@ const db = {
     const { error } = await sb.from("telegram_queries").insert({ chat_id: chat, text: testo, allowed: abilitata });
     if (error) console.error("registro del bot non scritto:", error.message);
   },
+  ricordaRisposta: async (chat: number, messaggio: number) => {
+    const { error } = await sb.from("telegram_replies").insert({ chat_id: chat, message_id: messaggio });
+    if (error) console.error("risposta da cancellare non ricordata:", error.message);
+  },
+  risposteScadute: async (minuti: number) => {
+    const { data, error } = await sb.rpc("telegram_take_due_replies", { older_than_minutes: minuti });
+    if (error) throw error;
+    return data as { chat_id: number; message_id: number }[];
+  },
+};
+
+const telegram = {
+  cancella: async (chat: number, messaggio: number) => {
+    const r = await fetch(`https://api.telegram.org/bot${TOKEN}/deleteMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chat, message_id: messaggio }),
+    });
+    if (!r.ok) throw new Error(`deleteMessage ${r.status}: ${await r.text()}`);
+  },
 };
 
 // Con `chiediContatto` sotto il messaggio il pulsante che manda il numero di chi lo tocca; senza, la tastiera sparisce.
@@ -60,11 +86,24 @@ async function manda(chat: number, testo: string, chiediContatto = false) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chat, text: testo, parse_mode: "HTML", disable_web_page_preview: true, reply_markup: tastiera }),
   });
-  if (!r.ok) console.error("risposta non mandata:", r.status, await r.text());
+  if (!r.ok) { console.error("risposta non mandata:", r.status, await r.text()); return; }
+  // Ricordata per cancellarla dopo MINUTI minuti.
+  const id = (await r.json())?.result?.message_id;
+  if (typeof id === "number") await db.ricordaRisposta(chat, id);
 }
 
 Deno.serve(async (richiesta) => {
   if (richiesta.method !== "POST") return new Response("Metodo non ammesso.", { status: 405 });
+  // La pulizia delle risposte scadute, chiamata ogni minuto dal database.
+  if (richiesta.headers.has("X-Pulizia-Bot")) {
+    if (!PULIZIA || richiesta.headers.get("X-Pulizia-Bot") !== PULIZIA) return new Response("Non autorizzato.", { status: 401 });
+    try {
+      return Response.json(await pulisci(db, telegram, MINUTI));
+    } catch (errore) {
+      console.error("pulizia:", errore);
+      return new Response("Errore della pulizia.", { status: 500 });
+    }
+  }
   if (!SEGRETO || richiesta.headers.get("X-Telegram-Bot-Api-Secret-Token") !== SEGRETO) {
     return new Response("Non autorizzato.", { status: 401 });
   }
