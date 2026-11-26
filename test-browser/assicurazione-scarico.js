@@ -9,6 +9,7 @@
   FAKE.rpc.insurance_members = [member("B1", "BASE"), member("B2", "BASE"), member("S1", "SPORT")];
   FAKE.rpc.insurance_sent_lists = [];
   FAKE.rpc.set_tax_code = null;
+  FAKE.rpc.insurance_search = [{ ...member("B1", "BASE"), list_number: null }];
   FAKE.risposta = (t) => (t === "insurances" ? [{ code: "BASE", name: "REALE MUTUA NEVE" }, { code: "SPORT", name: "REALE TOTAL SPORT" }] : []);
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
@@ -25,9 +26,14 @@
     await wait(200);
     test("riscaricaSola", downloaded.length === 3 && downloaded[2].startsWith("SPORT:"), `scaricati ${downloaded.join(",")}`);
 
-    const row = document.querySelector('#elencoDa tr[data-id="B1"]');
-    row.querySelector(".cf").value = "BNCLCU80A01F205X";
-    row.querySelector(".salva-riga").click();
+    // Il codice si corregge da «Correzione del codice fiscale» (nella lista si legge soltanto, dalla 3.15.2).
+    document.querySelector('#elencoDa tr[data-id="B1"] .correggi-cf')?.click();
+    await wait(300);
+    const row = document.querySelector('#elencoCerca tr[data-id="B1"]');
+    if (row) {
+      row.querySelector(".cf").value = "BNCLCU80A01F205X";
+      row.querySelector(".salva-riga").click();
+    }
     await wait(300);
     test("cfDopoLoScarico", el("btnSegna").disabled && /riscaric/i.test(el("passo").textContent + (el("statusToast")?.textContent || "")),
       `segna spento ${el("btnSegna").disabled}, «${el("passo").textContent.trim().slice(0, 80)}»`);

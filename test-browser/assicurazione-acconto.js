@@ -2,11 +2,12 @@
 // - Chi ha dato un acconto (il nucleo ha versato qualcosa ma resta da pagare): riga gialla,
 //   «Acconto: versati € X su € Y», casella «Assicura» accesa di default.
 // - Chi non ha dato nessun acconto (il nucleo non ha versato nulla): riga rossa, «Nessun acconto:
-//   da pagare € Y», casella spenta di default; si accende a mano, e dopo un invio le regole ripartono.
+//   da pagare € Y», casella spenta di default; si accende a mano e la scelta resta salvata.
 // - Chi ha saldato: riga normale, casella accesa. Una riga spenta a mano non si confonde con
 //   l'acconto (giallo) né con chi non ha pagato (rosso).
 // - Solo a schermo i soci dello stesso nucleo stanno insieme, capofamiglia prima, con il segno del
-//   nucleo; i file scaricati e l'invio restano nell'ordine del database (tipo, cognome, nome).
+//   nucleo, e (dalla 3.15.2) chi non ha dato l'acconto sta in cima, perché resterebbe fuori; i file
+//   scaricati e l'invio restano nell'ordine del database (tipo, cognome, nome).
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
   const member = (id, household, paid, total, debt) => ({ id, last_name: id, first_name: "PROVA", birth_date: "1980-01-01",
@@ -23,10 +24,14 @@
   ];
   FAKE.rpc.insurance_sent_lists = [];
   FAKE.rpc.insurance_send_all = 5;
+  FAKE.rpc.set_insurance_choice = 1;
   FAKE.risposta = (t) => (t === "insurances" ? [{ code: "BASE", name: "REALE MUTUA NEVE" }] : []);
   const sent = [];
   FAKE.errore = (t, request) => {
     if (t === "rpc:insurance_send_all") sent.push(request.parametri);
+    if (t === "rpc:set_insurance_choice") {   // come il database: la scelta resta per chi riapre la pagina
+      for (const s of FAKE.rpc.insurance_members) if (request.parametri.member_ids.includes(s.id)) s.insurance_choice = request.parametri.choice;
+    }
     return null;
   };
 
@@ -57,9 +62,9 @@
       && !row("ALFA").classList.contains("con-acconto") && !row("ALFA").classList.contains("senza-acconto") && box("ALFA").checked,
       `saldato ${plain}, acconto ${bg("ACCONTO")}, nessun acconto ${bg("LUNGHI")}`);
 
-    // A schermo il nucleo LUNGHI sta insieme, capofamiglia prima, al posto del suo cognome.
+    // A schermo il nucleo LUNGHI sta insieme, capofamiglia prima; senza acconto, sta in cima alla lista.
     const order = [...document.querySelectorAll("#elencoDa tr[data-id]")].map((tr) => tr.dataset.id).join(",");
-    test("nucleoInsieme", order === "ACCONTO,ALFA,CARLO,LUNGHI,BONINO,MEZZO", `ordine ${order}`);
+    test("nucleoInsieme", order === "LUNGHI,BONINO,ACCONTO,ALFA,CARLO,MEZZO", `ordine ${order}`);
     test("segnoNucleo", ["LUNGHI", "BONINO"].every((id) => row(id).classList.contains("in-nucleo"))
       && !row("ALFA").classList.contains("in-nucleo") && clean(row("LUNGHI")).includes("Nucleo familiare: 2 soci"),
       `LUNGHI «${row("LUNGHI").className}» «${clean(row("LUNGHI")).slice(0, 120)}», ALFA «${row("ALFA").className}»`);
@@ -89,7 +94,8 @@
     const sentIds = sent.at(-1)?.member_ids?.join("+");
     test("inviaInOrdine", sentIds === "ACCONTO+ALFA+BONINO+CARLO+MEZZO", `inviati ${sentIds}`);
     await wait(200);
-    test("dopoInvioRegole", box("BONINO") && !box("BONINO").checked && box("ACCONTO")?.checked,
+    // La scelta è salvata nel database (dalla 3.15.2): BONINO acceso a mano resta acceso.
+    test("dopoInvioSalvata", box("BONINO")?.checked === true && box("ACCONTO")?.checked,
       `BONINO ${box("BONINO")?.checked}, ACCONTO ${box("ACCONTO")?.checked}`);
 
     document.title = "RISULTATO " + r.join(" ");
