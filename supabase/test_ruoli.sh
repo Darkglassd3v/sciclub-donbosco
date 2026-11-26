@@ -2727,4 +2727,57 @@ end $$;
 delete from public.role_grants where role = 'assicurazione' and permission = 'soci';
 FINE
 
+# Bot Telegram (dalla 3.15, 26/11/2026): numeri di tessera liberi e telefono di un socio, solo per la funzione del bot
+# (service_role). Né anon né authenticated possono chiamare le funzioni o leggere le tabelle del bot.
+psql_ <<'FINE'
+insert into public.settings (key, value) values ('card_gaps_from', '21') on conflict (key) do update set value = '21';
+do $$ begin perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', false); end $$;
+insert into public.members (id, last_name, first_name, card_number, phone, enrolled_at) values
+  ('cccccccc-0000-0000-0000-000000000901', 'TELEGRAM', 'PRIMO', '21', '333 1111111', now()),
+  ('cccccccc-0000-0000-0000-000000000902', 'TELEGRAM', 'SECONDO', '23', null, now()),
+  ('cccccccc-0000-0000-0000-000000000903', 'D''ANGELO', 'TELEGRAM', '24', '333 2222222', now())
+on conflict (id) do nothing;
+update public.members set payer_id = 'cccccccc-0000-0000-0000-000000000901' where id = 'cccccccc-0000-0000-0000-000000000902';
+do $$
+declare liberi int[];
+begin
+  liberi := array(select public.telegram_free_cards(3));
+  assert liberi[1] = 22 and array_length(liberi, 1) = 3 and not (21 = any (liberi)) and not (23 = any (liberi)) and not (24 = any (liberi)),
+         format('telegram: numeri liberi sbagliati %s', liberi);
+  assert (select count(*) from public.telegram_free_cards(500)) = 50, 'telegram: i numeri liberi non si fermano a 50';
+  assert (select count(*) from public.telegram_phone_search('telegram')) = 3, 'telegram: la ricerca per cognome non trova i tre soci';
+  assert (select phone from public.telegram_phone_search('telegram primo')) = '333 1111111', 'telegram: telefono del socio sbagliato';
+  assert (select payer_phone from public.telegram_phone_search('telegram secondo')) = '333 1111111',
+         'telegram: senza telefono suo manca quello di chi paga per lui';
+  assert (select count(*) from public.telegram_phone_search('dangelo')) = 1, 'telegram: «dangelo» non trova D''ANGELO';
+  assert (select count(*) from public.telegram_phone_search('')) = 0, 'telegram: la ricerca vuota restituisce soci';
+  assert (select count(*) from public.telegram_phone_search('a')) = 0, 'telegram: una lettera sola restituisce soci';
+end $$;
+set role authenticated;
+do $$ begin
+  begin
+    perform public.telegram_phone_search('telegram');
+    raise exception 'ASSERZIONE: authenticated legge i telefoni del bot';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.telegram_users;
+    raise exception 'ASSERZIONE: authenticated legge le chat abilitate del bot';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+set role anon;
+do $$ begin
+  begin
+    perform public.telegram_free_cards(3);
+    raise exception 'ASSERZIONE: anon legge i numeri liberi del bot';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+reset role;
+delete from public.members where id in ('cccccccc-0000-0000-0000-000000000902', 'cccccccc-0000-0000-0000-000000000901',
+  'cccccccc-0000-0000-0000-000000000903');
+FINE
+
 echo "test ruoli: tutto a posto"
