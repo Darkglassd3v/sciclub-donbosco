@@ -13,11 +13,25 @@ const AIUTO = "Comandi:\n/liberi — i primi numeri di tessera liberi\n/telefono
 /** Testo per il parse_mode HTML di Telegram: i nomi dei soci non diventano tag. */
 export const esc = (t) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+/**
+ * Il telefono come Telegram lo rende toccabile per chiamare (dalla 3.15.4): formato internazionale senza spazi.
+ * Senza prefisso è italiano (+39); con + o 00 davanti il prefisso resta quello scritto; troppo corto, com'è.
+ */
+export function telefonoDaChiamare(telefono) {
+  const scritto = String(telefono ?? "").trim();
+  const cifre = scritto.replace(/\D/g, "");
+  if (scritto.startsWith("+")) return "+" + cifre;
+  if (cifre.startsWith("00")) return "+" + cifre.slice(2);
+  if (cifre.length === 12 && cifre.startsWith("39")) return "+" + cifre;
+  if (cifre.length >= 6 && cifre.length <= 11) return "+39" + cifre;
+  return scritto;
+}
+
 function rigaSocio(s) {
   const nome = `${esc(s.last_name)} ${esc(s.first_name)}`.trim();
   const tessera = s.card_number ? `${esc(s.card_number)} · ` : "";
-  const telefono = s.phone ? `<b>${esc(s.phone)}</b>`
-    : s.payer_phone ? `nessun telefono, paga ${esc(s.payer_name)}: <b>${esc(s.payer_phone)}</b>` : "nessun telefono";
+  const telefono = s.phone ? `<b>${esc(telefonoDaChiamare(s.phone))}</b>`
+    : s.payer_phone ? `nessun telefono, paga ${esc(s.payer_name)}: <b>${esc(telefonoDaChiamare(s.payer_phone))}</b>` : "nessun telefono";
   return `${tessera}${nome} · ${telefono}${s.enrolled ? "" : " (non iscritto quest'anno)"}`;
 }
 
