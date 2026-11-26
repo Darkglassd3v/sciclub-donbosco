@@ -90,4 +90,27 @@ assert.equal(telefonoDaChiamare("+41 79 123 45 67"), "+41791234567");
 assert.equal(telefonoDaChiamare("0041 79 123 45 67"), "+41791234567");
 assert.equal(telefonoDaChiamare("12"), "12");
 
+// Pulsanti (dalla 3.15.8): alla chat abilitata il bot mostra sempre «Tessere libere» e «Numero di telefono» al posto
+// della tastiera; toccarli manda al bot il loro testo. «Tessere libere» vale /liberi, «Numero di telefono» chiede il
+// nome e il messaggio dopo (un nome scritto senza comando) fa la ricerca. I comandi con «/» restano.
+chiamate.length = 0;
+let p = await rispondi({ chat: 42, testo: "/start" }, db);
+assert.deepEqual(p.menu, ["Tessere libere", "Numero di telefono"], "a /start mancano i pulsanti");
+p = await rispondi({ chat: 42, testo: "Tessere libere" }, db);
+assert.match(p.testo, /22, 25, 26/);
+assert.deepEqual(chiamate.find(([c]) => c === "liberi"), ["liberi", 10]);
+assert.ok(p.menu, "dopo una risposta i pulsanti spariscono");
+p = await rispondi({ chat: 42, testo: "Numero di telefono" }, db);
+assert.match(p.testo, /cognome/i);
+assert.ok(!chiamate.some(([c, t]) => c === "cerca" && /numero di telefono/i.test(t)), "«Numero di telefono» cercato come nome");
+p = await rispondi({ chat: 42, testo: "rossi" }, db);
+assert.match(p.testo, /ROSSI MARIO/);
+assert.ok(p.menu, "dopo la ricerca i pulsanti spariscono");
+// La chat non abilitata non ha i pulsanti: ha quello del numero.
+p = await rispondi({ chat: 7, testo: "/start" }, db);
+assert.ok(!p.menu && p.chiediContatto);
+// Abilitata col numero: subito i pulsanti.
+p = await rispondi({ chat: 7, mittente: 70, contatto: { telefono: "393331234567", utente: 70 } }, db);
+assert.deepEqual(p.menu, ["Tessere libere", "Numero di telefono"], "appena abilitata mancano i pulsanti");
+
 console.log("bot telegram: logica a posto");
