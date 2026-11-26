@@ -87,8 +87,11 @@ a carico e i **numeri di tessera liberi**. Come nei Pagamenti, ogni famiglia res
 nome del capofamiglia, poi lui e i familiari con la scritta «a carico». Si cerca per cognome, nome o codice
 fiscale: si vede la famiglia intera, con in giallo la persona trovata. Con **Colonne** si scelgono i dati da
 vedere (telefono, email, data di nascita...) e il loro ordine, coi pulsanti **Su** e **Giù**; la prima colonna è
-sempre il socio. La colonna **Sci club** dice chi arriva dallo Sci Club Moncalvo (vuota per i nostri soci); c'è
-anche nell'Excel. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
+sempre il socio. La colonna **Sci club** dice chi arriva dallo Sci Club Moncalvo (vuota per i nostri soci). Il menu
+**Sci club** mostra solo i soci di un club, o solo i nostri (DON BOSCO). **Scarica quello che vedi (Excel)**
+scarica i soci mostrati, con numero di tessera, cognome, nome e solo le colonne scelte; **Scarica tutti (Excel
+completo)** ha tutte le colonne e un foglio a parte per ogni sci club. Nell'Excel restano ferme solo le righe
+d'intestazione. Toccando il nome si apre la scheda del socio per modificarla. Chi non vede la voce nel menu
 chiede al superadmin di dargli il permesso «Elenco soci» in Gestione › Ruoli e permessi.
 
 Nel **Riepilogo**, in alto, ci sono le cifre di tutti i soci. Subito sotto, i pulsanti grandi **TUTTI**, **DON BOSCO**

@@ -914,14 +914,16 @@ function frozenPaneXml(xml, rows, cols) {
     + `activePane="${pane}" state="frozen"/><selection pane="${pane}"/></sheetView>`);
 }
 
-/** Scarica il libro Excel; `blocca` ({ righe, colonne }) le tiene ferme nel primo foglio mentre si scorre. */
+/** Scarica il libro Excel; `blocca` ({ righe, colonne }) le tiene ferme in ogni foglio mentre si scorre. */
 function saveBook(book, fileName, { righe: rows = 0, colonne: cols = 0 } = {}) {
   const zip = rows || cols ? XLSX.CFB.read(new Uint8Array(XLSX.write(book, { bookType: "xlsx", type: "array" })), { type: "array" }) : null;
-  const entry = zip && XLSX.CFB.find(zip, zip.FullPaths.find((p) => p.endsWith("xl/worksheets/sheet1.xml")) || "");
-  // Niente blocco chiesto, o il foglio non si trova nel file: lo si scarica com'è.
-  if (!entry) { XLSX.writeFile(book, fileName); return; }
-  entry.content = new TextEncoder().encode(frozenPaneXml(new TextDecoder().decode(entry.content), rows, cols));
-  entry.size = entry.content.length;
+  const entries = zip ? zip.FullPaths.filter((p) => /xl\/worksheets\/sheet\d+\.xml$/.test(p)).map((p) => XLSX.CFB.find(zip, p)).filter(Boolean) : [];
+  // Niente blocco chiesto, o nessun foglio nel file: lo si scarica com'è.
+  if (!entries.length) { XLSX.writeFile(book, fileName); return; }
+  for (const entry of entries) {
+    entry.content = new TextEncoder().encode(frozenPaneXml(new TextDecoder().decode(entry.content), rows, cols));
+    entry.size = entry.content.length;
+  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([XLSX.CFB.write(zip, { fileType: "zip", type: "array" })],
     { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
@@ -941,16 +943,22 @@ function loadPdf() {
  * Scarica un foglio Excel dei soci passati. `columns`: [[intestazione, (socio) => valore], ...].
  * `titolo` va nella prima riga, su tutta la larghezza; `gruppi` ([{ nome, colore, colonne }]) mette
  * sopra i nomi delle colonne la riga dei gruppi colorati (readableSheet()); `blocca` ({ righe,
- * colonne }) le tiene ferme mentre si scorre (saveBook()); `foglio` è il nome del foglio.
+ * colonne }) le tiene ferme mentre si scorre (saveBook()); `foglio` è il nome del foglio; `altri` aggiunge
+ * fogli con le stesse colonne ([{ foglio, righe, titolo }]).
  */
-async function downloadExcel(rows, nome, columns, { gruppi: groups = null, blocca: freeze = {}, titolo: title = null, foglio: sheetName = "Soci" } = {}) {
+async function downloadExcel(rows, nome, columns, { gruppi: groups = null, blocca: freeze = {}, titolo: title = null, foglio: sheetName = "Soci",
+  altri: others = [] } = {}) {
   if (!rows.length) { showToast("Nessun socio da scaricare."); return; }
   await loadXlsx();
-  const top = [...(title ? [[title]] : []), ...(groups ? [groups.flatMap((g) => [g.nome, ...Array(g.colonne - 1).fill("")])] : [])];
-  const table = [columns.map(([titleText]) => titleText), ...rows.map((s) => columns.map(([, theValue]) => theValue(s) ?? ""))];
-  const sheet = readableSheet([...top, ...table], { intestazione: top.length, gruppi: groups });
+  const sheetOf = (people, sheetTitle) => {
+    const top = [...(sheetTitle ? [[sheetTitle]] : []), ...(groups ? [groups.flatMap((g) => [g.nome, ...Array(g.colonne - 1).fill("")])] : [])];
+    const table = [columns.map(([titleText]) => titleText), ...people.map((s) => columns.map(([, theValue]) => theValue(s) ?? ""))];
+    return readableSheet([...top, ...table], { intestazione: top.length, gruppi: groups });
+  };
   const book = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(book, sheet, sheetName);
+  XLSX.utils.book_append_sheet(book, sheetOf(rows, title), sheetName);
+  // `altri` ([{ foglio, righe, titolo }], dal 26/11/2026): fogli in più con le stesse colonne, per esempio uno per sci club.
+  for (const other of others) XLSX.utils.book_append_sheet(book, sheetOf(other.righe, other.titolo), other.foglio.slice(0, 31));
   saveBook(book, `${nome}-${new Date().toISOString().slice(0, 10)}.xlsx`, freeze);
   showToast(rows.length === 1 ? "Scaricato 1 socio." : `Scaricati ${rows.length} soci.`);
 }

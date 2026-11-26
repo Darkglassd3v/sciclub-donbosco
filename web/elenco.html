@@ -141,11 +141,16 @@
         <label class="label" for="cercaSoci">Cerca per cognome, nome o codice fiscale</label>
         <input id="cercaSoci" class="input" type="search" autocomplete="off" placeholder="Cognome, nome o codice fiscale di un componente del nucleo">
       </div>
+      <!-- Dal 26/11/2026: solo i soci di uno sci club affiliato, o solo i nostri (DON BOSCO, senza club). -->
+      <div class="field">
+        <label class="label" for="filtroClub">Sci club</label>
+        <div class="select"><select id="filtroClub"><option value="">Tutti</option><option value="DON BOSCO">DON BOSCO</option></select></div>
+      </div>
       <button type="button" class="button is-link is-outlined" id="btnColonne">Colonne</button>
       <!-- L'Excel con tutti i dati personali: solo per chi ha il permesso riepilogo (prima stava nel Riepilogo). -->
       <div class="scarica" id="zonaScarica" hidden>
         <button type="button" class="button is-link" id="btnScaricaTutti">Scarica tutti (Excel completo)</button>
-        <button type="button" class="button is-link is-outlined" id="btnScaricaFiltrato">Scarica l'elenco filtrato</button>
+        <button type="button" class="button is-link is-outlined" id="btnScaricaFiltrato">Scarica quello che vedi (Excel)</button>
       </div>
     </div>
     <p class="tessere-libere" id="tessereLibere"></p>
@@ -204,6 +209,7 @@
   let found = new Set();     // gli id dei soci trovati dalla ricerca, evidenziati nel loro nucleo
   let page = 0;
   let seasonLabel = "";
+  let clubs = [];            // i nomi degli sci club affiliati (Impostazioni), per il filtro e i fogli dell'Excel
 
   const courseOf = (s) => (s.course_type && s.course_day ? `${s.course_type} (${s.course_day})` : s.course_type);
   const fullName = (s) => (s ? `${s.last_name || ""} ${s.first_name || ""}`.trim() : "");
@@ -256,8 +262,9 @@
       ["CAP", (s) => s.postal_code]]],
   ];
   const SUMMARY_COLUMNS = SUMMARY_GROUPS.flatMap(([, , columns]) => columns);
-  // Mentre si scorre restano ferme le tre righe d'intestazione (titolo, gruppi, colonne) e le colonne da Numero a Nome.
-  const SUMMARY_FROZEN = { righe: 3, colonne: 4 };
+  // Mentre si scorre restano ferme le tre righe d'intestazione (titolo, gruppi, colonne); le colonne no (26/11/2026:
+  // tenere ferme le colonne da Numero a Nome era poco intuitivo).
+  const SUMMARY_FROZEN = { righe: 3 };
 
   /** Il numero di tessera come numero (2 prima di 10); senza numero, o «NO», in fondo. */
   const cardOrder = (s) => { const n = parseInt(s.card_number, 10); return Number.isNaN(n) ? Infinity : n; };
@@ -280,6 +287,7 @@
     el("btnScaricaTutti").addEventListener("click", () => downloadMembers(false));
     el("btnScaricaFiltrato").addEventListener("click", () => downloadMembers(true));
     el("cercaSoci").addEventListener("input", () => { page = 0; applySearch(); });
+    el("filtroClub").addEventListener("change", () => { page = 0; applySearch(); });
     // In fondo all'elenco il cambio pagina riporta all'inizio: la pagina nuova si legge dall'alto.
     for (const [id, step, toTop] of [["pagPrecedente", -1, false], ["pagSuccessiva", 1, false],
       ["pagPrecedenteSotto", -1, true], ["pagSuccessivaSotto", 1, true]]) {
@@ -310,7 +318,7 @@
     try {
       const { data: seasonValue, error } = await sb.rpc("current_season");
       if (error) throw error;
-      const [rows, passes, cards] = await Promise.all([
+      const [rows, passes, cards, clubRows] = await Promise.all([
         allRows(() => sb
           .from("members")
           .select("id, last_name, first_name, birth_date, birth_place, birth_province, tax_code, name_key, payer_id, "
@@ -321,7 +329,10 @@
           .order("id")),
         allRows(() => sb.from("member_passes").select("member_id, pass_type").eq("season", seasonValue).order("id")),
         allRows(() => sb.from("prices").select("name, price, insurance, min_role").eq("category", "TESSERA").order("name")),
+        allRows(() => sb.from("affiliated_clubs").select("name").order("name")),
       ]);
+      clubs = clubRows.map((c) => c.name);
+      el("filtroClub").append(...clubs.map((name) => new Option(name, name)));
       const passesOf = new Map();
       for (const p of passes) passesOf.set(p.member_id, [...(passesOf.get(p.member_id) || []), p.pass_type]);
       members = rows.map((s) => ({ ...s, card_type: ownCard(s) ? s.card_type : coveringCard(cards, s.member_insurance),
@@ -338,9 +349,6 @@
       const year = new Date(seasonValue).getFullYear();
       seasonLabel = `${year}/${String(year + 1).slice(2)}`;
       el("titolo").textContent = `Elenco soci ${seasonLabel}`;
-      el("numSoci").textContent = members.length;
-      el("numNuclei").textContent = households.length;
-      el("numFamiliari").textContent = members.filter((s) => s.payer_id).length;
       drawFreeCards();
       applySearch();
     } catch (error) {
@@ -412,9 +420,17 @@
       const key = s.name_key || nameKey(`${s.last_name || ""} ${s.first_name || ""}`);
       return words.every((w) => text.includes(w) || (nameKey(w) && key.includes(nameKey(w))));
     };
-    found = new Set(words.length ? members.filter(matches).map((s) => s.id) : []);
-    shownHouseholds = !words.length ? households
-      : households.filter((h) => h.people.some((s) => found.has(s.id)) || (!h.headListed && h.head && matches(h.head)));
+    // Il filtro sci club tiene nel nucleo solo i suoi soci; le cifre in alto contano quelli.
+    const club = el("filtroClub").value;
+    const inClub = (s) => !club || (club === "DON BOSCO" ? !s.club : s.club?.name === club);
+    const ofClub = !club ? households : households.map((h) => ({ ...h, people: h.people.filter(inClub) })).filter((h) => h.people.length);
+    const people = ofClub.flatMap((h) => h.people);
+    el("numSoci").textContent = people.length;
+    el("numNuclei").textContent = ofClub.length;
+    el("numFamiliari").textContent = people.filter((s) => s.payer_id).length;
+    found = new Set(words.length ? people.filter(matches).map((s) => s.id) : []);
+    shownHouseholds = !words.length ? ofClub
+      : ofClub.filter((h) => h.people.some((s) => found.has(s.id)) || (!h.headListed && h.head && matches(h.head)));
     const ids = new Set(shownHouseholds.flatMap((h) => h.people.map((s) => s.id)));
     shown = members.filter((s) => ids.has(s.id));
     draw();
@@ -543,23 +559,34 @@
   }
 
   /**
-   * L'Excel dei soci: tutti, o solo quelli che la ricerca mostra (i nuclei interi, con la ricerca nel titolo e nel
-   * nome del file). La stagione è scritta dentro il file: rinominato o copiato, dice ancora di che stagione è.
+   * L'Excel dei soci (dal 26/11/2026):
+   * - «Scarica tutti»: tutti i soci con tutte le colonne a gruppi colorati, più un foglio per ogni sci club affiliato
+   *   con i suoi soci;
+   * - «Scarica quello che vedi»: i soci mostrati (ricerca e filtro sci club) con numero di tessera, cognome, nome e le
+   *   sole colonne scelte in «Colonne», nel loro ordine.
+   * La stagione, il filtro e la ricerca sono scritti nel titolo dentro il file: rinominato o copiato, dice ancora cosa è.
    */
-  async function downloadMembers(onlyFiltered = false) {
-    const query = el("cercaSoci").value.trim();
-    const filtered = onlyFiltered && query;
-    const rows = filtered ? shown : members;
+  async function downloadMembers(onlyShown = false) {
+    const query = onlyShown ? el("cercaSoci").value.trim() : "";
+    const club = onlyShown ? el("filtroClub").value : "";
+    const rows = onlyShown ? shown : members;
     const now = new Date();
-    const title = `Soci della stagione ${seasonLabel}`
-      + (filtered ? ` · ricerca «${query}»` : "")
-      + ` · scaricato il ${now.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`
-      + ` alle ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })} · ${rows.length === 1 ? "1 socio" : `${rows.length} soci`}`;
+    const when = ` · scaricato il ${now.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`
+      + ` alle ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
+    const count = (n) => (n === 1 ? " · 1 socio" : ` · ${n} soci`);
+    const titleOf = (clubName, people) => `Soci della stagione ${seasonLabel}` + (clubName ? ` · sci club «${clubName}»` : "")
+      + (query ? ` · ricerca «${query}»` : "") + when + count(people.length);
+    const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const file = `soci-stagione-${seasonLabel.replace("/", "-")}${club ? `-${slug(club)}` : ""}${query ? "-ricerca" : ""}`;
+    const columns = onlyShown ? [["Numero tessera", (s) => s.card_number], ["Cognome", (s) => s.last_name], ["Nome", (s) => s.first_name],
+      ...chosenKeys().map((key) => LIST_COLUMNS.find(([k]) => k === key)).map(([, label, value]) => [label, value])] : SUMMARY_COLUMNS;
     setLoading(true);
     try {
-      await downloadExcel(rows, `soci-stagione-${seasonLabel.replace("/", "-")}${filtered ? "-ricerca" : ""}`, SUMMARY_COLUMNS, {
-        gruppi: SUMMARY_GROUPS.map(([nome, colore, columns]) => ({ nome, colore, colonne: columns.length })),
-        blocca: SUMMARY_FROZEN, titolo: title, foglio: `Soci ${seasonLabel.replace("/", "-")}` });
+      await downloadExcel(rows, file, columns, onlyShown ? { blocca: { righe: 2 }, titolo: titleOf(club, rows), foglio: `Soci ${seasonLabel.replace("/", "-")}` } : {
+        gruppi: SUMMARY_GROUPS.map(([nome, colore, cols]) => ({ nome, colore, colonne: cols.length })),
+        blocca: SUMMARY_FROZEN, titolo: titleOf("", rows), foglio: `Soci ${seasonLabel.replace("/", "-")}`,
+        altri: clubs.map((name) => ({ name, people: members.filter((s) => s.club?.name === name) })).filter((c) => c.people.length)
+          .map(({ name, people }) => ({ foglio: name, righe: people, titolo: titleOf(name, people) })) });
     } catch (error) {
       showToast("Errore: " + errorMessage(error), "is-danger");
     } finally {

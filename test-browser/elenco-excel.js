@@ -1,6 +1,6 @@
 // Elenco soci (elenco.html): l'Excel dei soci della stagione, spostato qui dal Riepilogo il 18/11/2026.
-// - «Scarica tutti (Excel completo)»: tutti i soci dell'elenco; «Scarica l'elenco filtrato»: solo quelli trovati
-//   dalla ricerca, con la ricerca scritta nel titolo. I pulsanti li vede solo chi ha il permesso riepilogo, come
+// - «Scarica tutti (Excel completo)»: tutti i soci dell'elenco; «Scarica quello che vedi»: solo quelli mostrati,
+//   con la ricerca scritta nel titolo. I pulsanti li vede solo chi ha il permesso riepilogo, come
 //   prima nel Riepilogo: l'Excel ha tutti i dati personali.
 // - In ordine di numero di tessera, contato come numero (2, 10, 100); senza numero (o «NO») in fondo, per cognome.
 // - Colonne a gruppi, ognuno col suo colore nella riga sopra i nomi delle colonne (richiesta del 29/10):
@@ -11,7 +11,11 @@
 // - In cima una riga col titolo: stagione, quando è stato scaricato, quanti soci (richiesta del 29/10:
 //   il file rinominato o copiato deve dire ancora di che stagione è). Foglio «Soci 2026-27», file
 //   soci-stagione-2026-27-AAAA-MM-GG.xlsx.
-// - Mentre si scorre restano ferme le tre righe d'intestazione e le colonne da Numero a Nome.
+// - Mentre si scorre restano ferme le tre righe d'intestazione (dal 26/11/2026 non più le colonne da Numero a Nome:
+//   poco intuitivo), in tutti i fogli.
+// - Dal 26/11/2026 l'Excel completo ha anche un foglio per ogni sci club affiliato, con i suoi soci.
+// - «Scarica quello che vedi (Excel)» (prima «Scarica l'elenco filtrato»): i soci mostrati (ricerca e filtro sci club)
+//   con Numero tessera, Cognome, Nome e solo le colonne scelte in «Colonne», nel loro ordine.
 // - frozenPaneXml(): il blocco scritto nel foglio, che xlsx-js-style da solo non scrive.
 // - Chi è tesserato con la presciistica o con l'agevolazione famiglia non ha una tessera sua, ma
 //   nella colonna Tipo tessera ha quella ordinaria della sua assicurazione (member_insurance):
@@ -51,6 +55,7 @@ FAKE.risposta = (t, r) => {
     { name: "TESSERA SCONTATA - NO ASSICURAZIONE", price: 10, insurance: null, min_role: "utente" },
     { name: "SOLO TESSERA - NO ASSICURAZIONE", price: 20, insurance: null, min_role: "utente" },
   ];
+  if (t === "affiliated_clubs") return [{ name: "SCI CLUB MONCALVO" }];
   if (t === "member_passes") return [{ member_id: "a", pass_type: "10 VIAGGI SABATO" }, { member_id: "a", pass_type: "5 VIAGGI DOMENICA" },
     { member_id: "c", pass_type: "STAGIONALE" }];
   return [];
@@ -61,10 +66,13 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   const saved = [];
   window.saveBook = (...args) => saved.push(args);
   await downloadMembers();
-  const [rows = [], sheet = {}] = SHEETS[SHEETS.length - 1] || [];
+  const [rows = [], sheet = {}] = SHEETS[0] || [];
   const [[title = ""] = [], groups = [], head = [], ...data] = rows;
   test("titolo", /^Soci della stagione 2026\/27 · scaricato il \d{2}\/\d{2}\/\d{4} alle \d{2}:\d{2} · 5 soci$/.test(title), title);
-  test("foglio", SHEET_NAMES[SHEET_NAMES.length - 1] === "Soci 2026-27", SHEET_NAMES.join(","));
+  test("foglio", SHEET_NAMES.join(",") === "Soci 2026-27,SCI CLUB MONCALVO", SHEET_NAMES.join(","));
+  const clubSheet = SHEETS[SHEETS.length - 1]?.[0] || [];
+  test("foglioClub", clubSheet.length === 4 && clubSheet[3][2] === "ROSSI" && /SCI CLUB MONCALVO/.test(clubSheet[0][0]) && /· 1 socio$/.test(clubSheet[0][0]),
+    `${clubSheet.length} righe, «${clubSheet[0]?.[0]}»`);
   test("gruppi", groups.join("|") === "TESSERA||ANAGRAFICA|||||||CORSI E ABBONAMENTI|||RECAPITI|||||", groups.join("|"));
   test("colonne", head.join("|") === "Numero tessera|Tipo tessera|Cognome|Nome|Data di nascita|Luogo di nascita|Provincia di nascita|Codice fiscale"
     + "|Sci club di provenienza|Corso|Abbonamento|Presciistica|Telefono|Email|Indirizzo|Città|Provincia|CAP", head.join("|").slice(0, 120));
@@ -74,7 +82,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   test("colori", fill("A2") === "084C8D" && fill("C2") === "0B6E69" && fill("J2") === "8A5300" && fill("M2") === "4A5868"
     && sheet.A2.s.font.color.rgb === "FFFFFF" && sheet.C3.s.font.color.rgb === "0B6E69" && fill("C3") && fill("C3") !== "0B6E69",
     `${fill("A2")} ${fill("C2")} ${fill("J2")} ${fill("M2")} testa ${fill("C3")}`);
-  test("blocco", saved.length === 1 && saved[0][2]?.righe === 3 && saved[0][2]?.colonne === 4 && /^soci-stagione-2026-27-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[0][1]),
+  test("blocco", saved.length === 1 && saved[0][2]?.righe === 3 && !saved[0][2]?.colonne && /^soci-stagione-2026-27-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[0][1]),
     JSON.stringify(saved.map((s) => s.slice(1))).slice(0, 80));
   test("ordineTessere", data.map((d) => d[2]).join(",") === "BIANCHI,ROSSI,VERDI,ALFA,ZETA", data.map((d) => d[2]).join(","));
   const rossi = data.find((d) => d[2] === "ROSSI") || [];
@@ -97,16 +105,36 @@ window.addEventListener("load", () => setTimeout(async () => { try {
     ? frozenPaneXml('<worksheet><sheetViews><sheetView workbookViewId="0"/></sheetViews><sheetData/></worksheet>', 2, 4) : "";
   test("bloccoNelFoglio", xml.includes('<sheetView workbookViewId="0"><pane xSplit="4" ySplit="2" topLeftCell="E3" activePane="bottomRight" state="frozen"/>')
     && xml.endsWith("<sheetData/></worksheet>"), xml.slice(0, 100) || "frozenPaneXml mancante");
-  test("pulsanti", !el("zonaScarica")?.hidden && Boolean(el("btnScaricaTutti")) && Boolean(el("btnScaricaFiltrato")), "pulsanti di scarico nascosti o mancanti");
-  // Solo quelli trovati dalla ricerca.
+  test("pulsanti", !el("zonaScarica")?.hidden && Boolean(el("btnScaricaTutti")) && el("btnScaricaFiltrato")?.textContent.trim() === "Scarica quello che vedi (Excel)",
+    "pulsanti di scarico nascosti, mancanti o col nome vecchio");
+  // Solo quelli trovati dalla ricerca, con le sole colonne scelte (qui solo Email).
+  localStorage.setItem("sciclub-elenco-colonne", JSON.stringify(["email"]));
   el("cercaSoci").value = "rossi";
   el("cercaSoci").dispatchEvent(new Event("input"));
   await new Promise((ok) => setTimeout(ok, 300));
   await downloadMembers(true);
   const [filtered = []] = SHEETS[SHEETS.length - 1] || [];
-  const [[filteredTitle = ""] = [], , , ...filteredData] = filtered;
-  test("filtrato", filteredData.length === 1 && filteredData[0][2] === "ROSSI" && /ricerca «rossi»/.test(filteredTitle) && /· 1 socio$/.test(filteredTitle),
-    `${filteredData.length} righe, «${filteredTitle}»`);
+  const [[filteredTitle = ""] = [], filteredHead = [], ...filteredData] = filtered;
+  test("filtrato", filteredData.length === 1 && filteredData[0].join("|") === "10|ROSSI|ANNA|anna@example.it"
+    && filteredHead.join("|") === "Numero tessera|Cognome|Nome|Email" && /ricerca «rossi»/.test(filteredTitle) && /· 1 socio$/.test(filteredTitle),
+    `${filteredHead.join("|")} / ${filteredData.map((d) => d.join("|")).join(" ; ")} «${filteredTitle}»`);
+  test("bloccoFiltrato", saved[saved.length - 1]?.[2]?.righe === 2 && !saved[saved.length - 1]?.[2]?.colonne, JSON.stringify(saved[saved.length - 1]?.[2]));
   test("nomeFiltrato", /^soci-stagione-2026-27-ricerca-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[saved.length - 1]?.[1] || ""), saved[saved.length - 1]?.[1]);
+  // Filtro sci club: solo i soci di Moncalvo, o solo i nostri (DON BOSCO), sull'elenco e nell'Excel.
+  el("cercaSoci").value = "";
+  el("filtroClub").value = "SCI CLUB MONCALVO";
+  el("filtroClub").dispatchEvent(new Event("change"));
+  await new Promise((ok) => setTimeout(ok, 300));
+  test("filtroElenco", el("numSoci").textContent === "1" && /ROSSI/.test(el("elencoSoci").textContent) && !/BIANCHI/.test(el("elencoSoci").textContent),
+    `soci ${el("numSoci").textContent}`);
+  await downloadMembers(true);
+  const [clubOnly = []] = SHEETS[SHEETS.length - 1] || [];
+  test("filtroClub", clubOnly.length === 3 && clubOnly[2][1] === "ROSSI" && /sci club «SCI CLUB MONCALVO»/.test(clubOnly[0][0])
+    && /^soci-stagione-2026-27-sci-club-moncalvo-\d{4}-\d{2}-\d{2}\.xlsx$/.test(saved[saved.length - 1]?.[1] || ""),
+    `${clubOnly.length} righe «${clubOnly[0]?.[0]}» ${saved[saved.length - 1]?.[1]}`);
+  el("filtroClub").value = "DON BOSCO";
+  el("filtroClub").dispatchEvent(new Event("change"));
+  await new Promise((ok) => setTimeout(ok, 300));
+  test("filtroDonBosco", el("numSoci").textContent === "4" && !/ROSSI/.test(el("elencoSoci").textContent), `soci ${el("numSoci").textContent}`);
   document.title = "RISULTATO " + r.join(" ");
 } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 600));
