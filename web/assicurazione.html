@@ -371,10 +371,9 @@
   const withDeposit = (s) => num(s.debt) > 0 && num(s.household_paid) > 0;
   const noDeposit = (s) => num(s.debt) > 0 && num(s.household_paid) <= 0;
   // Chi entra nella lista lo sceglie la casella «Assicura»: di partenza accesa per tutti tranne chi
-  // non ha versato nulla; `chosen` tiene le scelte fatte a mano (id → acceso). La scelta vale finché
-  // la pagina è aperta (dopo un invio si riparte dalle regole).
-  const chosen = new Map();
-  const selected = (s) => (chosen.has(s.id) ? chosen.get(s.id) : !noDeposit(s));
+  // non ha versato nulla. Una scelta fatta a mano si salva nel database (insurance_choice, dalla 3.15.2)
+  // e la ritrova chiunque apra la pagina, anche dopo un invio; null = la regola.
+  const selected = (s) => s.insurance_choice ?? !noDeposit(s);
   const notSelected = (members) => members.filter((s) => conCF(s) && !selected(s)).length;
   const notSelectedText = (n) => howManyOnes(n, "non selezionato", "non selezionati");
 
@@ -506,8 +505,6 @@
       });
       if (error) throw error;
       cancelDownload();
-      // Le scelte fatte a mano si dimenticano: la prossima lista riparte dalle regole.
-      chosen.clear();
       showToast(`Invio registrato: ${data === 1 ? "1 socio assicurato" : `${data} soci assicurati`}.`);
       await load();
     } catch (error) {
@@ -899,19 +896,29 @@
   }
 
   /**
-   * Accende o spegne «Assicura» per alcuni soci. Non si salva: cambia solo chi entra nei file e
-   * nell'invio. Cambiata dopo lo scarico, i file non corrispondono più: lo scarico si annulla.
-   * Poi si ridisegna (conteggi e «Tutti») e il fuoco torna sulla casella usata.
+   * Accende o spegne «Assicura» per alcuni soci e lo salva nel database (set_insurance_choice), così chi
+   * apre la pagina dopo trova la stessa scelta. Cambia chi entra nei file e nell'invio: cambiata dopo lo
+   * scarico, i file non corrispondono più e lo scarico si annulla. Se il salvataggio non riesce la casella
+   * torna com'era. Poi si ridisegna (conteggi e «Tutti») e il fuoco torna sulla casella usata.
    */
-  function changeSelection(members, on, focusSelector) {
-    for (const s of members) chosen.set(s.id, on);
-    if (downloadedOne) {
-      cancelDownload();
-      showToast("La selezione è cambiata dopo lo scarico: scaricare di nuovo le liste prima dell'invio.", "is-warning");
+  async function changeSelection(members, on, focusSelector) {
+    setLoading(true);
+    try {
+      const { error } = await sb.rpc("set_insurance_choice", { member_ids: members.map((s) => s.id), choice: on });
+      if (error) throw error;
+      for (const s of members) s.insurance_choice = on;
+      if (downloadedOne) {
+        cancelDownload();
+        showToast("La selezione è cambiata dopo lo scarico: scaricare di nuovo le liste prima dell'invio.", "is-warning");
+      }
+    } catch (error) {
+      showToast("Scelta non salvata: " + errorMessage(error), "is-danger");
+    } finally {
+      setLoading(false);
     }
     drawProgressives();
     drawToInsure();
-    el("elencoDa").querySelector(focusSelector)?.focus();
+    document.querySelector(focusSelector)?.focus();   // la casella del socio o «Tutti» nel titolo della lista
   }
 
   // -------------------------------------------------------------------------

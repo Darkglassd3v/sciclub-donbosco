@@ -1548,6 +1548,12 @@ alter table public.members drop column if exists insurance_hold;
 alter table public.members add column if not exists no_insurance boolean not null default false;
 comment on column public.members.no_insurance is 'Coperto dall''agevolazione famiglia ma senza assicurazione (dalla 3.13).';
 
+-- La casella «Assicura» della pagina Assicurazione, salvata (dalla 3.15.2): true dentro la prossima lista,
+-- false fuori, null la regola della pagina (dentro, tranne chi non ha versato nulla). La scrive solo
+-- set_insurance_choice(); la chiusura della stagione e l'uscita dalla stagione la azzerano.
+alter table public.members add column if not exists insurance_choice boolean;
+comment on column public.members.insurance_choice is 'Scelta «Assicura» della pagina Assicurazione: true dentro, false fuori, null la regola (dalla 3.15.2).';
+
 -- L'assicurazione di un socio. Con la presciistica che comprende la tessera è quella
 -- scelta con lei, anche nessuna: una tessera rimasta da prima non assicura chi ha
 -- detto no. Altrimenti, nell'ordine: della tessera, dell'agevolazione famiglia che ha
@@ -1650,13 +1656,14 @@ end $$;
 -- lista non entrano. debt è il saldo da versare del nucleo; household_id (il
 -- capofamiglia), household_paid e household_total sono il nucleo come in Pagamenti
 -- (dalla 3.15.1): la pagina distingue chi ha dato un acconto da chi non ha versato
--- nulla e mostra insieme i soci dello stesso nucleo.
+-- nulla e mostra insieme i soci dello stesso nucleo. insurance_choice è la casella
+-- «Assicura» salvata (dalla 3.15.2).
 create or replace function public.insurance_members()
 returns table (id uuid, last_name text, first_name text, birth_date date,
                birth_place text, birth_province text, tax_code text,
                card_type text, card_number text, insurance text,
                debt numeric, household_id uuid, household_paid numeric,
-               household_total numeric)
+               household_total numeric, insurance_choice boolean)
 language sql
 stable
 security definer
@@ -1665,7 +1672,7 @@ as $$
   select t.id, t.last_name, t.first_name, t.birth_date,
          t.birth_place, t.birth_province, t.tax_code,
          t.card_type, t.card_number, t.tipo, t.debt, t.nucleo,
-         coalesce(h.household_paid, 0), coalesce(h.household_total, 0)
+         coalesce(h.household_paid, 0), coalesce(h.household_total, 0), t.insurance_choice
     from (select m.*, public.member_insurance(m) as tipo, public.member_debt(m) as debt,
                  coalesce(m.payer_id, m.id) as nucleo
             from public.members m
@@ -1680,6 +1687,33 @@ as $$
 $$;
 
 comment on function public.insurance_members is 'Tesserati della stagione aperta ancora da assicurare, con il tipo di assicurazione (member_insurance(): presciistica, tessera o agevolazione famiglia), il debito del nucleo e il nucleo con versato e totale come in Pagamenti.';
+
+-- Salva la casella «Assicura» di alcuni soci ancora da assicurare (dalla 3.15.2): chi apre la pagina
+-- dopo trova le stesse scelte. choice null riporta alla regola della pagina. Solo chi ha polizze; tocca
+-- solo insurance_choice, mai importi o liste. Restituisce quanti soci ha cambiato.
+create or replace function public.set_insurance_choice(member_ids uuid[], choice boolean)
+returns int
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  cambiati int;
+begin
+  if not public.can('polizze') then
+    raise exception 'Non hai il permesso di scegliere chi assicurare.';
+  end if;
+  update public.members m
+     set insurance_choice = set_insurance_choice.choice
+   where m.id = any(set_insurance_choice.member_ids)
+     and m.enrolled_at is not null
+     and m.insurance_list_id is null;
+  get diagnostics cambiati = row_count;
+  return cambiati;
+end;
+$$;
+
+comment on function public.set_insurance_choice is 'Salva la casella «Assicura» dei soci da assicurare: true dentro, false fuori, null la regola della pagina.';
 
 -- Per correggere un codice fiscale già salvato: cerca fra i tesserati della
 -- stagione, anche quelli già assicurati. Ogni parola (almeno due lettere)
@@ -1944,6 +1978,7 @@ declare f text;
 begin
   foreach f in array array[
     'public.insurance_members()', 'public.insurance_search(text)', 'public.set_tax_code(uuid, text)',
+    'public.set_insurance_choice(uuid[], boolean)',
     'public.insurance_sent_lists()', 'public.insurance_send(text, int, uuid[], date)',
     'public.insurance_send_all(text[], int[], uuid[], date)',
     'public.insurance_undo(uuid)', 'public.insurance_list_members(uuid)'] loop
@@ -2706,6 +2741,7 @@ begin
     paid               = 0,
     total_manual       = false,
     no_insurance       = false,
+    insurance_choice   = null,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null
@@ -2779,6 +2815,7 @@ begin
     paid               = 0,
     total_manual       = false,
     no_insurance       = false,
+    insurance_choice   = null,
     payer_id           = null,
     notes              = null,
     enrolled_at        = null

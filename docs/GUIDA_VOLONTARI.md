@@ -134,9 +134,13 @@ Il colore della riga dice quanto ha pagato il nucleo familiare:
   subito chi resterebbe fuori (solo a schermo: negli Excel l'ordine resta per cognome);
 - bianca: ha saldato; una riga grigia è un socio tolto a mano dalla lista.
 
+A destra di ogni socio c'è la casella grande **Assicura: sì / no**: decide se entra nella prossima lista. La scelta
+si salva subito: chi apre la pagina dopo, anche da un altro computer, trova le stesse caselle. Nella lista il codice
+fiscale si legge soltanto; per scriverlo o correggerlo c'è **Correggi il codice fiscale**, che porta il socio in
+«Correzione del codice fiscale» più in basso, dove si scrive e si salva.
+
 I soci dello stesso nucleo familiare stanno uno sotto l'altro, col capofamiglia per primo, uniti da un filo
 blu a sinistra e con la scritta «Nucleo familiare: N soci». Gli Excel scaricati restano in ordine di cognome.
-Dopo «Segna come assicurati» le caselle tornano come all'inizio.
 
 ## Stampare la scheda
 
