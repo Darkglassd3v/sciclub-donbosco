@@ -57,6 +57,17 @@
       const label = document.querySelector('[data-anteprima="SABATO"] .blocco-etichetta');
       test("leggibile", number && parseFloat(getComputedStyle(number).fontSize) >= 28 && parseFloat(getComputedStyle(label).fontSize) >= 17,
         `numero ${number && getComputedStyle(number).fontSize}, etichetta ${label && getComputedStyle(label).fontSize}`);
+      // Allineati (26/11/2026, «tutto disallineato»): pulsanti alti uguali, riquadri dei giorni in riga alti uguali,
+      // ogni etichetta su una riga sola e il numero sulla stessa riga dell'etichetta.
+      const heights = (sel) => [...document.querySelectorAll(sel)].map((n) => Math.round(n.getBoundingClientRect().height));
+      const buttons = heights(".giorni-stampa [data-giorno]"), days = heights(".giorno-stampa");
+      const lines = [...document.querySelectorAll(".blocco-anteprima")].map((b) => {
+        const l = b.querySelector(".blocco-etichetta").getBoundingClientRect(), n = b.querySelector(".blocco-numero").getBoundingClientRect();
+        return l.height <= parseFloat(getComputedStyle(b.querySelector(".blocco-etichetta")).lineHeight) * 1.2 && l.bottom > n.top && l.top < n.bottom;
+      });
+      const sameRow = innerWidth > 900;
+      test("allineati", new Set(buttons).size === 1 && (!sameRow || new Set(days).size === 1) && lines.length === 8 && lines.every(Boolean),
+        `pulsanti ${buttons}, giorni ${days}, righe ${lines}`);
 
       document.querySelector('.giorni-stampa [data-giorno="SABATO"]').click();
       await wait(800);
