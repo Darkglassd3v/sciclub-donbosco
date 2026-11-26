@@ -1172,13 +1172,17 @@ function postText(ev, sp, seasonValue) {
   // Rimandata: la data vecchia resta solo come «era», per riconoscere la gita.
   const was = p && ev.event_date ? ` (era ${longDate(ev.event_date).toLowerCase()})` : "";
   if (ev.kind === "gita") {
-    rows.push(p ? `🚌 Gita a ${oneRow(ev.title)}${was}` : `🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
+    // La struttura chiesta il 26/11/2026: titolo, riga vuota, ritrovo e luogo, riga vuota, contatti, canale, hashtag.
+    rows.push(p ? `❄️ Gita a ${oneRow(ev.title)}${was}` : `❄️ ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
     const stops = departures(ev), first = cardDeparture(stops, ev.card_stop), meeting = meetingFor(stops, ev.card_stop, meetingOf(ev));
     if (meeting && first) {
-      // Il ritrovo con la sua partenza, poi le altre fermate (dalla 3.15.5).
-      rows.push("", `Ritrovo alle ${meeting}, partenza alle ${first[0]} da ${first[1]}`);
+      // Il ritrovo con la sua partenza, poi le altre fermate (dalla 3.15.5). «Asti, Piazza d'Armi (…)»: il paese
+      // nella riga del ritrovo, il punto preciso sotto col segnaposto.
+      const [town, ...spot] = String(first[1]).split(",");
+      rows.push("", `⌚ Ritrovo alle ${meeting}, partenza alle ${first[0]} da ${town.trim()}`);
+      if (spot.join(",").trim()) rows.push(`📍 ${spot.join(",").trim()}`);
       const others = stops.filter((f) => f !== first);
       if (others.length) rows.push("Altre partenze: " + others.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     } else if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
@@ -1197,7 +1201,7 @@ function postText(ev, sp, seasonValue) {
     if (quote) rows.push("", quote);
     for (const [k, v] of eventFacts(ev)) if (!(p && k === "Iscrizioni")) rows.push(`${k}: ${withoutSigns(v)}`);
   }
-  if (tel) rows.push("", `Info e iscrizioni: ${tel}`);
+  if (tel) rows.push("", `Info e iscrizioni: 📞 ${tel}`);
   rows.push("", `🔗 Canale WhatsApp «${SOCIAL.canale}»: link in bio (su Facebook ${SOCIAL.canaleFacebook})`,
     "🔔 Attiva la campanella per non perdere i prossimi eventi!");
   rows.push("", hashtags(ev));
