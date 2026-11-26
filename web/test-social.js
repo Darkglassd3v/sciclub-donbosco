@@ -51,12 +51,12 @@ assert.deepStrictEqual(postTemplate(trip, "post").prices, [[null, "€ 52"]]);
 assert.strictEqual(postTemplate(trip, "post").deadline, "entro domenica 10/1");
 assert.match(postText(trip), /Quota soci: € 52/);
 
-// Ritrovo (dalla 3.15.5): l'ora in cui presentarsi alla partenza sotto la data. Nella tessera c'è il ritrovo al posto
-// della partenza, nel riquadro di quella fermata «ritrovo …», nel testo «Ritrovo alle …, partenza alle … da …».
+// Ritrovo (dalla 3.15.5): l'ora in cui presentarsi alla partenza sotto la data. Nella tessera «ore …» con l'ora del
+// ritrovo al posto di quella della partenza, il resto del post identico; nel testo «Ritrovo alle …, partenza alle … da …».
 const meeting = { ...trip, card_stop: "Asti", meeting_time: "6:15" };
 for (const fmt of ["post", "story"]) {
   const html = drawPost(postTemplate(meeting, fmt));
-  assert.ok(html.includes(">ritrovo 6:15<") && !html.includes(">ore 6:30<"), `${fmt}: nella tessera non c'è il ritrovo`);
+  assert.ok(html.includes(">ore 6:15<") && !html.includes(">ore 6:30<") && !html.includes("ritrovo"), `${fmt}: nella tessera non c'è l'ora del ritrovo`);
   // Nei riquadri delle partenze il ritrovo non si ripete: andava a capo e stringeva il luogo (26/11/2026).
   const fermate = (html.match(/<div class="fermata">.*?<\/div>/g) || []).join("");
   assert.ok(fermate.includes("<b>6:30</b>") && !fermate.includes("ritrovo"), `${fmt}: il ritrovo ripetuto nelle partenze`);
@@ -257,8 +257,12 @@ assert.strictEqual(dayOfMonth(null), "");
   // La tessera della gita prende il colore del giorno: il sabato blu con le scritte bianche, la domenica resta gialla.
   const card = (iso) => drawPost(postTemplate({ ...trip, event_date: iso }, "post")).match(/<div class="tessera"[^>]*>/)[0];
   assert.ok(card("2027-01-16").includes("background:#084C8D;color:#FFFFFF;--em:#FCCF02"), "tessera del sabato");
+  // Un evento tiene i colori di prima: la fascia gialla vale solo per le gite.
+  assert.ok(!drawPost(postTemplate({ kind: "evento", title: "Cena", event_date: "2027-01-17", event_time: "20:00" }, "post")).includes("--em:#FCCF02;--em-ink:#084C8D"),
+    "la fascia gialla anche sugli eventi");
   assert.ok(card("2027-01-19").includes("background:#B3261E"), "tessera del martedì");
-  assert.strictEqual(card("2027-01-17"), '<div class="tessera">', "tessera della domenica");
+  // La domenica resta gialla; la fascia dell'ora blu con la scritta gialla (26/11/2026).
+  assert.strictEqual(card("2027-01-17"), '<div class="tessera" style="background:#FCCF02;color:#084C8D;--em:#084C8D;--em-ink:#FCCF02">', "tessera della domenica");
   // Ora, luogo e scadenza di un evento hanno un campo loro e diventano le informazioni che le grafiche conoscono.
   const preski = { kind: "corso", title: "Ginnastica presciistica", event_date: "2026-10-21", event_time: "ore 19:30",
     place: "Palestra Way Assauto, Asti", deadline: "2026-10-19",

@@ -3990,6 +3990,10 @@ comment on column public.social_events.photo_zoom is 'Ingrandimento della foto n
 -- (resta giusta se le righe delle partenze cambiano ordine). Vuota = la prima.
 alter table public.social_events add column if not exists card_stop text;
 comment on column public.social_events.card_stop is 'Luogo della partenza mostrata sotto la data nel post (es. "Montegrosso"); vuoto = la prima.';
+-- L'ora del ritrovo della gita (dalla 3.15.5), alla partenza sotto la data: nel post sta nella tessera al posto
+-- dell'ora di partenza, perché le persone si presentano all'ora scritta in alto.
+alter table public.social_events add column if not exists meeting_time text;
+comment on column public.social_events.meeting_time is 'Ora del ritrovo della gita (es. "6:30") alla partenza sotto la data; vuota = nella tessera l''ora di partenza.';
 
 -- Inserzione Meta di una campagna (Social > Campagne): i testi da copiare in
 -- Gestione inserzioni. Facoltativi; i limiti consigliati da Meta li conta la pagina.

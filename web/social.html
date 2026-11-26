@@ -382,6 +382,9 @@
                   <label class="label">Partenze (ora e luogo)</label>
                   <div class="righe-editor" id="fFermate"></div>
                   <button type="button" class="button is-small is-light" data-aggiungi="fFermate">+ Partenza</button>
+                  <label class="label mt-3" for="fRitrovo">Ritrovo (ora, alla partenza «sotto la data»)</label>
+                  <input class="input" id="fRitrovo" placeholder="Es. 6:30" style="max-width: 10rem">
+                  <p class="help">Se c'è, nel post in alto a destra va il ritrovo al posto dell'ora di partenza.</p>
                 </div>
                 <div data-campo="prezzi" class="field campo-largo" data-per="gita evento">
                   <label class="label">Prezzi</label>
@@ -788,7 +791,7 @@
   // L'elenco senza le foto: sono nel database in base64, circa 250 KB l'una, e con 50 post la pagina
   // ne scaricava 11 MB all'apertura. La foto di un post si scarica quando lo si apre (doOpen()).
   const LIST_COLUMNS = "id,kind,event_date,title,subtitle,prices,show_price,stops,facts,deadline,course,sponsor_id,"
-    + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,"
+    + "story_title,cta,caption,published_at,created_at,updated_at,contacts,hook,event_time,place,photo_x,photo_y,photo_zoom,card_stop,meeting_time,"
     + "ad_text,ad_headline,ad_description,ad_cta,postponed_reason,postponed_to,carousel_badge,end_date";
 
   async function loadPosts() {
@@ -1263,6 +1266,7 @@
     (post.stops || []).forEach((r) => addRow("fFermate", r));
     const choice = [...el("fFermate").querySelectorAll(".riga")].find((r) => post.card_stop && r.querySelectorAll("input.input")[1].value.trim() === post.card_stop);
     if (choice) choice.querySelector("input[name=partenzaTessera]").checked = true;
+    el("fRitrovo").value = post.meeting_time || "";
     (post.prices || []).forEach((r) => addRow("fPrezzi", r));
     (post.facts || []).forEach((r) => addRow("fInfo", r));
     if (!post.id && !(post.stops || []).length) addRow("fFermate");
@@ -1370,6 +1374,8 @@
       stops: g === "gita" ? rowsOf("fFermate") : [],
       // La partenza scritta sotto la data, per luogo (resta giusta se le righe cambiano ordine); vuota = la prima.
       card_stop: g === "gita" ? chosenDeparture() : null,
+      // Il ritrovo (dalla 3.15.5): solo l'ora, «ore» davanti lo mette il post.
+      meeting_time: g === "gita" ? el("fRitrovo").value.trim().replace(/^ore\s*/i, "") || null : null,
       facts: g === "evento" ? rowsOf("fInfo") : [],
       deadline: g !== "sponsor" ? el("fScadenza").value || null : null,
       event_time: g === "evento" ? el("fOra").value.trim() || null : null,

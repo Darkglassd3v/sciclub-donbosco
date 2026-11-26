@@ -183,7 +183,7 @@ function postTemplate(ev, fmt) {
   if (ev.kind === "gita") {
     return {
       ...base, kind: "gita", dest: ev.title, date: longDate(ev.event_date),
-      stops: ev.stops || [], cardStop: ev.card_stop || null, corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: within(ev.deadline), scadenza: dayOfMonth(ev.deadline),
+      stops: ev.stops || [], cardStop: ev.card_stop || null, meeting: meetingOf(ev), corso: !!ev.course, nota: String(ev.subtitle || "").trim(), deadline: within(ev.deadline), scadenza: dayOfMonth(ev.deadline),
     };
   }
   // Weekend e settimane bianche: più giorni (fino a end_date), niente prezzi, dei dati solo il luogo e la scadenza.
@@ -637,6 +637,12 @@ const findFact = (facts, re) => facts.find(([n]) => re.test(String(n || "").trim
 const departures = (s) => (s.stops || []).filter(([t, l]) => t || l)
   .map(([t, l]) => [String(t || "").replace(/^ore\s*/i, ""), l || ""]);
 
+/** L'ora del ritrovo della gita (dalla 3.15.5), senza «ore» davanti; vuota = nessun ritrovo. */
+const meetingOf = (ev) => String(ev.meeting_time || "").trim().replace(/^ore\s*/i, "");
+
+/** La partenza sotto la data: quella scelta (card_stop) o la prima. È anche quella del ritrovo. */
+const cardDeparture = (stops, cardStop) => stops.find(([, l]) => cardStop && l === cardStop) || stops[0];
+
 const icoMail = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.4V17h16V7.4l-8 5.3-8-5.3zM5.8 7 12 11.1 18.2 7H5.8z"/></svg>';
 
 /** In fondo a ogni post: come ci si iscrive (in negozio, via mail) e i telefoni scelti per il post, su una riga. */
@@ -690,13 +696,17 @@ function cardK(s) {
   // Gita e weekend hanno sempre la data: finché manca, nell'anteprima la tessera vuota tiene il posto.
   if (!d) return s.kind === "gita" || s.kind === "weekend" ? `<div class="tessera vuota"><span data-fit style="font-size:${story ? 62 : 54}px">giorno</span><b>––</b>
     <span data-fit style="font-size:${story ? 78 : 66}px">mese</span></div>` : "";
-  const p = departures(s), choice = p.find(([, l]) => s.cardStop && l === s.cardStop) || p[0];
-  const ora = s.kind === "gita" ? (choice && choice[0] ? `ore ${choice[0]}` : "") : ((findFact(s.facts || [], TIME) || [])[1] || "");
+  const p = departures(s), choice = cardDeparture(p, s.cardStop);
+  // Nella gita l'ora del ritrovo, se c'è (le persone arrivano all'ora scritta in alto); se no l'ora di partenza.
+  const ora = s.kind === "gita" ? (s.meeting ? `ore ${s.meeting}` : choice && choice[0] ? `ore ${choice[0]}` : "")
+    : ((findFact(s.facts || [], TIME) || [])[1] || "");
   // Nelle gite la tessera ha il colore del giorno, come nel calendario: la domenica gialla, il sabato
-  // blu con le scritte bianche e la fascia dell'ora gialla, il martedì rossa; [fondo, scritte, fascia, sua scritta].
-  // Gli eventi e i weekend il colore degli eventi.
+  // blu con le scritte bianche, il martedì rossa; [fondo, scritte, fascia, sua scritta]. La fascia dell'ora
+  // (dal 26/11/2026) è gialla con la scritta blu come le ore delle partenze; sul riquadro giallo blu con la
+  // scritta gialla, se no non si vedrebbe. Gli eventi e i weekend il colore degli eventi.
   const c = newColor(s.cat).c.toUpperCase();
-  const T = c === YELLOW ? null : c === BLU ? [BLU, "#FFFFFF", YELLOW, BLU] : [c, captionOn(c), BLU, "#FFFFFF"];
+  const T = s.kind === "gita" ? (c === YELLOW ? [YELLOW, BLU, BLU, YELLOW] : [c, c === BLU ? "#FFFFFF" : captionOn(c), YELLOW, BLU])
+    : c === YELLOW ? null : c === BLU ? [BLU, "#FFFFFF", YELLOW, BLU] : [c, captionOn(c), BLU, "#FFFFFF"];
   const colors = T ? ` style="background:${T[0]};color:${T[1]};--em:${T[2]};--em-ink:${T[3]}"` : "";
   const stamp = s.postponed ? `<i class="timbro">${s.postponed.word}</i>` : "";
   // Il weekend: i giorni («ven–dom»), il periodo («11–13»), il mese o i due mesi e le notti nella fascia.
@@ -1145,7 +1155,13 @@ function postText(ev, sp, seasonValue) {
     rows.push(p ? `🚌 Gita a ${oneRow(ev.title)}${was}` : `🚌 ${longDate(ev.event_date) || ""}: gita a ${oneRow(ev.title)}!`);
     if (ev.subtitle) rows.push(withoutSigns(ev.subtitle));
     if (ev.course) rows.push("Nello stesso giorno c'è anche il corso.");
-    if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
+    const stops = departures(ev), meeting = meetingOf(ev), first = cardDeparture(stops, ev.card_stop);
+    if (meeting && first) {
+      // Il ritrovo con la sua partenza, poi le altre fermate (dalla 3.15.5).
+      rows.push("", `Ritrovo alle ${meeting}, partenza alle ${first[0]} da ${first[1]}`);
+      const others = stops.filter((f) => f !== first);
+      if (others.length) rows.push("Altre partenze: " + others.map(([t, l]) => `ore ${t} ${l}`).join(", "));
+    } else if ((ev.stops || []).length) rows.push("", "Partenze: " + ev.stops.map(([t, l]) => `ore ${t} ${l}`).join(", "));
     if (quote) rows.push(`Quota soci: ${quote}`);
     if (ev.deadline && !p) rows.push(`Iscrizioni ${within(ev.deadline)}`);
   } else if (ev.kind === "weekend") {
