@@ -277,6 +277,8 @@ begin
     ('scrivi', 'insert into public.social_contacts (name, phone) values (''PROVA'', ''333 000 0000'')', 'SxxxxSx'),
     ('scrivi', 'insert into public.social_events (kind, title, event_date) values (''gita'', ''PROVA'', current_date)', 'SxxxxSx'),
     ('scrivi', 'update public.social_events set ad_text = ''Testo'', ad_headline = ''Titolo'', ad_description = ''Descrizione'', ad_cta = ''Scopri di più''', 'SxxxxSx'),
+    -- L'ora del ritrovo delle gite (dalla 3.15.5): la scrive chi ha social, come il resto del post.
+    ('scrivi', 'update public.social_events set meeting_time = ''6:30''',  'SxxxxSx'),
     ('scrivi', 'update public.sponsors set color_accent = ''#E6AC34''',          'SxxxxSx'),
     ('scrivi', 'insert into public.members (last_name, first_name) values (''PROVA'', ''NUOVO'')', 'SSxxxxx'),
     ('scrivi', 'update public.members set phone = ''1'' where id = ' || m,       'SSxxxxx'),
