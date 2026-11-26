@@ -95,7 +95,7 @@ assert.deepStrictEqual(postTemplate({ ...trip, prices: [["Adulti", ""]] }, "post
 // --- Testo del post ---------------------------------------------------------
 
 const text = postText(trip);
-assert.match(text, /^🚌 Martedì 12 gennaio: gita a La Thuile!/);
+assert.match(text, /^❄️ Martedì 12 gennaio: gita a La Thuile!/);
 assert.match(text, /Ritrovo alle 6:15, partenza alle 6:30 da Asti\nAltre partenze: ore 6:45 Moncalvo/);
 assert.match(text, /Iscrizioni entro domenica 10\/1\n/);
 assert.match(text, /#lathuile/);
@@ -112,11 +112,32 @@ setContacts([
 assert.strictEqual(SOCIAL.contatti.length, 2);
 assert.doesNotMatch(postText(trip), /Info e iscrizioni/, "contatti della rubrica su un post che non li ha scelti");
 assert.match(postText({ ...trip, contacts: ["m", "s"] }),
-  /Info e iscrizioni: Marco 333 765 4321 · Segreteria 011 123 4567 \(lun–ven 18–20\)\n/);
-assert.match(postText({ ...trip, contacts: ["m"] }), /Info e iscrizioni: Marco 333 765 4321\n/);
+  /Info e iscrizioni: 📞 Marco 333 765 4321 · Segreteria 011 123 4567 \(lun–ven 18–20\)\n/);
+assert.match(postText({ ...trip, contacts: ["m"] }), /Info e iscrizioni: 📞 Marco 333 765 4321\n/);
 // Un contatto tolto dalla rubrica sparisce dal post, e uno a metà non c'entra.
 assert.deepStrictEqual(contactsOf({ contacts: ["tolto", "x", "s"] }).map((c) => c.name), ["Segreteria"]);
 assert.deepStrictEqual(postTemplate({ ...trip, contacts: ["s"] }, "post").contatti.map((c) => c.phone), ["011 123 4567"]);
+// Il testo della gita come lo vuole chi pubblica (26/11/2026): emoji, righe vuote e a capo uguali a questo.
+setContacts([{ id: "c", name: "Cesare", phone: "3485171707" }, { id: "b", name: "Beppe", phone: "3393291015" },
+  { id: "d", name: "Domenico", phone: "3895794663" }]);
+assert.strictEqual(postText({ kind: "gita", event_date: "2026-12-01", title: "Cervinia\nValtournenche", contacts: ["c", "b", "d"],
+  stops: [["06:45", "Asti, Piazza d'Armi (lato via Antico Ippodromo)"]], card_stop: "Asti, Piazza d'Armi (lato via Antico Ippodromo)",
+  prices: [], show_price: true }), [
+  "❄️ Martedì 1 dicembre: gita a Cervinia Valtournenche!",
+  "",
+  "⌚ Ritrovo alle 06:30, partenza alle 06:45 da Asti",
+  "📍 Piazza d'Armi (lato via Antico Ippodromo)",
+  "",
+  "Info e iscrizioni: 📞 Cesare 3485171707 · Beppe 3393291015 · Domenico 3895794663",
+  "",
+  "🔗 Canale WhatsApp «Sci Club Don Bosco Asti»: link in bio (su Facebook https://is.gd/sciclubdb_fb)",
+  "🔔 Attiva la campanella per non perdere i prossimi eventi!",
+  "",
+  "#sciclubdonboscoasti #sci #montagna #cervinia #matterhornskiparadise",
+].join("\n"));
+// Un luogo senza virgola: «da …» e niente riga col segnaposto.
+assert.match(postText({ kind: "gita", event_date: "2026-12-01", title: "Pila", stops: [["7:00", "Moncalvo"]] }),
+  /⌚ Ritrovo alle 6:45, partenza alle 7:00 da Moncalvo\n\n/);
 setContacts([]);
 
 // --- Campagna sponsor -------------------------------------------------------
@@ -524,7 +545,7 @@ assert.ok(META_CTAS.includes("Scopri di più"));
   assert.strictEqual(caption.split("\n")[0], "⚠️ Gita rimandata causa neve. Nuova data: domenica 17 gennaio.", caption.split("\n")[0]);
   assert.ok(!/Iscrizioni entro/.test(caption), "scadenza della data vecchia nel testo del post");
   // Dopo l'avviso la data vecchia non deve sembrare quella della gita (review del 29/10).
-  assert.strictEqual(caption.split("\n")[2], "🚌 Gita a La Thuile (era martedì 12 gennaio)", caption.split("\n")[2]);
+  assert.strictEqual(caption.split("\n")[2], "❄️ Gita a La Thuile (era martedì 12 gennaio)", caption.split("\n")[2]);
   assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[2], "Corso sci (era sabato 16 gennaio)");
   assert.strictEqual(postText({ ...course, postponed_reason: "" }).split("\n")[0], "⚠️ Rimandato. Nuova data da definire.");
 }
