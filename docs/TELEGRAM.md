@@ -10,8 +10,10 @@ restano:
   non ha un telefono suo ha quello di chi paga per lui. Prima gli iscritti di quest'anno. I telefoni sono scritti in formato internazionale
   (`+39…`, senza spazi; dalla 3.15.4): così Telegram li rende toccabili per chiamare.
 
-Le risposte del bot si **cancellano da sole dopo 10 minuti** (dalla 3.15.3): contengono i telefoni dei soci e
-non devono restare sui telefoni dei volontari.
+Dopo **10 minuti** si cancellano da soli i messaggi del volontario (i cognomi cercati) e le risposte con i telefoni
+dei soci (dalla 3.15.3, i messaggi del volontario dalla 3.15.9): i telefoni non devono restare sui telefoni dei
+volontari. Le altre risposte (benvenuto, tessere libere, «Scrivi il cognome…») restano: con l'ultima restano anche i
+pulsanti, che Telegram toglie insieme al messaggio che li ha mostrati.
 
 Chi non è abilitato riceve il pulsante «Condividi il mio numero»: se il suo numero è fra quelli della lista
 (`telegram_phones`), il bot si attiva da solo; altrimenti gli dice il numero della sua chat, da comunicare all'amministratore.

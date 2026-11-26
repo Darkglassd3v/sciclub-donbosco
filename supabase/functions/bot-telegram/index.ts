@@ -78,7 +78,8 @@ const telegram = {
 
 // Con `chiediContatto` sotto il messaggio il pulsante che manda il numero di chi lo tocca; con `menu` (chat abilitata,
 // dalla 3.15.8) i pulsanti sempre visibili «Tessere libere» e «Numero di telefono»; senza, la tastiera sparisce.
-async function manda(chat: number, testo: string, chiediContatto = false, menu?: string[]) {
+// Con `cancella` la risposta si ricorda per cancellarla dopo MINUTI minuti (dalla 3.15.9 solo quelle con i telefoni).
+async function manda(chat: number, testo: string, chiediContatto = false, menu?: string[], cancella = false) {
   const tastiera = chiediContatto
     ? { keyboard: [[{ text: "Condividi il mio numero", request_contact: true }]], resize_keyboard: true, one_time_keyboard: true }
     : menu ? { keyboard: [menu.map((text) => ({ text }))], resize_keyboard: true, is_persistent: true }
@@ -91,7 +92,7 @@ async function manda(chat: number, testo: string, chiediContatto = false, menu?:
   if (!r.ok) { console.error("risposta non mandata:", r.status, await r.text()); return; }
   // Ricordata per cancellarla dopo MINUTI minuti.
   const id = (await r.json())?.result?.message_id;
-  if (typeof id === "number") await db.ricordaRisposta(chat, id);
+  if (cancella && typeof id === "number") await db.ricordaRisposta(chat, id);
 }
 
 Deno.serve(async (richiesta) => {
@@ -118,9 +119,12 @@ Deno.serve(async (richiesta) => {
     ? { telefono: String(messaggio.contact.phone_number ?? ""), utente: messaggio.contact.user_id }
     : null;
   if (typeof chat !== "number" || (typeof messaggio?.text !== "string" && !contatto)) return new Response("ok");
+  // Anche i messaggi del volontario (cognomi cercati, numero condiviso) si cancellano dopo MINUTI minuti (dalla 3.15.9):
+  // in una chat privata il bot può cancellare quelli che riceve.
+  if (typeof messaggio.message_id === "number") await db.ricordaRisposta(chat, messaggio.message_id);
   try {
     const r = await rispondi({ chat, testo: messaggio.text, mittente: messaggio.from?.id, contatto }, db);
-    await manda(chat, r.testo, r.chiediContatto, r.menu);
+    await manda(chat, r.testo, r.chiediContatto, r.menu, r.cancella);
   } catch (errore) {
     console.error("bot:", errore);
     await manda(chat, "Errore del sito, riprova fra poco.");

@@ -45,9 +45,12 @@ function rigaSocio(s) {
  * Ritorna { testo } in HTML di Telegram, con `chiediContatto` quando va mostrato il pulsante del numero.
  */
 export async function rispondi(messaggio, db) {
-  const { testo, abilitata } = await testoRisposta(messaggio, db);
+  const { testo, abilitata, cancella } = await testoRisposta(messaggio, db);
   // Alla chat abilitata i pulsanti; a quella non abilitata il pulsante del numero (non dopo un numero già mandato).
-  return { testo, ...(abilitata ? { menu: MENU } : messaggio.contatto ? {} : { chiediContatto: true }) };
+  // `cancella` (dalla 3.15.9): solo le risposte con i telefoni dei soci si cancellano dopo 10 minuti; le altre
+  // restano, e con l'ultima restano i pulsanti (Telegram li toglie insieme al messaggio che li ha mostrati).
+  return { testo, ...(cancella ? { cancella } : {}),
+    ...(abilitata ? { menu: MENU } : messaggio.contatto ? {} : { chiediContatto: true }) };
 }
 
 async function testoRisposta({ chat, testo, mittente, contatto }, db) {
@@ -66,7 +69,8 @@ async function testoRisposta({ chat, testo, mittente, contatto }, db) {
     return { testo: "Questa chat non è abilitata. Tocca «Condividi il mio numero» qui sotto: se il tuo numero è fra quelli "
       + `abilitati dallo Sci Club, il bot si attiva. Oppure comunica all'amministratore il numero della chat: ${chat}` };
   }
-  return { testo: await testoAbilitata(scritto, db), abilitata: true };
+  const r = await testoAbilitata(scritto, db);
+  return { ...(typeof r === "string" ? { testo: r } : r), abilitata: true };
 }
 
 /** La risposta a una chat abilitata: i pulsanti valgono i comandi, un nome scritto è una ricerca. */
@@ -86,7 +90,8 @@ async function testoAbilitata(scritto, db) {
   if (nome.replace(/[^\p{L}]/gu, "").length < 2) return "Scrivi almeno 2 lettere del cognome, per esempio: /telefono rossi";
   const soci = await db.cerca(nome);
   if (!soci.length) return `Nessun socio trovato per «${esc(nome)}».`;
-  return soci.map(rigaSocio).join("\n") + (soci.length === 5 ? "\n(solo i primi 5: aggiungi il nome per restringere)" : "");
+  return { testo: soci.map(rigaSocio).join("\n") + (soci.length === 5 ? "\n(solo i primi 5: aggiungi il nome per restringere)" : ""),
+    cancella: true };
 }
 
 /**
