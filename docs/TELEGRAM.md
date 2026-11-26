@@ -1,6 +1,8 @@
 # Bot Telegram dello Sci Club
 
-Dalla 3.15 (26/11/2026) i volontari abilitati chiedono a un bot Telegram:
+Dalla 3.15 (26/11/2026) i volontari abilitati chiedono a un bot Telegram. Dalla 3.15.8 non servono comandi: sotto la
+chat ci sono sempre due pulsanti, **Tessere libere** e **Numero di telefono** (che chiede poi cognome e nome); i comandi
+restano:
 
 - `/liberi`: i primi 10 numeri di tessera liberi, contati dal numero delle Impostazioni (`card_gaps_from`) in su,
   come nella pagina Soci;
