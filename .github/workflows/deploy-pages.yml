@@ -86,6 +86,8 @@ jobs:
       # il deploy prima che la pagina rotta arrivi in produzione.
       - name: Controlla le pagine web
         run: for f in web/test-*.js; do node "$f" || exit 1; done
+      - name: Prove della logica del bot Telegram
+        run: node supabase/functions/bot-telegram/test-logica.mjs
 
       # Le pagine vere in Chrome (già sul runner), con un client Supabase finto
       # che fa arrivare le risposte in ordine sparso: schede e ricerche che si

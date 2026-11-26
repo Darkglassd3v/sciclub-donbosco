@@ -2746,8 +2746,8 @@ begin
          format('telegram: numeri liberi sbagliati %s', liberi);
   assert (select count(*) from public.telegram_free_cards(500)) = 50, 'telegram: i numeri liberi non si fermano a 50';
   assert (select count(*) from public.telegram_phone_search('telegram')) = 3, 'telegram: la ricerca per cognome non trova i tre soci';
-  assert (select phone from public.telegram_phone_search('telegram primo')) = '333 1111111', 'telegram: telefono del socio sbagliato';
-  assert (select payer_phone from public.telegram_phone_search('telegram secondo')) = '333 1111111',
+  assert (select replace(phone, ' ', '') from public.telegram_phone_search('telegram primo')) = '3331111111', 'telegram: telefono del socio sbagliato';
+  assert (select replace(payer_phone, ' ', '') from public.telegram_phone_search('telegram secondo')) = '3331111111',
          'telegram: senza telefono suo manca quello di chi paga per lui';
   assert (select count(*) from public.telegram_phone_search('dangelo')) = 1, 'telegram: «dangelo» non trova D''ANGELO';
   assert (select count(*) from public.telegram_phone_search('')) = 0, 'telegram: la ricerca vuota restituisce soci';

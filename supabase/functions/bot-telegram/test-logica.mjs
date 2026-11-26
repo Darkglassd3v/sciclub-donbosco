@@ -36,8 +36,8 @@ assert.match(r, /22, 25, 26/);
 // /telefono con un cognome: righe con tessera, nome e telefono; senza telefono quello di chi paga.
 r = await rispondi({ chat: 42, testo: "/telefono rossi" }, db);
 assert.deepEqual(chiamate.find(([c]) => c === "cerca"), ["cerca", "rossi"]);
-assert.match(r, /21 · ROSSI MARIO · 333 1111111/);
-assert.match(r, /ROSSI LUCA · nessun telefono, paga ROSSI MARIO: 333 1111111/);
+assert.match(r, /21 · ROSSI MARIO · <b>333 1111111<\/b>/);
+assert.match(r, /ROSSI LUCA · nessun telefono, paga ROSSI MARIO: <b>333 1111111<\/b>/);
 assert.match(r, /non iscritto quest'anno/);
 
 // Nome scritto senza comando: vale come /telefono. Nessun risultato e testo troppo corto.
