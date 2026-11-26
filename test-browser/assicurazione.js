@@ -2,9 +2,8 @@
 // - Sopra e sotto la lista «Pagina 2 di 3 · soci 26–50 di 60»; con 25 o meno niente pagine
 //   (dalla 3.15.2: assicurazione-liste.js).
 // - Nel titolo della lista quanti sono senza codice fiscale (le righe rosse, sparse fra le pagine).
-// - Dopo Salva si resta sulla pagina, e un codice scritto e non salvato su un'altra riga resta;
-//   lista accorciata: l'ultima pagina che c'è.
-// - Un codice fiscale scritto e non salvato: prima di cambiare pagina lo si chiede.
+// - Lista accorciata: l'ultima pagina che c'è. Nella lista il codice fiscale si legge soltanto (dalla 3.15.2:
+//   assicurazione-casella.js), quindi cambiando pagina non c'è niente da perdere.
 // - Gli Excel prendono tutti i soci col codice fiscale, non solo la pagina.
 // - Un codice fiscale sbagliato dice solo «Codice fiscale errato» (e il proposto), senza il motivo.
 // - Un codice valido ma diverso dalla scheda (qui la data) dice che cosa non torna, senza proporne un altro.
@@ -61,29 +60,13 @@
     test("avanti", rows("B")[0]?.dataset.id === "B026" && rows("B").length === 25 && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60",
       `prima ${rows("B")[0]?.dataset.id}, «${text("BASE")}»`);
 
-    const b026 = rows("B")[0];
-    b026.querySelector(".cf").value = "RSSMRA80A01F205X";
-    rows("B")[2].querySelector(".cf").value = "ABC";   // B028, scritto e non salvato
-    b026.querySelector(".salva-riga").click();
-    await wait(300);
-    test("salvaResta", text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60" && rows("B")[0]?.dataset.id === "B026", `«${text("BASE")}»`);
-    const b028 = rows("B")[2]?.querySelector(".cf");
-    test("salvaNonPerde", b028?.value === "ABC", `B028 «${b028?.value}»`);
-
-    rows("B")[1].querySelector(".cf").value = "ABC";
     forward("BASE").click();
-    test("chiede", Boolean(question()) && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
-    question()?.querySelector("[data-no]").click();
-    test("annulla", !question() && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60" && rows("B")[1].querySelector(".cf").value === "ABC",
-      `domanda ${Boolean(question())}, «${text("BASE")}»`);
-    forward("BASE").click();
-    question()?.querySelector("[data-si]").click();
     test("ultima", rows("B").length === 10 && text("BASE") === "Pagina 3 di 3 · soci 51–60 di 60" && forward("BASE").disabled,
       `${rows("B").length} righe, «${text("BASE")}», avanti spento ${forward("BASE")?.disabled}`);
     // All'ultima pagina Avanti è spento: il fuoco va su Indietro, non si perde.
     test("fuoco", document.activeElement === back("BASE"), `fuoco su ${document.activeElement?.tagName} ${document.activeElement?.textContent.trim().slice(0, 20)}`);
     back("BASE").click();
-    test("indietro", !question() && text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
+    test("indietro", text("BASE") === "Pagina 2 di 3 · soci 26–50 di 60", `domanda ${Boolean(question())}, «${text("BASE")}»`);
     forward("BASE").click();
 
     const downloaded = [];

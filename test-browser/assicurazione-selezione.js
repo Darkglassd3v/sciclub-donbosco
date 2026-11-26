@@ -56,7 +56,7 @@
     await openList("BASE");
     test("tutteAccese", ids.every((id) => box(id)?.checked === true) && sport === true,
       ids.map((id) => `${id} ${box(id)?.checked}`).join(", ") + `, SPORT1 ${sport}`);
-    test("etichetta", clean(box("PARI")?.closest("label")) === "Assicura", `etichetta «${clean(box("PARI")?.closest("label"))}»`);
+    test("etichetta", clean(box("PARI")?.closest("label")) === "Assicura: sì", `etichetta «${clean(box("PARI")?.closest("label"))}»`);
     test("accontoGiallo", row("DEBITO")?.classList.contains("con-acconto") && clean(row("DEBITO")).includes("Acconto: versati € 20,00 su € 65,00")
       && !row("PARI")?.classList.contains("con-acconto")
       && !/Escludi/.test(clean(document.getElementById("elencoDa"))),

@@ -3,7 +3,7 @@
 //   Riepilogo: si vede solo la lista scelta, con il suo titolo, e la colonna «Assicurazione» non c'è più.
 // - Le pagine stanno sopra e sotto la tabella: «Pagina 1 di 3 · soci 1–25 di 60», «‹ Pagina precedente» e
 //   «Pagina successiva ›», spenti agli estremi; con 25 soci o meno le pagine non si vedono.
-// - Ogni lista ricorda la sua pagina; un codice fiscale scritto e non salvato si chiede anche cambiando lista.
+// - Ogni lista ricorda la sua pagina.
 // - Gli Excel prendono sempre tutte le liste; se la lista aperta si svuota, si apre l'altra.
 // In un blocco: gli script della pagina e della prova hanno gli stessi nomi globali.
 {
@@ -24,7 +24,6 @@
   const shown = (node) => Boolean(node) && !node.hidden && node.getClientRects().length > 0;
   const text = (where) => clean(pager(where)?.querySelector(".pagine-testo"));
   const title = () => clean(document.querySelector("#testataLista .titolo-lista"));
-  const question = () => document.getElementById("finestraDomanda");
 
   window.addEventListener("load", () => setTimeout(async () => {
     const r = [];
@@ -65,13 +64,9 @@
     await wait(100);
     test("ricordaPagina", text("sopra") === "Pagina 3 di 3 · soci 51–60 di 60", `«${text("sopra")}»`);
 
-    document.querySelector("#elencoDa tr[data-id] .cf").value = "ABC";
     tab("SPORT").click();
     await wait(100);
-    test("chiede", Boolean(question()) && tab("BASE").getAttribute("aria-selected") === "true", `domanda ${Boolean(question())}`);
-    question()?.querySelector("[data-si]").click();
-    await wait(100);
-    test("cambiaDopo", rows()[0] === "S001", `prima ${rows()[0]}`);
+    test("cambiaLista", rows()[0] === "S001" && tab("SPORT").getAttribute("aria-selected") === "true", `prima ${rows()[0]}`);
 
     const downloaded = [];
     excelList = async (t, n, d, members) => { downloaded.push(`${t.kind}:${members.length}`); };
