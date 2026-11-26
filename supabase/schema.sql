@@ -4671,23 +4671,58 @@ as $$
    limit 5;
 $$;
 
-revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from public;
+-- Le risposte mandate dal bot (dalla 3.15.3), da cancellare su Telegram dopo 10 minuti: contengono i telefoni
+-- dei soci e non devono restare sui telefoni dei volontari. La funzione del bot scrive ogni risposta; ogni minuto
+-- un'attività pianificata (pg_cron, docs/TELEGRAM.md) la chiama perché cancelli quelle scadute, prese con
+-- telegram_take_due_replies().
+create table if not exists public.telegram_replies (
+  chat_id    bigint      not null,
+  message_id bigint      not null,
+  sent_at    timestamptz not null default now(),
+  primary key (chat_id, message_id)
+);
+alter table public.telegram_replies enable row level security;
+create index if not exists telegram_replies_sent_at on public.telegram_replies (sent_at);
+comment on table public.telegram_replies is 'Risposte del bot Telegram da cancellare dopo 10 minuti (dalla 3.15.3).';
+
+-- Toglie dalla tabella e restituisce le risposte più vecchie di `older_than_minutes` (al massimo 100 per volta):
+-- chi le prende le cancella su Telegram, e due pulizie insieme non prendono la stessa.
+create or replace function public.telegram_take_due_replies(older_than_minutes int default 10)
+returns table (chat_id bigint, message_id bigint)
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from public.telegram_replies r
+   where (r.chat_id, r.message_id) in (
+     select x.chat_id, x.message_id
+       from public.telegram_replies x
+      where x.sent_at < now() - make_interval(mins => greatest(older_than_minutes, 1))
+      order by x.sent_at
+      limit 100
+      for update skip locked)
+  returning r.chat_id, r.message_id;
+$$;
+
+revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones, public.telegram_replies from public;
 revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
-  public.telegram_enable_by_phone(bigint, text) from public;
+  public.telegram_enable_by_phone(bigint, text), public.telegram_take_due_replies(int) from public;
 do $$
 declare r text;
 begin
   foreach r in array array['anon', 'authenticated'] loop
     if exists (select 1 from pg_roles where rolname = r) then
-      execute format('revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones from %I', r);
+      execute format('revoke all on public.telegram_users, public.telegram_queries, public.telegram_phones, '
+        || 'public.telegram_replies from %I', r);
       execute format('revoke execute on function public.telegram_free_cards(int), public.telegram_phone_search(text), '
-        || 'public.telegram_enable_by_phone(bigint, text) from %I', r);
+        || 'public.telegram_enable_by_phone(bigint, text), public.telegram_take_due_replies(int) from %I', r);
     end if;
   end loop;
   if exists (select 1 from pg_roles where rolname = 'service_role') then
     grant select on public.telegram_users to service_role;
     grant insert on public.telegram_queries to service_role;
+    grant insert on public.telegram_replies to service_role;
     grant execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
-      public.telegram_enable_by_phone(bigint, text) to service_role;
+      public.telegram_enable_by_phone(bigint, text), public.telegram_take_due_replies(int) to service_role;
   end if;
 end $$;
