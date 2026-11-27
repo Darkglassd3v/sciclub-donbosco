@@ -6,9 +6,10 @@
 //   rientrati con la pillola «a carico». Un capofamiglia che quest'anno non è tesserato si legge a parte e
 //   l'intestazione lo dice.
 // - La prima colonna è sempre il socio: nome (link alla scheda), «Tessera n° …» o «Senza numero tessera».
-// - In alto le cifre: soci, nuclei familiari, familiari a carico, numeri di tessera liberi; sotto i numeri liberi
+// - In alto le cifre: soci, nuclei familiari (solo quelli di almeno due persone, dal 27/11/2026), familiari a carico,
+//   numeri di tessera liberi; sotto i numeri liberi
 //   fra 1 e il più alto, con gli intervalli scritti «da–a».
-// - Pagine da 50 persone al massimo, senza spezzare un nucleo; «Pagina N di M · X soci in Y nuclei».
+// - Pagine da 50 persone al massimo, senza spezzare un nucleo; «Pagina N di M · X soci, Y nuclei familiari».
 // - La ricerca filtra come quella dei soci (cognome, nome, codice fiscale, «D'ANGELO» = «DANGELO», anche il nome
 //   del capofamiglia non tesserato) e mostra il nucleo intero, con evidenziato chi è stato trovato.
 // - «Colonne» apre una finestra: caselle per mostrarle e pulsanti «Su»/«Giù» per l'ordine (mai solo
@@ -70,7 +71,7 @@
     test("sciClub", cell(rossi, 4) === "SCI CLUB MONCALVO" && cell(rows().find((tr) => !/ROSSI/.test(nameOf(tr))), 4) === ""
       && REQ.some(([t, c]) => t === "members" && /club:affiliated_clubs\(name\)/.test(c)), `«${cell(rossi, 4)}»`);
     const kpi = (i) => text(document.querySelectorAll(".cifre .kpi-value")[i]);
-    test("cifre", [0, 1, 2, 3].map(kpi).join("|") === "64|61|4|38", [0, 1, 2, 3].map(kpi).join("|"));
+    test("cifre", [0, 1, 2, 3].map(kpi).join("|") === "64|3|4|38", [0, 1, 2, 3].map(kpi).join("|"));
     test("liberi", /5, 12, 64–99/.test(text(el("tessereLibere"))), text(el("tessereLibere")));
 
     const order = rows().map(cardOf);
@@ -94,7 +95,7 @@
     test("testo", !rows()[2].querySelector("td i") && /<i>ANNA<\/i>/.test(nameOf(rows()[2])), rows()[2].innerHTML.slice(0, 120));
 
     test("primaPagina", rows().length === 49 && cardOf(rows().at(-1)) === "51", `${rows().length} persone, ultima ${cardOf(rows().at(-1))}`);
-    test("pagine", /Pagina 1 di 2 · 64 soci in 61 nuclei/.test(text(el("paginaSoci"))), text(el("paginaSoci")));
+    test("pagine", /Pagina 1 di 2 · 64 soci, 3 nuclei familiari/.test(text(el("paginaSoci"))), text(el("paginaSoci")));
     test("pagineSotto", Boolean(el("pagSuccessivaSotto")) && el("paginaSociSotto")?.textContent === el("paginaSoci").textContent,
       el("paginaSociSotto")?.textContent);
     el("pagSuccessivaSotto").click();
@@ -109,7 +110,7 @@
 
     await search("bianchi");
     test("cercaFamiliare", rows().length === 2 && nameOf(rows()[0]) === "ROSSI MARIO" && rows()[1].matches(".trovato") && !rows()[0].matches(".trovato")
-      && /Pagina 1 di 1 · 2 soci in 1 nucleo$/.test(text(el("paginaSoci"))), `${rows().length} righe, ${text(el("paginaSoci"))}`);
+      && /Pagina 1 di 1 · 2 soci, 1 nucleo familiare$/.test(text(el("paginaSoci"))), `${rows().length} righe, ${text(el("paginaSoci"))}`);
     await search("rossi");
     test("cercaCapo", rows().length === 2 && rows()[0].matches(".trovato") && !rows()[1].matches(".trovato"), `${rows().length} righe`);
     await search("verdi gino");
