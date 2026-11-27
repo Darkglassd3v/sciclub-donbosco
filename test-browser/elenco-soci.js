@@ -110,7 +110,7 @@
 
     await search("bianchi");
     test("cercaFamiliare", rows().length === 2 && nameOf(rows()[0]) === "ROSSI MARIO" && rows()[1].matches(".trovato") && !rows()[0].matches(".trovato")
-      && /Pagina 1 di 1 · 2 soci in 1 nucleo$/.test(text(el("paginaSoci"))), `${rows().length} righe, ${text(el("paginaSoci"))}`);
+      && /Pagina 1 di 1 · 2 soci, 1 nucleo familiare$/.test(text(el("paginaSoci"))), `${rows().length} righe, ${text(el("paginaSoci"))}`);
     await search("rossi");
     test("cercaCapo", rows().length === 2 && rows()[0].matches(".trovato") && !rows()[1].matches(".trovato"), `${rows().length} righe`);
     await search("verdi gino");

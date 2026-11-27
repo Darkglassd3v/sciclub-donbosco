@@ -268,7 +268,9 @@
     el("totalInsoluti").textContent = fmt(balances.filter((x) => x > 0).reduce((a, b) => a + b, 0));
     el("totalCredito").textContent = fmt(-balances.filter((x) => x < 0).reduce((a, b) => a + b, 0));
     const shownFamilyMembers = familyMembers.filter((f) => nuclei.some((n) => n.head_id === f.payer_id));
-    el("numNuclei").textContent = termini.length ? `${nuclei.length} di ${all.length}` : all.length;
+    // Solo i nuclei veri, con almeno un familiare a carico: chi paga solo per sé non è un nucleo familiare (27/11/2026).
+    const withFamily = (list) => list.filter((n) => familyMembers.some((f) => f.payer_id === n.head_id)).length;
+    el("numNuclei").textContent = termini.length ? `${withFamily(nuclei)} di ${withFamily(all)}` : withFamily(all);
     el("numFamiliari").textContent = termini.length ? `${shownFamilyMembers.length} di ${familyMembers.length}` : familyMembers.length;
 
     const container = el("displayArea");

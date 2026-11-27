@@ -427,7 +427,8 @@
     const ofClub = !club ? households : households.map((h) => ({ ...h, people: h.people.filter(inClub) })).filter((h) => h.people.length);
     const people = ofClub.flatMap((h) => h.people);
     el("numSoci").textContent = people.length;
-    el("numNuclei").textContent = ofClub.length;
+    // Solo i nuclei veri, di almeno due persone: chi è tesserato da solo non è un nucleo familiare (27/11/2026).
+    el("numNuclei").textContent = ofClub.filter((h) => h.people.length >= 2).length;
     el("numFamiliari").textContent = people.filter((s) => s.payer_id).length;
     found = new Set(words.length ? people.filter(matches).map((s) => s.id) : []);
     shownHouseholds = !words.length ? ofClub
@@ -465,8 +466,9 @@
     el("elencoSoci").innerHTML = head + (pages[page].length ? householdBodies(pages[page], columns)
       : `<tbody><tr><td class="vuota" colspan="${columns.length + 1}">Nessun socio trovato.</td></tr></tbody>`);
     const people = shown.length;
-    const label = `Pagina ${page + 1} di ${pages.length} · ${people === 1 ? "1 socio" : `${people} soci`} in `
-      + `${shownHouseholds.length === 1 ? "1 nucleo" : `${shownHouseholds.length} nuclei`}`;
+    const families = shownHouseholds.filter((h) => h.people.length >= 2).length;
+    const label = `Pagina ${page + 1} di ${pages.length} · ${people === 1 ? "1 socio" : `${people} soci`}, `
+      + `${families === 1 ? "1 nucleo familiare" : `${families} nuclei familiari`}`;
     el("paginaSoci").textContent = label;
     el("paginaSociSotto").textContent = label;
     for (const id of ["pagPrecedente", "pagPrecedenteSotto"]) el(id).disabled = page === 0;
