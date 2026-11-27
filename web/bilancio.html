@@ -68,6 +68,8 @@
     /* Il credito che avanza dai rimborsi e il pulsante per registrarne uno, sotto nome e importo (27/11/2026). */
     .per-persona .credito { flex-basis: 100%; color: var(--ok); font-weight: 600; }
     .per-persona .button { flex-basis: 100%; }
+    .per-persona .ultimo-rimborso { flex-basis: 100%; color: var(--testo-soft); }
+    .per-persona .ultimo-rimborso .button { flex-basis: auto; margin-left: 8px; }
     .filtro-voce { max-width: 22rem; }
     /* Sul telefono (schede di brand.css) la descrizione con le sue note va a capo sotto l'etichetta e i pulsanti
      * della riga vanno a capo: «Da rimborsare a …» col suo pulsante ed Elimina uscivano dalla scheda (18/11/2026). */
@@ -313,6 +315,7 @@
   let seasonEntries = [];      // i movimenti della stagione, per mostrarli tutti o di una voce sola
   let withReceipt = new Set(); // i movimenti che hanno la fattura
   let refundPerson = null;     // a chi va il rimborso della finestra «Registra un rimborso»
+  let lastRefunds = new Map(); // l'ultimo rimborso di ogni persona, da annullare se sbagliato
   const NEW_PERSON = "__nuova";
   const MAX_RECEIPT = 2 * 1024 * 1024;
 
@@ -333,6 +336,8 @@
     el("kDaRimborsarePersone").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-rimborso]");
       if (btn) openRefund(btn.dataset.rimborso);
+      const undo = e.target.closest("button[data-annulla]");
+      if (undo) askUndoRefund(undo);
     });
     el("rSalva").addEventListener("click", saveRefund);
     el("rAnnulla").addEventListener("click", () => el("dlgRimborso").close());
@@ -448,20 +453,22 @@
   }
 
   async function loadEntries() {
-    const [entries, balances, receipts] = await Promise.all([
+    const [entries, balances, refunds, receipts] = await Promise.all([
       sb.from("ledger_entries").select("*")
         .eq("season", seasonValue)
         .order("entry_date", { ascending: false })
         .order("created_at", { ascending: false }),
       sb.from("ledger_refund_balance").select("person_id,person,owed,credit"),
+      sb.from("ledger_refunds").select("id,person_id,amount,refund_date,method")
+        .order("refund_date", { ascending: false }).order("created_at", { ascending: false }),
       // Solo quali movimenti hanno la fattura, non i file: si scaricano uno alla volta.
       sb.from("ledger_receipts").select("entry_id,file_name"),
     ]);
-    for (const r of [entries, balances, receipts]) if (r.error) throw r.error;
+    for (const r of [entries, balances, refunds, receipts]) if (r.error) throw r.error;
     seasonEntries = entries.data;
     entriesById = new Map(seasonEntries.map((m) => [m.id, m]));
     withReceipt = new Set(receipts.data.map((r) => r.entry_id));
-    drawRefunds(balances.data);
+    drawRefunds(balances.data, refunds.data);
     // Le voci della stagione per «Mostra la voce», tenendo quella scelta.
     const chosen = el("filtroVoce").value;
     const categories = [...new Set(seasonEntries.map((m) => m.category))].sort((a, b) => a.localeCompare(b, "it"));
@@ -475,14 +482,21 @@
    * Chi deve ancora riavere i soldi anticipati e chi ha un credito dai rimborsi (ledger_refund_balance): il totale
    * sta in alto, vicino al saldo, e sotto ogni persona col pulsante per registrarle un rimborso unico.
    */
-  function drawRefunds(balances) {
-    const shown = balances.filter((b) => num(b.owed) > 0 || num(b.credit) > 0)
+  function drawRefunds(balances, refunds) {
+    // L'ultimo rimborso di ciascuno (arrivano dal più recente): si può annullare se è stato scritto per sbaglio.
+    lastRefunds = new Map();
+    for (const r of refunds) if (!lastRefunds.has(r.person_id)) lastRefunds.set(r.person_id, r);
+    // Anche chi è in pari ma ha avuto un rimborso in questa stagione: altrimenti il suo «Annulla» sparirebbe.
+    const seasonStart = String(seasonValue).slice(0, 10);
+    const refundedNow = (id) => lastRefunds.has(id) && lastRefunds.get(id).refund_date >= seasonStart;
+    const shown = balances.filter((b) => num(b.owed) > 0 || num(b.credit) > 0 || refundedNow(b.person_id))
       .sort((a, b) => num(b.owed) - num(a.owed) || a.person.localeCompare(b.person, "it"));
     const owed = shown.reduce((s, b) => s + num(b.owed), 0);
     el("kpiDaRimborsare").hidden = !shown.length;
     el("kDaRimborsare").textContent = fmt(owed);
     el("kDaRimborsarePersone").innerHTML = shown.map((b) => `<li><span>${esc(b.person)}</span><span>${fmt(b.owed)}</span>`
       + (num(b.credit) > 0 ? `<span class="credito">credito ${fmt(b.credit)}</span>` : "")
+      + (lastRefunds.has(b.person_id) ? lastRefundNote(lastRefunds.get(b.person_id)) : "")
       + `<button type="button" class="button is-small is-light" data-rimborso="${esc(b.person_id)}" data-nome="${esc(b.person)}">`
       + "Registra un rimborso</button></li>").join("");
   }
@@ -517,6 +531,19 @@
         <td class="num ${totalAmount < 0 ? "uscita" : "entrata"}" data-etichetta="Totale">${fmt(totalAmount)}</td>
         <td></td>
       </tr>`;
+  }
+
+  const lastRefundNote = (r) => `<span class="ultimo-rimborso">Ultimo rimborso: ${fmt(r.amount)} il ${esc(dataIt(r.refund_date))}`
+    + ` ${r.method === "BONIFICO" ? "con bonifico" : "in contanti"}`
+    + `<button type="button" class="button is-small is-light" data-annulla="${esc(r.id)}">Annulla</button></span>`;
+
+  /** «Annulla» dell'ultimo rimborso: dopo la conferma le spese che copriva tornano da rimborsare. */
+  function askUndoRefund(btn) {
+    const refund = [...lastRefunds.values()].find((r) => r.id === btn.dataset.annulla);
+    if (!refund) return;
+    ask(btn.closest("li"), `Annullare il rimborso di ${fmt(refund.amount)} del ${dataIt(refund.refund_date)}?`, "Annulla il rimborso",
+      () => write(() => sb.from("ledger_refunds").delete().eq("id", refund.id), "Rimborso annullato."),
+      { dettagli: [["Le spese che copriva", "tornano da rimborsare"]] });
   }
 
   /** «Registra un rimborso»: la finestra per la persona scelta, con la data di oggi e in contanti. */
