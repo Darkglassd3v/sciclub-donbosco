@@ -23,11 +23,12 @@
   FAKE.rpc.ledger_social_events = [];
   FAKE.risposta = (t, r) => {
     const writing = r.filtri.find((f) => ["insert", "update", "delete"].includes(f[0]));
-    if (writing) { writes.push([t, ...writing]); return [{ id: "NUOVO" }]; }
+    if (writing) { writes.push([t, ...writing, r.filtri]); return [{ id: "NUOVO" }]; }
     if (t === "season_balance") return [{ season: SEASON, bank_current: 1000, members_collected: 0, other_income: 0,
       total_collected: 0, expenses: 80, bank_opening: 0, bank_opening_set: true }];
     if (t === "ledger_entries") return ENTRIES;
     if (t === "ledger_refund_balance") return BALANCE;
+    if (t === "ledger_refunds") return [{ id: "R1", person_id: "PF", amount: 50, refund_date: "2026-11-20", method: "CONTANTI" }];
     if (t === "ledger_people") return [{ id: "PF", last_name: "COSSETTA", first_name: "FEDERICO" }, { id: "PV", last_name: "VERDI", first_name: "LUCA" }];
     return [];
   };
@@ -79,6 +80,16 @@
     const row = saved && saved[2];
     test("salvaRimborso", row && row.person_id === "PF" && Number(row.amount) === 200 && row.method === "CONTANTI"
       && /^\d{4}-\d{2}-\d{2}$/.test(row.refund_date || ""), JSON.stringify(writes));
+    // Un rimborso sbagliato si annulla dalla pagina: l'ultimo di ogni persona, dopo la conferma.
+    const last = text(el("kDaRimborsarePersone"));
+    test("ultimoRimborso", /Ultimo rimborso[^0-9]*50,00[^0-9]*20\/11\/2026/.test(last), last);
+    document.querySelector('#kDaRimborsarePersone button[data-annulla="R1"]')?.click();
+    await wait(100);
+    const before = writes.length;
+    document.querySelector("dialog.finestra-domanda[open] [data-si]")?.click();
+    await wait(600);
+    const removed = writes.slice(before).find((w) => w[0] === "ledger_refunds" && w[1] === "delete");
+    test("annullaRimborso", removed && JSON.stringify(writes.slice(before)).includes("R1"), JSON.stringify(writes.slice(before)));
     document.title = "RISULTATO " + r.join(" ");
   } catch (e) { document.title = `RISULTATO eccezione=NO(${String(e?.message || e).slice(0, 120)})`; } }, 500));
 }
