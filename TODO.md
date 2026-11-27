@@ -17,36 +17,6 @@
 
 ## Richieste nuove
 
-- [ ] **Pagina «Bot Telegram» per il superadmin (v3.16.0, piano del 27/11/2026, da confermare; ramo `release/v3.16.0`).**
-  Gestire dal sito chi può usare il bot, senza SQL Editor; il bot ricontrolla l'accesso a ogni messaggio.
-  1. **Database** (`schema.sql`, blocco Telegram in fondo; in produzione solo le istruzioni nuove con `lock_timeout`):
-     - `telegram_users.phone` → `telegram_phones(phone) on delete cascade`: togliendo un numero dalla lista si
-       tolgono anche le chat abilitate con quel numero. `telegram_enable_by_phone()` lo scrive. Le chat abilitate
-       col numero della chat restano con `phone` vuoto. Produzione: `phone` riempito per le chat già attive
-       (nome uguale a quello del numero).
-     - Policy RLS solo per il superadmin (ruolo vero o «Vedi come» superadmin, password già cambiata, come `can()`):
-       lettura, aggiunta, modifica e cancellazione su `telegram_phones` e `telegram_users`, sola lettura su
-       `telegram_queries`. Gli altri ruoli: nessuna riga e nessuna scrittura; `anon` niente.
-  2. **Bot**: già oggi `logica.js` chiede `db.abilitata(chat)` a ogni messaggio prima di rispondere (anche /start e
-     i pulsanti), quindi una chat tolta smette subito. Prova in `test-logica.mjs`: chat abilitata, poi tolta, il
-     messaggio dopo riceve «Questa chat non è abilitata» e nessun dato.
-  3. **Pagina `web/bot.html` «Bot Telegram»**, stile delle pagine di Gestione (Impostazioni):
-     - in alto il link al bot (`https://t.me/sciclubdonboscoasti_bot`) e come si attiva un volontario;
-     - **Numeri abilitati**: nome, telefono, se la chat è attiva e l'ultimo uso; «Aggiungi» (nome e telefono, solo
-       cifre, senza +39, come `telegram_phone_key()`); «Togli» con le due finestre di conferma (toglie anche la chat);
-     - **Chat attive**: nome, numero o «abilitata col numero della chat», attivata il, ultima domanda; «Togli accesso»
-       con due finestre; «Aggiungi col numero della chat» (per chi non condivide il telefono);
-     - **Ultime domande**: le ultime 50 di `telegram_queries` (chi, testo, abilitata o no, quando), per controllo.
-  4. **Menu laterale**: voce «Bot Telegram» nel gruppo Gestione di tutte le pagine, visibile solo al superadmin
-     (`data-solo-superadmin`, gestito da `shared.js` col ruolo di `my_access()`); la pagina rimanda alla prima
-     pagina permessa chi non è superadmin.
-  5. **TDD**: RED prima del codice in `supabase/test_ruoli.sh` (policy per ruolo, cascade, enable_by_phone scrive
-     `phone`), `test-logica.mjs` (chat tolta), `test-browser/bot.js` nuovo (elenchi, aggiungi, togli con due
-     conferme, 1280 e 500 px), `test-browser/menu.js` (voce solo per il superadmin); poi GREEN, `/ecc:code-review`,
-     backup e migrazione minima, PR, CI, merge, tag `v3.16.0`, `docs/TELEGRAM.md` aggiornato.
-  Rischio: le policy aprono a `authenticated` tabelle oggi chiuse del tutto; la matrice dei permessi in
-  `test_ruoli.sh` controlla ogni ruolo.
-
 - [ ] **Audit di sicurezza completo** (26/11/2026, quando lo chiede l'utente): skill `/security-audit`, modalità audit
   completo, rapporto in `~/security-audit-skill/sciclub-donbosco/run-<N>`; prove solo locali in sandbox.
 - [ ] **Bot Telegram: volontari da attivare** (pubblicato il 26/11/2026, @sciclubdonboscoasti_bot, `docs/TELEGRAM.md`).

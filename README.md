@@ -44,6 +44,7 @@ misure stanno in `web/brand.css`, che nasce da
 | `web/utenti.html` | account dei volontari e il loro ruolo |
 | `web/stagione.html` | amministrazione: resoconto (incasso corsi, incasso totale, tesserati) e chiusura della stagione (solo superadmin) |
 | `web/gestione.html` | solo superadmin, scheda "Ruoli e permessi" di Gestione (con Amministrazione, Utenti e Impostazioni): chi fa cosa, e "Visualizza come" per guardare il sito con gli occhi di un altro ruolo |
+| `web/bot.html` | solo superadmin, scheda "Bot Telegram" di Gestione: numeri e chat abilitati al bot Telegram, aggiunta e revoca, ultime 50 domande (`docs/TELEGRAM.md`) |
 | `web/social.html` | post per Instagram e Facebook (grafica "Skipass"), calendario del mese, copertina, campagne degli sponsor: anteprima, PNG e testo da incollare |
 | `web/social-contatti.html` | solo un rimando a `social.html#contatti`: la rubrica dei contatti ora sta in Social > Impostazioni > Contatti |
 | `ricerca/index.html` | sito a parte: si cerca un socio, con i pulsanti per chiamarlo o scrivergli su WhatsApp |
