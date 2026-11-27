@@ -174,7 +174,7 @@ window.addEventListener("load", () => setTimeout(async () => { try {
   await wait(400);
   const ins = WRITES.slice(before).find(([t, op]) => t === "ledger_entries" && op === "insert");
   const row = ins && ins[2];
-  test("movimento", row && row.kind === "USCITA" && row.category === "Pubblicità Meta" && row.unit_price === 25.5
+  test("movimento", row && row.kind === "USCITA" && row.category === "Pubblicità" && row.unit_price === 25.5
     && row.quantity === 1 && row.entry_date === "2026-12-03" && row.social_event_id === "P1" && /Brindisi/.test(row.description),
     JSON.stringify(row || null).slice(0, 120));
 
