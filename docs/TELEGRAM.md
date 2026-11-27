@@ -36,6 +36,10 @@ pg_cron, ogni minuto → Edge Function bot-telegram (X-Pulizia-Bot) → deleteMe
   (`supabase/test_ruoli.sh`).
 - A ogni messaggio, anche /start e i pulsanti, il bot verifica in `telegram_users` che la chat sia abilitata
   prima di rispondere: tolto l'accesso, il messaggio successivo non riceve più dati.
+- Solo chat private (dalla 3.16): in un gruppo il bot risponde soltanto che lavora in privato, senza dati e senza
+  interrogare il database. In BotFather `/setjoingroups` è su **Disable** (27/11/2026), quindi il bot non si può
+  aggiungere ai gruppi; la pagina non accetta i numeri di chat negativi, che sono quelli dei gruppi.
+- Un numero sta in lista una volta sola, in qualunque forma sia scritto (indice unico su `telegram_phone_key`).
 
 ## Pubblicazione (una volta sola)
 

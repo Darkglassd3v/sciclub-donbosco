@@ -186,7 +186,7 @@
 
       step = "niente da togliere";
       deleteNothing = true;
-      phoneRow("3475551234")?.querySelector(".togli-numero")?.click();
+      phoneRow("393335559999")?.querySelector(".togli-numero")?.click();
       await wait(200);
       await confirm();
       await confirm();

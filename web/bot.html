@@ -100,29 +100,29 @@
     </div>
 
     <div class="riquadro">
-      <h2>Numeri abilitati</h2>
+      <h2 tabindex="-1">Numeri abilitati</h2>
       <table class="tabella-bot a-schede">
         <thead><tr><th>Nome</th><th>Telefono</th><th>Chat</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
         <tbody id="tabellaNumeri"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
       </table>
-      <div class="riga-nuovo">
+      <form class="riga-nuovo" id="formNumero" novalidate>
         <input class="input" type="text" id="nuovoNome" aria-label="Cognome e nome del volontario" placeholder="Cognome e nome" autocomplete="off">
         <input class="input" type="tel" id="nuovoTelefono" aria-label="Numero di cellulare del volontario" placeholder="Cellulare, es. 333 123 4567" autocomplete="off">
-        <button type="button" class="button is-link" id="btnAggiungiNumero">+ Aggiungi numero</button>
-      </div>
+        <button type="submit" class="button is-link" id="btnAggiungiNumero">+ Aggiungi numero</button>
+      </form>
     </div>
 
     <div class="riquadro">
-      <h2>Chat attive</h2>
+      <h2 tabindex="-1">Chat attive</h2>
       <table class="tabella-bot a-schede">
         <thead><tr><th>Nome</th><th>Entrata con</th><th>Attivata il</th><th><span class="is-sr-only">Azioni</span></th></tr></thead>
         <tbody id="tabellaChat"><tr><td colspan="4" class="vuota">Caricamento…</td></tr></tbody>
       </table>
-      <div class="riga-nuovo">
+      <form class="riga-nuovo" id="formChat" novalidate>
         <input class="input" type="text" id="chatNome" aria-label="Cognome e nome di chi usa la chat" placeholder="Cognome e nome" autocomplete="off">
         <input class="input" type="text" inputmode="numeric" id="chatId" aria-label="Numero della chat, scritto dal bot" placeholder="Numero della chat" autocomplete="off">
-        <button type="button" class="button is-link" id="btnAggiungiChat">+ Aggiungi col numero della chat</button>
-      </div>
+        <button type="submit" class="button is-link" id="btnAggiungiChat">+ Aggiungi col numero della chat</button>
+      </form>
     </div>
 
     <div class="riquadro">
@@ -149,13 +149,15 @@
   }
   const cleanName = (text) => String(text ?? "").trim().replace(/\s+/g, " ").toUpperCase();
   const when = (iso) => (iso ? new Date(iso).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" }) : "");
+  // Il database dice «duplicate key» in inglese: qui in italiano.
+  const saveError = (error) => (error?.code === "23505" ? "è già presente." : errorMessage(error));
 
-  let phones = [], chats = [];
+  let phones = [], chats = [], busy = false;
 
   (async function init() {
     if (!(await requirePermission("gestione"))) return;
-    el("btnAggiungiNumero").addEventListener("click", addPhone);
-    el("btnAggiungiChat").addEventListener("click", addChat);
+    el("formNumero").addEventListener("submit", (e) => { e.preventDefault(); addPhone(); });
+    el("formChat").addEventListener("submit", (e) => { e.preventDefault(); addChat(); });
     await load();
   })();
 
@@ -181,45 +183,57 @@
     }
   }
 
+  // Il numero con cui la chat è entrata. Le chat attivate prima della 3.16 non lo hanno scritto: vale quello col
+  // loro stesso nome, se nella lista ce n'è uno solo (il database fa lo stesso quando si rilancia lo schema).
+  function chatPhone(c) {
+    if (c.phone) return c.phone;
+    const same = phones.filter((p) => p.name === c.name);
+    return same.length === 1 ? same[0].phone : null;
+  }
+
   const empty = (text) => `<tr><td colspan="4" class="vuota">${text}</td></tr>`;
 
   function drawPhones() {
     el("tabellaNumeri").innerHTML = phones.length ? phones.map((p) => {
-      const active = chats.some((c) => c.phone === p.phone);
+      const active = chats.some((c) => chatPhone(c) === p.phone);
       return `<tr data-phone="${esc(p.phone)}">
         <td>${esc(p.name)}</td>
         <td data-etichetta="Telefono">${esc(p.phone)}</td>
         <td data-etichetta="Chat">${active ? "Attiva" : '<span class="tenue">Non ancora attivata</span>'}</td>
-        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-numero">Togli</button></td>
+        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-numero" aria-label="Togli ${esc(p.name)}">Togli</button></td>
       </tr>`;
     }).join("") : empty("Nessun numero abilitato.");
     el("tabellaNumeri").querySelectorAll(".togli-numero").forEach((b) => b.addEventListener("click", () => {
       const p = phones.find((x) => x.phone === b.closest("tr").dataset.phone);
-      const active = chats.some((c) => c.phone === p.phone);
+      const active = chats.some((c) => chatPhone(c) === p.phone);
       confirmTwice(b.closest("td"), `Togliere ${p.name} (${p.phone}) dai numeri abilitati?`,
         active ? "Si toglie anche la sua chat: dal messaggio successivo il bot non gli risponde più." : "Il numero non potrà più attivare il bot.",
-        () => remove("telegram_phones", "phone", p.phone, `${p.name} tolto dal bot.`));
+        () => removePhone(p, "tabellaNumeri"));
     }));
   }
 
   function drawChats() {
-    el("tabellaChat").innerHTML = chats.length ? chats.map((c) => `<tr data-chat="${esc(c.chat_id)}">
+    el("tabellaChat").innerHTML = chats.length ? chats.map((c) => {
+      const phone = chatPhone(c);
+      return `<tr data-chat="${esc(c.chat_id)}">
         <td>${esc(c.name)}</td>
-        <td data-etichetta="Entrata con">${c.phone ? `numero ${esc(c.phone)}` : '<span class="tenue">numero della chat ' + esc(c.chat_id) + "</span>"}</td>
+        <td data-etichetta="Entrata con">${phone ? `numero ${esc(phone)}` : '<span class="tenue">numero della chat ' + esc(c.chat_id) + "</span>"}</td>
         <td data-etichetta="Attivata il">${esc(dataIt(c.created_at))}</td>
-        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-chat">Togli accesso</button></td>
-      </tr>`).join("") : empty("Nessuna chat attiva.");
+        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-chat" aria-label="Togli l'accesso a ${esc(c.name)}">Togli accesso</button></td>
+      </tr>`;
+    }).join("") : empty("Nessuna chat attiva.");
     el("tabellaChat").querySelectorAll(".togli-chat").forEach((b) => b.addEventListener("click", () => {
       const c = chats.find((x) => String(x.chat_id) === b.closest("tr").dataset.chat);
+      const phone = chatPhone(c);
       // Entrata col numero: si toglie il numero (e con lui la chat), se no condividendolo di nuovo rientrerebbe.
-      if (c.phone) {
+      if (phone) {
         confirmTwice(b.closest("td"), `Togliere l'accesso al bot a ${c.name}?`,
-          `Si toglie anche il suo numero ${c.phone} dai numeri abilitati, così non può riattivarsi da solo.`,
-          () => remove("telegram_phones", "phone", c.phone, `${c.name} tolto dal bot.`));
+          `Si toglie anche il suo numero ${phone} dai numeri abilitati, così non può riattivarsi da solo.`,
+          () => removePhone(phones.find((p) => p.phone === phone), "tabellaChat"));
       } else {
         confirmTwice(b.closest("td"), `Togliere l'accesso al bot a ${c.name}?`,
           "Dal messaggio successivo il bot non gli risponde più.",
-          () => remove("telegram_users", "chat_id", c.chat_id, `${c.name} tolto dal bot.`));
+          () => remove([["telegram_users", "chat_id", [c.chat_id]]], `${c.name} tolto dal bot.`, "tabellaChat"));
       }
     }));
   }
@@ -239,36 +253,61 @@
     ask(where, question, "Togli", () => ask(where, "Confermare? L'operazione non si può annullare.", "Sì, togli", then), { elenco: [details] });
   }
 
-  async function remove(table, column, value, done) {
+  // Un numero: tutte le righe con la stessa chiave e le chat attivate prima della 3.16 che lo usavano (la
+  // cancellazione a cascata toglie le altre).
+  function removePhone(p, table) {
+    const key = phoneKey(p.phone);
+    const same = phones.filter((x) => phoneKey(x.phone) === key).map((x) => x.phone);
+    const legacy = chats.filter((c) => !c.phone && same.includes(chatPhone(c))).map((c) => c.chat_id);
+    remove([["telegram_phones", "phone", same], ...(legacy.length ? [["telegram_users", "chat_id", legacy]] : [])],
+      `${p.name} tolto dal bot.`, table);
+  }
+
+  // Cancella e controlla che qualcosa sia stato tolto: senza permesso il database toglie zero righe senza errore.
+  async function remove(steps, done, table) {
+    if (busy) return;
+    busy = true;
     setLoading(true);
     try {
-      const { error } = await sb.from(table).delete().eq(column, value);
-      if (error) throw error;
+      let removed = 0;
+      for (const [from, column, values] of steps) {
+        const { data, error } = await sb.from(from).delete().in(column, values).select(column);
+        if (error) throw error;
+        removed += data?.length || 0;
+      }
+      if (!removed) throw new Error("niente da togliere, forse già tolto da un'altra pagina");
       showToast(done);
     } catch (error) {
       showToast("Non tolto: " + errorMessage(error), "is-danger");
     } finally {
       setLoading(false);
+      busy = false;
     }
     await load();
+    el(table).closest(".riquadro").querySelector("h2").focus();
   }
 
   async function addPhone() {
     const name = cleanName(el("nuovoNome").value), phone = phoneKey(el("nuovoTelefono").value);
     if (!name) return markError(el("nuovoNome"), "Scrivere cognome e nome del volontario.");
     if (!/^[0-9]{6,15}$/.test(phone)) return markError(el("nuovoTelefono"), "Numero di cellulare non valido: scrivere solo il numero, es. 333 123 4567.");
-    if (phones.some((p) => p.phone === phone)) return markError(el("nuovoTelefono"), `Il numero ${phone} è già abilitato.`);
+    const already = phones.find((p) => phoneKey(p.phone) === phone);
+    if (already) return markError(el("nuovoTelefono"), `Il numero ${phone} è già abilitato (${already.name}).`);
     await write("telegram_phones", { phone, name }, `${name} abilitato: ora può attivare il bot.`, ["nuovoNome", "nuovoTelefono"]);
   }
 
   async function addChat() {
     const name = cleanName(el("chatNome").value), id = el("chatId").value.trim();
     if (!name) return markError(el("chatNome"), "Scrivere cognome e nome di chi usa la chat.");
-    if (!/^-?[0-9]{1,15}$/.test(id)) return markError(el("chatId"), "Numero della chat non valido: è il numero scritto dal bot nella risposta.");
+    // Le chat di gruppo hanno il numero negativo: il bot risponde solo in privato.
+    if (!/^[0-9]{1,15}$/.test(id)) return markError(el("chatId"), "Numero della chat non valido: è il numero scritto dal bot nella risposta, senza il segno meno (i gruppi non si possono abilitare).");
+    if (chats.some((c) => String(c.chat_id) === id)) return markError(el("chatId"), `La chat ${id} è già abilitata.`);
     await write("telegram_users", { chat_id: Number(id), name }, `Chat di ${name} abilitata.`, ["chatNome", "chatId"]);
   }
 
   async function write(table, row, done, fields) {
+    if (busy) return;
+    busy = true;
     setLoading(true);
     try {
       const { error } = await sb.from(table).insert(row);
@@ -276,9 +315,10 @@
       fields.forEach((f) => { el(f).value = ""; });
       showToast(done);
     } catch (error) {
-      showToast("Non salvato: " + errorMessage(error), "is-danger");
+      showToast("Non salvato: " + saveError(error), "is-danger");
     } finally {
       setLoading(false);
+      busy = false;
     }
     await load();
   }

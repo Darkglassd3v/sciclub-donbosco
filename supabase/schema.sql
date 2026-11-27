@@ -4590,6 +4590,8 @@ create table if not exists public.telegram_queries (
   at      timestamptz not null default now()
 );
 comment on table public.telegram_queries is 'Registro delle domande fatte al bot Telegram, anche dalle chat non abilitate.';
+-- Le ultime domande della pagina «Bot Telegram» (dalla 3.16): il registro cresce con ogni messaggio ricevuto.
+create index if not exists telegram_queries_at on public.telegram_queries (at desc);
 
 -- I numeri di telefono che possono usare il bot (26/11/2026): chi li condivide dal bot (pulsante «Condividi il mio
 -- numero») viene abilitato da solo. Il superadmin li mette dall'SQL Editor; il numero si confronta senza spazi,
@@ -4604,6 +4606,12 @@ comment on table public.telegram_phones is 'Numeri di telefono abilitati al bot 
 -- il volontario resterebbe abilitato. Vuoto per le chat abilitate col numero della chat.
 alter table public.telegram_users add column if not exists phone text
   references public.telegram_phones (phone) on update cascade on delete cascade;
+-- Le chat attivate prima della 3.16 non hanno il numero: lo si ritrova dal nome, che telegram_enable_by_phone()
+-- copiava dalla lista, se un solo numero ha quel nome. Senza, togliere il numero non toglierebbe la chat.
+update public.telegram_users u set phone = p.phone
+  from public.telegram_phones p
+ where u.phone is null and p.name = u.name
+   and (select count(*) from public.telegram_phones x where x.name = u.name) = 1;
 
 alter table public.telegram_users enable row level security;
 alter table public.telegram_queries enable row level security;
@@ -4619,6 +4627,9 @@ as $$
   select case when d ~ '^39[0-9]{9,10}$' then substr(d, 3) else d end
     from (select regexp_replace(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), '^00', '') as d) x;
 $$;
+-- Un numero una volta sola, in qualunque forma sia scritto (393331234567 e 3331234567 sono lo stesso): con due
+-- righe, togliendone una l'altra abiliterebbe ancora il volontario.
+create unique index if not exists telegram_phones_key on public.telegram_phones (public.telegram_phone_key(phone));
 
 -- Abilita la chat se il numero condiviso è in telegram_phones; restituisce il nome, o null se il numero non c'è.
 create or replace function public.telegram_enable_by_phone(chat bigint, phone text)

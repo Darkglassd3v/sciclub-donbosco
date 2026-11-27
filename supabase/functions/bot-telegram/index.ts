@@ -123,7 +123,8 @@ Deno.serve(async (richiesta) => {
   // in una chat privata il bot può cancellare quelli che riceve.
   if (typeof messaggio.message_id === "number") await db.ricordaRisposta(chat, messaggio.message_id);
   try {
-    const r = await rispondi({ chat, testo: messaggio.text, mittente: messaggio.from?.id, contatto }, db);
+    const r = await rispondi({ chat, privata: messaggio.chat?.type === "private", testo: messaggio.text,
+      mittente: messaggio.from?.id, contatto }, db);
     await manda(chat, r.testo, r.chiediContatto, r.menu, r.cancella);
   } catch (errore) {
     console.error("bot:", errore);

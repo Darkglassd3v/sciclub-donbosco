@@ -40,11 +40,13 @@ function rigaSocio(s) {
 }
 
 /**
- * La risposta a un messaggio ({ chat, testo, mittente, contatto: { telefono, utente } }). `db`: { abilitata(chat),
+ * La risposta a un messaggio ({ chat, privata, testo, mittente, contatto: { telefono, utente } }). `db`: { abilitata(chat),
  * abilitaDaTelefono(chat, telefono), liberi(quanti), cerca(testo), registra(chat, testo, abilitata) }.
  * Ritorna { testo } in HTML di Telegram, con `chiediContatto` quando va mostrato il pulsante del numero.
  */
 export async function rispondi(messaggio, db) {
+  // Solo chat private (dalla 3.16): in un gruppo ogni membro leggerebbe i telefoni dei soci.
+  if (messaggio.privata === false) return { testo: "Il bot risponde solo in chat privata: scrivigli direttamente." };
   const { testo, abilitata, cancella } = await testoRisposta(messaggio, db);
   // Alla chat abilitata i pulsanti; a quella non abilitata il pulsante del numero (non dopo un numero già mandato).
   // `cancella` (dalla 3.15.9): solo le risposte con i telefoni dei soci si cancellano dopo 10 minuti; le altre
@@ -55,10 +57,13 @@ export async function rispondi(messaggio, db) {
 
 async function testoRisposta({ chat, testo, mittente, contatto }, db) {
   if (contatto) {
-    await db.registra(chat, "(numero condiviso)", false);
     // Telegram manda anche i contatti di altre persone: vale solo il numero di chi scrive.
-    if (contatto.utente !== mittente) return { testo: "Condividi solo il tuo numero, col pulsante «Condividi il mio numero»." };
+    if (contatto.utente !== mittente) {
+      await db.registra(chat, "(numero condiviso)", false);
+      return { testo: "Condividi solo il tuo numero, col pulsante «Condividi il mio numero»." };
+    }
     const chi = await db.abilitaDaTelefono(chat, contatto.telefono);
+    await db.registra(chat, "(numero condiviso)", Boolean(chi));
     return chi ? { testo: `Ciao ${esc(chi)}, ora puoi usare il bot.\n${AIUTO}`, abilitata: true }
       : { testo: `Il tuo numero non è fra quelli abilitati. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}` };
   }
