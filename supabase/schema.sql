@@ -2444,6 +2444,10 @@ create table if not exists public.ledger_entries (
 
 create index if not exists ledger_entries_season_idx on public.ledger_entries (season);
 
+-- La voce «Sponsor» del Bilancio si chiama «Contributo» (27/11/2026): i movimenti già scritti la seguono.
+-- Rieseguibile: dopo la prima volta non trova più niente.
+update public.ledger_entries set category = 'Contributo' where category = 'Sponsor';
+
 comment on table public.ledger_entries is 'Movimenti extra (entrate/uscite) di una stagione, oltre alle quote dei soci.';
 
 -- Il saldo in banca a inizio stagione, scritto a mano dal direttivo.
