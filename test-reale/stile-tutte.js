@@ -1,4 +1,4 @@
-// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html ricerca/index.html ricerca/gite.html
+// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html bot.html ricerca/index.html ricerca/gite.html
 // Lo stile della 3.0 (27/10/2026, l'immagine di riferimento dell'utente: Material), uguale in
 // tutte le pagine, sul computer:
 // - menu: una colonna a sinistra, fino in fondo allo schermo, larga 220-280 px, con le voci una

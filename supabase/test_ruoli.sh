@@ -2907,4 +2907,32 @@ delete from public.members where id in ('cccccccc-0000-0000-0000-000000000902', 
   'cccccccc-0000-0000-0000-000000000903');
 FINE
 
+# Chat attivate prima della 3.16 (revisione del 27/11/2026): non ricordano il numero. Rilanciato lo schema, il numero si
+# ritrova dal nome (scritto da telegram_enable_by_phone), se nella lista un solo numero ha quel nome; se no resta
+# vuoto. Un numero già in lista non si può scrivere una seconda volta in un'altra forma (393331234567, 00393331234567).
+psql_ <<'FINE'
+insert into public.telegram_phones (phone, name) values ('3335550000', 'VECCHIO VOLONTARIO'),
+  ('3335550001', 'OMONIMO'), ('3335550002', 'OMONIMO');
+insert into public.telegram_users (chat_id, name) values (555, 'VECCHIO VOLONTARIO'), (556, 'OMONIMO');
+FINE
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ <<'FINE'
+do $$ begin
+  assert (select phone from public.telegram_users where chat_id = 555) = '3335550000',
+         'telegram: la chat attivata prima della 3.16 non ritrova il suo numero';
+  assert (select phone from public.telegram_users where chat_id = 556) is null,
+         'telegram: con due numeri dello stesso nome la chat prende un numero a caso';
+  begin
+    insert into public.telegram_phones (phone, name) values ('393335550000', 'DOPPIONE');
+    raise exception 'ASSERZIONE: lo stesso numero scritto due volte in forme diverse';
+  exception when unique_violation then null;
+  end;
+  assert exists (select 1 from pg_indexes where schemaname = 'public' and tablename = 'telegram_queries'
+                   and indexdef like '%(at DESC)%'),
+         'telegram: le ultime domande della pagina si leggono senza indice';
+end $$;
+delete from public.telegram_users where chat_id in (555, 556);
+delete from public.telegram_phones where phone in ('3335550000', '3335550001', '3335550002');
+FINE
+
 echo "test ruoli: tutto a posto"

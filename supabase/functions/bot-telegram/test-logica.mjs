@@ -122,7 +122,7 @@ for (const t of ["/start", "Tessere libere", "Numero di telefono", "nessuno", "/
 assert.ok(!(await rispondi({ chat: 7, testo: "/start" }, db)).cancella);
 
 // Accesso tolto dalla pagina «Bot Telegram» (dalla 3.16): il bot ricontrolla la chat a ogni messaggio, quindi
-// quello dopo la revoca non riceve dati né pulsanti, nemmeno se la chat aspettava il cognome da cercare.
+// quello dopo la revoca non riceve dati né pulsanti, nemmeno il cognome scritto subito dopo «Numero di telefono».
 const tolte = new Set();
 const abilitataPrima = db.abilitata;
 db.abilitata = async (chat) => !tolte.has(chat) && abilitataPrima(chat);
@@ -137,5 +137,21 @@ for (const t of ["rossi", "/liberi", "Tessere libere", "/start"]) {
 }
 assert.ok(!chiamate.some(([c]) => c === "liberi" || c === "cerca"), "chat tolta: interrogato il database");
 db.abilitata = abilitataPrima;
+
+// Solo chat private (dalla 3.16): in un gruppo abilitato ogni membro leggerebbe i telefoni dei soci, e il bot non
+// potrebbe cancellare i messaggi degli altri. Nessun dato e nessuna domanda al database.
+chiamate.length = 0;
+p = await rispondi({ chat: 42, privata: false, testo: "/liberi" }, db);
+assert.match(p.testo, /chat privata/);
+assert.ok(!p.menu && !p.chiediContatto, "in un gruppo: pulsanti mostrati");
+assert.equal(chiamate.length, 0, "in un gruppo: interrogato il database");
+
+// Il numero condiviso finisce nel registro con l'esito vero: abilitata o no (la pagina «Ultime domande» lo mostra).
+chiamate.length = 0;
+await rispondi({ chat: 7, mittente: 70, contatto: { telefono: "393331234567", utente: 70 } }, db);
+assert.deepEqual(chiamate.find(([c]) => c === "registra"), ["registra", 7, "(numero condiviso)", true], "attivazione registrata come rifiutata");
+chiamate.length = 0;
+await rispondi({ chat: 8, mittente: 80, contatto: { telefono: "3330000000", utente: 80 } }, db);
+assert.deepEqual(chiamate.find(([c]) => c === "registra"), ["registra", 8, "(numero condiviso)", false]);
 
 console.log("bot telegram: logica a posto");

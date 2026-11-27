@@ -1,4 +1,4 @@
-// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html ricerca/index.html ricerca/gite.html
+// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html bot.html ricerca/index.html ricerca/gite.html
 // Accessibilità (WCAG 2.2) di ogni pagina coi dati veri, i difetti trovati da Lighthouse il 23/10/2026:
 // - una sola zona principale (<main> o role="main"): col lettore di schermo si salta il menu;
 // - ogni campo e ogni tendina ha un nome (label, aria-label o aria-labelledby), anche quelli
