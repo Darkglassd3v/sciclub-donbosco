@@ -4571,15 +4571,16 @@ end $$;
 -- Bot Telegram (dalla 3.15, 26/11/2026): i volontari chiedono al bot i primi numeri di tessera liberi e il
 -- telefono di un socio. Lo interroga solo la Edge Function bot-telegram, con la service_role, dopo aver
 -- controllato che la chat sia abilitata (telegram_users). Ogni domanda resta in telegram_queries.
--- Nessuna pagina e nessun utente del sito le può leggere: sta qui in fondo, dopo il grant a tutte le funzioni,
--- perché le revoke sotto non vengano riaperte.
+-- Dalla 3.16 numeri e chat abilitati li gestisce il superadmin dalla pagina «Bot Telegram» (web/bot.html), che
+-- legge anche il registro delle domande; nessun altro utente del sito li vede. Sta qui in fondo, dopo il grant a
+-- tutte le funzioni, perché le revoke sotto non vengano riaperte.
 -- ---------------------------------------------------------------------------
 create table if not exists public.telegram_users (
   chat_id    bigint primary key,
   name       text not null check (btrim(name) <> ''),
   created_at timestamptz not null default now()
 );
-comment on table public.telegram_users is 'Chat Telegram abilitate al bot (le aggiunge il superadmin dall''SQL Editor).';
+comment on table public.telegram_users is 'Chat Telegram abilitate al bot (le gestisce il superadmin dalla pagina Bot Telegram).';
 
 create table if not exists public.telegram_queries (
   id      bigint generated always as identity primary key,
@@ -4589,6 +4590,8 @@ create table if not exists public.telegram_queries (
   at      timestamptz not null default now()
 );
 comment on table public.telegram_queries is 'Registro delle domande fatte al bot Telegram, anche dalle chat non abilitate.';
+-- Le ultime domande della pagina «Bot Telegram» (dalla 3.16): il registro cresce con ogni messaggio ricevuto.
+create index if not exists telegram_queries_at on public.telegram_queries (at desc);
 
 -- I numeri di telefono che possono usare il bot (26/11/2026): chi li condivide dal bot (pulsante «Condividi il mio
 -- numero») viene abilitato da solo. Il superadmin li mette dall'SQL Editor; il numero si confronta senza spazi,
@@ -4599,6 +4602,16 @@ create table if not exists public.telegram_phones (
   created_at timestamptz not null default now()
 );
 comment on table public.telegram_phones is 'Numeri di telefono abilitati al bot Telegram (solo cifre, senza prefisso 39).';
+-- Il numero con cui la chat è entrata (dalla 3.16): togliendo il numero dalla lista si toglie anche la chat, se no
+-- il volontario resterebbe abilitato. Vuoto per le chat abilitate col numero della chat.
+alter table public.telegram_users add column if not exists phone text
+  references public.telegram_phones (phone) on update cascade on delete cascade;
+-- Le chat attivate prima della 3.16 non hanno il numero: lo si ritrova dal nome, che telegram_enable_by_phone()
+-- copiava dalla lista, se un solo numero ha quel nome. Senza, togliere il numero non toglierebbe la chat.
+update public.telegram_users u set phone = p.phone
+  from public.telegram_phones p
+ where u.phone is null and p.name = u.name
+   and (select count(*) from public.telegram_phones x where x.name = u.name) = 1;
 
 alter table public.telegram_users enable row level security;
 alter table public.telegram_queries enable row level security;
@@ -4614,6 +4627,9 @@ as $$
   select case when d ~ '^39[0-9]{9,10}$' then substr(d, 3) else d end
     from (select regexp_replace(regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g'), '^00', '') as d) x;
 $$;
+-- Un numero una volta sola, in qualunque forma sia scritto (393331234567 e 3331234567 sono lo stesso): con due
+-- righe, togliendone una l'altra abiliterebbe ancora il volontario.
+create unique index if not exists telegram_phones_key on public.telegram_phones (public.telegram_phone_key(phone));
 
 -- Abilita la chat se il numero condiviso è in telegram_phones; restituisce il nome, o null se il numero non c'è.
 create or replace function public.telegram_enable_by_phone(chat bigint, phone text)
@@ -4622,13 +4638,15 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
-declare who text;
+declare who text; listed text;
 begin
-  select p.name into who from public.telegram_phones p
-   where public.telegram_phone_key(p.phone) = public.telegram_phone_key(telegram_enable_by_phone.phone);
+  select p.name, p.phone into who, listed from public.telegram_phones p
+   where public.telegram_phone_key(p.phone) = public.telegram_phone_key(telegram_enable_by_phone.phone)
+   order by p.phone
+   limit 1;
   if who is null then return null; end if;
-  insert into public.telegram_users (chat_id, name) values (chat, who)
-  on conflict (chat_id) do update set name = excluded.name;
+  insert into public.telegram_users (chat_id, name, phone) values (chat, who, listed)
+  on conflict (chat_id) do update set name = excluded.name, phone = excluded.phone;
   return who;
 end;
 $$;
@@ -4729,4 +4747,18 @@ begin
     grant execute on function public.telegram_free_cards(int), public.telegram_phone_search(text),
       public.telegram_enable_by_phone(bigint, text), public.telegram_take_due_replies(int) to service_role;
   end if;
+  -- La pagina «Bot Telegram» (dalla 3.16): le policy qui sotto lasciano le righe al solo superadmin.
+  if exists (select 1 from pg_roles where rolname = 'authenticated') then
+    grant select, insert, update, delete on public.telegram_phones, public.telegram_users to authenticated;
+    grant select on public.telegram_queries to authenticated;
+  end if;
 end $$;
+drop policy if exists telegram_phones_superadmin on public.telegram_phones;
+create policy telegram_phones_superadmin on public.telegram_phones
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+drop policy if exists telegram_users_superadmin on public.telegram_users;
+create policy telegram_users_superadmin on public.telegram_users
+  for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
+drop policy if exists telegram_queries_superadmin on public.telegram_queries;
+create policy telegram_queries_superadmin on public.telegram_queries
+  for select to authenticated using ((select public.can('gestione')));

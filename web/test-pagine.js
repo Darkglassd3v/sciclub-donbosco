@@ -77,4 +77,17 @@ assert.ok(/\["elenco", "Elenco soci"\]/.test(management), "gestione.html: «Elen
 assert.ok(/\["soci", "index\.html"\],\s*\["elenco", "elenco\.html"\]/.test(fs.readFileSync(path.join(root, "web/shared.js"), "utf8")),
   "shared.js: chi ha solo elenco non ha una pagina di arrivo");
 
+// Bot Telegram (dalla 3.16): una voce in fondo al gruppo Gestione di ogni pagina col menu, che vede solo chi ha
+// «gestione», cioè il superadmin; la pagina rimanda altrove chiunque altro.
+for (const f of file.filter((x) => /\.html$/.test(x))) {
+  const text = fs.readFileSync(f, "utf8");
+  if (!text.includes('class="barra-voci"')) continue;
+  const gruppo = text.match(/<details class="gruppo" data-permesso="gestione"[^>]*>[\s\S]*?<\/details>/)?.[0] || "";
+  assert.ok(/<a href="(\.\.\/)?bot\.html"[^>]*>Bot Telegram<\/a>\s*<\/details>/.test(gruppo),
+    `${path.relative(root, f)}: manca la voce «Bot Telegram» in fondo al gruppo Gestione del menu`);
+}
+const botPage = fs.readFileSync(path.join(root, "web/bot.html"), "utf8");
+assert.ok(/<a href="bot\.html" aria-current="page">Bot Telegram<\/a>/.test(botPage), "bot.html: la voce segnata non è Bot Telegram");
+assert.ok(/requirePermission\("gestione"\)/.test(botPage), "bot.html: non chiede il permesso gestione");
+
 console.log("test-pagine: tutto a posto");

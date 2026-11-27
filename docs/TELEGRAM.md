@@ -30,8 +30,16 @@ pg_cron, ogni minuto → Edge Function bot-telegram (X-Pulizia-Bot) → deleteMe
   `node supabase/functions/bot-telegram/test-logica.mjs` (anche nella CI).
 - Database (`schema.sql`, in fondo): `telegram_users` (le chat abilitate), `telegram_queries` (il registro di
   tutte le domande), `telegram_replies` (le risposte da cancellare), `telegram_free_cards()`,
-  `telegram_phone_search()` e `telegram_take_due_replies()`. Né le pagine né gli utenti del sito
-  possono leggerle o chiamarle: solo la funzione del bot (`supabase/test_ruoli.sh`).
+  `telegram_phone_search()` e `telegram_take_due_replies()`. Le funzioni e le risposte da cancellare le usa
+  solo la funzione del bot. Dalla 3.16 numeri e chat abilitati, e il registro in sola lettura, li vede anche il
+  superadmin dalla pagina «Bot Telegram»; gli altri utenti del sito non vedono nessuna riga
+  (`supabase/test_ruoli.sh`).
+- A ogni messaggio, anche /start e i pulsanti, il bot verifica in `telegram_users` che la chat sia abilitata
+  prima di rispondere: tolto l'accesso, il messaggio successivo non riceve più dati.
+- Solo chat private (dalla 3.16): in un gruppo il bot risponde soltanto che lavora in privato, senza dati e senza
+  interrogare il database. In BotFather `/setjoingroups` è su **Disable** (27/11/2026), quindi il bot non si può
+  aggiungere ai gruppi; la pagina non accetta i numeri di chat negativi, che sono quelli dei gruppi.
+- Un numero sta in lista una volta sola, in qualunque forma sia scritto (indice unico su `telegram_phone_key`).
 
 ## Pubblicazione (una volta sola)
 
@@ -73,26 +81,22 @@ Poi:
 
 ## Abilitare un volontario
 
-**Col numero di telefono** (il modo normale): il superadmin mette il numero nella lista, una volta sola, dall'SQL
-Editor (solo cifre, senza +39):
+Dalla 3.16 si fa dal sito, nella pagina **Gestione › Bot Telegram** (`web/bot.html`), che vede solo il superadmin.
 
-```sql
-insert into public.telegram_phones (phone, name) values ('3331234567', 'Nome del volontario');
-```
-
-Il volontario scrive `/start` al bot e tocca **«Condividi il mio numero»**: Telegram manda al bot il suo numero
-(solo il suo, verificato da Telegram) e, se è in lista, la chat si abilita da sola. Per togliere un numero:
-`delete from public.telegram_phones where phone = '3331234567';` (e la sua chat da `telegram_users`, sotto).
+**Col numero di telefono** (il modo normale): in «Numeri abilitati» si scrivono cognome, nome e cellulare e si
+preme «Aggiungi numero» (il numero si salva in sole cifre, senza +39). Il volontario scrive `/start` al bot e tocca
+**«Condividi il mio numero»**: Telegram manda al bot il suo numero (solo il suo, verificato da Telegram) e, se è in
+lista, la chat si abilita da sola e ricorda con quale numero è entrata (`telegram_users.phone`).
 
 **Con il numero della chat**, per chi non vuole condividere il telefono: il volontario scrive `/start` e riceve il
-numero della sua chat. Il superadmin lo abilita dall'SQL Editor:
+numero della sua chat, che il superadmin inserisce in «Chat attive» con «Aggiungi col numero della chat».
 
-```sql
-insert into public.telegram_users (chat_id, name) values (123456789, 'Nome del volontario');
-```
+**Togliere l'accesso**: «Togli» accanto al numero, oppure «Togli accesso» accanto alla chat, con due conferme.
+Togliendo il numero si toglie anche la chat entrata con quel numero (cancellazione a cascata); per una chat entrata
+col numero, «Togli accesso» toglie il numero, altrimenti basterebbe condividerlo di nuovo per rientrare.
 
-Per togliere l'accesso: `delete from public.telegram_users where chat_id = 123456789;`.
-Le domande fatte restano in `telegram_queries` (chat, testo, abilitata o no, quando).
+In «Ultime domande» ci sono le ultime 50 domande arrivate al bot (chi, testo, risposta data o chat non abilitata,
+quando). Il registro completo resta in `telegram_queries`.
 
 ## Privacy
 

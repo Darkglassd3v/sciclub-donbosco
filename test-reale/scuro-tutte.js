@@ -1,4 +1,4 @@
-// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html ricerca/index.html ricerca/gite.html
+// PAGINA: index.html admin.html assicurazione.html bilancio.html gestione.html impostazioni.html password.html riepilogo.html social.html stagione.html stampe.html utenti.html bot.html ricerca/index.html ricerca/gite.html
 // Il tema scuro della 3.0 (richiesta del 27/10/2026), coi dati veri, su ogni pagina:
 // - contrasto: ogni testo visibile si legge sul suo fondo, almeno 4,5:1 (3:1 se grande), come
 //   chiede WCAG 1.4.3; il blu del club come testo sul fondo scuro, per esempio, non si legge;
