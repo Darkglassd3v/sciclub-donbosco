@@ -191,6 +191,10 @@ insert into public.social_events (id, kind, title, sponsor_id) values ('dddddddd
 insert into public.ledger_entries (kind, category, quantity, unit_price, social_event_id)
 select 'USCITA', 'Pubblicità Meta', 1, 20, id from public.social_events where title = 'PROVA CAMPAGNA';
 insert into public.social_contacts (name, phone) values ('PROVA CONTATTO', '333 000 0000');
+-- Un numero, una chat e una domanda del bot Telegram (dalla 3.16 li gestisce il superadmin dalla pagina «Bot Telegram»).
+insert into public.telegram_phones (phone, name) values ('3330009001', 'PROVA MATRICE');
+insert into public.telegram_users (chat_id, name) values (9001, 'PROVA MATRICE');
+insert into public.telegram_queries (chat_id, text, allowed) values (9001, '/liberi', true);
 
 -- Una prova della matrice: `leggi` è riuscita se trova almeno una riga,
 -- `scrivi` se non dà errore e tocca almeno una riga (la RLS che nega una
@@ -311,7 +315,19 @@ begin
     ('scrivi', 'update public.profiles set role = role',                          'Sxxxxxx'),
     ('leggi',  'select 1 from public.pending_password_changes',                  'xxxxxxx'),
     ('scrivi', 'delete from public.pending_password_changes',                    'xxxxxxx'),
-    ('scrivi', 'select public.reset_password(''33333333-3333-3333-3333-333333333333'', ''donbosco26!'')', 'Sxxxxxx')
+    ('scrivi', 'select public.reset_password(''33333333-3333-3333-3333-333333333333'', ''donbosco26!'')', 'Sxxxxxx'),
+    -- La pagina «Bot Telegram» (dalla 3.16): numeri e chat abilitati li vede e li cambia solo il superadmin; il
+    -- registro delle domande lo legge soltanto, perché lo scrive il bot.
+    ('leggi',  'select 1 from public.telegram_phones',                           'Sxxxxxx'),
+    ('scrivi', 'insert into public.telegram_phones (phone, name) values (''3330009002'', ''PROVA'')', 'Sxxxxxx'),
+    ('scrivi', 'update public.telegram_phones set name = ''PROVA NUOVO'' where phone = ''3330009001''', 'Sxxxxxx'),
+    ('scrivi', 'delete from public.telegram_phones where phone = ''3330009001''',  'Sxxxxxx'),
+    ('leggi',  'select 1 from public.telegram_users',                            'Sxxxxxx'),
+    ('scrivi', 'insert into public.telegram_users (chat_id, name) values (9002, ''PROVA'')', 'Sxxxxxx'),
+    ('scrivi', 'delete from public.telegram_users where chat_id = 9001',          'Sxxxxxx'),
+    ('leggi',  'select 1 from public.telegram_queries',                          'Sxxxxxx'),
+    ('scrivi', 'insert into public.telegram_queries (chat_id, text, allowed) values (9001, ''x'', true)', 'xxxxxxx'),
+    ('scrivi', 'delete from public.telegram_queries',                            'xxxxxxx')
   ) as t(tipo, comando, atteso) loop
     for i in 1..7 loop
       if public.test_prova(chi[i], prova.tipo, prova.comando) <> (substr(prova.atteso, i, 1) = 'S') then
@@ -2790,11 +2806,10 @@ do $$ begin
     raise exception 'ASSERZIONE: authenticated legge i telefoni del bot';
   exception when insufficient_privilege then null;
   end;
-  begin
-    perform 1 from public.telegram_users;
-    raise exception 'ASSERZIONE: authenticated legge le chat abilitate del bot';
-  exception when insufficient_privilege then null;
-  end;
+  -- Dalla 3.16 le chat abilitate le legge il superadmin (pagina «Bot Telegram»); un admin non ne vede nessuna.
+  perform set_config('test.uid', '44444444-4444-4444-4444-444444444444', true);
+  assert not exists (select 1 from public.telegram_users), 'telegram: un admin legge le chat abilitate del bot';
+  assert not exists (select 1 from public.telegram_phones), 'telegram: un admin legge i numeri abilitati del bot';
 end $$;
 reset role;
 set role anon;
@@ -2802,6 +2817,16 @@ do $$ begin
   begin
     perform public.telegram_free_cards(3);
     raise exception 'ASSERZIONE: anon legge i numeri liberi del bot';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.telegram_users;
+    raise exception 'ASSERZIONE: anon legge le chat abilitate del bot';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.telegram_phones;
+    raise exception 'ASSERZIONE: anon legge i numeri abilitati del bot';
   exception when insufficient_privilege then null;
   end;
 end $$;
@@ -2815,6 +2840,22 @@ do $$ begin
   assert public.telegram_enable_by_phone(111, '393331234567') = 'VOLONTARIO DI PROVA', 'telegram: seconda volta non va';
   assert public.telegram_enable_by_phone(222, '3339999999') is null, 'telegram: numero fuori lista abilitato';
   assert not exists (select 1 from public.telegram_users where chat_id = 222), 'telegram: chat fuori lista scritta';
+  -- Dalla 3.16 la chat ricorda con quale numero è entrata: togliendo il numero si toglie anche la chat.
+  assert (select phone from public.telegram_users where chat_id = 111) = '3331234567',
+         'telegram: la chat abilitata col numero non ricorda il numero';
+end $$;
+insert into public.telegram_phones (phone, name) values ('3337654321', 'DA TOGLIERE');
+select public.telegram_enable_by_phone(444, '3337654321') \g /dev/null
+set role authenticated;
+do $$ begin
+  perform set_config('test.uid', '22222222-2222-2222-2222-222222222222', true);
+  delete from public.telegram_phones where phone = '3337654321';
+end $$;
+reset role;
+do $$ begin
+  assert not exists (select 1 from public.telegram_phones where phone = '3337654321'), 'telegram: il superadmin non toglie un numero';
+  assert not exists (select 1 from public.telegram_users where chat_id = 444),
+         'telegram: tolto il numero, la sua chat può ancora usare il bot';
 end $$;
 set role authenticated;
 do $$ begin

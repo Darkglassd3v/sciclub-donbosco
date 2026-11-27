@@ -121,4 +121,21 @@ for (const t of ["/start", "Tessere libere", "Numero di telefono", "nessuno", "/
 }
 assert.ok(!(await rispondi({ chat: 7, testo: "/start" }, db)).cancella);
 
+// Accesso tolto dalla pagina «Bot Telegram» (dalla 3.16): il bot ricontrolla la chat a ogni messaggio, quindi
+// quello dopo la revoca non riceve dati né pulsanti, nemmeno se la chat aspettava il cognome da cercare.
+const tolte = new Set();
+const abilitataPrima = db.abilitata;
+db.abilitata = async (chat) => !tolte.has(chat) && abilitataPrima(chat);
+p = await rispondi({ chat: 42, testo: "Numero di telefono" }, db);
+assert.match(p.testo, /cognome/i);
+tolte.add(42);
+chiamate.length = 0;
+for (const t of ["rossi", "/liberi", "Tessere libere", "/start"]) {
+  p = await rispondi({ chat: 42, testo: t }, db);
+  assert.match(p.testo, /non è abilitata/, `«${t}» dopo la revoca: risposto come a una chat abilitata`);
+  assert.ok(!p.menu, `«${t}» dopo la revoca: restano i pulsanti`);
+}
+assert.ok(!chiamate.some(([c]) => c === "liberi" || c === "cerca"), "chat tolta: interrogato il database");
+db.abilitata = abilitataPrima;
+
 console.log("bot telegram: logica a posto");
