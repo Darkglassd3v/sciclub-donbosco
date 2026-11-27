@@ -64,7 +64,11 @@
     .tabella-movimenti .nota .button { margin-left: 8px; }
     /* Sotto il totale da rimborsare: quanto spetta a ciascuno. */
     .per-persona { list-style: none; margin: 8px 0 0; padding: 0; font-size: .9375rem; }
-    .per-persona li { display: flex; justify-content: space-between; gap: 12px; }
+    .per-persona li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 12px; margin-top: 6px; }
+    /* Il credito che avanza dai rimborsi e il pulsante per registrarne uno, sotto nome e importo (27/11/2026). */
+    .per-persona .credito { flex-basis: 100%; color: var(--ok); font-weight: 600; }
+    .per-persona .button { flex-basis: 100%; }
+    .filtro-voce { max-width: 22rem; }
     /* Sul telefono (schede di brand.css) la descrizione con le sue note va a capo sotto l'etichetta e i pulsanti
      * della riga vanno a capo: «Da rimborsare a …» col suo pulsante ed Elimina uscivano dalla scheda (18/11/2026). */
     @media (max-width: 600px) {
@@ -191,6 +195,7 @@
               <option>Maestri</option>
               <option>Pullman</option>
               <option>Assicurazioni</option>
+              <option>Pubblicità</option>
               <option>Contributo</option>
               <option>Altro</option>
             </select>
@@ -231,7 +236,11 @@
       <p class="importo-anteprima" aria-live="polite">Importo: <b id="mImporto">€ 0,00</b></p>
     </form>
 
-    <div class="tabella-scorrevole mt-5">
+    <div class="field filtro-voce mt-5">
+      <label class="label" for="filtroVoce">Mostra la voce</label>
+      <div class="select is-fullwidth"><select id="filtroVoce"><option value="">Tutte le voci</option></select></div>
+    </div>
+    <div class="tabella-scorrevole mt-3">
       <table class="tabella-movimenti a-schede">
         <thead><tr>
           <th>Data</th><th>Voce</th><th>Descrizione</th>
@@ -242,6 +251,32 @@
     </div>
     <!-- Per allegare la fattura a un movimento già registrato («Allega la fattura»). -->
     <input type="file" id="allegaFattura" accept="application/pdf,.pdf" aria-label="Fattura in PDF da allegare al movimento" hidden>
+    <!-- «Registra un rimborso» del riquadro delle spese anticipate: un rimborso unico a una persona (27/11/2026). -->
+    <dialog id="dlgRimborso" class="finestra" aria-labelledby="dlgRimborsoTitolo">
+      <h2 class="title is-5" id="dlgRimborsoTitolo">Registra un rimborso</h2>
+      <p class="mb-3">Il rimborso copre le spese anticipate dalla più vecchia; quello che avanza resta come credito per le
+        spese successive.</p>
+      <div class="field">
+        <label class="label" for="rImporto">Importo (€)</label>
+        <input class="input" id="rImporto" type="number" min="0.01" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label class="label" for="rData">Data</label>
+        <input class="input" id="rData" type="date">
+      </div>
+      <div class="field">
+        <label class="label" for="rModo">Modo</label>
+        <div class="select is-fullwidth"><select id="rModo">
+          <option value="CONTANTI">In contanti</option>
+          <option value="BONIFICO">Con bonifico</option>
+        </select></div>
+      </div>
+      <p class="help is-danger" id="rErrore" role="alert" hidden></p>
+      <div class="buttons">
+        <button type="button" class="button is-medium" id="rAnnulla">Annulla</button>
+        <button type="button" class="button is-medium is-link" id="rSalva">Registra</button>
+      </div>
+    </dialog>
     <!-- «Aggiungi una persona…» di «Anticipata da»: la rubrica delle persone da rimborsare (dalla 3.5). -->
     <dialog id="dlgPersona" class="finestra" aria-labelledby="dlgPersonaTitolo">
       <h2 class="title is-5" id="dlgPersonaTitolo">Aggiungi una persona da rimborsare</h2>
@@ -275,6 +310,9 @@
   let entriesById = new Map(); // movimenti mostrati, per le azioni di ogni riga
   let people = [];             // rubrica delle persone da rimborsare (ledger_people)
   let chosenPerson = "";       // scelta di «Anticipata da» prima di «Aggiungi una persona…»
+  let seasonEntries = [];      // i movimenti della stagione, per mostrarli tutti o di una voce sola
+  let withReceipt = new Set(); // i movimenti che hanno la fattura
+  let refundPerson = null;     // a chi va il rimborso della finestra «Registra un rimborso»
   const NEW_PERSON = "__nuova";
   const MAX_RECEIPT = 2 * 1024 * 1024;
 
@@ -291,6 +329,13 @@
     el("allegaFattura").addEventListener("change", attachToEntry);
     el("mAnticipata").addEventListener("change", choosePerson);
     el("pSalva").addEventListener("click", savePerson);
+    el("filtroVoce").addEventListener("change", drawEntries);
+    el("kDaRimborsarePersone").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-rimborso]");
+      if (btn) openRefund(btn.dataset.rimborso);
+    });
+    el("rSalva").addEventListener("click", saveRefund);
+    el("rAnnulla").addEventListener("click", () => el("dlgRimborso").close());
     // Annulla, Esc o la finestra chiusa in altro modo: si torna alla scelta di prima.
     const backToChoice = () => { if (el("mAnticipata").value === NEW_PERSON) el("mAnticipata").value = chosenPerson; };
     el("pAnnulla").addEventListener("click", () => { backToChoice(); el("dlgPersona").close(); });
@@ -403,33 +448,56 @@
   }
 
   async function loadEntries() {
-    const { data, error } = await sb.from("ledger_entries").select("*")
-      .eq("season", seasonValue)
-      .order("entry_date", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    entriesById = new Map(data.map((m) => [m.id, m]));
-    // Chi deve ancora riavere i soldi anticipati: il totale sta in alto, vicino al saldo.
-    const toRefund = data.filter((m) => m.advanced_by && !m.refunded_on);
-    const owed = toRefund.reduce((s, m) => s + num(m.amount), 0);
-    el("kpiDaRimborsare").hidden = owed <= 0;
+    const [entries, balances, receipts] = await Promise.all([
+      sb.from("ledger_entries").select("*")
+        .eq("season", seasonValue)
+        .order("entry_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      sb.from("ledger_refund_balance").select("person_id,person,owed,credit"),
+      // Solo quali movimenti hanno la fattura, non i file: si scaricano uno alla volta.
+      sb.from("ledger_receipts").select("entry_id,file_name"),
+    ]);
+    for (const r of [entries, balances, receipts]) if (r.error) throw r.error;
+    seasonEntries = entries.data;
+    entriesById = new Map(seasonEntries.map((m) => [m.id, m]));
+    withReceipt = new Set(receipts.data.map((r) => r.entry_id));
+    drawRefunds(balances.data);
+    // Le voci della stagione per «Mostra la voce», tenendo quella scelta.
+    const chosen = el("filtroVoce").value;
+    const categories = [...new Set(seasonEntries.map((m) => m.category))].sort((a, b) => a.localeCompare(b, "it"));
+    el("filtroVoce").innerHTML = '<option value="">Tutte le voci</option>'
+      + categories.map((c) => `<option>${esc(c)}</option>`).join("");
+    el("filtroVoce").value = categories.includes(chosen) ? chosen : "";
+    drawEntries();
+  }
+
+  /**
+   * Chi deve ancora riavere i soldi anticipati e chi ha un credito dai rimborsi (ledger_refund_balance): il totale
+   * sta in alto, vicino al saldo, e sotto ogni persona col pulsante per registrarle un rimborso unico.
+   */
+  function drawRefunds(balances) {
+    const shown = balances.filter((b) => num(b.owed) > 0 || num(b.credit) > 0)
+      .sort((a, b) => num(b.owed) - num(a.owed) || a.person.localeCompare(b.person, "it"));
+    const owed = shown.reduce((s, b) => s + num(b.owed), 0);
+    el("kpiDaRimborsare").hidden = !shown.length;
     el("kDaRimborsare").textContent = fmt(owed);
-    // E quanto spetta a ciascuno, dal più alto.
-    const byPerson = new Map();
-    for (const m of toRefund) byPerson.set(m.advanced_by, (byPerson.get(m.advanced_by) || 0) + num(m.amount));
-    el("kDaRimborsarePersone").innerHTML = [...byPerson].sort((a, b) => b[1] - a[1])
-      .map(([who, amount]) => `<li><span>${esc(who)}</span><span>${fmt(amount)}</span></li>`).join("");
-    if (!data.length) {
+    el("kDaRimborsarePersone").innerHTML = shown.map((b) => `<li><span>${esc(b.person)}</span><span>${fmt(b.owed)}</span>`
+      + (num(b.credit) > 0 ? `<span class="credito">credito ${fmt(b.credit)}</span>` : "")
+      + `<button type="button" class="button is-small is-light" data-rimborso="${esc(b.person_id)}" data-nome="${esc(b.person)}">`
+      + "Registra un rimborso</button></li>").join("");
+  }
+
+  /** I movimenti della stagione, tutti o solo della voce scelta in «Mostra la voce», col loro totale. */
+  function drawEntries() {
+    const category = el("filtroVoce").value;
+    const rows = category ? seasonEntries.filter((m) => m.category === category) : seasonEntries;
+    if (!rows.length) {
       el("elencoMovimenti").innerHTML = `<tr><td colspan="7" class="vuota">Nessun movimento registrato nella stagione in corso.</td></tr>`;
       return;
     }
-    // Solo quali movimenti hanno la fattura, non i file: si scaricano uno alla volta.
-    const { data: receipts, error: receiptsError } = await sb.from("ledger_receipts").select("entry_id,file_name");
-    if (receiptsError) throw receiptsError;
-    const withReceipt = new Set(receipts.map((r) => r.entry_id));
     // Totale netto: entrate meno uscite.
-    const totalAmount = data.reduce((s, m) => s + (m.kind === "USCITA" ? -1 : 1) * num(m.amount), 0);
-    el("elencoMovimenti").innerHTML = data.map((m) => {
+    const totalAmount = rows.reduce((s, m) => s + (m.kind === "USCITA" ? -1 : 1) * num(m.amount), 0);
+    el("elencoMovimenti").innerHTML = rows.map((m) => {
       const isOutflow = m.kind === "USCITA";
       return `
         <tr>
@@ -445,10 +513,40 @@
         </tr>`;
     }).join("") + `
       <tr class="riga-totale">
-        <td colspan="5">Totale movimenti</td>
+        <td colspan="5">${category ? `Totale ${esc(category)}` : "Totale movimenti"}</td>
         <td class="num ${totalAmount < 0 ? "uscita" : "entrata"}" data-etichetta="Totale">${fmt(totalAmount)}</td>
         <td></td>
       </tr>`;
+  }
+
+  /** «Registra un rimborso»: la finestra per la persona scelta, con la data di oggi e in contanti. */
+  function openRefund(personId) {
+    const btn = el("kDaRimborsarePersone").querySelector(`button[data-rimborso="${CSS.escape(personId)}"]`);
+    refundPerson = personId;
+    el("dlgRimborsoTitolo").textContent = `Registra un rimborso a ${btn?.dataset.nome || ""}`.trim();
+    el("rImporto").value = "";
+    el("rData").value = today();
+    el("rModo").value = "CONTANTI";
+    el("rErrore").hidden = true;
+    el("dlgRimborso").showModal();
+    el("rImporto").focus();
+  }
+
+  async function saveRefund() {
+    const amount = Number(el("rImporto").value);
+    const error = !(amount > 0) ? "Scrivere un importo maggiore di zero."
+      : !el("rData").value ? "Scrivere la data del rimborso." : "";
+    if (error) {
+      el("rErrore").textContent = error;
+      el("rErrore").hidden = false;
+      return;
+    }
+    el("rSalva").disabled = true;
+    const done = await write(() => sb.from("ledger_refunds").insert({
+      person_id: refundPerson, amount: Math.round(amount * 100) / 100, refund_date: el("rData").value, method: el("rModo").value,
+    }), "Rimborso registrato.");
+    el("rSalva").disabled = false;
+    if (done) el("dlgRimborso").close();
   }
 
   /** Il post collegato e lo stato della spesa anticipata, sotto la descrizione. */

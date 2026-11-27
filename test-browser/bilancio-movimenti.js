@@ -37,6 +37,8 @@
       return ENTRIES;
     }
     if (t === "ledger_people") return PEOPLE;
+    // Quanto spetta a ciascuno lo calcola il database (ledger_refund_balance, dalla 3.17): qui la spesa E1 di Rossi.
+    if (t === "ledger_refund_balance") return [{ person_id: "PR", person: "ROSSI MARIO", owed: 30, credit: 0 }];
     if (t === "ledger_receipts") return [{ entry_id: "E2", file_name: "pullman.pdf" }];
     return [];
   };
