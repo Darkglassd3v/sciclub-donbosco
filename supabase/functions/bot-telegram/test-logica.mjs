@@ -153,5 +153,12 @@ assert.deepEqual(chiamate.find(([c]) => c === "registra"), ["registra", 7, "(num
 chiamate.length = 0;
 await rispondi({ chat: 8, mittente: 80, contatto: { telefono: "3330000000", utente: 80 } }, db);
 assert.deepEqual(chiamate.find(([c]) => c === "registra"), ["registra", 8, "(numero condiviso)", false]);
+// Se il database non risponde, il tentativo resta comunque nel registro.
+chiamate.length = 0;
+const abilitaPrima = db.abilitaDaTelefono;
+db.abilitaDaTelefono = async () => { throw new Error("database assente"); };
+await assert.rejects(rispondi({ chat: 9, mittente: 90, contatto: { telefono: "3331234567", utente: 90 } }, db));
+assert.deepEqual(chiamate.find(([c]) => c === "registra"), ["registra", 9, "(numero condiviso)", false], "tentativo non registrato");
+db.abilitaDaTelefono = abilitaPrima;
 
 console.log("bot telegram: logica a posto");

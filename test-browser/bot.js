@@ -21,12 +21,16 @@
     { phone: "3339876543", name: "BIANCHI LUCA", created_at: "2026-11-26T10:00:00Z" },
     { phone: "3335550000", name: "GIALLO PIERO", created_at: "2026-11-20T10:00:00Z" },
     { phone: "393335559999", name: HOSTILE, created_at: "2026-11-20T10:00:00Z" },
+    // Due numeri con lo stesso nome: la chat attivata prima della 3.16 non sa quale dei due è il suo.
+    { phone: "3336660001", name: "OMONIMO", created_at: "2026-11-20T10:00:00Z" },
+    { phone: "3336660002", name: "OMONIMO", created_at: "2026-11-20T10:00:00Z" },
   ];
   let chats = [
     { chat_id: 111, name: "ROSSI MARIO", phone: "3331234567", created_at: "2026-11-26T11:00:00Z" },
     { chat_id: 222, name: "VERDI ANNA", phone: null, created_at: "2026-11-26T12:00:00Z" },
     // Attivata col numero prima della 3.16: il numero non è scritto, il nome è quello del numero.
     { chat_id: 333, name: "GIALLO PIERO", phone: null, created_at: "2026-11-20T11:00:00Z" },
+    { chat_id: 444, name: "OMONIMO", phone: null, created_at: "2026-11-20T11:00:00Z" },
   ];
   const queries = [
     { chat_id: 111, text: "/liberi", allowed: true, at: "2026-11-27T09:00:00Z" },
@@ -59,7 +63,7 @@
   const clean = (node) => node?.textContent.replace(/\s+/g, " ").trim() || "";
   const shown = (node) => Boolean(node) && node.getClientRects().length > 0;
   const dialogOpen = () => document.querySelector("dialog#finestraDomanda[open]");
-  const confirm = async () => { dialogOpen()?.querySelector("[data-si]")?.click(); await wait(300); };
+  const confirm = async () => { dialogOpen()?.querySelector("[data-si]")?.click(); await wait(150); };
   const type = (id, value) => { const f = document.getElementById(id); f.value = value; f.dispatchEvent(new Event("input", { bubbles: true })); };
   const toast = () => clean(document.getElementById("statusToast")) || clean(document.querySelector(".notification"));
   const deletes = (from) => WRITES.slice(from).filter((w) => w.kind === "delete");
@@ -89,7 +93,7 @@
         `XSS ${window.XSS}, riga «${clean(phoneRow("393335559999"))}»`);
       const button = phoneRow("3331234567")?.querySelector(".togli-numero");
       test("etichette", button?.getAttribute("aria-label") === "Togli ROSSI MARIO"
-        && chatRow(222)?.querySelector(".togli-chat")?.getAttribute("aria-label") === "Togli l'accesso a VERDI ANNA",
+        && chatRow(222)?.querySelector(".togli-chat")?.getAttribute("aria-label") === "Togli accesso VERDI ANNA",
         `«${button?.getAttribute("aria-label")}», «${chatRow(222)?.querySelector(".togli-chat")?.getAttribute("aria-label")}»`);
 
       if (innerWidth <= 600) {
@@ -114,7 +118,7 @@
       type("nuovoTelefono", "+39 347 555 1234");
       document.getElementById("btnAggiungiNumero").click();
       document.getElementById("btnAggiungiNumero").click();
-      await wait(500);
+      await wait(250);
       const added = WRITES.slice(before).filter((w) => w.t === "telegram_phones" && w.kind === "insert");
       test("aggiungi", added.length === 1 && added[0].payload?.phone === "3475551234" && added[0].payload?.name === "NERI PAOLO",
         `scritto ${JSON.stringify(added)}`);
@@ -124,7 +128,7 @@
       type("chatNome", "Gialli Sara");
       type("chatId", "8");
       document.getElementById("chatId").form?.requestSubmit();
-      await wait(400);
+      await wait(250);
       const newChat = WRITES.slice(before).find((w) => w.t === "telegram_users" && w.kind === "insert");
       test("aggiungiChatConInvio", newChat?.payload?.chat_id === 8 && newChat?.payload?.name === "GIALLI SARA", `scritto ${JSON.stringify(newChat)}`);
       before = WRITES.length;
@@ -137,12 +141,12 @@
       step = "togli numero";
       before = WRITES.length;
       phoneRow("3339876543")?.querySelector(".togli-numero")?.click();
-      await wait(200);
+      await wait(100);
       const first = Boolean(dialogOpen());
       await confirm();
       const second = Boolean(dialogOpen()) && WRITES.length === before;
       await confirm();
-      await wait(200);
+      await wait(100);
       const removed = deletes(before)[0];
       test("togliDueConferme", first && second && removed?.t === "telegram_phones" && removed.values.includes("3339876543"),
         `prima ${first}, seconda ${second}, cancellato ${JSON.stringify(removed)}`);
@@ -152,7 +156,7 @@
       step = "annulla";
       before = WRITES.length;
       phoneRow("3331234567")?.querySelector(".togli-numero")?.click();
-      await wait(200);
+      await wait(100);
       dialogOpen()?.querySelector("[data-no]")?.click();
       await wait(300);
       test("annulla", !dialogOpen() && WRITES.length === before && Boolean(phoneRow("3331234567")), `scritto ${JSON.stringify(WRITES.slice(before))}`);
@@ -160,7 +164,7 @@
       step = "togli chat";
       before = WRITES.length;
       chatRow(222)?.querySelector(".togli-chat")?.click();
-      await wait(200);
+      await wait(100);
       await confirm();
       await confirm();
       const chatGone = deletes(before)[0];
@@ -168,7 +172,7 @@
         `cancellato ${JSON.stringify(chatGone)}`);
       before = WRITES.length;
       chatRow(111)?.querySelector(".togli-chat")?.click();
-      await wait(200);
+      await wait(100);
       await confirm();
       await confirm();
       const viaPhone = deletes(before)[0];
@@ -176,7 +180,7 @@
         `cancellato ${JSON.stringify(viaPhone)}, riga ${Boolean(chatRow(111))}`);
       before = WRITES.length;
       chatRow(333)?.querySelector(".togli-chat")?.click();
-      await wait(200);
+      await wait(100);
       await confirm();
       await confirm();
       const legacy = deletes(before);
@@ -184,13 +188,26 @@
         && !chatRow(333) && !phoneRow("3335550000"),
         `cancellati ${JSON.stringify(legacy)}, chat ${Boolean(chatRow(333))}, numero ${Boolean(phoneRow("3335550000"))}`);
 
+      // Con due numeri dello stesso nome, togliere la chat toglie anche quei numeri: se no condividendone uno
+      // rientrerebbe. La chat va prima dei numeri, così un errore a metà non lascia la chat senza numero e attiva.
+      before = WRITES.length;
+      chatRow(444)?.querySelector(".togli-chat")?.click();
+      await wait(100);
+      const listed = clean(dialogOpen());
+      await confirm();
+      await confirm();
+      const homonyms = deletes(before);
+      test("togliChatOmonimi", /3336660001/.test(listed) && homonyms[0]?.t === "telegram_users" && homonyms[0].values.includes(444)
+        && homonyms.some((w) => w.t === "telegram_phones" && w.values.includes("3336660001") && w.values.includes("3336660002")),
+        `finestra «${listed.slice(0, 120)}», cancellati ${JSON.stringify(homonyms)}`);
+
       step = "niente da togliere";
       deleteNothing = true;
       phoneRow("393335559999")?.querySelector(".togli-numero")?.click();
-      await wait(200);
+      await wait(100);
       await confirm();
       await confirm();
-      await wait(200);
+      await wait(100);
       deleteNothing = false;
       test("nienteTolto", /non tolto|niente/i.test(toast()) && !/tolto dal bot/.test(toast()), `avviso «${toast()}»`);
 
