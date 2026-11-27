@@ -11,7 +11,8 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 
-const EXCEPTIONS = { "bilancio.html": ["saldoInizio", "mPrezzo"] };
+// Anche il rimborso a una persona (rImporto, dalla 3.17): restituisce spese coi centesimi.
+const EXCEPTIONS = { "bilancio.html": ["saldoInizio", "mPrezzo", "rImporto"] };
 const wrongOnes = [];
 for (const file of fs.readdirSync(__dirname).filter((f) => f.endsWith(".html"))) {
   const text = fs.readFileSync(path.join(__dirname, file), "utf8");

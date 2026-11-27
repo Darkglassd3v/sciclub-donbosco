@@ -254,7 +254,7 @@ begin
     -- I comuni già scritti nelle schede (suggerimenti del form): gli stessi permessi dei soci.
     ('leggi',  'select 1 from public.member_places',                             'SSSxSxx'),
     ('leggi',  'select 1 from public.prices',                                    'SSSxSxx'),
-    ('leggi',  'select 1 from public.departures',                                'SSxxxSx'),
+    ('leggi',  'select 1 from public.departures',                                'SSSxxSx'),
     ('leggi',  'select 1 from public.member_passes',                             'SSSxSxx'),
     ('leggi',  'select 1 from public.trip_uses',                                 'SSSxSxx'),
     ('leggi',  'select 1 from public.ledger_entries',                            'SxSxxxx'),
@@ -2934,5 +2934,90 @@ end $$;
 delete from public.telegram_users where chat_id in (555, 556);
 delete from public.telegram_phones where phone in ('3335550000', '3335550001', '3335550002');
 FINE
+
+# Bilancio (27/11/2026): un rimborso unico a una persona copre le sue spese anticipate dalla più vecchia,
+# finché basta; quello che avanza resta come credito per le spese dopo. La voce «Pubblicità Meta» di Social
+# diventa «Pubblicità». Tutto solo col permesso bilancio.
+psql_ <<'SQL'
+reset role;
+set role authenticated;
+do $$
+declare
+  persona uuid;
+  e1 uuid; e2 uuid; e3 uuid; e4 uuid; a_mano uuid;
+  r1 uuid; r2 uuid;
+begin
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);  -- tesoriere
+  insert into public.ledger_people (last_name, first_name) values ('PROVA', 'RIMBORSI') returning id into persona;
+  insert into public.ledger_entries (kind, category, entry_date, quantity, unit_price, advanced_by_id)
+    values ('USCITA', 'Pubblicità', current_date - 3, 1, 10, persona) returning id into e1;
+  insert into public.ledger_entries (kind, category, entry_date, quantity, unit_price, advanced_by_id)
+    values ('USCITA', 'Pubblicità', current_date - 2, 1, 20, persona) returning id into e2;
+  insert into public.ledger_entries (kind, category, entry_date, quantity, unit_price, advanced_by_id)
+    values ('USCITA', 'Pubblicità', current_date - 1, 1, 5, persona) returning id into e3;
+  -- Segnata a mano col pulsante della riga, senza rimborso registrato: il rimborso unico non la tocca.
+  insert into public.ledger_entries (kind, category, entry_date, quantity, unit_price, advanced_by_id, refunded_on)
+    values ('USCITA', 'Pubblicità', current_date - 5, 1, 7, persona, current_date - 4) returning id into a_mano;
+
+  insert into public.ledger_refunds (person_id, amount, method) values (persona, 32, 'CONTANTI') returning id into r1;
+  assert (select refund_id = r1 and refunded_on is not null from public.ledger_entries where id = e1), 'rimborso: la spesa più vecchia non è coperta';
+  assert (select refund_id = r1 and refunded_on is not null from public.ledger_entries where id = e2), 'rimborso: la seconda spesa non è coperta';
+  assert (select refund_id is null and refunded_on is null from public.ledger_entries where id = e3), 'rimborso: coperta una spesa oltre l''importo';
+  assert (select refund_id is null and refunded_on = current_date - 4 from public.ledger_entries where id = a_mano),
+         'rimborso: toccata una spesa segnata a mano';
+  assert (select credit = 2 and owed = 5 from public.ledger_refund_balance where person_id = persona),
+         'rimborso: credito o debito sbagliati dopo 32 € su 35 €';
+
+  -- Una spesa nuova non passa davanti a una più vecchia ancora da coprire.
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by_id)
+    values ('USCITA', 'Pubblicità', 1, 2, persona) returning id into e4;
+  assert (select refunded_on is null from public.ledger_entries where id = e4), 'rimborso: la spesa nuova passa davanti alla vecchia';
+
+  -- Un altro rimborso copre il resto e consuma il credito.
+  insert into public.ledger_refunds (person_id, amount, method, refund_date) values (persona, 5, 'BONIFICO', current_date) returning id into r2;
+  assert (select count(*) from public.ledger_entries where id in (e3, e4) and refund_id is not null) = 2,
+         'rimborso: il secondo rimborso non copre le spese rimaste';
+  assert (select credit = 0 and owed = 0 from public.ledger_refund_balance where person_id = persona), 'rimborso: credito rimasto dopo aver coperto tutto';
+
+  -- Con credito, una spesa nuova che ci sta è coperta subito; una che non ci sta resta da rimborsare.
+  delete from public.ledger_entries where id = e4;
+  assert (select credit = 2 from public.ledger_refund_balance where person_id = persona), 'rimborso: eliminata una spesa coperta, il credito non torna';
+  insert into public.ledger_entries (kind, category, quantity, unit_price, advanced_by_id)
+    values ('USCITA', 'Pubblicità', 1, 1.5, persona) returning id into e4;
+  assert (select refund_id is not null from public.ledger_entries where id = e4), 'rimborso: il credito non copre la spesa nuova';
+
+  -- Annullato il primo rimborso, le spese tornano da rimborsare e il secondo copre quello che può.
+  delete from public.ledger_refunds where id = r1;
+  assert (select refunded_on is null from public.ledger_entries where id = e1), 'rimborso: annullato, la spesa resta rimborsata';
+  assert (select credit = 5 and owed = 36.5 from public.ledger_refund_balance where person_id = persona),
+         'rimborso: dopo l''annullamento credito o debito sbagliati';
+
+  begin
+    insert into public.ledger_refunds (person_id, amount) values (persona, 0);
+    raise exception 'ASSERZIONE: accettato un rimborso di zero euro';
+  exception when check_violation then null;
+  end;
+
+  -- La voce di Social si chiama come quella del Bilancio.
+  insert into public.ledger_entries (kind, category, quantity, unit_price) values ('USCITA', 'Pubblicità Meta', 1, 1);
+  perform set_config('test.uid', '88888888-8888-8888-8888-888888888888', false);  -- social
+  assert (select count(*) from public.ledger_refunds) = 0, 'rimborso: senza permesso bilancio si leggono i rimborsi';
+  assert (select count(*) from public.ledger_refund_balance) = 0, 'rimborso: senza permesso bilancio si leggono i crediti';
+  begin
+    insert into public.ledger_refunds (person_id, amount) values (persona, 1);
+    raise exception 'ASSERZIONE: senza permesso bilancio ha registrato un rimborso';
+  exception when others then
+    if sqlerrm like 'ASSERZIONE:%' then raise; end if;
+  end;
+  perform set_config('test.uid', '33333333-3333-3333-3333-333333333333', false);
+  delete from public.ledger_refunds where person_id = persona;
+  delete from public.ledger_entries where advanced_by_id = persona or category = 'Pubblicità Meta';
+  delete from public.ledger_people where id = persona;
+end $$;
+SQL
+# Lo schema rieseguito porta le spese di Social alla voce «Pubblicità».
+psql_ -c "insert into public.ledger_entries (kind, category, quantity, unit_price) values ('USCITA', 'Pubblicità Meta', 1, 1)"
+psql_ < "$QUI/schema.sql" >/dev/null
+psql_ -c "do \$\$ begin assert not exists (select 1 from public.ledger_entries where category = 'Pubblicità Meta'), 'schema: resta la voce Pubblicità Meta'; end \$\$; delete from public.ledger_entries where category = 'Pubblicità' and unit_price = 1;"
 
 echo "test ruoli: tutto a posto"

@@ -33,6 +33,9 @@
       return [{ id: "NUOVO" }];
     }
     if (t === "ledger_people") return PEOPLE;
+    // Quanto spetta a ciascuno lo calcola il database (ledger_refund_balance, dalla 3.17), dalle spese ancora da rimborsare.
+    if (t === "ledger_refund_balance") return [{ person_id: "PC", person: "COSSETTA FEDERICO", owed: 50.5, credit: 0 },
+      { person_id: "PV", person: "VERDI LUCA", owed: 10, credit: 0 }];
     if (t === "ledger_entries") return ENTRIES;
     return [];
   };

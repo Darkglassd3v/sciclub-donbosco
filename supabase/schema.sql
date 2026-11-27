@@ -2448,6 +2448,8 @@ create index if not exists ledger_entries_season_idx on public.ledger_entries (s
 -- La voce «Sponsor» del Bilancio si chiama «Contributo» (27/11/2026): i movimenti già scritti la seguono.
 -- Rieseguibile: dopo la prima volta non trova più niente.
 update public.ledger_entries set category = 'Contributo' where category = 'Sponsor';
+-- Le spese per le inserzioni registrate da Social vanno nella voce «Pubblicità» del Bilancio (27/11/2026).
+update public.ledger_entries set category = 'Pubblicità' where category = 'Pubblicità Meta';
 
 comment on table public.ledger_entries is 'Movimenti extra (entrate/uscite) di una stagione, oltre alle quote dei soci.';
 
@@ -4417,6 +4419,148 @@ $$;
 comment on function public.link_ledger_advances is 'Collega a una persona della rubrica le spese anticipate scritte col solo nome. Rieseguibile.';
 
 select public.link_ledger_advances();
+
+-- Rimborsi a una persona (27/11/2026). Prima il club restituiva le spese anticipate una per una («Segna come
+-- rimborsata»), e un rimborso unico in contanti che copriva più spese, o ne copriva più del dovuto, non si poteva
+-- scrivere. Un rimborso ha importo, giorno e modo; il database copre con i rimborsi di una persona le sue spese
+-- anticipate dalla più vecchia, finché bastano (refund_id, refunded_on), e quello che avanza resta credito per le
+-- spese dopo. Le spese segnate a mano col pulsante della riga restano come sono. Il rimborso non è un'uscita:
+-- la spesa è già un'uscita del Bilancio.
+create table if not exists public.ledger_refunds (
+  id          uuid primary key default gen_random_uuid(),
+  person_id   uuid not null references public.ledger_people (id) on delete restrict,
+  refund_date date not null default current_date,
+  amount      numeric(10, 2) not null check (amount > 0),
+  method      text not null default 'CONTANTI' check (method in ('CONTANTI', 'BONIFICO')),
+  created_by  uuid default auth.uid(),
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists ledger_refunds_person_idx on public.ledger_refunds (person_id);
+
+comment on table public.ledger_refunds is 'Rimborsi del club a una persona della rubrica: coprono le sue spese anticipate dalla più vecchia.';
+
+alter table public.ledger_refunds enable row level security;
+drop policy if exists ledger_refunds_all on public.ledger_refunds;
+create policy ledger_refunds_all on public.ledger_refunds
+  for all to authenticated using ((select public.can('bilancio'))) with check ((select public.can('bilancio')));
+
+alter table public.ledger_entries add column if not exists refund_id uuid
+  references public.ledger_refunds (id) on delete set null;
+create index if not exists ledger_entries_refund_idx on public.ledger_entries (refund_id);
+
+comment on column public.ledger_entries.refund_id is 'Rimborso che copre la spesa anticipata (ledger_refunds); vuoto con refunded_on = segnata a mano.';
+
+-- Ricopre da capo le spese anticipate di una persona coi suoi rimborsi: la più vecchia per prima, e ci si ferma
+-- alla prima che non ci sta (una spesa nuova non passa davanti a una vecchia ancora da coprire). Il giorno del
+-- rimborso è quello del rimborso che la completa, o quello della spesa se il credito c'era già. Invoker: legge e
+-- scrive con i permessi di chi tiene il Bilancio.
+create or replace function public.ledger_settle(person uuid)
+returns void
+language plpgsql
+set search_path = ''
+as $$
+declare
+  used  numeric := 0;
+  spesa record;
+  copre record;
+begin
+  if person is null then return; end if;
+  update public.ledger_entries set refunded_on = null, refund_id = null
+   where advanced_by_id = person and refund_id is not null;
+  for spesa in
+    select e.id, e.amount, e.entry_date from public.ledger_entries e
+     where e.advanced_by_id = person and e.kind = 'USCITA' and e.refunded_on is null
+     order by e.entry_date, e.created_at, e.id
+  loop
+    select r.id, r.refund_date into copre
+      from (select x.id, x.refund_date,
+                   sum(x.amount) over (order by x.refund_date, x.created_at, x.id) as fino_a
+              from public.ledger_refunds x where x.person_id = person) r
+     where r.fino_a >= used + spesa.amount
+     order by r.fino_a
+     limit 1;
+    exit when not found;
+    update public.ledger_entries set refund_id = copre.id, refunded_on = greatest(copre.refund_date, spesa.entry_date)
+     where id = spesa.id;
+    used := used + spesa.amount;
+  end loop;
+end;
+$$;
+
+revoke all on function public.ledger_settle(uuid) from public;
+
+create or replace function public.ledger_entries_settle()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then perform public.ledger_settle(old.advanced_by_id); end if;
+  if tg_op = 'INSERT' or (tg_op = 'UPDATE' and new.advanced_by_id is distinct from old.advanced_by_id) then
+    perform public.ledger_settle(new.advanced_by_id);
+  end if;
+  return null;
+end;
+$$;
+
+-- Solo le colonne che cambiano la copertura: ledger_settle() scrive refunded_on e refund_id, che qui non ci sono,
+-- e il trigger non si richiama da solo.
+drop trigger if exists ledger_entries_settle on public.ledger_entries;
+create trigger ledger_entries_settle
+  after insert or delete or update of advanced_by_id, kind, quantity, unit_price, entry_date on public.ledger_entries
+  for each row execute function public.ledger_entries_settle();
+
+-- Un rimborso annullato libera prima le sue spese: la chiave esterna toglierebbe refund_id lasciando refunded_on,
+-- e la spesa sembrerebbe segnata a mano.
+create or replace function public.ledger_refunds_release()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  update public.ledger_entries set refunded_on = null, refund_id = null where refund_id = old.id;
+  return old;
+end;
+$$;
+
+drop trigger if exists ledger_refunds_release on public.ledger_refunds;
+create trigger ledger_refunds_release
+  before delete on public.ledger_refunds
+  for each row execute function public.ledger_refunds_release();
+
+create or replace function public.ledger_refunds_settle()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then perform public.ledger_settle(old.person_id); end if;
+  if tg_op in ('INSERT', 'UPDATE') then perform public.ledger_settle(new.person_id); end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists ledger_refunds_settle on public.ledger_refunds;
+create trigger ledger_refunds_settle
+  after insert or delete or update on public.ledger_refunds
+  for each row execute function public.ledger_refunds_settle();
+
+-- Per persona: quanto deve ancora riavere (owed) e il credito che avanza dai rimborsi (credit).
+create or replace view public.ledger_refund_balance as
+select p.id as person_id,
+       p.last_name || ' ' || p.first_name as person,
+       coalesce((select sum(e.amount) from public.ledger_entries e
+                  where e.advanced_by_id = p.id and e.kind = 'USCITA' and e.refunded_on is null), 0)::numeric(10, 2) as owed,
+       (coalesce((select sum(r.amount) from public.ledger_refunds r where r.person_id = p.id), 0)
+        - coalesce((select sum(e.amount) from public.ledger_entries e
+                     join public.ledger_refunds r on r.id = e.refund_id
+                    where r.person_id = p.id), 0))::numeric(10, 2) as credit
+  from public.ledger_people p;
+
+alter view public.ledger_refund_balance set (security_invoker = true);
+
+comment on view public.ledger_refund_balance is 'Per persona della rubrica: spese anticipate ancora da rimborsare e credito dei rimborsi.';
 
 -- Le schede eliminate, intere: il socio e le righe che se ne vanno con lui
 -- (abbonamenti, storico degli importi). Nessuna policy e nessun permesso: ci
