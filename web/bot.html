@@ -219,7 +219,7 @@
         <td>${esc(c.name)}</td>
         <td data-etichetta="Entrata con">${phone ? `numero ${esc(phone)}` : '<span class="tenue">numero della chat ' + esc(c.chat_id) + "</span>"}</td>
         <td data-etichetta="Attivata il">${esc(dataIt(c.created_at))}</td>
-        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-chat" aria-label="Togli l'accesso a ${esc(c.name)}">Togli accesso</button></td>
+        <td class="azioni"><button type="button" class="button is-small is-danger is-light togli-chat" aria-label="Togli accesso ${esc(c.name)}">Togli accesso</button></td>
       </tr>`;
     }).join("") : empty("Nessuna chat attiva.");
     el("tabellaChat").querySelectorAll(".togli-chat").forEach((b) => b.addEventListener("click", () => {
@@ -231,9 +231,14 @@
           `Si toglie anche il suo numero ${phone} dai numeri abilitati, così non può riattivarsi da solo.`,
           () => removePhone(phones.find((p) => p.phone === phone), "tabellaChat"));
       } else {
+        // Più numeri con lo stesso nome (chat attivata prima della 3.16): non si sa quale sia il suo, si tolgono tutti,
+        // se no condividendone uno rientrerebbe.
+        const homonyms = phones.filter((p) => p.name === c.name).map((p) => p.phone);
         confirmTwice(b.closest("td"), `Togliere l'accesso al bot a ${c.name}?`,
-          "Dal messaggio successivo il bot non gli risponde più.",
-          () => remove([["telegram_users", "chat_id", [c.chat_id]]], `${c.name} tolto dal bot.`, "tabellaChat"));
+          homonyms.length ? `Si tolgono anche i numeri con lo stesso nome: ${homonyms.join(", ")}.`
+            : "Dal messaggio successivo il bot non gli risponde più.",
+          () => remove([["telegram_users", "chat_id", [c.chat_id]], ...(homonyms.length ? [["telegram_phones", "phone", homonyms]] : [])],
+            `${c.name} tolto dal bot.`, "tabellaChat"));
       }
     }));
   }
@@ -259,7 +264,8 @@
     const key = phoneKey(p.phone);
     const same = phones.filter((x) => phoneKey(x.phone) === key).map((x) => x.phone);
     const legacy = chats.filter((c) => !c.phone && same.includes(chatPhone(c))).map((c) => c.chat_id);
-    remove([["telegram_phones", "phone", same], ...(legacy.length ? [["telegram_users", "chat_id", legacy]] : [])],
+    // Prima le chat: se la seconda cancellazione non riesce, non resta una chat attiva senza il suo numero.
+    remove([...(legacy.length ? [["telegram_users", "chat_id", legacy]] : []), ["telegram_phones", "phone", same]],
       `${p.name} tolto dal bot.`, table);
   }
 

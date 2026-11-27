@@ -62,8 +62,12 @@ async function testoRisposta({ chat, testo, mittente, contatto }, db) {
       await db.registra(chat, "(numero condiviso)", false);
       return { testo: "Condividi solo il tuo numero, col pulsante «Condividi il mio numero»." };
     }
-    const chi = await db.abilitaDaTelefono(chat, contatto.telefono);
-    await db.registra(chat, "(numero condiviso)", Boolean(chi));
+    let chi = null;
+    try {
+      chi = await db.abilitaDaTelefono(chat, contatto.telefono);
+    } finally {
+      await db.registra(chat, "(numero condiviso)", Boolean(chi));   // anche se il database non risponde
+    }
     return chi ? { testo: `Ciao ${esc(chi)}, ora puoi usare il bot.\n${AIUTO}`, abilitata: true }
       : { testo: `Il tuo numero non è fra quelli abilitati. Comunica all'amministratore dello Sci Club il numero della chat: ${chat}` };
   }
