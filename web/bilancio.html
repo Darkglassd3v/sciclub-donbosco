@@ -191,7 +191,7 @@
               <option>Maestri</option>
               <option>Pullman</option>
               <option>Assicurazioni</option>
-              <option>Sponsor</option>
+              <option>Contributo</option>
               <option>Altro</option>
             </select>
           </div>
@@ -300,13 +300,13 @@
     await reload();
   })();
 
-  // Sponsor: chi ha pagato va scritto, se no a fine anno non si sa chi era. Il
-  // nome si scrive a mano: l'elenco degli sponsor è di Social, e chi tiene il
+  // Contributo (era «Sponsor» fino al 27/11): chi ha versato va scritto, se no a fine anno non si
+  // sa chi era. Il nome si scrive a mano: l'elenco degli sponsor è di Social, e chi tiene il
   // bilancio non lo legge.
   function updateDescription() {
-    const sponsor = el("mVoce").value === "Sponsor";
-    el("lDescrizione").textContent = sponsor ? "Nome dello sponsor" : "Descrizione";
-    el("mDescrizione").required = sponsor;
+    const contributo = el("mVoce").value === "Contributo";
+    el("lDescrizione").textContent = contributo ? "Chi versa il contributo" : "Descrizione";
+    el("mDescrizione").required = contributo;
   }
 
   /** «Anticipata da» ha senso solo per le uscite: con un'entrata il campo sparisce e si svuota. */

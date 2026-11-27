@@ -158,6 +158,14 @@
     test("avvisoFatturaMancata", /non è stata allegata/.test(toast) && el("statusToast")?.classList.contains("is-warning"), `avviso «${toast}»`);
     failUpload = false;
 
+    // La voce «Sponsor» si chiama «Contributo» (27/11): scelta, chiede chi versa il contributo, obbligatorio.
+    const voci = [...el("mVoce").options].map((o) => o.value);
+    el("mVoce").value = "Contributo";
+    el("mVoce").dispatchEvent(new Event("change", { bubbles: true }));
+    test("voceContributo", voci.includes("Contributo") && !voci.includes("Sponsor")
+      && /contributo/i.test(text(el("lDescrizione"))) && el("mDescrizione").required,
+      `voci ${voci.join(",")}, etichetta «${text(el("lDescrizione"))}»`);
+
     document.title = "RISULTATO " + r.join(" ");
   }, 500));
 }

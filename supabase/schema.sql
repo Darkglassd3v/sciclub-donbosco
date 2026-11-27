@@ -2160,9 +2160,10 @@ create policy prices_write on public.prices
 
 drop policy if exists departures_select on public.departures;
 drop policy if exists departures_write  on public.departures;
--- Le partenze servono al form Soci e, come luoghi da suggerire, ai post social.
+-- Le partenze servono al form Soci, anche in sola lettura dall'Elenco soci (27/11/2026), e, come luoghi da
+-- suggerire, ai post social.
 create policy departures_select on public.departures
-  for select to authenticated using ((select public.can('soci', 'social')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'social')));
 create policy departures_write on public.departures
   for all to authenticated using ((select public.can('gestione'))) with check ((select public.can('gestione')));
 
@@ -2443,6 +2444,10 @@ create table if not exists public.ledger_entries (
 );
 
 create index if not exists ledger_entries_season_idx on public.ledger_entries (season);
+
+-- La voce «Sponsor» del Bilancio si chiama «Contributo» (27/11/2026): i movimenti già scritti la seguono.
+-- Rieseguibile: dopo la prima volta non trova più niente.
+update public.ledger_entries set category = 'Contributo' where category = 'Sponsor';
 
 comment on table public.ledger_entries is 'Movimenti extra (entrate/uscite) di una stagione, oltre alle quote dei soci.';
 
@@ -3692,8 +3697,9 @@ drop policy if exists trip_uses_delete on public.trip_uses;
 -- Si scrive e si corregge solo passando da use_trip() e cancel_trip(), che
 -- controllano da sé il permesso gite: nessuna policy di scrittura. Leggono il
 -- form Soci (gite fatte per abbonamento), il pannello gite e il Riepilogo.
+-- Anche l'Elenco soci, che apre la scheda in sola lettura (27/11/2026): senza, le gite fatte risulterebbero zero.
 create policy trip_uses_select on public.trip_uses
-  for select to authenticated using ((select public.can('soci', 'cerca', 'gite', 'stampe', 'riepilogo')));
+  for select to authenticated using ((select public.can('soci', 'elenco', 'cerca', 'gite', 'stampe', 'riepilogo')));
 
 -- Abbonamenti dei soci: li scrive il form Soci (permesso soci), il pannello
 -- gite passa da add_pass(). Niente update: un abbonamento sbagliato si toglie

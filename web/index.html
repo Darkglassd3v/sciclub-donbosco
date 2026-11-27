@@ -108,7 +108,9 @@
 
     /* Finestre dell'eliminazione: chi si elimina in una tabellina (dataTable() in shared.js). */
     .elimina-avviso { font-size: 1.2rem; }
-    #memberForm > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
+    #campiScheda > .riquadro { scroll-margin-top: calc(var(--barra-h) + 1rem); }
+    /* La scheda in sola lettura: il fieldset spento spegne tutti i campi, senza il bordo del browser. */
+    .campi-scheda { border: 0; padding: 0; margin: 0; min-width: 0; }
     /* Spazio per la barra dei totali, incollata in basso sopra il modulo. */
     .container-main { padding-bottom: 200px; }
 
@@ -235,6 +237,10 @@
   </div>
 
   <form id="memberForm">
+    <p class="notification is-info is-light" id="avvisoSolaLettura" role="status" hidden>
+      Scheda in sola lettura: modificare i soci non è tra i permessi del proprio ruolo.
+    </p>
+    <fieldset id="campiScheda" class="campi-scheda">
     <input type="hidden" id="f_id">
 
     <!-- Quattro sezioni come le pensa chi iscrive: chi è, la tessera, gite e
@@ -420,6 +426,7 @@
         <button type="button" class="button is-danger is-outlined" id="btnTogli">Rimuovi dalla stagione</button>
       </div>
     </section>
+    </fieldset>
   </form>
 </div>
 
@@ -482,6 +489,11 @@
   // tessera, il socio aperto escluso). Vedi loadHouseholdHead().
   let householdHead = null;
   let access = null; // chi è collegato (getProfile), per tessere riservate e Togli
+  // Senza «Registra soci» (permesso soci) si arriva qui solo dall'Elenco soci, e la scheda si guarda soltanto:
+  // il database non accetterebbe comunque le modifiche (policy members_update).
+  let readOnly = false;
+  // Un id di socio valido nell'indirizzo: l'indirizzo lo può scrivere chiunque.
+  const MEMBER_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   // Abbonamenti del socio aperto: quelli già salvati (righe di pass_status,
   // con le gite fatte), quelli aggiunti qui e non ancora salvati, e i pass_id
@@ -533,11 +545,14 @@
   };
 
   (async function init() {
-    if (!(await requirePermission("soci"))) return;
+    // Dall'Elenco soci (index.html?socio=<id>) basta il permesso elenco, per guardare la scheda.
+    const fromList = MEMBER_ID.test(new URLSearchParams(location.search).get("socio") || "");
+    if (!(await requirePermission(fromList ? ["soci", "elenco"] : "soci"))) return;
     updateBand();
     setLoading(true);
     try {
       access = await getProfile();
+      readOnly = !access?.permissions.includes("soci");
 
       PRICES = await loadPrices();
       // Dalla meno cara: la prima è quella proposta con la presciistica.
@@ -623,6 +638,7 @@
     } finally {
       setLoading(false);
     }
+    if (readOnly) showReadOnly();
     // Arrivati dall'Elenco soci col socio da aprire (index.html?socio=<id>).
     await openFromAddress();
   })();
@@ -899,6 +915,7 @@
    * Prima rilegge i numeri dati, per quelli liberi sotto il campo.
    */
   async function proposeCardNumber() {
+    if (readOnly) return; // in sola lettura non si propone niente
     const field = el("f_numero_tessera");
     await loadUsedCards();
     if (field.value.trim()) return;
@@ -1234,7 +1251,15 @@
     el("btnChiudiScheda").hidden = !s;
     el("btnSalva").textContent = nome ? `Salva ${nome}` : s ? `Salva ${before}` : "Salva il nuovo socio";
     // Si elimina solo una scheda salvata, aperta.
-    el("btnElimina").hidden = !s;
+    el("btnElimina").hidden = !s || readOnly;
+  }
+
+  /** Sola lettura: campi spenti, niente Salva né Elimina, e l'avviso che lo dice. */
+  function showReadOnly() {
+    el("campiScheda").disabled = true;
+    el("avvisoSolaLettura").hidden = false;
+    el("zonaSalva").hidden = true;
+    el("btnElimina").hidden = true;
   }
 
   /**
@@ -1580,7 +1605,7 @@
    */
   async function openFromAddress(search = location.search) {
     const wanted = new URLSearchParams(search).get("socio");
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(wanted || "")) await loadMember(wanted);
+    if (MEMBER_ID.test(wanted || "")) await loadMember(wanted);
   }
 
   async function loadMember(id) {
